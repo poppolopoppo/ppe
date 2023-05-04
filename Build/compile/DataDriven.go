@@ -1,7 +1,7 @@
 package compile
 
 import (
-	"build/utils"
+	. "build/utils"
 	"fmt"
 	"io"
 	"path"
@@ -18,7 +18,7 @@ const PCH_DEFAULT_SOURCE = "stdafx.cpp"
  * Module Arche Type
  ***************************************/
 
-var AllArchetypes utils.SharedMapT[string, ModuleArchetype]
+var AllArchetypes SharedMapT[string, ModuleArchetype]
 
 type ModuleArchetype func(*ModuleRules)
 
@@ -33,9 +33,9 @@ func RegisterArchetype(archtype string, fn ModuleArchetype) ModuleArchetype {
  ***************************************/
 
 type ExtensionDesc struct {
-	Archetypes      utils.StringSet
-	AllowedPlaforms utils.SetT[PlatformAlias]
-	HAL             map[utils.HostId]*ModuleDesc
+	Archetypes      StringSet
+	AllowedPlaforms SetT[PlatformAlias]
+	HAL             map[HostId]*ModuleDesc
 	TAG             map[TagFlags]*ModuleDesc
 }
 
@@ -43,7 +43,7 @@ func (src ExtensionDesc) ApplyAllowedPlatforms(name fmt.Stringer) bool {
 	if len(src.AllowedPlaforms) > 0 {
 		localPlatform := GetLocalHostPlatformAlias()
 		if src.AllowedPlaforms.Contains(localPlatform) {
-			utils.LogTrace("%v: not allowed on <%v> platform", name, localPlatform)
+			LogTrace("%v: not allowed on <%v> platform", name, localPlatform)
 			return false
 		}
 	}
@@ -54,23 +54,23 @@ func (src ExtensionDesc) ApplyArchetypes(dst *ModuleDesc, name ModuleAlias) {
 	src.Archetypes.Range(func(id string) {
 		id = strings.ToUpper(id)
 		if decorator, ok := AllArchetypes.Get(id); ok {
-			utils.LogTrace("%v: inherit module archtype <%v>", name, id)
+			LogTrace("%v: inherit module archtype <%v>", name, id)
 			decorator(dst.rules)
 		} else {
-			utils.LogFatal("%v: invalid module archtype <%v>", name, id)
+			LogFatal("%v: invalid module archtype <%v>", name, id)
 		}
 	})
 }
 func (src ExtensionDesc) ApplyHAL(dst *ModuleDesc, name ModuleAlias) {
-	hostId := utils.CurrentHost().Id
+	hostId := CurrentHost().Id
 	for id, desc := range src.HAL {
-		var hal utils.HostId
+		var hal HostId
 		if err := hal.Set(id.String()); err == nil && hal == hostId {
-			utils.LogTrace("%v: inherit platform facet [%v]", name, id)
+			LogTrace("%v: inherit platform facet [%v]", name, id)
 			dst.Archetypes.Prepend(desc.Archetypes...)
 			dst.rules.Prepend(desc.rules)
 		} else if err != nil {
-			utils.LogError("%v: invalid platform id [%v], %v", name, id, err)
+			LogError("%v: invalid platform id [%v], %v", name, id, err)
 		}
 	}
 }
@@ -106,12 +106,12 @@ func (x *ExtensionDesc) ApplyExtensions(other *ExtensionDesc) {
 
 type NamespaceDesc struct {
 	Name   string
-	Source utils.Filename
+	Source Filename
 
-	Modules utils.StringSet
+	Modules StringSet
 
 	Parent   *NamespaceDesc
-	Children utils.StringSet
+	Children StringSet
 
 	Facet
 	ExtensionDesc
@@ -128,11 +128,11 @@ func (x *NamespaceDesc) GetAbsoluteName() string {
 }
 
 func (x *NamespaceDesc) Serialize(dst io.Writer) error {
-	return utils.JsonSerialize(x, dst)
+	return JsonSerialize(x, dst)
 }
 func (x *NamespaceDesc) Deserialize(src io.Reader) error {
 	x.Facet = NewFacet()
-	return utils.JsonDeserialize(x, src)
+	return JsonDeserialize(x, src)
 }
 
 /***************************************
@@ -141,19 +141,19 @@ func (x *NamespaceDesc) Deserialize(src io.Reader) error {
 
 type ModuleDesc struct {
 	Name   string
-	Source utils.Filename
+	Source Filename
 
 	Type ModuleType
 
-	SourceDirs    utils.StringSet
-	SourceGlobs   utils.StringSet
-	ExcludedGlobs utils.StringSet
-	SourceFiles   utils.StringSet
-	ExcludedFiles utils.StringSet
-	ForceIncludes utils.StringSet
-	IsolatedFiles utils.StringSet
-	ExtraFiles    utils.StringSet
-	ExtraDirs     utils.StringSet
+	SourceDirs    StringSet
+	SourceGlobs   StringSet
+	ExcludedGlobs StringSet
+	SourceFiles   StringSet
+	ExcludedFiles StringSet
+	ForceIncludes StringSet
+	IsolatedFiles StringSet
+	ExtraFiles    StringSet
+	ExtraDirs     StringSet
 
 	PrecompiledHeader *string
 	PrecompiledSource *string
@@ -170,18 +170,18 @@ type ModuleDesc struct {
 }
 
 func (x *ModuleDesc) Serialize(dst io.Writer) error {
-	return utils.JsonSerialize(x, dst)
+	return JsonSerialize(x, dst)
 }
 func (x *ModuleDesc) Deserialize(src io.Reader) error {
 	x.Facet = NewFacet()
-	return utils.JsonDeserialize(x, src)
+	return JsonDeserialize(x, src)
 }
-func (x *ModuleDesc) CreateRules(src utils.Filename, namespace *NamespaceDesc, moduleBasename string) error {
+func (x *ModuleDesc) CreateRules(src Filename, namespace *NamespaceDesc, moduleBasename string) error {
 	moduleAlias := ModuleAlias{
 		NamespaceAlias: namespace.rules.NamespaceAlias,
 		ModuleName:     moduleBasename,
 	}
-	utils.LogVerbose("create rules for module: '%v'", moduleAlias)
+	LogVerbose("create rules for module: '%v'", moduleAlias)
 
 	rootDir := src.Dirname
 	x.rules = &ModuleRules{
@@ -236,15 +236,15 @@ type buildModulesDeserializer struct {
 	modules    []*ModuleDesc
 }
 
-func (x *buildModulesDeserializer) loadModuleDesc(src utils.Filename, namespace *NamespaceDesc) (*ModuleDesc, error) {
-	utils.LogTrace("loading data-driven module from '%v'", src)
+func (x *buildModulesDeserializer) loadModuleDesc(src Filename, namespace *NamespaceDesc) (*ModuleDesc, error) {
+	LogTrace("loading data-driven module from '%v'", src)
 
 	result := &ModuleDesc{
 		Name:   strings.TrimSuffix(src.Basename, MODULEDESC_EXT),
 		Source: src,
 	}
 
-	if err := utils.UFS.OpenBuffered(src, result.Deserialize); err != nil {
+	if err := UFS.OpenBuffered(src, result.Deserialize); err != nil {
 		return nil, fmt.Errorf("%v: %v", src, err)
 	}
 	rootDir := src.Dirname
@@ -280,14 +280,14 @@ func (x *buildModulesDeserializer) loadModuleDesc(src utils.Filename, namespace 
 	return result, nil
 }
 
-func (x *buildModulesDeserializer) loadNamespaceDesc(src utils.Filename, parent *NamespaceDesc) (*NamespaceDesc, error) {
-	utils.LogTrace("loading data-driven namespace from '%v'", src)
+func (x *buildModulesDeserializer) loadNamespaceDesc(src Filename, parent *NamespaceDesc) (*NamespaceDesc, error) {
+	LogTrace("loading data-driven namespace from '%v'", src)
 
 	result := &NamespaceDesc{
 		Source: src,
 	}
 
-	if err := utils.UFS.OpenBuffered(src, result.Deserialize); err != nil {
+	if err := UFS.OpenBuffered(src, result.Deserialize); err != nil {
 		return nil, fmt.Errorf("%v: %v", src, err)
 	}
 
@@ -297,7 +297,7 @@ func (x *buildModulesDeserializer) loadNamespaceDesc(src utils.Filename, parent 
 
 	result.rules = &NamespaceRules{
 		NamespaceAlias:    NamespaceAlias{NamespaceName: result.GetAbsoluteName()},
-		NamespaceChildren: utils.NewStringSet(),
+		NamespaceChildren: NewStringSet(),
 		NamespaceDir:      src.Dirname,
 		NamespaceModules:  ModuleAliases{},
 		Facet:             result.Facet,
@@ -344,17 +344,17 @@ func (x *buildModulesDeserializer) loadNamespaceDesc(src utils.Filename, parent 
  ***************************************/
 
 type BuildModules struct {
-	Source     utils.Filename
+	Source     Filename
 	Programs   ModuleAliases
 	Modules    ModuleAliases
 	Namespaces NamespaceAliases
 	Root       Namespace
 }
 
-func (x *BuildModules) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Modules", x.Source.String())
+func (x *BuildModules) Alias() BuildAlias {
+	return MakeBuildAlias("Modules", x.Source.String())
 }
-func (x *BuildModules) Build(bc utils.BuildContext) error {
+func (x *BuildModules) Build(bc BuildContext) error {
 	x.Programs = make(ModuleAliases, 0, len(x.Programs))
 	x.Namespaces = make(NamespaceAliases, 0, len(x.Namespaces))
 	x.Modules = make(ModuleAliases, 0, len(x.Modules))
@@ -377,7 +377,7 @@ func (x *BuildModules) Build(bc utils.BuildContext) error {
 			}
 		}
 
-		err := bc.OutputNode(utils.MakeBuildFactory(func(bi utils.BuildInitializer) (Namespace, error) {
+		err := bc.OutputNode(MakeBuildFactory(func(bi BuildInitializer) (Namespace, error) {
 			if err := bi.NeedFile(it.Source); err != nil {
 				return nil, err
 			}
@@ -404,7 +404,7 @@ func (x *BuildModules) Build(bc utils.BuildContext) error {
 			return err
 		}
 
-		err := bc.OutputNode(utils.MakeBuildFactory(func(bi utils.BuildInitializer) (Module, error) {
+		err := bc.OutputNode(MakeBuildFactory(func(bi BuildInitializer) (Module, error) {
 			if err := bi.NeedFile(it.Source); err != nil {
 				return nil, err
 			}
@@ -420,17 +420,17 @@ func (x *BuildModules) Build(bc utils.BuildContext) error {
 
 	// need a separated pass for validation, or not every module will be declared!
 	for _, it := range deserializer.modules {
-		utils.LogPanicIfFailed(validateModuleRec(x, it.rules))
+		LogPanicIfFailed(validateModuleRec(x, it.rules))
 	}
 
 	return nil
 }
-func (x *BuildModules) Serialize(ar utils.Archive) {
+func (x *BuildModules) Serialize(ar Archive) {
 	ar.Serializable(&x.Source)
-	utils.SerializeSlice(ar, x.Programs.Ref())
-	utils.SerializeSlice(ar, x.Modules.Ref())
-	utils.SerializeSlice(ar, x.Namespaces.Ref())
-	utils.SerializeExternal(ar, &x.Root)
+	SerializeSlice(ar, x.Programs.Ref())
+	SerializeSlice(ar, x.Modules.Ref())
+	SerializeSlice(ar, x.Namespaces.Ref())
+	SerializeExternal(ar, &x.Root)
 }
 
 func validateModuleDep(x *BuildModules, src ...ModuleAlias) error {
@@ -461,9 +461,9 @@ func validateModuleRec(x *BuildModules, rules *ModuleRules) error {
 	return nil
 }
 
-func GetBuildModules() utils.BuildFactoryTyped[*BuildModules] {
-	return func(bi utils.BuildInitializer) (*BuildModules, error) {
-		source := utils.CommandEnv.RootFile()
+func GetBuildModules() BuildFactoryTyped[*BuildModules] {
+	return func(bi BuildInitializer) (*BuildModules, error) {
+		source := CommandEnv.RootFile()
 		if err := bi.NeedFile(source); err != nil {
 			return nil, err
 		}

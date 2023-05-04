@@ -2,7 +2,6 @@ package windows
 
 import (
 	. "build/compile"
-	"build/utils"
 	. "build/utils"
 	"fmt"
 )
@@ -61,7 +60,7 @@ func (res *ResourceCompiler) Decorate(_ *CompileEnv, u *Unit) error {
 
 func (res *ResourceCompiler) Build(bc BuildContext) error {
 	windowsFlags := GetWindowsFlags()
-	if _, err := utils.GetBuildableFlags(windowsFlags).Need(bc); err != nil {
+	if _, err := GetBuildableFlags(windowsFlags).Need(bc); err != nil {
 		return err
 	}
 

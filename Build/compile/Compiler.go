@@ -1,12 +1,12 @@
 package compile
 
 import (
-	utils "build/utils"
+	. "build/utils"
 	"fmt"
 	"strings"
 )
 
-var AllCompilers = utils.NewStringSet()
+var AllCompilers = NewStringSet()
 
 /***************************************
  * Compiler Alias
@@ -28,10 +28,10 @@ func NewCompilerAlias(family, name, variant string) CompilerAlias {
 func (x CompilerAlias) Valid() bool {
 	return len(x.CompilerName) > 0
 }
-func (x CompilerAlias) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Rules", "Compiler", x.String())
+func (x CompilerAlias) Alias() BuildAlias {
+	return MakeBuildAlias("Rules", "Compiler", x.String())
 }
-func (x *CompilerAlias) Serialize(ar utils.Archive) {
+func (x *CompilerAlias) Serialize(ar Archive) {
 	ar.String(&x.CompilerFamily)
 	ar.String(&x.CompilerName)
 	ar.String(&x.CompilerVariant)
@@ -58,10 +58,10 @@ func (x CompilerAlias) String() string {
 	return fmt.Sprintf("%s-%s-%s", x.CompilerFamily, x.CompilerName, x.CompilerVariant)
 }
 func (x CompilerAlias) MarshalText() ([]byte, error) {
-	return utils.UnsafeBytesFromString(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *CompilerAlias) UnmarshalText(data []byte) error {
-	return x.Set(utils.UnsafeStringFromBytes(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 
 /***************************************
@@ -82,18 +82,18 @@ type Compiler interface {
 	PrecompiledHeader(u *Unit)
 	Sanitizer(*Facet, SanitizerType)
 
-	ForceInclude(*Facet, ...utils.Filename)
-	IncludePath(*Facet, ...utils.Directory)
-	ExternIncludePath(*Facet, ...utils.Directory)
-	SystemIncludePath(*Facet, ...utils.Directory)
-	Library(*Facet, ...utils.Filename)
-	LibraryPath(*Facet, ...utils.Directory)
+	ForceInclude(*Facet, ...Filename)
+	IncludePath(*Facet, ...Directory)
+	ExternIncludePath(*Facet, ...Directory)
+	SystemIncludePath(*Facet, ...Directory)
+	Library(*Facet, ...Filename)
+	LibraryPath(*Facet, ...Directory)
 
 	SourceDependencies(*ActionRules) Action
 
 	FacetDecorator
-	utils.Buildable
-	utils.Serializable
+	Buildable
+	Serializable
 }
 
 /***************************************
@@ -106,13 +106,13 @@ type CompilerRules struct {
 	CppStd   CppStdType
 	Features CompilerFeatureFlags
 
-	Executable   utils.Filename
-	Linker       utils.Filename
-	Librarian    utils.Filename
-	Preprocessor utils.Filename
+	Executable   Filename
+	Linker       Filename
+	Librarian    Filename
+	Preprocessor Filename
 
-	Environment utils.ProcessEnvironment
-	ExtraFiles  utils.FileSet
+	Environment ProcessEnvironment
+	ExtraFiles  FileSet
 
 	Facet
 }
@@ -123,7 +123,7 @@ func NewCompilerRules(alias CompilerAlias) CompilerRules {
 	}
 }
 
-func (rules *CompilerRules) Alias() utils.BuildAlias {
+func (rules *CompilerRules) Alias() BuildAlias {
 	return rules.CompilerAlias.Alias()
 }
 func (rules *CompilerRules) String() string {
@@ -133,7 +133,7 @@ func (rules *CompilerRules) String() string {
 func (rules *CompilerRules) GetFacet() *Facet {
 	return rules.Facet.GetFacet()
 }
-func (rules *CompilerRules) Serialize(ar utils.Archive) {
+func (rules *CompilerRules) Serialize(ar Archive) {
 	ar.Serializable(&rules.CompilerAlias)
 
 	ar.Serializable(&rules.CppStd)

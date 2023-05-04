@@ -1,7 +1,7 @@
 package compile
 
 import (
-	utils "build/utils"
+	. "build/utils"
 	"io"
 )
 
@@ -9,25 +9,25 @@ import (
  * Generated
  ***************************************/
 
-func MakeGeneratedAlias(output utils.Filename) utils.BuildAlias {
-	return utils.MakeBuildAlias("Generated", output.String())
+func MakeGeneratedAlias(output Filename) BuildAlias {
+	return MakeBuildAlias("Generated", output.String())
 }
 
 type Generated interface {
-	Generate(utils.BuildContext, *BuildGenerated, io.Writer) error
-	utils.Serializable
+	Generate(BuildContext, *BuildGenerated, io.Writer) error
+	Serializable
 }
 
 type BuildGenerated struct {
-	OutputFile utils.Filename
+	OutputFile Filename
 	Generated
 }
 
-func (x *BuildGenerated) Alias() utils.BuildAlias {
+func (x *BuildGenerated) Alias() BuildAlias {
 	return MakeGeneratedAlias(x.OutputFile)
 }
-func (x *BuildGenerated) Build(bc utils.BuildContext) error {
-	err := utils.UFS.SafeCreate(x.OutputFile, func(w io.Writer) error {
+func (x *BuildGenerated) Build(bc BuildContext) error {
+	err := UFS.SafeCreate(x.OutputFile, func(w io.Writer) error {
 		return x.Generate(bc, x, w)
 	})
 	if err == nil {
@@ -35,9 +35,9 @@ func (x *BuildGenerated) Build(bc utils.BuildContext) error {
 	}
 	return err
 }
-func (x *BuildGenerated) Serialize(ar utils.Archive) {
+func (x *BuildGenerated) Serialize(ar Archive) {
 	ar.Serializable(&x.OutputFile)
-	utils.SerializeExternal(ar, &x.Generated)
+	SerializeExternal(ar, &x.Generated)
 }
 
 /***************************************
@@ -45,8 +45,8 @@ func (x *BuildGenerated) Serialize(ar utils.Archive) {
  ***************************************/
 
 type Generator interface {
-	CreateGenerated(unit *Unit, output utils.Filename) Generated
-	utils.Serializable
+	CreateGenerated(unit *Unit, output Filename) Generated
+	Serializable
 }
 
 type GeneratorList []GeneratorRules
@@ -57,8 +57,8 @@ func (list *GeneratorList) Append(it ...GeneratorRules) {
 func (list *GeneratorList) Prepend(it ...GeneratorRules) {
 	*list = append(it, *list...)
 }
-func (list *GeneratorList) Serialize(ar utils.Archive) {
-	utils.SerializeSlice(ar, (*[]GeneratorRules)(list))
+func (list *GeneratorList) Serialize(ar Archive) {
+	SerializeSlice(ar, (*[]GeneratorRules)(list))
 }
 
 type GeneratorRules struct {
@@ -70,12 +70,12 @@ type GeneratorRules struct {
 func (rules *GeneratorRules) GetGenerator() *GeneratorRules {
 	return rules
 }
-func (rules *GeneratorRules) Serialize(ar utils.Archive) {
+func (rules *GeneratorRules) Serialize(ar Archive) {
 	ar.String(&rules.GeneratedName)
 	ar.Serializable(&rules.Visibility)
-	utils.SerializeExternal(ar, &rules.Generator)
+	SerializeExternal(ar, &rules.Generator)
 }
-func (rules *GeneratorRules) GetGenerateDir(unit *Unit) utils.Directory {
+func (rules *GeneratorRules) GetGenerateDir(unit *Unit) Directory {
 	result := unit.GeneratedDir
 	switch rules.Visibility {
 	case PRIVATE:
@@ -83,22 +83,22 @@ func (rules *GeneratorRules) GetGenerateDir(unit *Unit) utils.Directory {
 	case PUBLIC, RUNTIME:
 		result = result.Folder("Public")
 	default:
-		utils.UnexpectedValue(rules.Visibility)
+		UnexpectedValue(rules.Visibility)
 	}
 	return result
 }
-func (rules *GeneratorRules) GetGenerateFile(unit *Unit) utils.Filename {
+func (rules *GeneratorRules) GetGenerateFile(unit *Unit) Filename {
 	return rules.GetGenerateDir(unit).AbsoluteFile(rules.GeneratedName)
 }
 
-func (rules *GeneratorRules) CreateGenerated(bc utils.BuildContext, module Module, unit *Unit) (*BuildGenerated, error) {
+func (rules *GeneratorRules) CreateGenerated(bc BuildContext, module Module, unit *Unit) (*BuildGenerated, error) {
 	outputFile := rules.GetGenerateFile(unit)
 	generated := &BuildGenerated{
 		OutputFile: outputFile,
 		Generated:  rules.Generator.CreateGenerated(unit, outputFile),
 	}
 
-	err := bc.OutputNode(utils.MakeBuildFactory(func(bi utils.BuildInitializer) (*BuildGenerated, error) {
+	err := bc.OutputNode(MakeBuildFactory(func(bi BuildInitializer) (*BuildGenerated, error) {
 		return generated, nil
 	}))
 	return generated, err

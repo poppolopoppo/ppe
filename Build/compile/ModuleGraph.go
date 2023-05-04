@@ -1,7 +1,7 @@
 package compile
 
 import (
-	"build/utils"
+	. "build/utils"
 	"fmt"
 	"sort"
 	"strconv"
@@ -107,7 +107,7 @@ func (graph *moduleGraph) Module(name ModuleAlias) Module {
 	if module, ok := graph.modules[name]; ok {
 		return module
 	} else {
-		utils.LogPanic("unknown module name '%v'", name)
+		LogPanic("unknown module name '%v'", name)
 		return nil
 	}
 }
@@ -115,7 +115,7 @@ func (graph *moduleGraph) NodeByModule(module Module) *ModuleNode {
 	if node, ok := graph.nodes[module]; ok {
 		return node
 	} else {
-		utils.LogPanic("module node not constructed for <%v>", module)
+		LogPanic("module node not constructed for <%v>", module)
 		return nil
 	}
 }
@@ -167,19 +167,19 @@ func MakeModuleGraph(env *CompileEnv, targets *BuildModules) (ModuleGraph, error
 	for ord, module := range result.keys {
 		node := result.nodes[module]
 		node.Ordinal = TargetBuildOrder(ord) // record the enumeration order in the node
-		utils.LogTrace("module %02d#%02d\t|%2d |%2d |%2d |\t%v",
+		LogTrace("module %02d#%02d\t|%2d |%2d |%2d |\t%v",
 			node.Level,
 			node.Ordinal,
-			utils.MakeStringer(func() string {
+			MakeStringer(func() string {
 				return strconv.FormatInt(int64(node.Private(func(Module) {})), 10)
 			}),
-			utils.MakeStringer(func() string {
+			MakeStringer(func() string {
 				return strconv.FormatInt(int64(node.Public(func(Module) {})), 10)
 			}),
-			utils.MakeStringer(func() string {
+			MakeStringer(func() string {
 				return strconv.FormatInt(int64(node.Runtime(func(Module) {})), 10)
 			}),
-			utils.MakeStringer(func() string {
+			MakeStringer(func() string {
 				return module.String()
 			}))
 	}
@@ -193,11 +193,11 @@ func MakeModuleGraph(env *CompileEnv, targets *BuildModules) (ModuleGraph, error
 }
 
 func (graph *moduleGraph) expandDependencies(env *CompileEnv, deps ...ModuleAlias) []*ModuleNode {
-	return utils.Map(func(name ModuleAlias) *ModuleNode {
+	return Map(func(name ModuleAlias) *ModuleNode {
 		if module, ok := graph.modules[name]; ok {
 			return graph.expandModule(env, module)
 		} else {
-			utils.LogPanic("module graph: can't find module dependency <%v>", name)
+			LogPanic("module graph: can't find module dependency <%v>", name)
 			return nil
 		}
 	}, deps...)

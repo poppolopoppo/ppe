@@ -1,27 +1,27 @@
 package windows
 
 import (
-	"build/compile"
-	"build/utils"
+	. "build/compile"
+	. "build/utils"
 	"regexp"
 	"sort"
 )
 
 type WindowsSDK struct {
 	Name             string
-	RootDir          utils.Directory
+	RootDir          Directory
 	Version          string
-	ResourceCompiler utils.Filename
-	compile.Facet
+	ResourceCompiler Filename
+	Facet
 }
 
-func newWindowsSDK(rootDir utils.Directory, version string) (result WindowsSDK) {
+func newWindowsSDK(rootDir Directory, version string) (result WindowsSDK) {
 	result = WindowsSDK{
 		Name:             "WindowsSDK_" + version,
 		RootDir:          rootDir,
 		Version:          version,
 		ResourceCompiler: rootDir.Folder("Bin", version, "x64").File("RC.exe"),
-		Facet:            compile.NewFacet(),
+		Facet:            NewFacet(),
 	}
 	result.Facet.SystemIncludePaths.Append(
 		rootDir.Folder("Include", version, "ucrt"),
@@ -43,55 +43,55 @@ func newWindowsSDK(rootDir utils.Directory, version string) (result WindowsSDK) 
 	return result
 }
 
-func (sdk *WindowsSDK) GetFacet() *compile.Facet {
+func (sdk *WindowsSDK) GetFacet() *Facet {
 	return &sdk.Facet
 }
-func (sdk *WindowsSDK) Serialize(ar utils.Archive) {
+func (sdk *WindowsSDK) Serialize(ar Archive) {
 	ar.String(&sdk.Name)
 	ar.Serializable(&sdk.RootDir)
 	ar.String(&sdk.Version)
 	ar.Serializable(&sdk.ResourceCompiler)
 	ar.Serializable(&sdk.Facet)
 }
-func (sdk *WindowsSDK) Decorate(compileEnv *compile.CompileEnv, u *compile.Unit) error {
+func (sdk *WindowsSDK) Decorate(compileEnv *CompileEnv, u *Unit) error {
 	switch compileEnv.GetPlatform().Arch {
-	case compile.ARCH_X64:
+	case ARCH_X64:
 		u.LibraryPaths.Append(
 			sdk.RootDir.Folder("Lib", sdk.Version, "ucrt", "x64"),
 			sdk.RootDir.Folder("Lib", sdk.Version, "um", "x64"),
 		)
-	case compile.ARCH_X86:
+	case ARCH_X86:
 		u.LibraryPaths.Append(
 			sdk.RootDir.Folder("Lib", sdk.Version, "ucrt", "x86"),
 			sdk.RootDir.Folder("Lib", sdk.Version, "um", "x86"),
 		)
 	default:
-		utils.UnexpectedValue(compileEnv.GetPlatform().Arch)
+		UnexpectedValue(compileEnv.GetPlatform().Arch)
 	}
 	return nil
 }
 
 type WindowsSDKBuilder struct {
 	MajorVer   string
-	SearchDir  utils.Directory
+	SearchDir  Directory
 	SearchGlob string
 	WindowsSDK
 }
 
-func (x *WindowsSDKBuilder) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("HAL", "Windows", "SDK", x.MajorVer)
+func (x *WindowsSDKBuilder) Alias() BuildAlias {
+	return MakeBuildAlias("HAL", "Windows", "SDK", x.MajorVer)
 }
-func (x *WindowsSDKBuilder) Build(bc utils.BuildContext) error {
-	var dirs utils.DirSet
+func (x *WindowsSDKBuilder) Build(bc BuildContext) error {
+	var dirs DirSet
 	var err error
 	if x.MajorVer != "User" {
-		err = x.SearchDir.MatchDirectories(func(d utils.Directory) error {
+		err = x.SearchDir.MatchDirectories(func(d Directory) error {
 			dirs.Append(d)
 			return nil
 		}, regexp.MustCompile(x.SearchGlob))
 	} else {
 		windowsFlags := GetWindowsFlags()
-		if _, err = utils.GetBuildableFlags(windowsFlags).Need(bc); err != nil {
+		if _, err = GetBuildableFlags(windowsFlags).Need(bc); err != nil {
 			return err
 		}
 
@@ -105,7 +105,7 @@ func (x *WindowsSDKBuilder) Build(bc utils.BuildContext) error {
 			return err
 		}
 
-		utils.LogDebug("found WindowsSDK@%v in '%v'", x.MajorVer, lib)
+		LogDebug("found WindowsSDK@%v in '%v'", x.MajorVer, lib)
 
 		libParent, ver := lib.Split()
 		x.WindowsSDK = newWindowsSDK(libParent.Parent(), ver)
@@ -113,16 +113,16 @@ func (x *WindowsSDKBuilder) Build(bc utils.BuildContext) error {
 	}
 	return err
 }
-func (x *WindowsSDKBuilder) Serialize(ar utils.Archive) {
+func (x *WindowsSDKBuilder) Serialize(ar Archive) {
 	ar.String(&x.MajorVer)
 	ar.Serializable(&x.SearchDir)
 	ar.String(&x.SearchGlob)
 	ar.Serializable(&x.WindowsSDK)
 }
 
-func getWindowsSDK_10() utils.BuildFactoryTyped[*WindowsSDKBuilder] {
-	return func(bi utils.BuildInitializer) (*WindowsSDKBuilder, error) {
-		searchDir := utils.MakeDirectory("C:/Program Files (x86)/Windows Kits/10/Lib")
+func getWindowsSDK_10() BuildFactoryTyped[*WindowsSDKBuilder] {
+	return func(bi BuildInitializer) (*WindowsSDKBuilder, error) {
+		searchDir := MakeDirectory("C:/Program Files (x86)/Windows Kits/10/Lib")
 		if err := bi.NeedDirectory(searchDir); err != nil {
 			return nil, err
 		}
@@ -134,9 +134,9 @@ func getWindowsSDK_10() utils.BuildFactoryTyped[*WindowsSDKBuilder] {
 	}
 }
 
-func getWindowsSDK_8_1() utils.BuildFactoryTyped[*WindowsSDKBuilder] {
-	return func(bi utils.BuildInitializer) (*WindowsSDKBuilder, error) {
-		searchDir := utils.MakeDirectory("C:/Program Files (x86)/Windows Kits/8.1/Lib")
+func getWindowsSDK_8_1() BuildFactoryTyped[*WindowsSDKBuilder] {
+	return func(bi BuildInitializer) (*WindowsSDKBuilder, error) {
+		searchDir := MakeDirectory("C:/Program Files (x86)/Windows Kits/8.1/Lib")
 		if err := bi.NeedDirectory(searchDir); err != nil {
 			return nil, err
 		}
@@ -148,8 +148,8 @@ func getWindowsSDK_8_1() utils.BuildFactoryTyped[*WindowsSDKBuilder] {
 	}
 }
 
-func getWindowsSDK_User(overrideDir utils.Directory) utils.BuildFactoryTyped[*WindowsSDKBuilder] {
-	return func(bi utils.BuildInitializer) (*WindowsSDKBuilder, error) {
+func getWindowsSDK_User(overrideDir Directory) BuildFactoryTyped[*WindowsSDKBuilder] {
+	return func(bi BuildInitializer) (*WindowsSDKBuilder, error) {
 		if err := bi.NeedDirectory(overrideDir); err != nil {
 			return nil, err
 		}
@@ -160,24 +160,24 @@ func getWindowsSDK_User(overrideDir utils.Directory) utils.BuildFactoryTyped[*Wi
 	}
 }
 
-func GetWindowsSDKInstall(bi utils.BuildInitializer, overrideDir utils.Directory) *WindowsSDKBuilder {
+func GetWindowsSDKInstall(bi BuildInitializer, overrideDir Directory) *WindowsSDKBuilder {
 	if len(overrideDir.Path) > 0 {
-		utils.LogPanicIfFailed(bi.NeedDirectory(overrideDir))
+		LogPanicIfFailed(bi.NeedDirectory(overrideDir))
 
-		utils.LogVeryVerbose("using user override '%v' for Windows SDK", overrideDir)
+		LogVeryVerbose("using user override '%v' for Windows SDK", overrideDir)
 		return getWindowsSDK_User(overrideDir).SafeNeed(bi)
 	}
 
 	if win10, err := getWindowsSDK_10().Need(bi); err == nil {
-		utils.LogVeryVerbose("using Windows SDK 10")
+		LogVeryVerbose("using Windows SDK 10")
 		return win10
 	}
 
 	if win81, err := getWindowsSDK_8_1().Need(bi); err == nil {
-		utils.LogVeryVerbose("using Windows SDK 8.1")
+		LogVeryVerbose("using Windows SDK 8.1")
 		return win81
 	}
 
-	utils.UnreachableCode()
+	UnreachableCode()
 	return nil
 }

@@ -2,12 +2,12 @@ package cmd
 
 import (
 	compile "build/compile"
-	utils "build/utils"
+	. "build/utils"
 	"fmt"
 	"io"
 )
 
-func completeJsonExport[INPUT any, T any](cmd *utils.CommandEnvT, args *CompletionArgs, factory func(INPUT) (T, error), inputs ...INPUT) error {
+func completeJsonExport[INPUT any, T any](cmd *CommandEnvT, args *CompletionArgs, factory func(INPUT) (T, error), inputs ...INPUT) error {
 	matching := []T{}
 
 	completion := make(map[string]T, len(inputs))
@@ -17,7 +17,7 @@ func completeJsonExport[INPUT any, T any](cmd *utils.CommandEnvT, args *Completi
 			return err
 		}
 
-		completion[utils.MakeString(a)] = it
+		completion[MakeString(a)] = it
 	}
 
 	mapCompletion(args, func(s string) {
@@ -25,23 +25,23 @@ func completeJsonExport[INPUT any, T any](cmd *utils.CommandEnvT, args *Completi
 	}, completion)
 
 	return openCompletion(args, func(w io.Writer) (err error) {
-		utils.WithoutLog(func() {
-			_, err = fmt.Fprintln(w, utils.PrettyPrint(matching))
+		WithoutLog(func() {
+			_, err = fmt.Fprintln(w, PrettyPrint(matching))
 		})
 		return err
 	})
 }
 
-var ExportConfig = utils.NewCommand(
+var ExportConfig = NewCommand(
 	"Export",
 	"export-config",
 	"export configuration to json",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
-		return completeJsonExport(utils.CommandEnv, GetCompletionArgs(), func(name string) (compile.Configuration, error) {
+	OptionCommandRun(func(cc CommandContext) error {
+		return completeJsonExport(CommandEnv, GetCompletionArgs(), func(name string) (compile.Configuration, error) {
 			alias := compile.NewConfigurationAlias(name)
 
-			result := compile.GetBuildConfig(alias).Build(utils.CommandEnv.BuildGraph())
+			result := compile.GetBuildConfig(alias).Build(CommandEnv.BuildGraph())
 
 			if err := result.Failure(); err == nil {
 				return result.Success(), nil
@@ -51,15 +51,15 @@ var ExportConfig = utils.NewCommand(
 		}, compile.AllConfigurations.Keys()...)
 	}))
 
-var ExportPlatform = utils.NewCommand(
+var ExportPlatform = NewCommand(
 	"Export",
 	"export-platform",
 	"export platform to json",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
-		return completeJsonExport(utils.CommandEnv, GetCompletionArgs(), func(name string) (compile.Platform, error) {
+	OptionCommandRun(func(cc CommandContext) error {
+		return completeJsonExport(CommandEnv, GetCompletionArgs(), func(name string) (compile.Platform, error) {
 			alias := compile.NewPlatformAlias(name)
-			result := compile.GetBuildPlatform(alias).Build(utils.CommandEnv.BuildGraph())
+			result := compile.GetBuildPlatform(alias).Build(CommandEnv.BuildGraph())
 
 			if err := result.Failure(); err == nil {
 				return result.Success(), nil
@@ -69,75 +69,75 @@ var ExportPlatform = utils.NewCommand(
 		}, compile.AllPlatforms.Keys()...)
 	}))
 
-var ExportModule = utils.NewCommand(
+var ExportModule = NewCommand(
 	"Export",
 	"export-module",
 	"export parsed module to json",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
-		buildModules := compile.GetBuildModules().Build(utils.CommandEnv.BuildGraph())
+	OptionCommandRun(func(cc CommandContext) error {
+		buildModules := compile.GetBuildModules().Build(CommandEnv.BuildGraph())
 		if err := buildModules.Failure(); err != nil {
 			return err
 		}
 
-		return completeJsonExport(utils.CommandEnv, GetCompletionArgs(), func(ma compile.ModuleAlias) (compile.Module, error) {
+		return completeJsonExport(CommandEnv, GetCompletionArgs(), func(ma compile.ModuleAlias) (compile.Module, error) {
 			return compile.GetBuildModule(ma)
 		}, buildModules.Success().Modules...)
 	}))
 
-var ExportNamespace = utils.NewCommand(
+var ExportNamespace = NewCommand(
 	"Export",
 	"export-namespace",
 	"export parsed namespace to json",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
-		buildModules := compile.GetBuildModules().Build(utils.CommandEnv.BuildGraph())
+	OptionCommandRun(func(cc CommandContext) error {
+		buildModules := compile.GetBuildModules().Build(CommandEnv.BuildGraph())
 		if err := buildModules.Failure(); err != nil {
 			return err
 		}
 
-		return completeJsonExport(utils.CommandEnv, GetCompletionArgs(), func(na compile.NamespaceAlias) (compile.Namespace, error) {
+		return completeJsonExport(CommandEnv, GetCompletionArgs(), func(na compile.NamespaceAlias) (compile.Namespace, error) {
 			return compile.GetBuildNamespace(na)
 		}, buildModules.Success().Namespaces...)
 	}))
 
-var ExportNode = utils.NewCommand(
+var ExportNode = NewCommand(
 	"Export",
 	"export-node",
 	"export build node to json",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+	OptionCommandRun(func(cc CommandContext) error {
 		args := GetCompletionArgs()
 
-		aliases := utils.CommandEnv.BuildGraph().Aliases()
-		completion := make(map[string]utils.BuildAlias, len(aliases))
+		aliases := CommandEnv.BuildGraph().Aliases()
+		completion := make(map[string]BuildAlias, len(aliases))
 		for _, a := range aliases {
 			completion[a.String()] = a
 		}
 
-		results := make(map[utils.BuildAlias]utils.BuildNode, 8)
+		results := make(map[BuildAlias]BuildNode, 8)
 		mapCompletion(args, func(s string) {
 			alias := completion[s]
-			results[alias] = utils.CommandEnv.BuildGraph().Find(alias)
+			results[alias] = CommandEnv.BuildGraph().Find(alias)
 		}, completion)
 
 		return openCompletion(args, func(w io.Writer) (err error) {
-			utils.WithoutLog(func() {
-				_, err = fmt.Fprintln(w, utils.PrettyPrint(results))
+			WithoutLog(func() {
+				_, err = fmt.Fprintln(w, PrettyPrint(results))
 			})
 			return err
 		})
 	}))
 
-var ExportUnit = utils.NewCommand(
+var ExportUnit = NewCommand(
 	"Export",
 	"export-unit",
 	"export translated unit to json",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+	OptionCommandRun(func(cc CommandContext) error {
 		completion := make(map[string]*compile.Unit)
-		compile.ForeachBuildTargets(func(bf utils.BuildFactoryTyped[*compile.BuildTargets]) error {
-			buildTargets := bf.Build(utils.CommandEnv.BuildGraph())
+		compile.ForeachBuildTargets(func(bf BuildFactoryTyped[*compile.BuildTargets]) error {
+			buildTargets := bf.Build(CommandEnv.BuildGraph())
 			if err := buildTargets.Failure(); err != nil {
 				return err
 			}
@@ -161,8 +161,8 @@ var ExportUnit = utils.NewCommand(
 		}, completion)
 
 		return openCompletion(args, func(w io.Writer) (err error) {
-			utils.WithoutLog(func() {
-				_, err = fmt.Fprintln(w, utils.PrettyPrint(matching))
+			WithoutLog(func() {
+				_, err = fmt.Fprintln(w, PrettyPrint(matching))
 			})
 			return err
 		})

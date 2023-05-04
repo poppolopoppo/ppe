@@ -1,7 +1,7 @@
 package compile
 
 import (
-	utils "build/utils"
+	. "build/utils"
 	"fmt"
 	"strings"
 )
@@ -20,14 +20,14 @@ func NewConfigurationAlias(configName string) ConfigurationAlias {
 func (x ConfigurationAlias) Valid() bool {
 	return len(x.ConfigName) > 0
 }
-func (x ConfigurationAlias) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Rules", "Config", x.String())
+func (x ConfigurationAlias) Alias() BuildAlias {
+	return MakeBuildAlias("Rules", "Config", x.String())
 }
 func (x ConfigurationAlias) String() string {
-	utils.Assert(func() bool { return x.Valid() })
+	Assert(func() bool { return x.Valid() })
 	return x.ConfigName
 }
-func (x *ConfigurationAlias) Serialize(ar utils.Archive) {
+func (x *ConfigurationAlias) Serialize(ar Archive) {
 	ar.String(&x.ConfigName)
 }
 func (x ConfigurationAlias) Compare(o ConfigurationAlias) int {
@@ -38,12 +38,12 @@ func (x *ConfigurationAlias) Set(in string) (err error) {
 	return nil
 }
 func (x ConfigurationAlias) MarshalText() ([]byte, error) {
-	return utils.UnsafeBytesFromString(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *ConfigurationAlias) UnmarshalText(data []byte) error {
-	return x.Set(utils.UnsafeStringFromBytes(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
-func (x *ConfigurationAlias) AutoComplete(in utils.AutoComplete) {
+func (x *ConfigurationAlias) AutoComplete(in AutoComplete) {
 	AllConfigurations.Range(func(s string, c Configuration) {
 		in.Add(c.String())
 	})
@@ -53,7 +53,7 @@ func (x *ConfigurationAlias) AutoComplete(in utils.AutoComplete) {
  * Configuration Rules
  ***************************************/
 
-var AllConfigurations utils.SharedMapT[string, Configuration]
+var AllConfigurations SharedMapT[string, Configuration]
 
 type ConfigRules struct {
 	ConfigurationAlias ConfigurationAlias
@@ -65,7 +65,7 @@ type ConfigRules struct {
 
 type Configuration interface {
 	GetConfig() *ConfigRules
-	utils.Serializable
+	Serializable
 	fmt.Stringer
 }
 
@@ -82,7 +82,7 @@ func (rules *ConfigRules) GetCpp() *CppRules {
 func (rules *ConfigRules) GetFacet() *Facet {
 	return rules.Facet.GetFacet()
 }
-func (rules *ConfigRules) Serialize(ar utils.Archive) {
+func (rules *ConfigRules) Serialize(ar Archive) {
 	ar.Serializable(&rules.ConfigurationAlias)
 	ar.Serializable(&rules.ConfigType)
 
@@ -98,7 +98,7 @@ func (rules *ConfigRules) Decorate(_ *CompileEnv, unit *Unit) error {
 	case PAYLOAD_SHAREDLIB:
 		unit.Facet.Defines.Append("BUILD_LINK_DYNAMIC")
 	default:
-		utils.UnreachableCode()
+		UnreachableCode()
 	}
 	return nil
 }
@@ -109,17 +109,17 @@ var Configuration_Debug = &ConfigRules{
 	CppRules: CppRules{
 		CppRtti:       CPPRTTI_ENABLED,
 		DebugSymbols:  DEBUG_EMBEDDED,
-		DebugFastLink: utils.INHERITABLE_TRUE,
+		DebugFastLink: INHERITABLE_TRUE,
 		Exceptions:    EXCEPTION_ENABLED,
 		Link:          LINK_STATIC,
 		PCH:           PCH_MONOLITHIC,
 		Sanitizer:     SANITIZER_NONE,
 		Unity:         UNITY_AUTOMATIC,
-		LTO:           utils.INHERITABLE_FALSE,
+		LTO:           INHERITABLE_FALSE,
 	},
 	Facet: Facet{
 		Defines: []string{"DEBUG", "_DEBUG"},
-		Tags:    utils.MakeEnumSet(TAG_DEBUG),
+		Tags:    MakeEnumSet(TAG_DEBUG),
 	},
 }
 var Configuration_FastDebug = &ConfigRules{
@@ -128,17 +128,17 @@ var Configuration_FastDebug = &ConfigRules{
 	CppRules: CppRules{
 		CppRtti:       CPPRTTI_ENABLED,
 		DebugSymbols:  DEBUG_HOTRELOAD,
-		DebugFastLink: utils.INHERITABLE_INHERIT,
+		DebugFastLink: INHERITABLE_INHERIT,
 		Exceptions:    EXCEPTION_ENABLED,
 		Link:          LINK_DYNAMIC,
 		PCH:           PCH_MONOLITHIC,
 		Sanitizer:     SANITIZER_NONE,
 		Unity:         UNITY_DISABLED,
-		LTO:           utils.INHERITABLE_INHERIT,
+		LTO:           INHERITABLE_INHERIT,
 	},
 	Facet: Facet{
 		Defines: []string{"DEBUG", "_DEBUG", "FASTDEBUG"},
-		Tags:    utils.MakeEnumSet(TAG_FASTDEBUG, TAG_DEBUG),
+		Tags:    MakeEnumSet(TAG_FASTDEBUG, TAG_DEBUG),
 	},
 }
 var Configuration_Devel = &ConfigRules{
@@ -147,17 +147,17 @@ var Configuration_Devel = &ConfigRules{
 	CppRules: CppRules{
 		CppRtti:       CPPRTTI_DISABLED,
 		DebugSymbols:  DEBUG_EMBEDDED,
-		DebugFastLink: utils.INHERITABLE_TRUE,
+		DebugFastLink: INHERITABLE_TRUE,
 		Exceptions:    EXCEPTION_ENABLED,
 		Link:          LINK_STATIC,
 		PCH:           PCH_MONOLITHIC,
 		Sanitizer:     SANITIZER_NONE,
 		Unity:         UNITY_AUTOMATIC,
-		LTO:           utils.INHERITABLE_INHERIT,
+		LTO:           INHERITABLE_INHERIT,
 	},
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG"},
-		Tags:    utils.MakeEnumSet(TAG_DEVEL, TAG_NDEBUG),
+		Tags:    MakeEnumSet(TAG_DEVEL, TAG_NDEBUG),
 	},
 }
 var Configuration_Test = &ConfigRules{
@@ -167,16 +167,16 @@ var Configuration_Test = &ConfigRules{
 		CppRtti:       CPPRTTI_DISABLED,
 		DebugSymbols:  DEBUG_SYMBOLS,
 		Exceptions:    EXCEPTION_ENABLED,
-		DebugFastLink: utils.INHERITABLE_INHERIT,
+		DebugFastLink: INHERITABLE_INHERIT,
 		Link:          LINK_STATIC,
 		PCH:           PCH_MONOLITHIC,
 		Sanitizer:     SANITIZER_NONE,
 		Unity:         UNITY_AUTOMATIC,
-		LTO:           utils.INHERITABLE_TRUE,
+		LTO:           INHERITABLE_TRUE,
 	},
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG", "PROFILING_ENABLED"},
-		Tags:    utils.MakeEnumSet(TAG_TEST, TAG_NDEBUG, TAG_PROFILING),
+		Tags:    MakeEnumSet(TAG_TEST, TAG_NDEBUG, TAG_PROFILING),
 	},
 }
 var Configuration_Shipping = &ConfigRules{
@@ -185,19 +185,19 @@ var Configuration_Shipping = &ConfigRules{
 	CppRules: CppRules{
 		CppRtti:       CPPRTTI_DISABLED,
 		DebugSymbols:  DEBUG_SYMBOLS,
-		DebugFastLink: utils.INHERITABLE_FALSE,
+		DebugFastLink: INHERITABLE_FALSE,
 		Exceptions:    EXCEPTION_ENABLED,
 		Link:          LINK_STATIC,
 		PCH:           PCH_MONOLITHIC,
 		Sanitizer:     SANITIZER_NONE,
 		Unity:         UNITY_AUTOMATIC,
-		LTO:           utils.INHERITABLE_TRUE,
-		Deterministic: utils.INHERITABLE_TRUE,
-		Incremental:   utils.INHERITABLE_FALSE,
+		LTO:           INHERITABLE_TRUE,
+		Deterministic: INHERITABLE_TRUE,
+		Incremental:   INHERITABLE_FALSE,
 	},
 	Facet: Facet{
 		Defines: []string{"RELEASE", "NDEBUG", "FINAL_RELEASE"},
-		Tags:    utils.MakeEnumSet(TAG_SHIPPING, TAG_NDEBUG),
+		Tags:    MakeEnumSet(TAG_SHIPPING, TAG_NDEBUG),
 	},
 }
 
@@ -209,18 +209,18 @@ type BuildConfig struct {
 	Configuration
 }
 
-func (x *BuildConfig) Alias() utils.BuildAlias {
+func (x *BuildConfig) Alias() BuildAlias {
 	return x.GetConfig().ConfigurationAlias.Alias()
 }
-func (x *BuildConfig) Build(bc utils.BuildContext) error {
+func (x *BuildConfig) Build(bc BuildContext) error {
 	return nil
 }
-func (x *BuildConfig) Serialize(ar utils.Archive) {
-	utils.SerializeExternal(ar, &x.Configuration)
+func (x *BuildConfig) Serialize(ar Archive) {
+	SerializeExternal(ar, &x.Configuration)
 }
 
-func GetBuildConfig(configAlias ConfigurationAlias) utils.BuildFactoryTyped[*BuildConfig] {
-	return func(bi utils.BuildInitializer) (*BuildConfig, error) {
+func GetBuildConfig(configAlias ConfigurationAlias) BuildFactoryTyped[*BuildConfig] {
+	return func(bi BuildInitializer) (*BuildConfig, error) {
 		if config, ok := AllConfigurations.Get(configAlias.String()); ok {
 			return &BuildConfig{config}, nil
 		} else {
@@ -229,7 +229,7 @@ func GetBuildConfig(configAlias ConfigurationAlias) utils.BuildFactoryTyped[*Bui
 	}
 }
 
-func ForeachBuildConfig(each func(utils.BuildFactoryTyped[*BuildConfig]) error) error {
+func ForeachBuildConfig(each func(BuildFactoryTyped[*BuildConfig]) error) error {
 	for _, configName := range AllConfigurations.Keys() {
 		configAlias := NewConfigurationAlias(configName)
 		if err := each(GetBuildConfig(configAlias)); err != nil {

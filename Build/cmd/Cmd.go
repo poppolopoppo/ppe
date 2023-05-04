@@ -1,10 +1,10 @@
 package cmd
 
-import utils "build/utils"
+import . "build/utils"
 
 func InitCmd() {
-	utils.RegisterSerializable(&BffBuilder{})
-	utils.RegisterSerializable(&CompilationDatabaseBuilder{})
-	utils.RegisterSerializable(&VcxprojBuilder{})
-	utils.RegisterSerializable(&VscodeBuilder{})
+	RegisterSerializable(&BffBuilder{})
+	RegisterSerializable(&CompilationDatabaseBuilder{})
+	RegisterSerializable(&VcxprojBuilder{})
+	RegisterSerializable(&VscodeBuilder{})
 }

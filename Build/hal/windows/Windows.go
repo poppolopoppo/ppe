@@ -2,7 +2,6 @@ package windows
 
 import (
 	. "build/compile"
-	"build/utils"
 	. "build/utils"
 	"strconv"
 )
@@ -12,15 +11,15 @@ var HalTag = MakeArchiveTag(MakeFourCC('W', 'I', 'N', 'X'))
 func InitWindows() {
 	LogTrace("build/hal/window.Init()")
 
-	utils.RegisterSerializable(&WindowsPlatform{})
-	utils.RegisterSerializable(&MsvcCompiler{})
-	utils.RegisterSerializable(&MsvcProductInstall{})
-	utils.RegisterSerializable(&ResourceCompiler{})
-	utils.RegisterSerializable(&WindowsSDKBuilder{})
-	utils.RegisterSerializable(&WindowsSDK{})
-	utils.RegisterSerializable(&ClangCompiler{})
-	utils.RegisterSerializable(&LlvmProductInstall{})
-	utils.RegisterSerializable(&MsvcSourceDependenciesAction{})
+	RegisterSerializable(&WindowsPlatform{})
+	RegisterSerializable(&MsvcCompiler{})
+	RegisterSerializable(&MsvcProductInstall{})
+	RegisterSerializable(&ResourceCompiler{})
+	RegisterSerializable(&WindowsSDKBuilder{})
+	RegisterSerializable(&WindowsSDK{})
+	RegisterSerializable(&ClangCompiler{})
+	RegisterSerializable(&LlvmProductInstall{})
+	RegisterSerializable(&MsvcSourceDependenciesAction{})
 
 	AllPlatforms.Add("Win32", getWindowsPlatform_X86())
 	AllPlatforms.Add("Win64", getWindowsPlatform_X64())

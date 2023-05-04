@@ -3,7 +3,6 @@ package main
 import (
 	. "build"
 	. "build/compile"
-	"build/utils"
 	. "build/utils"
 	"fmt"
 	"io"
@@ -285,11 +284,11 @@ func makePPE_Program(rules *ModuleRules, usage UsageType) {
  ***************************************/
 
 func main() {
-	utils.RegisterSerializable(&BuildModulesHeaderGenerator{})
-	utils.RegisterSerializable(&BuildModulesGeneratedHeader{})
+	RegisterSerializable(&BuildModulesHeaderGenerator{})
+	RegisterSerializable(&BuildModulesGeneratedHeader{})
 
-	utils.RegisterSerializable(&BuildVersionHeaderGenerator{})
-	utils.RegisterSerializable(&BuildVersionGeneratedHeader{})
+	RegisterSerializable(&BuildVersionHeaderGenerator{})
+	RegisterSerializable(&BuildVersionGeneratedHeader{})
 
 	RegisterArchetype("PPE/Headers", makePPE_Headers)
 	RegisterArchetype("PPE/External", makePPE_External)

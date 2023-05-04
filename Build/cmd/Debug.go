@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"build/compile"
-	utils "build/utils"
+	. "build/utils"
 	"fmt"
 	"io"
 	"math/rand"
@@ -12,21 +12,21 @@ import (
 	"time"
 )
 
-var CommandCheckBuild = utils.NewCommand(
+var CommandCheckBuild = NewCommand(
 	"Debug",
 	"check-build",
 	"build graph aliases passed as input parameters",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
-		bg := utils.CommandEnv.BuildGraph()
+	OptionCommandRun(func(cc CommandContext) error {
+		bg := CommandEnv.BuildGraph()
 		args := GetCompletionArgs()
 
 		// look for every nodes passed as input parameters
-		targets := utils.Map(func(it utils.StringVar) utils.BuildAlias {
-			utils.LogVerbose("check-build: find build graph node named %q", it)
-			node := bg.Find(utils.BuildAlias(it.Get()))
+		targets := Map(func(it StringVar) BuildAlias {
+			LogVerbose("check-build: find build graph node named %q", it)
+			node := bg.Find(BuildAlias(it.Get()))
 			if node == nil {
-				utils.LogPanic("check-build: node could not be found %q", it)
+				LogPanic("check-build: node could not be found %q", it)
 			}
 			return node.Alias()
 		}, args.Inputs...)
@@ -36,24 +36,24 @@ var CommandCheckBuild = utils.NewCommand(
 		return result.Join().Failure()
 	}))
 
-var CommandCheckCache = utils.NewCommand(
+var CommandCheckCache = NewCommand(
 	"Debug",
 	"check-cache",
 	"inspect action cache content validity and clean invalid/outdated entries",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+	OptionCommandRun(func(cc CommandContext) error {
 		cache := compile.GetActionCache()
 		cachePath := cache.GetCachePath()
 
-		tempPath := utils.UFS.Transient.Folder("check-cache")
-		utils.UFS.Mkdir(tempPath)
+		tempPath := UFS.Transient.Folder("check-cache")
+		UFS.Mkdir(tempPath)
 		defer os.RemoveAll(tempPath.String())
 
-		cacheGlob := utils.MakeGlobRegexp("*" + compile.ActionCacheEntryExtname)
+		cacheGlob := MakeGlobRegexp("*" + compile.ActionCacheEntryExtname)
 		expireTime := time.Now().AddDate(0, -1, 0) // remove all cached entries older than 1 month
 
-		return cachePath.MatchFilesRec(func(f utils.Filename) error {
-			utils.GetGlobalWorkerPool().Queue(func() {
+		return cachePath.MatchFilesRec(func(f Filename) error {
+			GetGlobalWorkerPool().Queue(func() {
 				var entry compile.ActionCacheEntry
 
 				removeCacheEntry := false
@@ -61,21 +61,21 @@ var CommandCheckCache = utils.NewCommand(
 					if !removeCacheEntry {
 						return
 					}
-					utils.LogWarning("check-cache: remove %q cache entry")
+					LogWarning("check-cache: remove %q cache entry")
 					for _, bulk := range entry.Bulks {
-						utils.UFS.Remove(bulk.Path)
+						UFS.Remove(bulk.Path)
 					}
 
-					utils.UFS.Remove(f)
+					UFS.Remove(f)
 				}()
 
-				utils.LogDebug("check-cache: found cache entry %q", f)
+				LogDebug("check-cache: found cache entry %q", f)
 				if err := entry.Load(f); err != nil {
-					utils.LogError("check-cache: %v", err)
+					LogError("check-cache: %v", err)
 					removeCacheEntry = true
 				}
 
-				utils.LogVerbose("check-cache: read cache entry %q with key %s and %d bulks", f, entry.Key.GetFingerprint().ShortString(), len(entry.Bulks))
+				LogVerbose("check-cache: read cache entry %q with key %s and %d bulks", f, entry.Key.GetFingerprint().ShortString(), len(entry.Bulks))
 				for i := 0; i < len(entry.Bulks); {
 					removeBulk := false
 					bulk := &entry.Bulks[i]
@@ -85,20 +85,20 @@ var CommandCheckCache = utils.NewCommand(
 
 					if artifacts, err := bulk.Inflate(dst); err == nil {
 						for _, it := range artifacts {
-							utils.UFS.Remove(it)
+							UFS.Remove(it)
 						}
 					} else {
-						utils.LogError("check-cache: %v", err)
+						LogError("check-cache: %v", err)
 						removeBulk = true
 					}
 
 					if !removeBulk { // expire cache entries
-						removeBulk = removeBulk || utils.UFS.MTime(bulk.Path).Before(expireTime)
+						removeBulk = removeBulk || UFS.MTime(bulk.Path).Before(expireTime)
 					}
 
 					if removeBulk {
-						utils.LogVerbose("check-cache: remove cache bulk %q", bulk)
-						utils.UFS.Remove(bulk.Path)
+						LogVerbose("check-cache: remove cache bulk %q", bulk)
+						UFS.Remove(bulk.Path)
 
 						if i+1 < len(entry.Bulks) {
 							entry.Bulks[i] = entry.Bulks[len(entry.Bulks)-1]
@@ -117,35 +117,35 @@ var CommandCheckCache = utils.NewCommand(
 		}, cacheGlob)
 	}))
 
-var CheckFingerprint = utils.NewCommand(
+var CheckFingerprint = NewCommand(
 	"Debug",
 	"check-fingerprint",
 	"recompute nodes fingerprint and see if they match with the stamp stored in build graph",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
-		bg := utils.CommandEnv.BuildGraph()
+	OptionCommandRun(func(cc CommandContext) error {
+		bg := CommandEnv.BuildGraph()
 		args := GetCompletionArgs()
 
 		for _, it := range args.Inputs {
-			a := utils.BuildAlias(it.Get())
-			utils.LogVerbose("check-fingerprint: find build graph node named %q", a)
+			a := BuildAlias(it.Get())
+			LogVerbose("check-fingerprint: find build graph node named %q", a)
 
 			// find the node associated with this alias
 			node := bg.Find(a)
 			if node == nil {
-				utils.LogPanic("check-fingerprint: node could not be found %q", a)
+				LogPanic("check-fingerprint: node could not be found %q", a)
 			}
 
 			// compute buildable fingerprint and check wether it matches save build stamp or not
 			buildable := node.GetBuildable()
-			checksum := utils.MakeBuildFingerprint(buildable)
+			checksum := MakeBuildFingerprint(buildable)
 			original := node.GetBuildStamp().Content
 
 			// if save build stamp do not match, we will try to find which property is not stable by rebuilding it
 			if original == checksum {
-				utils.LogInfo("check-fingerprint: %q -> OK\n\told: %v\n\tnew: %v", a, original, checksum)
+				LogInfo("check-fingerprint: %q -> OK\n\told: %v\n\tnew: %v", a, original, checksum)
 			} else {
-				utils.LogWarning("check-fingerprint: %q -> KO\n\told: %v\n\tnew: %v", a, original, checksum)
+				LogWarning("check-fingerprint: %q -> KO\n\told: %v\n\tnew: %v", a, original, checksum)
 
 				// duplicate original buildable, so we can make a diff after the build
 				v := reflect.ValueOf(buildable).Elem()
@@ -153,18 +153,18 @@ var CheckFingerprint = utils.NewCommand(
 				original.Elem().Set(v)
 
 				// build the node and check for errors
-				_, future := bg.Build(node, utils.OptionBuildForce)
+				_, future := bg.Build(node, OptionBuildForce)
 				result := future.Join()
 
 				if err := result.Failure(); err != nil {
 					return err
 				}
 
-				utils.LogInfo("check-fingerprint: %q ->\n\tbuild: %v", a, result.Success().BuildStamp)
+				LogInfo("check-fingerprint: %q ->\n\tbuild: %v", a, result.Success().BuildStamp)
 
 				// finally make a diff between the original backup and the updated node after the build
 				// -> the diff should issue an error on the property causing the desynchronization
-				if err := utils.SerializableDiff(original.Interface().(utils.Serializable), result.Success().Buildable); err != nil {
+				if err := SerializableDiff(original.Interface().(Serializable), result.Success().Buildable); err != nil {
 					return err
 				}
 			}
@@ -173,19 +173,19 @@ var CheckFingerprint = utils.NewCommand(
 		return nil
 	}))
 
-var CheckSerialize = utils.NewCommand(
+var CheckSerialize = NewCommand(
 	"Debug",
 	"check-serialize",
 	"write and load every node, then check for differences",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
-		bg := utils.CommandEnv.BuildGraph()
+	OptionCommandRun(func(cc CommandContext) error {
+		bg := CommandEnv.BuildGraph()
 		aliases := bg.Aliases()
 
-		pbar := utils.LogProgress(0, len(aliases), "check-serialize")
+		pbar := LogProgress(0, len(aliases), "check-serialize")
 		defer pbar.Close()
 
-		ar := utils.NewArchiveDiff()
+		ar := NewArchiveDiff()
 		defer ar.Close()
 
 		type Stats struct {
@@ -199,7 +199,7 @@ var CheckSerialize = utils.NewCommand(
 			node := bg.Find(a)
 			buildable := node.GetBuildable()
 
-			bench := utils.LogBenchmark("%10s bytes   %T -> %q", utils.MakeStringer(func() string {
+			bench := LogBenchmark("%10s bytes   %T -> %q", MakeStringer(func() string {
 				return fmt.Sprint(ar.Len())
 			}), buildable, a)
 
@@ -219,7 +219,7 @@ var CheckSerialize = utils.NewCommand(
 			perClass[reflect.TypeOf(buildable)] = stats
 		}
 
-		classBySize := utils.Keys(perClass)
+		classBySize := Keys(perClass)
 		sort.Slice(classBySize, func(i, j int) bool {
 			return perClass[classBySize[i]].Size > perClass[classBySize[j]].Size
 		})
@@ -230,7 +230,7 @@ var CheckSerialize = utils.NewCommand(
 
 		for _, class := range classBySize {
 			stats := perClass[class]
-			utils.LogInfo("%6d elts  -  %10.3f KiB  - %8.3f MiB/s  -  %v",
+			LogInfo("%6d elts  -  %10.3f KiB  - %8.3f MiB/s  -  %v",
 				stats.Num,
 				float32(stats.Size)/1024.0,
 				(float64(stats.Size)/(1024*1024.0))/(float64(stats.Duration.Seconds())),
@@ -240,12 +240,12 @@ var CheckSerialize = utils.NewCommand(
 		return nil
 	}))
 
-var DependencyChain = utils.NewCommand(
+var DependencyChain = NewCommand(
 	"Debug",
 	"dependency-chain",
 	"find shortest dependency chain between 2 nodes",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+	OptionCommandRun(func(cc CommandContext) error {
 		args := GetCompletionArgs()
 		if len(args.Inputs) < 2 {
 			return fmt.Errorf("dependency-chain: must pass at least 2 targets")
@@ -256,19 +256,19 @@ var DependencyChain = utils.NewCommand(
 
 			for i := 1; i < len(args.Inputs); i += 1 {
 				// build graph will use Dijkstra to find the shortest path between the 2 nodes
-				buildGraph := utils.CommandEnv.BuildGraph()
+				buildGraph := CommandEnv.BuildGraph()
 				chain, err := buildGraph.GetDependencyChain(
-					utils.BuildAlias(args.Inputs[0]),
-					utils.BuildAlias(args.Inputs[i]))
+					BuildAlias(args.Inputs[0]),
+					BuildAlias(args.Inputs[i]))
 				if err != nil {
 					return err
 				}
 
 				indent := ""
 				for i, link := range chain {
-					utils.WithoutLog(func() {
+					WithoutLog(func() {
 						fmt.Fprintf(w, "%s[%d] %s: %s", indent, i, link.Type, link.Alias)
-						if utils.IsLogLevelActive(utils.LOG_VERBOSE) {
+						if IsLogLevelActive(LOG_VERBOSE) {
 							node := buildGraph.Find(link.Alias)
 							fmt.Fprintf(w, " -> %v", node.GetBuildStamp())
 						}
@@ -282,24 +282,24 @@ var DependencyChain = utils.NewCommand(
 		})
 	}))
 
-var ProgressBar = utils.NewCommand(
+var ProgressBar = NewCommand(
 	"Debug",
 	"progress-bar",
 	"print several progress bars for debugging",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
-		spinner := utils.LogSpinner("spinner")
+	OptionCommandRun(func(cc CommandContext) error {
+		spinner := LogSpinner("spinner")
 		defer spinner.Close()
 
 		for {
 			n := int(10 + rand.Uint32()%50)
-			pbar := utils.LogProgress(0, n, "progress")
+			pbar := LogProgress(0, n, "progress")
 
 			for i := 0; i < n; i += 1 {
 				n2 := int(10 + rand.Uint32()%100)
-				pbar2 := utils.LogProgress(0, n2, "progress2")
+				pbar2 := LogProgress(0, n2, "progress2")
 
-				spinner2 := utils.LogSpinner("spinner")
+				spinner2 := LogSpinner("spinner")
 
 				for j := 0; j < n2; j += 1 {
 					pbar2.Inc()
@@ -320,29 +320,29 @@ var ProgressBar = utils.NewCommand(
 		return nil
 	}))
 
-var ShowVersion = utils.NewCommand(
+var ShowVersion = NewCommand(
 	"Debug",
 	"version",
 	"print build version",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+	OptionCommandRun(func(cc CommandContext) error {
 		return openCompletion(GetCompletionArgs(), func(w io.Writer) (err error) {
-			utils.WithoutLog(func() {
-				_, err = fmt.Fprintln(w, utils.PROCESS_INFO)
+			WithoutLog(func() {
+				_, err = fmt.Fprintln(w, PROCESS_INFO)
 			})
 			return err
 		})
 	}))
 
-var ShowSeed = utils.NewCommand(
+var ShowSeed = NewCommand(
 	"Debug",
 	"seed",
 	"print build seed",
 	OptionCommandCompletionArgs(),
-	utils.OptionCommandRun(func(cc utils.CommandContext) error {
+	OptionCommandRun(func(cc CommandContext) error {
 		return openCompletion(GetCompletionArgs(), func(w io.Writer) (err error) {
-			utils.WithoutLog(func() {
-				_, err = fmt.Printf("%v\n", utils.GetProcessSeed())
+			WithoutLog(func() {
+				_, err = fmt.Printf("%v\n", GetProcessSeed())
 			})
 			return err
 		})

@@ -1,7 +1,7 @@
 package compile
 
 import (
-	utils "build/utils"
+	. "build/utils"
 	"fmt"
 	"strings"
 )
@@ -24,23 +24,23 @@ type VariableSubstitutions []VariableDefinition
  ***************************************/
 
 type Facet struct {
-	Defines utils.StringSet
+	Defines StringSet
 
-	ForceIncludes      utils.FileSet
-	IncludePaths       utils.DirSet
-	ExternIncludePaths utils.DirSet
-	SystemIncludePaths utils.DirSet
+	ForceIncludes      FileSet
+	IncludePaths       DirSet
+	ExternIncludePaths DirSet
+	SystemIncludePaths DirSet
 
-	AnalysisOptions          utils.StringSet
-	PreprocessorOptions      utils.StringSet
-	CompilerOptions          utils.StringSet
-	PrecompiledHeaderOptions utils.StringSet
+	AnalysisOptions          StringSet
+	PreprocessorOptions      StringSet
+	CompilerOptions          StringSet
+	PrecompiledHeaderOptions StringSet
 
-	Libraries    utils.FileSet
-	LibraryPaths utils.DirSet
+	Libraries    FileSet
+	LibraryPaths DirSet
 
-	LibrarianOptions utils.StringSet
-	LinkerOptions    utils.StringSet
+	LibrarianOptions StringSet
+	LinkerOptions    StringSet
 
 	Tags    TagFlags
 	Exports VariableSubstitutions
@@ -49,7 +49,7 @@ type Facet struct {
 func (facet *Facet) GetFacet() *Facet {
 	return facet
 }
-func (facet *Facet) Serialize(ar utils.Archive) {
+func (facet *Facet) Serialize(ar Archive) {
 	ar.Serializable(&facet.Defines)
 
 	ar.Serializable(&facet.ForceIncludes)
@@ -74,19 +74,19 @@ func (facet *Facet) Serialize(ar utils.Archive) {
 
 func NewFacet() Facet {
 	return Facet{
-		Defines:                  utils.StringSet{},
-		ForceIncludes:            utils.FileSet{},
-		IncludePaths:             utils.DirSet{},
-		ExternIncludePaths:       utils.DirSet{},
-		SystemIncludePaths:       utils.DirSet{},
-		AnalysisOptions:          utils.StringSet{},
-		PreprocessorOptions:      utils.StringSet{},
-		CompilerOptions:          utils.StringSet{},
-		PrecompiledHeaderOptions: utils.StringSet{},
-		Libraries:                utils.FileSet{},
-		LibraryPaths:             utils.DirSet{},
-		LibrarianOptions:         utils.StringSet{},
-		LinkerOptions:            utils.StringSet{},
+		Defines:                  StringSet{},
+		ForceIncludes:            FileSet{},
+		IncludePaths:             DirSet{},
+		ExternIncludePaths:       DirSet{},
+		SystemIncludePaths:       DirSet{},
+		AnalysisOptions:          StringSet{},
+		PreprocessorOptions:      StringSet{},
+		CompilerOptions:          StringSet{},
+		PrecompiledHeaderOptions: StringSet{},
+		Libraries:                FileSet{},
+		LibraryPaths:             DirSet{},
+		LibrarianOptions:         StringSet{},
+		LinkerOptions:            StringSet{},
 		Tags:                     TagFlags(0),
 		Exports:                  VariableSubstitutions{},
 	}
@@ -178,24 +178,24 @@ func (facet *Facet) RemoveCompilationFlag(flags ...string) {
 
 func (facet *Facet) PerformSubstitutions() {
 	if len(facet.Exports) > 0 {
-		facet.Defines = utils.Map(facet.Exports.ExpandString, facet.Defines...)
-		facet.ForceIncludes = utils.Map(facet.Exports.ExpandFilename, facet.ForceIncludes...)
-		facet.IncludePaths = utils.Map(facet.Exports.ExpandDirectory, facet.IncludePaths...)
-		facet.ExternIncludePaths = utils.Map(facet.Exports.ExpandDirectory, facet.ExternIncludePaths...)
-		facet.SystemIncludePaths = utils.Map(facet.Exports.ExpandDirectory, facet.SystemIncludePaths...)
-		facet.AnalysisOptions = utils.Map(facet.Exports.ExpandString, facet.AnalysisOptions...)
-		facet.PreprocessorOptions = utils.Map(facet.Exports.ExpandString, facet.PreprocessorOptions...)
-		facet.CompilerOptions = utils.Map(facet.Exports.ExpandString, facet.CompilerOptions...)
-		facet.PrecompiledHeaderOptions = utils.Map(facet.Exports.ExpandString, facet.PrecompiledHeaderOptions...)
-		facet.Libraries = utils.Map(facet.Exports.ExpandFilename, facet.Libraries...)
-		facet.LibraryPaths = utils.Map(facet.Exports.ExpandDirectory, facet.LibraryPaths...)
-		facet.LibrarianOptions = utils.Map(facet.Exports.ExpandString, facet.LibrarianOptions...)
-		facet.LinkerOptions = utils.Map(facet.Exports.ExpandString, facet.LinkerOptions...)
+		facet.Defines = Map(facet.Exports.ExpandString, facet.Defines...)
+		facet.ForceIncludes = Map(facet.Exports.ExpandFilename, facet.ForceIncludes...)
+		facet.IncludePaths = Map(facet.Exports.ExpandDirectory, facet.IncludePaths...)
+		facet.ExternIncludePaths = Map(facet.Exports.ExpandDirectory, facet.ExternIncludePaths...)
+		facet.SystemIncludePaths = Map(facet.Exports.ExpandDirectory, facet.SystemIncludePaths...)
+		facet.AnalysisOptions = Map(facet.Exports.ExpandString, facet.AnalysisOptions...)
+		facet.PreprocessorOptions = Map(facet.Exports.ExpandString, facet.PreprocessorOptions...)
+		facet.CompilerOptions = Map(facet.Exports.ExpandString, facet.CompilerOptions...)
+		facet.PrecompiledHeaderOptions = Map(facet.Exports.ExpandString, facet.PrecompiledHeaderOptions...)
+		facet.Libraries = Map(facet.Exports.ExpandFilename, facet.Libraries...)
+		facet.LibraryPaths = Map(facet.Exports.ExpandDirectory, facet.LibraryPaths...)
+		facet.LibrarianOptions = Map(facet.Exports.ExpandString, facet.LibrarianOptions...)
+		facet.LinkerOptions = Map(facet.Exports.ExpandString, facet.LinkerOptions...)
 	}
 }
 
 func (facet *Facet) String() string {
-	return utils.PrettyPrint(facet)
+	return PrettyPrint(facet)
 }
 
 /***************************************
@@ -219,15 +219,15 @@ func (vars VariableSubstitutions) ExpandString(str string) string {
 	}
 	return str
 }
-func (vars VariableSubstitutions) ExpandDirectory(dir utils.Directory) (result utils.Directory) {
+func (vars VariableSubstitutions) ExpandDirectory(dir Directory) (result Directory) {
 	if len(vars) > 0 {
-		return utils.MakeDirectory(vars.ExpandString(dir.String()))
+		return MakeDirectory(vars.ExpandString(dir.String()))
 	} else {
 		return dir
 	}
 }
-func (vars VariableSubstitutions) ExpandFilename(it utils.Filename) utils.Filename {
-	return utils.Filename{
+func (vars VariableSubstitutions) ExpandFilename(it Filename) Filename {
+	return Filename{
 		Dirname:  vars.ExpandDirectory(it.Dirname),
 		Basename: vars.ExpandString(it.Basename),
 	}
@@ -236,7 +236,7 @@ func (vars VariableSubstitutions) Get(from string) string {
 	if i, ok := vars.IndexOf(from); ok {
 		return vars[i].Value
 	} else {
-		utils.LogPanic("variable-substitutions: could not find [[:%s:]] in %v", from, vars)
+		LogPanic("variable-substitutions: could not find [[:%s:]] in %v", from, vars)
 		return ""
 	}
 }
@@ -260,8 +260,8 @@ func (vars *VariableSubstitutions) Prepend(other VariableSubstitutions) {
 		vars.Add(it.Name, it.Value)
 	}
 }
-func (vars *VariableSubstitutions) Serialize(ar utils.Archive) {
-	utils.SerializeSlice(ar, (*[]VariableDefinition)(vars))
+func (vars *VariableSubstitutions) Serialize(ar Archive) {
+	SerializeSlice(ar, (*[]VariableDefinition)(vars))
 }
 
 func (def VariableDefinition) String() string {
@@ -278,12 +278,12 @@ func (def *VariableDefinition) Set(in string) error {
 	return nil
 }
 func (x VariableDefinition) MarshalText() ([]byte, error) {
-	return utils.UnsafeBytesFromString(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *VariableDefinition) UnmarshalText(data []byte) error {
-	return x.Set(utils.UnsafeStringFromBytes(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
-func (def *VariableDefinition) Serialize(ar utils.Archive) {
+func (def *VariableDefinition) Serialize(ar Archive) {
 	ar.String(&def.Name)
 	ar.String(&def.Value)
 }

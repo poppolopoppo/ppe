@@ -1,7 +1,7 @@
 package compile
 
 import (
-	utils "build/utils"
+	. "build/utils"
 	"fmt"
 	"strings"
 )
@@ -20,14 +20,14 @@ func NewPlatformAlias(platformName string) PlatformAlias {
 func (x PlatformAlias) Valid() bool {
 	return len(x.PlatformName) > 0
 }
-func (x PlatformAlias) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Rules", "Platform", x.String())
+func (x PlatformAlias) Alias() BuildAlias {
+	return MakeBuildAlias("Rules", "Platform", x.String())
 }
 func (x PlatformAlias) String() string {
-	utils.Assert(func() bool { return x.Valid() })
+	Assert(func() bool { return x.Valid() })
 	return x.PlatformName
 }
-func (x *PlatformAlias) Serialize(ar utils.Archive) {
+func (x *PlatformAlias) Serialize(ar Archive) {
 	ar.String(&x.PlatformName)
 }
 func (x PlatformAlias) Compare(o PlatformAlias) int {
@@ -38,12 +38,12 @@ func (x *PlatformAlias) Set(in string) (err error) {
 	return nil
 }
 func (x PlatformAlias) MarshalText() ([]byte, error) {
-	return utils.UnsafeBytesFromString(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *PlatformAlias) UnmarshalText(data []byte) error {
-	return x.Set(utils.UnsafeStringFromBytes(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
-func (x *PlatformAlias) AutoComplete(in utils.AutoComplete) {
+func (x *PlatformAlias) AutoComplete(in AutoComplete) {
 	AllPlatforms.Range(func(s string, p Platform) {
 		in.Add(p.String())
 	})
@@ -53,12 +53,12 @@ func (x *PlatformAlias) AutoComplete(in utils.AutoComplete) {
  * Plaform Rules
  ***************************************/
 
-var AllPlatforms utils.SharedMapT[string, Platform]
+var AllPlatforms SharedMapT[string, Platform]
 
 type Platform interface {
-	GetCompiler() utils.BuildFactoryTyped[Compiler]
+	GetCompiler() BuildFactoryTyped[Compiler]
 	GetPlatform() *PlatformRules
-	utils.Buildable
+	Buildable
 	fmt.Stringer
 }
 
@@ -80,7 +80,7 @@ func (rules *PlatformRules) GetFacet() *Facet {
 func (rules *PlatformRules) GetPlatform() *PlatformRules {
 	return rules
 }
-func (rules *PlatformRules) Serialize(ar utils.Archive) {
+func (rules *PlatformRules) Serialize(ar Archive) {
 	ar.Serializable(&rules.PlatformAlias)
 
 	ar.String(&rules.Os)
@@ -120,15 +120,15 @@ var Platform_ARM = &PlatformRules{
  * Build Platform Factory
  ***************************************/
 
-func (x *PlatformRules) Alias() utils.BuildAlias {
+func (x *PlatformRules) Alias() BuildAlias {
 	return x.GetPlatform().PlatformAlias.Alias()
 }
-func (x *PlatformRules) Build(bc utils.BuildContext) error {
+func (x *PlatformRules) Build(bc BuildContext) error {
 	return nil
 }
 
-func GetBuildPlatform(platformAlias PlatformAlias) utils.BuildFactoryTyped[Platform] {
-	return func(bi utils.BuildInitializer) (Platform, error) {
+func GetBuildPlatform(platformAlias PlatformAlias) BuildFactoryTyped[Platform] {
+	return func(bi BuildInitializer) (Platform, error) {
 		if plaform, ok := AllPlatforms.Get(platformAlias.String()); ok {
 			return plaform, nil
 		} else {
@@ -137,7 +137,7 @@ func GetBuildPlatform(platformAlias PlatformAlias) utils.BuildFactoryTyped[Platf
 	}
 }
 
-func ForeachBuildPlatform(each func(utils.BuildFactoryTyped[Platform]) error) error {
+func ForeachBuildPlatform(each func(BuildFactoryTyped[Platform]) error) error {
 	for _, platformName := range AllPlatforms.Keys() {
 		platformAlias := NewPlatformAlias(platformName)
 		if err := each(GetBuildPlatform(platformAlias)); err != nil {
@@ -147,17 +147,17 @@ func ForeachBuildPlatform(each func(utils.BuildFactoryTyped[Platform]) error) er
 	return nil
 }
 
-var GetLocalHostPlatformAlias = utils.Memoize(func() PlatformAlias {
+var GetLocalHostPlatformAlias = Memoize(func() PlatformAlias {
 	arch := CurrentArch()
 	for _, platform := range AllPlatforms.Values() {
 		if platform.GetPlatform().Arch == arch {
 			return platform.GetPlatform().PlatformAlias
 		}
 	}
-	utils.UnreachableCode()
+	UnreachableCode()
 	return PlatformAlias{}
 })
 
-func GeLocalHostBuildPlatform() utils.BuildFactoryTyped[Platform] {
+func GeLocalHostBuildPlatform() BuildFactoryTyped[Platform] {
 	return GetBuildPlatform(GetLocalHostPlatformAlias())
 }

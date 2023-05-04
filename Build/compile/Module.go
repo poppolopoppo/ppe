@@ -1,7 +1,7 @@
 package compile
 
 import (
-	utils "build/utils"
+	. "build/utils"
 	"fmt"
 	"path"
 	"strings"
@@ -11,8 +11,8 @@ type Module interface {
 	GetModule() *ModuleRules
 	GetNamespace() *NamespaceRules
 	ExpandModule(env *CompileEnv) *ModuleRules
-	utils.Buildable
-	utils.Serializable
+	Buildable
+	Serializable
 	fmt.Stringer
 }
 
@@ -25,7 +25,7 @@ type ModuleAlias struct {
 	ModuleName string
 }
 
-type ModuleAliases = utils.SetT[ModuleAlias]
+type ModuleAliases = SetT[ModuleAlias]
 
 func NewModuleAlias(namespace Namespace, moduleName string) ModuleAlias {
 	return ModuleAlias{
@@ -36,10 +36,10 @@ func NewModuleAlias(namespace Namespace, moduleName string) ModuleAlias {
 func (x ModuleAlias) Valid() bool {
 	return x.NamespaceAlias.Valid() && len(x.ModuleName) > 0
 }
-func (x ModuleAlias) Alias() utils.BuildAlias {
-	return utils.MakeBuildAlias("Rules", "Module", x.String())
+func (x ModuleAlias) Alias() BuildAlias {
+	return MakeBuildAlias("Rules", "Module", x.String())
 }
-func (x *ModuleAlias) Serialize(ar utils.Archive) {
+func (x *ModuleAlias) Serialize(ar Archive) {
 	ar.Serializable(&x.NamespaceAlias)
 	ar.String(&x.ModuleName)
 }
@@ -56,17 +56,17 @@ func (x ModuleAlias) String() string {
 	return path.Join(x.NamespaceAlias.String(), x.ModuleName)
 }
 func (x *ModuleAlias) Set(in string) (err error) {
-	if parts := utils.SplitPath(in); len(parts) > 1 {
+	if parts := SplitPath(in); len(parts) > 1 {
 		x.ModuleName = parts[len(parts)-1]
 		return x.NamespaceAlias.Set(path.Join(parts[0 : len(parts)-1]...))
 	}
 	return fmt.Errorf("malformed ModuleAlias: '%s'", in)
 }
 func (x ModuleAlias) MarshalText() ([]byte, error) {
-	return utils.UnsafeBytesFromString(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *ModuleAlias) UnmarshalText(data []byte) error {
-	return x.Set(utils.UnsafeStringFromBytes(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 
 /***************************************
@@ -74,14 +74,14 @@ func (x *ModuleAlias) UnmarshalText(data []byte) error {
  ***************************************/
 
 type ModuleSource struct {
-	SourceDirs    utils.DirSet
-	SourceGlobs   utils.StringSet
-	ExcludedGlobs utils.StringSet
-	SourceFiles   utils.FileSet
-	ExcludedFiles utils.FileSet
-	IsolatedFiles utils.FileSet
-	ExtraFiles    utils.FileSet
-	ExtraDirs     utils.DirSet
+	SourceDirs    DirSet
+	SourceGlobs   StringSet
+	ExcludedGlobs StringSet
+	SourceFiles   FileSet
+	ExcludedFiles FileSet
+	IsolatedFiles FileSet
+	ExtraFiles    FileSet
+	ExtraDirs     DirSet
 }
 
 func (x *ModuleSource) Append(o ModuleSource) {
@@ -104,7 +104,7 @@ func (x *ModuleSource) Prepend(o ModuleSource) {
 	x.ExtraFiles.Prepend(o.ExtraFiles...)
 	x.ExtraDirs.Prepend(o.ExtraDirs...)
 }
-func (x *ModuleSource) Serialize(ar utils.Archive) {
+func (x *ModuleSource) Serialize(ar Archive) {
 	ar.Serializable(&x.SourceDirs)
 	ar.Serializable(&x.SourceGlobs)
 	ar.Serializable(&x.ExcludedGlobs)
@@ -114,14 +114,14 @@ func (x *ModuleSource) Serialize(ar utils.Archive) {
 	ar.Serializable(&x.ExtraFiles)
 	ar.Serializable(&x.ExtraDirs)
 }
-func (x *ModuleSource) GetFileSet(bc utils.BuildContext) (utils.FileSet, error) {
-	result := utils.FileSet{}
+func (x *ModuleSource) GetFileSet(bc BuildContext) (FileSet, error) {
+	result := FileSet{}
 
 	for _, source := range x.SourceDirs {
-		if files, err := utils.GlobDirectory(bc, source, x.SourceGlobs, x.ExcludedGlobs, x.ExcludedFiles); err == nil {
+		if files, err := GlobDirectory(bc, source, x.SourceGlobs, x.ExcludedGlobs, x.ExcludedFiles); err == nil {
 			result.Append(files...)
 		} else {
-			return utils.FileSet{}, err
+			return FileSet{}, err
 		}
 	}
 
@@ -139,13 +139,13 @@ func (x *ModuleSource) GetFileSet(bc utils.BuildContext) (utils.FileSet, error) 
 type ModuleRules struct {
 	ModuleAlias ModuleAlias
 
-	ModuleDir  utils.Directory
+	ModuleDir  Directory
 	ModuleType ModuleType
 
 	CppRules
 
-	PrecompiledHeader *utils.Filename
-	PrecompiledSource *utils.Filename
+	PrecompiledHeader *Filename
+	PrecompiledSource *Filename
 
 	PublicDependencies  ModuleAliases
 	PrivateDependencies ModuleAliases
@@ -171,7 +171,7 @@ func (rules *ModuleRules) GetNamespace() *NamespaceRules {
 	if namespace, err := rules.GetBuildNamespace(); err == nil {
 		return namespace.GetNamespace()
 	} else {
-		utils.LogPanicErr(err)
+		LogPanicErr(err)
 		return nil
 	}
 }
@@ -180,15 +180,15 @@ func (rules *ModuleRules) String() string {
 }
 
 func (rules *ModuleRules) RelativePath() string {
-	return rules.ModuleDir.Relative(utils.UFS.Source)
+	return rules.ModuleDir.Relative(UFS.Source)
 }
-func (rules *ModuleRules) PublicDir() utils.Directory {
+func (rules *ModuleRules) PublicDir() Directory {
 	return rules.ModuleDir.Folder("Public")
 }
-func (rules *ModuleRules) PrivateDir() utils.Directory {
+func (rules *ModuleRules) PrivateDir() Directory {
 	return rules.ModuleDir.Folder("Private")
 }
-func (rules *ModuleRules) GeneratedDir(env *CompileEnv) utils.Directory {
+func (rules *ModuleRules) GeneratedDir(env *CompileEnv) Directory {
 	return env.GeneratedDir().AbsoluteFolder(rules.RelativePath())
 }
 
@@ -201,7 +201,7 @@ func (rules *ModuleRules) GetFacet() *Facet {
 func (rules *ModuleRules) expandTagsRec(env *CompileEnv, dst *ModuleRules) {
 	for tags, tagged := range rules.PerTags {
 		if selectedTags := env.Tags.Intersect(tags); !selectedTags.Empty() {
-			utils.LogVeryVerbose("expand module %q with rules tagged [%v]", dst.ModuleAlias, selectedTags)
+			LogVeryVerbose("expand module %q with rules tagged [%v]", dst.ModuleAlias, selectedTags)
 			dst.Prepend(&tagged)
 			tagged.expandTagsRec(env, dst)
 		}
@@ -255,7 +255,7 @@ func (rules *ModuleRules) Decorate(env *CompileEnv, unit *Unit) error {
 	return nil
 }
 
-func (rules *ModuleRules) Serialize(ar utils.Archive) {
+func (rules *ModuleRules) Serialize(ar Archive) {
 	ar.Serializable(&rules.ModuleAlias)
 
 	ar.Serializable(&rules.ModuleDir)
@@ -263,12 +263,12 @@ func (rules *ModuleRules) Serialize(ar utils.Archive) {
 
 	ar.Serializable(&rules.CppRules)
 
-	utils.SerializeExternal(ar, &rules.PrecompiledHeader)
-	utils.SerializeExternal(ar, &rules.PrecompiledSource)
+	SerializeExternal(ar, &rules.PrecompiledHeader)
+	SerializeExternal(ar, &rules.PrecompiledSource)
 
-	utils.SerializeSlice(ar, rules.PublicDependencies.Ref())
-	utils.SerializeSlice(ar, rules.PrivateDependencies.Ref())
-	utils.SerializeSlice(ar, rules.RuntimeDependencies.Ref())
+	SerializeSlice(ar, rules.PublicDependencies.Ref())
+	SerializeSlice(ar, rules.PrivateDependencies.Ref())
+	SerializeSlice(ar, rules.RuntimeDependencies.Ref())
 
 	ar.Serializable(&rules.Customs)
 	ar.Serializable(&rules.Generators)
@@ -276,7 +276,7 @@ func (rules *ModuleRules) Serialize(ar utils.Archive) {
 	ar.Serializable(&rules.Facet)
 	ar.Serializable(&rules.Source)
 
-	utils.SerializeMap(ar, &rules.PerTags)
+	SerializeMap(ar, &rules.PerTags)
 }
 
 func (rules *ModuleRules) Generate(vis VisibilityType, name string, gen Generator) {
@@ -338,13 +338,13 @@ func (x *ModuleRules) Prepend(other *ModuleRules) {
  * Build Module
  ***************************************/
 
-func (x *ModuleRules) Alias() utils.BuildAlias {
+func (x *ModuleRules) Alias() BuildAlias {
 	return x.ModuleAlias.Alias()
 }
-func (x *ModuleRules) Build(bc utils.BuildContext) error {
+func (x *ModuleRules) Build(bc BuildContext) error {
 	return nil
 }
 
 func GetBuildModule(moduleAlias ModuleAlias) (Module, error) {
-	return utils.FindGlobalBuildable[Module](moduleAlias)
+	return FindGlobalBuildable[Module](moduleAlias)
 }

@@ -1,7 +1,7 @@
 package compile
 
 import (
-	"build/utils"
+	. "build/utils"
 )
 
 type CppRules struct {
@@ -14,27 +14,27 @@ type CppRules struct {
 	Sanitizer    SanitizerType
 	Unity        UnityType
 
-	SizePerUnity    utils.IntVar
-	AdaptiveUnity   utils.BoolVar
-	Benchmark       utils.BoolVar
-	Deterministic   utils.BoolVar
-	DebugFastLink   utils.BoolVar
-	LTO             utils.BoolVar
-	Incremental     utils.BoolVar
-	RuntimeChecks   utils.BoolVar
-	CompilerVerbose utils.BoolVar
-	LinkerVerbose   utils.BoolVar
+	SizePerUnity    IntVar
+	AdaptiveUnity   BoolVar
+	Benchmark       BoolVar
+	Deterministic   BoolVar
+	DebugFastLink   BoolVar
+	LTO             BoolVar
+	Incremental     BoolVar
+	RuntimeChecks   BoolVar
+	CompilerVerbose BoolVar
+	LinkerVerbose   BoolVar
 }
 
 type Cpp interface {
 	GetCpp() *CppRules
-	utils.Serializable
+	Serializable
 }
 
 func (rules *CppRules) GetCpp() *CppRules {
 	return rules
 }
-func (rules *CppRules) Serialize(ar utils.Archive) {
+func (rules *CppRules) Serialize(ar Archive) {
 	ar.Serializable(&rules.CppStd)
 	ar.Serializable(&rules.CppRtti)
 	ar.Serializable(&rules.DebugSymbols)
@@ -56,44 +56,44 @@ func (rules *CppRules) Serialize(ar utils.Archive) {
 	ar.Serializable(&rules.LinkerVerbose)
 }
 func (rules *CppRules) Inherit(other *CppRules) {
-	utils.Inherit(&rules.CppStd, other.CppStd)
-	utils.Inherit(&rules.CppRtti, other.CppRtti)
-	utils.Inherit(&rules.DebugSymbols, other.DebugSymbols)
-	utils.Inherit(&rules.Exceptions, other.Exceptions)
-	utils.Inherit(&rules.PCH, other.PCH)
-	utils.Inherit(&rules.Link, other.Link)
-	utils.Inherit(&rules.Sanitizer, other.Sanitizer)
-	utils.Inherit(&rules.Unity, other.Unity)
+	Inherit(&rules.CppStd, other.CppStd)
+	Inherit(&rules.CppRtti, other.CppRtti)
+	Inherit(&rules.DebugSymbols, other.DebugSymbols)
+	Inherit(&rules.Exceptions, other.Exceptions)
+	Inherit(&rules.PCH, other.PCH)
+	Inherit(&rules.Link, other.Link)
+	Inherit(&rules.Sanitizer, other.Sanitizer)
+	Inherit(&rules.Unity, other.Unity)
 
-	utils.Inherit(&rules.SizePerUnity, other.SizePerUnity)
-	utils.Inherit(&rules.AdaptiveUnity, other.AdaptiveUnity)
-	utils.Inherit(&rules.Benchmark, other.Benchmark)
-	utils.Inherit(&rules.Deterministic, other.Deterministic)
-	utils.Inherit(&rules.DebugFastLink, other.DebugFastLink)
-	utils.Inherit(&rules.LTO, other.LTO)
-	utils.Inherit(&rules.Incremental, other.Incremental)
-	utils.Inherit(&rules.RuntimeChecks, other.RuntimeChecks)
-	utils.Inherit(&rules.CompilerVerbose, other.CompilerVerbose)
-	utils.Inherit(&rules.LinkerVerbose, other.LinkerVerbose)
+	Inherit(&rules.SizePerUnity, other.SizePerUnity)
+	Inherit(&rules.AdaptiveUnity, other.AdaptiveUnity)
+	Inherit(&rules.Benchmark, other.Benchmark)
+	Inherit(&rules.Deterministic, other.Deterministic)
+	Inherit(&rules.DebugFastLink, other.DebugFastLink)
+	Inherit(&rules.LTO, other.LTO)
+	Inherit(&rules.Incremental, other.Incremental)
+	Inherit(&rules.RuntimeChecks, other.RuntimeChecks)
+	Inherit(&rules.CompilerVerbose, other.CompilerVerbose)
+	Inherit(&rules.LinkerVerbose, other.LinkerVerbose)
 }
 func (rules *CppRules) Overwrite(other *CppRules) {
-	utils.Overwrite(&rules.CppStd, other.CppStd)
-	utils.Overwrite(&rules.CppRtti, other.CppRtti)
-	utils.Overwrite(&rules.DebugSymbols, other.DebugSymbols)
-	utils.Overwrite(&rules.Exceptions, other.Exceptions)
-	utils.Overwrite(&rules.PCH, other.PCH)
-	utils.Overwrite(&rules.Link, other.Link)
-	utils.Overwrite(&rules.Sanitizer, other.Sanitizer)
-	utils.Overwrite(&rules.Unity, other.Unity)
+	Overwrite(&rules.CppStd, other.CppStd)
+	Overwrite(&rules.CppRtti, other.CppRtti)
+	Overwrite(&rules.DebugSymbols, other.DebugSymbols)
+	Overwrite(&rules.Exceptions, other.Exceptions)
+	Overwrite(&rules.PCH, other.PCH)
+	Overwrite(&rules.Link, other.Link)
+	Overwrite(&rules.Sanitizer, other.Sanitizer)
+	Overwrite(&rules.Unity, other.Unity)
 
-	utils.Overwrite(&rules.SizePerUnity, other.SizePerUnity)
-	utils.Overwrite(&rules.AdaptiveUnity, other.AdaptiveUnity)
-	utils.Overwrite(&rules.Benchmark, other.Benchmark)
-	utils.Overwrite(&rules.Deterministic, other.Deterministic)
-	utils.Overwrite(&rules.DebugFastLink, other.DebugFastLink)
-	utils.Overwrite(&rules.LTO, other.LTO)
-	utils.Overwrite(&rules.Incremental, other.Incremental)
-	utils.Overwrite(&rules.RuntimeChecks, other.RuntimeChecks)
-	utils.Overwrite(&rules.CompilerVerbose, other.CompilerVerbose)
-	utils.Overwrite(&rules.LinkerVerbose, other.LinkerVerbose)
+	Overwrite(&rules.SizePerUnity, other.SizePerUnity)
+	Overwrite(&rules.AdaptiveUnity, other.AdaptiveUnity)
+	Overwrite(&rules.Benchmark, other.Benchmark)
+	Overwrite(&rules.Deterministic, other.Deterministic)
+	Overwrite(&rules.DebugFastLink, other.DebugFastLink)
+	Overwrite(&rules.LTO, other.LTO)
+	Overwrite(&rules.Incremental, other.Incremental)
+	Overwrite(&rules.RuntimeChecks, other.RuntimeChecks)
+	Overwrite(&rules.CompilerVerbose, other.CompilerVerbose)
+	Overwrite(&rules.LinkerVerbose, other.LinkerVerbose)
 }
