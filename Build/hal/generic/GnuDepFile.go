@@ -6,7 +6,6 @@ import (
 	. "build/utils"
 	"io"
 	"path/filepath"
-	"strings"
 	"unicode"
 )
 
@@ -23,15 +22,18 @@ func (x *GnuDepFile) Load(src Filename) error {
 
 	return UFS.Open(src, func(rd io.Reader) error {
 		rb := bufio.NewReader(rd)
+
+		buf := TransientBuffer.Allocate()
+		defer TransientBuffer.Release(buf)
+
 		var err error
 		for {
 			if _, err = rb.ReadString(':'); err != nil {
 				break
 			}
 
-			tmp := strings.Builder{}
 			appendFile := func() {
-				filename := tmp.String()
+				filename := UnsafeStringFromBuffer(buf)
 				if len(filename) > 0 {
 					if filepath.IsLocal(filename) {
 						x.Dependencies.AppendUniq(UFS.Root.AbsoluteFile(filename).Normalize())
@@ -40,7 +42,7 @@ func (x *GnuDepFile) Load(src Filename) error {
 					}
 					// LogDebug("gnu-dep-file: parsed source file name %q", x.Dependencies[len(x.Dependencies)-1])
 				}
-				tmp.Reset()
+				buf.Reset()
 			}
 
 			for {
@@ -53,7 +55,7 @@ func (x *GnuDepFile) Load(src Filename) error {
 
 					if err == nil {
 						if ch2 == ' ' {
-							if _, err := tmp.WriteRune(ch2); err != nil {
+							if _, err := buf.WriteRune(ch2); err != nil {
 								return err
 							}
 							continue
@@ -71,7 +73,7 @@ func (x *GnuDepFile) Load(src Filename) error {
 				if unicode.IsSpace(ch) {
 					appendFile()
 				} else {
-					if _, err := tmp.WriteRune(ch); err != nil {
+					if _, err := buf.WriteRune(ch); err != nil {
 						return err
 					}
 				}

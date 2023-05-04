@@ -49,20 +49,51 @@ func SanitizePath(pathname string, sep rune) string {
 	BuildSanitizedPath(&sb, pathname, sep)
 	return sb.String()
 }
+func JoinPath(in string, args ...string) string {
+	Assert(func() bool { return len(in) > 0 })
+	sb := strings.Builder{}
+	capacity := len(in)
+	for _, it := range args {
+		Assert(func() bool { return len(it) > 0 })
+		capacity += len(it) + 1
+	}
+	sb.Grow(capacity)
+	sb.WriteString(in)
+	for _, it := range args {
+		sb.WriteRune(OSPathSeparator)
+		sb.WriteString(it)
+	}
+	return sb.String()
+}
 func SplitPath(in string) (results []string) {
-	first := 0
-	for i, ch := range in {
-		if os.IsPathSeparator((uint8)(ch)) {
-			if i > first {
-				results = append(results, in[first:i])
-			}
-			first = i + 1
+	for {
+		if i, ok := firstIndexOfPathSeparator(in); ok {
+			results = append(results, in[:i])
+			in = in[i+1:]
+		} else {
+			results = append(results, in)
+			return
 		}
 	}
-	if first < len(in) {
-		results = append(results, in[first:])
+}
+
+func firstIndexOfPathSeparator(in string) (int, bool) {
+	for i, ch := range in {
+		if os.IsPathSeparator((uint8)(ch)) {
+			return i, true
+		}
 	}
-	return
+	return len(in), false
+}
+func lastIndexOfPathSeparator(in string) (int, bool) {
+	n := (len(in) - 1)
+	for i := range in {
+		i = n - i
+		if os.IsPathSeparator(in[i]) {
+			return i, true
+		}
+	}
+	return len(in), false
 }
 
 var localPathEnabled = true
@@ -86,57 +117,68 @@ func MakeLocalFilename(f Filename) (relative string) {
  * Directory
  ***************************************/
 
-type Directory []string
+type Directory struct {
+	Path string
+}
 
 func MakeDirectory(str string) Directory {
 	return CleanPath(str)
 }
 func (d Directory) Valid() bool {
-	return len(d) > 0
+	return len(d.Path) > 0
 }
 func (d Directory) Basename() string {
-	if len(d) > 0 {
-		return d[len(d)-1]
+	if i, ok := lastIndexOfPathSeparator(d.String()); ok {
+		return d.Path[i+1:]
 	} else {
-		return ""
+		return d.Path
 	}
 }
 func (d Directory) Parent() Directory {
-	return d[:len(d)-1]
+	if i, ok := lastIndexOfPathSeparator(d.Path); ok {
+		return Directory{Path: d.Path[:i]}
+	} else {
+		UnexpectedValuePanic(d, d)
+		return Directory{}
+	}
+}
+func (d Directory) Split() (Directory, string) {
+	if i, ok := lastIndexOfPathSeparator(d.String()); ok {
+		return Directory{Path: d.Path[:i]}, d.String()[i+1:]
+	} else {
+		UnexpectedValuePanic(d, d)
+		return Directory{}, ""
+	}
 }
 func (d Directory) Folder(name ...string) Directory {
-	return append(append([]string(nil), d...), name...)
+	return Directory{Path: JoinPath(d.String(), name...)}
 }
 func (d Directory) File(name ...string) Filename {
-	return Filename{Dirname: append(d, name[:len(name)-1]...), Basename: name[len(name)-1]}
+	return Filename{
+		Dirname:  d.Folder(name[:len(name)-1]...),
+		Basename: name[len(name)-1]}
 }
 func (d Directory) IsIn(o Directory) bool {
 	return o.IsParentOf(d)
 }
 func (d Directory) IsParentOf(o Directory) bool {
-	n := len(d)
-	if n > len(o) {
+	n := len(d.Path)
+	if n > len(o.Path) {
 		return false
 	}
-	for i := range d[:n] {
-		if d[i] != o[i] {
+	for i := range d.Path[:n] {
+		if d.Path[i] != o.Path[i] {
 			return false
 		}
 	}
 	return true
 }
 func (d Directory) AbsoluteFolder(rel ...string) (result Directory) {
-	result = append([]string(nil), d...)
-	for _, x := range rel {
-		path := SplitPath(x)
-		result = append(result, path...)
-	}
-	return
+	return Directory{Path: filepath.Clean(JoinPath(d.String(), rel...))}
 }
 func (d Directory) AbsoluteFile(rel ...string) (result Filename) {
-	result.Dirname = d.AbsoluteFolder(rel...)
-	result.Basename = result.Dirname.Basename()
-	result.Dirname = result.Dirname.Parent()
+	result.Dirname = d.AbsoluteFolder(rel...) // rel is not guaranteed to hold only one '/'
+	result.Dirname, result.Basename = result.Dirname.Split()
 	return
 }
 func (d Directory) Relative(to Directory) string {
@@ -147,67 +189,16 @@ func (d Directory) Relative(to Directory) string {
 	}
 }
 func (d Directory) Normalize() (result Directory) {
-	return MakeDirectory(d.String())
+	return MakeDirectory(d.Path)
 }
 func (d Directory) Equals(o Directory) bool {
-	if len(d) != len(o) {
-		return false
-	}
-	for i, x := range d {
-		if x != o[i] {
-			return false
-		}
-	}
-	return true
+	return d == o
 }
 func (d Directory) Compare(o Directory) int {
-	n := len(o)
-	if len(d) < len(o) {
-		n = len(d)
-	}
-	for i := 0; i < n; i += 1 {
-		if c := strings.Compare(d[i], o[i]); c != 0 {
-			return c
-		}
-	}
-	if len(d) == len(o) {
-		return 0
-	} else if len(d) < len(o) {
-		return -1
-	} else {
-		return 1
-	}
+	return strings.Compare(d.Path, o.Path)
 }
 func (d Directory) String() string {
-	sb := strings.Builder{}
-	if err := d.StringBuilder(&sb); err != nil {
-		LogPanicErr(err)
-	}
-	return sb.String()
-}
-func (d Directory) stringBuilderCapacity() (capacity int) {
-	for i, x := range d {
-		if i > 0 {
-			capacity += 1
-		}
-		capacity += len(x)
-	}
-	return
-}
-func (d Directory) StringBuilder(sb *strings.Builder) error {
-	sb.Grow(d.stringBuilderCapacity())
-
-	for i, x := range d {
-		if i > 0 {
-			if _, err := sb.WriteRune(OSPathSeparator); err != nil {
-				return err
-			}
-		}
-		if _, err := sb.WriteString(x); err != nil {
-			return err
-		}
-	}
-	return nil
+	return d.Path
 }
 
 /***************************************
@@ -263,19 +254,8 @@ func (f Filename) Compare(o Filename) int {
 	}
 }
 func (f Filename) String() string {
-	if len(f.Dirname) > 0 {
-		sb := strings.Builder{}
-		sb.Grow(f.Dirname.stringBuilderCapacity() + 1 + len(f.Basename))
-		if err := f.Dirname.StringBuilder(&sb); err != nil {
-			LogPanicErr(err)
-		}
-		if _, err := sb.WriteRune(OSPathSeparator); err != nil {
-			LogPanicErr(err)
-		}
-		if _, err := sb.WriteString(f.Basename); err != nil {
-			LogPanicErr(err)
-		}
-		return sb.String()
+	if len(f.Dirname.Path) > 0 {
+		return JoinPath(f.Dirname.Path, f.Basename)
 	} else {
 		return f.Basename
 	}
@@ -544,7 +524,7 @@ func (d Directory) MatchDirectories(each func(Directory) error, r *regexp.Regexp
 	LogVeryVerbose("match directories in '%v' for /%v/...", d, r)
 	if info, err := enumerate_directory(d); err == nil {
 		for _, s := range info.Directories {
-			if r.MatchString(s[len(s)-1]) {
+			if r.MatchString(s.Basename()) {
 				if err := each(s); err != nil {
 					return err
 				}
@@ -1180,7 +1160,7 @@ func (x Directory) Build(bc BuildContext) error {
 	}
 }
 func (x *Directory) Serialize(ar Archive) {
-	SerializeMany(ar, ar.String, (*[]string)(x))
+	ar.String(&x.Path)
 }
 
 func BuildFile(source Filename, staticDeps ...BuildAlias) BuildFactoryTyped[*Filename] {

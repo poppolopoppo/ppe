@@ -174,7 +174,7 @@ func (x *serializableFactory) resolveConreteType(guid serializableGuid) reflect.
 func (x *serializableFactory) resolveTypename(typeptr uintptr) serializableGuid {
 	it, ok := x.typeptrToType.Get(typeptr)
 	if !ok {
-		LogPanic("serializable: could not resolve type name from %q", typeptr)
+		LogPanic("serializable: could not resolve type name from %X", typeptr)
 	}
 	return it.Guid
 }

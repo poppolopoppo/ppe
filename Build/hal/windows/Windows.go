@@ -58,7 +58,6 @@ var GetWindowsFlags = NewCompilationFlags("windows_flags", "windows-specific com
 	Permissive: INHERITABLE_FALSE,
 	StackSize:  2000000,
 	StaticCRT:  INHERITABLE_FALSE,
-	WindowsSDK: Directory{},
 })
 
 func (flags *WindowsFlags) Flags(cfv CommandFlagsVisitor) {

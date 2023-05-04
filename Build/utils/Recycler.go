@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"sync"
+	"unsafe"
 )
 
 type Recycler[T any] interface {
@@ -44,6 +45,12 @@ var TransientBuffer = NewRecycler(
 	func(b *bytes.Buffer) {
 		b.Reset()
 	})
+
+func UnsafeStringFromBuffer(buf *bytes.Buffer) string {
+	// from func (strings.Builder) String() string
+	bits := buf.Bytes()
+	return unsafe.String(unsafe.SliceData(bits), len(bits))
+}
 
 // recycle channels for Future[T]
 var AnyChannels = NewRecycler(

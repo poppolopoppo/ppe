@@ -107,8 +107,8 @@ func (x *WindowsSDKBuilder) Build(bc utils.BuildContext) error {
 
 		utils.LogDebug("found WindowsSDK@%v in '%v'", x.MajorVer, lib)
 
-		ver := lib[len(lib)-1]
-		x.WindowsSDK = newWindowsSDK(lib.Parent().Parent(), ver)
+		libParent, ver := lib.Split()
+		x.WindowsSDK = newWindowsSDK(libParent.Parent(), ver)
 		err = bc.NeedFile(x.WindowsSDK.ResourceCompiler)
 	}
 	return err
@@ -161,7 +161,7 @@ func getWindowsSDK_User(overrideDir utils.Directory) utils.BuildFactoryTyped[*Wi
 }
 
 func GetWindowsSDKInstall(bi utils.BuildInitializer, overrideDir utils.Directory) *WindowsSDKBuilder {
-	if len(overrideDir) > 0 {
+	if len(overrideDir.Path) > 0 {
 		utils.LogPanicIfFailed(bi.NeedDirectory(overrideDir))
 
 		utils.LogVeryVerbose("using user override '%v' for Windows SDK", overrideDir)
