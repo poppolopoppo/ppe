@@ -181,7 +181,7 @@ func getExecutableInfo_FromFile() (result ProcessInfo) {
 			})
 		} else {
 			result.Path = UFS.Executable
-			result.Version = "0.60"
+			result.Version = "0.70"
 			result.Timestamp = UFS.MTime(result.Path)
 			result.Checksum = MakeFuture(func() (Fingerprint, error) {
 				return FileFingerprint(result.Path, Fingerprint{})
