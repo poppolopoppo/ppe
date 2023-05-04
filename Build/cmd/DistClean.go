@@ -66,7 +66,7 @@ var CommandDistClean = NewCommand(
 func distCleanFile(f Filename) {
 	if f.Exists() {
 		LogVerbose("remove file '%v'", f)
-		err := os.RemoveAll(f.String())
+		err := os.Remove(f.String())
 		if err != nil {
 			LogWarning("distclean: %v", err)
 		}

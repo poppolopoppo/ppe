@@ -45,25 +45,26 @@ func (x *BuildCommand) Run(cc CommandContext) error {
 
 	// select target that match input by globbing
 	if x.Glob.Get() {
+		re := MakeGlobRegexp(Stringize(x.Targets...)...)
+
+		var factories []Future[*BuildTargets]
+		if err := ForeachBuildTargets(func(bft BuildFactoryTyped[*BuildTargets]) error {
+			factories = append(factories, bft.Prepare(bg))
+			return nil
+		}); err != nil {
+			return err
+		}
+
 		targets := []StringVar{}
-		for _, input := range x.Targets {
-			re := MakeGlobRegexp(input.Get())
-			err := ForeachBuildTargets(func(bft BuildFactoryTyped[*BuildTargets]) error {
-				result := bft.Build(bg)
-				if err := result.Failure(); err == nil {
-					for target := range result.Success().Targets {
-						if re.MatchString(target.String()) {
-							targets = append(targets, StringVar(target.String()))
-						}
-					}
-					return nil
-				} else {
-					return err
+		if err := ParallelJoin(func(index int, bt *BuildTargets) error {
+			for target := range bt.Targets {
+				if re.MatchString(target.String()) {
+					targets = append(targets, StringVar(target.String()))
 				}
-			})
-			if err != nil {
-				return err
 			}
+			return nil
+		}, factories...); err != nil {
+			return err
 		}
 
 		// overwrite user input with targets found
@@ -141,22 +142,25 @@ func (x *BuildCommand) cleanBuild(targets []*TargetActions) error {
 		return err
 	}
 
-	selecteds := ActionSet{}
-	actions.ExpandDependencies(&selecteds)
+	expandeds := ActionSet{}
+	actions.ExpandDependencies(&expandeds)
 
-	pbar := LogProgress(0, 0, "clean %d actions", len(selecteds))
-	defer pbar.Close()
-
-	for _, it := range selecteds {
+	filesToDelete := FileSet{}
+	for _, it := range expandeds {
 		for _, file := range it.GetAction().Outputs {
-			distCleanFile(file)
+			filesToDelete.Append(file)
 		}
 		for _, file := range it.GetAction().Extras {
-			distCleanFile(file)
+			filesToDelete.Append(file)
 		}
-
-		pbar.Inc()
 	}
 
-	return nil
+	pbar := LogProgress(0, 0, "clean %d files from %d actions", len(filesToDelete), len(expandeds))
+	defer pbar.Close()
+
+	return ParallelRange(func(file Filename) error {
+		distCleanFile(file)
+		pbar.Inc()
+		return nil
+	}, filesToDelete...)
 }
