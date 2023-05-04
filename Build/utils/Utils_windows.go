@@ -8,6 +8,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unicode"
 	"unsafe"
 )
 
@@ -40,6 +41,117 @@ func SetMTime(file *os.File, mtime time.Time) (err error) {
 
 var cleanPathCache SharedMapT[string, Directory]
 
+// normVolumeName is like VolumeName, but makes drive letter upper case.
+// result of EvalSymlinks must be unique, so we have
+// EvalSymlinks(`c:\a`) == EvalSymlinks(`C:\a`).
+func normVolumeName(path string) string {
+	volume := filepath.VolumeName(path)
+
+	if len(volume) > 2 { // isUNC
+		return volume
+	}
+
+	return strings.ToUpper(volume)
+}
+
+// normBase returns the last element of path with correct case.
+func normBase(path string) (string, error) {
+	p, err := syscall.UTF16PtrFromString(path)
+	if err != nil {
+		return "", err
+	}
+
+	var data syscall.Win32finddata
+
+	h, err := syscall.FindFirstFile(p, &data)
+	if err != nil {
+		return "", err
+	}
+	syscall.FindClose(h)
+
+	return syscall.UTF16ToString(data.FileName[:]), nil
+}
+
+func writeLowerString(w interface {
+	WriteRune(rune) (int, error)
+}, in string) error {
+	// avoid string copy
+	for _, ch := range in {
+		if _, err := w.WriteRune(unicode.ToLower(ch)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func cacheCleanPath(in string) (string, error) {
+	// see filepath.normBase(), this version is using a cache for each sub-directory
+
+	// skip special cases
+	if in == "" || in == "." || in == `\` {
+		return in, nil
+	}
+
+	volName := normVolumeName(in)
+	in = in[len(volName)+1:]
+
+	cleaned := TransientBuffer.Allocate()
+	defer TransientBuffer.Release(cleaned)
+
+	dirty := TransientBuffer.Allocate()
+	defer TransientBuffer.Release(dirty)
+
+	cleaned.Grow(len(in))
+	dirty.Grow(len(in))
+
+	cleaned.WriteString(volName)
+	writeLowerString(dirty, volName)
+
+	var err error
+	for len(in) > 0 {
+		dirty.WriteRune(OSPathSeparator)
+
+		var dirtyName string
+		if i, ok := firstIndexOfPathSeparator(in); ok {
+			dirtyName = in[:i]
+			writeLowerString(dirty, in[:i])
+			in = in[i+1:]
+		} else {
+			dirtyName = in
+			writeLowerString(dirty, in)
+			in = ""
+		}
+
+		if err == nil {
+			dirtyPath := UnsafeStringFromBuffer(dirty)
+
+			if realpath, ok := cleanPathCache.Get(dirtyPath); ok {
+				cleaned.Reset()
+				cleaned.WriteString(realpath.Path)
+
+			} else if realname, er := normBase(dirtyPath); er == nil {
+				cleaned.WriteRune(OSPathSeparator)
+				cleaned.WriteString(realname)
+
+				// store in cache for future queries, avoid querying all files all paths all the time
+				cleanPathCache.Add(
+					// need string copies for caching here
+					dirty.String(),
+					Directory{Path: cleaned.String()})
+			} else {
+				err = er
+			}
+		}
+
+		if err != nil {
+			cleaned.WriteRune(OSPathSeparator)
+			cleaned.WriteString(dirtyName)
+		}
+	}
+
+	return cleaned.String(), err
+}
+
 func CleanPath(in string) Directory {
 	AssertMessage(func() bool { return filepath.IsAbs(in) }, "ufs: need absolute path -> %q", in)
 
@@ -61,18 +173,14 @@ func CleanPath(in string) Directory {
 		LogPanicErr(err)
 	}
 
-	cleaned, err := filepath.EvalSymlinks(in)
+	// result, err := filepath.EvalSymlinks(in)
+	result, err := cacheCleanPath(in)
 	if err != nil {
-		cleaned = in
+		result = in
 		err = nil // if path does not exist yet
 	}
 
-	// Split path and store prebuilt directory to re-use this slice in the future
-	result := SplitPath(cleaned)
-
-	// Store cleaned path for future occurrences (expects many for directories)
-	cleanPathCache.Add(in, result)
-	return result
+	return Directory(Directory{Path: result})
 }
 
 /***************************************
