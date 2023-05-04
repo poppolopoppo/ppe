@@ -762,7 +762,7 @@ func (x *MsvcProductInstall) Build(bc BuildContext) error {
 	vcToolsVersionFile := x.VsInstallPath.Folder("VC", "Auxiliary", "Build").File("Microsoft.VCToolsVersion.default.txt")
 
 	if data, err := os.ReadFile(vcToolsVersionFile.String()); err == nil {
-		vcToolsVersion = strings.TrimSpace(string(data))
+		vcToolsVersion = strings.TrimSpace(UnsafeStringFromBytes(data))
 	} else {
 		return err
 	}

@@ -192,5 +192,5 @@ func make_logQueue() logQueue {
 }
 
 func log_callstack() {
-	log.Println(string(debug.Stack()))
+	log.Println(UnsafeStringFromBytes(debug.Stack()))
 }

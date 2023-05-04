@@ -340,10 +340,10 @@ func (x *EnumSet[T, E]) Serialize(ar Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x EnumSet[T, E]) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *EnumSet[T, E]) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 
 func MakeEnumSet[T EnumFlag, E interface {

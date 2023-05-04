@@ -222,7 +222,7 @@ func DownloadHttpRedirect(dst Filename, src url.URL) error {
 		match := re_metaRefreshRedirect.FindSubmatch(parse.Bytes())
 		if len(match) > 1 {
 			var url *url.URL
-			if url, err = url.Parse(string(match[1])); err == nil {
+			if url, err = url.Parse(UnsafeStringFromBytes(match[1])); err == nil {
 				return DownloadFile(dst, *url)
 			}
 		} else {

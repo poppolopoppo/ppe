@@ -245,7 +245,7 @@ func (llvm *LlvmProductInstall) Build(bc BuildContext) error {
 			llvm.LldLink_exe = x.Folder("bin").File("lld-link.exe")
 
 			if fullVersion, err := exec.Command(llvm.ClangCl_exe.String(), "--version").Output(); err == nil {
-				parsed := re_clangClVersion.FindStringSubmatch(string(fullVersion))
+				parsed := re_clangClVersion.FindStringSubmatch(UnsafeStringFromBytes(fullVersion))
 				if nil == parsed {
 					return fmt.Errorf("failed to parse clang-cl version: %v", fullVersion)
 				}

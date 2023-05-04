@@ -45,10 +45,10 @@ func (x *CompilerType) Serialize(ar Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x CompilerType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *CompilerType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 func (x *CompilerType) AutoComplete(in AutoComplete) {
 	for _, it := range CompilerTypes() {

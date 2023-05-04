@@ -38,10 +38,10 @@ func (x *ConfigurationAlias) Set(in string) (err error) {
 	return nil
 }
 func (x ConfigurationAlias) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *ConfigurationAlias) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *ConfigurationAlias) AutoComplete(in utils.AutoComplete) {
 	AllConfigurations.Range(func(s string, c Configuration) {

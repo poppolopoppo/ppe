@@ -179,7 +179,7 @@ func MakeString(x any) string {
 	case fmt.Stringer:
 		return it.String()
 	case []byte:
-		return string(it)
+		return UnsafeStringFromBytes(it)
 	default:
 		return fmt.Sprint(x)
 	}
@@ -216,7 +216,7 @@ func (x FourCC) Bytes() (result [4]byte) {
 }
 func (x FourCC) String() string {
 	raw := x.Bytes()
-	return string(raw[:])
+	return UnsafeStringFromBytes(raw[:])
 }
 func (x *FourCC) Serialize(ar Archive) {
 	ar.UInt32((*uint32)(x))

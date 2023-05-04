@@ -306,14 +306,14 @@ func (x *LlvmProductInstall) Build(bc BuildContext) error {
 		LogDebug("llvm: looking for clang-%s...", suffix)
 		c := exec.Command("/bin/sh", "-c", "which clang++"+suffix)
 		if outp, err := c.Output(); err == nil {
-			x.ClangPlusPlus = MakeFilename(strings.TrimSpace(string(outp)))
+			x.ClangPlusPlus = MakeFilename(strings.TrimSpace(UnsafeStringFromBytes(outp)))
 		} else {
 			return err
 		}
 
 		c = exec.Command("/bin/sh", "-c", "realpath $(which clang"+suffix+")")
 		if outp, err := c.Output(); err == nil {
-			x.Clang = MakeFilename(strings.TrimSpace(string(outp)))
+			x.Clang = MakeFilename(strings.TrimSpace(UnsafeStringFromBytes(outp)))
 		} else {
 			return err
 		}
@@ -328,7 +328,7 @@ func (x *LlvmProductInstall) Build(bc BuildContext) error {
 
 		c = exec.Command("llvm-config"+suffix, "--version")
 		if outp, err := c.Output(); err == nil {
-			parsed := strings.TrimSpace(string(outp))
+			parsed := strings.TrimSpace(UnsafeStringFromBytes(outp))
 			if n := strings.IndexByte(parsed, '.'); n != -1 {
 				parsed = parsed[:n]
 			}

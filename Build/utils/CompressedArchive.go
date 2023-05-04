@@ -96,10 +96,10 @@ func (x *CompressedArchiveType) Serialize(ar Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x CompressedArchiveType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *CompressedArchiveType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 
 /***************************************

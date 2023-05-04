@@ -358,8 +358,8 @@ func SerializeExternal[T Serializable](ar Archive, external *T) {
 
 type basicArchive struct {
 	bytes []byte
-	flags ArchiveFlags
 	tags  []FourCC
+	flags ArchiveFlags
 	err   error
 }
 

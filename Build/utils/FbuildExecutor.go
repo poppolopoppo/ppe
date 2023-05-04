@@ -53,10 +53,10 @@ func (x *FBuildCacheType) Serialize(ar Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x FBuildCacheType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *FBuildCacheType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 
 /***************************************

@@ -8,7 +8,7 @@ import (
 
 type BffOp string
 
-func (x BffOp) String() string { return string(x) }
+func (x BffOp) String() string { return (string)(x) }
 
 const (
 	BFF_ASSIGN BffOp = "="
@@ -17,7 +17,7 @@ const (
 
 type BffScope string
 
-func (x BffScope) String() string { return string(x) }
+func (x BffScope) String() string { return (string)(x) }
 
 const (
 	BFF_LOCAL  BffScope = "."
@@ -33,7 +33,7 @@ func MakeBffVar(key string) BffVar {
 }
 
 func (x BffVar) Valid() bool    { return x != "" }
-func (x BffVar) String() string { return string(x) }
+func (x BffVar) String() string { return (string)(x) }
 
 func MakeBffArray[T any](it ...T) (result BffArray) {
 	result = make(BffArray, len(it))

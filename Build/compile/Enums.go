@@ -82,10 +82,10 @@ func (x *ArchType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x ArchType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *ArchType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *ArchType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range ArchTypes() {
@@ -152,10 +152,10 @@ func (x *CompilerFeature) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x CompilerFeature) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *CompilerFeature) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *CompilerFeature) AutoComplete(in utils.AutoComplete) {
 	for _, it := range CompilerFeatures() {
@@ -224,10 +224,10 @@ func (x *ConfigType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x ConfigType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *ConfigType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *ConfigType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range ConfigTypes() {
@@ -287,10 +287,10 @@ func (x *CppRttiType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x CppRttiType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *CppRttiType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *CppRttiType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range CppRttiTypes() {
@@ -368,10 +368,10 @@ func (x *CppStdType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x CppStdType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *CppStdType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *CppStdType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range CppStdTypes() {
@@ -443,10 +443,10 @@ func (x *DebugType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x DebugType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *DebugType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *DebugType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range DebugTypes() {
@@ -506,10 +506,10 @@ func (x *ExceptionType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x ExceptionType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *ExceptionType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *ExceptionType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range ExceptionTypes() {
@@ -569,10 +569,10 @@ func (x *LinkType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x LinkType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *LinkType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *LinkType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range LinkTypes() {
@@ -635,10 +635,10 @@ func (x *ModuleType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x ModuleType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *ModuleType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *ModuleType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range ModuleTypes() {
@@ -704,10 +704,10 @@ func (x *PrecompiledHeaderType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x PrecompiledHeaderType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *PrecompiledHeaderType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *PrecompiledHeaderType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range PrecompiledHeaderTypes() {
@@ -805,10 +805,10 @@ func (x *PayloadType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x PayloadType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *PayloadType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *PayloadType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range PayloadTypes() {
@@ -912,10 +912,10 @@ func (x *SanitizerType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x SanitizerType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *SanitizerType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *SanitizerType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range SanitizerTypes() {
@@ -1000,10 +1000,10 @@ func (x *TagType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x TagType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *TagType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *TagType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range TagTypes() {
@@ -1072,10 +1072,10 @@ func (x *UnityType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x UnityType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *UnityType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *UnityType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range UnityTypes() {
@@ -1132,10 +1132,10 @@ func (x *VisibilityType) Serialize(ar utils.Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x VisibilityType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *VisibilityType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *VisibilityType) AutoComplete(in utils.AutoComplete) {
 	for _, it := range VisibilityTypes() {
@@ -1210,8 +1210,8 @@ func (x *VisibilityMask) Serialize(ar utils.Archive) {
 	ar.UInt32((*uint32)(x))
 }
 func (x VisibilityMask) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *VisibilityMask) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }

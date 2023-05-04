@@ -578,10 +578,10 @@ func (x *CacheModeType) Serialize(ar Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x CacheModeType) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *CacheModeType) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 func (x *CacheModeType) AutoComplete(in AutoComplete) {
 	for _, it := range CacheModeTypes() {

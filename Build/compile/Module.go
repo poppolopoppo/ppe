@@ -63,10 +63,10 @@ func (x *ModuleAlias) Set(in string) (err error) {
 	return fmt.Errorf("malformed ModuleAlias: '%s'", in)
 }
 func (x ModuleAlias) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *ModuleAlias) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 
 /***************************************

@@ -75,11 +75,11 @@ const (
 	INHERIT_STRING = "INHERIT"
 )
 
-func (x InheritableString) Get() string { return string(x) }
+func (x InheritableString) Get() string { return (string)(x) }
 func (x *InheritableString) Assign(in string) {
 	*(*string)(x) = in
 }
-func (x InheritableString) String() string { return string(x) }
+func (x InheritableString) String() string { return (string)(x) }
 func (x InheritableString) IsInheritable() bool {
 	return x == INHERIT_STRING || x == ""
 }
@@ -109,10 +109,10 @@ func (x *InheritableString) Overwrite(y InheritableString) {
 }
 
 func (x InheritableString) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *InheritableString) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 
 /***************************************
@@ -161,10 +161,10 @@ func (x *InheritableInt) Set(in string) error {
 }
 
 func (x InheritableInt) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *InheritableInt) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 
 func (x *InheritableInt) CommandLine(name, input string) (bool, error) {
@@ -277,10 +277,10 @@ func (x *InheritableBool) CommandLine(name, input string) (bool, error) {
 }
 
 func (x InheritableBool) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *InheritableBool) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 
 /***************************************
@@ -352,10 +352,10 @@ func (x *InheritableSlice[T, P]) Overwrite(y InheritableSlice[T, P]) {
 }
 
 func (x InheritableSlice[T, P]) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *InheritableSlice[T, P]) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 
 func (x *InheritableSlice[T, P]) AutoComplete(in AutoComplete) {

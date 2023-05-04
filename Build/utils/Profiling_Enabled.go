@@ -5,6 +5,7 @@ package utils
 
 import (
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/pkg/profile"
@@ -127,10 +128,10 @@ func (x *ProfilingMode) Serialize(ar Archive) {
 	ar.Int32((*int32)(x))
 }
 func (x ProfilingMode) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *ProfilingMode) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 func (x *ProfilingMode) AutoComplete(in AutoComplete) {
 	for _, it := range ProfilingModes() {
@@ -161,6 +162,9 @@ var running_profiler interface {
 func StartProfiling() func() {
 	profiling := GetProflingFlags().Profiling
 	LogWarning("profiling: use %v profiling mode", profiling)
+	if profiling == PROFILING_CPU {
+		runtime.SetCPUProfileRate(1000) // default is 100
+	}
 	running_profiler = profile.Start(
 		profiling.Mode(),
 		profile.NoShutdownHook,
@@ -175,7 +179,7 @@ func PurgeProfiling() {
 			proc := exec.Command("sh", UFS.Build.File("flamegraph.sh").String())
 			proc.Dir = UFS.Root.String()
 			output, err := proc.Output()
-			LogForward(string(output))
+			LogForward(UnsafeStringFromBytes(output))
 			LogPanicIfFailed(err)
 		}
 		running_profiler = nil

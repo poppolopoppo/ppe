@@ -278,10 +278,10 @@ func (def *VariableDefinition) Set(in string) error {
 	return nil
 }
 func (x VariableDefinition) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *VariableDefinition) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (def *VariableDefinition) Serialize(ar utils.Archive) {
 	ar.String(&def.Name)

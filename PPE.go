@@ -277,7 +277,7 @@ func makePPE_Program(rules *ModuleRules, usage UsageType) {
 	Inherit(&rules.Link, LINK_STATIC)
 	Inherit(&rules.Unity, UNITY_DISABLED)
 	rules.Defines.Append("PPE_TARGET_NAME=" + rules.String())
-	rules.Defines.Append("PPE_TARGET_USAGE=" + string(usage))
+	rules.Defines.Append("PPE_TARGET_USAGE=" + (string)(usage))
 }
 
 /***************************************
@@ -296,7 +296,7 @@ func main() {
 	RegisterArchetype("PPE/Module", makePPE_Module)
 
 	for _, usage := range UsageTypes() {
-		RegisterArchetype("PPE/Program/"+string(usage), func(rules *ModuleRules) {
+		RegisterArchetype("PPE/Program/"+(string)(usage), func(rules *ModuleRules) {
 			makePPE_Program(rules, usage)
 		})
 	}

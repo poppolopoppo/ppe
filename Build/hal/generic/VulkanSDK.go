@@ -627,7 +627,7 @@ const (
 )
 
 func (v VkBindingType) String() string {
-	return string(v)
+	return (string)(v)
 }
 func (v *VkBindingType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {

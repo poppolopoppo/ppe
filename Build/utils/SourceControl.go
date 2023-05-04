@@ -159,7 +159,7 @@ func (git GitSourceControl) GetModifiedFiles() (FileSet, error) {
 		if len(token) == 0 {
 			continue
 		}
-		line := string(token)
+		line := UnsafeStringFromBytes(token)
 		if strings.HasPrefix(line, "A ") || strings.HasPrefix(line, " M") || strings.HasPrefix(line, "AM") || strings.HasPrefix(line, "??") {
 			file := UFS.Root.AbsoluteFile(strings.TrimSpace(line[3:]))
 			LogVeryVerbose("git: %q was modified", file)
@@ -184,7 +184,7 @@ func (git GitSourceControl) GetStatus(status *SourceControlStatus) error {
 			return nil // output is empty when the path is known to Git (ignored or not git-added yet for instance)
 		}
 
-		line := strings.TrimSpace(string(outp))
+		line := strings.TrimSpace(UnsafeStringFromBytes(outp))
 		line = strings.TrimPrefix(line, "\"")
 		line = strings.TrimSuffix(line, "\"")
 

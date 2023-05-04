@@ -24,7 +24,7 @@ func HostIds() []HostId {
 }
 
 func (id HostId) String() string {
-	return string(id)
+	return (string)(id)
 }
 func (x *HostId) Set(in string) (err error) {
 	switch strings.ToUpper(in) {

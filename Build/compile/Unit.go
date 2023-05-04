@@ -70,10 +70,10 @@ func (x TargetAlias) String() string {
 	return fmt.Sprintf("%v-%v-%v", x.ModuleAlias, x.PlatformName, x.ConfigName)
 }
 func (x TargetAlias) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *TargetAlias) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 func (x *TargetAlias) AutoComplete(in AutoComplete) {
 	for _, a := range FindBuildAliases(CommandEnv.BuildGraph(), "Unit") {

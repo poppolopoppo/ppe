@@ -56,10 +56,10 @@ func (x EnvironmentAlias) String() string {
 	return fmt.Sprintf("%v-%v", x.PlatformName, x.ConfigName)
 }
 func (x EnvironmentAlias) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *EnvironmentAlias) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *EnvironmentAlias) AutoComplete(in utils.AutoComplete) {
 	ForeachEnvironmentAlias(func(ea EnvironmentAlias) error {

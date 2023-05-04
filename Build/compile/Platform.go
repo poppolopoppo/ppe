@@ -38,10 +38,10 @@ func (x *PlatformAlias) Set(in string) (err error) {
 	return nil
 }
 func (x PlatformAlias) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *PlatformAlias) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 func (x *PlatformAlias) AutoComplete(in utils.AutoComplete) {
 	AllPlatforms.Range(func(s string, p Platform) {

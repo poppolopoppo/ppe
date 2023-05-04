@@ -50,10 +50,16 @@ var TransientBuffer = NewRecycler(
 		b.Reset()
 	})
 
+func UnsafeBytesFromString(in string) []byte {
+	return unsafe.Slice(unsafe.StringData(in), len(in))
+}
+func UnsafeStringFromBytes(raw []byte) string {
+	// from func (strings.Builder) String() string
+	return unsafe.String(unsafe.SliceData(raw), len(raw))
+}
 func UnsafeStringFromBuffer(buf *bytes.Buffer) string {
 	// from func (strings.Builder) String() string
-	bits := buf.Bytes()
-	return unsafe.String(unsafe.SliceData(bits), len(bits))
+	return UnsafeStringFromBytes(buf.Bytes())
 }
 
 // recycle channels for Future[T]

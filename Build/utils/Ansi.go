@@ -17,11 +17,11 @@ func SetEnableAnsiColor(enabled bool) {
 }
 
 func (x AnsiCode) Always() string {
-	return string(x)
+	return (string)(x)
 }
 func (x AnsiCode) String() string {
 	if enableAnsiColor {
-		return string(x)
+		return (string)(x)
 	}
 	return ""
 }

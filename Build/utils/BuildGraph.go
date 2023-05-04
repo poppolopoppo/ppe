@@ -1488,14 +1488,14 @@ func MakeBuildAlias(category string, names ...string) BuildAlias {
 func (x BuildAlias) Alias() BuildAlias { return x }
 func (x BuildAlias) Valid() bool       { return len(x) > 3 /* check for "---" */ }
 func (x BuildAlias) Equals(o BuildAlias) bool {
-	return string(x) == string(o)
+	return (string)(x) == (string)(o)
 }
 func (x BuildAlias) Compare(o BuildAlias) int {
-	return strings.Compare(string(x), string(o))
+	return strings.Compare((string)(x), (string)(o))
 }
 func (x BuildAlias) String() string {
 	Assert(func() bool { return x.Valid() })
-	return string(x)
+	return (string)(x)
 }
 func (x *BuildAlias) Set(in string) error {
 	Assert(func() bool { return x.Valid() })
@@ -1506,10 +1506,10 @@ func (x *BuildAlias) Serialize(ar Archive) {
 	ar.String((*string)(x))
 }
 func (x BuildAlias) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *BuildAlias) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(UnsafeStringFromBytes(data))
 }
 
 /***************************************

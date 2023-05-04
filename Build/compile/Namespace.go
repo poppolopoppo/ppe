@@ -43,10 +43,10 @@ func (x *NamespaceAlias) Set(in string) (err error) {
 	return nil
 }
 func (x NamespaceAlias) MarshalText() ([]byte, error) {
-	return []byte(x.String()), nil
+	return utils.UnsafeBytesFromString(x.String()), nil
 }
 func (x *NamespaceAlias) UnmarshalText(data []byte) error {
-	return x.Set(string(data))
+	return x.Set(utils.UnsafeStringFromBytes(data))
 }
 
 /***************************************
