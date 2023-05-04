@@ -365,7 +365,7 @@ type basicArchive struct {
 
 func newBasicArchive(flags ...ArchiveFlag) basicArchive {
 	ar := basicArchive{
-		bytes: TransientBytes.Allocate(),
+		bytes: TransientSmallPage.Allocate(),
 		err:   nil,
 		flags: ArchiveFlags{
 			MakeEnumSet(flags...),
@@ -373,9 +373,9 @@ func newBasicArchive(flags ...ArchiveFlag) basicArchive {
 	}
 	return ar
 }
-func (x basicArchive) Byte() []byte { return x.bytes }
+func (x basicArchive) Bytes() []byte { return x.bytes }
 func (x *basicArchive) Close() {
-	TransientBytes.Release(x.bytes)
+	TransientSmallPage.Release(x.bytes)
 	x.bytes = nil
 }
 

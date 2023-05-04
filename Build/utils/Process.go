@@ -100,9 +100,9 @@ func RunProcess(executable Filename, arguments StringSet, userOptions ...Process
 			return err
 		}
 
-		const capacity = TRANSIENT_BYTES_CAPACITY / 2
-		buf := TransientBytes.Allocate()
-		defer TransientBytes.Release(buf)
+		const capacity = LARGE_PAGE_CAPACITY / 2
+		buf := TransientLargePage.Allocate()
+		defer TransientLargePage.Release(buf)
 
 		scanner := bufio.NewScanner(stdout)
 		scanner.Buffer(buf, capacity)

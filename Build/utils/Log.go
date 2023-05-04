@@ -320,8 +320,8 @@ func attachPinUnsafe(pin *pinnedLogManager) {
 		pin.inflight = len(pin.messages)
 
 		// format messages in local buffer
-		tmp := TransientBytes.Allocate()
-		defer TransientBytes.Release(tmp)
+		tmp := TransientSmallPage.Allocate()
+		defer TransientSmallPage.Release(tmp)
 
 		buf := bytes.NewBuffer(tmp)
 		buf.Reset()
@@ -353,8 +353,8 @@ func detachPinUnsafe(pin *pinnedLogManager, clear bool) {
 	inflight := pin.inflight
 	if inflight > 0 {
 		// format messages in local buffer
-		tmp := TransientBytes.Allocate()
-		defer TransientBytes.Release(tmp)
+		tmp := TransientSmallPage.Allocate()
+		defer TransientSmallPage.Release(tmp)
 
 		buf := bytes.NewBuffer(tmp)
 		buf.Reset()

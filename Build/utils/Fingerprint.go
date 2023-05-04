@@ -100,8 +100,8 @@ func ReaderFingerprint(rd io.Reader, seed Fingerprint) (result Fingerprint, err 
 	digester := digesterPool.Allocate()
 	defer digesterPool.Release(digester)
 
-	buffer := TransientBytes.Allocate()
-	defer TransientBytes.Release(buffer)
+	buffer := TransientLargePage.Allocate()
+	defer TransientLargePage.Release(buffer)
 
 	if _, err = digester.Write(seed[:]); err != nil {
 		return

@@ -981,11 +981,11 @@ func (ufs *UFSFrontEnd) ReadAll(src Filename, read func([]byte) error) error {
 		}
 
 		// check if the file is small enough to fit in a transient buffer
-		if info, err := src.Info(); info.Size() < TRANSIENT_BYTES_CAPACITY {
+		if info, err := src.Info(); info.Size() < LARGE_PAGE_CAPACITY {
 			LogPanicIfFailed(err)
 
-			transient := TransientBytes.Allocate()
-			defer TransientBytes.Release(transient)
+			transient := TransientLargePage.Allocate()
+			defer TransientLargePage.Release(transient)
 			return useBuffer(transient)
 
 		} else {
@@ -999,9 +999,9 @@ func (ufs *UFSFrontEnd) Scan(src Filename, re *regexp.Regexp, match func([]strin
 	return ufs.Open(src, func(rd io.Reader) error {
 		LogDebug("ufs: scan '%v' with regexp %v", src, re)
 
-		const capacity = TRANSIENT_BYTES_CAPACITY / 2
-		buf := TransientBytes.Allocate()
-		defer TransientBytes.Release(buf)
+		const capacity = LARGE_PAGE_CAPACITY / 2
+		buf := TransientLargePage.Allocate()
+		defer TransientLargePage.Release(buf)
 
 		scanner := bufio.NewScanner(rd)
 		scanner.Buffer(buf, capacity)

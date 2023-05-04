@@ -47,8 +47,8 @@ func JsonSerialize(x interface{}, dst io.Writer, options ...JsonOptionFunc) erro
 	}
 
 	if jsonPrettyPrintByDefault || opts.PrettyPrint {
-		tmp := TransientBytes.Allocate()
-		defer TransientBytes.Release(tmp)
+		tmp := TransientLargePage.Allocate()
+		defer TransientLargePage.Release(tmp)
 
 		buf := bytes.NewBuffer(tmp)
 		buf.Reset()
@@ -59,8 +59,8 @@ func JsonSerialize(x interface{}, dst io.Writer, options ...JsonOptionFunc) erro
 			return err
 		}
 
-		tmp2 := TransientBytes.Allocate()
-		defer TransientBytes.Release(tmp2)
+		tmp2 := TransientLargePage.Allocate()
+		defer TransientLargePage.Release(tmp2)
 
 		pretty := bytes.NewBuffer(tmp2)
 		pretty.Reset()
@@ -87,8 +87,8 @@ func JsonDeserialize(x interface{}, src io.Reader) error {
 }
 
 func PrettyPrint(x interface{}) string {
-	tmp := TransientBytes.Allocate()
-	defer TransientBytes.Release(tmp)
+	tmp := TransientLargePage.Allocate()
+	defer TransientLargePage.Release(tmp)
 
 	buf := bytes.NewBuffer(tmp)
 	buf.Reset()
@@ -97,8 +97,8 @@ func PrettyPrint(x interface{}) string {
 
 	var err error
 	if err = encoder.Encode(x); err == nil {
-		tmp2 := TransientBytes.Allocate()
-		defer TransientBytes.Release(tmp2)
+		tmp2 := TransientLargePage.Allocate()
+		defer TransientLargePage.Release(tmp2)
 
 		pretty := bytes.NewBuffer(tmp2)
 		pretty.Reset()

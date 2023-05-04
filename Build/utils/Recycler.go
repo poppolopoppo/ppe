@@ -32,11 +32,15 @@ func (x *recyclerPool[T]) Release(item T) {
 	x.pool.Put(item)
 }
 
-const TRANSIENT_BYTES_CAPACITY = 64 << 10
+const SMALL_PAGE_CAPACITY = (4 << 10)
+const LARGE_PAGE_CAPACITY = (64 << 10)
 
 // recycle temporary buffers
-var TransientBytes = NewRecycler(
-	func() []byte { return make([]byte, TRANSIENT_BYTES_CAPACITY) },
+var TransientLargePage = NewRecycler(
+	func() []byte { return make([]byte, LARGE_PAGE_CAPACITY) },
+	func([]byte) {})
+var TransientSmallPage = NewRecycler(
+	func() []byte { return make([]byte, LARGE_PAGE_CAPACITY) },
 	func([]byte) {})
 
 // recycle byte buffers
@@ -72,8 +76,8 @@ func TransientIoCopy(dst io.Writer, src io.Reader) (err error) {
 			_, err = rt.ReadFrom(src)
 		} else*/{
 			// io.Copy() will make a temporary allocation, and we have a recycler for this
-			buf := TransientBytes.Allocate()
-			defer TransientBytes.Release(buf)
+			buf := TransientLargePage.Allocate()
+			defer TransientLargePage.Release(buf)
 
 			for {
 				nr, er := src.Read(buf)
