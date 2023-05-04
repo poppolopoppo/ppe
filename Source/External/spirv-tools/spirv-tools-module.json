@@ -12,7 +12,7 @@
 	"SourceFiles": [
 		"Private/spirv-tools.cpp"
 	],
-	"Exports": {
-		"SpirvTools/Path": "SPIRV-Tools.zip"
-	}
+	"Exports": [
+		"SpirvTools/Path=SPIRV-Tools.zip"
+	]
 }

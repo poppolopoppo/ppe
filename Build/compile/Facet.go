@@ -221,11 +221,7 @@ func (vars VariableSubstitutions) ExpandString(str string) string {
 }
 func (vars VariableSubstitutions) ExpandDirectory(dir utils.Directory) (result utils.Directory) {
 	if len(vars) > 0 {
-		result = make([]string, len(dir))
-		for i, it := range dir {
-			result[i] = vars.ExpandString(it)
-		}
-		return result
+		return utils.MakeDirectory(vars.ExpandString(dir.String()))
 	} else {
 		return dir
 	}

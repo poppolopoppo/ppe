@@ -12,7 +12,7 @@
 	"SourceFiles": [
 		"Private/glslang.cpp"
 	],
-	"Exports": {
-		"Glslang/Path": "glslang.zip"
-	}
+	"Exports": [
+		"Glslang/Path=glslang.zip"
+	]
 }
