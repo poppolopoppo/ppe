@@ -102,12 +102,12 @@ func (x *BffBuilder) Build(bc BuildContext) (err error) {
 		bff.Func("Settings", func() {
 			bff.Assign("RootPath", UFS.Root)
 			bff.Assign("CachePath", UFS.Cache)
+
 			if CurrentHost().Id == HOST_WINDOWS {
 				platform := GeLocalHostBuildPlatform().SafeNeed(bc)
 				compiler := platform.GetCompiler().SafeNeed(bc)
 
-				environment := ProcessEnvironment(CopyMap(compiler.GetCompiler().Environment))
-				bff.Assign("Environment", environment.Export())
+				bff.Assign("Environment", compiler.GetCompiler().Environment.Export())
 			}
 		})
 

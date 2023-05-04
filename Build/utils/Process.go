@@ -2,10 +2,8 @@ package utils
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"os/exec"
-	"sort"
 	"strings"
 	"time"
 )
@@ -82,7 +80,7 @@ func RunProcess(executable Filename, arguments StringSet, userOptions ...Process
 
 	defer cmd.Wait()
 
-	if len(options.WorkingDir) > 0 {
+	if len(options.WorkingDir.Path) > 0 {
 		cmd.Dir = options.WorkingDir.String()
 	}
 
@@ -166,47 +164,83 @@ func (x *EnvironmentVar) Serialize(ar Archive) {
 	ar.String((*string)(x))
 }
 
-type ProcessEnvironment map[EnvironmentVar]StringSet
+type EnvironmentDefinition struct {
+	Name   EnvironmentVar
+	Values StringSet
+}
+
+func (x EnvironmentDefinition) String() string {
+	if len(x.Values) > 0 {
+		sb := strings.Builder{}
+
+		capacity := len(x.Name.String())
+		for _, it := range x.Values {
+			capacity += 1 + len(it)
+		}
+		sb.Grow(capacity)
+
+		sb.WriteString(x.Name.String())
+		sb.WriteRune('=')
+
+		for i, it := range x.Values {
+			if i > 0 {
+				sb.WriteRune(';')
+			}
+			sb.WriteString(it)
+		}
+
+		return sb.String()
+	} else {
+		return x.Name.String()
+	}
+}
+func (x *EnvironmentDefinition) Serialize(ar Archive) {
+	ar.Serializable(&x.Name)
+	ar.Serializable(&x.Values)
+}
+
+type ProcessEnvironment []EnvironmentDefinition
 
 func NewProcessEnvironment() ProcessEnvironment {
-	return ProcessEnvironment(make(map[EnvironmentVar]StringSet))
+	return ProcessEnvironment([]EnvironmentDefinition{})
 }
 
-func (x *ProcessEnvironment) Export() []string {
-	result := make([]string, 0, len(*x))
-	for name, values := range *x {
-		if len(values) > 0 {
-			result = append(result, fmt.Sprintf("%s=%s", name, values.Join(";")))
-		} else {
-			result = append(result, name.String())
-		}
+func (x ProcessEnvironment) Export() []string {
+	result := make([]string, len(x))
+	for i, it := range x {
+		result[i] = it.String()
 	}
-	sort.Strings(result)
 	return result
 }
+func (x ProcessEnvironment) IndexOf(name string) (int, bool) {
+	for i, it := range x {
+		if it.Name.String() == name {
+			return i, true
+		}
+	}
+	return len(x), false
+}
 func (x *ProcessEnvironment) Append(name string, values ...string) {
-	record := (*x)[EnvironmentVar(name)]
-	record.Append(values...)
-	(*x)[EnvironmentVar(name)] = record
+	if i, ok := x.IndexOf(name); ok {
+		(*x)[i].Values.Append(values...)
+	} else {
+		*x = append(*x, EnvironmentDefinition{
+			Name:   EnvironmentVar(name),
+			Values: values,
+		})
+	}
 }
 func (x *ProcessEnvironment) Inherit(other ProcessEnvironment) {
-	for name, values := range other {
-		if present, ok := (*x)[name]; ok {
-			(*x)[name] = append(present, values...)
-		} else {
-			(*x)[name] = values
-		}
+	for _, it := range other {
+		// #TODO: add precedence?
+		x.Append(it.Name.String(), it.Values...)
 	}
 }
 func (x *ProcessEnvironment) Overwrite(other ProcessEnvironment) {
-	for name, values := range other {
-		if present, ok := (*x)[name]; ok {
-			(*x)[name] = append(values, present...)
-		} else {
-			(*x)[name] = values
-		}
+	for _, it := range other {
+		x.Append(it.Name.String(), it.Values...)
 	}
 }
 func (x *ProcessEnvironment) Serialize(ar Archive) {
-	SerializeMap(ar, (*map[EnvironmentVar]StringSet)(x))
+	SerializeSlice(ar, (*[]EnvironmentDefinition)(x))
 }

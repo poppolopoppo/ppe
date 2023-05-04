@@ -72,9 +72,8 @@ func (res *ResourceCompiler) Build(bc BuildContext) error {
 		return err
 	}
 
-	res.CompilerRules.Environment = ProcessEnvironment{
-		"PATH": []string{res.CompilerRules.Executable.Dirname.String(), "%PATH%"},
-	}
+	res.CompilerRules.Environment = NewProcessEnvironment()
+	res.CompilerRules.Environment.Append("PATH", res.CompilerRules.Executable.Dirname.String(), "%PATH%")
 
 	res.CompilerOptions = StringSet{
 		"/nologo",   // no copyright when compiling

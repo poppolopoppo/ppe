@@ -268,10 +268,10 @@ func (vsc *VscodeBuilder) launch_configs(programAliases ModuleAliases, compiler 
 		executable := SanitizePath(alias, '-')
 
 		environment := []JsonMap{}
-		for name, values := range compiler.GetCompiler().Environment {
+		for _, it := range compiler.GetCompiler().Environment {
 			environment = append(environment, JsonMap{
-				"name":   name,
-				"values": strings.Join(values, ";"),
+				"name":   it.Name.String(),
+				"values": strings.Join(it.Values, ";"),
 			})
 		}
 

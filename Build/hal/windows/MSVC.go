@@ -402,7 +402,7 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 
 	if u.Sanitizer != SANITIZER_NONE {
 		LogVeryVerbose("%v: using sanitizer %v", u, u.Sanitizer)
-		u.Environment["ASAN_OPTIONS"] = []string{"windows_hook_rtl_allocators=true"}
+		u.Environment.Append("ASAN_OPTIONS", "windows_hook_rtl_allocators=true")
 		if u.CompilerOptions.Contains("/LTCG") {
 			LogVeryVerbose("%v: disable LTCG due to %v", u, u.Sanitizer)
 			u.LinkerOptions.Remove("/LTCG")
@@ -859,14 +859,14 @@ func (msvc *MsvcCompiler) Build(bc BuildContext) (err error) {
 		return err
 	}
 
-	msvc.CompilerRules.Environment = ProcessEnvironment{
-		"PATH": []string{
-			msvc.ProductInstall.VcToolsHostPath().String(),
-			msvc.WindowsSDK.ResourceCompiler.Dirname.String(),
-			"%PATH%"},
-		"SystemRoot": []string{os.Getenv("SystemRoot")},
-		"TMP":        []string{tmpDir.String()},
-	}
+	msvc.CompilerRules.Environment = NewProcessEnvironment()
+	msvc.CompilerRules.Environment.Append("PATH",
+		msvc.ProductInstall.VcToolsHostPath().String(),
+		msvc.WindowsSDK.ResourceCompiler.Dirname.String(),
+		"%PATH%")
+	msvc.CompilerRules.Environment.Append("SystemRoot", os.Getenv("SystemRoot"))
+	msvc.CompilerRules.Environment.Append("TMP", tmpDir.String())
+
 	msvc.CompilerRules.ExtraFiles = msvc.ProductInstall.VcToolsFileSet
 
 	msvc.CompilerRules.Facet = NewFacet()
