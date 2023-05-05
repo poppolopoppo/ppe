@@ -162,14 +162,14 @@ func (x *actionCache) makeActionKey(a *ActionRules) ActionCacheKey {
 			}
 
 			ar.Serializable(&result.Success().Digest)
-			LogDebug("action-cache: file digest for %q is %v", result.Success().Source, result.Success().Digest.ShortString())
+			LogDebug("action-cache: file digest for %q is %v", result.Success().Source, result.Success().Digest)
 		}
 
 		return nil
 	}, x.seed)
 	LogPanicIfFailed(err)
 
-	LogDebug("action-cache: action %q key is %v", a.Alias(), fingerprint.ShortString())
+	LogDebug("action-cache: action %q key is %v", a.Alias(), fingerprint)
 	return ActionCacheKey(fingerprint)
 }
 
@@ -277,7 +277,7 @@ func (x *ActionCacheBulk) CacheHit() bool {
 		}
 		if result.Success().Digest != x.Inputs[i].Digest {
 			LogDebug("action-cache: cache miss due to %q, was %v ang got %v",
-				x.Inputs[i].Source, x.Inputs[i].Digest.ShortString(), result.Success().Digest.ShortString())
+				x.Inputs[i].Source, x.Inputs[i].Digest, result.Success().Digest)
 			return false
 		}
 	}

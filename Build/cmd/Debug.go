@@ -75,7 +75,7 @@ var CommandCheckCache = NewCommand(
 					removeCacheEntry = true
 				}
 
-				LogVerbose("check-cache: read cache entry %q with key %s and %d bulks", f, entry.Key.GetFingerprint().ShortString(), len(entry.Bulks))
+				LogVerbose("check-cache: read cache entry %q with key %s and %d bulks", f, entry.Key.GetFingerprint(), len(entry.Bulks))
 				for i := 0; i < len(entry.Bulks); {
 					removeBulk := false
 					bulk := &entry.Bulks[i]
