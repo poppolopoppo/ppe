@@ -156,18 +156,20 @@ func (future *timeout_async_future[T]) Join() Result[T] {
 
 type map_future_result[OUT, IN any] struct {
 	inner     Result[IN]
-	transform func(IN) OUT
+	transform func(IN) (OUT, error)
 }
 
 func (x map_future_result[OUT, IN]) Success() OUT {
-	return x.transform(x.inner.Success())
+	result, err := x.transform(x.inner.Success())
+	LogPanicIfFailed(err)
+	return result
 }
 func (x map_future_result[OUT, IN]) Failure() error {
 	return x.inner.Failure()
 }
 func (x map_future_result[OUT, IN]) Get() (OUT, error) {
 	if result, err := x.inner.Get(); err == nil {
-		return x.transform(result), nil
+		return x.transform(result)
 	} else {
 		var none OUT
 		return none, err
@@ -176,10 +178,10 @@ func (x map_future_result[OUT, IN]) Get() (OUT, error) {
 
 type map_future[OUT, IN any] struct {
 	inner     Future[IN]
-	transform func(IN) OUT
+	transform func(IN) (OUT, error)
 }
 
-func MapFuture[OUT, IN any](future Future[IN], transform func(IN) OUT) Future[OUT] {
+func MapFuture[OUT, IN any](future Future[IN], transform func(IN) (OUT, error)) Future[OUT] {
 	return map_future[OUT, IN]{inner: future, transform: transform}
 }
 func (x map_future[OUT, IN]) Join() Result[OUT] {

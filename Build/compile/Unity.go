@@ -184,19 +184,15 @@ type UnityFile struct {
 func BuildUnityFile(output Filename, includes StringSet, inputs FileSet) BuildFactoryTyped[*UnityFile] {
 	Assert(func() bool { return output.Alias().Valid() })
 	Assert(func() bool { return len(inputs) > 0 })
-	return func(bi BuildInitializer) (*UnityFile, error) {
-		if err := bi.NeedFile(inputs...); err != nil {
-			return nil, err
-		}
-
-		return &UnityFile{
+	return MakeBuildFactory(func(bi BuildInitializer) (UnityFile, error) {
+		return UnityFile{
 			Output:   output,
 			Includes: includes,
 			Inputs:   inputs,
-		}, nil
-	}
+		}, bi.NeedFile(inputs...)
+	})
 }
-func (x *UnityFile) Alias() BuildAlias {
+func (x UnityFile) Alias() BuildAlias {
 	return MakeBuildAlias("Compile", "Unity", x.Output.String())
 }
 func (x *UnityFile) Build(bc BuildContext) error {

@@ -53,7 +53,7 @@ type CompilationDatabaseBuilder struct {
 	Database   CompilationDatabase
 }
 
-//	func (x *CompilationDatabaseBuilder) Alias() BuildAlias {
+//	func (x CompilationDatabaseBuilder) Alias() BuildAlias {
 //		return MakeBuildAlias("Compile", "Database", x.OutputFile.String())
 //	}
 //

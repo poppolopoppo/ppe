@@ -102,9 +102,15 @@ func (win *WindowsPlatform) Serialize(ar Archive) {
 func (win *WindowsPlatform) GetCompiler() BuildFactoryTyped[Compiler] {
 	switch win.CompilerType {
 	case COMPILER_MSVC:
-		return GetMsvcCompiler(win.Arch)
+		return WrapBuildFactory(func(bi BuildInitializer) (Compiler, error) {
+			msvc, err := GetMsvcCompiler(win.Arch).Create(bi)
+			return msvc.(Compiler), err
+		})
 	case COMPILER_CLANGCL:
-		return GetClangCompiler(win.Arch)
+		return WrapBuildFactory(func(bi BuildInitializer) (Compiler, error) {
+			clang_cl, err := GetClangCompiler(win.Arch).Create(bi)
+			return clang_cl.(Compiler), err
+		})
 	default:
 		UnexpectedValue(win.CompilerType)
 		return nil

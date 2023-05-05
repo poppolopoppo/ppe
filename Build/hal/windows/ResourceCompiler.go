@@ -87,11 +87,9 @@ func (res *ResourceCompiler) Serialize(ar Archive) {
 }
 
 func GetWindowsResourceCompiler() BuildFactoryTyped[*ResourceCompiler] {
-	return func(bi BuildInitializer) (*ResourceCompiler, error) {
-		it := &ResourceCompiler{
+	return MakeBuildFactory(func(bi BuildInitializer) (ResourceCompiler, error) {
+		return ResourceCompiler{
 			CompilerRules: NewCompilerRules(NewCompilerAlias("custom", "rc", "windows_sdk")),
-		}
-		var result Compiler = it // just to check statically that `ResourceCompiler` *IS* a `Compiler`
-		return result.(*ResourceCompiler), nil
-	}
+		}, nil
+	})
 }

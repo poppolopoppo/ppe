@@ -27,15 +27,12 @@ var Vscode = NewCommand(
  ***************************************/
 
 func BuildVscode(outputDir Directory) BuildFactoryTyped[*VscodeBuilder] {
-	return func(bi BuildInitializer) (*VscodeBuilder, error) {
-		if err := CreateDirectory(bi, outputDir); err != nil {
-			return nil, err
-		}
-		return &VscodeBuilder{
+	return MakeBuildFactory(func(bi BuildInitializer) (VscodeBuilder, error) {
+		return VscodeBuilder{
 			Version:   VscodeBuilderVersion,
 			OutputDir: outputDir,
-		}, nil
-	}
+		}, CreateDirectory(bi, outputDir)
+	})
 }
 
 var VscodeBuilderVersion = "VscodeBuilder-1-0-0"
@@ -45,7 +42,7 @@ type VscodeBuilder struct {
 	OutputDir Directory
 }
 
-func (vsc *VscodeBuilder) Alias() BuildAlias {
+func (vsc VscodeBuilder) Alias() BuildAlias {
 	return MakeBuildAlias("Vscode", vsc.OutputDir.String())
 }
 func (vsc *VscodeBuilder) Serialize(ar Archive) {

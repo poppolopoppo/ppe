@@ -109,7 +109,7 @@ func (rules *NamespaceRules) Serialize(ar Archive) {
  * Build Namespace
  ***************************************/
 
-func (x *NamespaceRules) Alias() BuildAlias {
+func (x NamespaceRules) Alias() BuildAlias {
 	return x.GetNamespace().NamespaceAlias.Alias()
 }
 func (x *NamespaceRules) Build(bc BuildContext) error {

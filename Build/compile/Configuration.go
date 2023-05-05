@@ -209,7 +209,7 @@ type BuildConfig struct {
 	Configuration
 }
 
-func (x *BuildConfig) Alias() BuildAlias {
+func (x BuildConfig) Alias() BuildAlias {
 	return x.GetConfig().ConfigurationAlias.Alias()
 }
 func (x *BuildConfig) Build(bc BuildContext) error {
@@ -220,13 +220,13 @@ func (x *BuildConfig) Serialize(ar Archive) {
 }
 
 func GetBuildConfig(configAlias ConfigurationAlias) BuildFactoryTyped[*BuildConfig] {
-	return func(bi BuildInitializer) (*BuildConfig, error) {
+	return WrapBuildFactory(func(bi BuildInitializer) (*BuildConfig, error) {
 		if config, ok := AllConfigurations.Get(configAlias.String()); ok {
 			return &BuildConfig{config}, nil
 		} else {
 			return nil, fmt.Errorf("compile: unknown configuration name %q", configAlias.String())
 		}
-	}
+	})
 }
 
 func ForeachBuildConfig(each func(BuildFactoryTyped[*BuildConfig]) error) error {

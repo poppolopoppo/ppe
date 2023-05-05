@@ -589,7 +589,7 @@ type CommandParsableBuilder[T any, P interface {
 	Flags T
 }
 
-func (x *CommandParsableBuilder[T, P]) Alias() BuildAlias {
+func (x CommandParsableBuilder[T, P]) Alias() BuildAlias {
 	return MakeBuildAlias("Command", "Flags", x.Name)
 }
 func (x *CommandParsableBuilder[T, P]) Build(BuildContext) error {
@@ -622,12 +622,12 @@ func GetBuildableFlags[T any, P interface {
 	*T
 	CommandParsableFlags
 }](flags *T) BuildFactoryTyped[*CommandParsableBuilder[T, P]] {
-	return func(bi BuildInitializer) (*CommandParsableBuilder[T, P], error) {
-		return &CommandParsableBuilder[T, P]{
+	return MakeBuildFactory(func(bi BuildInitializer) (CommandParsableBuilder[T, P], error) {
+		return CommandParsableBuilder[T, P]{
 			Name:  getCommandParsableFlagsName(P(flags)),
 			Flags: *flags,
 		}, nil
-	}
+	})
 }
 
 /***************************************

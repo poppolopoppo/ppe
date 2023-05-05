@@ -205,8 +205,8 @@ func newBuildNode(alias BuildAlias, builder Buildable) *buildNode {
 		future: AtomicFuture[BuildResult]{},
 	}
 }
-func (node *buildNode) Alias() BuildAlias { return node.BuildAlias }
-func (node *buildNode) String() string    { return node.BuildAlias.String() }
+func (node buildNode) Alias() BuildAlias { return node.BuildAlias }
+func (node *buildNode) String() string   { return node.BuildAlias.String() }
 func (node *buildNode) GetBuildable() Buildable {
 	node.state.RLock()
 	defer node.state.RUnlock()
@@ -329,57 +329,9 @@ func (node *buildNode) addOutputNode_AssumeLocked(a BuildAlias) {
 }
 
 /***************************************
- * Build Factory
+ * Build Factory Typed
  ***************************************/
 
-type BuildFactoryTyped[T Buildable] func(BuildInitializer) (T, error)
-
-func (x BuildFactoryTyped[T]) Create(context BuildInitializer) (Buildable, error) {
-	return x(context)
-}
-func (x BuildFactoryTyped[T]) Need(context BuildInitializer) (T, error) {
-	if buildable, err := context.NeedFactory(x); err == nil {
-		return buildable.(T), nil
-	} else {
-		var none T
-		return none, err
-	}
-}
-func (x BuildFactoryTyped[T]) SafeNeed(context BuildInitializer) (result T) {
-	if buildable, err := x.Need(context); err == nil {
-		result = buildable
-	} else {
-		LogPanicErr(err)
-	}
-	return result
-}
-func (x BuildFactoryTyped[T]) Init(graph BuildGraph, options ...BuildOptionFunc) (result T, err error) {
-	var node *buildNode
-	node, err = buildInit(graph.(*buildGraph), x, NewBuildOptions(options...))
-	if err == nil {
-		result = node.Buildable.(T)
-	}
-	return
-}
-func (x BuildFactoryTyped[T]) Prepare(graph BuildGraph, options ...BuildOptionFunc) Future[T] {
-	bo := NewBuildOptions(options...)
-	node, err := buildInit(graph.(*buildGraph), x, bo)
-	if err != nil {
-		return MakeFutureError[T](err)
-	}
-
-	future := graph.(*buildGraph).launchBuild(node, bo)
-	return MapFuture(future, func(it BuildResult) T {
-		return it.Buildable.(T)
-	})
-}
-func (x BuildFactoryTyped[T]) Build(graph BuildGraph, options ...BuildOptionFunc) Result[T] {
-	return x.Prepare(graph, options...).Join()
-}
-
-func MakeBuildFactory[T Buildable](factory func(BuildInitializer) (T, error)) BuildFactoryTyped[T] {
-	return BuildFactoryTyped[T](factory)
-}
 func FindGlobalBuildable[T Buildable](aliasable BuildAliasable) (result T, err error) {
 	return FindBuildable[T](CommandEnv.buildGraph, aliasable)
 }
@@ -391,6 +343,80 @@ func FindBuildable[T Buildable](graph BuildGraph, aliasable BuildAliasable) (res
 		err = fmt.Errorf("buildable not found: %q", alias)
 	}
 	return
+}
+
+type BuildFactoryTyped[T Buildable] interface {
+	BuildFactory
+	Need(BuildInitializer) (T, error)
+	SafeNeed(BuildInitializer) T
+	Init(BuildGraph, ...BuildOptionFunc) (T, error)
+	Prepare(BuildGraph, ...BuildOptionFunc) Future[T]
+	Build(BuildGraph, ...BuildOptionFunc) Result[T]
+}
+
+func MakeBuildFactory[T BuildAliasable, B interface {
+	*T
+	Buildable
+}](factory func(BuildInitializer) (T, error)) BuildFactoryTyped[B] {
+	return WrapBuildFactory(func(bi BuildInitializer) (B, error) {
+		if value, err := factory(bi); err == nil {
+			if !bi.Options().Force {
+				if node := CommandEnv.buildGraph.Find(value.Alias()); node != nil {
+					return node.GetBuildable().(B), nil
+				}
+			}
+			return B(&value), nil
+
+		} else {
+			return nil, err
+		}
+	})
+}
+
+type buildFactoryWrapped[T Buildable] func(BuildInitializer) (T, error)
+
+func WrapBuildFactory[T Buildable](factory func(BuildInitializer) (T, error)) BuildFactoryTyped[T] {
+	return buildFactoryWrapped[T](factory)
+}
+
+func (x buildFactoryWrapped[T]) Create(bi BuildInitializer) (Buildable, error) {
+	return x(bi)
+}
+func (x buildFactoryWrapped[T]) Need(bi BuildInitializer) (T, error) {
+	if buildable, err := bi.NeedFactory(x); err == nil {
+		return buildable.(T), nil
+	} else {
+		var none T
+		return none, err
+	}
+}
+func (x buildFactoryWrapped[T]) SafeNeed(bi BuildInitializer) T {
+	dst, err := x.Need(bi)
+	LogPanicIfFailed(err)
+	return dst
+}
+func (x buildFactoryWrapped[T]) Init(bg BuildGraph, options ...BuildOptionFunc) (result T, err error) {
+	var node *buildNode
+	node, err = buildInit(bg.(*buildGraph), x, NewBuildOptions(options...))
+	if err == nil {
+		result = node.Buildable.(T)
+	}
+	return
+}
+func (x buildFactoryWrapped[T]) Prepare(bg BuildGraph, options ...BuildOptionFunc) Future[T] {
+	bo := NewBuildOptions(options...)
+	node, err := buildInit(bg.(*buildGraph), x, bo)
+	if err != nil {
+		return MakeFutureError[T](err)
+	}
+
+	future := bg.(*buildGraph).launchBuild(node, bo)
+	return MapFuture(future, func(it BuildResult) (T, error) {
+		return it.Buildable.(T), nil
+	})
+}
+func (x buildFactoryWrapped[T]) Build(bg BuildGraph, options ...BuildOptionFunc) Result[T] {
+	return x.Prepare(bg, options...).Join()
 }
 
 /***************************************
@@ -701,7 +727,7 @@ func (x *buildExecuteContext) OnBuilt(e func(BuildNode) error) {
 	// add to parent to trigger the event in outer scope
 	x.options.Parent.OnBuilt.Add(e)
 }
-func (x *buildExecuteContext) Alias() BuildAlias {
+func (x buildExecuteContext) Alias() BuildAlias {
 	return x.node.Alias()
 }
 func (x *buildExecuteContext) Options() BuildOptions {
@@ -842,15 +868,17 @@ func (x *buildExecuteContext) OutputNode(factories ...BuildFactory) error {
 	bo := x.options
 	bo.Force = true // force update freshly outputed nodes
 
+	creatorAlias := x.node.Alias()
 	for _, it := range factories {
-		factory := it
-
-		node, err := buildInit(x.graph, MakeBuildFactory(func(init BuildInitializer) (Buildable, error) {
-			if err := init.DependsOn(x.node.Alias()); err != nil { // add caller node as a static dependency
+		factory := WrapBuildFactory(func(bi BuildInitializer) (Buildable, error) {
+			// add caller node as a static dependency
+			if err := bi.DependsOn(creatorAlias); err != nil {
 				return nil, err
 			}
-			return factory.Create(init)
-		}), bo)
+			return it.Create(bi)
+		})
+
+		node, err := buildInit(x.graph, factory, bo)
 		if err != nil {
 			return err
 		}
@@ -1007,8 +1035,8 @@ func (g *buildGraph) BuildMany(targets BuildAliases, options ...BuildOptionFunc)
 		alias := targets[0]
 		_, future := g.Build(alias, options...)
 
-		return MapFuture(future, func(it BuildResult) (result []BuildResult) {
-			return []BuildResult{it}
+		return MapFuture(future, func(it BuildResult) ([]BuildResult, error) {
+			return []BuildResult{it}, nil
 		})
 	default:
 		return MakeFuture(func() (results []BuildResult, err error) {

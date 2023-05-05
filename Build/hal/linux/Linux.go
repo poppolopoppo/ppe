@@ -67,7 +67,10 @@ func (linux *LinuxPlatform) Serialize(ar Archive) {
 func (linux *LinuxPlatform) GetCompiler() BuildFactoryTyped[Compiler] {
 	switch linux.CompilerType {
 	case COMPILER_CLANG:
-		return GetLlvmCompiler(linux.Arch)
+		return WrapBuildFactory(func(bi BuildInitializer) (Compiler, error) {
+			llvm, err := GetLlvmCompiler(linux.Arch).Create(bi)
+			return llvm.(Compiler), err
+		})
 	case COMPILER_GCC:
 		NotImplemented("need to implement GCC support")
 		return nil

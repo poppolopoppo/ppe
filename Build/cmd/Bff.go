@@ -57,17 +57,13 @@ var CommandBff = NewCommand(
 	}))
 
 func GetBffBuilder() BuildFactoryTyped[*BffBuilder] {
-	return func(bi BuildInitializer) (*BffBuilder, error) {
+	return MakeBuildFactory(func(bi BuildInitializer) (BffBuilder, error) {
 		flags := GetBffArgs()
-		if _, err := GetBuildableFlags(flags).Need(bi); err != nil {
-			return nil, err
-		}
-
-		return &BffBuilder{
+		return BffBuilder{
 			Output:  flags.BffOutput,
 			Version: BFF_VERSION,
-		}, nil
-	}
+		}, bi.NeedFactories(GetBuildableFlags(flags))
+	})
 }
 
 /***************************************
@@ -79,7 +75,7 @@ type BffBuilder struct {
 	Version string
 }
 
-func (x *BffBuilder) Alias() BuildAlias {
+func (x BffBuilder) Alias() BuildAlias {
 	return MakeBuildAlias("Bff", x.Output.String())
 }
 func (x *BffBuilder) Serialize(ar Archive) {

@@ -2,9 +2,9 @@ package utils
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 )
@@ -36,8 +36,8 @@ func BuildDownloader(uri string, dst Filename, mode DownloadMode) BuildFactoryTy
 	if err != nil {
 		LogFatal("download: %v", err)
 	}
-	return MakeBuildFactory(func(bi BuildInitializer) (*Downloader, error) {
-		return &Downloader{
+	return MakeBuildFactory(func(bi BuildInitializer) (Downloader, error) {
+		return Downloader{
 			Source:      *parsedUrl,
 			Destination: dst,
 			Mode:        mode,
@@ -51,7 +51,7 @@ type Downloader struct {
 	Mode        DownloadMode
 }
 
-func (dl *Downloader) Alias() BuildAlias {
+func (dl Downloader) Alias() BuildAlias {
 	return MakeBuildAlias("Download", dl.Destination.String())
 }
 func (dl *Downloader) Build(bc BuildContext) error {
@@ -65,6 +65,9 @@ func (dl *Downloader) Build(bc BuildContext) error {
 
 	if err == nil {
 		err = bc.OutputFile(dl.Destination)
+	}
+	if err == nil { // avoid re-downloading after each rebuild
+		bc.Timestamp(UFS.MTime(dl.Destination))
 	}
 	return err
 }
@@ -106,7 +109,7 @@ func (nonCachableResponse) ShouldCache() bool {
 	return false
 }
 
-func downloadFromCachedArtifcats(resp *http.Response) (Filename, downloadCacheResult) {
+func downloadFromCache(resp *http.Response) (Filename, downloadCacheResult) {
 	var contentHash []string
 	if contentHash = resp.Header.Values("Content-Md5"); contentHash == nil {
 		contentHash = resp.Header.Values("X-Goog-Hash")
@@ -145,7 +148,7 @@ func DownloadFile(dst Filename, src url.URL) error {
 	LogVerbose("http: downloading url '%v' to '%v'...", src.String(), dst.String())
 
 	cacheFile, shouldCache := Filename{}, false
-	err := UFS.SafeCreate(dst, func(w io.Writer) error {
+	err := UFS.CreateFile(dst, func(w *os.File) error {
 		client := http.Client{
 			CheckRedirect: func(r *http.Request, _ []*http.Request) error {
 				r.URL.Opaque = r.URL.Path
@@ -160,12 +163,20 @@ func DownloadFile(dst Filename, src url.URL) error {
 		defer resp.Body.Close()
 
 		var cacheResult downloadCacheResult
-		cacheFile, cacheResult = downloadFromCachedArtifcats(resp)
+		cacheFile, cacheResult = downloadFromCache(resp)
 		if cacheResult == nil { // cache hit
 			LogDebug("http: cache hit on '%v'", cacheFile)
-			return UFS.Open(cacheFile, func(r io.Reader) error {
+
+			return UFS.OpenFile(cacheFile, func(r *os.File) error {
+				if info, err := r.Stat(); err == nil {
+					SetMTime(w, info.ModTime()) // keep mtime consistent
+				} else {
+					return err
+				}
+
 				return TransientIoCopy(w, r)
 			})
+
 		} else { // cache miss
 			shouldCache = cacheResult.ShouldCache() // cachable ?
 

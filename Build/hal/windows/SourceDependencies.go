@@ -69,7 +69,7 @@ func NewMsvcSourceDependenciesAction(rules *ActionRules, output Filename) *MsvcS
 	return result
 }
 
-func (x *MsvcSourceDependenciesAction) Alias() BuildAlias {
+func (x MsvcSourceDependenciesAction) Alias() BuildAlias {
 	return MakeBuildAlias("Action", "Msvc", x.Outputs.Join(";"))
 }
 func (x *MsvcSourceDependenciesAction) Build(bc BuildContext) error {

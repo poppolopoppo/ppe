@@ -57,7 +57,7 @@ type ActionRules struct {
 	Dependencies BuildAliases
 }
 
-func (x *ActionRules) Alias() BuildAlias {
+func (x ActionRules) Alias() BuildAlias {
 	return MakeBuildAlias("Action", x.Outputs.Join(";"))
 }
 func (x *ActionRules) Build(bc BuildContext) error {
@@ -154,7 +154,7 @@ func (x *ActionRules) String() string {
 }
 
 func makeActionFactory(compiler CompilerAlias, action Action) BuildFactoryTyped[Action] {
-	return func(bi BuildInitializer) (Action, error) {
+	return WrapBuildFactory(func(bi BuildInitializer) (Action, error) {
 		rules := action.GetAction()
 
 		// track compiler
@@ -185,7 +185,7 @@ func makeActionFactory(compiler CompilerAlias, action Action) BuildFactoryTyped[
 		}
 
 		return action, nil
-	}
+	})
 }
 
 /***************************************
@@ -200,7 +200,7 @@ type TargetActions struct {
 	Payloads   PayloadBuildAliases
 }
 
-func (x *TargetActions) Alias() BuildAlias {
+func (x TargetActions) Alias() BuildAlias {
 	return MakeBuildAlias("Targets", x.TargetAlias.String())
 }
 func (x *TargetActions) Build(bc BuildContext) error {
@@ -254,12 +254,9 @@ func GetBuildActions(aliases ...BuildAlias) (ActionSet, error) {
 }
 
 func GetTargetActions(target TargetAlias) BuildFactoryTyped[*TargetActions] {
-	return func(bi BuildInitializer) (*TargetActions, error) {
-		if err := bi.NeedBuildable(target); err != nil {
-			return nil, err
-		}
-		return &TargetActions{TargetAlias: target}, nil
-	}
+	return MakeBuildFactory(func(bi BuildInitializer) (TargetActions, error) {
+		return TargetActions{TargetAlias: target}, bi.NeedBuildable(target)
+	})
 }
 
 func ForeachTargetActions(ea EnvironmentAlias, each func(BuildFactoryTyped[*TargetActions]) error, ma ...ModuleAlias) error {

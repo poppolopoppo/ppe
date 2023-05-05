@@ -27,19 +27,15 @@ func BuildTgzExtractor(src Filename, dst Directory, acceptList StringSet, static
 	return BuildCompressedArchiveExtractor(ARCHIVE_TGZ, src, dst, acceptList, staticDeps...)
 }
 func BuildCompressedArchiveExtractor(arType CompressedArchiveType, src Filename, dst Directory, acceptList StringSet, staticDeps ...BuildAliasable) BuildFactoryTyped[*CompressedArchiveExtractor] {
-	return MakeBuildFactory(func(bi BuildInitializer) (*CompressedArchiveExtractor, error) {
-		if err := bi.NeedFile(src); err != nil {
-			return nil, err
-		}
-		if err := bi.NeedBuildable(staticDeps...); err != nil {
-			return nil, err
-		}
-		return &CompressedArchiveExtractor{
-			Type:        arType,
-			Source:      src,
-			Destination: dst,
-			AcceptList:  acceptList,
-		}, nil
+	return MakeBuildFactory(func(bi BuildInitializer) (CompressedArchiveExtractor, error) {
+		return CompressedArchiveExtractor{
+				Type:        arType,
+				Source:      src,
+				Destination: dst,
+				AcceptList:  acceptList,
+			}, AnyError(
+				bi.NeedFile(src),
+				bi.NeedBuildable(staticDeps...))
 	})
 }
 func BuildCompressedArchiveExtractorFromExt(src Filename, dst Directory, acceptList StringSet, staticDeps ...BuildAliasable) BuildFactoryTyped[*CompressedArchiveExtractor] {
@@ -114,7 +110,7 @@ type CompressedArchiveExtractor struct {
 	ExtractedFiles FileSet
 }
 
-func (x *CompressedArchiveExtractor) Alias() BuildAlias {
+func (x CompressedArchiveExtractor) Alias() BuildAlias {
 	return MakeBuildAlias(x.Type.String(), x.Destination.String())
 }
 func (x *CompressedArchiveExtractor) Build(bc BuildContext) error {
@@ -156,6 +152,10 @@ func (x *CompressedArchiveExtractor) Build(bc BuildContext) error {
 			return err
 		}
 	}
+
+	// avoid re-extracting after each rebuild
+	bc.Timestamp(UFS.MTime(x.Source))
+
 	return nil
 }
 func (x *CompressedArchiveExtractor) Serialize(ar Archive) {

@@ -288,7 +288,7 @@ type LlvmProductInstall struct {
 	ClangPlusPlus Filename
 }
 
-func (x *LlvmProductInstall) Alias() BuildAlias {
+func (x LlvmProductInstall) Alias() BuildAlias {
 	return MakeBuildAlias("HAL", "Linux", "LLVM", x.WantedVer.String(), x.Arch)
 }
 func (x *LlvmProductInstall) Serialize(ar Archive) {
@@ -453,19 +453,19 @@ type LlvmProductVer struct {
 }
 
 func GetLlvmProductInstall(productVer LlvmProductVer) BuildFactoryTyped[*LlvmProductInstall] {
-	return func(bi BuildInitializer) (*LlvmProductInstall, error) {
-		return &LlvmProductInstall{
+	return MakeBuildFactory(func(bi BuildInitializer) (LlvmProductInstall, error) {
+		return LlvmProductInstall{
 			Arch:      productVer.Arch.String(),
 			WantedVer: productVer.LlvmVer,
 		}, nil
-	}
+	})
 }
 
-func GetLlvmCompiler(arch ArchType) BuildFactoryTyped[Compiler] {
-	return func(bi BuildInitializer) (Compiler, error) {
-		return &LlvmCompiler{
+func GetLlvmCompiler(arch ArchType) BuildFactoryTyped[*LlvmCompiler] {
+	return MakeBuildFactory(func(bi BuildInitializer) (LlvmCompiler, error) {
+		return LlvmCompiler{
 			Arch:          arch,
 			CompilerRules: NewCompilerRules(NewCompilerAlias("clang", "llvm", arch.String())),
 		}, nil
-	}
+	})
 }

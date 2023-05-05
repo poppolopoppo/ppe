@@ -256,7 +256,7 @@ func (unit *Unit) Serialize(ar Archive) {
  * Unit Factory
  ***************************************/
 
-func (unit *Unit) Alias() BuildAlias {
+func (unit Unit) Alias() BuildAlias {
 	return unit.Target.Alias()
 }
 func (unit *Unit) Build(bc BuildContext) error {

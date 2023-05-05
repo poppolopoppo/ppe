@@ -32,7 +32,7 @@ func (x *recyclerPool[T]) Release(item T) {
 	x.pool.Put(item)
 }
 
-const SMALL_PAGE_CAPACITY = (4 << 10)
+const SMALL_PAGE_CAPACITY = (04 << 10)
 const LARGE_PAGE_CAPACITY = (64 << 10)
 
 // recycle temporary buffers

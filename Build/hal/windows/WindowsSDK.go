@@ -78,7 +78,7 @@ type WindowsSDKBuilder struct {
 	WindowsSDK
 }
 
-func (x *WindowsSDKBuilder) Alias() BuildAlias {
+func (x WindowsSDKBuilder) Alias() BuildAlias {
 	return MakeBuildAlias("HAL", "Windows", "SDK", x.MajorVer)
 }
 func (x *WindowsSDKBuilder) Build(bc BuildContext) error {
@@ -121,43 +121,34 @@ func (x *WindowsSDKBuilder) Serialize(ar Archive) {
 }
 
 func getWindowsSDK_10() BuildFactoryTyped[*WindowsSDKBuilder] {
-	return func(bi BuildInitializer) (*WindowsSDKBuilder, error) {
+	return MakeBuildFactory(func(bi BuildInitializer) (WindowsSDKBuilder, error) {
 		searchDir := MakeDirectory("C:/Program Files (x86)/Windows Kits/10/Lib")
-		if err := bi.NeedDirectory(searchDir); err != nil {
-			return nil, err
-		}
-		return &WindowsSDKBuilder{
+		return WindowsSDKBuilder{
 			MajorVer:   "10",
 			SearchDir:  searchDir,
 			SearchGlob: `10\..*`,
-		}, nil
-	}
+		}, bi.NeedDirectory(searchDir)
+	})
 }
 
 func getWindowsSDK_8_1() BuildFactoryTyped[*WindowsSDKBuilder] {
-	return func(bi BuildInitializer) (*WindowsSDKBuilder, error) {
+	return MakeBuildFactory(func(bi BuildInitializer) (WindowsSDKBuilder, error) {
 		searchDir := MakeDirectory("C:/Program Files (x86)/Windows Kits/8.1/Lib")
-		if err := bi.NeedDirectory(searchDir); err != nil {
-			return nil, err
-		}
-		return &WindowsSDKBuilder{
+		return WindowsSDKBuilder{
 			MajorVer:   "8.1",
 			SearchDir:  searchDir,
 			SearchGlob: `8\..*`,
-		}, nil
-	}
+		}, bi.NeedDirectory(searchDir)
+	})
 }
 
 func getWindowsSDK_User(overrideDir Directory) BuildFactoryTyped[*WindowsSDKBuilder] {
-	return func(bi BuildInitializer) (*WindowsSDKBuilder, error) {
-		if err := bi.NeedDirectory(overrideDir); err != nil {
-			return nil, err
-		}
-		return &WindowsSDKBuilder{
+	return MakeBuildFactory(func(bi BuildInitializer) (WindowsSDKBuilder, error) {
+		return WindowsSDKBuilder{
 			MajorVer:  "User",
 			SearchDir: overrideDir,
-		}, nil
-	}
+		}, bi.NeedDirectory(overrideDir)
+	})
 }
 
 func GetWindowsSDKInstall(bi BuildInitializer, overrideDir Directory) *WindowsSDKBuilder {

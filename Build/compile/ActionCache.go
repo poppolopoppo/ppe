@@ -50,14 +50,14 @@ var GetActionCache = Memoize(func() ActionCache {
 })
 
 func BuildActionCache(path Directory) BuildFactoryTyped[*actionCache] {
-	return func(bi BuildInitializer) (*actionCache, error) {
-		return &actionCache{
+	return MakeBuildFactory(func(bi BuildInitializer) (actionCache, error) {
+		return actionCache{
 			path: path,
 		}, nil
-	}
+	})
 }
 
-func (x *actionCache) Alias() BuildAlias {
+func (x actionCache) Alias() BuildAlias {
 	return MakeBuildAlias("Cache", "Actions", x.path.String())
 }
 func (x *actionCache) Serialize(ar Archive) {

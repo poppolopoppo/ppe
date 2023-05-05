@@ -123,7 +123,7 @@ func NewCompilerRules(alias CompilerAlias) CompilerRules {
 	}
 }
 
-func (rules *CompilerRules) Alias() BuildAlias {
+func (rules CompilerRules) Alias() BuildAlias {
 	return rules.CompilerAlias.Alias()
 }
 func (rules *CompilerRules) String() string {

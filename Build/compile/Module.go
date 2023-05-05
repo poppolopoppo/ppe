@@ -338,7 +338,7 @@ func (x *ModuleRules) Prepend(other *ModuleRules) {
  * Build Module
  ***************************************/
 
-func (x *ModuleRules) Alias() BuildAlias {
+func (x ModuleRules) Alias() BuildAlias {
 	return x.ModuleAlias.Alias()
 }
 func (x *ModuleRules) Build(bc BuildContext) error {

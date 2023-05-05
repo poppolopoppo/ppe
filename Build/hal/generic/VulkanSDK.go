@@ -758,15 +758,12 @@ type VulkanBindings struct {
 }
 
 func GetVulkanBindings(f Filename) BuildFactoryTyped[*VulkanBindings] {
-	return func(bi BuildInitializer) (*VulkanBindings, error) {
-		if err := bi.NeedFile(f); err != nil {
-			return nil, err
-		}
-		return &VulkanBindings{Src: f}, nil
-	}
+	return MakeBuildFactory(func(bi BuildInitializer) (VulkanBindings, error) {
+		return VulkanBindings{Src: f}, bi.NeedFile(f)
+	})
 }
 
-func (vk *VulkanBindings) Alias() BuildAlias {
+func (vk VulkanBindings) Alias() BuildAlias {
 	return MakeBuildAlias("External", "Vulkan", vk.Src.Relative(UFS.Root))
 }
 func (vk *VulkanBindings) Build(bc BuildContext) error {
@@ -827,15 +824,12 @@ type VulkanHeaders struct {
 }
 
 func GetVulkanHeaders(src Directory) BuildFactoryTyped[*VulkanHeaders] {
-	return func(bi BuildInitializer) (*VulkanHeaders, error) {
-		if err := bi.NeedDirectory(src); err != nil {
-			return nil, err
-		}
-		return &VulkanHeaders{Src: src}, nil
-	}
+	return MakeBuildFactory(func(bi BuildInitializer) (VulkanHeaders, error) {
+		return VulkanHeaders{Src: src}, bi.NeedDirectory(src)
+	})
 }
 
-func (vk *VulkanHeaders) Alias() BuildAlias {
+func (vk VulkanHeaders) Alias() BuildAlias {
 	return MakeBuildAlias("External", "Vulkan", vk.Src.Relative(UFS.Root))
 }
 func (vk *VulkanHeaders) Build(bc BuildContext) error {
@@ -957,18 +951,16 @@ func (x VulkanInterfaceParams) Equals(other VulkanInterfaceParams) bool {
 }
 
 func GetVulkanInterface(prms VulkanInterfaceParams) BuildFactoryTyped[*VulkanInterface] {
-	return func(bi BuildInitializer) (*VulkanInterface, error) {
-		if err := bi.NeedDirectory(prms.IncludeDir); err != nil {
-			return nil, err
-		}
-		if err := bi.NeedFile(prms.BindingsFile); err != nil {
-			return nil, err
-		}
-		return &VulkanInterface{IncludeDir: prms.IncludeDir, BindingsFile: prms.BindingsFile}, nil
-	}
+	return MakeBuildFactory(func(bi BuildInitializer) (VulkanInterface, error) {
+		return VulkanInterface{
+				IncludeDir: prms.IncludeDir, BindingsFile: prms.BindingsFile,
+			}, AnyError(
+				bi.NeedDirectory(prms.IncludeDir),
+				bi.NeedFile(prms.BindingsFile))
+	})
 }
 
-func (vk *VulkanInterface) Alias() BuildAlias {
+func (vk VulkanInterface) Alias() BuildAlias {
 	return MakeBuildAlias("External", "Vulkan", "Interface")
 }
 func (vk *VulkanInterface) Build(bc BuildContext) error {

@@ -1037,7 +1037,7 @@ func (ufs *UFSFrontEnd) Copy(src, dst Filename) error {
 		if err != nil {
 			return err
 		}
-		return ufs.SafeCreate(dst, func(w io.Writer) error {
+		return ufs.Create(dst, func(w io.Writer) error {
 			return CopyWithProgress(dst.Basename, info.Size(), w, r)
 		})
 	})
@@ -1164,18 +1164,17 @@ func (x *Directory) Serialize(ar Archive) {
 }
 
 func BuildFile(source Filename, staticDeps ...BuildAlias) BuildFactoryTyped[*Filename] {
-	return func(bi BuildInitializer) (*Filename, error) {
-		buildable := new(Filename)
-		*buildable = source //.Normalize()
-		return buildable, bi.DependsOn(staticDeps...)
-	}
+	return MakeBuildFactory(func(bi BuildInitializer) (Filename, error) {
+		return Filename{
+			Basename: source.Basename,
+			Dirname:  source.Dirname,
+		}, bi.DependsOn(staticDeps...)
+	})
 }
 func BuildDirectory(source Directory, staticDeps ...BuildAlias) BuildFactoryTyped[*Directory] {
-	return func(bi BuildInitializer) (*Directory, error) {
-		buildable := new(Directory)
-		*buildable = source //.Normalize()
-		return buildable, bi.DependsOn(staticDeps...)
-	}
+	return MakeBuildFactory(func(bi BuildInitializer) (Directory, error) {
+		return Directory{Path: source.Path}, bi.DependsOn(staticDeps...)
+	})
 }
 
 /***************************************
@@ -1193,22 +1192,19 @@ type FileDigest struct {
 }
 
 func BuildFileDigest(source Filename) BuildFactoryTyped[*FileDigest] {
-	return func(bi BuildInitializer) (*FileDigest, error) {
-		if err := bi.NeedFile(source); err != nil {
-			return nil, err
-		}
-		return &FileDigest{
+	return MakeBuildFactory(func(bi BuildInitializer) (FileDigest, error) {
+		return FileDigest{
 			Source: source, //.Normalize(),
-		}, nil
-	}
+		}, bi.NeedFile(source)
+	})
 }
 
-func (x *FileDigest) Alias() BuildAlias {
+func (x FileDigest) Alias() BuildAlias {
 	return MakeBuildAlias("UFS", "Digest", x.Source.String())
 }
 func (x *FileDigest) Build(bc BuildContext) (err error) {
 	x.Digest, err = FileFingerprint(x.Source, Fingerprint{} /* no seed here */)
-	LogTrace("ufs: file digest %s for %q", x.Digest.ShortString(), x.Source)
+	LogTrace("ufs: file digest %s for %q", x.Digest, x.Source)
 	return
 }
 func (x *FileDigest) Serialize(ar Archive) {
@@ -1230,14 +1226,14 @@ type DirectoryCreator struct {
 }
 
 func BuildDirectoryCreator(source Directory) BuildFactoryTyped[*DirectoryCreator] {
-	return func(init BuildInitializer) (*DirectoryCreator, error) {
-		return &DirectoryCreator{
+	return MakeBuildFactory(func(init BuildInitializer) (DirectoryCreator, error) {
+		return DirectoryCreator{
 			Source: source, //.Normalize(),
 		}, nil
-	}
+	})
 }
 
-func (x *DirectoryCreator) Alias() BuildAlias {
+func (x DirectoryCreator) Alias() BuildAlias {
 	return MakeBuildAlias("UFS", "Create", x.Source.String())
 }
 func (x *DirectoryCreator) Build(bc BuildContext) error {
@@ -1270,18 +1266,15 @@ type DirectoryList struct {
 }
 
 func BuildDirectoryList(source Directory) BuildFactoryTyped[*DirectoryList] {
-	return func(init BuildInitializer) (*DirectoryList, error) {
-		if err := init.NeedDirectory(source); err != nil {
-			return nil, err
-		}
-		return &DirectoryList{
+	return MakeBuildFactory(func(init BuildInitializer) (DirectoryList, error) {
+		return DirectoryList{
 			Source:  source, // .Normalize(),
 			Results: FileSet{},
-		}, nil
-	}
+		}, init.NeedDirectory(source)
+	})
 }
 
-func (x *DirectoryList) Alias() BuildAlias {
+func (x DirectoryList) Alias() BuildAlias {
 	return MakeBuildAlias("UFS", "List", x.Source.String())
 }
 func (x *DirectoryList) Build(bc BuildContext) error {
@@ -1341,21 +1334,18 @@ func BuildDirectoryGlob(
 	includedGlobs StringSet,
 	excludedGlobs StringSet,
 	excludedFiles FileSet) BuildFactoryTyped[*DirectoryGlob] {
-	return func(init BuildInitializer) (*DirectoryGlob, error) {
-		if err := init.NeedDirectory(source); err != nil {
-			return nil, err
-		}
-		return &DirectoryGlob{
+	return MakeBuildFactory(func(init BuildInitializer) (DirectoryGlob, error) {
+		return DirectoryGlob{
 			Source:        source.Normalize(),
 			IncludedGlobs: includedGlobs,
 			ExcludedGlobs: excludedGlobs,
 			ExcludedFiles: excludedFiles,
 			Results:       FileSet{},
-		}, nil
-	}
+		}, init.NeedDirectory(source)
+	})
 }
 
-func (x *DirectoryGlob) Alias() BuildAlias {
+func (x DirectoryGlob) Alias() BuildAlias {
 	return MakeBuildAlias("UFS", "Glob", strings.Join([]string{
 		x.Source.String(),
 		x.IncludedGlobs.Join(";"),

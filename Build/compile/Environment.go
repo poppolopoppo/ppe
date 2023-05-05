@@ -370,7 +370,7 @@ func (env *CompileEnv) Link(moduleGraph ModuleGraph) (SetT[*Unit], error) {
  * Compilation Environment Factory
  ***************************************/
 
-func (env *CompileEnv) Alias() BuildAlias {
+func (env CompileEnv) Alias() BuildAlias {
 	return env.EnvironmentAlias.Alias()
 }
 func (env *CompileEnv) Build(bc BuildContext) error {
@@ -412,25 +412,25 @@ func (env *CompileEnv) Build(bc BuildContext) error {
 }
 
 func GetCompileEnvironment(env EnvironmentAlias) BuildFactoryTyped[*CompileEnv] {
-	return func(bi BuildInitializer) (*CompileEnv, error) {
+	return MakeBuildFactory(func(bi BuildInitializer) (CompileEnv, error) {
 		// register dependency to Configuration/Platform
 		// Compiler is a dynamic dependency, since it depends on CompileFlags
 
 		config, err := GetBuildConfig(env.ConfigurationAlias).Need(bi)
 		if err != nil {
-			return nil, err
+			return CompileEnv{}, err
 		}
 
 		platform, err := GetBuildPlatform(env.PlatformAlias).Need(bi)
 		if err != nil {
-			return nil, err
+			return CompileEnv{}, err
 		}
 
-		return &CompileEnv{
+		return CompileEnv{
 			EnvironmentAlias: NewEnvironmentAlias(platform, config),
 			Facet:            NewFacet(),
 		}, nil
-	}
+	})
 }
 
 func ForeachEnvironmentAlias(each func(EnvironmentAlias) error) error {

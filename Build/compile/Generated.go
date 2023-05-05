@@ -23,7 +23,7 @@ type BuildGenerated struct {
 	Generated
 }
 
-func (x *BuildGenerated) Alias() BuildAlias {
+func (x BuildGenerated) Alias() BuildAlias {
 	return MakeGeneratedAlias(x.OutputFile)
 }
 func (x *BuildGenerated) Build(bc BuildContext) error {
@@ -98,7 +98,7 @@ func (rules *GeneratorRules) CreateGenerated(bc BuildContext, module Module, uni
 		Generated:  rules.Generator.CreateGenerated(unit, outputFile),
 	}
 
-	err := bc.OutputNode(MakeBuildFactory(func(bi BuildInitializer) (*BuildGenerated, error) {
+	err := bc.OutputNode(WrapBuildFactory(func(bi BuildInitializer) (*BuildGenerated, error) {
 		return generated, nil
 	}))
 	return generated, err

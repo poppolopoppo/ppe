@@ -47,6 +47,15 @@ func IsNil(v interface{}) bool {
 	return !ok
 }
 
+func AnyError(errs ...error) error {
+	for _, err := range errs {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 /***************************************
  * Higher order programming
  ***************************************/

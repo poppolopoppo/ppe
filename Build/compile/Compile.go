@@ -127,7 +127,7 @@ type BuildTargets struct {
 	Aliases []TargetAlias
 }
 
-func (x *BuildTargets) Alias() BuildAlias {
+func (x BuildTargets) Alias() BuildAlias {
 	return MakeBuildAlias("Targets", x.EnvironmentAlias.String())
 }
 func (x *BuildTargets) Build(bc BuildContext) error {
@@ -189,7 +189,7 @@ func (x *BuildTargets) Build(bc BuildContext) error {
 		x.Targets[unit.Target] = TargetBuildOrder(len(x.Aliases))
 		x.Aliases = append(x.Aliases, unit.Target)
 
-		err := bc.OutputNode(MakeBuildFactory(func(bi BuildInitializer) (*Unit, error) {
+		err := bc.OutputNode(WrapBuildFactory(func(bi BuildInitializer) (*Unit, error) {
 			if err := bi.NeedBuildable(unit.Target.ModuleAlias, compileEnv.EnvironmentAlias); err != nil {
 				return nil, err
 			}
@@ -232,9 +232,9 @@ func (x *BuildTargets) GetTranslatedUnits() (Units, error) {
 }
 
 func GetBuildTargets(environmentAlias EnvironmentAlias) BuildFactoryTyped[*BuildTargets] {
-	return func(bi BuildInitializer) (*BuildTargets, error) {
-		return &BuildTargets{EnvironmentAlias: environmentAlias}, nil
-	}
+	return MakeBuildFactory(func(bi BuildInitializer) (BuildTargets, error) {
+		return BuildTargets{EnvironmentAlias: environmentAlias}, nil
+	})
 }
 
 func ForeachBuildTargets(each func(BuildFactoryTyped[*BuildTargets]) error) error {

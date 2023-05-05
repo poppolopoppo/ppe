@@ -120,7 +120,7 @@ var Platform_ARM = &PlatformRules{
  * Build Platform Factory
  ***************************************/
 
-func (x *PlatformRules) Alias() BuildAlias {
+func (x PlatformRules) Alias() BuildAlias {
 	return x.GetPlatform().PlatformAlias.Alias()
 }
 func (x *PlatformRules) Build(bc BuildContext) error {
@@ -128,13 +128,13 @@ func (x *PlatformRules) Build(bc BuildContext) error {
 }
 
 func GetBuildPlatform(platformAlias PlatformAlias) BuildFactoryTyped[Platform] {
-	return func(bi BuildInitializer) (Platform, error) {
+	return WrapBuildFactory(func(bi BuildInitializer) (Platform, error) {
 		if plaform, ok := AllPlatforms.Get(platformAlias.String()); ok {
 			return plaform, nil
 		} else {
 			return nil, fmt.Errorf("compile: unknown platform name %q", platformAlias.String())
 		}
-	}
+	})
 }
 
 func ForeachBuildPlatform(each func(BuildFactoryTyped[Platform]) error) error {

@@ -351,7 +351,7 @@ type BuildModules struct {
 	Root       Namespace
 }
 
-func (x *BuildModules) Alias() BuildAlias {
+func (x BuildModules) Alias() BuildAlias {
 	return MakeBuildAlias("Modules", x.Source.String())
 }
 func (x *BuildModules) Build(bc BuildContext) error {
@@ -377,7 +377,7 @@ func (x *BuildModules) Build(bc BuildContext) error {
 			}
 		}
 
-		err := bc.OutputNode(MakeBuildFactory(func(bi BuildInitializer) (Namespace, error) {
+		err := bc.OutputNode(WrapBuildFactory(func(bi BuildInitializer) (Namespace, error) {
 			if err := bi.NeedFile(it.Source); err != nil {
 				return nil, err
 			}
@@ -404,7 +404,7 @@ func (x *BuildModules) Build(bc BuildContext) error {
 			return err
 		}
 
-		err := bc.OutputNode(MakeBuildFactory(func(bi BuildInitializer) (Module, error) {
+		err := bc.OutputNode(WrapBuildFactory(func(bi BuildInitializer) (Module, error) {
 			if err := bi.NeedFile(it.Source); err != nil {
 				return nil, err
 			}
@@ -462,11 +462,8 @@ func validateModuleRec(x *BuildModules, rules *ModuleRules) error {
 }
 
 func GetBuildModules() BuildFactoryTyped[*BuildModules] {
-	return func(bi BuildInitializer) (*BuildModules, error) {
+	return MakeBuildFactory(func(bi BuildInitializer) (BuildModules, error) {
 		source := CommandEnv.RootFile()
-		if err := bi.NeedFile(source); err != nil {
-			return nil, err
-		}
-		return &BuildModules{Source: source}, nil
-	}
+		return BuildModules{Source: source}, bi.NeedFile(source)
+	})
 }

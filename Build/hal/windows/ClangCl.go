@@ -134,7 +134,7 @@ func (clang *ClangCompiler) Build(bc BuildContext) error {
 
 	if msvc, err := GetMsvcCompiler(clang.Arch).Need(bc); err == nil {
 		compilerAlias := clang.CompilerAlias
-		clang.MsvcCompiler = *(msvc.(*MsvcCompiler))
+		clang.MsvcCompiler = *msvc
 		clang.CompilerAlias = compilerAlias
 	} else {
 		return err
@@ -222,7 +222,7 @@ func (clang *ClangCompiler) Build(bc BuildContext) error {
 
 var re_clangClVersion = regexp.MustCompile(`(?m)^clang\s+version\s+([\.\d]+)$`)
 
-func (llvm *LlvmProductInstall) Alias() BuildAlias {
+func (llvm LlvmProductInstall) Alias() BuildAlias {
 	return MakeBuildAlias("HAL", "Windows", "LLVM", "Latest")
 }
 func (llvm *LlvmProductInstall) Serialize(ar Archive) {
@@ -267,26 +267,22 @@ func (llvm *LlvmProductInstall) Build(bc BuildContext) error {
 }
 
 func GetLlvmProductInstall() BuildFactoryTyped[*LlvmProductInstall] {
-	return func(bi BuildInitializer) (*LlvmProductInstall, error) {
-		return &LlvmProductInstall{}, nil
-	}
+	return MakeBuildFactory(func(bi BuildInitializer) (LlvmProductInstall, error) {
+		return LlvmProductInstall{}, nil
+	})
 }
 
-func GetClangCompiler(arch ArchType) BuildFactoryTyped[Compiler] {
-	return func(bi BuildInitializer) (Compiler, error) {
-		if err := bi.NeedFactories(
-			GetBuildableFlags(GetCompileFlags()),
-			GetBuildableFlags(GetWindowsFlags())); err != nil {
-			return nil, err
-		}
-
-		return &ClangCompiler{
-			UseMsvcLibrarian: false,
-			UseMsvcLinker:    false,
-			MsvcCompiler: MsvcCompiler{
-				Arch:          arch,
-				CompilerRules: NewCompilerRules(NewCompilerAlias("clang-cl", "LLVM", arch.String())),
-			},
-		}, nil
-	}
+func GetClangCompiler(arch ArchType) BuildFactoryTyped[*ClangCompiler] {
+	return MakeBuildFactory(func(bi BuildInitializer) (ClangCompiler, error) {
+		return ClangCompiler{
+				UseMsvcLibrarian: false,
+				UseMsvcLinker:    false,
+				MsvcCompiler: MsvcCompiler{
+					Arch:          arch,
+					CompilerRules: NewCompilerRules(NewCompilerAlias("clang-cl", "LLVM", arch.String())),
+				},
+			}, bi.NeedFactories(
+				GetBuildableFlags(GetCompileFlags()),
+				GetBuildableFlags(GetWindowsFlags()))
+	})
 }

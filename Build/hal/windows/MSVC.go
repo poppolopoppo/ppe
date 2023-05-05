@@ -674,7 +674,7 @@ func (x *MsvcProductInstall) VcToolsHostPath() Directory {
 	return x.VcToolsPath.Folder("bin", "Host"+x.HostArch, x.Arch)
 }
 
-func (x *MsvcProductInstall) Alias() BuildAlias {
+func (x MsvcProductInstall) Alias() BuildAlias {
 	variant := "Stable"
 	if x.Insider {
 		variant = "Insider"
@@ -1033,34 +1033,26 @@ type MsvcProductVer struct {
 }
 
 func GetMsvcProductInstall(prms MsvcProductVer) BuildFactoryTyped[*MsvcProductInstall] {
-	return func(bi BuildInitializer) (*MsvcProductInstall, error) {
-		if err := bi.NeedFile(MSVC_VSWHERE_EXE); err != nil {
-			return nil, err
-		}
-
+	return MakeBuildFactory(func(bi BuildInitializer) (MsvcProductInstall, error) {
 		if prms.MscVer == MSC_VER_LATEST {
 			prms.MscVer = msc_ver_any
 		}
 
-		return &MsvcProductInstall{
+		return MsvcProductInstall{
 			WantedVer: prms.MscVer,
 			Arch:      prms.Arch.String(),
 			Insider:   prms.Insider.Get(),
-		}, nil
-	}
+		}, bi.NeedFile(MSVC_VSWHERE_EXE)
+	})
 }
 
-func GetMsvcCompiler(arch ArchType) BuildFactoryTyped[Compiler] {
-	return func(bi BuildInitializer) (Compiler, error) {
-		if err := bi.NeedFactories(
-			GetBuildableFlags(GetCompileFlags()),
-			GetBuildableFlags(GetWindowsFlags())); err != nil {
-			return nil, err
-		}
-
-		return &MsvcCompiler{
-			Arch:          arch,
-			CompilerRules: NewCompilerRules(NewCompilerAlias("msvc", "VisualStudio", arch.String())),
-		}, nil
-	}
+func GetMsvcCompiler(arch ArchType) BuildFactoryTyped[*MsvcCompiler] {
+	return MakeBuildFactory(func(bi BuildInitializer) (MsvcCompiler, error) {
+		return MsvcCompiler{
+				Arch:          arch,
+				CompilerRules: NewCompilerRules(NewCompilerAlias("msvc", "VisualStudio", arch.String())),
+			}, bi.NeedFactories(
+				GetBuildableFlags(GetCompileFlags()),
+				GetBuildableFlags(GetWindowsFlags()))
+	})
 }

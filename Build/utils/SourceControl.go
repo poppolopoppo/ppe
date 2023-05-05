@@ -29,7 +29,7 @@ type SourceControlStatus struct {
 	Timestamp time.Time
 }
 
-func (x *SourceControlStatus) Alias() BuildAlias {
+func (x SourceControlStatus) Alias() BuildAlias {
 	return MakeBuildAlias("SourceControl", "Status", x.Path.String())
 }
 func (x *SourceControlStatus) Build(BuildContext) (err error) {
@@ -47,11 +47,11 @@ func (x *SourceControlStatus) Serialize(ar Archive) {
 }
 
 func BuildSourceControlStatus(path Directory) BuildFactoryTyped[*SourceControlStatus] {
-	return func(bi BuildInitializer) (*SourceControlStatus, error) {
-		return &SourceControlStatus{
+	return MakeBuildFactory(func(bi BuildInitializer) (SourceControlStatus, error) {
+		return SourceControlStatus{
 			Path: path,
 		}, nil
-	}
+	})
 }
 
 /***************************************
@@ -63,7 +63,7 @@ type SourceControlModifiedFiles struct {
 	ModifiedFiles FileSet
 }
 
-func (x *SourceControlModifiedFiles) Alias() BuildAlias {
+func (x SourceControlModifiedFiles) Alias() BuildAlias {
 	return MakeBuildAlias("SourceControl", "ModifiedFiles", x.OutputFile.String())
 }
 func (x *SourceControlModifiedFiles) Build(bc BuildContext) (err error) {
@@ -89,11 +89,11 @@ func (x *SourceControlModifiedFiles) Serialize(ar Archive) {
 }
 
 func BuildSourceControlModifiedFiles() BuildFactoryTyped[*SourceControlModifiedFiles] {
-	return func(bi BuildInitializer) (*SourceControlModifiedFiles, error) {
-		return &SourceControlModifiedFiles{
+	return MakeBuildFactory(func(bi BuildInitializer) (SourceControlModifiedFiles, error) {
+		return SourceControlModifiedFiles{
 			OutputFile: UFS.Saved.File(".modified_files_list.txt"),
 		}, nil
-	}
+	})
 }
 
 /***************************************
