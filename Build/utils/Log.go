@@ -302,16 +302,12 @@ type pinnedLogManager struct {
 }
 
 var pinnedFake = &pinnedLogFake{}
+var pinnedLogRefresh func()
 var pinnedLog = Memoize(func() *pinnedLogManager {
 	manager := &pinnedLogManager{
 		stream: os.Stderr,
 	}
-	go func() {
-		for {
-			time.Sleep(50 * time.Millisecond)
-			manager.refresh()
-		}
-	}()
+	pinnedLogRefresh = manager.refresh
 	return manager
 })
 

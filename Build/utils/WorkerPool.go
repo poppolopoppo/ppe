@@ -3,11 +3,13 @@ package utils
 import (
 	"runtime"
 	"sync"
+	"time"
 )
 
 type TaskFunc func()
 
 type WorkerPool interface {
+	Name() string
 	Arity() int
 	Queue(TaskFunc)
 	Join()
@@ -28,7 +30,32 @@ var GetGlobalWorkerPool = Memoize(func() (result WorkerPool) {
 	return
 })
 var GetLoggerWorkerPool = Memoize(func() (result WorkerPool) {
-	result = NewFixedSizeWorkerPool("logger", 1)
+	result = NewFixedSizeWorkerPoolEx("logger", 1, func(fswp *fixedSizeWorkerPool, i int) {
+		onWorkerThreadStart(fswp, i)
+		defer onWorkerThreadStop(fswp, i)
+
+		for quit := false; !quit; {
+			if pinnedLogRefresh != nil {
+				select {
+				case task := (<-fswp.give):
+					if task != nil {
+						task()
+					} else {
+						quit = true
+					}
+				// refresh pinned logs if no message output after a while
+				case <-time.After(33 * time.Millisecond):
+					pinnedLogRefresh()
+				}
+			} else {
+				if task := (<-fswp.give); task != nil {
+					task()
+				} else {
+					quit = true
+				}
+			}
+		}
+	})
 	allWorkerPools = append(allWorkerPools, result)
 	return
 })
@@ -43,6 +70,11 @@ type fixedSizeWorkerPool struct {
 }
 
 func NewFixedSizeWorkerPool(name string, numWorkers int) WorkerPool {
+	return NewFixedSizeWorkerPoolEx(name, numWorkers, func(fswp *fixedSizeWorkerPool, i int) {
+		fswp.workerLoop(i)
+	})
+}
+func NewFixedSizeWorkerPoolEx(name string, numWorkers int, loop func(*fixedSizeWorkerPool, int)) WorkerPool {
 	pool := &fixedSizeWorkerPool{
 		give:       make(chan TaskFunc, 8192),
 		name:       name,
@@ -52,13 +84,12 @@ func NewFixedSizeWorkerPool(name string, numWorkers int) WorkerPool {
 	pool.cond = sync.NewCond(&pool.mutex)
 	for i := 0; i < pool.numWorkers; i += 1 {
 		workerIndex := i
-		go pool.workerLoop(workerIndex)
+		go loop(pool, workerIndex)
 	}
 	return pool
 }
-func (x *fixedSizeWorkerPool) Arity() int {
-	return x.numWorkers
-}
+func (x *fixedSizeWorkerPool) Name() string { return x.name }
+func (x *fixedSizeWorkerPool) Arity() int   { return x.numWorkers }
 func (x *fixedSizeWorkerPool) Queue(task TaskFunc) {
 	Assert(func() bool { return task != nil })
 	x.give <- task
@@ -107,7 +138,7 @@ func (x *fixedSizeWorkerPool) Resize(n int) {
 	}
 	x.numWorkers += delta
 }
-func (x *fixedSizeWorkerPool) workerLoop(workerIndex int) {
+func onWorkerThreadStart(pool WorkerPool, workerIndex int) {
 	// LockOSThread wires the calling goroutine to its current operating system thread.
 	// The calling goroutine will always execute in that thread,
 	// and no other goroutine will execute in it,
@@ -116,7 +147,13 @@ func (x *fixedSizeWorkerPool) workerLoop(workerIndex int) {
 	// If the calling goroutine exits without unlocking the thread,
 	// the thread will be terminated.
 	runtime.LockOSThread()
-	defer runtime.UnlockOSThread()
+}
+func onWorkerThreadStop(pool WorkerPool, workerIndex int) {
+	//runtime.UnlockOSThread() // let acquired thread die with the pool
+}
+func (x *fixedSizeWorkerPool) workerLoop(workerIndex int) {
+	onWorkerThreadStart(x, workerIndex)
+	defer onWorkerThreadStop(x, workerIndex)
 
 	for {
 		if task := (<-x.give); task != nil {
