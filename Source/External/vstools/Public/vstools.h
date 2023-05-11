@@ -6,8 +6,6 @@
 #   define USE_PPE_EXTERNAL_VSTOOLS 0
 #endif
 
-#if USE_PPE_EXTERNAL_VSTOOLS
-
 #include "Meta/Aliases.h"
 
 #ifdef EXPORT_PPE_EXTERNAL_VSTOOLS
@@ -16,23 +14,27 @@
 #   define PPE_VSTOOLS_API DLL_IMPORT
 #endif
 
-extern "C" {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef void* vstools_FHeapTracker;
-//----------------------------------------------------------------------------
-PPE_VSTOOLS_API vstools_FHeapTracker vstools_CreateHeapTracker(const char* name);
-PPE_VSTOOLS_API void vstools_DestroyHeapTracker(vstools_FHeapTracker heap);
-//----------------------------------------------------------------------------
-PPE_VSTOOLS_API bool vstools_IsValidHeapTracker(vstools_FHeapTracker heap) NOEXCEPT;
-//----------------------------------------------------------------------------
-PPE_VSTOOLS_API bool vstools_AllocateEvent(vstools_FHeapTracker heap, void* ptr, size_t sz);
-PPE_VSTOOLS_API bool vstools_ReallocateEvent(vstools_FHeapTracker heap, void* newp, size_t newsz, void* oldp);
-PPE_VSTOOLS_API bool vstools_DeallocateEvent(vstools_FHeapTracker heap, void* ptr);
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-} //!extern "C"
+class PPE_VSTOOLS_API IVSTools {
+public:
+    typedef void* FHeapTracker;
 
-#endif //!USE_PPE_EXTERNAL_VSTOOLS
+    virtual bool Available() const NOEXCEPT = 0;
+
+    virtual FHeapTracker CreateHeapTracker(const char* name) = 0;
+    virtual void DestroyHeapTracker(FHeapTracker heap) = 0;
+    virtual bool IsValidHeapTracker(FHeapTracker heap) const NOEXCEPT = 0;
+
+    virtual bool AllocateEvent(FHeapTracker heap, void* ptr, size_t sz) = 0;
+    virtual bool ReallocateEvent(FHeapTracker heap, void* newp, size_t newsz, void* oldp) = 0;
+    virtual bool DeallocateEvent(FHeapTracker heap, void* ptr) = 0;
+};
+//----------------------------------------------------------------------------
+extern "C" {
+PPE_VSTOOLS_API IVSTools* GetVSToolsInterface() NOEXCEPT;
+} //!extern "C"
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------

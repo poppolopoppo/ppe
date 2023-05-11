@@ -8,6 +8,9 @@
 	"SourceFiles": [
 		"Private/vstools.cpp"
 	],
+	"AllowedPlatforms": [
+		"Win32", "Win64"
+	],
 	"Debug": "Disabled",
 	"Link": "Dynamic",
 	"HAL": {
