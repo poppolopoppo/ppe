@@ -340,7 +340,7 @@ struct TAllocatorTraits {
             return a.Reallocate(b, s);
         }
         else {
-            if ((!!b) & (!!s)) {
+            if ((!!b) && (!!s)) {
                 const FAllocatorBlock r = a.Allocate(s);
                 Assert_NoAssume(r);
                 FPlatformMemory::MemcpyLarge(r.Data, b.Data, Min(s, b.SizeInBytes));
@@ -435,7 +435,6 @@ struct TAllocatorTraits {
     }
 
 #endif
-
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

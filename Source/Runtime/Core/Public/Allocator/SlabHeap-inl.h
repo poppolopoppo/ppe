@@ -45,7 +45,7 @@ TSlabHeap<_Allocator>::TSlabHeap(const _Allocator& alloc) NOEXCEPT
 template <typename _Allocator>
 TSlabHeap<_Allocator>::~TSlabHeap() {
     Assert_NoAssume(CheckCanary_());
-    ONLY_IF_MEMORYDOMAINS(AssertRelease_NoAssume(_trackingData.User().NumAllocs == 0));
+    ONLY_IF_MEMORYDOMAINS(Assert_NoAssume(_trackingData.User().NumAllocs == 0));
     ReleaseAll();
     ONLY_IF_MEMORYDOMAINS(UnregisterTrackingData(&_trackingData));
 }
@@ -69,7 +69,7 @@ void* TSlabHeap<_Allocator>::Reallocate_AssumeLast(void* ptr, size_t newSize, si
             return FPlatformMemory::Memaliases(slab.Ptr, slab.Size, ptr);
         });
 
-        AssertRelease(pSlab);
+        Assert(pSlab);
         Assert_NoAssume(FPlatformMemory::Memaliases(pSlab->Ptr, pSlab->Size, static_cast<u8*>(ptr) + oldSize - 1));
         Assert(static_cast<u8*>(pSlab->Ptr) + pSlab->Offset - oldSize == ptr);
         Assert(pSlab->Offset >= oldSize);
@@ -253,11 +253,11 @@ void* TSlabHeap<_Allocator>::Allocate_FromNewSlab_(size_t size) {
 
     const FAllocatorBlock blk = allocator_traits_without_tracking::Allocate(allocator, thisSlabSize);
 
-    AssertRelease(blk.Data);
+    Assert(blk.Data);
     ONLY_IF_MEMORYDOMAINS(_trackingData.AllocateSystem(blk.SizeInBytes));
 
     FSlabPtr slab{ blk.Data, 0u, checked_cast<u32>(blk.SizeInBytes), true/* need to deallocate */ };
-    AssertRelease(slab.Offset + size <= slab.Size);
+    Assert(slab.Offset + size <= slab.Size);
 
     void* const result = static_cast<u8*>(slab.Ptr) + slab.Offset;
     slab.Offset += checked_cast<u32>(size);

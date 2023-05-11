@@ -3,10 +3,12 @@
 #include "Core_fwd.h"
 
 // Memory Domains ON/OFF
-#if not (USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING) // %_NOCOMMIT%
-#   define USE_PPE_MEMORYDOMAINS 1
-#else
-#   define USE_PPE_MEMORYDOMAINS 0
+#ifndef USE_PPE_MEMORYDOMAINS
+#   if not (USE_PPE_FINAL_RELEASE || USE_PPE_PROFILING) // %_NOCOMMIT%
+#       define USE_PPE_MEMORYDOMAINS 1
+#   else
+#       define USE_PPE_MEMORYDOMAINS 0
+#   endif
 #endif
 
 // Memory domains collapsing (less codegen)

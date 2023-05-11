@@ -306,7 +306,7 @@ namespace details {
 template <typename T>
 FORCE_INLINE void Construct_(T* p, FNoInit, std::false_type) { INPLACE_NEW(p, T){}; }
 template <typename T>
-FORCE_INLINE void Construct_(T* p, FNoInit noInit, std::true_type) { INPLACE_NEW(p, T){ noInit }; }
+FORCE_INLINE void Construct_(T* p, FNoInit noInit, std::true_type) { INPLACE_NEW(p, T)(noInit); }
 } //!details
 template <typename T>
 void Construct(T* p, FNoInit noInit) {
@@ -318,7 +318,7 @@ namespace details {
 template <typename T>
 FORCE_INLINE void Construct_(T* p, FForceInit, std::false_type) { INPLACE_NEW(p, T){}; }
 template <typename T>
-FORCE_INLINE void Construct_(T* p, FForceInit init, std::true_type) { INPLACE_NEW(p, T){ init }; }
+FORCE_INLINE void Construct_(T* p, FForceInit init, std::true_type) { INPLACE_NEW(p, T)(init); }
 } //!details
 template <typename T>
 void Construct(T* p, FForceInit init) {

@@ -292,7 +292,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Can lock a subset instead of all resource
+// Can lock a subset instead of all resource (best used with a hash function)
 //----------------------------------------------------------------------------
 class CACHELINE_ALIGNED FAtomicMaskLock : Meta::FNonCopyableNorMovable {
 public:

@@ -20,7 +20,12 @@ struct TBasicConstChar {
     CONSTEXPR const _Char* c_str() const NOEXCEPT { return Data; }
     CONSTEXPR operator const _Char* () const NOEXCEPT { return Data; }
 
-    size_t length() const { return Length(Data); }
+    CONSTEXPR size_t length() const {
+        if (nullptr == Data) return 0;
+        size_t len = 0;
+        for(const _Char* s = Data; s[len]; ++len);
+        return len;
+    }
 
     CONSTEXPR bool Equals(const TBasicConstChar& other) const NOEXCEPT {
         const _Char* a = Data;
@@ -79,14 +84,14 @@ struct TBasicConstChar {
     }
 
     CONSTEXPR size_t HashValue() const NOEXCEPT {
-        size_t h = 0;
+        size_t h = PPE_HASH_VALUE_SEED;
         for (const _Char* ch = Data; *ch; ++ch)
             h = hash_size_t_constexpr(h, *ch);
         return h;
     }
 
     CONSTEXPR size_t HashValueI() const NOEXCEPT {
-        size_t h = 0;
+        size_t h = PPE_HASH_VALUE_SEED;
         for (const _Char* ch = Data; *ch; ++ch)
             h = hash_size_t_constexpr(h, ToLower(*ch));
         return h;
@@ -99,7 +104,7 @@ struct TBasicConstChar {
     }
 
     CONSTEXPR TBasicStringView<_Char> MakeView() const NOEXCEPT {
-        return TBasicStringView<_Char>(Data, Data ? Length(Data) : 0);
+        return TBasicStringView<_Char>(Data, Data ? length() : 0);
     }
 
     CONSTEXPR inline friend bool operator ==(const TBasicConstChar& lhs, const TBasicConstChar& rhs) NOEXCEPT { return lhs.Equals(rhs); }

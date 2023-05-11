@@ -135,11 +135,6 @@ auto FWindowsPlatformMemory::StackUsage() -> FStackUsage {
     return usage;
 }
 //----------------------------------------------------------------------------
-void* FWindowsPlatformMemory::AddressOfReturnAddress() {
-    // https://docs.microsoft.com/en-us/cpp/intrinsics/addressofreturnaddress?view=vs-2017
-    return _AddressOfReturnAddress();
-}
-//----------------------------------------------------------------------------
 void* FWindowsPlatformMemory::PageAlloc(size_t sizeInBytes) {
     Assert(sizeInBytes);
     Assert(Meta::IsAlignedPow2(PAGE_SIZE, sizeInBytes));

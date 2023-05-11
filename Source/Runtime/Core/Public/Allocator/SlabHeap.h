@@ -132,7 +132,7 @@ private:
     friend class TPoolingSlabHeap;
     void ReclaimUserBlock_AssumeTracked_(void* ptr, size_t size);
 
-    VECTORINSITU(SlabHeap, FSlabPtr, 4) _slabs;
+    TVector<FSlabPtr, _Allocator> _slabs;
     u32 _slabSize{ DefaultSlabSize };
 
 #if USE_PPE_ASSERT
@@ -201,7 +201,7 @@ public:
     size_t SlabSize() const { return _heap.SlabSize(); }
     void SetSlabSize(size_t value) NOEXCEPT {
         _heap.SetSlabSize(value);
-        AssertRelease_NoAssume(_heap.SlabSize() >= MaxBinSize);
+        Assert_Lightweight(_heap.SlabSize() >= MaxBinSize);
     }
 
 #if !USE_PPE_FINAL_RELEASE

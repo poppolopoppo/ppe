@@ -18,7 +18,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_CORE_API FWindowsPlatformMemory : FGenericPlatformMemory {
+struct FWindowsPlatformMemory : FGenericPlatformMemory {
 public:
     STATIC_CONST_INTEGRAL(size_t, PageSize, PAGE_SIZE);
     STATIC_CONST_INTEGRAL(size_t, CacheLineSize, CACHELINE_SIZE);
@@ -28,29 +28,32 @@ public:
     // platform memory infos
 
     using FGenericPlatformMemory::FConstants;
-    static const FConstants& Constants();
+    static PPE_CORE_API const FConstants& Constants();
 
     using FGenericPlatformMemory::FStats;
-    static FStats Stats();
+    static PPE_CORE_API FStats Stats();
 
     using FGenericPlatformMemory::FStackUsage;
-    static FStackUsage StackUsage();
+    static PPE_CORE_API FStackUsage StackUsage();
 
-    static void* AddressOfReturnAddress();
+    static void* AddressOfReturnAddress() {
+        // https://docs.microsoft.com/en-us/cpp/intrinsics/addressofreturnaddress?view=vs-2017
+        return _AddressOfReturnAddress();
+    }
 
     //------------------------------------------------------------------------
     // virtual memory *DONT USE THOSE DIRECTLY, SEE VirtualMemory.h * (no logs !)
 
-    static void* PageAlloc(size_t sizeInBytes);
-    static void PageFree(void* ptr, size_t sizeInBytes);
+    static PPE_CORE_API void* PageAlloc(size_t sizeInBytes);
+    static PPE_CORE_API void PageFree(void* ptr, size_t sizeInBytes);
 
-    static void* VirtualAlloc(size_t sizeInBytes, bool commit);
-    static void* VirtualAlloc(size_t alignment, size_t sizeInBytes, bool commit);
-    static void VirtualCommit(void* ptr, size_t sizeInBytes);
-    static void VirtualFree(void* ptr, size_t sizeInBytes, bool release);
+    static PPE_CORE_API void* VirtualAlloc(size_t sizeInBytes, bool commit);
+    static PPE_CORE_API void* VirtualAlloc(size_t alignment, size_t sizeInBytes, bool commit);
+    static PPE_CORE_API void VirtualCommit(void* ptr, size_t sizeInBytes);
+    static PPE_CORE_API void VirtualFree(void* ptr, size_t sizeInBytes, bool release);
 
-    static size_t RegionSize(void* ptr);
-    static bool PageProtect(void* ptr, size_t sizeInBytes, bool read, bool write);
+    static PPE_CORE_API size_t RegionSize(void* ptr);
+    static PPE_CORE_API bool PageProtect(void* ptr, size_t sizeInBytes, bool read, bool write);
 
     //------------------------------------------------------------------------
     // memory block helpers
@@ -170,7 +173,7 @@ public:
 
     using FGenericPlatformMemory::BackupMemorySizeInBytes;
 
-    static void OnOutOfMemory(size_t sizeInBytes, size_t alignment);
+    static PPE_CORE_API void OnOutOfMemory(size_t sizeInBytes, size_t alignment);
 
 };
 //----------------------------------------------------------------------------

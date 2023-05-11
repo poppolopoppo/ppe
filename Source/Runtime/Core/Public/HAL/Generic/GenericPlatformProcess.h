@@ -18,7 +18,7 @@ enum class EProcessPriority {
     Idle,
 };
 //----------------------------------------------------------------------------
-struct PPE_CORE_API FGenericPlatformProcess {
+struct FGenericPlatformProcess {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(bool, HasSemaphore, false);
     STATIC_CONST_INTEGRAL(bool, HasSpawnProcess, false);
@@ -27,10 +27,10 @@ public: // must be defined for every platform
     // platform hooks for process start/shutdown
     // NOTE: these are implemented and should be called by platform specific overrides
 
-    static void OnProcessStart(
+    static PPE_CORE_API void OnProcessStart(
         void* appHandle, int nShowCmd,
         const wchar_t* filename, size_t argc, const wchar_t* const* argv );
-    static void OnProcessShutdown();
+    static PPE_CORE_API void OnProcessShutdown();
 
     //------------------------------------------------------------------------
     // sleep

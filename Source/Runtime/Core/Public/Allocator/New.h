@@ -1,6 +1,8 @@
 ﻿#pragma once
 
-#define PPE_OVERRIDE_NEW_OPERATORS (!USE_PPE_SANITIZER) // turn to 0 to disable global allocator overriding %_NOCOMMIT%
+#ifndef PPE_OVERRIDE_NEW_OPERATORS
+#   define PPE_OVERRIDE_NEW_OPERATORS (!USE_PPE_SANITIZER) // turn to 0 to disable global allocator overriding %_NOCOMMIT%
+#endif
 
 #if PPE_OVERRIDE_NEW_OPERATORS
 

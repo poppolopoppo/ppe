@@ -31,7 +31,7 @@ struct FGenericPlatformMemoryStackUsage {
     u64 Committed;
 };
 //----------------------------------------------------------------------------
-struct PPE_CORE_API FGenericPlatformMemory {
+struct FGenericPlatformMemory {
 public: // must be defined for every platform
     STATIC_CONST_INTEGRAL(size_t, CacheLineSize, 64);
 
@@ -66,16 +66,16 @@ public: // must be defined for every platform
     //------------------------------------------------------------------------
     // system allocator
 
-    NODISCARD static void* SystemMalloc(size_t s);
-    NODISCARD static void* SystemRealloc(void* p, size_t s);
+    NODISCARD PPE_CORE_API static void* SystemMalloc(size_t s);
+    NODISCARD PPE_CORE_API static void* SystemRealloc(void* p, size_t s);
     static void SystemFree(void* p);
 
-    NODISCARD static void* SystemAlignedMalloc(size_t s, size_t boundary);
-    NODISCARD static void* SystemAlignedRealloc(void* p, size_t s, size_t boundary);
-    static void SystemAlignedFree(void* p, size_t boundary);
+    NODISCARD PPE_CORE_API static void* SystemAlignedMalloc(size_t s, size_t boundary);
+    NODISCARD PPE_CORE_API static void* SystemAlignedRealloc(void* p, size_t s, size_t boundary);
+    PPE_CORE_API static void SystemAlignedFree(void* p, size_t boundary);
 
 #if !USE_PPE_FINAL_RELEASE
-    static size_t SystemAlignedRegionSize(void* p, size_t boundary);
+    PPE_CORE_API static size_t SystemAlignedRegionSize(void* p, size_t boundary);
 #endif
 
     //------------------------------------------------------------------------

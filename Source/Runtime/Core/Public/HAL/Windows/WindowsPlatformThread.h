@@ -10,12 +10,12 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_CORE_API FWindowsPlatformThread : FGenericPlatformThread {
+struct FWindowsPlatformThread : FGenericPlatformThread {
 public:
     STATIC_CONST_INTEGRAL(bool, HasReadWriteLock, true);
 
-    static void OnThreadStart();
-    static void OnThreadShutdown();
+    static PPE_CORE_API void OnThreadStart();
+    static PPE_CORE_API void OnThreadShutdown();
 
     //------------------------------------------------------------------------
     // thread properties
@@ -24,14 +24,14 @@ public:
 
     static const FAffinityMask AllCoresAffinity;
 
-    static FAffinityMask MainThreadAffinity();
-    static FAffinityMask SecondaryThreadAffinity();
+    static PPE_CORE_API FAffinityMask MainThreadAffinity();
+    static PPE_CORE_API FAffinityMask SecondaryThreadAffinity();
 
-    static FAffinityMask AffinityMask();
-    static void SetAffinityMask(FAffinityMask mask);
+    static PPE_CORE_API FAffinityMask AffinityMask();
+    static PPE_CORE_API void SetAffinityMask(FAffinityMask mask);
 
-    static EThreadPriority Priority();
-    static void SetPriority(EThreadPriority priority);
+    static PPE_CORE_API EThreadPriority Priority();
+    static PPE_CORE_API void SetPriority(EThreadPriority priority);
 
     //------------------------------------------------------------------------
     // task group
