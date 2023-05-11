@@ -267,8 +267,8 @@ func (vsc *VscodeBuilder) launch_configs(programAliases ModuleAliases, compiler 
 		environment := []JsonMap{}
 		for _, it := range compiler.GetCompiler().Environment {
 			environment = append(environment, JsonMap{
-				"name":   it.Name.String(),
-				"values": strings.Join(it.Values, ";"),
+				"name":  it.Name.String(),
+				"value": strings.Join(it.Values, ";"),
 			})
 		}
 
