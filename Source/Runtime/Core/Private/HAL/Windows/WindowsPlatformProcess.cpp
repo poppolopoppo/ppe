@@ -245,14 +245,6 @@ void FWindowsPlatformProcess::OnProcessShutdown() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-auto FWindowsPlatformProcess::CurrentPID() -> FProcessId {
-    return ::GetCurrentProcessId();
-}
-//----------------------------------------------------------------------------
-auto FWindowsPlatformProcess::CurrentProcess() -> FProcessHandle {
-    return ::GetCurrentProcess();
-}
-//----------------------------------------------------------------------------
 bool FWindowsPlatformProcess::EnableDebugPrivileges() {
     ::HANDLE hToken;
     ::LUID luid;

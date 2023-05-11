@@ -18,7 +18,9 @@ TSlabHeap<_Allocator>::TSlabHeap() NOEXCEPT
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap(Meta::FForceInit) NOEXCEPT
-:   allocator_type(Meta::MakeForceInit<allocator_type>()) {// used for non default-constructible allocators
+:   allocator_type(Meta::MakeForceInit<allocator_type>())
+,   _slabs(static_cast<allocator_type&>(*this))
+{// used for non default-constructible allocators
 #if USE_PPE_MEMORYDOMAINS
     RegisterTrackingData(&_trackingData);
 #endif
@@ -28,6 +30,7 @@ TSlabHeap<_Allocator>::TSlabHeap(Meta::FForceInit) NOEXCEPT
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap(_Allocator&& ralloc) NOEXCEPT
 :   _Allocator(TAllocatorTraits<_Allocator>::SelectOnMove(std::move(ralloc)))
+,   _slabs(static_cast<allocator_type&>(*this))
 ,   _trackingData(Meta::type_info<TSlabHeap>.name, allocator_traits::TrackingData(*this)) {
     RegisterTrackingData(&_trackingData);
 }
@@ -37,6 +40,7 @@ TSlabHeap<_Allocator>::TSlabHeap(_Allocator&& ralloc) NOEXCEPT
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap(const _Allocator& alloc) NOEXCEPT
 :   _Allocator(TAllocatorTraits<_Allocator>::SelectOnCopy(alloc))
+,   _slabs(static_cast<allocator_type&>(*this))
 ,   _trackingData(Meta::type_info<TSlabHeap>.name, allocator_traits::TrackingData(*this)) {
     RegisterTrackingData(&_trackingData);
 }

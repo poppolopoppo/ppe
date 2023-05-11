@@ -29,8 +29,14 @@ public:
     explicit TSlabHeap(const allocator_type& alloc) NOEXCEPT;
 #else
     TSlabHeap() = default;
-    explicit TSlabHeap(allocator_type&& ralloc) NOEXCEPT : allocator_type(allocator_traits::SelectOnMove(std::move(ralloc))) {}
-    explicit TSlabHeap(const allocator_type& alloc) NOEXCEPT : allocator_type(allocator_traits::SelectOnCopy(alloc)) {}
+    explicit TSlabHeap(allocator_type&& ralloc) NOEXCEPT
+        : allocator_type(allocator_traits::SelectOnMove(std::move(ralloc)))
+        , _slabs(static_cast<allocator_type&>(*this))
+    {}
+    explicit TSlabHeap(const allocator_type& alloc) NOEXCEPT
+        : allocator_type(allocator_traits::SelectOnCopy(alloc))
+        , _slabs(static_cast<allocator_type&>(*this))
+    {}
 #endif
 
     explicit TSlabHeap(Meta::FForceInit) NOEXCEPT;
