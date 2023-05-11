@@ -37,14 +37,15 @@ const FTokenFactory::FEntry* FTokenFactory::Lookup(size_t len, size_t hash, cons
 }
 //----------------------------------------------------------------------------
 const FTokenFactory::FEntry* FTokenFactory::Allocate(void* src, size_t len, size_t stride, size_t hash, const FEntry* tail) {
-    FEntry* result = const_cast<FEntry*>(Lookup(len, hash, tail)); // check if wasn't allocated by another thread
-    if (result)
-        return result;
-
     const size_t bucket = (hash & MaskBuckets);
 
     // the lock is not exclusive to all buckets, instead we only lock the chunk where lie the current bucket
-    const FAtomicMaskLock::FScopeLock scopeLock(_barrier, FAtomicMaskLock::size_type(1) << (bucket / FAtomicMaskLock::NumBuckets));
+    const FAtomicMaskLock::FScopeLock scopeLock(_barrier,
+        FAtomicMaskLock::size_type(1) << (hash_size_t_constexpr(bucket) % FAtomicMaskLock::NumBuckets));
+
+    FEntry* result = const_cast<FEntry*>(Lookup(len, hash, tail)); // check if wasn't allocated by another thread
+    if (result)
+        return result;
 
     FEntry* head = _bucketHeads[bucket];
     tail = _bucketTails[bucket];
