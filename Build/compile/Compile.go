@@ -157,6 +157,11 @@ func (x *BuildTargets) Build(bc BuildContext) error {
 		return err
 	}
 
+	err = bc.DependsOn(MakeBuildAliases(moduleGraph.SortedModules()...)...)
+	if err != nil {
+		return err
+	}
+
 	err = ParallelRange(func(module Module) error {
 		node := moduleGraph.NodeByModule(module)
 		unit, err := compileEnv.Compile(compiler, node.Rules) // node.rules may be different from module.GetModule()
