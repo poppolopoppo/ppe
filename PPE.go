@@ -248,13 +248,13 @@ func makePPE_Internal(rules *ModuleRules) {
 }
 
 func makePPE_Headers(rules *ModuleRules) {
-	rules.ModuleType = MODULE_HEADERS
+	Inherit(&rules.ModuleType, MODULE_HEADERS)
 	Inherit(&rules.DebugSymbols, DEBUG_EMBEDDED)
 	rules.IncludePaths.Append(CorePublicDir)
 }
 func makePPE_External(rules *ModuleRules) {
 	makePPE_Common(rules)
-	rules.ModuleType = MODULE_EXTERNAL
+	Inherit(&rules.ModuleType, MODULE_EXTERNAL)
 	Inherit(&rules.DebugSymbols, DEBUG_EMBEDDED)
 	Inherit(&rules.Unity, UNITY_DISABLED)
 	rules.IncludePaths.Append(CorePublicDir)
@@ -262,7 +262,7 @@ func makePPE_External(rules *ModuleRules) {
 func makePPE_Module(rules *ModuleRules) {
 	makePPE_Common(rules)
 	makePPE_Internal(rules)
-	rules.ModuleType = MODULE_LIBRARY
+	Inherit(&rules.ModuleType, MODULE_LIBRARY)
 
 	moduleCpp := rules.PrivateDir().File(rules.ModuleAlias.ModuleName + "Module.cpp")
 	if moduleCpp.Exists() { // isolate module since it's including BuildXXX.generated.h files
@@ -272,7 +272,7 @@ func makePPE_Module(rules *ModuleRules) {
 func makePPE_Program(rules *ModuleRules, usage UsageType) {
 	makePPE_Common(rules)
 	makePPE_Internal(rules)
-	rules.ModuleType = MODULE_PROGRAM
+	Inherit(&rules.ModuleType, MODULE_PROGRAM)
 	Inherit(&rules.Link, LINK_STATIC)
 	Inherit(&rules.Unity, UNITY_DISABLED)
 	rules.Defines.Append("PPE_TARGET_NAME=" + rules.String())

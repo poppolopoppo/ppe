@@ -587,7 +587,8 @@ func (x *LinkType) AutoComplete(in AutoComplete) {
 type ModuleType int32
 
 const (
-	MODULE_PROGRAM ModuleType = iota
+	MODULE_INHERIT ModuleType = iota
+	MODULE_PROGRAM
 	MODULE_LIBRARY
 	MODULE_EXTERNAL
 	MODULE_HEADERS
@@ -603,6 +604,8 @@ func ModuleTypes() []ModuleType {
 }
 func (x ModuleType) String() string {
 	switch x {
+	case MODULE_INHERIT:
+		return "INHERIT"
 	case MODULE_PROGRAM:
 		return "PROGRAM"
 	case MODULE_LIBRARY:
@@ -618,6 +621,8 @@ func (x ModuleType) String() string {
 }
 func (x *ModuleType) Set(in string) (err error) {
 	switch strings.ToUpper(in) {
+	case MODULE_INHERIT.String():
+		*x = MODULE_INHERIT
 	case MODULE_PROGRAM.String():
 		*x = MODULE_PROGRAM
 	case MODULE_LIBRARY.String():
@@ -630,6 +635,9 @@ func (x *ModuleType) Set(in string) (err error) {
 		err = MakeUnexpectedValueError(x, in)
 	}
 	return err
+}
+func (x ModuleType) IsInheritable() bool {
+	return x == MODULE_INHERIT
 }
 func (x *ModuleType) Serialize(ar Archive) {
 	ar.Int32((*int32)(x))

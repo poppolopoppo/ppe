@@ -143,7 +143,7 @@ type ModuleDesc struct {
 	Name   string
 	Source Filename
 
-	Type ModuleType
+	ModuleType ModuleType
 
 	SourceDirs    StringSet
 	SourceGlobs   StringSet
@@ -187,7 +187,7 @@ func (x *ModuleDesc) CreateRules(src Filename, namespace *NamespaceDesc, moduleB
 	x.rules = &ModuleRules{
 		ModuleAlias: moduleAlias,
 		ModuleDir:   rootDir,
-		ModuleType:  x.Type,
+		ModuleType:  x.ModuleType,
 		CppRules:    x.CppRules,
 		Source: ModuleSource{
 			SourceGlobs:   x.SourceGlobs,
