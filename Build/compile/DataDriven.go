@@ -192,12 +192,12 @@ func (x *ModuleDesc) CreateRules(src Filename, namespace *NamespaceDesc, moduleB
 		Source: ModuleSource{
 			SourceGlobs:   x.SourceGlobs,
 			ExcludedGlobs: x.ExcludedGlobs,
-			SourceDirs:    x.SourceDirs.ToDirSet(rootDir),
-			SourceFiles:   x.SourceFiles.ToFileSet(rootDir),
-			ExcludedFiles: x.ExcludedFiles.ToFileSet(rootDir),
-			IsolatedFiles: x.IsolatedFiles.ToFileSet(rootDir),
-			ExtraFiles:    x.ExtraFiles.ToFileSet(rootDir),
-			ExtraDirs:     x.ExtraDirs.ToDirSet(rootDir),
+			SourceDirs:    x.SourceDirs.ToDirSet(rootDir).Normalize(),
+			SourceFiles:   x.SourceFiles.ToFileSet(rootDir).Normalize(),
+			ExcludedFiles: x.ExcludedFiles.ToFileSet(rootDir).Normalize(),
+			IsolatedFiles: x.IsolatedFiles.ToFileSet(rootDir).Normalize(),
+			ExtraFiles:    x.ExtraFiles.ToFileSet(rootDir).Normalize(),
+			ExtraDirs:     x.ExtraDirs.ToDirSet(rootDir).Normalize(),
 		},
 		PrivateDependencies: x.PrivateDependencies,
 		PublicDependencies:  x.PublicDependencies,
@@ -283,6 +283,8 @@ func (x *buildModulesDeserializer) loadModuleDesc(src Filename, namespace *Names
 func (x *buildModulesDeserializer) loadNamespaceDesc(src Filename, parent *NamespaceDesc) (*NamespaceDesc, error) {
 	LogTrace("loading data-driven namespace from '%v'", src)
 
+	src = src.Normalize()
+
 	result := &NamespaceDesc{
 		Source: src,
 	}
@@ -315,7 +317,7 @@ func (x *buildModulesDeserializer) loadNamespaceDesc(src Filename, parent *Names
 	x.namespaces = append(x.namespaces, result)
 
 	for _, it := range result.Modules {
-		f := result.rules.NamespaceDir.Folder(it).File(it + MODULEDESC_EXT)
+		f := result.rules.NamespaceDir.Folder(it).File(it + MODULEDESC_EXT).Normalize()
 		if module, err := x.loadModuleDesc(f, result); err == nil {
 			if module != nil { // check if module is allowed
 				result.rules.NamespaceModules.Append(module.rules.ModuleAlias)
@@ -326,7 +328,7 @@ func (x *buildModulesDeserializer) loadNamespaceDesc(src Filename, parent *Names
 	}
 
 	for _, it := range result.Children {
-		f := result.rules.NamespaceDir.Folder(it).File(it + NAMESPACEDESC_EXT)
+		f := result.rules.NamespaceDir.Folder(it).File(it + NAMESPACEDESC_EXT).Normalize()
 		if namespace, err := x.loadNamespaceDesc(f, result); err == nil {
 			if namespace != nil { // check if namespace is allowed
 				result.rules.NamespaceChildren.Append(namespace.rules.String())

@@ -39,7 +39,7 @@ func SetMTime(file *os.File, mtime time.Time) (err error) {
  * Cleaning path to get the correct case is terribly expansive on Windows
  ***************************************/
 
-var cleanPathCache SharedMapT[string, Directory]
+var cleanPathCache SharedMapT[string, string]
 
 // normVolumeName is like VolumeName, but makes drive letter upper case.
 // result of EvalSymlinks must be unique, so we have
@@ -114,20 +114,19 @@ func cacheCleanPath(in string) (string, error) {
 		var dirtyName string
 		if i, ok := firstIndexOfPathSeparator(in); ok {
 			dirtyName = in[:i]
-			writeLowerString(dirty, in[:i])
 			in = in[i+1:]
 		} else {
 			dirtyName = in
-			writeLowerString(dirty, in)
 			in = ""
 		}
+		writeLowerString(dirty, dirtyName)
 
 		if err == nil {
 			dirtyPath := UnsafeStringFromBuffer(dirty)
 
 			if realpath, ok := cleanPathCache.Get(dirtyPath); ok {
 				cleaned.Reset()
-				cleaned.WriteString(realpath.Path)
+				cleaned.WriteString(realpath)
 
 			} else if realname, er := normBase(dirtyPath); er == nil {
 				cleaned.WriteRune(OSPathSeparator)
@@ -136,8 +135,7 @@ func cacheCleanPath(in string) (string, error) {
 				// store in cache for future queries, avoid querying all files all paths all the time
 				cleanPathCache.Add(
 					// need string copies for caching here
-					dirty.String(),
-					Directory{Path: cleaned.String()})
+					dirty.String(), filepath.Clean(cleaned.String()))
 			} else {
 				err = er
 			}
@@ -149,21 +147,21 @@ func cacheCleanPath(in string) (string, error) {
 		}
 	}
 
-	return cleaned.String(), err
+	return filepath.Clean(cleaned.String()), err
 }
 
-func CleanPath(in string) Directory {
+func CleanPath(in string) string {
 	AssertMessage(func() bool { return filepath.IsAbs(in) }, "ufs: need absolute path -> %q", in)
-
-	// Maximize cache usage by always convert to lower-case on Windows
-	in = strings.ToLower(in)
 
 	// Those checks are cheap compared to the followings
 	in = filepath.Clean(in)
 
+	// Maximize cache usage by always convert to lower-case on Windows
+	query := strings.ToLower(in)
+
 	// /!\ EvalSymlinks() is **SUPER** expansive !
 	// Try to mitigate with an ad-hoc concurrent cache
-	if cleaned, ok := cleanPathCache.Get(in); ok {
+	if cleaned, ok := cleanPathCache.Get(query); ok {
 		return cleaned // cache-hit: already processed
 	}
 
@@ -176,11 +174,11 @@ func CleanPath(in string) Directory {
 	// result, err := filepath.EvalSymlinks(in)
 	result, err := cacheCleanPath(in)
 	if err != nil {
-		result = in
+		// result = in
 		err = nil // if path does not exist yet
 	}
 
-	return Directory(Directory{Path: result})
+	return result
 }
 
 /***************************************

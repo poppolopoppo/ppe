@@ -122,7 +122,7 @@ type Directory struct {
 }
 
 func MakeDirectory(str string) Directory {
-	return CleanPath(str)
+	return Directory{Path: CleanPath(str)}
 }
 func (d Directory) Valid() bool {
 	return len(d.Path) > 0
@@ -211,10 +211,11 @@ type Filename struct {
 }
 
 func MakeFilename(str string) Filename {
+	str = CleanPath(str)
 	dirname, basename := filepath.Split(str)
 	return Filename{
 		Basename: basename,
-		Dirname:  MakeDirectory(dirname),
+		Dirname:  Directory{Path: dirname[:len(dirname)-1]},
 	}
 }
 
@@ -680,6 +681,11 @@ func (list DirSet) Join(delim string) string {
 func (list DirSet) Local(path Directory) StringSet {
 	return NewStringSet(Map(MakeLocalDirectory, list...)...)
 }
+func (list DirSet) Normalize() DirSet {
+	return NewDirSet(Map(func(it Directory) Directory {
+		return it.Normalize()
+	}, list...)...)
+}
 
 /***************************************
  * FileSet
@@ -776,6 +782,11 @@ func (list FileSet) Join(delim string) string {
 }
 func (list FileSet) Local(path Directory) StringSet {
 	return NewStringSet(Map(MakeLocalFilename, list...)...)
+}
+func (list FileSet) Normalize() FileSet {
+	return NewFileSet(Map(func(it Filename) Filename {
+		return it.Normalize()
+	}, list...)...)
 }
 
 /***************************************
@@ -1165,15 +1176,12 @@ func (x *Directory) Serialize(ar Archive) {
 
 func BuildFile(source Filename, staticDeps ...BuildAlias) BuildFactoryTyped[*Filename] {
 	return MakeBuildFactory(func(bi BuildInitializer) (Filename, error) {
-		return Filename{
-			Basename: source.Basename,
-			Dirname:  source.Dirname,
-		}, bi.DependsOn(staticDeps...)
+		return source.Normalize(), bi.DependsOn(staticDeps...)
 	})
 }
 func BuildDirectory(source Directory, staticDeps ...BuildAlias) BuildFactoryTyped[*Directory] {
 	return MakeBuildFactory(func(bi BuildInitializer) (Directory, error) {
-		return Directory{Path: source.Path}, bi.DependsOn(staticDeps...)
+		return source.Normalize(), bi.DependsOn(staticDeps...)
 	})
 }
 
@@ -1194,7 +1202,7 @@ type FileDigest struct {
 func BuildFileDigest(source Filename) BuildFactoryTyped[*FileDigest] {
 	return MakeBuildFactory(func(bi BuildInitializer) (FileDigest, error) {
 		return FileDigest{
-			Source: source, //.Normalize(),
+			Source: source.Normalize(),
 		}, bi.NeedFile(source)
 	})
 }
@@ -1228,7 +1236,7 @@ type DirectoryCreator struct {
 func BuildDirectoryCreator(source Directory) BuildFactoryTyped[*DirectoryCreator] {
 	return MakeBuildFactory(func(init BuildInitializer) (DirectoryCreator, error) {
 		return DirectoryCreator{
-			Source: source, //.Normalize(),
+			Source: source.Normalize(),
 		}, nil
 	})
 }
@@ -1268,7 +1276,7 @@ type DirectoryList struct {
 func BuildDirectoryList(source Directory) BuildFactoryTyped[*DirectoryList] {
 	return MakeBuildFactory(func(init BuildInitializer) (DirectoryList, error) {
 		return DirectoryList{
-			Source:  source, // .Normalize(),
+			Source:  source.Normalize(),
 			Results: FileSet{},
 		}, init.NeedDirectory(source)
 	})
@@ -1288,7 +1296,7 @@ func (x *DirectoryList) Build(bc BuildContext) error {
 
 	x.Results = x.Source.Files()
 	for i, filename := range x.Results {
-		//filename = filename.Normalize()
+		filename = filename.Normalize()
 		x.Results[i] = filename
 
 		if err := bc.NeedFile(filename); err != nil {
@@ -1341,7 +1349,7 @@ func BuildDirectoryGlob(
 			ExcludedGlobs: excludedGlobs,
 			ExcludedFiles: excludedFiles,
 			Results:       FileSet{},
-		}, init.NeedDirectory(source)
+		}, nil //init.NeedDirectory(source) // no dependency so to be built every-time
 	})
 }
 

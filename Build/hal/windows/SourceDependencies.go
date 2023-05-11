@@ -24,7 +24,7 @@ type MsvcSourceDependenciesData struct {
 	Source              Filename
 	ProvidedModule      string
 	PCH                 Filename
-	Includes            []Filename
+	Includes            FileSet
 	ImportedModules     []MsvcSourceDependenciesImportModule
 	ImportedHeaderUnits []MsvcSourceDependenciesImportHeaderUnit
 }
@@ -37,15 +37,15 @@ func (x *MsvcSourceDependencies) Load(r io.Reader) error {
 	return JsonDeserialize(x, r)
 }
 func (x MsvcSourceDependencies) Files() (result []Filename) {
-	result = x.Data.Includes
+	result = x.Data.Includes.Normalize()
 	if x.Data.PCH.Valid() {
-		result = append(result, x.Data.PCH)
+		result = append(result, x.Data.PCH.Normalize())
 	}
 	for _, module := range x.Data.ImportedModules {
-		result = append(result, module.BMI)
+		result = append(result, module.BMI.Normalize())
 	}
 	for _, header := range x.Data.ImportedHeaderUnits {
-		result = append(result, header.Header, header.BMI)
+		result = append(result, header.Header.Normalize(), header.BMI.Normalize())
 	}
 	return
 }

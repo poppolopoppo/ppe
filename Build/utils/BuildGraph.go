@@ -842,6 +842,8 @@ func (x *buildExecuteContext) OutputFile(files ...Filename) error {
 	bo.Force = true
 
 	for _, it := range files {
+		it = it.Normalize()
+
 		// create output file with a static dependency pointing to its creator (e.g x.node here)
 		file, err := BuildFile(it, x.node.BuildAlias).Init(x.graph, OptionBuildStruct(bo))
 		if err != nil {
