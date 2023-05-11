@@ -34,11 +34,11 @@ func newWindowsSDK(rootDir Directory, version string) (result WindowsSDK) {
 		"VC_EXTRALEAN",             // https://support.microsoft.com/en-us/kb/166474
 		"WIN32_LEAN_AND_MEAN",      // https://support.microsoft.com/en-us/kb/166474
 		"_NO_W32_PSEUDO_MODIFIERS", // Prevent windows from #defining IN or OUT (undocumented)
-		"DBGHELP_TRANSLATE_TCHAR",  // https://msdn.microsoft.com/en-us/library/windows/desktop/ms679294(v=vs.85).aspx
-		"_UNICODE",                 // https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
-		"UNICODE",                  // defaults to UTF-8
-		"_HAS_EXCEPTIONS=0",        // Disable STL exceptions
-		"OEMRESOURCE",              // https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-setsystemcursor
+		// "DBGHELP_TRANSLATE_TCHAR",  // https://msdn.microsoft.com/en-us/library/windows/desktop/ms679294(v=vs.85).aspx
+		"_UNICODE",          // https://msdn.microsoft.com/fr-fr/library/dybsewaf.aspx
+		"UNICODE",           // defaults to UTF-8
+		"_HAS_EXCEPTIONS=0", // Disable STL exceptions
+		"OEMRESOURCE",       // https://docs.microsoft.com/en-us/windows/desktop/api/winuser/nf-winuser-setsystemcursor
 	)
 	return result
 }
