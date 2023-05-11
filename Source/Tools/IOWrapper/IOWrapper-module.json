@@ -1,0 +1,24 @@
+{
+	"AllowedPlatforms": [
+		"Win32", "Win64"
+	],
+	"ExtraFiles": [
+		"resource.rc"
+	],
+	"PCH": "Disabled",
+	"Unity": "Disabled",
+	"Defines": [
+		"USE_PPE_MEMORYDOMAINS=0",
+		"PPE_OVERRIDE_NEW_OPERATORS=0"
+	],
+	"IncludePaths": [
+		"Source/Runtime/Core/Public"
+	],
+	"HAL": {
+		"Windows": {
+			"PrivateDependencies": [
+				"External/detours"
+			]
+		}
+	}
+}

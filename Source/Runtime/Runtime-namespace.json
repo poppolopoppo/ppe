@@ -10,6 +10,7 @@
 		"RHI",
 		"Network",
 		"Remoting",
-		"Application"
+		"Application",
+		"IODetouring"
 	]
 }

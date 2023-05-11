@@ -1,0 +1,27 @@
+{
+	"Archetypes": [
+		"PPE/External"
+	],
+	"AllowedPlatforms": [
+		"Win32", "Win64"
+	],
+	"Defines": [
+		"USE_PPE_MEMORYDOMAINS=0",
+		"PPE_OVERRIDE_NEW_OPERATORS=0"
+	],
+	"Link": "Dynamic",
+	"PCH": "Disabled",
+	"HAL": {
+		"Windows": {
+			"CompilerOptions": [
+				"/MD"
+			],
+			"LinkerOptions": [
+				"/LTCG"
+			],
+			"PrivateDependencies": [
+				"External/detours"
+			]
+		}
+	}
+}

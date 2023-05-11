@@ -4,6 +4,7 @@
 	],
 	"Modules": [
 		"BuildRobot",
+		"IOWrapper",
 		"ShaderToy",
 		"VoxelCube",
 		"UnitTest",
