@@ -47,3 +47,6 @@
 [submodule "Source/External/minhook/minhook.git"]
 	path = Source/External/minhook/minhook.git
 	url = https://github.com/TsudaKageyu/minhook.git
+[submodule "Source/External/detours/detours.git"]
+	path = Source/External/detours/detours.git
+	url = https://github.com/microsoft/Detours.git

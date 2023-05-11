@@ -1,6 +1,7 @@
 {
 	"Modules": [
 		"double-conversion",
+		"detours",
 		"farmhash",
 		"glslang",
 		"glsl_trace",
