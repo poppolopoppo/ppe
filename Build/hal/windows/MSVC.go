@@ -414,7 +414,8 @@ func (msvc *MsvcCompiler) Decorate(compileEnv *CompileEnv, u *Unit) error {
 		case DEBUG_SYMBOLS, DEBUG_EMBEDDED, DEBUG_DISABLED:
 			// https://nikhilism.com/post/2020/windows-deterministic-builds/
 			u.Incremental.Disable()
-			pathMap := fmt.Sprintf("/pathmap:%v=.", UFS.Root)
+			// pathMap := fmt.Sprintf("/pathmap:%v=.", UFS.Root) // #TODO: debugging with this is painful...
+			pathMap := fmt.Sprintf("/pathmap:%v=%v", UFS.Root, UFS.Root)
 			u.AddCompilationFlag("/Brepro", "/experimental:deterministic", pathMap, "/d1nodatetime")
 			//u.AddCompilationFlag("/d1trimfile:"+UFS.Root.String()) // implied by /experimental:deterministic + /pathmap: ?
 			u.PrecompiledHeaderOptions.Append("/wd5049") // Embedding a full path may result in machine-dependent output (always happen with PCH)
