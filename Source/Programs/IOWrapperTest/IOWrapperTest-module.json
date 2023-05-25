@@ -1,0 +1,28 @@
+{
+	"Defines": [
+		"USE_PPE_MEMORYDOMAINS=0",
+		"PPE_OVERRIDE_NEW_OPERATORS=0"
+	],
+	"ExtraFiles": [
+		"resource.rc"
+	],
+	"IncludePaths": [
+		"Source/Runtime/Core/Public",
+		"Source/Tools/IODetouring/Public/"
+	],
+	"RuntimeDependencies": [
+		"Tools/IODetouring"
+	],
+	"PCH": "Disabled",
+	"Unity": "Disabled",
+	"HAL": {
+		"Windows": {
+			"LinkerOptions": [
+				"/SUBSYSTEM:CONSOLE"
+			],
+			"PrivateDependencies": [
+				"External/detours"
+			]
+		}
+	}
+}

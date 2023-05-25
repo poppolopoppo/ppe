@@ -5,6 +5,7 @@
 		"Runtime",
 		"Extensions",
 		"ContentPipeline",
+		"Programs",
 		"Tools"
 	]
 }

@@ -1,0 +1,12 @@
+{
+	"Archetypes": [
+		"PPE/Program/Tools"
+	],
+	"Modules": [
+		"BuildRobot",
+		"ShaderToy",
+		"UnitTest",
+		"VoxelCube",
+		"WindowTest"
+	]
+}
