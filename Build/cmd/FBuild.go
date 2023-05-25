@@ -49,7 +49,7 @@ func (x *FBuildCommand) Run(cc CommandContext) error {
 				for _, target := range buildTargets.Success().Aliases {
 					targetName := target.String()
 					for _, input := range x.Targets {
-						LogDebug("fbuild: check target <%v> against input <%v>", targetName, input)
+						LogDebug(LogFBuild, "check target <%v> against input <%v>", targetName, input)
 						if strings.Contains(strings.ToUpper(targetName), strings.ToUpper(input.String())) {
 							targetGlobs = append(targetGlobs, targetName)
 						}

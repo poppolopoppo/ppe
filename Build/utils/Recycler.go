@@ -124,7 +124,7 @@ func TransientIoCopy(dst io.Writer, src io.Reader) (err error) {
 
 type writerWithProgress struct {
 	wr   io.Writer
-	pbar PinnedProgress
+	pbar ProgressScope
 }
 
 func (x writerWithProgress) Write(p []byte) (int, error) {
@@ -134,7 +134,7 @@ func (x writerWithProgress) Write(p []byte) (int, error) {
 }
 
 func TransientIoCopyWithProgress(context string, totalSize int64, dst io.Writer, src io.Reader) (err error) {
-	var pbar PinnedProgress
+	var pbar ProgressScope
 	if totalSize > 0 {
 		pbar = LogProgress(0, int(totalSize), "copying %s -- %.3f MiB", context, float32(totalSize)/(1024*1024))
 	} else {

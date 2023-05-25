@@ -107,7 +107,7 @@ func (env *CompileEnv) GetPlatform() *PlatformRules {
 	if platform, err := env.GetBuildPlatform(); err == nil {
 		return platform.GetPlatform()
 	} else {
-		LogPanicErr(err)
+		LogPanicErr(LogCompile, err)
 		return nil
 	}
 }
@@ -115,7 +115,7 @@ func (env *CompileEnv) GetConfig() *ConfigRules {
 	if config, err := env.GetBuildConfig(); err == nil {
 		return config.GetConfig()
 	} else {
-		LogPanicErr(err)
+		LogPanicErr(LogCompile, err)
 		return nil
 	}
 }
@@ -123,7 +123,7 @@ func (env *CompileEnv) GetCompiler() *CompilerRules {
 	if compiler, err := env.GetBuildCompiler(); err == nil {
 		return compiler.GetCompiler()
 	} else {
-		LogPanicErr(err)
+		LogPanicErr(LogCompile, err)
 		return nil
 	}
 }
@@ -182,7 +182,7 @@ func (env *CompileEnv) GetPayloadType(module *ModuleRules, link LinkType) (resul
 		case LINK_STATIC:
 			return PAYLOAD_EXECUTABLE
 		case LINK_DYNAMIC:
-			LogPanic("executable should have %s link, but found %s", LINK_STATIC, link)
+			LogPanic(LogCompile, "executable should have %s link, but found %s", LINK_STATIC, link)
 		default:
 			UnexpectedValuePanic(module.ModuleType, link)
 		}
@@ -238,10 +238,10 @@ func (env CompileEnv) Compile(compiler Compiler, module Module) (*Unit, error) {
 	case PCH_MONOLITHIC, PCH_SHARED:
 		if moduleRules.PrecompiledHeader == nil || moduleRules.PrecompiledSource == nil {
 			if moduleRules.PrecompiledHeader != nil {
-				LogPanic("unit is using PCH_%s, but precompiled header is nil (source: %v)", unit.PCH, moduleRules.PrecompiledSource)
+				LogPanic(LogCompile, "unit is using PCH_%s, but precompiled header is nil (source: %v)", unit.PCH, moduleRules.PrecompiledSource)
 			}
 			if moduleRules.PrecompiledSource != nil {
-				LogPanic("unit is using PCH_%s, but precompiled source is nil (header: %v)", unit.PCH, moduleRules.PrecompiledHeader)
+				LogPanic(LogCompile, "unit is using PCH_%s, but precompiled source is nil (header: %v)", unit.PCH, moduleRules.PrecompiledHeader)
 			}
 			unit.PCH = PCH_DISABLED
 		} else {
@@ -301,7 +301,7 @@ func (env *CompileEnv) Link(moduleGraph ModuleGraph) (SetT[*Unit], error) {
 					if other.Unit.Payload == PAYLOAD_SHAREDLIB {
 						node.Unit.RuntimeDependencies.AppendUniq(other.Unit.Target)
 					} else {
-						LogPanic("%v <%v> is linking against %v <%v> with %v visibility, which is not allowed:\n%v",
+						LogPanic(LogCompile, "%v <%v> is linking against %v <%v> with %v visibility, which is not allowed:\n%v",
 							node.Unit.Payload, node.Unit, node.Unit.Payload, other, vis,
 							node.Dependencies)
 					}
@@ -322,7 +322,7 @@ func (env *CompileEnv) Link(moduleGraph ModuleGraph) (SetT[*Unit], error) {
 		return SetT[*Unit]{}, err
 	}
 
-	pbar.Reset()
+	pbar.Set(0)
 
 	linked := NewSet[*Unit]()
 
@@ -331,27 +331,27 @@ func (env *CompileEnv) Link(moduleGraph ModuleGraph) (SetT[*Unit], error) {
 
 		node.Unit.IncludeDependencies.Range(func(target TargetAlias) {
 			other := moduleGraph.NodeByAlias(target.ModuleAlias)
-			LogDebug("[%v] include dep -> %v", node.Unit.Target, target)
-			node.Unit.Facet.Append(&other.Unit.TransitiveFacet)
+			LogDebug(LogCompile, "[%v] include dep -> %v", node.Unit.Target, target)
+			node.Unit.Facet.AppendUniq(&other.Unit.TransitiveFacet)
 		})
 
 		node.Unit.CompileDependencies.Range(func(target TargetAlias) {
 			other := moduleGraph.NodeByAlias(target.ModuleAlias)
-			LogDebug("[%v] compile dep -> %v", node.Unit.Target, target)
-			node.Unit.Facet.Append(&other.Unit.TransitiveFacet)
+			LogDebug(LogCompile, "[%v] compile dep -> %v", node.Unit.Target, target)
+			node.Unit.Facet.AppendUniq(&other.Unit.TransitiveFacet)
 		})
 
 		node.Unit.LinkDependencies.Range(func(target TargetAlias) {
 			other := moduleGraph.NodeByAlias(target.ModuleAlias)
-			LogDebug("[%v] link dep -> %v", node.Unit.Target, target)
-			node.Unit.Facet.Append(&other.Unit.TransitiveFacet)
+			LogDebug(LogCompile, "[%v] link dep -> %v", node.Unit.Target, target)
+			node.Unit.Facet.AppendUniq(&other.Unit.TransitiveFacet)
 		})
 
 		node.Unit.RuntimeDependencies.Range(func(target TargetAlias) {
 			other := moduleGraph.NodeByAlias(target.ModuleAlias)
-			LogDebug("[%v] runtime dep -> %v", node.Unit.Target, target)
-			node.Unit.IncludePaths.Append(other.Unit.TransitiveFacet.IncludePaths...)
-			node.Unit.ForceIncludes.Append(other.Unit.TransitiveFacet.ForceIncludes...)
+			LogDebug(LogCompile, "[%v] runtime dep -> %v", node.Unit.Target, target)
+			node.Unit.IncludePaths.AppendUniq(other.Unit.TransitiveFacet.IncludePaths...)
+			node.Unit.ForceIncludes.AppendUniq(other.Unit.TransitiveFacet.ForceIncludes...)
 		})
 
 		if err := node.Unit.Decorate(env, node.Unit.GetCompiler()); err != nil {

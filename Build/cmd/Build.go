@@ -37,7 +37,7 @@ func (x *BuildCommand) Init(ci CommandContext) error {
 	return nil
 }
 func (x *BuildCommand) Run(cc CommandContext) error {
-	LogClaim("build <%v>...", JoinString(">, <", x.Targets...))
+	LogClaim(LogCommand, "build <%v>...", JoinString(">, <", x.Targets...))
 
 	targets := SetT[*TargetActions]{}
 
@@ -87,7 +87,7 @@ func (x *BuildCommand) Run(cc CommandContext) error {
 	if IsLogLevelActive(LOG_VERBOSE) {
 		for _, t := range targets {
 			for _, a := range t.GetOutputAliases() {
-				LogVerbose("build: selected '%v' action", a)
+				LogVerbose(LogCommand, "selected '%v' action", a)
 			}
 		}
 	}

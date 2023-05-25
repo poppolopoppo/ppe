@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -9,10 +10,185 @@ import (
 	"math/rand"
 	"os"
 	"reflect"
+	"runtime"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 )
+
+/***************************************
+ * Logger API
+ ***************************************/
+
+var LogGlobal = NewLogCategory("Global")
+
+var gLogger Logger = newDeferredLogger(newInteractiveLogger(newBasicLogger()))
+
+func LogDebug(category LogCategory, msg string, args ...interface{}) {
+	gLogger.Log(category, LOG_DEBUG, msg, args...)
+}
+func LogDebugIf(category LogCategory, enabled bool, msg string, args ...interface{}) {
+	if enabled {
+		gLogger.Log(category, LOG_DEBUG, msg, args...)
+	}
+}
+func LogVeryVerbose(category LogCategory, msg string, args ...interface{}) {
+	gLogger.Log(category, LOG_VERYVERBOSE, msg, args...)
+}
+func LogTrace(category LogCategory, msg string, args ...interface{}) {
+	gLogger.Log(category, LOG_TRACE, msg, args...)
+}
+func LogVerbose(category LogCategory, msg string, args ...interface{}) {
+	gLogger.Log(category, LOG_VERBOSE, msg, args...)
+}
+func LogInfo(category LogCategory, msg string, args ...interface{}) {
+	gLogger.Log(category, LOG_INFO, msg, args...)
+}
+func LogClaim(category LogCategory, msg string, args ...interface{}) {
+	gLogger.Log(category, LOG_CLAIM, msg, args...)
+}
+func LogWarning(category LogCategory, msg string, args ...interface{}) {
+	gLogger.Log(category, LOG_WARNING, msg, args...)
+}
+func LogError(category LogCategory, msg string, args ...interface{}) {
+	gLogger.Log(category, LOG_ERROR, msg, args...)
+}
+func LogFatal(msg string, args ...interface{}) {
+	gLogger.Purge()
+	log.Fatalf(msg, args...)
+}
+
+func LogPanic(category LogCategory, msg string, args ...interface{}) {
+	LogPanicErr(category, fmt.Errorf(msg, args...))
+}
+func LogPanicErr(category LogCategory, err error) {
+	LogError(category, "panic: caught error %v", err)
+
+	gLogger.Purge()
+
+	if CommandEnv == nil || CommandEnv.OnPanic(err) {
+		panic(fmt.Errorf("%v%v%v[PANIC] %v%v",
+			ANSI_FG1_RED, ANSI_BG1_WHITE, ANSI_BLINK0, err, ANSI_RESET))
+	} else {
+		panic(fmt.Errorf("panic reentrancy: %v", err))
+	}
+}
+func LogPanicIfFailed(category LogCategory, err error) {
+	if err != nil {
+		LogPanicErr(category, err)
+	}
+}
+
+func LogForward(msg string) {
+	gLogger.Forward(msg)
+}
+func LogForwardln(msg string) {
+	gLogger.Forwardln(msg)
+}
+func LogForwardf(format string, args ...interface{}) {
+	gLogger.Forwardf(format, args...)
+}
+
+func WithoutLog(block func()) {
+	gLogger.WithoutPin(block)
+}
+
+func IsLogLevelActive(level LogLevel) bool {
+	return gLogger.IsVisible(level)
+}
+func FlushLog() {
+	gLogger.Flush()
+}
+
+/***************************************
+ * Logger interface
+ ***************************************/
+
+type PinScope interface {
+	Log(msg string, args ...interface{})
+	Closable
+
+	format(LogWriter)
+}
+
+type ProgressScope interface {
+	Grow(int)
+	Add(int)
+	Inc()
+	Set(int)
+	PinScope
+}
+
+type LogCategory struct {
+	Name  string
+	Level LogLevel
+	Hash  uint32
+	Color [3]uint8
+}
+
+type LogWriter interface {
+	io.Writer
+	io.StringWriter
+}
+
+type Logger interface {
+	IsInteractive() bool
+	IsVisible(LogLevel) bool
+
+	SetLevel(LogLevel) LogLevel
+	SetLevelMaximum(LogLevel) LogLevel
+	SetLevelMinimum(LogLevel) LogLevel
+	SetWarningAsError(bool)
+	SetShowCategory(bool)
+	SetShowTimestamp(bool)
+	SetWriter(LogWriter)
+
+	Forward(msg string)
+	Forwardln(msg string)
+	Forwardf(msg string, args ...interface{})
+
+	Log(category LogCategory, level LogLevel, msg string, args ...interface{})
+
+	Pin(msg string, args ...interface{}) PinScope
+	Progress(first, last int, msg string, args ...interface{}) ProgressScope
+	WithoutPin(func())
+	Close(PinScope)
+
+	Flush()   // wait for all pending all messages
+	Purge()   // close the log and every on-going pins
+	Refresh() // re-draw all pins, need for animated effects
+
+}
+
+var logCategoryIndex atomic.Uint32
+
+func NewLogCategory(name string) LogCategory {
+	hash := logCategoryIndex.Add(1)
+	_, frac := math.Modf((float64(hash) + math.Pi) * 1.61803398875)
+	return LogCategory{
+		Name:  name,
+		Level: LOG_ALL,
+		Hash:  hash,
+		Color: pastelizer_truecolor(frac),
+	}
+}
+
+func MakeError(msg string, args ...interface{}) error {
+	LogError(LogGlobal, msg, args...)
+	return fmt.Errorf(msg, args...)
+}
+
+func MakeUnexpectedValueError(dst interface{}, any interface{}) error {
+	return MakeError("unexpected <%v> value '%v'", reflect.TypeOf(dst), any)
+}
+func UnexpectedValuePanic(dst interface{}, any interface{}) {
+	LogPanicErr(LogGlobal, MakeUnexpectedValueError(dst, any))
+}
+
+/***************************************
+ * Log level
+ ***************************************/
 
 type LogLevel int32
 
@@ -29,31 +205,428 @@ const (
 	LOG_FATAL
 )
 
-func (x LogLevel) String() string {
+func (x LogLevel) IsVisible(level LogLevel) bool {
+	return (int32(level) >= int32(x))
+}
+func (x LogLevel) Style(dst io.Writer) {
 	switch x {
 	case LOG_DEBUG:
-		return fmt.Sprint(ANSI_FG0_MAGENTA, ANSI_ITALIC, ANSI_FAINT, " ~ ", " ")
+		fmt.Fprint(dst, ANSI_FG0_MAGENTA, ANSI_ITALIC, ANSI_FAINT)
 	case LOG_TRACE:
-		return fmt.Sprint(ANSI_FG0_CYAN, ANSI_ITALIC, " - ", " ")
+		fmt.Fprint(dst, ANSI_FG0_CYAN, ANSI_ITALIC, ANSI_FAINT)
 	case LOG_VERYVERBOSE:
-		return fmt.Sprint(ANSI_FG1_MAGENTA, ANSI_ITALIC, ANSI_ITALIC, "   ", " ")
+		fmt.Fprint(dst, ANSI_FG1_MAGENTA, ANSI_ITALIC, ANSI_ITALIC)
 	case LOG_VERBOSE:
-		return fmt.Sprint(ANSI_FG0_BLUE, "   ", " ")
+		fmt.Fprint(dst, ANSI_FG0_BLUE)
 	case LOG_INFO:
-		return fmt.Sprint(ANSI_FG1_WHITE, ANSI_BG0_BLACK, "---", " ")
+		fmt.Fprint(dst, ANSI_FG1_WHITE, ANSI_BG0_BLACK)
 	case LOG_CLAIM:
-		return fmt.Sprint(ANSI_FG1_GREEN, ANSI_BG0_BLACK, ANSI_BOLD, "-+-", " ")
+		fmt.Fprint(dst, ANSI_FG1_GREEN, ANSI_BG0_BLACK, ANSI_BOLD)
 	case LOG_WARNING:
-		return fmt.Sprint(ANSI_FG0_YELLOW, "/?\\", " ")
+		fmt.Fprint(dst, ANSI_FG0_YELLOW)
 	case LOG_ERROR:
-		return fmt.Sprint(ANSI_FG1_RED, ANSI_BOLD, "/!\\", " ")
+		fmt.Fprint(dst, ANSI_FG1_RED, ANSI_BOLD)
 	case LOG_FATAL:
-		return fmt.Sprint(ANSI_FG1_WHITE, ANSI_BG0_RED, ANSI_BLINK0, "[!]", " ")
+		fmt.Fprint(dst, ANSI_FG1_WHITE, ANSI_BG0_RED, ANSI_BLINK0)
 	default:
 		UnexpectedValue(x)
 	}
-	return ""
 }
+func (x LogLevel) Header(dst io.Writer) {
+	switch x {
+	case LOG_DEBUG:
+		fmt.Fprint(dst, "  ~  ")
+	case LOG_TRACE:
+		fmt.Fprint(dst, "  -  ")
+	case LOG_VERYVERBOSE:
+		fmt.Fprint(dst, "     ")
+	case LOG_VERBOSE:
+		fmt.Fprint(dst, "     ")
+	case LOG_INFO:
+		fmt.Fprint(dst, " --- ")
+	case LOG_CLAIM:
+		fmt.Fprint(dst, " -+- ")
+	case LOG_WARNING:
+		fmt.Fprint(dst, " /?\\ ")
+	case LOG_ERROR:
+		fmt.Fprint(dst, " /!\\ ")
+	case LOG_FATAL:
+		fmt.Fprint(dst, " [!] ")
+	default:
+		UnexpectedValue(x)
+	}
+}
+func (x LogLevel) String() string {
+	outp := strings.Builder{}
+	x.Header(&outp)
+	return outp.String()
+}
+
+/***************************************
+ * Basic Logger
+ ***************************************/
+
+type basicLogPin struct{}
+
+func (x basicLogPin) Log(string, ...interface{}) {}
+func (x basicLogPin) Close()                     {}
+func (x basicLogPin) format(LogWriter)           {}
+
+type basicLogProgress struct {
+	basicLogPin
+}
+
+func (x basicLogProgress) Grow(int) {}
+func (x basicLogProgress) Add(int)  {}
+func (x basicLogProgress) Inc()     {}
+func (x basicLogProgress) Set(int)  {}
+
+type basicLogger struct {
+	MinimumLevel   LogLevel
+	WarningAsError bool
+	ShowCategory   bool
+	ShowTimestamp  bool
+	Writer         *bufio.Writer
+}
+
+func newBasicLogger() *basicLogger {
+	level := LOG_INFO
+	if EnableDiagnostics() {
+		level = LOG_ALL
+	}
+
+	return &basicLogger{
+		MinimumLevel:   level,
+		WarningAsError: false,
+		ShowCategory:   true,
+		ShowTimestamp:  false,
+		Writer:         bufio.NewWriter(os.Stdout),
+	}
+}
+
+func (x *basicLogger) IsInteractive() bool {
+	return false
+}
+func (x *basicLogger) IsVisible(level LogLevel) bool {
+	return x.MinimumLevel.IsVisible(level)
+}
+
+func (x *basicLogger) SetLevel(level LogLevel) LogLevel {
+	previous := x.MinimumLevel
+	if level < LOG_FATAL {
+		x.MinimumLevel = level
+	} else {
+		x.MinimumLevel = LOG_FATAL
+	}
+	return previous
+}
+func (x *basicLogger) SetLevelMinimum(level LogLevel) LogLevel {
+	previous := x.MinimumLevel
+	if level < LOG_FATAL && level < x.MinimumLevel {
+		x.MinimumLevel = level
+	}
+	return previous
+}
+func (x *basicLogger) SetLevelMaximum(level LogLevel) LogLevel {
+	previous := x.MinimumLevel
+	if level < LOG_FATAL && level > x.MinimumLevel {
+		x.MinimumLevel = level
+	}
+	return previous
+}
+func (x *basicLogger) SetWarningAsError(enabled bool) {
+	x.WarningAsError = enabled
+}
+func (x *basicLogger) SetShowCategory(enabled bool) {
+	x.ShowCategory = enabled
+}
+func (x *basicLogger) SetShowTimestamp(enabled bool) {
+	x.ShowTimestamp = enabled
+}
+func (x *basicLogger) SetWriter(dst LogWriter) {
+	Assert(func() bool { return !IsNil(dst) })
+	x.Writer.Flush()
+	x.Writer.Reset(dst)
+}
+
+func (x *basicLogger) Forward(msg string) {
+	x.Writer.WriteString(msg)
+}
+func (x *basicLogger) Forwardln(msg string) {
+	x.Writer.WriteString(msg)
+	if !strings.HasSuffix(msg, "\n") {
+		x.Writer.WriteRune('\n')
+	}
+
+	x.flushLogToAvoidCropIFN()
+}
+func (x *basicLogger) Forwardf(msg string, args ...interface{}) {
+	fmt.Fprintf(x.Writer, msg, args...)
+	fmt.Fprintln(x.Writer, "")
+
+	x.flushLogToAvoidCropIFN()
+}
+
+func (x *basicLogger) Log(category LogCategory, level LogLevel, msg string, args ...interface{}) {
+	// warning as error?
+	if level == LOG_WARNING && x.WarningAsError {
+		level = LOG_ERROR
+	}
+
+	// log level visible?
+	if !x.IsVisible(level) || !category.Level.IsVisible(level) {
+		return
+	}
+
+	// format message
+	if x.ShowTimestamp {
+		fmt.Fprintf(x.Writer, "%s%08f |%s  ", ANSI_FG1_BLACK, Elapsed().Seconds(), ANSI_RESET)
+	}
+
+	level.Style(x.Writer)
+	level.Header(x.Writer)
+
+	if x.ShowCategory {
+		fmt.Fprintf(x.Writer, " %s%s%s%s: ", ANSI_RESET, make_ansi_fg_truecolor(category.Color[:]...), category.Name, ANSI_RESET)
+		level.Style(x.Writer)
+	}
+
+	fmt.Fprintf(x.Writer, msg, args...)
+
+	x.Writer.WriteString(ANSI_RESET.String())
+	x.Writer.WriteRune('\n')
+
+	x.flushLogToAvoidCropIFN()
+}
+
+func (x *basicLogger) Pin(msg string, args ...interface{}) PinScope {
+	return basicLogPin{} // see interactiveLogger struct
+}
+func (x *basicLogger) Progress(first, last int, msg string, args ...interface{}) ProgressScope {
+	return basicLogProgress{} // see interactiveLogger struct
+}
+func (x *basicLogger) WithoutPin(block func()) {
+	block() // see interactiveLogger struct
+}
+func (x *basicLogger) Close(pin PinScope) {
+	UnreachableCode() // see interactiveLogger struct
+}
+
+func (x *basicLogger) Flush()   { x.Writer.Flush() }
+func (x *basicLogger) Purge()   { x.Writer.Flush() }
+func (x *basicLogger) Refresh() { x.Writer.Flush() }
+
+func (x *basicLogger) flushLogToAvoidCropIFN() {
+	if x.Writer.Available() < 200 {
+		x.Writer.Flush()
+	}
+}
+
+/***************************************
+ * Deferred Logger
+ ***************************************/
+
+type deferredPinScope struct {
+	future Future[PinScope]
+}
+
+func (x deferredPinScope) Log(msg string, args ...interface{}) {
+	x.future.Join().Success().Log(msg, args...)
+}
+func (x deferredPinScope) Close() {
+	x.future.Join().Success().Close()
+}
+func (x deferredPinScope) format(dst LogWriter) {
+	x.future.Join().Success().format(dst)
+}
+
+type deferredProgressScope struct {
+	future Future[ProgressScope]
+}
+
+func (x deferredProgressScope) Log(msg string, args ...interface{}) {
+	x.future.Join().Success().Log(msg, args...)
+}
+func (x deferredProgressScope) Close() {
+	x.future.Join().Success().Close()
+}
+func (x deferredProgressScope) format(dst LogWriter) {
+	x.future.Join().Success().format(dst)
+}
+
+func (x deferredProgressScope) Grow(n int) {
+	x.future.Join().Success().Grow(n)
+}
+func (x deferredProgressScope) Add(n int) {
+	x.future.Join().Success().Add(n)
+}
+func (x deferredProgressScope) Inc() {
+	x.future.Join().Success().Inc()
+}
+func (x deferredProgressScope) Set(v int) {
+	x.future.Join().Success().Set(v)
+}
+
+type deferredLogger struct {
+	logger  Logger
+	thread  WorkerPool
+	barrier *sync.Mutex
+}
+
+func newDeferredLogger(logger Logger) deferredLogger {
+	barrier := &sync.Mutex{}
+	return deferredLogger{
+		logger:  logger,
+		barrier: barrier,
+		thread: NewFixedSizeWorkerPoolEx("logger", 1,
+			func(fswp *fixedSizeWorkerPool, i int) {
+				onWorkerThreadStart(fswp, i)
+				defer onWorkerThreadStop(fswp, i)
+
+				runTask := func(task TaskFunc) {
+					barrier.Lock()
+					defer barrier.Unlock()
+					task()
+				}
+
+				for quit := false; !quit; {
+					if logger.IsInteractive() {
+						// refresh pinned logs if no message output after a while
+						select {
+						case task := (<-fswp.give):
+							if task != nil {
+								runTask(task)
+							} else {
+								quit = true
+							}
+						case <-time.After(33 * time.Millisecond):
+							logger.Refresh()
+						}
+					} else {
+						if task := (<-fswp.give); task != nil {
+							runTask(task)
+						} else {
+							quit = true // a nil task means quit
+						}
+					}
+				}
+			}),
+	}
+}
+
+func (x deferredLogger) IsInteractive() bool {
+	return x.logger.IsInteractive()
+}
+func (x deferredLogger) IsVisible(level LogLevel) bool {
+	return x.logger.IsVisible(level)
+}
+
+func (x deferredLogger) SetLevel(level LogLevel) LogLevel {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	return x.logger.SetLevel(level)
+}
+func (x deferredLogger) SetLevelMinimum(level LogLevel) LogLevel {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	return x.logger.SetLevelMinimum(level)
+}
+func (x deferredLogger) SetLevelMaximum(level LogLevel) LogLevel {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	return x.logger.SetLevelMaximum(level)
+}
+func (x deferredLogger) SetWarningAsError(enabled bool) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.SetWarningAsError(enabled)
+}
+func (x deferredLogger) SetShowCategory(enabled bool) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.SetShowCategory(enabled)
+}
+func (x deferredLogger) SetShowTimestamp(enabled bool) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.SetShowTimestamp(enabled)
+}
+func (x deferredLogger) SetWriter(dst LogWriter) {
+	x.thread.Queue(func() {
+		x.logger.SetWriter(dst)
+	})
+}
+
+func (x deferredLogger) Forward(msg string) {
+	x.thread.Queue(func() {
+		x.logger.Forward(msg)
+	})
+}
+func (x deferredLogger) Forwardln(msg string) {
+	x.thread.Queue(func() {
+		x.logger.Forwardln(msg)
+	})
+}
+func (x deferredLogger) Forwardf(msg string, args ...interface{}) {
+	x.thread.Queue(func() {
+		x.logger.Forwardf(msg, args...)
+	})
+}
+func (x deferredLogger) Log(category LogCategory, level LogLevel, msg string, args ...interface{}) {
+	if category.Level.IsVisible(level) && x.logger.IsVisible(level) {
+		x.thread.Queue(func() {
+			x.logger.Log(category, level, msg, args...)
+		})
+	}
+	if level >= LOG_ERROR {
+		x.thread.Join() // flush log when an error occurred
+	}
+}
+func (x deferredLogger) Pin(msg string, args ...interface{}) PinScope {
+	return deferredPinScope{
+		future: MakeWorkerFuture(x.thread, func() (PinScope, error) {
+			pin := x.logger.Pin(msg, args...)
+			return pin, nil
+		})}
+}
+func (x deferredLogger) Progress(first, last int, msg string, args ...interface{}) ProgressScope {
+	return deferredProgressScope{
+		future: MakeWorkerFuture(x.thread, func() (ProgressScope, error) {
+			pin := x.logger.Progress(first, last, msg, args...)
+			return pin, nil
+		})}
+}
+func (x deferredLogger) WithoutPin(block func()) {
+	x.thread.Queue(func() {
+		x.logger.WithoutPin(block)
+	})
+}
+func (x deferredLogger) Close(pin PinScope) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.Close(pin)
+}
+func (x deferredLogger) Flush() {
+	x.thread.Queue(func() {
+		x.logger.Flush()
+	})
+	x.thread.Join()
+}
+func (x deferredLogger) Purge() {
+	x.thread.Queue(func() {
+		x.logger.Purge()
+	})
+	x.thread.Join()
+}
+func (x deferredLogger) Refresh() {
+	x.thread.Queue(func() {
+		x.logger.Refresh()
+	})
+}
+
+/***************************************
+ * Interactive Logger
+ ***************************************/
 
 var enableInteractiveShell bool = true
 var forceInteractiveShell bool = false
@@ -69,505 +642,273 @@ func SetEnableInteractiveShell(enabled bool) {
 	}
 }
 
-type logEvent func()
-type logQueue interface {
-	Flush()
-	Queue(logEvent)
+type interactiveLogPin struct {
+	header string
+	writer func(LogWriter)
+
+	tick      int
+	first     int
+	last      atomic.Int32
+	progress  atomic.Int32
+	startedAt time.Duration
+
+	color [3]byte
 }
 
-type logQueue_immediate struct {
-	barrier sync.Mutex
+func (x *interactiveLogPin) reset() {
+	x.header = ""
+	x.writer = nil
+	x.tick = 0
+	x.first = 0
+	x.startedAt = 0
+}
+func (x *interactiveLogPin) format(dst LogWriter) {
+	x.writer(dst)
 }
 
-func make_logQueue_immediate() logQueue {
-	return &logQueue_immediate{barrier: sync.Mutex{}}
+func (x *interactiveLogPin) Log(msg string, args ...interface{}) {
+	x.header = fmt.Sprintf(msg, args...)
 }
-func (x *logQueue_immediate) Flush() {}
-func (x *logQueue_immediate) Queue(e logEvent) {
-	x.barrier.Lock()
-	defer x.barrier.Unlock()
-	e()
+func (x *interactiveLogPin) Close() {
+	gLogger.Close(x)
 }
 
-type logQueue_deferred struct {
-	pool WorkerPool
+func (x *interactiveLogPin) Grow(n int) {
+	x.last.Add(int32(n))
 }
-
-func make_logQueue_deferred() logQueue {
-	pool := GetLoggerWorkerPool()
-	return logQueue_deferred{pool}
+func (x *interactiveLogPin) Add(n int) {
+	x.progress.Add(int32(n))
 }
-func (x logQueue_deferred) Flush() {
-	x.pool.Join()
+func (x *interactiveLogPin) Inc() {
+	x.progress.Add(1)
 }
-func (x logQueue_deferred) Queue(e logEvent) {
-	x.pool.Queue(TaskFunc(e))
-}
-
-type Logger struct {
-	Level        LogLevel
-	WarningLevel LogLevel
-	logQueue
-}
-
-func make_logger() Logger {
-	SetLogTimestamp(false)
-
-	level := LOG_INFO
-	if EnableDiagnostics() {
-		level = LOG_ALL
-	}
-
-	return Logger{
-		Level:        level,
-		WarningLevel: LOG_WARNING,
-		logQueue:     make_logQueue()}
-}
-
-var logger Logger = make_logger()
-
-func SetLogOutput(dst io.Writer) {
-	log.SetOutput(dst)
-}
-func SetLogTimestamp(enabled bool) {
-	if enabled {
-		log.SetFlags(log.Lmicroseconds)
-	} else {
-		log.SetFlags(0)
-	}
-}
-func SetLogWarningAsError(enabled bool) bool {
-	previous := logger.WarningLevel != LOG_WARNING
-	if enabled {
-		logger.WarningLevel = LOG_ERROR
-	} else {
-		logger.WarningLevel = LOG_WARNING
-	}
-	return previous
-}
-func SetLogLevel(level LogLevel) LogLevel {
-	previous := logger.Level
-	if level < LOG_FATAL {
-		logger.Level = level
-	} else {
-		logger.Level = LOG_FATAL
-	}
-	return previous
-}
-func SetLogLevelMininum(level LogLevel) LogLevel {
-	previous := logger.Level
-	if level < LOG_FATAL && level < logger.Level {
-		logger.Level = level
-	}
-	return previous
-}
-func SetLogLevelMaximum(level LogLevel) LogLevel {
-	previous := logger.Level
-	if level < LOG_FATAL && level > logger.Level {
-		logger.Level = level
-	}
-	return previous
-}
-func IsLogLevelActive(level LogLevel) bool {
-	return logger.Level <= level
-}
-func FlushLog() {
-	logger.Flush()
-}
-func Log(level LogLevel, msg string, args ...interface{}) {
-	if IsLogLevelActive(level) {
-		pinnedLog().without(func() {
-			log.Printf(level.String()+msg+ANSI_RESET.String()+"\n", args...)
-			if level >= LOG_WARNING {
-				log_callstack()
-			}
-		})
+func (x *interactiveLogPin) Set(v int) {
+	for {
+		prev := x.progress.Load()
+		if prev > int32(v) || x.progress.CompareAndSwap(prev, int32(v)) {
+			break
+		}
 	}
 }
 
-func LogDebug(msg string, args ...interface{}) {
-	Log(LOG_DEBUG, msg, args...)
-}
-func LogDebugIf(enabled bool, msg string, args ...interface{}) {
-	if enabled {
-		Log(LOG_DEBUG, msg, args...)
-	}
-}
-func LogVeryVerbose(msg string, args ...interface{}) {
-	Log(LOG_VERYVERBOSE, msg, args...)
-}
-func LogTrace(msg string, args ...interface{}) {
-	Log(LOG_TRACE, msg, args...)
-}
-func LogVerbose(msg string, args ...interface{}) {
-	Log(LOG_VERBOSE, msg, args...)
-}
-func LogInfo(msg string, args ...interface{}) {
-	Log(LOG_INFO, msg, args...)
-}
-func LogClaim(msg string, args ...interface{}) {
-	Log(LOG_CLAIM, msg, args...)
-}
-func LogWarning(msg string, args ...interface{}) {
-	Log(logger.WarningLevel, msg, args...)
-}
-func LogError(msg string, args ...interface{}) {
-	Log(LOG_ERROR, msg, args...)
-}
-func LogFatal(msg string, args ...interface{}) {
-	WithoutLog(func() {
-		log.Fatalf(msg, args...)
-	})
-}
-
-func LogPanic(msg string, args ...interface{}) {
-	LogPanicErr(fmt.Errorf(msg, args...))
-}
-func LogPanicErr(err error) {
-	LogError("panic: caught error %v", err)
-
-	if CommandEnv == nil || CommandEnv.OnPanic(err) {
-		PurgePinnedLogs()
-		panic(fmt.Errorf("%v%v%v[PANIC] %v%v",
-			ANSI_FG1_RED, ANSI_BG1_WHITE, ANSI_BLINK0, err, ANSI_RESET))
-	} else {
-		panic("panic reentrancy!")
-	}
-}
-func LogPanicIfFailed(err error) {
-	if err != nil {
-		LogPanicErr(err)
-	}
-}
-
-func LogForward(msg string) {
-	pinnedLog().without(func() {
-		log.Print(msg)
-	})
-}
-func LogForwardf(format string, args ...interface{}) {
-	pinnedLog().without(func() {
-		log.Printf(format, args...)
-	})
-}
-func WithoutLog(block func()) {
-	pinnedLog().without(block)
-}
-
-func MakeError(msg string, args ...interface{}) error {
-	LogError(msg, args...)
-	return fmt.Errorf(msg, args...)
-}
-
-func MakeUnexpectedValueError(dst interface{}, any interface{}) error {
-	return MakeError("unexpected <%v> value '%v'", reflect.TypeOf(dst), any)
-}
-func UnexpectedValuePanic(dst interface{}, any interface{}) {
-	LogPanicErr(MakeUnexpectedValueError(dst, any))
-}
-
-type FormatFunc func() string
-
-func MakeFormat[T any](fn func() T) FormatFunc {
-	return func() string {
-		return fmt.Sprint(fn())
-	}
-}
-func (fn FormatFunc) String() string {
-	return fn()
-}
-
-type PinnedLog interface {
-	Close()
-	Log(msg func(io.Writer))
-}
-
-type pinnedLogFake struct{}
-
-func (log *pinnedLogFake) Close()              {}
-func (log *pinnedLogFake) Log(func(io.Writer)) {}
-
-type pinnedLogScope struct {
-	mainText string
-	subText  atomic.Pointer[func(io.Writer)]
-}
-
-type pinnedLogManager struct {
-	stream   io.Writer
-	messages SetT[*pinnedLogScope]
+type interactiveLogger struct {
+	messages SetT[*interactiveLogPin]
 	inflight int
 	maxLen   int
 
-	cooldown int32
+	recycler  Recycler[*interactiveLogPin]
+	transient bytes.Buffer
+	*basicLogger
 }
 
-var pinnedFake = &pinnedLogFake{}
-var pinnedLogRefresh func()
-var pinnedLog = Memoize(func() *pinnedLogManager {
-	manager := &pinnedLogManager{
-		stream: os.Stderr,
-	}
-	pinnedLogRefresh = manager.refresh
-	return manager
-})
-
-func attachPinUnsafe(pin *pinnedLogManager) {
-	if !pin.messages.Empty() && pin.inflight == 0 {
-		pin.inflight = len(pin.messages)
-
-		// format messages in local buffer
-		tmp := TransientSmallPage.Allocate()
-		defer TransientSmallPage.Release(tmp)
-
-		buf := bytes.NewBuffer(tmp)
-		buf.Reset()
-
-		fmt.Println(buf, "")
-
-		pin.maxLen = 0
-		for _, x := range pin.messages {
-			if x == nil {
-				continue
-			}
-
-			offset := buf.Len()
-
-			fmt.Fprint(buf, "\r", ANSI_ERASE_END_LINE.Always(), ANSI_FG1_YELLOW)
-			x.Print(buf)
-			fmt.Fprintln(buf, ANSI_RESET)
-
-			if len := int(buf.Len() - offset); pin.maxLen < len {
-				pin.maxLen = len
-			}
-		}
-
-		// flush with one call
-		pin.stream.Write(buf.Bytes())
+func newInteractiveLogger(basic *basicLogger) *interactiveLogger {
+	return &interactiveLogger{
+		messages:    make([]*interactiveLogPin, 0, runtime.NumCPU()),
+		inflight:    0,
+		maxLen:      0,
+		basicLogger: basic,
+		recycler: NewRecycler(
+			func() *interactiveLogPin {
+				return new(interactiveLogPin)
+			},
+			func(ip *interactiveLogPin) {
+				ip.reset()
+			}),
 	}
 }
-func detachPinUnsafe(pin *pinnedLogManager, clear bool) {
-	inflight := pin.inflight
-	if inflight > 0 {
-		// format messages in local buffer
-		tmp := TransientSmallPage.Allocate()
-		defer TransientSmallPage.Release(tmp)
-
-		buf := bytes.NewBuffer(tmp)
-		buf.Reset()
-
-		fmt.Fprint(buf,
-			ANSI_ERASE_ALL_LINE.Always(),
-			"\033[", inflight+1, "F", // move cursor up  # lines
-			ANSI_ERASE_SCREEN_FROM_CURSOR.Always())
-
-		pin.inflight = 0
-
-		// flush with one call
-		pin.stream.Write(buf.Bytes())
-	}
+func (x *interactiveLogger) IsInteractive() bool {
+	return true
 }
-func refreshPinUnsafe(pin *pinnedLogManager) {
-	if ref := atomic.AddInt32(&pin.cooldown, -1); ref == 0 {
-		detachPinUnsafe(pin, false)
-		attachPinUnsafe(pin)
-	}
+func (x *interactiveLogger) Forward(msg string) {
+	x.WithoutPin(func() {
+		x.basicLogger.Forward(msg)
+	})
 }
-
-func (pin *pinnedLogManager) push(msg string, args ...interface{}) PinnedLog {
-	if len(msg) > 0 && enableInteractiveShell {
-		log := &pinnedLogScope{
-			mainText: fmt.Sprintf(msg, args...),
-		}
-		atomic.AddInt32(&pin.cooldown, 1)
-		logger.Queue(func() {
-			pin.messages.Append(log)
-			refreshPinUnsafe(pin)
-		})
-		return log
-	}
-	return pinnedFake
+func (x *interactiveLogger) Forwardln(msg string) {
+	x.WithoutPin(func() {
+		x.basicLogger.Forwardln(msg)
+	})
 }
-func (pin *pinnedLogManager) pop(log *pinnedLogScope) {
-	if log != nil {
-		atomic.AddInt32(&pin.cooldown, 1)
-		logger.Queue(func() {
-			pin.messages.Remove(log)
-			refreshPinUnsafe(pin)
-		})
-	}
+func (x *interactiveLogger) Forwardf(msg string, args ...interface{}) {
+	x.WithoutPin(func() {
+		x.basicLogger.Forwardf(msg, args...)
+	})
 }
-func (pin *pinnedLogManager) refresh() {
+func (x *interactiveLogger) Log(category LogCategory, level LogLevel, msg string, args ...interface{}) {
+	x.WithoutPin(func() {
+		x.basicLogger.Log(category, level, msg, args...)
+	})
+}
+func (x *interactiveLogger) Pin(msg string, args ...interface{}) PinScope {
 	if enableInteractiveShell {
-		atomic.AddInt32(&pin.cooldown, 1)
-		logger.Queue(func() {
-			refreshPinUnsafe(pin)
-		})
+		pin := x.recycler.Allocate()
+		pin.Log(msg, args...)
+		pin.startedAt = Elapsed()
+		pin.color = pastelizer_truecolor(rand.Float64())
+		pin.writer = pin.writeLogHeader
+
+		x.messages.Append(pin)
+		x.attachMessages()
+		return pin
 	}
+	return basicLogPin{}
 }
-func (pin *pinnedLogManager) without(block func()) {
+func (x *interactiveLogger) Progress(first, last int, msg string, args ...interface{}) ProgressScope {
 	if enableInteractiveShell {
-		logger.Queue(func() {
-			detachPinUnsafe(pin, false)
-			block()
-			attachPinUnsafe(pin)
-		})
+		pin := x.recycler.Allocate()
+		pin.Log(msg, args...)
+		pin.startedAt = Elapsed()
+		pin.first = first
+		pin.last.Store(int32(last))
+		pin.progress.Store(0)
+		pin.color = pastelizer_truecolor(rand.Float64())
+		pin.writer = pin.writeLogProgress
+
+		x.messages.Append(pin)
+		x.attachMessages()
+		return pin
+	}
+	return basicLogProgress{}
+}
+func (x *interactiveLogger) WithoutPin(block func()) {
+	if x.hasInflightMessages() {
+		x.detachMessages()
+		block()
+		x.attachMessages()
 	} else {
 		block()
 	}
 }
-func (pin *pinnedLogManager) forceClose() {
-	detachPinUnsafe(pin, true)
-}
-
-func (log *pinnedLogScope) Close() {
-	pinnedLog().pop(log)
-}
-func (log *pinnedLogScope) Log(msg func(io.Writer)) {
-	if msg != nil {
-		log.subText.Store(&msg)
-		pinnedLog().refresh()
-	} else {
-		log.subText.Store(nil)
+func (x *interactiveLogger) Close(scope PinScope) {
+	if !IsNil(scope) {
+		pin := scope.(*interactiveLogPin)
+		x.messages.Remove(pin)
+		x.recycler.Release(pin)
 	}
 }
-func (log *pinnedLogScope) Print(dst io.Writer) {
-	printCropped := func(buf []byte, capacity int, in string) {
-		elapsed := int(float64(capacity) * time.Since(programStartedAt).Seconds())
-		for i := 0; i < capacity; {
-			ci := (elapsed + i) % len(in)
-			ch := in[ci]
-			switch ch {
-			case '\r', '\n':
-				continue
-			case '\t':
-				ch = ' '
-				fallthrough
-			default:
-				if ci == 0 {
-					buf[i] = ' '
-					i += 1
-				}
-				if i < capacity {
-					buf[i] = ch
-					i += 1
-				}
+func (x *interactiveLogger) Flush() {
+	x.basicLogger.Flush()
+}
+func (x *interactiveLogger) Purge() {
+	x.detachMessages()
+	x.basicLogger.Purge()
+}
+func (x *interactiveLogger) Refresh() {
+	if x.hasInflightMessages() {
+		x.detachMessages()
+		x.basicLogger.Refresh()
+		x.attachMessages()
+	}
+}
+
+func (x *interactiveLogger) hasInflightMessages() bool {
+	return x.inflight > 0
+}
+func (x *interactiveLogger) attachMessages() bool {
+	if x.inflight != 0 || x.messages.Empty() {
+		return false
+	}
+
+	x.inflight = len(x.messages)
+	x.maxLen = 0
+
+	// format pins in memory
+	defer x.transient.Reset()
+	fmt.Fprintln(&x.transient, "")
+
+	for _, it := range x.messages {
+		AssertNotIn(it, nil)
+		offset := x.transient.Len()
+
+		fmt.Fprint(&x.transient, "\r", ANSI_ERASE_END_LINE.Always(), make_ansi_fg_truecolor(it.color[:]...))
+		{
+			it.format(&x.transient)
+		}
+		fmt.Fprintln(&x.transient, ANSI_RESET.Always())
+
+		if len := int(x.transient.Len() - offset); x.maxLen < len {
+			x.maxLen = len
+		}
+	}
+
+	// write all output with 1 call
+	os.Stderr.Write(x.transient.Bytes())
+
+	return true
+}
+func (x *interactiveLogger) detachMessages() bool {
+	if x.inflight == 0 {
+		return false
+	}
+
+	// format pins in memory
+	defer x.transient.Reset()
+
+	fmt.Fprint(&x.transient,
+		ANSI_ERASE_ALL_LINE.Always(),
+		"\033[", x.inflight+1, "F", // move cursor up  # lines
+		ANSI_ERASE_SCREEN_FROM_CURSOR.Always())
+
+	// write all output with 1 call
+	os.Stderr.Write(x.transient.Bytes())
+
+	x.inflight = 0
+	return true
+}
+
+/***************************************
+ * Log Progress
+ ***************************************/
+
+func writeLogCropped(dst io.Writer, buf []byte, capacity int, in string) {
+	i := int(Elapsed().Seconds() * 20)
+	for w := 0; w < capacity; i += 1 {
+		ci := i % len(in)
+		ch := in[ci]
+		switch ch {
+		case '\r', '\n':
+			continue
+		case '\t':
+			ch = ' '
+			fallthrough
+		default:
+			if ci == 0 {
+				buf[w] = ' '
+				w += 1
+			}
+			if w < capacity {
+				buf[w] = ch
+				w += 1
 			}
 		}
-		dst.Write(buf)
 	}
-
-	if subText := log.subText.Load(); subText != nil {
-		const maxLen = 20
-		buf := [maxLen]byte{}
-		printCropped(buf[:], int(maxLen), log.mainText)
-		(*subText)(dst)
-	} else {
-		const maxLen = 100
-		buf := [maxLen]byte{}
-		printCropped(buf[:], int(maxLen), log.mainText)
-	}
+	dst.Write(buf)
 }
 
-func LogPin(msg string, args ...interface{}) PinnedLog {
-	return pinnedLog().push(msg, args...)
+func (x *interactiveLogPin) writeLogHeader(lw LogWriter) {
+	const width = 100
+	buf := [width]byte{}
+	writeLogCropped(lw, buf[:], width, x.header)
 }
 
-func PurgePinnedLogs() {
-	JoinAllWorkerPools()
-	logger.Flush()
-	pinnedLog().forceClose()
-}
-
-type PinnedProgress interface {
-	Close()
-	Grow(int)
-	Add(int)
-	Inc()
-	Set(int)
-	Reset()
-}
-
-type noopLogProgress struct{}
-
-func (x noopLogProgress) Close()   {}
-func (x noopLogProgress) Grow(int) {}
-func (x noopLogProgress) Add(int)  {}
-func (x noopLogProgress) Inc()     {}
-func (x noopLogProgress) Set(int)  {}
-func (x noopLogProgress) Reset()   {}
-
-type pinnedLogProgress struct {
-	first     int
-	last      atomic.Int32
-	progress  atomic.Int32
-	tick      atomic.Int32
-	startedat time.Time
-	log       PinnedLog
-
-	color [3]uint8
-
-	sync.Mutex
-}
-
-func (pg *pinnedLogProgress) Close() {
-	pg.log.Close()
-}
-func (pg *pinnedLogProgress) Grow(n int) {
-	pg.Lock()
-	pg.last.Add(int32(n))
-	pg.tick.Add(1)
-	pg.log.Log(pg.Print)
-	pg.Unlock()
-}
-func (pg *pinnedLogProgress) Add(n int) {
-	pg.Invalidate(int(pg.progress.Add(int32(n))) + n)
-}
-func (pg *pinnedLogProgress) Inc() {
-	pg.Add(1)
-}
-func (pg *pinnedLogProgress) Set(x int) {
-	for {
-		prev := pg.progress.Load()
-		if prev > int32(x) {
-			break
-		}
-		if pg.progress.CompareAndSwap(prev, int32(x)) {
-			pg.Invalidate(x)
-			break
-		}
-	}
-}
-func (pg *pinnedLogProgress) Reset() {
-	pg.progress.Store(int32(pg.first))
-	pg.Invalidate(pg.first)
-}
-func (pg *pinnedLogProgress) Invalidate(x int) {
-	pg.Lock()
-	if pg.progress.Load() == int32(x) {
-		pg.tick.Add(1)
-		pg.log.Log(pg.Print)
-	}
-	pg.Unlock()
-}
-func (pg *pinnedLogProgress) SetRandomColors() {
-	pg.color = pastelizer_truecolor(rand.Float64())
-}
-
-func (pg *pinnedLogProgress) Print(dst io.Writer) {
+func (x *interactiveLogPin) writeLogProgress(lw LogWriter) {
 	const width = 50
 
-	progress := int(pg.progress.Load())
-	duration := time.Since(pg.startedat)
-	t := float64(duration.Seconds()+float64(pg.color[0])) * 3.0
+	header := [25]byte{}
+	writeLogCropped(lw, header[:], len(header), x.header)
+	lw.WriteString(" ")
 
-	fmt.Fprint(dst, ` `)
+	progress := int(x.progress.Load())
+	last := int(x.last.Load())
 
-	last := int(pg.last.Load())
-	if pg.first < last {
-		// progress-bar
+	duration := Elapsed() - x.startedAt
+	t := float64(duration.Seconds()+float64(x.color[0])) * 5.0
 
-		fmt.Fprint(dst, ANSI_FG1_WHITE.String())
-		ff := float64(progress-pg.first) / float64(last-pg.first)
+	if x.first < last {
+		// progress-bar (%)
+
+		lw.WriteString(ANSI_FG1_WHITE.String())
+		ff := float64(progress-x.first) / float64(last-x.first)
 		ff = math.Max(0.0, math.Min(1.0, ff))
 		fi := int(ff * (width - 1))
 
@@ -576,25 +917,25 @@ func (pg *pinnedLogProgress) Print(dst io.Writer) {
 			mi := 0.49 + float64(i&1)*0.02
 
 			if i < fi {
-				bg := expose_truecolor(pg.color, ft*.3+.38)
-				fg := expose_truecolor(pg.color, mi)
-				fmt.Fprint(dst,
+				bg := expose_truecolor(x.color, ft*.3+.38)
+				fg := expose_truecolor(x.color, mi)
+				fmt.Fprint(lw,
 					make_ansi_fg_truecolor(bg[0], bg[1], bg[2]),
 					make_ansi_bg_truecolor(fg[0], fg[1], fg[2]),
 					`▂`) //`▁`)
 
 			} else {
-				bg := expose_truecolor(pg.color, ft*.09+.3)
-				fmt.Fprint(dst,
+				bg := expose_truecolor(x.color, ft*.09+.3)
+				fmt.Fprint(lw,
 					make_ansi_bg_truecolor(bg[0], bg[1], bg[1]),
 					` `)
 			}
 		}
 
-		fmt.Fprint(dst, ANSI_RESET.String())
-		fmt.Fprintf(dst, " %6.2f%% ", ff*100) // Sprintf() escaping hell
+		lw.WriteString(ANSI_RESET.String())
+		fmt.Fprintf(lw, " %6.2f%% ", ff*100) // Sprintf() escaping hell
 
-		numElts := float32(progress - pg.first)
+		numElts := float32(progress - x.first)
 		eltUnit := ""
 		if numElts > 5000 {
 			eltUnit = "K"
@@ -606,18 +947,18 @@ func (pg *pinnedLogProgress) Print(dst io.Writer) {
 		}
 
 		eltPerSec := numElts / float32(duration.Seconds()+0.00001)
-		fmt.Fprint(dst, ANSI_FG1_YELLOW.String())
-		fmt.Fprintf(dst, " %.3f %s/s", eltPerSec, eltUnit)
+		lw.WriteString(ANSI_FG1_YELLOW.String())
+		fmt.Fprintf(lw, " %.3f %s/s", eltPerSec, eltUnit)
 
 	} else {
-		// spinner
+		// spinner (?)
 
-		fmt.Fprint(dst, ANSI_FG0_CYAN.String())
+		lw.WriteString(ANSI_FG0_CYAN.String())
 
 		pattern := []string{` `, `▁`, `▂`, `▃`, `▄`, `▅`, `▆`, `▇`}
 
 		for i := 0; i < width; i += 1 {
-			x := math.Pi * 100 * float64(i) / (width - 1)
+			lx := math.Pi * 100 * float64(i) / (width - 1)
 
 			const phi float64 = 1.0 / 1.61803398875
 			const gravitationalConst float64 = 9.81
@@ -629,7 +970,7 @@ func (pg *pinnedLogProgress) Print(dst io.Writer) {
 				k := 2.0 * math.Pi / wavelength
 				c := math.Sqrt(float64(gravitationalConst / k))
 				a := steepness / k
-				f := k * (x - c*t*steepness*4)
+				f := k * (lx - c*t*steepness*4)
 
 				waves_x += a * math.Sin(f)
 				waves_y += a
@@ -646,69 +987,55 @@ func (pg *pinnedLogProgress) Print(dst io.Writer) {
 			// f = float64(i) / width
 			c := int(math.Round(float64(len(pattern)-1) * f))
 
-			fmt.Fprint(dst)
+			fg := expose_truecolor(x.color, smootherstep(f)*.3+.35)
+			bg := expose_truecolor(x.color, (math.Cos(t+float64(i)/(width-1)*math.Pi)*0.5+0.5)*.2+.3)
 
-			fg := expose_truecolor(pg.color, smootherstep(f)*.3+.35)
-			bg := expose_truecolor(pg.color, (math.Cos(t+float64(i)/(width-1)*math.Pi)*0.5+0.5)*.2+.3)
-
-			fmt.Fprint(dst,
+			fmt.Fprint(lw,
 				make_ansi_bg_truecolor(bg[0], bg[1], bg[2]),
 				make_ansi_fg_truecolor(fg[0], fg[1], fg[2]),
 				pattern[c])
 		}
 
-		fmt.Fprint(dst, ANSI_RESET.String(), ANSI_FG0_GREEN.String())
-		fmt.Fprintf(dst, " %6.2fs ", duration.Seconds())
+		lw.WriteString(ANSI_RESET.String())
+		lw.WriteString(ANSI_FG0_GREEN.String())
+		fmt.Fprintf(lw, " %6.2fs ", duration.Seconds())
 	}
 
 	if progress == last {
-		fmt.Fprint(dst, " DONE")
+		lw.WriteString("DONE")
 	}
 }
 
-func LogProgress(first, last int, msg string, args ...interface{}) PinnedProgress {
-	if enableInteractiveShell {
-		result := &pinnedLogProgress{
-			first:     first,
-			startedat: time.Now(),
-			log:       LogPin(msg, args...),
-		}
-		result.last.Store(int32(last))
-		result.progress.Store(int32(first))
-		result.SetRandomColors()
-		result.Invalidate(first)
-		return result
-	} else {
-		return noopLogProgress{}
-	}
+/***************************************
+ * Logger helpers
+ ***************************************/
+
+func PurgePinnedLogs() {
+	gLogger.Purge()
 }
-func LogSpinner(msg string, args ...interface{}) PinnedProgress {
-	if enableInteractiveShell {
-		result := &pinnedLogProgress{
-			startedat: time.Now(),
-			log:       LogPin(msg, args...),
-		}
-		result.SetRandomColors()
-		result.Invalidate(0)
-		return result
-	} else {
-		return noopLogProgress{}
-	}
+
+func LogProgress(first, last int, msg string, args ...interface{}) ProgressScope {
+	return gLogger.Progress(first, last, msg, args...)
+}
+func LogSpinner(msg string, args ...interface{}) ProgressScope {
+	return gLogger.Progress(1, 0, msg, args...)
 }
 
 type BenchmarkLog struct {
+	category  LogCategory
 	message   string
 	startedAt time.Duration
 }
 
 func (x BenchmarkLog) Close() time.Duration {
 	duration := Elapsed() - x.startedAt
-	LogVeryVerbose("benchmark: %10v   %s", duration, x.message)
+	LogVeryVerbose(x.category, "benchmark: %10v   %s", duration, x.message)
 	return duration
 }
-func LogBenchmark(msg string, args ...interface{}) BenchmarkLog {
+func LogBenchmark(category LogCategory, msg string, args ...interface{}) BenchmarkLog {
 	formatted := fmt.Sprintf(msg, args...) // before measured scope
 	return BenchmarkLog{
+		category:  category,
 		message:   formatted,
 		startedAt: Elapsed(),
 	}

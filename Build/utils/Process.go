@@ -69,14 +69,14 @@ func RunProcess(executable Filename, arguments StringSet, userOptions ...Process
 	}
 	options.Init(userOptions...)
 
-	var pbar PinnedProgress
+	var pbar ProgressScope
 	if !options.NoSpinner {
 		pbar = LogSpinner(strings.Join(arguments, " "))
 		defer pbar.Close()
 	}
 
 	cmd := exec.Command(executable.String(), arguments...)
-	LogTrace("run process: %v", cmd)
+	LogTrace(LogProcess, "run %v", cmd)
 
 	defer cmd.Wait()
 
@@ -142,7 +142,7 @@ func RunProcess(executable Filename, arguments StringSet, userOptions ...Process
 		cmd.Stdout = outputForError
 		if err := cmd.Run(); err != nil {
 			// print output if the command failed
-			LogForward(outputForError.String())
+			LogForward(UnsafeStringFromBytes(outputForError.Bytes()))
 			return err
 		}
 

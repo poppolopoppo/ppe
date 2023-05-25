@@ -69,14 +69,14 @@ func (flags *CommandFlags) Flags(cfv CommandFlagsVisitor) {
 }
 func (flags *CommandFlags) Apply() {
 	SetEnableDiagnostics(flags.Diagnostics.Get())
-	SetLogTimestamp(flags.Timestamp.Get())
+	gLogger.SetShowTimestamp(flags.Timestamp.Get())
 
 	if flags.LogFile.Valid() {
 		if outp, err := UFS.CreateWriter(flags.LogFile); err == nil {
 			SetEnableInteractiveShell(false)
-			SetLogOutput(outp)
+			gLogger.SetWriter(outp)
 		} else {
-			LogPanicErr(err)
+			LogPanicErr(LogCommand, err)
 		}
 	}
 
@@ -85,33 +85,31 @@ func (flags *CommandFlags) Apply() {
 	}
 
 	if flags.Ide.Get() {
-		SetLogLevelMininum(LOG_VERBOSE)
+		gLogger.SetLevelMinimum(LOG_VERBOSE)
 		SetEnableInteractiveShell(false)
 	}
 	if flags.Verbose.Get() {
-		SetLogLevel(LOG_VERBOSE)
+		gLogger.SetLevel(LOG_VERBOSE)
 	}
 	if flags.Trace.Get() {
-		SetLogLevel(LOG_TRACE)
+		gLogger.SetLevel(LOG_TRACE)
 	}
 	if flags.VeryVerbose.Get() {
-		SetLogLevel(LOG_VERYVERBOSE)
+		gLogger.SetLevel(LOG_VERYVERBOSE)
 	}
 	if flags.Quiet.Get() {
-		SetLogLevel(LOG_ERROR)
+		gLogger.SetLevel(LOG_ERROR)
 		SetEnableInteractiveShell(false)
 	}
-	if flags.Debug.Get() || EnableDiagnostics() {
-		SetLogLevel(LOG_DEBUG)
-		enableAssertions = true
-	} else {
-		enableAssertions = false
+	if flags.Debug.Get() {
+		gLogger.SetLevel(LOG_DEBUG)
+		SetEnableDiagnostics(true)
 	}
 	if !flags.Color.IsInheritable() {
 		SetEnableAnsiColor(flags.Color.Get())
 	}
 	if flags.WarningAsError.Get() {
-		SetLogWarningAsError(true)
+		gLogger.SetWarningAsError(true)
 	}
 
 	if flags.OutputDir.Valid() {
@@ -119,11 +117,19 @@ func (flags *CommandFlags) Apply() {
 	}
 
 	if flags.Purge.Get() {
-		LogTrace("command: build will be forced due to '-F' command-line option")
+		LogTrace(LogCommand, "build will be forced due to '-F' command-line option")
 		flags.Force.Enable()
 	}
 	if flags.Force.Get() {
-		LogTrace("command: fbuild will be forced due to '-f' command-line option")
+		LogTrace(LogCommand, "fbuild will be forced due to '-f' command-line option")
+	}
+
+	// queue print summary if specified on command-line
+	if flags.Summary.Get() {
+		CommandEnv.onExit.Add(func(cet *CommandEnvT) error {
+			printBuildGraphSummary(cet.startedAt, cet.buildGraph)
+			return nil
+		})
 	}
 }
 
@@ -200,7 +206,7 @@ func InitCommandEnv(prefix string, rootFile Filename, args []string, startedAt t
 
 	// parse global flags early-on
 	for _, cl := range CommandEnv.commandLines {
-		LogPanicIfFailed(GlobalParsableFlags.Parse(cl))
+		LogPanicIfFailed(LogCommand, GlobalParsableFlags.Parse(cl))
 	}
 
 	// apply global command flags early-on
@@ -245,7 +251,7 @@ func (env *CommandEnvT) Run() (result error) {
 	// prepare specified commands
 	for _, cl := range env.commandLines {
 		if err := env.commandEvents.Parse(cl); err != nil {
-			LogError("command: %s", err)
+			LogError(LogCommand, "%s", err)
 			PrintCommandHelp(os.Stderr, false)
 			return nil
 		}
@@ -253,16 +259,8 @@ func (env *CommandEnvT) Run() (result error) {
 
 	// check if any command was successfully parsed
 	if !env.commandEvents.Bound() {
-		LogWarning("command: missing argument, use `help` to learn about command usage")
+		LogWarning(LogCommand, "missing argument, use `help` to learn about command usage")
 		return nil
-	}
-
-	// queue print summary if specified on command-line
-	if GetCommandFlags().Summary.Get() {
-		env.onExit.Add(func(cet *CommandEnvT) error {
-			printBuildGraphSummary(cet.startedAt, cet.buildGraph)
-			return nil
-		})
 	}
 
 	defer func() {
@@ -278,30 +276,30 @@ func (env *CommandEnvT) Run() (result error) {
 }
 
 func (env *CommandEnvT) Load() {
-	benchmark := LogBenchmark("load from disk")
+	benchmark := LogBenchmark(LogCommand, "load from disk")
 	defer benchmark.Close()
 
-	LogTrace("command: loading config from '%v'...", env.configPath)
+	LogTrace(LogCommand, "loading config from '%v'...", env.configPath)
 	UFS.OpenBuffered(env.configPath, env.persistent.Deserialize)
 
-	LogTrace("command: loading build graph from '%v'...", env.databasePath)
+	LogTrace(LogCommand, "loading build graph from '%v'...", env.databasePath)
 	if UFS.OpenBuffered(env.databasePath, env.buildGraph.Load) != nil {
 		env.buildGraph.(*buildGraph).makeDirty()
 	}
 }
 func (env *CommandEnvT) Save() {
-	benchmark := LogBenchmark("save to disk")
+	benchmark := LogBenchmark(LogCommand, "save to disk")
 	defer benchmark.Close()
 
-	LogTrace("command: saving config to '%v'...", env.configPath)
+	LogTrace(LogCommand, "saving config to '%v'...", env.configPath)
 	UFS.SafeCreate(env.configPath, env.persistent.Serialize)
 
 	if env.lastPanic != nil {
-		LogTrace("command: won't save build graph since a panic occured")
+		LogTrace(LogCommand, "won't save build graph since a panic occured")
 	} else if env.buildGraph.Dirty() {
-		LogTrace("command: saving build graph to '%v'...", env.databasePath)
+		LogTrace(LogCommand, "saving build graph to '%v'...", env.databasePath)
 		UFS.SafeCreate(env.databasePath, env.buildGraph.Save)
 	} else {
-		LogTrace("command: skipped saving unmodified build graph")
+		LogTrace(LogCommand, "skipped saving unmodified build graph")
 	}
 }

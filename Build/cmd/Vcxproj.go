@@ -21,7 +21,7 @@ var CommandVcxproj = NewCommand(
 
 		vcx := node.GetBuildable().(*VcxprojBuilder)
 
-		LogClaim("generating VCXProj solution in '%v'", vcx.SolutionFile())
+		LogClaim(LogCommand, "generating VCXProj solution in '%v'", vcx.SolutionFile())
 
 		_, result := bg.Build(node)
 		if err := result.Join().Failure(); err != nil {

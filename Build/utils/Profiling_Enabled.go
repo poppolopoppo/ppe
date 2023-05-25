@@ -13,6 +13,7 @@ import (
 
 const PROFILING_ENABLED = true
 
+var LogProfiling = NewLogCategory("Profiling")
 var ProfilingTag = MakeArchiveTag(MakeFourCC('P', 'R', 'O', 'F'))
 
 /***************************************
@@ -161,7 +162,7 @@ var running_profiler interface {
 
 func StartProfiling() func() {
 	profiling := GetProflingFlags().Profiling
-	LogWarning("profiling: use %v profiling mode", profiling)
+	LogWarning(LogProfiling, "use %v profiling mode", profiling)
 	if profiling == PROFILING_CPU {
 		runtime.SetCPUProfileRate(1000) // default is 100
 	}
@@ -180,7 +181,7 @@ func PurgeProfiling() {
 			proc.Dir = UFS.Root.String()
 			output, err := proc.Output()
 			LogForward(UnsafeStringFromBytes(output))
-			LogPanicIfFailed(err)
+			LogPanicIfFailed(LogProfiling, err)
 		}
 		running_profiler = nil
 	}

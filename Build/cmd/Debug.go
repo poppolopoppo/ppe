@@ -23,10 +23,10 @@ var CommandCheckBuild = NewCommand(
 
 		// look for every nodes passed as input parameters
 		targets := Map(func(it StringVar) BuildAlias {
-			LogVerbose("check-build: find build graph node named %q", it)
+			LogVerbose(LogCommand, "find build graph node named %q", it)
 			node := bg.Find(BuildAlias(it.Get()))
 			if node == nil {
-				LogPanic("check-build: node could not be found %q", it)
+				LogPanic(LogCommand, "node could not be found %q", it)
 			}
 			return node.Alias()
 		}, args.Inputs...)
@@ -61,7 +61,7 @@ var CommandCheckCache = NewCommand(
 					if !removeCacheEntry {
 						return
 					}
-					LogWarning("check-cache: remove %q cache entry")
+					LogWarning(LogCommand, "remove %q cache entry")
 					for _, bulk := range entry.Bulks {
 						UFS.Remove(bulk.Path)
 					}
@@ -69,13 +69,13 @@ var CommandCheckCache = NewCommand(
 					UFS.Remove(f)
 				}()
 
-				LogDebug("check-cache: found cache entry %q", f)
+				LogDebug(LogCommand, "found cache entry %q", f)
 				if err := entry.Load(f); err != nil {
-					LogError("check-cache: %v", err)
+					LogError(LogCommand, "%v", err)
 					removeCacheEntry = true
 				}
 
-				LogVerbose("check-cache: read cache entry %q with key %s and %d bulks", f, entry.Key.GetFingerprint(), len(entry.Bulks))
+				LogVerbose(LogCommand, "read cache entry %q with key %s and %d bulks", f, entry.Key.GetFingerprint(), len(entry.Bulks))
 				for i := 0; i < len(entry.Bulks); {
 					removeBulk := false
 					bulk := &entry.Bulks[i]
@@ -88,7 +88,7 @@ var CommandCheckCache = NewCommand(
 							UFS.Remove(it)
 						}
 					} else {
-						LogError("check-cache: %v", err)
+						LogError(LogCommand, "%v", err)
 						removeBulk = true
 					}
 
@@ -97,7 +97,7 @@ var CommandCheckCache = NewCommand(
 					}
 
 					if removeBulk {
-						LogVerbose("check-cache: remove cache bulk %q", bulk)
+						LogVerbose(LogCommand, "remove cache bulk %q", bulk)
 						UFS.Remove(bulk.Path)
 
 						if i+1 < len(entry.Bulks) {
@@ -128,12 +128,12 @@ var CheckFingerprint = NewCommand(
 
 		for _, it := range args.Inputs {
 			a := BuildAlias(it.Get())
-			LogVerbose("check-fingerprint: find build graph node named %q", a)
+			LogVerbose(LogCommand, "find build graph node named %q", a)
 
 			// find the node associated with this alias
 			node := bg.Find(a)
 			if node == nil {
-				LogPanic("check-fingerprint: node could not be found %q", a)
+				LogPanic(LogCommand, "node could not be found %q", a)
 			}
 
 			// compute buildable fingerprint and check wether it matches save build stamp or not
@@ -143,9 +143,9 @@ var CheckFingerprint = NewCommand(
 
 			// if save build stamp do not match, we will try to find which property is not stable by rebuilding it
 			if original == checksum {
-				LogInfo("check-fingerprint: %q -> OK\n\told: %v\n\tnew: %v", a, original, checksum)
+				LogInfo(LogCommand, "%q -> OK\n\told: %v\n\tnew: %v", a, original, checksum)
 			} else {
-				LogWarning("check-fingerprint: %q -> KO\n\told: %v\n\tnew: %v", a, original, checksum)
+				LogWarning(LogCommand, "%q -> KO\n\told: %v\n\tnew: %v", a, original, checksum)
 
 				// duplicate original buildable, so we can make a diff after the build
 				v := reflect.ValueOf(buildable).Elem()
@@ -160,7 +160,7 @@ var CheckFingerprint = NewCommand(
 					return err
 				}
 
-				LogInfo("check-fingerprint: %q ->\n\tbuild: %v", a, result.Success().BuildStamp)
+				LogInfo(LogCommand, "%q ->\n\tbuild: %v", a, result.Success().BuildStamp)
 
 				// finally make a diff between the original backup and the updated node after the build
 				// -> the diff should issue an error on the property causing the desynchronization
@@ -199,7 +199,7 @@ var CheckSerialize = NewCommand(
 			node := bg.Find(a)
 			buildable := node.GetBuildable()
 
-			bench := LogBenchmark("%10s bytes   %T -> %q", MakeStringer(func() string {
+			bench := LogBenchmark(LogCommand, "%10s bytes   %T -> %q", MakeStringer(func() string {
 				return fmt.Sprint(ar.Len())
 			}), buildable, a)
 
@@ -230,7 +230,7 @@ var CheckSerialize = NewCommand(
 
 		for _, class := range classBySize {
 			stats := perClass[class]
-			LogInfo("%6d elts  -  %10.3f KiB  - %8.3f MiB/s  -  %v",
+			LogInfo(LogCommand, "%6d elts  -  %10.3f KiB  - %8.3f MiB/s  -  %v",
 				stats.Num,
 				float32(stats.Size)/1024.0,
 				(float64(stats.Size)/(1024*1024.0))/(float64(stats.Duration.Seconds())),
@@ -316,8 +316,6 @@ var ProgressBar = NewCommand(
 
 			pbar.Close()
 		}
-
-		return nil
 	}))
 
 var ShowVersion = NewCommand(

@@ -12,7 +12,7 @@ var CommandCompileDb = NewCommand(
 	"generate json compilation database",
 	OptionCommandAllCompilationFlags(),
 	OptionCommandRun(func(cc CommandContext) error {
-		LogClaim("generation json compilation database in %q", UFS.Intermediate)
+		LogClaim(LogCommand, "generation json compilation database in %q", UFS.Intermediate)
 
 		bg := CommandEnv.BuildGraph()
 
@@ -53,7 +53,7 @@ type CompilationDatabaseBuilder struct {
 	Database   CompilationDatabase
 }
 
-//	func (x CompilationDatabaseBuilder) Alias() BuildAlias {
+//	func (x *CompilationDatabaseBuilder) Alias() BuildAlias {
 //		return MakeBuildAlias("Compile", "Database", x.OutputFile.String())
 //	}
 //
@@ -63,7 +63,7 @@ type CompilationDatabaseBuilder struct {
 //		SerializeSlice(ar, &x.Database)
 //	}
 func (x *CompilationDatabaseBuilder) Build(bg BuildGraph) error {
-	LogVerbose("generate compilation database for %v in %q...", x.EnvironmentAlias, x.OutputFile)
+	LogVerbose(LogCommand, "generate compilation database for %v in %q...", x.EnvironmentAlias, x.OutputFile)
 
 	x.Database = make([]CompileCommand, 0, len(x.Database))
 

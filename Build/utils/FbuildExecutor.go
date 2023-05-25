@@ -4,6 +4,8 @@ import (
 	"strings"
 )
 
+var LogFBuild = NewLogCategory("FBuild")
+
 /***************************************
  * FBuild arguments
  ***************************************/
@@ -187,7 +189,7 @@ func MakeFBuildExecutor(flags *FBuildArgs, args ...string) (result FBuildExecuto
 	return result
 }
 func (x *FBuildExecutor) Run() (err error) {
-	LogVerbose("fbuild: running with '%v' (capture=%v)", x, x.Capture)
+	LogVerbose(LogFBuild, "running with '%v' (capture=%v)", x, x.Capture)
 
 	return RunProcess(FBUILD_BIN, x.Args.Slice(),
 		OptionProcessExport("FASTBUILD_CACHE_PATH", UFS.Cache.String()),

@@ -8,10 +8,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"time"
 )
-
-var programStartedAt = time.Now()
 
 func InitUtils() {
 	setupCloseHandler()

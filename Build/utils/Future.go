@@ -9,6 +9,8 @@ import (
 	"unsafe"
 )
 
+var LogFuture = NewLogCategory("Future")
+
 type Future[T any] interface {
 	Join() Result[T]
 }
@@ -33,7 +35,7 @@ func (r result[S]) Get() (S, error) {
 }
 func (r result[S]) Success() S {
 	if r.failure != nil {
-		LogPanic("future: %v", r.failure)
+		LogPanic(LogFuture, "%v", r.failure)
 	}
 	return r.success
 }
@@ -161,7 +163,7 @@ type map_future_result[OUT, IN any] struct {
 
 func (x map_future_result[OUT, IN]) Success() OUT {
 	result, err := x.transform(x.inner.Success())
-	LogPanicIfFailed(err)
+	LogPanicIfFailed(LogFuture, err)
 	return result
 }
 func (x map_future_result[OUT, IN]) Failure() error {
@@ -305,7 +307,7 @@ func ParallelMap_Sync[IN any, OUT any](each func(IN) (OUT, error), in ...IN) ([]
 	results := Map(func(x IN) OUT {
 		result, err := each(x)
 		if err != nil {
-			LogPanicErr(err)
+			LogPanicErr(LogFuture, err)
 		}
 		return result
 	}, in...)

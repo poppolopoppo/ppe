@@ -18,6 +18,8 @@ import (
 	"github.com/pierrec/lz4/v4"
 )
 
+var LogSerialize = NewLogCategory("Serialize")
+
 /***************************************
  * Archive
  ***************************************/
@@ -155,26 +157,26 @@ func (x *serializableFactory) registerName(typeptr uintptr, name string, concret
 	fingerprint := StringFingerprint(name)
 	copy(typ.Guid[:], fingerprint[:16])
 
-	LogDebug("serializable: register type %v as %q : [%v]", concreteType, name, hex.EncodeToString(typ.Guid[:]))
+	LogDebug(LogSerialize, "register type %v as %q : [%v]", concreteType, name, hex.EncodeToString(typ.Guid[:]))
 
 	if prev, ok := x.typeptrToType.FindOrAdd(typeptr, typ); ok && prev != typ {
-		LogPanic("serializable: overwriting factory type %q from <%v> to <%v>", name, prev.Type, concreteType)
+		LogPanic(LogSerialize, "overwriting factory type %q from <%v> to <%v>", name, prev.Type, concreteType)
 	}
 	if prev, ok := x.guidToType.FindOrAdd(typ.Guid, typ); ok && prev != typ {
-		LogPanic("serializable: duplicate factory type <%v> from %q to %q", concreteType, prev.Type, concreteType)
+		LogPanic(LogSerialize, "duplicate factory type <%v> from %q to %q", concreteType, prev.Type, concreteType)
 	}
 }
 func (x *serializableFactory) resolveConreteType(guid serializableGuid) reflect.Type {
 	it, ok := x.guidToType.Get(guid)
 	if !ok {
-		LogPanic("serializable: could not resolve concrete type from %q", guid)
+		LogPanic(LogSerialize, "could not resolve concrete type from %q", guid)
 	}
 	return it.Type
 }
 func (x *serializableFactory) resolveTypename(typeptr uintptr) serializableGuid {
 	it, ok := x.typeptrToType.Get(typeptr)
 	if !ok {
-		LogPanic("serializable: could not resolve type name from %X", typeptr)
+		LogPanic(LogSerialize, "could not resolve type name from %X", typeptr)
 	}
 	return it.Guid
 }
@@ -209,7 +211,7 @@ func reflectTypename(input reflect.Type) string {
 func RegisterSerializable[T Serializable](value T) {
 	typ, ok := getTypeptr(value)
 	if !ok {
-		LogPanic("serializable: don't register a nil pointer to a struct %T", value)
+		LogPanic(LogSerialize, "don't register a nil pointer to a struct %T", value)
 	}
 	rt := reflect.TypeOf(value)
 	globalSerializableFactory.registerName(typ, reflectTypename(rt), rt)
@@ -384,7 +386,7 @@ func (x basicArchive) Error() error {
 }
 func (x *basicArchive) OnError(err error) {
 	x.err = err
-	LogPanic("serializable: %v", err)
+	LogPanic(LogSerialize, "%v", err)
 }
 func (x basicArchive) Flags() ArchiveFlags {
 	return x.flags
@@ -867,7 +869,7 @@ func (x *ArchiveDiff) Error() error {
 func (ar ArchiveDiff) serializeLog(format string, args ...interface{}) {
 	if ar.verbose && IsLogLevelActive(LOG_DEBUG) {
 		indent := strings.Repeat("  ", ar.level)
-		LogDebug("serializable:%s%s", indent, fmt.Sprintf(format, args...))
+		LogDebug(LogSerialize, "%s%s", indent, fmt.Sprintf(format, args...))
 	}
 }
 func (x *ArchiveDiff) onDiff(equals bool, old, new any) {
@@ -974,18 +976,18 @@ func NewArchiveGuard(ar Archive) Archive {
 func (ar ArchiveGuard) serializeLog(format string, args ...interface{}) {
 	if IsLogLevelActive(LOG_DEBUG) {
 		indent := strings.Repeat("  ", ar.level)
-		LogDebug("serializable:%s%s", indent, fmt.Sprintf(format, args...))
+		LogDebug(LogSerialize, "%s%s", indent, fmt.Sprintf(format, args...))
 	}
 }
 func (ar ArchiveGuard) checkTag(tag FourCC) {
 	canary := ARCHIVEGUARD_CANARY
 	if ar.inner.UInt32(&canary); canary != ARCHIVEGUARD_CANARY {
-		LogPanic("invalid canary guard : 0x%08X vs 0x%08X", canary, ARCHIVEGUARD_CANARY)
+		LogPanic(LogSerialize, "invalid canary guard : 0x%08X vs 0x%08X", canary, ARCHIVEGUARD_CANARY)
 	}
 
 	check := tag
 	if check.Serialize(ar.inner); tag != check {
-		LogPanic("invalid tag guard : %s (0x%08X) vs %s (0x%08X)", check, check, tag, tag)
+		LogPanic(LogSerialize, "invalid tag guard : %s (0x%08X) vs %s (0x%08X)", check, check, tag, tag)
 	}
 }
 func (ar *ArchiveGuard) typeGuard(value any, tag FourCC, format string, args ...interface{}) func() {
@@ -997,7 +999,7 @@ func (ar *ArchiveGuard) typeGuard(value any, tag FourCC, format string, args ...
 	}
 
 	return func() {
-		LogPanicIfFailed(ar.inner.Error())
+		LogPanicIfFailed(LogSerialize, ar.inner.Error())
 		ar.checkTag(tag)
 
 		vo := reflect.ValueOf(value)

@@ -12,6 +12,8 @@ import (
 	"github.com/minio/sha256-simd"
 )
 
+var LogFingerprint = NewLogCategory("Fingerprint")
+
 /***************************************
  * Fingerprint
  ***************************************/
@@ -90,7 +92,7 @@ func SerializeAnyFingerprint(any func(ar Archive) error, seed Fingerprint) (resu
 	if err = any(&ar); err != nil {
 		return
 	}
-	LogPanicIfFailed(ar.Error())
+	LogPanicIfFailed(LogFingerprint, ar.Error())
 
 	copy(result[:], digester.Sum(nil))
 	return
@@ -142,7 +144,7 @@ func SerializeFingerpint(value Serializable, seed Fingerprint) Fingerprint {
 		ar.Serializable(value)
 		return nil
 	}, seed)
-	LogPanicIfFailed(err)
+	LogPanicIfFailed(LogFingerprint, err)
 	return fingerprint
 }
 
@@ -165,7 +167,7 @@ var PROCESS_INFO = getExecutableInfo()
 
 var GetProcessSeed = Memoize(func() Fingerprint {
 	result := PROCESS_INFO.Checksum.Join()
-	LogPanicIfFailed(result.Failure())
+	LogPanicIfFailed(LogFingerprint, result.Failure())
 	return result.Success()
 })
 
@@ -188,7 +190,7 @@ func getExecutableInfo_FromFile() (result ProcessInfo) {
 			})
 		}
 	} else {
-		LogPanic("no module build info!")
+		LogPanic(LogFingerprint, "no module build info!")
 	}
 	// round up timestamp to millisecond, see ArchiveBinaryReader/Writer.Time()
 	result.Timestamp = time.UnixMilli(result.Timestamp.UnixMilli())

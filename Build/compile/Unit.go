@@ -148,7 +148,7 @@ func (unit *Unit) GetCompiler() *CompilerRules {
 	if compiler, err := unit.GetBuildCompiler(); err == nil {
 		return compiler.GetCompiler()
 	} else {
-		LogPanicErr(err)
+		LogPanicErr(LogCompile, err)
 		return nil
 	}
 }
@@ -156,7 +156,7 @@ func (unit *Unit) GetPreprocessor() *CompilerRules {
 	if compiler, err := unit.GetBuildPreprocessor(); err == nil {
 		return compiler.GetCompiler()
 	} else {
-		LogPanicErr(err)
+		LogPanicErr(LogCompile, err)
 		return nil
 	}
 }
@@ -168,7 +168,7 @@ func (unit *Unit) DebugString() string {
 	return PrettyPrint(unit)
 }
 func (unit *Unit) Decorate(env *CompileEnv, decorator ...UnitDecorator) error {
-	LogVeryVerbose("unit %v: decorate with [%v]", unit.Target, MakeStringer(func() string {
+	LogVeryVerbose(LogCompile, "unit %v: decorate with [%v]", unit.Target, MakeStringer(func() string {
 		return Join(",", decorator...).String()
 	}))
 	for _, x := range decorator {

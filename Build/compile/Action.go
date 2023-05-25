@@ -81,7 +81,7 @@ func (x *ActionRules) Build(bc BuildContext) error {
 	if flags.CacheMode.HasRead() && x.CacheMode.HasRead() {
 		var err error
 		if cacheKey, err = GetActionCache().CacheRead(x, outputFiles); err == nil {
-			LogInfo("cache-hit %q", x.Outputs[0])
+			LogInfo(LogBuildGraph, "cache-hit %q", x.Outputs[0])
 			needToRunProcess = false // cache-hit
 		}
 	}
@@ -341,7 +341,7 @@ func (x *buildActionGenerator) CreateActions(unit *Unit) error {
 	}
 
 	Assert(func() bool { return x.OutputType == PAYLOAD_HEADERS || len(targetOutputs) > 0 })
-	LogVeryVerbose("action: %q outputs %v payload with %d artifacts%s", unit, unit.Payload, len(targetOutputs),
+	LogVeryVerbose(LogAction, "%q outputs %v payload with %d artifacts%s", unit, unit.Payload, len(targetOutputs),
 		MakeStringer(func() string {
 			if IsLogLevelActive(LOG_VERYVERBOSE) {
 				allActions := ActionSet{}

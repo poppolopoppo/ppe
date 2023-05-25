@@ -118,7 +118,7 @@ func (x *GnuSourceDependenciesAction) Build(bc BuildContext) error {
 	}
 
 	// add all parsed filenames as dynamic dependencies: when a header is modified, this action will have to be rebuild
-	LogDebug("gnu-dep-file: parsed output in %q\n%v", x.GnuDepFile, MakeStringer(func() string {
+	LogDebug(LogGeneric, "gnu-dep-file: parsed output in %q\n%v", x.GnuDepFile, MakeStringer(func() string {
 		return PrettyPrint(sourceDeps.Dependencies)
 	}))
 

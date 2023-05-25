@@ -5,11 +5,11 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"reflect"
-	"runtime/debug"
 	"sync/atomic"
 )
+
+var LogAssert = NewLogCategory("Assert")
 
 var DebugTag = MakeArchiveTag(MakeFourCC('D', 'E', 'B', 'G'))
 
@@ -22,11 +22,9 @@ func SetEnableDiagnostics(enabled bool) {
 	enableDiagnostics = enabled
 }
 
-var enableAssertions bool = true
-
 func AssertMessage(pred func() bool, msg string, args ...interface{}) {
 	if !pred() {
-		LogPanic(msg, args...)
+		LogPanic(LogAssert, msg, args...)
 	}
 }
 
@@ -38,7 +36,7 @@ func AssertSameType[T any](a T, b T) {
 	ta := reflect.TypeOf(a)
 	tb := reflect.TypeOf(b)
 	if ta != tb {
-		LogPanic("expected type <%v> but got <%v>", ta, tb)
+		LogPanic(LogAssert, "expected type <%v> but got <%v>", ta, tb)
 	}
 }
 
@@ -48,12 +46,12 @@ func AssertIn[T comparable](elt T, values ...T) {
 			return
 		}
 	}
-	LogPanic("element <%v> is not in the slice", elt)
+	LogPanic(LogAssert, "element <%v> is not in the slice", elt)
 }
 func AssertNotIn[T comparable](elt T, values ...T) {
 	for _, x := range values {
 		if x == elt {
-			LogPanic("element <%v> is already in the slice", elt)
+			LogPanic(LogAssert, "element <%v> is already in the slice", elt)
 		}
 	}
 }
@@ -64,28 +62,28 @@ func AssertInStrings[T fmt.Stringer](elt T, values ...T) {
 			return
 		}
 	}
-	LogPanic("element <%v> is not in the slice", elt)
+	LogPanic(LogAssert, "element <%v> is not in the slice", elt)
 }
 func AssertNotInStrings[T fmt.Stringer](elt T, values ...T) {
 	for _, x := range values {
 		if x.String() == elt.String() {
-			LogPanic("element <%v> is already in the slice", elt)
+			LogPanic(LogAssert, "element <%v> is already in the slice", elt)
 		}
 	}
 }
 
 func NotImplemented(m string, a ...interface{}) {
-	LogWarning("not implemented: "+m, a...)
+	LogWarning(LogAssert, "not implemented: "+m, a...)
 }
 func UnreachableCode() {
-	LogPanic("unreachable code")
+	LogPanic(LogAssert, "unreachable code")
 }
 func UnexpectedValue(x interface{}) {
-	LogPanic("unexpected value: <%T> %#v", x, x)
+	LogPanic(LogAssert, "unexpected value: <%T> %#v", x, x)
 }
 func UnexpectedType(expected reflect.Type, given interface{}) {
 	if reflect.TypeOf(given) != expected {
-		LogPanic("expected <%#v>, given %#v <%T>", expected, given, given)
+		LogPanic(LogAssert, "expected <%#v>, given %#v <%T>", expected, given, given)
 	}
 }
 
@@ -95,7 +93,7 @@ func AppendComparable_CheckUniq[T comparable](src []T, elts ...T) (result []T) {
 		if !Contains(src, x) {
 			result = append(result, x)
 		} else {
-			LogPanic("element already in set: %v (%v)", x, src)
+			LogPanic(LogAssert, "element already in set: %v (%v)", x, src)
 		}
 	}
 	return result
@@ -106,7 +104,7 @@ func PrependComparable_CheckUniq[T comparable](src []T, elts ...T) (result []T) 
 		if !Contains(src, x) {
 			result = append([]T{x}, result...)
 		} else {
-			LogPanic("element already in set: %v (%v)", x, src)
+			LogPanic(LogAssert, "element already in set: %v (%v)", x, src)
 		}
 	}
 	return result
@@ -117,7 +115,7 @@ func AppendSlice_CheckUniq[T any](src []T, elts []T, equals func(T, T) bool) (re
 	for _, x := range elts {
 		for _, y := range src {
 			if equals(x, y) {
-				LogPanic("element already in set: %v (%v)", x, src)
+				LogPanic(LogAssert, "element already in set: %v (%v)", x, src)
 			}
 		}
 		result = append(result, x)
@@ -129,7 +127,7 @@ func PrependSlice_CheckUniq[T any](src []T, elts []T, equals func(T, T) bool) (r
 	for _, x := range elts {
 		for _, y := range src {
 			if equals(x, y) {
-				LogPanic("element already in set: %v (%v)", x, src)
+				LogPanic(LogAssert, "element already in set: %v (%v)", x, src)
 			}
 		}
 		result = append([]T{x}, result...)
@@ -142,7 +140,7 @@ func AppendEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T) 
 	for _, x := range elts {
 		for _, y := range src {
 			if x.Equals(y) {
-				LogPanic("element already in set: %v (%v)", x, src)
+				LogPanic(LogAssert, "element already in set: %v (%v)", x, src)
 			}
 		}
 		result = append(result, x)
@@ -154,7 +152,7 @@ func PrependEquatable_CheckUniq[T Equatable[T]](src []T, elts ...T) (result []T)
 	for _, x := range elts {
 		for _, y := range src {
 			if x.Equals(y) {
-				LogPanic("element already in set: %v (%v)", x, src)
+				LogPanic(LogAssert, "element already in set: %v (%v)", x, src)
 			}
 		}
 		result = append([]T{x}, result...)
@@ -185,12 +183,4 @@ func ParallelMap[IN any, OUT any](each func(IN) (OUT, error), in ...IN) ([]OUT, 
 }
 func ParallelRange[IN any](each func(IN) error, in ...IN) error {
 	return ParallelRange_Sync(each, in...)
-}
-
-func make_logQueue() logQueue {
-	return make_logQueue_immediate()
-}
-
-func log_callstack() {
-	log.Println(UnsafeStringFromBytes(debug.Stack()))
 }

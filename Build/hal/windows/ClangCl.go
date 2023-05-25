@@ -154,11 +154,11 @@ func (clang *ClangCompiler) Build(bc BuildContext) error {
 	)
 
 	if !clang.UseMsvcLibrarian {
-		LogVeryVerbose("%v: use llvm librarian %q", clang.CompilerAlias, clang.ProductInstall.LlvmLib_exe)
+		LogVeryVerbose(LogWindows, "%v: use llvm librarian %q", clang.CompilerAlias, clang.ProductInstall.LlvmLib_exe)
 		rules.Librarian = clang.ProductInstall.LlvmLib_exe
 	}
 	if !clang.UseMsvcLinker {
-		LogVeryVerbose("%v: use llvm linker %q", clang.CompilerAlias, clang.ProductInstall.LldLink_exe)
+		LogVeryVerbose(LogWindows, "%v: use llvm linker %q", clang.CompilerAlias, clang.ProductInstall.LldLink_exe)
 		rules.Linker = clang.ProductInstall.LldLink_exe
 	}
 
@@ -254,7 +254,7 @@ func (llvm *LlvmProductInstall) Build(bc BuildContext) error {
 				return err
 			}
 
-			LogTrace("using LLVM v%s for Windows found in '%v'", llvm.Version, llvm.InstallDir)
+			LogTrace(LogWindows, "using LLVM v%s for Windows found in '%v'", llvm.Version, llvm.InstallDir)
 			if err := bc.NeedFile(llvm.ClangCl_exe, llvm.LlvmLib_exe, llvm.LldLink_exe); err != nil {
 				return err
 			}

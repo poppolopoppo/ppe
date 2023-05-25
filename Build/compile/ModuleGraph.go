@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"sort"
@@ -107,7 +108,7 @@ func (graph *moduleGraph) Module(name ModuleAlias) Module {
 	if module, ok := graph.modules[name]; ok {
 		return module
 	} else {
-		LogPanic("unknown module name '%v'", name)
+		LogPanic(LogCompile, "unknown module name '%v'", name)
 		return nil
 	}
 }
@@ -115,7 +116,7 @@ func (graph *moduleGraph) NodeByModule(module Module) *ModuleNode {
 	if node, ok := graph.nodes[module]; ok {
 		return node
 	} else {
-		LogPanic("module node not constructed for <%v>", module)
+		LogPanic(LogCompile, "module node not constructed for <%v>", module)
 		return nil
 	}
 }
@@ -167,7 +168,7 @@ func MakeModuleGraph(env *CompileEnv, targets *BuildModules) (ModuleGraph, error
 	for ord, module := range result.keys {
 		node := result.nodes[module]
 		node.Ordinal = TargetBuildOrder(ord) // record the enumeration order in the node
-		LogTrace("module %02d#%02d\t|%2d |%2d |%2d |\t%v",
+		LogTrace(LogCompile, "module %02d#%02d\t|%2d |%2d |%2d |\t%v",
 			node.Level,
 			node.Ordinal,
 			MakeStringer(func() string {
@@ -197,7 +198,7 @@ func (graph *moduleGraph) expandDependencies(env *CompileEnv, deps ...ModuleAlia
 		if module, ok := graph.modules[name]; ok {
 			return graph.expandModule(env, module)
 		} else {
-			LogPanic("module graph: can't find module dependency <%v>", name)
+			LogPanic(LogCompile, "module graph: can't find module dependency <%v>", name)
 			return nil
 		}
 	}, deps...)

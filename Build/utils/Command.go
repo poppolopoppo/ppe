@@ -63,7 +63,7 @@ func splitArgsIFN(args []string, each func([]string) error) error {
 
 func NewCommandLine(persistent PersistentData, args []string) (result []CommandLine) {
 	splitArgsIFN(args, func(split []string) error {
-		LogTrace("command: process arguments -> %v", MakeStringer(func() string {
+		LogTrace(LogCommand, "process arguments -> %v", MakeStringer(func() string {
 			return strings.Join(Map(func(a string) string {
 				return fmt.Sprintf("%q", a)
 			}, split...), ", ")
@@ -712,7 +712,7 @@ func (x *commandItem) Parse(cl CommandLine) error {
 		}
 		if len(unknownFlags) > 0 {
 			// report a warning about unknown flag: dont' die on thie
-			LogWarning("unknown command flags: %q", strings.Join(unknownFlags, ", "))
+			LogWarning(LogCommand, "unknown command flags: %q", strings.Join(unknownFlags, ", "))
 		}
 	}
 
@@ -798,7 +798,7 @@ func OptionCommandArg(arg CommandArgument) CommandOptionFunc {
 func OptionCommandPrepare(e EventDelegate[CommandContext]) CommandOptionFunc {
 	return func(ci *commandItem) {
 		ci.prepare = func(cc CommandContext) error {
-			LogTrace("commmand: prepare %q command", ci)
+			LogTrace(LogCommand, "prepare %q command", ci)
 			return e(cc)
 		}
 	}
@@ -806,7 +806,7 @@ func OptionCommandPrepare(e EventDelegate[CommandContext]) CommandOptionFunc {
 func OptionCommandRun(e EventDelegate[CommandContext]) CommandOptionFunc {
 	return func(ci *commandItem) {
 		ci.run = func(cc CommandContext) error {
-			LogTrace("commmand: run %q command", ci)
+			LogTrace(LogCommand, "run %q command", ci)
 			return e(cc)
 		}
 	}
@@ -814,7 +814,7 @@ func OptionCommandRun(e EventDelegate[CommandContext]) CommandOptionFunc {
 func OptionCommandClean(e EventDelegate[CommandContext]) CommandOptionFunc {
 	return func(ci *commandItem) {
 		ci.clean = func(cc CommandContext) error {
-			LogTrace("commmand: clean %q command", ci)
+			LogTrace(LogCommand, "clean %q command", ci)
 			return e(cc)
 		}
 	}
@@ -822,7 +822,7 @@ func OptionCommandClean(e EventDelegate[CommandContext]) CommandOptionFunc {
 func OptionCommandPanic(e EventDelegate[error]) CommandOptionFunc {
 	return func(ci *commandItem) {
 		ci.panic = func(err error) error {
-			LogTrace("commmand: panic %q command", ci)
+			LogTrace(LogCommand, "panic %q command", ci)
 			return e(err)
 		}
 	}
@@ -859,7 +859,7 @@ func NewCommand(
 		if factory, ok := Commands.Get(key); ok {
 			return factory()
 		} else {
-			LogPanic("command: command %q not found", name)
+			LogPanic(LogCommand, "command %q not found", name)
 			return nil
 		}
 	}
@@ -934,8 +934,8 @@ func FindCommand(name string) (CommandItem, error) {
 }
 
 func PrintCommandHelp(w io.Writer, detailed bool) {
-	restoreLogLevel := SetLogLevelMaximum(LOG_VERBOSE)
-	defer SetLogLevel(restoreLogLevel)
+	restoreLogLevel := gLogger.SetLevelMaximum(LOG_VERBOSE)
+	defer gLogger.SetLevel(restoreLogLevel)
 
 	f := NewStructuredFile(w, "  ", false)
 
@@ -1050,7 +1050,7 @@ func (x *HelpCommand) Run(cc CommandContext) (err error) {
 	if !x.Command.IsInheritable() {
 		cmd, err = FindCommand(x.Command.Get())
 		if err != nil {
-			LogError("command: %v", err)
+			LogError(LogCommand, "%v", err)
 		}
 	}
 

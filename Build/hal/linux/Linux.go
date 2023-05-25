@@ -5,10 +5,12 @@ import (
 	. "build/utils"
 )
 
+var LogLinux = NewLogCategory("Linux")
+
 var HalTag = MakeArchiveTag(MakeFourCC('L', 'I', 'N', 'X'))
 
 func InitLinux() {
-	LogTrace("build/hal/linux.Init()")
+	LogTrace(LogLinux, "build/hal/linux.Init()")
 
 	RegisterSerializable(&LinuxPlatform{})
 	RegisterSerializable(&LlvmProductInstall{})

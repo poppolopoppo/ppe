@@ -105,7 +105,7 @@ func (x *WindowsSDKBuilder) Build(bc BuildContext) error {
 			return err
 		}
 
-		LogDebug("found WindowsSDK@%v in '%v'", x.MajorVer, lib)
+		LogDebug(LogWindows, "found WindowsSDK@%v in '%v'", x.MajorVer, lib)
 
 		libParent, ver := lib.Split()
 		x.WindowsSDK = newWindowsSDK(libParent.Parent(), ver)
@@ -153,19 +153,19 @@ func getWindowsSDK_User(overrideDir Directory) BuildFactoryTyped[*WindowsSDKBuil
 
 func GetWindowsSDKInstall(bi BuildInitializer, overrideDir Directory) *WindowsSDKBuilder {
 	if len(overrideDir.Path) > 0 {
-		LogPanicIfFailed(bi.NeedDirectory(overrideDir))
+		LogPanicIfFailed(LogWindows, bi.NeedDirectory(overrideDir))
 
-		LogVeryVerbose("using user override '%v' for Windows SDK", overrideDir)
+		LogVeryVerbose(LogWindows, "using user override '%v' for Windows SDK", overrideDir)
 		return getWindowsSDK_User(overrideDir).SafeNeed(bi)
 	}
 
 	if win10, err := getWindowsSDK_10().Need(bi); err == nil {
-		LogVeryVerbose("using Windows SDK 10")
+		LogVeryVerbose(LogWindows, "using Windows SDK 10")
 		return win10
 	}
 
 	if win81, err := getWindowsSDK_8_1().Need(bi); err == nil {
-		LogVeryVerbose("using Windows SDK 8.1")
+		LogVeryVerbose(LogWindows, "using Windows SDK 8.1")
 		return win81
 	}
 

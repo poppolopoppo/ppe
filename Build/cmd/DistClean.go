@@ -14,7 +14,7 @@ var CommandDistClean = NewCommand(
 	OptionCommandRun(func(cc CommandContext) error {
 		args := GetCompletionArgs()
 		if len(args.Inputs) == 0 {
-			LogClaim("dist-clean all output folders and database")
+			LogClaim(LogCommand, "dist-clean all output folders and database")
 
 			distCleanDir(UFS.Binaries)
 			distCleanDir(UFS.Cache)
@@ -28,7 +28,7 @@ var CommandDistClean = NewCommand(
 
 		} else {
 			re := MakeGlobRegexp(Stringize(args.Inputs...)...)
-			LogClaim("dist-clean all targets matching /%v/", re)
+			LogClaim(LogCommand, "dist-clean all targets matching /%v/", re)
 
 			buildGraph := CommandEnv.BuildGraph()
 			return ForeachBuildTargets(func(bf BuildFactoryTyped[*BuildTargets]) error {
@@ -40,7 +40,7 @@ var CommandDistClean = NewCommand(
 				for _, unitAlias := range buildTargets.Success().Aliases {
 					if re.MatchString(unitAlias.String()) {
 						if unit, err := GetBuildUnit(unitAlias); err == nil {
-							LogInfo("dist-clean %q build unit", unit.String())
+							LogInfo(LogCommand, "dist-clean %q build unit", unit.String())
 
 							distCleanDir(unit.GeneratedDir)
 							distCleanDir(unit.IntermediateDir)
@@ -65,20 +65,20 @@ var CommandDistClean = NewCommand(
 
 func distCleanFile(f Filename) {
 	if f.Exists() {
-		LogVerbose("remove file '%v'", f)
+		LogVerbose(LogCommand, "remove file '%v'", f)
 		err := os.Remove(f.String())
 		if err != nil {
-			LogWarning("distclean: %v", err)
+			LogWarning(LogCommand, "distclean: %v", err)
 		}
 		f.Invalidate()
 	}
 }
 func distCleanDir(d Directory) {
 	if d.Exists() {
-		LogVerbose("remove directory '%v'", d)
+		LogVerbose(LogCommand, "remove directory '%v'", d)
 		err := os.RemoveAll(d.String())
 		if err != nil {
-			LogWarning("distclean: %v", err)
+			LogWarning(LogCommand, "distclean: %v", err)
 		}
 		d.Invalidate()
 	}

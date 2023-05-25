@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"runtime"
@@ -1051,7 +1052,7 @@ func (x UnityType) String() string {
 		return "DISABLED"
 	default:
 		if x <= 0 {
-			LogPanic("invalid unity type: %v", x)
+			LogPanic(LogCompile, "invalid unity type: %v", x)
 		}
 		return fmt.Sprint(int32(x))
 	}

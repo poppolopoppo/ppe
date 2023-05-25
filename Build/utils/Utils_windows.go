@@ -26,7 +26,7 @@ func SetMTime(file *os.File, mtime time.Time) (err error) {
 			var info os.FileInfo
 			if info, err = file.Stat(); err == nil {
 				if info.ModTime() != mtime {
-					LogPanic("SetMTime: timestamp mismatch for %q\n\tfound:\t\t%v\n\texpected:\t\t%v", file.Name(), info.ModTime(), mtime)
+					LogPanic(LogUFS, "SetMTime: timestamp mismatch for %q\n\tfound:\t\t%v\n\texpected:\t\t%v", file.Name(), info.ModTime(), mtime)
 				}
 			}
 			return true

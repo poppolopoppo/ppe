@@ -1,12 +1,15 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"io"
 	"path"
 	"strings"
 )
+
+var LogDataDriven = NewLogCategory("DataDriven")
 
 const NAMESPACEDESC_EXT = "-namespace.json"
 const MODULEDESC_EXT = "-module.json"
@@ -43,7 +46,7 @@ func (src ExtensionDesc) ApplyAllowedPlatforms(name fmt.Stringer) bool {
 	if len(src.AllowedPlaforms) > 0 {
 		localPlatform := GetLocalHostPlatformAlias()
 		if src.AllowedPlaforms.Contains(localPlatform) {
-			LogTrace("%v: not allowed on <%v> platform", name, localPlatform)
+			LogTrace(LogDataDriven, "%v: not allowed on <%v> platform", name, localPlatform)
 			return false
 		}
 	}
@@ -54,7 +57,7 @@ func (src ExtensionDesc) ApplyArchetypes(dst *ModuleDesc, name ModuleAlias) {
 	src.Archetypes.Range(func(id string) {
 		id = strings.ToUpper(id)
 		if decorator, ok := AllArchetypes.Get(id); ok {
-			LogTrace("%v: inherit module archtype <%v>", name, id)
+			LogTrace(LogDataDriven, "%v: inherit module archtype <%v>", name, id)
 			decorator(dst.rules)
 		} else {
 			LogFatal("%v: invalid module archtype <%v>", name, id)
@@ -66,11 +69,11 @@ func (src ExtensionDesc) ApplyHAL(dst *ModuleDesc, name ModuleAlias) {
 	for id, desc := range src.HAL {
 		var hal HostId
 		if err := hal.Set(id.String()); err == nil && hal == hostId {
-			LogTrace("%v: inherit platform facet [%v]", name, id)
+			LogTrace(LogDataDriven, "%v: inherit platform facet [%v]", name, id)
 			dst.Archetypes.Prepend(desc.Archetypes...)
 			dst.rules.Prepend(desc.rules)
 		} else if err != nil {
-			LogError("%v: invalid platform id [%v], %v", name, id, err)
+			LogError(LogDataDriven, "%v: invalid platform id [%v], %v", name, id, err)
 		}
 	}
 }
@@ -181,7 +184,7 @@ func (x *ModuleDesc) CreateRules(src Filename, namespace *NamespaceDesc, moduleB
 		NamespaceAlias: namespace.rules.NamespaceAlias,
 		ModuleName:     moduleBasename,
 	}
-	LogVerbose("create rules for module: '%v'", moduleAlias)
+	LogVerbose(LogDataDriven, "create rules for module: '%v'", moduleAlias)
 
 	rootDir := src.Dirname
 	x.rules = &ModuleRules{
@@ -237,7 +240,7 @@ type buildModulesDeserializer struct {
 }
 
 func (x *buildModulesDeserializer) loadModuleDesc(src Filename, namespace *NamespaceDesc) (*ModuleDesc, error) {
-	LogTrace("loading data-driven module from '%v'", src)
+	LogTrace(LogDataDriven, "loading data-driven module from '%v'", src)
 
 	result := &ModuleDesc{
 		Name:   strings.TrimSuffix(src.Basename, MODULEDESC_EXT),
@@ -281,7 +284,7 @@ func (x *buildModulesDeserializer) loadModuleDesc(src Filename, namespace *Names
 }
 
 func (x *buildModulesDeserializer) loadNamespaceDesc(src Filename, parent *NamespaceDesc) (*NamespaceDesc, error) {
-	LogTrace("loading data-driven namespace from '%v'", src)
+	LogTrace(LogDataDriven, "loading data-driven namespace from '%v'", src)
 
 	src = src.Normalize()
 
@@ -422,7 +425,7 @@ func (x *BuildModules) Build(bc BuildContext) error {
 
 	// need a separated pass for validation, or not every module will be declared!
 	for _, it := range deserializer.modules {
-		LogPanicIfFailed(validateModuleRec(x, it.rules))
+		LogPanicIfFailed(LogDataDriven, validateModuleRec(x, it.rules))
 	}
 
 	return nil

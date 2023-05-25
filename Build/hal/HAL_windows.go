@@ -11,6 +11,8 @@ import (
 	"syscall"
 )
 
+var LogHAL = utils.NewLogCategory("HAL")
+
 func osVersion() string {
 	v, err := syscall.GetVersion()
 	if err != nil {
@@ -36,7 +38,7 @@ func setConsoleMode() bool {
 		return true
 	}
 
-	utils.LogVerbose("hal: failed to set console mode with %v", err)
+	utils.LogVerbose(LogHAL, "failed to set console mode with %v", err)
 	return false
 }
 
@@ -45,8 +47,11 @@ func InitHAL() {
 		Id:   utils.HOST_WINDOWS,
 		Name: "Windows " + osVersion(),
 	})
+
 	utils.FBUILD_BIN = utils.UFS.Build.Folder("hal", "windows", "bin").File("FBuild.exe")
+
 	utils.SetEnableInteractiveShell(setConsoleMode())
+
 	generic.InitGeneric()
 	windows.InitWindows()
 }

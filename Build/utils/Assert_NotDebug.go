@@ -9,6 +9,8 @@ import (
 	"sync/atomic"
 )
 
+var LogAssert = NewLogCategory("Assert")
+
 var enableDiagnostics bool = false
 
 func EnableDiagnostics() bool {
@@ -17,8 +19,6 @@ func EnableDiagnostics() bool {
 func SetEnableDiagnostics(enabled bool) {
 	enableDiagnostics = enabled
 }
-
-var enableAssertions bool = false
 
 func AssertMessage(pred func() bool, msg string, args ...interface{}) {}
 
@@ -29,10 +29,10 @@ func AssertNotIn[T comparable](T, ...T)          {}
 func AssertInStrings[T fmt.Stringer](T, ...T)    {}
 func AssertNotInStrings[T fmt.Stringer](T, ...T) {}
 
-func NotImplemented(string, ...interface{})    { LogPanic("not implemented") }
-func UnreachableCode()                         { LogPanic("unreachable code") }
-func UnexpectedValue(interface{})              { LogPanic("unexpected value") }
-func UnexpectedType(reflect.Type, interface{}) { LogPanic("unexpected type") }
+func NotImplemented(string, ...interface{})    { LogPanic(LogAssert, "not implemented") }
+func UnreachableCode()                         { LogPanic(LogAssert, "unreachable code") }
+func UnexpectedValue(interface{})              { LogPanic(LogAssert, "unexpected value") }
+func UnexpectedType(reflect.Type, interface{}) { LogPanic(LogAssert, "unexpected type") }
 
 func AppendSlice_CheckUniq[T any](src []T, elts []T, equals func(T, T) bool) (result []T) {
 	return append(src, elts...)
@@ -79,9 +79,3 @@ func ParallelMap[IN any, OUT any](each func(IN) (OUT, error), in ...IN) ([]OUT, 
 func ParallelRange[IN any](each func(IN) error, in ...IN) error {
 	return ParallelRange_Async(each, in...)
 }
-
-func make_logQueue() logQueue {
-	return make_logQueue_deferred()
-}
-
-func log_callstack() {}

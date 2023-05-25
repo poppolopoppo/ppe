@@ -30,9 +30,9 @@ func (flags *CompletionArgs) Flags(cfv CommandFlagsVisitor) {
 }
 
 func openCompletion(args *CompletionArgs, closure func(io.Writer) error) error {
-	LogVerbose("completion: input parameters = %v", args.Inputs)
+	LogVerbose(LogCommand, "completion input parameters = %v", args.Inputs)
 	if args.Output.Basename != "" {
-		LogInfo("export completion results to %q...", args.Output)
+		LogInfo(LogCommand, "export completion results to %q...", args.Output)
 		return UFS.CreateBuffered(args.Output, closure)
 	} else {
 		return closure(os.Stdout)

@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+var LogCompressedArchive = NewLogCategory("CompressedArchive")
+
 type CompressedArchiveFromDownload struct {
 	Download   *Downloader
 	ExtractDir Directory
@@ -43,7 +45,7 @@ func BuildCompressedArchiveExtractorFromExt(src Filename, dst Directory, acceptL
 	extname := src.Ext()
 	extNoDot := strings.TrimLeft(extname, ".")
 	if err := arType.Set(extNoDot); err != nil {
-		LogPanic("unknown archive type: %v", err)
+		LogPanic(LogCompressedArchive, "unknown archive type: %v", err)
 	}
 	return BuildCompressedArchiveExtractor(arType, src, dst, acceptList, staticDeps...)
 }
@@ -171,7 +173,7 @@ func (x *CompressedArchiveExtractor) Serialize(ar Archive) {
  ***************************************/
 
 func UnGzip(source, target string) error {
-	LogVerbose("gzip: decompress to '%v'...", target)
+	LogVerbose(LogCompressedArchive, "decompress gzip to '%v'...", target)
 	reader, err := os.Open(source)
 	if err != nil {
 		return err
@@ -200,7 +202,7 @@ func ExtractTgz(bc BuildContext, dst Directory, src Filename) error {
 	}, src)
 }
 func ExtractTgzEx(bc BuildContext, exportFilter func(string) (Filename, bool), src Filename) error {
-	LogVerbose("tgz: extracting archive '%v'...", src)
+	LogVerbose(LogCompressedArchive, "extracting tgz archive '%v'...", src)
 
 	tarball := src.ReplaceExt(".tar").String()
 	if err := UnGzip(src.String(), tarball); err != nil {
@@ -240,7 +242,7 @@ func ExtractTgzEx(bc BuildContext, exportFilter func(string) (Filename, bool), s
 		}
 
 		if fpath, validated := exportFilter(header.Name); validated {
-			LogTrace("tgz: extracting '%v'", fpath)
+			LogTrace(LogCompressedArchive, "extracting from tgz '%v'", fpath)
 
 			UFS.Mkdir(fpath.Dirname)
 			if err := extractFile(fpath, info); err != nil {
@@ -263,7 +265,7 @@ func ExtractZip(bc BuildContext, dst Directory, src Filename) error {
 	}, dst, src)
 }
 func ExtractZipEx(bc BuildContext, exportFilter func(string) (Filename, bool), dst Directory, src Filename) error {
-	LogVerbose("zip: extracting archive '%v'...", src)
+	LogVerbose(LogCompressedArchive, "extracting zip archive '%v'...", src)
 
 	rd, err := zip.OpenReader(src.String())
 	if err != nil {
@@ -282,7 +284,7 @@ func ExtractZipEx(bc BuildContext, exportFilter func(string) (Filename, bool), d
 		}
 
 		if fpath, validated := exportFilter(f.Name); validated {
-			LogTrace("zip: extracting '%v'", fpath)
+			LogTrace(LogCompressedArchive, "extracting from zip '%v'", fpath)
 
 			if _, err := BuildDirectory(fpath.Dirname).Need(bc); err != nil {
 				return err

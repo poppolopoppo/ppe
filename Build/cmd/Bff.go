@@ -51,7 +51,7 @@ var CommandBff = NewCommand(
 		return nil
 	}),
 	OptionCommandRun(func(cc CommandContext) error {
-		LogClaim("generating BFF config in '%v'", GetBffArgs().BffOutput)
+		LogClaim(LogCommand, "generating BFF config in '%v'", GetBffArgs().BffOutput)
 
 		return GetBffBuilder().Build(CommandEnv.BuildGraph()).Failure()
 	}))
@@ -361,7 +361,7 @@ func (gen bffGenerator) Compiler(compiler Compiler) BffVar {
 func (gen bffGenerator) CustomUnits(unit *Unit) []string {
 	return Map(func(custom CustomUnit) string {
 		compiler, preprocessor, err := gen.Toolchain(&custom.Unit)
-		LogPanicIfFailed(err)
+		LogPanicIfFailed(LogCommand, err)
 
 		return gen.BaseModule(&custom.Unit, compiler, preprocessor, "", true)
 	}, unit.CustomUnits...)

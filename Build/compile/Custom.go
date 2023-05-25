@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 )
@@ -26,8 +27,8 @@ func (rules *CustomRules) GetConfig() *CustomRules {
 	return rules
 }
 func (rules *CustomRules) GetCompiler() Compiler {
-	compiler, err := FindGlobalBuildable[Compiler](rules.CompilerAlias)
-	LogPanicIfFailed(err)
+	compiler, err := FindGlobalBuildable[Compiler](rules.CompilerAlias.Alias())
+	LogPanicIfFailed(LogCompile, err)
 	return compiler
 }
 func (rules *CustomRules) GetFacet() *Facet {

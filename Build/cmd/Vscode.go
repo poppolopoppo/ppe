@@ -16,7 +16,7 @@ var Vscode = NewCommand(
 	OptionCommandParsableAccessor("solution_flags", "solution generation option", GetSolutionFlags),
 	OptionCommandRun(func(cc CommandContext) error {
 		outputDir := UFS.Root.Folder(".vscode")
-		LogClaim("generating VSCode workspace in '%v'", outputDir)
+		LogClaim(LogCommand, "generating VSCode workspace in '%v'", outputDir)
 
 		result := BuildVscode(outputDir).Build(CommandEnv.BuildGraph(), OptionBuildForce)
 		return result.Failure()
@@ -42,7 +42,7 @@ type VscodeBuilder struct {
 	OutputDir Directory
 }
 
-func (vsc VscodeBuilder) Alias() BuildAlias {
+func (vsc *VscodeBuilder) Alias() BuildAlias {
 	return MakeBuildAlias("Vscode", vsc.OutputDir.String())
 }
 func (vsc *VscodeBuilder) Serialize(ar Archive) {
@@ -50,7 +50,7 @@ func (vsc *VscodeBuilder) Serialize(ar Archive) {
 	ar.Serializable(&vsc.OutputDir)
 }
 func (vsc *VscodeBuilder) Build(bc BuildContext) error {
-	LogVerbose("build vscode configuration in '%v'...", vsc.OutputDir)
+	LogVerbose(LogCommand, "build vscode configuration in '%v'...", vsc.OutputDir)
 
 	buildModules, err := GetBuildModules().Need(bc)
 	if err != nil {
@@ -66,19 +66,19 @@ func (vsc *VscodeBuilder) Build(bc BuildContext) error {
 	}
 
 	c_cpp_properties_json := vsc.OutputDir.File("c_cpp_properties.json")
-	LogTrace("generating vscode c/c++ properties in '%v'", c_cpp_properties_json)
+	LogTrace(LogCommand, "generating vscode c/c++ properties in '%v'", c_cpp_properties_json)
 	if err := vsc.c_cpp_properties(bc, c_cpp_properties_json); err != nil {
 		return err
 	}
 
 	tasks_json := vsc.OutputDir.File("tasks.json")
-	LogTrace("generating vscode build tasks in '%v'", tasks_json)
+	LogTrace(LogCommand, "generating vscode build tasks in '%v'", tasks_json)
 	if err := vsc.tasks(buildModules.Modules, tasks_json); err != nil {
 		return err
 	}
 
 	launch_json := vsc.OutputDir.File("launch.json")
-	LogTrace("generating vscode launch configuratiosn in '%v'", launch_json)
+	LogTrace(LogCommand, "generating vscode launch configuratiosn in '%v'", launch_json)
 	if err := vsc.launch_configs(buildModules.Programs, compiler, launch_json); err != nil {
 		return err
 	}
@@ -294,12 +294,13 @@ func (vsc *VscodeBuilder) launch_configs(programAliases ModuleAliases, compiler 
 	})
 }
 func (vsc *VscodeBuilder) make_compiledb(env EnvironmentAlias, output Filename) error {
-	LogTrace("generating compile commands '%v' for <%v> environemnt...", output, env)
+	LogTrace(LogCommand, "generating compile commands '%v' for <%v> environment...", output, env)
 
 	fbuildArgs := FBuildArgs{
 		BffInput: GetBffArgs().BffOutput,
 	}
 
+	// #TODO: use internal compiledb targets instead of running FBuild, which is much slower
 	fbuildExec := MakeFBuildExecutor(&fbuildArgs, "-compdb", "-nounity", env.String())
 	fbuildExec.Capture = IsLogLevelActive(LOG_VERYVERBOSE)
 
@@ -309,7 +310,7 @@ func (vsc *VscodeBuilder) make_compiledb(env EnvironmentAlias, output Filename) 
 
 	compiledb := UFS.Root.File("compile_commands.json")
 	if _, err := compiledb.Info(); err != nil {
-		LogError("can't find generated compilation commands in '%v'", compiledb)
+		LogError(LogCommand, "can't find generated compilation commands in '%v'", compiledb)
 		return err
 	}
 

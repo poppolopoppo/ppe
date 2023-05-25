@@ -6,6 +6,8 @@ import (
 	"io"
 )
 
+var LogPersistent = NewLogCategory("Persistent")
+
 type PersistentVar interface {
 	fmt.Stringer
 	flag.Value
@@ -53,22 +55,22 @@ func (pmp *persistentData) PinData() (result map[string]string) {
 func (pmp *persistentData) LoadData(name string, property string, dst PersistentVar) error {
 	if object, ok := pmp.Data[name]; ok {
 		if value, ok := object[property]; ok {
-			LogDebug("load persistent object property %s.%s = %v", name, property, value)
+			LogDebug(LogPersistent, "load object property %s.%s = %v", name, property, value)
 			return dst.Set(value)
 		} else {
 			err := fmt.Errorf("object %q has no property %q", name, property)
-			LogWarning("load(%s.%s): %v", name, property, err)
+			LogWarning(LogPersistent, "load(%s.%s): %v", name, property, err)
 			return err
 		}
 
 	} else {
 		err := fmt.Errorf("object '%s' not found", name)
-		LogWarning("load(%s.%s): %v", name, property, err)
+		LogWarning(LogPersistent, "load(%s.%s): %v", name, property, err)
 		return err
 	}
 }
 func (pmp *persistentData) StoreData(name string, property string, dst PersistentVar) {
-	LogDebug("persistent: store in %s.%s = %v", name, property, dst)
+	LogDebug(LogPersistent, "store in %s.%s = %v", name, property, dst)
 	object, ok := pmp.Data[name]
 	if !ok {
 		object = make(map[string]string)
@@ -78,7 +80,7 @@ func (pmp *persistentData) StoreData(name string, property string, dst Persisten
 }
 func (pmp *persistentData) Serialize(dst io.Writer) error {
 	if err := JsonSerialize(&pmp.Data, dst, OptionJsonPrettyPrint(true)); err == nil {
-		LogDebug("persistent: saved %d vars from config to disk", pmp.Len())
+		LogDebug(LogPersistent, "saved %d vars from config to disk", pmp.Len())
 		return nil
 	} else {
 		return fmt.Errorf("failed to serialize config: %v", err)
@@ -86,7 +88,7 @@ func (pmp *persistentData) Serialize(dst io.Writer) error {
 }
 func (pmp *persistentData) Deserialize(src io.Reader) error {
 	if err := JsonDeserialize(&pmp.Data, src); err == nil {
-		LogVerbose("persistent: loaded %d vars from disk to config", pmp.Len())
+		LogVerbose(LogPersistent, "loaded %d vars from disk to config", pmp.Len())
 		return nil
 	} else {
 		return fmt.Errorf("failed to deserialize config: %v", err)

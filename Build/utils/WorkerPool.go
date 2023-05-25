@@ -3,8 +3,9 @@ package utils
 import (
 	"runtime"
 	"sync"
-	"time"
 )
+
+var LogWorkerPool = NewLogCategory("WorkerPool")
 
 type TaskFunc func()
 
@@ -27,36 +28,6 @@ func JoinAllWorkerPools() {
 var GetGlobalWorkerPool = Memoize(func() (result WorkerPool) {
 	result = NewFixedSizeWorkerPool("global", runtime.NumCPU()-1)
 	allWorkerPools = append([]WorkerPool{result}, allWorkerPools...)
-	return
-})
-var GetLoggerWorkerPool = Memoize(func() (result WorkerPool) {
-	result = NewFixedSizeWorkerPoolEx("logger", 1, func(fswp *fixedSizeWorkerPool, i int) {
-		onWorkerThreadStart(fswp, i)
-		defer onWorkerThreadStop(fswp, i)
-
-		for quit := false; !quit; {
-			if pinnedLogRefresh != nil {
-				select {
-				case task := (<-fswp.give):
-					if task != nil {
-						task()
-					} else {
-						quit = true
-					}
-				// refresh pinned logs if no message output after a while
-				case <-time.After(33 * time.Millisecond):
-					pinnedLogRefresh()
-				}
-			} else {
-				if task := (<-fswp.give); task != nil {
-					task()
-				} else {
-					quit = true
-				}
-			}
-		}
-	})
-	allWorkerPools = append(allWorkerPools, result)
 	return
 })
 
@@ -86,25 +57,31 @@ func NewFixedSizeWorkerPoolEx(name string, numWorkers int, loop func(*fixedSizeW
 		workerIndex := i
 		go loop(pool, workerIndex)
 	}
+	runtime.SetFinalizer(pool, func(pool *fixedSizeWorkerPool) {
+		pool.Join()
+	})
 	return pool
 }
 func (x *fixedSizeWorkerPool) Name() string { return x.name }
 func (x *fixedSizeWorkerPool) Arity() int   { return x.numWorkers }
 func (x *fixedSizeWorkerPool) Queue(task TaskFunc) {
-	Assert(func() bool { return task != nil })
+	// Assert(func() bool { return task != nil })
 	x.give <- task
+}
+func (x *fixedSizeWorkerPool) Close() {
+	x.cond.L.Lock()
+	defer x.cond.L.Unlock()
+
+	for i := 0; i < x.numWorkers; i += 1 {
+		x.give <- nil // push a nil task to kill the future
+	}
 }
 func (x *fixedSizeWorkerPool) Join() {
 	x.cond.L.Lock()
 	defer x.cond.L.Unlock()
 
-	pbar := LogProgress(0, x.numWorkers, "join %s worker pool", x.name)
-	defer pbar.Close()
-
 	for i := 0; i < x.numWorkers; i += 1 {
 		x.Queue(func() {
-			pbar.Inc()
-
 			x.cond.L.Lock()
 			defer x.cond.L.Unlock()
 
@@ -123,7 +100,7 @@ func (x *fixedSizeWorkerPool) Resize(n int) {
 		return
 	}
 
-	LogTrace("workerpool: resizing %q pool from %d to %d worker threads", x.name, x.numWorkers, n)
+	LogTrace(LogWorkerPool, "resizing %q pool from %d to %d worker threads", x.name, x.numWorkers, n)
 
 	delta := n - x.numWorkers
 	if delta > 0 {
@@ -149,7 +126,7 @@ func onWorkerThreadStart(pool WorkerPool, workerIndex int) {
 	runtime.LockOSThread()
 }
 func onWorkerThreadStop(pool WorkerPool, workerIndex int) {
-	//runtime.UnlockOSThread() // let acquired thread die with the pool
+	runtime.UnlockOSThread() // let acquired thread die with the pool?
 }
 func (x *fixedSizeWorkerPool) workerLoop(workerIndex int) {
 	onWorkerThreadStart(x, workerIndex)

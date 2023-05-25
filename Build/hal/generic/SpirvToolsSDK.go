@@ -132,7 +132,7 @@ func getSpirvToolsDownloader(config string) BuildFactoryTyped[*Downloader] {
 			dst = dst.ReplaceExt(filepath.Ext(frozenUrl))
 			return BuildDownloader(frozenUrl, dst, DOWNLOAD_DEFAULT)
 		} else {
-			LogPanic("spirv-tools: unknown frozen artifact for <%v>", config)
+			LogPanic(LogGeneric, "spirv-tools: unknown frozen artifact for <%v>", config)
 			return nil
 		}
 	} else {

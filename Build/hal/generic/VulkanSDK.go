@@ -775,7 +775,7 @@ func (vk *VulkanBindings) Build(bc BuildContext) error {
 		return err
 	}
 
-	LogTrace("vulkan: found %d bindings", len(vk.Bindings))
+	LogTrace(LogGeneric, "vulkan: found %d bindings", len(vk.Bindings))
 	return nil
 }
 func (vk *VulkanBindings) Serialize(ar Archive) {
@@ -862,8 +862,8 @@ func (vk *VulkanHeaders) Build(bc BuildContext) error {
 		return vk.Functions[i].Name < vk.Functions[j].Name
 	})
 
-	LogTrace("vulkan: found %d headers", len(vk.Headers))
-	LogTrace("vulkan: found %d functions", len(vk.Functions))
+	LogTrace(LogGeneric, "vulkan: found %d headers", len(vk.Headers))
+	LogTrace(LogGeneric, "vulkan: found %d functions", len(vk.Functions))
 
 	return nil
 }
@@ -984,7 +984,7 @@ func (vk *VulkanInterface) Build(bc BuildContext) error {
 		if i, ok := funcPointerByName[name]; ok {
 			return &vkHeaders.Functions[i]
 		} else {
-			LogVerbose("vulkan: function not found: %s", name)
+			LogVerbose(LogGeneric, "vulkan: function not found: %s", name)
 			return nil
 		}
 	}
@@ -996,7 +996,7 @@ func (vk *VulkanInterface) Build(bc BuildContext) error {
 		if i, ok := instanceExtByName[name]; ok {
 			return &vk.InstanceExts[i]
 		} else {
-			LogPanic("vulkan instance extension not found: %s", name)
+			LogPanic(LogGeneric, "vulkan instance extension not found: %s", name)
 			return nil
 		}
 	}
@@ -1006,7 +1006,7 @@ func (vk *VulkanInterface) Build(bc BuildContext) error {
 		if i, ok := deviceExtByName[name]; ok {
 			return &vk.DeviceExts[i]
 		} else {
-			LogVerbose("vulkan: device extension not found: %s", name)
+			LogVerbose(LogGeneric, "vulkan: device extension not found: %s", name)
 			return nil
 		}
 	}
@@ -1023,7 +1023,7 @@ func (vk *VulkanInterface) Build(bc BuildContext) error {
 	vk.DeviceBwds = []VkFunctionAlias{}
 
 	for _, x := range vkBindings.Bindings {
-		LogVeryVerbose("%v(%v)", x.Kind, MakeStringer(func() string {
+		LogVeryVerbose(LogGeneric, "%v(%v)", x.Kind, MakeStringer(func() string {
 			return Join(", ", x.Args).String()
 		}))
 		switch x.Kind {
@@ -1111,14 +1111,14 @@ func (vk *VulkanInterface) Build(bc BuildContext) error {
 		}
 	}
 
-	LogTrace("vulkan: found %d versions", len(vk.Versions))
-	LogTrace("vulkan: found %d enum types", len(vk.EnumTypes))
-	LogTrace("vulkan: found %d exported functions", len(vk.ExportedFuncs))
-	LogTrace("vulkan: found %d global functions", len(vk.GlobalFuncs))
-	LogTrace("vulkan: found %d instance functions", len(vk.InstanceFuncs))
-	LogTrace("vulkan: found %d instance extensions", len(vk.InstanceExts))
-	LogTrace("vulkan: found %d device functions", len(vk.DeviceFuncs))
-	LogTrace("vulkan: found %d device extensions", len(vk.DeviceExts))
+	LogTrace(LogGeneric, "vulkan: found %d versions", len(vk.Versions))
+	LogTrace(LogGeneric, "vulkan: found %d enum types", len(vk.EnumTypes))
+	LogTrace(LogGeneric, "vulkan: found %d exported functions", len(vk.ExportedFuncs))
+	LogTrace(LogGeneric, "vulkan: found %d global functions", len(vk.GlobalFuncs))
+	LogTrace(LogGeneric, "vulkan: found %d instance functions", len(vk.InstanceFuncs))
+	LogTrace(LogGeneric, "vulkan: found %d instance extensions", len(vk.InstanceExts))
+	LogTrace(LogGeneric, "vulkan: found %d device functions", len(vk.DeviceFuncs))
+	LogTrace(LogGeneric, "vulkan: found %d device extensions", len(vk.DeviceExts))
 	return nil
 }
 func (vk *VulkanInterface) Serialize(ar Archive) {

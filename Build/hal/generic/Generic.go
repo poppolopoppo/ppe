@@ -2,6 +2,8 @@ package generic
 
 import "build/utils"
 
+var LogGeneric = utils.NewLogCategory("Generic")
+
 func InitGeneric() {
 	utils.RegisterSerializable(&GnuSourceDependenciesAction{})
 

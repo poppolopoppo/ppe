@@ -17,6 +17,7 @@ func initInternals() {
 
 func LaunchCommand(prefix string, rootFile utils.Filename, args []string) {
 	startedAt := time.Now()
+
 	defer utils.StartTrace()()
 	defer utils.PurgePinnedLogs()
 
@@ -28,7 +29,7 @@ func LaunchCommand(prefix string, rootFile utils.Filename, args []string) {
 	env.Load()
 
 	if err := env.Run(); err != nil {
-		utils.LogError("command failed: %v", err)
+		utils.LogError(utils.LogCommand, "%v", err)
 	}
 
 	env.Save()

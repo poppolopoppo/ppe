@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"strings"
@@ -236,7 +237,7 @@ func (vars VariableSubstitutions) Get(from string) string {
 	if i, ok := vars.IndexOf(from); ok {
 		return vars[i].Value
 	} else {
-		LogPanic("variable-substitutions: could not find [[:%s:]] in %v", from, vars)
+		LogPanic(LogCompile, "variable-substitutions: could not find [[:%s:]] in %v", from, vars)
 		return ""
 	}
 }

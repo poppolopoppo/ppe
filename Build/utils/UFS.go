@@ -506,7 +506,7 @@ func (d Directory) Files() []Filename {
 	if info, err := enumerate_directory(d); err == nil {
 		return info.Files
 	} else {
-		LogError("Directory.Files(): %v", err)
+		LogError(LogUFS, "Directory.Files(): %v", err)
 		return []Filename{}
 	}
 }
@@ -514,7 +514,7 @@ func (d Directory) Directories() []Directory {
 	if info, err := enumerate_directory(d); err == nil {
 		return info.Directories
 	} else {
-		LogError("Directory.Directories(): %v", err)
+		LogError(LogUFS, "Directory.Directories(): %v", err)
 		return []Directory{}
 	}
 }
@@ -522,7 +522,7 @@ func (d Directory) MatchDirectories(each func(Directory) error, r *regexp.Regexp
 	if r == nil {
 		return nil
 	}
-	LogVeryVerbose("match directories in '%v' for /%v/...", d, r)
+	LogVeryVerbose(LogUFS, "match directories in '%v' for /%v/...", d, r)
 	if info, err := enumerate_directory(d); err == nil {
 		for _, s := range info.Directories {
 			if r.MatchString(s.Basename()) {
@@ -540,7 +540,7 @@ func (d Directory) MatchFiles(each func(Filename) error, r *regexp.Regexp) error
 	if r == nil {
 		return nil
 	}
-	LogVeryVerbose("match files in '%v' for /%v/...", d, r)
+	LogVeryVerbose(LogUFS, "match files in '%v' for /%v/...", d, r)
 	if info, err := enumerate_directory(d); err == nil {
 		for _, f := range info.Files {
 			if r.MatchString(f.Basename) {
@@ -558,7 +558,7 @@ func (d Directory) MatchFilesRec(each func(Filename) error, r *regexp.Regexp) er
 	if r == nil {
 		return nil
 	}
-	LogVeryVerbose("match files rec in '%v' for /%v/...", d, r)
+	LogVeryVerbose(LogUFS, "match files rec in '%v' for /%v/...", d, r)
 	if info, err := enumerate_directory(d); err == nil {
 		for _, f := range info.Files {
 			if r.MatchString(f.Basename) {
@@ -578,7 +578,7 @@ func (d Directory) MatchFilesRec(each func(Filename) error, r *regexp.Regexp) er
 	}
 }
 func (d Directory) FindFileRec(r *regexp.Regexp) (Filename, error) {
-	LogVeryVerbose("find file rec in '%v' for /%v/...", d, r)
+	LogVeryVerbose(LogUFS, "find file rec in '%v' for /%v/...", d, r)
 	if info, err := enumerate_directory(d); err == nil {
 		for _, f := range info.Files {
 			if r.MatchString(f.Basename) {
@@ -754,7 +754,7 @@ func (list FileSet) TotalSize() (result int64) {
 		if info, err := x.Info(); info != nil {
 			result += info.Size()
 		} else {
-			LogError("%v: %v", x, err)
+			LogError(LogUFS, "%v: %v", x, err)
 		}
 	}
 	// LogDebug("total size of %d files: %.3f KiB", len(list), float32(result)/1024.0)
@@ -842,7 +842,7 @@ func (ufs *UFSFrontEnd) Touch(dst Filename) error {
 	return ufs.SetMTime(dst, time.Now().Local())
 }
 func (ufs *UFSFrontEnd) SetMTime(dst Filename, mtime time.Time) error {
-	LogDebug("ufs: chtimes %v", dst)
+	LogDebug(LogUFS, "chtimes %v", dst)
 	path := dst.String()
 	if err := os.Chtimes(path, mtime, mtime); err == nil {
 		invalidate_file_info(dst)
@@ -853,25 +853,25 @@ func (ufs *UFSFrontEnd) SetMTime(dst Filename, mtime time.Time) error {
 }
 func (ufs *UFSFrontEnd) Remove(dst Filename) error {
 	if err := os.Remove(dst.String()); err != nil {
-		LogError("ufs: %v", err)
+		LogError(LogUFS, "%v", err)
 		return err
 	}
 	return nil
 }
 func (ufs *UFSFrontEnd) Mkdir(dst Directory) {
 	if err := ufs.MkdirEx(dst); err != nil {
-		LogPanicErr(err)
+		LogPanicErr(LogUFS, err)
 	}
 }
 func (ufs *UFSFrontEnd) MkdirEx(dst Directory) error {
 	path := dst.String()
 	if st, err := os.Stat(path); st != nil && (err == nil || os.IsExist(err)) {
 		if !st.IsDir() {
-			LogDebug("ufs: mkdir %v", dst)
+			LogDebug(LogUFS, "mkdir %v", dst)
 			return fmt.Errorf("ufs: %q already exist, but is not a directory", dst)
 		}
 	} else {
-		LogDebug("ufs: mkdir %v", dst)
+		LogDebug(LogUFS, "mkdir %v", dst)
 		invalidate_directory_info(dst)
 		if err := os.MkdirAll(path, os.ModePerm); err != nil {
 			return fmt.Errorf("ufs: mkdir %q got error %v", dst, err)
@@ -882,7 +882,7 @@ func (ufs *UFSFrontEnd) MkdirEx(dst Directory) error {
 func (ufs *UFSFrontEnd) CreateWriter(dst Filename) (*os.File, error) {
 	invalidate_file_info(dst)
 	ufs.Mkdir(dst.Dirname)
-	LogDebug("ufs: create '%v'", dst)
+	LogDebug(LogUFS, "create '%v'", dst)
 	return os.Create(dst.String())
 }
 func (ufs *UFSFrontEnd) CreateFile(dst Filename, write func(*os.File) error) error {
@@ -898,7 +898,7 @@ func (ufs *UFSFrontEnd) CreateFile(dst Filename, write func(*os.File) error) err
 			return err
 		}
 	}
-	LogWarning("UFS.CreateFile: caught %v while trying to create %v", err, dst)
+	LogWarning(LogUFS, "CreateFile: caught %v while trying to create %v", err, dst)
 	return err
 }
 func (ufs *UFSFrontEnd) Create(dst Filename, write func(io.Writer) error) error {
@@ -933,7 +933,7 @@ func (ufs *UFSFrontEnd) SafeCreate(dst Filename, write func(io.Writer) error) er
 
 		if err == nil {
 			if err = os.Rename(tmpFilename.String(), dst.String()); err != nil {
-				LogWarning("UFS.SafeCreate: %v", err)
+				LogWarning(LogUFS, "SafeCreate: %v", err)
 			}
 		}
 		return err
@@ -943,13 +943,13 @@ func (ufs *UFSFrontEnd) MTime(src Filename) time.Time {
 	if info, err := src.Info(); err == nil {
 		return info.ModTime()
 	} else {
-		LogPanicErr(err)
+		LogPanicErr(LogUFS, err)
 		return time.Time{}
 	}
 }
 func (ufs *UFSFrontEnd) OpenFile(src Filename, read func(*os.File) error) error {
 	input, err := os.Open(src.String())
-	LogDebug("ufs: open '%v'", src)
+	LogDebug(LogUFS, "open '%v'", src)
 
 	if err == nil {
 		defer func() {
@@ -963,7 +963,7 @@ func (ufs *UFSFrontEnd) OpenFile(src Filename, read func(*os.File) error) error 
 		}
 	}
 
-	LogWarning("UFS.OpenFile: %v", err)
+	LogWarning(LogUFS, "OpenFile: %v", err)
 	return err
 }
 func (ufs *UFSFrontEnd) Open(src Filename, read func(io.Reader) error) error {
@@ -993,7 +993,7 @@ func (ufs *UFSFrontEnd) ReadAll(src Filename, read func([]byte) error) error {
 
 		// check if the file is small enough to fit in a transient buffer
 		if info, err := src.Info(); info.Size() < LARGE_PAGE_CAPACITY {
-			LogPanicIfFailed(err)
+			LogPanicIfFailed(LogUFS, err)
 
 			transient := TransientLargePage.Allocate()
 			defer TransientLargePage.Release(transient)
@@ -1006,9 +1006,32 @@ func (ufs *UFSFrontEnd) ReadAll(src Filename, read func([]byte) error) error {
 		}
 	})
 }
+func (ufs *UFSFrontEnd) ReadLines(src Filename, line func(string) error) error {
+	return ufs.Open(src, func(rd io.Reader) error {
+		LogDebug(LogUFS, "read lines '%v'", src)
+
+		const capacity = LARGE_PAGE_CAPACITY / 2
+		buf := TransientLargePage.Allocate()
+		defer TransientLargePage.Release(buf)
+
+		scanner := bufio.NewScanner(rd)
+		scanner.Buffer(buf, capacity)
+
+		for scanner.Scan() {
+			if err := scanner.Err(); err == nil {
+				if err = line(scanner.Text()); err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
+		}
+		return nil
+	})
+}
 func (ufs *UFSFrontEnd) Scan(src Filename, re *regexp.Regexp, match func([]string) error) error {
 	return ufs.Open(src, func(rd io.Reader) error {
-		LogDebug("ufs: scan '%v' with regexp %v", src, re)
+		LogDebug(LogUFS, "scan '%v' with regexp %v", src, re)
 
 		const capacity = LARGE_PAGE_CAPACITY / 2
 		buf := TransientLargePage.Allocate()
@@ -1036,13 +1059,13 @@ func (ufs *UFSFrontEnd) Rename(src, dst Filename) error {
 	ufs.Mkdir(dst.Dirname)
 	invalidate_file_info(src)
 	invalidate_file_info(dst)
-	LogDebug("ufs: rename file '%v' to '%v'", src, dst)
+	LogDebug(LogUFS, "rename file '%v' to '%v'", src, dst)
 	return os.Rename(src.String(), dst.String())
 }
 func (ufs *UFSFrontEnd) Copy(src, dst Filename) error {
 	ufs.Mkdir(dst.Dirname)
 	invalidate_file_info(dst)
-	LogDebug("ufs: copy file '%v' to '%v'", src, dst)
+	LogDebug(LogUFS, "copy file '%v' to '%v'", src, dst)
 	return ufs.Open(src, func(r io.Reader) error {
 		info, err := src.Info()
 		if err != nil {
@@ -1055,7 +1078,7 @@ func (ufs *UFSFrontEnd) Copy(src, dst Filename) error {
 }
 
 func (ufs *UFSFrontEnd) MountOutputDir(output Directory) {
-	LogTrace("ufs: mount output dir %q", output)
+	LogTrace(LogUFS, "mount output dir %q", output)
 	ufs.Output = output
 	ufs.Binaries = ufs.Output.Folder("Binaries")
 	ufs.Cache = ufs.Output.Folder("Cache")
@@ -1069,7 +1092,7 @@ func (ufs *UFSFrontEnd) MountOutputDir(output Directory) {
 func make_ufs_frontend() (ufs UFSFrontEnd) {
 	_, caller, _, ok := runtime.Caller(1)
 	if !ok {
-		LogPanic("no caller information")
+		LogPanic(LogUFS, "no caller information")
 	}
 
 	caller = path.Dir(caller)
@@ -1085,20 +1108,20 @@ func make_ufs_frontend() (ufs UFSFrontEnd) {
 	ufs.Root = ufs.Dir(caller)
 
 	executable, err := os.Executable()
-	LogPanicIfFailed(err)
+	LogPanicIfFailed(LogUFS, err)
 
 	ufs.Executable = MakeFilename(executable)
 	if !ufs.Executable.Exists() {
 		ufs.Executable = ufs.Executable.ReplaceExt(".exe")
 	}
 	if !ufs.Executable.Exists() {
-		LogPanic("hal: executable path %q does not point to a valid file", ufs.Executable)
+		LogPanic(LogUFS, "executable path %q does not point to a valid file", ufs.Executable)
 	}
 
 	if wd, err := os.Getwd(); err == nil {
 		ufs.Working = MakeDirectory(wd)
 	} else {
-		LogPanic("working directory: %v", err)
+		LogPanic(LogUFS, "working directory is %v", err)
 	}
 
 	ufs.Build = ufs.Root.Folder("Build")
@@ -1212,7 +1235,7 @@ func (x FileDigest) Alias() BuildAlias {
 }
 func (x *FileDigest) Build(bc BuildContext) (err error) {
 	x.Digest, err = FileFingerprint(x.Source, Fingerprint{} /* no seed here */)
-	LogTrace("ufs: file digest %s for %q", x.Digest, x.Source)
+	LogTrace(LogUFS, "file digest %s for %q", x.Digest, x.Source)
 	return
 }
 func (x *FileDigest) Serialize(ar Archive) {

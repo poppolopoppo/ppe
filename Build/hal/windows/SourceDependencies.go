@@ -91,7 +91,7 @@ func (x *MsvcSourceDependenciesAction) Build(bc BuildContext) error {
 
 	// add all parsed filenames as dynamic dependencies: when a header is modified, this action will have to be rebuild
 	dependentFiles := sourceDeps.Files()
-	LogDebug("sourceDependencies: parsed output in %q\n%v", x.SourceDependenciesFile, MakeStringer(func() string {
+	LogDebug(LogWindows, "sourceDependencies: parsed output in %q\n%v", x.SourceDependenciesFile, MakeStringer(func() string {
 		return PrettyPrint(dependentFiles)
 	}))
 	return bc.NeedFile(dependentFiles...)

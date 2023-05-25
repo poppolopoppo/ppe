@@ -78,7 +78,7 @@ func (rules *NamespaceRules) GetParentNamespace() Namespace {
 	if namespace, err := GetBuildNamespace(rules.NamespaceParent); err == nil {
 		return namespace
 	} else {
-		LogPanicErr(err)
+		LogPanicErr(LogCompile, err)
 		return nil
 	}
 }

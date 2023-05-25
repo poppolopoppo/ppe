@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+var LogSourceControl = NewLogCategory("SourceControl")
+
 type SourceControlProvider interface {
 	GetModifiedFiles() (FileSet, error)
 	GetStatus(*SourceControlStatus) error
@@ -35,7 +37,7 @@ func (x SourceControlStatus) Alias() BuildAlias {
 func (x *SourceControlStatus) Build(BuildContext) (err error) {
 	err = GetSourceControlProvider().GetStatus(x)
 	if err == nil {
-		LogVerbose("source-control: branch=%s, revision=%s, timestamp=%s", x.Branch, x.Revision, x.Timestamp)
+		LogVerbose(LogSourceControl, "branch=%s, revision=%s, timestamp=%s", x.Branch, x.Revision, x.Timestamp)
 	}
 	return
 }
@@ -79,7 +81,7 @@ func (x *SourceControlModifiedFiles) Build(bc BuildContext) (err error) {
 		return nil
 	})
 
-	LogVerbose("source-control: updated %q (%d files)", x.OutputFile, len(x.ModifiedFiles))
+	LogVerbose(LogSourceControl, "updated %q (%d files)", x.OutputFile, len(x.ModifiedFiles))
 	//bc.OutputFile(x.OutputFile)
 	return
 }
@@ -122,7 +124,7 @@ type GitSourceControl struct {
 
 func (git GitSourceControl) Command(name string, args ...string) ([]byte, error) {
 	args = append([]string{"--no-optional-locks", name}, args...)
-	LogVeryVerbose("git: %v", MakeStringer(func() string {
+	LogVeryVerbose(LogSourceControl, "run git command %v", MakeStringer(func() string {
 		return strings.Join(args, " ")
 	}))
 
@@ -132,7 +134,7 @@ func (git GitSourceControl) Command(name string, args ...string) ([]byte, error)
 
 	output, err := proc.Output()
 	if err != nil {
-		LogError("git: %v -> %v : %v", strings.Join(args, " "), err, output)
+		LogError(LogSourceControl, "git command %v returned %v : %v", strings.Join(args, " "), err, output)
 	}
 
 	return output, err
@@ -162,13 +164,13 @@ func (git GitSourceControl) GetModifiedFiles() (FileSet, error) {
 		line := UnsafeStringFromBytes(token)
 		if strings.HasPrefix(line, "A ") || strings.HasPrefix(line, " M") || strings.HasPrefix(line, "AM") || strings.HasPrefix(line, "??") {
 			file := UFS.Root.AbsoluteFile(strings.TrimSpace(line[3:]))
-			LogVeryVerbose("git: %q was modified", file)
+			LogVeryVerbose(LogSourceControl, "git sees %q as modified", file)
 			fileset.Append(file)
 		}
 	}
 
 	if err := reader.Err(); err == nil {
-		LogVeryVerbose("git: found %d modified files", len(fileset))
+		LogVeryVerbose(LogSourceControl, "git found %d modified files", len(fileset))
 		return fileset, nil
 	} else {
 		return fileset, err
@@ -209,7 +211,7 @@ func (git GitSourceControl) GetStatus(status *SourceControlStatus) error {
 
 var GetSourceControlProvider = Memoize(func() SourceControlProvider {
 	if gitDir := UFS.Root.Folder(".git"); gitDir.Exists() {
-		LogVerbose("source-control: found Git source control in %q", gitDir)
+		LogVerbose(LogSourceControl, "found Git source control in %q", gitDir)
 		return &GitSourceControl{gitDir}
 	}
 	return &DummySourceControl{}

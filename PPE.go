@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+var LogPPE = LogCategory{Name: "PPE"}
+
 var CorePublicDir = UFS.Source.Folder("Runtime", "Core", "Public")
 var NatvisFile = UFS.Extras.Folder("Debug").File("PPE.natvis")
 
@@ -236,7 +238,7 @@ func makePPE_Internal(rules *ModuleRules) {
 		rules.PrecompiledHeader = &pch_h
 		rules.PrecompiledSource = &pch_cpp
 	case PCH_SHARED:
-		LogPanic("Shared PCH are not implemented")
+		LogPanic(LogPPE, "shared PCH are not implemented")
 	case PCH_DISABLED:
 		// nothing TODO
 	default:

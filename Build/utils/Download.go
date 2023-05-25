@@ -9,6 +9,8 @@ import (
 	"strconv"
 )
 
+var LogDownload = NewLogCategory("Download")
+
 type DownloadMode int32
 
 const (
@@ -51,7 +53,7 @@ type Downloader struct {
 	Mode        DownloadMode
 }
 
-func (dl Downloader) Alias() BuildAlias {
+func (dl *Downloader) Alias() BuildAlias {
 	return MakeBuildAlias("Download", dl.Destination.String())
 }
 func (dl *Downloader) Build(bc BuildContext) error {
@@ -122,7 +124,7 @@ func downloadFromCache(resp *http.Response) (Filename, downloadCacheResult) {
 			}
 			return nil
 		}, Fingerprint{})
-		LogPanicIfFailed(err)
+		LogPanicIfFailed(LogDownload, err)
 
 		inCache := UFS.Transient.Folder("DownloadCache").File(fmt.Sprintf("%v.bin", uid))
 		if info, err := inCache.Info(); info != nil && err == nil {
@@ -145,7 +147,7 @@ func downloadFromCache(resp *http.Response) (Filename, downloadCacheResult) {
 }
 
 func DownloadFile(dst Filename, src url.URL) error {
-	LogVerbose("http: downloading url '%v' to '%v'...", src.String(), dst.String())
+	LogVerbose(LogDownload, "downloading url '%v' to '%v'...", src.String(), dst.String())
 
 	cacheFile, shouldCache := Filename{}, false
 	err := UFS.CreateFile(dst, func(w *os.File) error {
@@ -155,6 +157,7 @@ func DownloadFile(dst Filename, src url.URL) error {
 				return nil
 			},
 		}
+		defer client.CloseIdleConnections()
 
 		resp, err := client.Get(src.String())
 		if err != nil {
@@ -165,7 +168,7 @@ func DownloadFile(dst Filename, src url.URL) error {
 		var cacheResult downloadCacheResult
 		cacheFile, cacheResult = downloadFromCache(resp)
 		if cacheResult == nil { // cache hit
-			LogDebug("http: cache hit on '%v'", cacheFile)
+			LogDebug(LogDownload, "cache hit on '%v'", cacheFile)
 
 			return UFS.OpenFile(cacheFile, func(r *os.File) error {
 				if info, err := r.Stat(); err == nil {
@@ -197,9 +200,9 @@ func DownloadFile(dst Filename, src url.URL) error {
 	})
 
 	if err == nil && shouldCache {
-		LogDebug("http: cache store in '%v'", cacheFile)
+		LogDebug(LogDownload, "cache store in '%v'", cacheFile)
 		if err := UFS.Copy(dst, cacheFile); err != nil {
-			LogWarning("http: failed to cache download with %v", err)
+			LogWarning(LogDownload, "failed to cache download with %v", err)
 		}
 	}
 
@@ -209,7 +212,7 @@ func DownloadFile(dst Filename, src url.URL) error {
 var re_metaRefreshRedirect = regexp.MustCompile(`(?i)<meta.*http-equiv="refresh".*content=".*url=(.*)".*?/>`)
 
 func DownloadHttpRedirect(dst Filename, src url.URL) error {
-	LogVerbose("http: download http redirect '%v' to '%v'...", src.String(), dst.String())
+	LogVerbose(LogDownload, "download http redirect '%v' to '%v'...", src.String(), dst.String())
 
 	client := http.Client{
 		CheckRedirect: func(r *http.Request, _ []*http.Request) error {
@@ -217,6 +220,7 @@ func DownloadHttpRedirect(dst Filename, src url.URL) error {
 			return nil
 		},
 	}
+	defer client.CloseIdleConnections()
 
 	resp, err := client.Get(src.String())
 	if err != nil {

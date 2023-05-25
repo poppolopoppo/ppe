@@ -13,6 +13,8 @@ import (
 	"github.com/klauspost/compress/zstd"
 )
 
+var LogActionCache = NewLogCategory("ActionCache")
+
 /***************************************
  * ActionCache
  ***************************************/
@@ -85,8 +87,8 @@ func (x *actionCache) CacheRead(a *ActionRules, artifacts FileSet) (key ActionCa
 	}
 
 	if err == nil {
-		LogTrace("action-cache: cache hit for %q", a.Alias())
-		LogDebug("action-cache: %q has the following artifacts ->\n\t - %v", a.Alias(), MakeStringer(func() string {
+		LogTrace(LogActionCache, "cache hit for %q", a.Alias())
+		LogDebug(LogActionCache, "%q has the following artifacts ->\n\t - %v", a.Alias(), MakeStringer(func() string {
 			return JoinString("\n\t - ", artifacts...)
 		}))
 
@@ -113,12 +115,12 @@ func (x *actionCache) CacheWrite(action BuildAlias, key ActionCacheKey, artifact
 	}
 
 	if err == nil {
-		LogTrace("action-cache: cache store for %q", action)
-		LogDebug("action-cache: %q has the following artifacts ->\n\t - %v", action, MakeStringer(func() string {
+		LogTrace(LogActionCache, "cache store for %q", action)
+		LogDebug(LogActionCache, "%q has the following artifacts ->\n\t - %v", action, MakeStringer(func() string {
 			return JoinString("\n\t - ", artifacts...)
 		}))
 	} else {
-		LogError("action-cache: failed to cache in store %q with %v", action, err)
+		LogError(LogActionCache, "failed to cache in store %q with %v", action, err)
 	}
 	return
 }
@@ -130,7 +132,7 @@ func (x *actionCache) AsyncCacheWrite(node BuildNode, cacheKey ActionCacheKey, a
 			inputs.Sort()
 			err = x.CacheWrite(action, cacheKey, artifacts, inputs)
 		}
-		LogPanicIfFailed(err)
+		LogPanicIfFailed(LogActionCache, err)
 	})
 	return nil
 }
@@ -162,14 +164,14 @@ func (x *actionCache) makeActionKey(a *ActionRules) ActionCacheKey {
 			}
 
 			ar.Serializable(&result.Success().Digest)
-			LogDebug("action-cache: file digest for %q is %v", result.Success().Source, result.Success().Digest)
+			LogDebug(LogActionCache, "file digest for %q is %v", result.Success().Source, result.Success().Digest)
 		}
 
 		return nil
 	}, x.seed)
-	LogPanicIfFailed(err)
+	LogPanicIfFailed(LogActionCache, err)
 
-	LogDebug("action-cache: action %q key is %v", a.Alias(), fingerprint)
+	LogDebug(LogActionCache, "action %q key is %v", a.Alias(), fingerprint)
 	return ActionCacheKey(fingerprint)
 }
 
@@ -276,7 +278,7 @@ func (x *ActionCacheBulk) CacheHit() bool {
 			return false
 		}
 		if result.Success().Digest != x.Inputs[i].Digest {
-			LogDebug("action-cache: cache miss due to %q, was %v ang got %v",
+			LogDebug(LogActionCache, "cache miss due to %q, was %v ang got %v",
 				x.Inputs[i].Source, x.Inputs[i].Digest, result.Success().Digest)
 			return false
 		}
@@ -435,7 +437,7 @@ func (x *ActionCacheEntry) CacheWrite(cachePath Directory, inputs FileSet, artif
 }
 
 func (x *ActionCacheEntry) Load(src Filename) error {
-	benchmark := LogBenchmark("action-cache: read cache entry with key %q", x.Key)
+	benchmark := LogBenchmark(LogActionCache, "read cache entry with key %q", x.Key)
 	defer benchmark.Close()
 
 	return UFS.Open(src, func(r io.Reader) error {
@@ -448,7 +450,7 @@ func (x *ActionCacheEntry) Load(src Filename) error {
 func (x *ActionCacheEntry) readCacheEntry(cachePath Directory) error {
 	path := x.Key.GetEntryPath(cachePath)
 	if !path.Exists() {
-		return fmt.Errorf("action-cache: no cache entry with key %q", x.Key)
+		return fmt.Errorf("no cache entry with key %q", x.Key)
 	}
 
 	return x.Load(path)
@@ -456,7 +458,7 @@ func (x *ActionCacheEntry) readCacheEntry(cachePath Directory) error {
 func (x *ActionCacheEntry) writeCacheEntry(cachePath Directory) error {
 	path := x.Key.GetEntryPath(cachePath)
 
-	benchmark := LogBenchmark("action-cache: store cache entry with key %q", x.Key)
+	benchmark := LogBenchmark(LogActionCache, "store cache entry with key %q", x.Key)
 	defer benchmark.Close()
 
 	return UFS.Create(path, func(w io.Writer) error {

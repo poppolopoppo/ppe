@@ -186,7 +186,7 @@ func (set *SetT[T]) Remove(x T) *SetT[T] {
 	if i, ok := set.IndexOf(x); ok {
 		set.Delete(i)
 	} else {
-		LogPanic("could not find item in set")
+		LogPanic(LogGlobal, "could not find item in set")
 	}
 	return set
 }

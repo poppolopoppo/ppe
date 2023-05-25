@@ -55,7 +55,7 @@ func (x *UnityRules) Generate(u *Unit, bc BuildContext) (err error) {
 		isolatedFiles := NewFileSet(u.Source.IsolatedFiles...)
 		for _, file := range scm.ModifiedFiles {
 			if x.SourceFiles.Contains(file) {
-				LogVerbose("%v: adaptive unity isolated %q", u.Target, file)
+				LogVerbose(LogCompile, "%v: adaptive unity isolated %q", u.Target, file)
 				isolatedFiles.AppendUniq(file)
 			}
 		}
@@ -82,7 +82,7 @@ func (x *UnityRules) Generate(u *Unit, bc BuildContext) (err error) {
 		numUnityFiles = 0
 	case UNITY_AUTOMATIC:
 		numUnityFiles = int(math.Ceil(float64(totalSize) / float64(u.SizePerUnity)))
-		LogVeryVerbose("%v: %d unity files (%.2f KiB)", u.Target, numUnityFiles, float64(totalSize)/1024.0)
+		LogVeryVerbose(LogCompile, "%v: %d unity files (%.2f KiB)", u.Target, numUnityFiles, float64(totalSize)/1024.0)
 	case UNITY_INHERIT:
 		UnexpectedValuePanic(u.Unity, UNITY_INHERIT)
 	default:
@@ -94,7 +94,7 @@ func (x *UnityRules) Generate(u *Unit, bc BuildContext) (err error) {
 	}
 
 	if numUnityFiles >= len(u.SourceFiles) {
-		LogWarning("%v: %d unity files (%.2f KiB) is superiori to source files count (%d files), disabling unity (was %v)", u.Target, numUnityFiles, len(x.SourceFiles), float64(totalSize)/1024.0, u.Unity)
+		LogWarning(LogCompile, "%v: %d unity files (%.2f KiB) is superiori to source files count (%d files), disabling unity (was %v)", u.Target, numUnityFiles, len(x.SourceFiles), float64(totalSize)/1024.0, u.Unity)
 		numUnityFiles = 0
 	}
 

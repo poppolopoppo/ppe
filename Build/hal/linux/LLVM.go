@@ -90,9 +90,9 @@ func (llvm *LlvmCompiler) DebugSymbols(u *Unit) {
 	case DEBUG_DISABLED:
 		return
 	case DEBUG_SYMBOLS:
-		LogVeryVerbose("not available on linux: DEBUG_SYMBOLS")
+		LogVeryVerbose(LogLinux, "not available on linux: DEBUG_SYMBOLS")
 	case DEBUG_HOTRELOAD:
-		LogVeryVerbose("not available on linux: DEBUG_HOTRELOAD")
+		LogVeryVerbose(LogLinux, "not available on linux: DEBUG_HOTRELOAD")
 	case DEBUG_EMBEDDED:
 	default:
 		UnexpectedValue(u.DebugSymbols)
@@ -220,29 +220,29 @@ func llvm_CXX_linkTimeCodeGeneration(u *Unit, enabled bool, incremental bool) {
 	if enabled {
 		u.LibrarianOptions.Append("-T")
 		if incremental {
-			LogVeryVerbose("%v: using llvm thin link time optimization with caching", u)
+			LogVeryVerbose(LogLinux, "%v: using llvm thin link time optimization with caching", u)
 			u.CompilerOptions.Append("-flto=thin")
 			u.LinkerOptions.Append("-Wl,--thinlto-cache-dir=" + UFS.Transient.AbsoluteFolder("ThinLTO").String())
 		} else {
-			LogVeryVerbose("%v: using llvm link time optimization", u)
+			LogVeryVerbose(LogLinux, "%v: using llvm link time optimization", u)
 			u.CompilerOptions.Append("-flto")
 		}
 	} else {
-		LogVeryVerbose("%v: disable llvm link time optimization", u)
+		LogVeryVerbose(LogLinux, "%v: disable llvm link time optimization", u)
 		u.CompilerOptions.Append("-fno-lto")
 	}
 }
 func llvm_CXX_runtimeChecks(u *Unit, enabled bool, strong bool) {
 	if enabled {
 		if strong {
-			LogVeryVerbose("%v: using llvm strong stack protector", u)
+			LogVeryVerbose(LogLinux, "%v: using llvm strong stack protector", u)
 			u.AddCompilationFlag_NoPreprocessor("-fstack-protector-strong")
 		} else {
-			LogVeryVerbose("%v: using llvm stack protector", u)
+			LogVeryVerbose(LogLinux, "%v: using llvm stack protector", u)
 			u.AddCompilationFlag_NoPreprocessor("-fstack-protector")
 		}
 	} else {
-		LogVeryVerbose("%v: disable llvm stack protector", u)
+		LogVeryVerbose(LogLinux, "%v: disable llvm stack protector", u)
 		u.AddCompilationFlag_NoPreprocessor("-fno-stack-protector")
 	}
 }
@@ -303,7 +303,7 @@ func (x *LlvmProductInstall) Serialize(ar Archive) {
 }
 func (x *LlvmProductInstall) Build(bc BuildContext) error {
 	buildCompilerVer := func(suffix string) error {
-		LogDebug("llvm: looking for clang-%s...", suffix)
+		LogDebug(LogLinux, "llvm: looking for clang-%s...", suffix)
 		c := exec.Command("/bin/sh", "-c", "which clang++"+suffix)
 		if outp, err := c.Output(); err == nil {
 			x.ClangPlusPlus = MakeFilename(strings.TrimSpace(UnsafeStringFromBytes(outp)))

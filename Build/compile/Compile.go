@@ -5,6 +5,8 @@ import (
 	"fmt"
 )
 
+var LogCompile = NewLogCategory("Compile")
+
 var AllCompilationFlags []struct {
 	Name, Description string
 	CommandParsableFlags
@@ -36,7 +38,7 @@ func OptionCommandAllCompilationFlags() CommandOptionFunc {
 }
 
 func InitCompile() {
-	LogTrace("build/compile.Init()")
+	LogTrace(LogCompile, "build/compile.Init()")
 
 	// register type for serialization
 	RegisterSerializable(&ActionRules{})

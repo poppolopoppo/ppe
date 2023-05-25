@@ -171,7 +171,7 @@ func (rules *ModuleRules) GetNamespace() *NamespaceRules {
 	if namespace, err := rules.GetBuildNamespace(); err == nil {
 		return namespace.GetNamespace()
 	} else {
-		LogPanicErr(err)
+		LogPanicErr(LogCompile, err)
 		return nil
 	}
 }
@@ -201,7 +201,7 @@ func (rules *ModuleRules) GetFacet() *Facet {
 func (rules *ModuleRules) expandTagsRec(env *CompileEnv, dst *ModuleRules) {
 	for tags, tagged := range rules.PerTags {
 		if selectedTags := env.Tags.Intersect(tags); !selectedTags.Empty() {
-			LogVeryVerbose("expand module %q with rules tagged [%v]", dst.ModuleAlias, selectedTags)
+			LogVeryVerbose(LogCompile, "expand module %q with rules tagged [%v]", dst.ModuleAlias, selectedTags)
 			dst.Prepend(&tagged)
 			tagged.expandTagsRec(env, dst)
 		}

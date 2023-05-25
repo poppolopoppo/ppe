@@ -6,10 +6,12 @@ import (
 	"strconv"
 )
 
+var LogWindows = NewLogCategory("Windows")
+
 var HalTag = MakeArchiveTag(MakeFourCC('W', 'I', 'N', 'X'))
 
 func InitWindows() {
-	LogTrace("build/hal/window.Init()")
+	LogTrace(LogWindows, "build/hal/window.Init()")
 
 	RegisterSerializable(&WindowsPlatform{})
 	RegisterSerializable(&MsvcCompiler{})

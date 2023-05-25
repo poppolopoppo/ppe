@@ -90,8 +90,8 @@ func setupCloseHandler() {
 		signal.Notify(c, os.Interrupt)
 		<-c
 
-		LogWarning("\r- Ctrl+C pressed in Terminal")
-		PurgePinnedLogs()
+		LogWarning(LogGlobal, "\r- Ctrl+C pressed in Terminal")
+		gLogger.Purge()
 		PurgeProfiling()
 
 		os.Exit(0)

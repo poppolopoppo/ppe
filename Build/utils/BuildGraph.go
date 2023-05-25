@@ -649,7 +649,7 @@ func (x *buildExecuteContext) needToBuild() (bool, BuildDependencyType, error) {
 		}
 	} else {
 		if !x.options.NoWarningOnMissingOutput {
-			LogWarning("%v: missing output, trigger rebuild", x.node.Alias())
+			LogWarning(LogBuildGraph, "%v: missing output, trigger rebuild", x.node.Alias())
 		}
 		rebuild = true // output dependencies can be regenerated
 		dependencyType = DEPENDENCY_OUTPUT
@@ -658,9 +658,9 @@ func (x *buildExecuteContext) needToBuild() (bool, BuildDependencyType, error) {
 	if !rebuild && lastError == nil {
 		// check if content fingerprint changed
 		buildstamp := x.node.GetBuildStamp()
-		checksum := MakeBuildFingerprint(x.node.GetBuildable())
+		checksum := MakeBuildFingerprint(x.node.Buildable)
 		if rebuild = (checksum != buildstamp.Content); rebuild {
-			LogTrace("%v: fingerprint mismatch, trigger rebuild\n\told: %v\n\tnew: %v", x.node.Alias(), buildstamp.Content, checksum)
+			LogTrace(LogBuildGraph, "%v: fingerprint mismatch, trigger rebuild\n\told: %v\n\tnew: %v", x.node.Alias(), buildstamp.Content, checksum)
 		}
 	}
 
@@ -885,7 +885,7 @@ func (x *buildExecuteContext) OutputNode(factories ...BuildFactory) error {
 			return err
 		}
 
-		LogDebug("%v: outputs node %q", x.Alias(), node.Alias())
+		LogDebug(LogBuildGraph, "%v: outputs node %q", x.Alias(), node.Alias())
 		x.node.addOutputNode_AssumeLocked(node.Alias())
 	}
 
@@ -968,8 +968,8 @@ func (g *buildGraph) Create(buildable Buildable, static BuildAliases, options ..
 		node, loaded = g.nodes.FindOrAdd(alias, newBuildNode(alias, buildable))
 	}
 
-	LogDebug("%v: create <%v> node%v", alias,
-		MakeStringer(func() string { return reflect.TypeOf(node.GetBuildable()).String() }),
+	LogDebug(LogBuildGraph, "%v: create <%v> node%v", alias,
+		MakeStringer(func() string { return reflect.TypeOf(node.Buildable).String() }),
 		MakeStringer(func() string { return Blend("", " (forced update)", bo.Force) }))
 
 	node.state.Lock()
@@ -978,7 +978,7 @@ func (g *buildGraph) Create(buildable Buildable, static BuildAliases, options ..
 	Assert(func() bool { return alias == node.Alias() })
 	AssertSameType(node.Buildable, buildable)
 
-	LogPanicIfFailed(bo.OnLaunched.Invoke(node))
+	LogPanicIfFailed(LogBuildGraph, bo.OnLaunched.Invoke(node))
 
 	dirty := !loaded || bo.Force || len(static) != len(node.Static)
 	oldStaticDeps := node.Static
@@ -997,7 +997,7 @@ func (g *buildGraph) Create(buildable Buildable, static BuildAliases, options ..
 	}
 
 	if dirty {
-		LogPanicIfFailed(bo.OnBuilt.Invoke(node))
+		LogPanicIfFailed(LogBuildGraph, bo.OnBuilt.Invoke(node))
 
 		node.makeDirty_assumeLocked()
 		g.makeDirty()
@@ -1115,7 +1115,7 @@ func (g *buildGraph) Save(dst io.Writer) error {
 func (g *buildGraph) Load(src io.Reader) error {
 	g.revision = 0
 	file, err := CompressedArchiveFileRead(src, g.Serialize)
-	LogVeryVerbose("buildgraph: archive version = %v tags = %v", file.Version, file.Tags)
+	LogVeryVerbose(LogBuildGraph, "archive version = %v tags = %v", file.Version, file.Tags)
 	return err
 }
 func (g *buildGraph) Equals(other BuildGraph) bool {
@@ -1307,16 +1307,16 @@ func (g *buildGraph) launchBuild(node *buildNode, options BuildOptions) Future[B
 	Assert(func() bool {
 		relateOutp := strings.Builder{}
 		if options.RelatesVerbose(node, 0, &relateOutp) {
-			LogPanic("buildgraph: build cyclic dependency in %q\n%s", node, relateOutp.String())
+			LogPanic(LogBuildGraph, "build cyclic dependency in %q\n%s", node, relateOutp.String())
 			return false
 		}
 		return true
 	})
-	// relateOutp := strings.Builder{}
+	// relateOutp := strings.Builder{} // %_NOCOMMIT%
 	// if options.RelatesVerbose(node, 0, &relateOutp) {
-	// 	LogPanic("buildgraph: build cyclic dependency in %q\n%s", node, relateOutp.String())
+	// 	LogPanic(LogBuildGraph, "build cyclic dependency in %q\n%s", node, relateOutp.String())
 	// }
-	// LogTrace("buildgraph: launch build of <%T> %q\n%s", node.Buildable, node.Alias(), relateOutp.String())
+	// LogTrace(LogBuildGraph, "buildgraph: launch build of <%T> %q\n%s", node.Buildable, node.Alias(), relateOutp.String())
 
 	var future = node.future.Load()
 	if future != nil && !options.Force {
@@ -1333,7 +1333,7 @@ func (g *buildGraph) launchBuild(node *buildNode, options BuildOptions) Future[B
 		future = other
 	}
 
-	LogDebug("%v: launch <%v> build%v", node.Alias(),
+	LogDebug(LogBuildGraph, "%v: launch <%v> build%v", node.Alias(),
 		MakeStringer(func() string { return reflect.TypeOf(node.Buildable).String() }),
 		MakeStringer(func() string { return Blend("", " (forced update)", options.Force) }))
 
@@ -1358,28 +1358,28 @@ func (g *buildGraph) launchBuild(node *buildNode, options BuildOptions) Future[B
 			if built {
 				if result.BuildStamp != context.stamp {
 					if context.numDependencies() > 0 || IsLogLevelActive(LOG_VERYVERBOSE) {
-						LogInfo("%s%s%s %q (%v)",
+						LogInfo(LogBuildGraph, "%s%s%s %q (%v)",
 							Blend("", "force ", options.Force),
 							Blend("build", "update", context.stamp.Content.Valid()),
 							Blend("", " standalone", context.numDependencies() == 0),
 							node.BuildAlias, node.state.stats.Duration.Exclusive)
 					}
 
-					LogTrace("%v: new build stamp for [%T]\n\tnew: %v\n\told: %v", node.BuildAlias, result.Buildable, result.BuildStamp, context.stamp)
+					LogTrace(LogBuildGraph, "%v: new build stamp for [%T]\n\tnew: %v\n\told: %v", node.BuildAlias, result.Buildable, result.BuildStamp, context.stamp)
 
 					g.makeDirty()
 
 				} else {
-					LogDebug("unchanged %q (%v)", node.BuildAlias, node.state.stats.Duration.Exclusive)
+					LogDebug(LogBuildGraph, "unchanged %q (%v)", node.BuildAlias, node.state.stats.Duration.Exclusive)
 				}
 			} else {
-				LogVerbose("up-to-date %q", node.BuildAlias)
+				LogVerbose(LogBuildGraph, "up-to-date %q", node.BuildAlias)
 			}
 		} else {
 			switch err.(type) {
 			case buildDependencyError:
 			default: // failed dependency errors are only printed once
-				LogError("%v: %v", node.BuildAlias, err)
+				LogError(LogBuildGraph, "%v: %v", node.BuildAlias, err)
 			}
 		}
 
