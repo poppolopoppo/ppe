@@ -228,7 +228,7 @@
         - https://nikhilism.com/post/2020/windows-deterministic-builds/
         - https://blog.assarbad.net/20230201/aiding-reproducibility-in-builds-with-ms-visual-c/
         - https://github.com/bazelbuild/bazel/issues/9466#issuecomment-682394297
-- [X] Cache build objects
+- [x] Cache build objects
     - **NOTE: caching is only efficient if we have deterministic builds**
     - add an object store with both outputs *AND* expanded inputs
     - the key to the cache is using fingperprint of all direct input of the action
@@ -236,10 +236,11 @@
     - finally if everything matches, we have a cache-hit
 - [ ] Distribute ~~build actions~~ buildable jobs
     - [ ] write a client/server architecture to distribute buildables
+        - https://dzone.com/articles/a-simple-clustered-task-distri
     - [ ] create a [webdav server](https://gist.github.com/staaldraad/d835126cd46969330a8fdadba62b9b69) on host to share input files with workers
     - [ ] implement a protocol for available worker discovery
     - [ ] monitor available ressources on worker machines to opt-out when already busy
-    - [ ] use [Minhook](https://github.com/NaniteFactory/gominhook) on Windows to hook all IO Win32 functions
+    - [x] use [Minhook](https://github.com/NaniteFactory/gominhook) on Windows to hook all IO Win32 functions
         - MinHook does not support payload injection in another process :'(
             - actually [it coult work with `CreateRemoteThread`](https://stackoverflow.com/a/46940325)
             - [IO detouring with Minhook](https://github.com/TanninOne/usvfs/blob/master/usvfs/hookmanager.cpp)

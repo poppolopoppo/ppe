@@ -1,5 +1,6 @@
 #include "IODetouringTblog.h"
 
+#include "IODetouringDebug.h"
 #include "IODetouringFiles.h"
 #include "IODetouringHooks.h"
 
@@ -28,6 +29,7 @@ static void LoadStdHandleName_(DWORD id, PCWSTR pwzBuffer, BOOL bAppend) {
         FIODetouringFiles& files = FIODetouringFiles::Get();
         FIODetouringFiles::PFileInfo const pInfo = files.FindPartial(pwzBuffer);
 
+        pInfo->bStdio = true;
         if (bAppend)
             pInfo->bAppend = TRUE;
 
@@ -42,6 +44,7 @@ static void SaveStdHandleName_(HANDLE hFile, PWCHAR pwzBuffer, BOOL* bAppend) {
         if (FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().RecallFile(hFile)) {
             FIODetouringFiles::StringCopy(pwzBuffer, pInfo->pwzPath);
 
+            pInfo->bStdio = true;
             if (pInfo->bAppend && bAppend != nullptr)
                 *bAppend = TRUE;
         }
@@ -57,6 +60,16 @@ FIODetouringTblog::FIODetouringTblog() {
     InitializeCriticalSection(&_csChildPayload);
 
     ZeroMemory(&_payload, sizeof(_payload));
+
+    _payload.nPayloadOptions = (
+        // ignore every "special" files by default
+        EOptions::IgnoreAbsorbed    |
+        EOptions::IgnoreCleanup     |
+        EOptions::IgnoreDelete      |
+        EOptions::IgnoreDirectory   |
+        EOptions::IgnorePipe        |
+        EOptions::IgnoreStdio       |
+        EOptions::IgnoreSystem      );
 }
 //----------------------------------------------------------------------------
 FIODetouringTblog::~FIODetouringTblog() {
@@ -72,8 +85,8 @@ void FIODetouringTblog::CopyPayload(PPayload pPayload) {
     CopyMemory(&_payload, pPayload, sizeof(_payload));
 
     LoadStdHandleName_(STD_INPUT_HANDLE, _payload.wzStdin, FALSE);
-    LoadStdHandleName_(STD_OUTPUT_HANDLE, _payload.wzStdout, _payload.bStdoutAppend);
-    LoadStdHandleName_(STD_ERROR_HANDLE, _payload.wzStderr, _payload.bStderrAppend);
+    LoadStdHandleName_(STD_OUTPUT_HANDLE, _payload.wzStdout, _payload.nPayloadOptions & EOptions::AppendStdout);
+    LoadStdHandleName_(STD_ERROR_HANDLE, _payload.wzStderr, _payload.nPayloadOptions & EOptions::AppendStderr);
 
     _nTraceProcessId = _payload.nTraceProcessId;
 }
@@ -91,9 +104,20 @@ BOOL FIODetouringTblog::ChildPayload(HANDLE hProcess, DWORD nProcessId, PCHAR ps
     _childPayload.nParentProcessId = GetCurrentProcessId();
     _childPayload.rGeneology[_childPayload.nGeneology++] = DWORD(InterlockedIncrement(&_nChildCnt));
 
+    BOOL bStdoutAppend = FALSE, bStderrAppend = FALSE;
     SaveStdHandleName_(hStdin, _childPayload.wzStdin, NULL);
-    SaveStdHandleName_(hStdout, _childPayload.wzStdout, &_childPayload.bStdoutAppend);
-    SaveStdHandleName_(hStderr, _childPayload.wzStderr, &_childPayload.bStderrAppend);
+    SaveStdHandleName_(hStdout, _childPayload.wzStdout, &bStdoutAppend);
+    SaveStdHandleName_(hStderr, _childPayload.wzStderr, &bStderrAppend);
+
+    if (bStdoutAppend)
+        _childPayload.nPayloadOptions += EOptions::AppendStdout;
+    else
+        _childPayload.nPayloadOptions -= EOptions::AppendStdout;
+
+    if (bStderrAppend)
+        _childPayload.nPayloadOptions += EOptions::AppendStderr;
+    else
+        _childPayload.nPayloadOptions -= EOptions::AppendStderr;
 
     DetourCopyPayloadToProcess(hProcess, GIODetouringGuid, &_childPayload, sizeof(_childPayload));
 
@@ -148,8 +172,9 @@ VOID FIODetouringTblog::Printf(PCSTR pszMsgf, ...) {
 BOOL FIODetouringTblog::Open() {
     EnterCriticalSection(&_csPipe);
 
-    WCHAR wzPipe[256];
-    StringCchPrintfW(wzPipe, ARRAYSIZE(wzPipe), L"%ls.%d", TBLOG_PIPE_NAMEW, _nTraceProcessId);
+    WCHAR wzPipe[MAX_PATH] = TEXT("");
+    StringCchPrintfW(wzPipe, ARRAYSIZE(wzPipe), L"\\\\.\\pipe\\%ls-%ls.%d",
+        GIODetougingGlobalPrefix, _payload.wzNamedPipe, _payload.nTraceProcessId);
 
     for (int retries = 0; retries < 10; retries++) {
         WaitNamedPipeW(wzPipe, 10000); // Wait up to 10 seconds for a pipe to appear.
@@ -195,8 +220,7 @@ VOID FIODetouringTblog::Close() {
 // Completely side-effect free printf replacement (but no FP numbers).
 // https://github.com/microsoft/Detours/blob/main/samples/tracebld/trcbld.cpp#L1644
 //----------------------------------------------------------------------------
-static PCHAR do_base(PCHAR pszOut, UINT64 nValue, UINT nBase, PCSTR pszDigits)
-{
+static PCHAR do_base(PCHAR pszOut, UINT64 nValue, UINT nBase, PCSTR pszDigits) {
     CHAR szTmp[96];
     int nDigit = sizeof(szTmp)-2;
     for (; nDigit >= 0; nDigit--) {

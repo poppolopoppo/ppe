@@ -2,6 +2,7 @@
 
 #include "IODetouring.h"
 
+#include "IODetouringDebug.h"
 #include "IODetouringFiles.h"
 #include "IODetouringHooks.h"
 #include "IODetouringTblog.h"
@@ -11,10 +12,10 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Installing/uninstalling the hooks when DLL is loaded/unloaded:
+// Install/Uninstall the hooks when DLL is loaded/unloaded:
 //----------------------------------------------------------------------------
 static BOOL OnProcessAttach_(FIODetouringHooks& H, HMODULE hDll);
-static BOOL OnProcessDettach_(FIODetouringHooks& H, HMODULE hDll);
+static BOOL OnProcessDetach_(FIODetouringHooks& H, HMODULE hDll);
 //----------------------------------------------------------------------------
 static BOOL OnThreadAttach_(FIODetouringHooks& H, HMODULE hDll);
 static BOOL OnThreadDetach_(FIODetouringHooks& H, HMODULE hDll);
@@ -36,7 +37,7 @@ extern "C" BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD dwReason, PVOID lpRese
         return OnProcessAttach_(H, hModule);
 
     case DLL_PROCESS_DETACH:
-        return OnProcessDettach_(H, hModule);
+        return OnProcessDetach_(H, hModule);
 
     case DLL_THREAD_ATTACH:
         return OnThreadAttach_(H, hModule);
@@ -49,6 +50,8 @@ extern "C" BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD dwReason, PVOID lpRese
 }
 //----------------------------------------------------------------------------
 static BOOL OnProcessAttach_(FIODetouringHooks& H, HMODULE hDll) {
+    IODETOURING_DEBUGPRINTF("process attach: %d\n", GetCurrentProcessId());
+
     FIODetouringTblog::Create();
 
     H.hInstance = hDll;
@@ -62,20 +65,17 @@ static BOOL OnProcessAttach_(FIODetouringHooks& H, HMODULE hDll) {
         ULONG cbData;
         PVOID pvData = DetourFindPayload(hMod, GIODetouringGuid, &cbData);
 
-        if (pvData != NULL && pPayload == NULL) {
+        if (pvData != NULL && pPayload == NULL)
             pPayload = (FIODetouringTblog::PPayload)pvData;
-        }
 
         ULONG cbMod = DetourGetModuleSize(hMod);
 
-        if (((PBYTE)hMod) < xCreate && ((PBYTE)hMod + cbMod) > xCreate) {
+        if (((PBYTE)hMod) < xCreate && ((PBYTE)hMod + cbMod) > xCreate)
             H.hKernel32 = hMod;
-        }
     }
 
-    if (pPayload == NULL || H.hKernel32 == NULL) {
+    if (pPayload == NULL || H.hKernel32 == NULL)
         return FALSE;
-    }
 
     FIODetouringFiles::Create(pPayload->wzStdin, pPayload->wzStdout, pPayload->wzStderr);
 
@@ -87,10 +87,13 @@ static BOOL OnProcessAttach_(FIODetouringHooks& H, HMODULE hDll) {
     // Find hidden functions.
     H.Real_PrivCopyFileExW = (BOOL (WINAPI *)(LPCWSTR, LPCWSTR, LPPROGRESS_ROUTINE, LPVOID, LPBOOL, DWORD))
         GetProcAddress(H.hKernel32, "PrivCopyFileExW");
-    if (H.Real_PrivCopyFileExW == NULL) {
-        PPE_DEBUG_BREAK();
-    }
+    H.Real_PrivCopyFileExA = (BOOL(WINAPI*)(LPCSTR, LPCSTR, LPPROGRESS_ROUTINE, LPVOID, LPBOOL, DWORD))
+        GetProcAddress(H.hKernel32, "PrivCopyFileExA");
 
+    if (H.Real_PrivCopyFileExW == NULL && H.Real_PrivCopyFileExA == NULL)
+        PPE_DEBUG_BREAK();
+
+    // Attach IO detouring
     LONG const error = H.AttachDetours();
     if (error != NO_ERROR) {
         PPE_DEBUG_BREAK();
@@ -103,7 +106,9 @@ static BOOL OnProcessAttach_(FIODetouringHooks& H, HMODULE hDll) {
     return TRUE;
 }
 //----------------------------------------------------------------------------
-static BOOL OnProcessDettach_(FIODetouringHooks& H, HMODULE hDll) {
+static BOOL OnProcessDetach_(FIODetouringHooks& H, HMODULE hDll) {
+    IODETOURING_DEBUGPRINTF("process detach %d\n", GetCurrentProcessId());
+
     OnThreadDetach_(H, hDll);
     H.bLog = FALSE;
 
@@ -123,11 +128,15 @@ static BOOL OnProcessDettach_(FIODetouringHooks& H, HMODULE hDll) {
 }
 //----------------------------------------------------------------------------
 static BOOL OnThreadAttach_(FIODetouringHooks& H, HMODULE hDll) {
+    IODETOURING_DEBUGPRINTF("thread attach\n");
+
     PPE::Unused(H, hDll);
     return TRUE;
 }
 //----------------------------------------------------------------------------
 static BOOL OnThreadDetach_(FIODetouringHooks& H, HMODULE hDll) {
+    IODETOURING_DEBUGPRINTF("thread detach\n");
+
     PPE::Unused(H, hDll);
     return TRUE;
 }

@@ -1,303 +1,190 @@
 ﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
-#include "IOWrapper.h"
+#include "Core_fwd.h"
+#include "HAL/PlatformIncludes.h"
+#include "Meta/Utility.h" // ON_SCOPE_EXIT()
 
-int APIENTRY wWinMain(
-    _In_ HINSTANCE      /*hInstance*/,
-    _In_opt_ HINSTANCE  /*hPrevInstance*/,
-    _In_ LPWSTR         /*lpCmdLine*/,
-    _In_ int            /*nCmdShow*/) {
-    FIOWrapper ioWrapper;
-    return ioWrapper.main(__argc, __wargv);
-}
+#include "IODetouring.h"
+#include "IODetouringFiles.h"
+#include "IODetouringTblog.h"
 
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-BOOL FIOWrapper::CLIENT::LogMessageV(PCCH pszMsg, ...) {
-    DWORD cbWritten = 0;
-    CHAR szBuf[1024];
-    PCHAR pcchEnd = szBuf + ARRAYSIZE(szBuf) - 2;
-    PCHAR pcchCur = szBuf;
-    HRESULT hr;
+#include "detours-external.h"
+
+#include <random>
+#include <strsafe.h>
+
+#define USE_IOWRAPPER_DEBUG     0 // %_NOCOMMIT%
+#define USE_IOWRAPPER_THREAD    0 // %_NOCOMMIT%
+
+#if USE_IOWRAPPER_DEBUG
+#   define IOWRAPPER_LOG(_FMT, ...) LogPrintf_("IOWrapper: " _FMT, ## __VA_ARGS__)
+#else
+#   define IOWRAPPER_LOG(_FMT, ...) NOOP()
+#endif
+
+#if USE_IOWRAPPER_DEBUG
+PRAGMA_DISABLE_OPTIMIZATION
+static void LogPrintf_(const char* pzFmt, ...) {
+    char szTmp[8192];
 
     va_list args;
-    va_start(args, pszMsg);
-    hr = StringCchVPrintfExA(pcchCur, pcchEnd - pcchCur,
-                             &pcchCur, NULL, STRSAFE_NULL_ON_FAILURE,
-                             pszMsg, args);
+    va_start(args, pzFmt);
+    StringCchVPrintfA(szTmp, ARRAYSIZE(szTmp), pzFmt, args);
     va_end(args);
-    if (FAILED(hr)) {
-        goto cleanup;
-    }
 
-    hr = StringCchPrintfExA(pcchCur, szBuf + (ARRAYSIZE(szBuf)) - pcchCur,
-                            &pcchCur, NULL, STRSAFE_NULL_ON_FAILURE,
-                            "\n");
-
-  cleanup:
-    WriteFile(hFile, szBuf, (DWORD)(pcchCur - szBuf), &cbWritten, NULL);
-    return TRUE;
+    OutputDebugStringA(szTmp);
 }
-//----------------------------------------------------------------------------
-BOOL FIOWrapper::CLIENT::LogMessage(FIODetouringMessage* pMessage, DWORD nBytes) {
-    // Sanity check the size of the message.
-    //
-    if (nBytes > pMessage->nBytes) {
-        nBytes = pMessage->nBytes;
-    }
-    if (nBytes >= sizeof(*pMessage)) {
-        nBytes = sizeof(*pMessage) - 1;
+#endif
+
+enum ERunProcess {
+    RP_NO_ERROR = 0,                    // success
+    RP_BAD_ALLOC,                       // GlobalAlloc() failed
+    RP_BROKEN_PIPE,                     // pipe connection ended abnormally
+    RP_COMPLETION_PORT,                 // IO completion port error
+    RP_CREATE_PIPE,                     // failed to create a named pipe
+    RP_CREATE_PROCESS,                  // failed to create the process
+    RP_CREATE_REDIRECT,                 // failed to create pipe redirection for STDOUT/STDERR
+    RP_EXIT_CODE,                       // failed to retrieve process exit code
+    RP_PAYLOAD_COPY,                    // failed to copy Detour payload to child process
+    RP_WORKER_THREAD,                   // failed to create IO completion port worker thread (if USE_IOWRAPPER_THREAD)
+};
+
+#if USE_IOWRAPPER_THREAD
+constexpr DWORD GIOWrapperTimeoutInMs = INFINITE;
+#else
+constexpr DWORD GIOWrapperTimeoutInMs = INFINITE;
+#endif
+
+static ERunProcess RunProcessWithDetours(
+    int* pExitCode,                     // exit code returned by process, or GetLastError() when failed
+    PCSTR pszIODetouringDll,            // path to the IODetouring-WinXX-XXX.dll to inject in child process
+    PCWSTR pwzNamedPipePrefix,          // prefix of the pipe for this particular process, should be unique
+    PCWSTR pwzExecutableName,           // executable path, provide an absolute path to bypass %PATH% resolution
+    PCWSTR pwzCommandLine,              // process arguments as a string, separated by spaces and within quotes when needed
+    PCWSTR pwzzIgnoredApplications,     // child application matching those name won't be detoured, as a null-terminated array of null-terminated strings
+    EIODetouringOptions nOptions,       // file matching any of those attribute won't pass through `onFilename` event
+    HANDLE hDependencyFile              // handle to dependency output file
+);
+
+int _tmain(int argc, TCHAR* argv[], TCHAR* []) {
+    if (argc < 4) {
+        fprintf(stderr, "%ls <dependency_path> <ignored_applications> <application_path> [application_args]*\n", argv[0]);
+        return -1;
     }
 
-    // Don't log message if there isn't and message text.
-    //
-    DWORD cbWrite = nBytes - offsetof(FIODetouringMessage, szMessage);
-    if (cbWrite <= 0 ) {
-        return TRUE;
+    const int nCommandLineFirstArg = 4;
+    PCWSTR const pwzDependenciesPath = argv[1];
+    PCWSTR const pwzIgnoredApplications = argv[2];
+    PCWSTR const pwzExecutableName = argv[3];
+
+    IOWRAPPER_LOG("dependency file: '%ls'\n", pwzDependenciesPath);
+    IOWRAPPER_LOG("ignored applications: '%ls'\n", pwzIgnoredApplications);
+    IOWRAPPER_LOG("executable name: '%ls'\n", pwzExecutableName);
+
+    // open output handle to write file dependencies
+    HANDLE const hDependencyFile = CreateFile(pwzDependenciesPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    if (hDependencyFile == NULL || hDependencyFile == INVALID_HANDLE_VALUE)
+        return GetLastError();
+    ON_SCOPE_EXIT([hDependencyFile]() {
+        CloseHandle(hDependencyFile);
+    });
+
+    // look for IO detouring DLL next in the same folder than running application
+    CHAR szIODetouringDll[MAX_PATH] = "";
+    if (!GetModuleFileNameA(NULL, szIODetouringDll, ARRAYSIZE(szIODetouringDll)))
+        return GetLastError();
+    if (CHAR* pzFilename = strrchr(szIODetouringDll, '\\'))
+        *pzFilename = '\0';
+    else
+        return -2;
+    StringCchCatA(szIODetouringDll, ARRAYSIZE(szIODetouringDll), "\\Tools-IODetouring-" STRINGIZE(BUILD_FAMILY) ".dll");
+
+    IOWRAPPER_LOG("detouring dll: '%s'\n", szIODetouringDll);
+
+    // construct command-line for detoured process
+    TCHAR wzCommandLine[8192] = TEXT("");
+    for (int iArg = nCommandLineFirstArg - 1; iArg < argc; ++iArg) {
+        PCWSTR pwzArg = pwzExecutableName;
+        if (iArg >= nCommandLineFirstArg) {
+            pwzArg = argv[iArg];
+            StringCchCat(wzCommandLine, ARRAYSIZE(wzCommandLine), TEXT(" "));
+        }
+
+        if (wcschr(pwzArg, TEXT(' ')) != NULL || wcschr(pwzArg, TEXT('\t')) != NULL) {
+            StringCchCat(wzCommandLine, ARRAYSIZE(wzCommandLine), TEXT("\""));
+            StringCchCat(wzCommandLine, ARRAYSIZE(wzCommandLine), pwzArg);
+            StringCchCat(wzCommandLine, ARRAYSIZE(wzCommandLine), TEXT("\""));
+        }
+        else {
+            StringCchCat(wzCommandLine, ARRAYSIZE(wzCommandLine), pwzArg);
+        }
     }
 
-    if (bVerbose) {
-        printf("IOWrapper: `%s`", pMessage->szMessage);
+    IOWRAPPER_LOG("command-line: '%ls'\n", wzCommandLine);
+
+    // construct ignored applications block
+    TCHAR wzzIgnoredApplications[8192] = TEXT("");
+    for (int nOff = 0; nOff < ARRAYSIZE(wzzIgnoredApplications) - 1; ) {
+        wzzIgnoredApplications[nOff] = (pwzIgnoredApplications[nOff] != TEXT(',') ? pwzIgnoredApplications[nOff] : TEXT('\0'));
+        if (pwzIgnoredApplications[++nOff] == TEXT('\0')) {
+            wzzIgnoredApplications[nOff] = TEXT('\0');
+            wzzIgnoredApplications[nOff + 1] = TEXT('\0');
+            break;
+        }
     }
 
-    DWORD cbWritten = 0;
-    WriteFile(hFile, pMessage->szMessage, cbWrite, &cbWritten, NULL);
-    return TRUE;
+    // construct a pseudo unique identifier for named pipe
+    const u32 nRandomSeed{ u32(PPE::hash_size_t_constexpr(GetTickCount64(), GetCurrentProcessId(), PPE::FConstWChar(wzCommandLine).HashValue())) };
+    wchar_t wzNamedPipePrefix[17] = TEXT("");
+    constexpr wchar_t wzRandomCharset[] = TEXT(
+        "0123456789"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz");
+    std::generate_n(wzNamedPipePrefix, 16, [
+            rnd{std::default_random_engine{nRandomSeed}},
+            distrib{ std::uniform_int_distribution<>{0, ARRAYSIZE(wzRandomCharset) - 2} }]
+        () mutable -> wchar_t {
+        return wzRandomCharset[distrib(rnd)];
+    });
+    wzNamedPipePrefix[16] = TEXT('\0');
+
+
+    IOWRAPPER_LOG("ignored applications: '%ls'\n", pwzIgnoredApplications);
+
+    // ignore all _special_ file types
+    EIODetouringOptions nOptions = (
+        // ignore every "special" files by default
+        EIODetouringOptions::IgnoreAbsorbed    |
+        EIODetouringOptions::IgnoreCleanup     |
+        EIODetouringOptions::IgnoreDelete      |
+        EIODetouringOptions::IgnoreDirectory   |
+        EIODetouringOptions::IgnoreDoNone      |
+        EIODetouringOptions::IgnorePipe        |
+        EIODetouringOptions::IgnoreStdio       |
+        EIODetouringOptions::IgnoreSystem      );
+
+    // launch detoured process
+    int nExitCode = 0;
+    const ERunProcess nError = RunProcessWithDetours(
+        &nExitCode,
+        szIODetouringDll,
+        wzNamedPipePrefix,
+        pwzExecutableName,
+        wzCommandLine,
+        wzzIgnoredApplications,
+        nOptions,
+        hDependencyFile);
+
+    IOWRAPPER_LOG("error code = %d (%d)\n", nError, nExitCode);
+    if (nError == RP_NO_ERROR)
+        return nExitCode;
+    return -nError;
 }
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-VOID FIOWrapper::OnExit(PCSTR pszMsg) {
-    DWORD error = GetLastError();
-
-    fprintf(stderr, "IOWrapper: Error %ld in %s.\n", error, pszMsg);
-    fflush(stderr);
-    exit(1);
-}
-//----------------------------------------------------------------------------
-BOOL FIOWrapper::CloseConnection(PCLIENT pClient) {
-    InterlockedDecrement(&_nActiveClients);
-    if (pClient != NULL) {
-        if (pClient->hPipe != INVALID_HANDLE_VALUE) {
-            //FlushFileBuffers(pClient->hPipe);
-            if (!DisconnectNamedPipe(pClient->hPipe)) {
-                DWORD error = GetLastError();
-                fprintf(stderr, "IOWrapper: error %d in DisconnectNamedPipe\n", error);
-            }
-            CloseHandle(pClient->hPipe);
-            pClient->hPipe = INVALID_HANDLE_VALUE;
-        }
-        // if (pClient->hFile != INVALID_HANDLE_VALUE) {
-        //     CloseHandle(pClient->hFile);
-        //     pClient->hFile = INVALID_HANDLE_VALUE;
-        // }
-        pClient->hFile = INVALID_HANDLE_VALUE;
-        GlobalFree(pClient);
-        pClient = NULL;
-    }
-    return TRUE;
-}
-//----------------------------------------------------------------------------
-// Creates a pipe instance and initiate an accept request.
-//----------------------------------------------------------------------------
-auto FIOWrapper::CreatePipeConnection(LONG nClient) -> PCLIENT {
-    HANDLE hPipe = CreateNamedPipeA(_szPipe,                   // pipe name
-                                    PIPE_ACCESS_INBOUND |       // read-only access
-                                    FILE_FLAG_OVERLAPPED,       // overlapped mode
-                                    PIPE_TYPE_MESSAGE |         // message-type pipe
-                                    PIPE_READMODE_MESSAGE |     // message read mode
-                                    PIPE_WAIT,                  // blocking mode
-                                    PIPE_UNLIMITED_INSTANCES,   // unlimited instances
-                                    0,                          // output buffer size
-                                    0,                          // input buffer size
-                                    20000,                      // client time-out
-                                    NULL);                      // no security attributes
-    if (hPipe == INVALID_HANDLE_VALUE) {
-        OnExit("CreateNamedPipe");
-    }
-
-    VerbosePrintf("IOWrapper: create named pipe %s for client #%d\n", _szPipe, nClient);
-
-    // Allocate the client data structure.
-    //
-    PCLIENT pClient = (PCLIENT) GlobalAlloc(GPTR, sizeof(CLIENT));
-    if (pClient == NULL) {
-        OnExit("GlobalAlloc pClient");
-    }
-
-    ZeroMemory(pClient, sizeof(*pClient));
-    pClient->hPipe = hPipe;
-    pClient->nClient = nClient;
-    pClient->bAwaitingAccept = TRUE;
-    pClient->bVerbose = _bVerbose;
-    pClient->hFile = _hLogFile;
-
-    VerbosePrintf("IOWrapper: create client #%d\n", nClient);
-
-    // Associate file with our complietion port.
-    //
-    if (!CreateIoCompletionPort(pClient->hPipe, _hCompletionPort, (ULONG_PTR)pClient, 0)) {
-        OnExit("CreateIoComplietionPort pClient");
-    }
-
-    if (!ConnectNamedPipe(hPipe, pClient)) {
-        DWORD error = GetLastError();
-
-        if (error == ERROR_IO_PENDING) {
-            VerbosePrintf("IOWrapper: pending client #%d\n", nClient);
-            return NULL;
-        }
-        if (error == ERROR_PIPE_CONNECTED) {
-            pClient->bAwaitingAccept = FALSE;
-            VerbosePrintf("IOWrapper: client #%d awaiting accept\n", nClient);
-        }
-        else if (error != ERROR_IO_PENDING &&
-                 error != ERROR_PIPE_LISTENING) {
-
-            OnExit("ConnectNamedPipe");
-        }
-    }
-    else {
-        VerbosePrintf("IOWrapper: ConnectNamedPipe accepted immediately.\n");
-        pClient->bAwaitingAccept = FALSE;
-    }
-    return pClient;
-}
-//----------------------------------------------------------------------------
-BOOL FIOWrapper::DoRead(PCLIENT pClient) {
-    SetLastError(NO_ERROR);
-    DWORD nBytes = 0;
-    BOOL b = ReadFile(pClient->hPipe, &pClient->Message, sizeof(pClient->Message),
-                      &nBytes, pClient);
-
-    DWORD error = GetLastError();
-
-    if (b && error == NO_ERROR) {
-        return TRUE;
-    }
-    if (error == ERROR_BROKEN_PIPE) {
-        fprintf(stderr, "IOWrapper: ERROR_BROKEN_PIPE [%d]\n", nBytes);
-        CloseConnection(pClient);
-        return TRUE;
-    }
-    else if (error == ERROR_INVALID_HANDLE) {
-        // ?
-        fprintf(stderr, "IOWrapper: ERROR_INVALID_HANDLE\n");
-        // I have no idea why this happens.  Our remedy is to drop the connection.
-        return TRUE;
-    }
-    else if (error != ERROR_IO_PENDING) {
-        if (b)
-            fprintf(stderr, "IOWrapper: ReadFile succeeded %d\n", error);
-        else
-            fprintf(stderr, "IOWrapper: ReadFile failed %d\n", error);
-        CloseConnection(pClient);
-    }
-    return TRUE;
-}
-//----------------------------------------------------------------------------
-DWORD WINAPI FIOWrapper::WorkerThread(LPVOID pvVoid) {
-    PCLIENT pClient;
-    BOOL b;
-    LPOVERLAPPED lpo;
-    DWORD nBytes;
-    FIOWrapper& ioWrapper = *(FIOWrapper*)pvVoid;
-
-    for (BOOL fKeepLooping = TRUE; fKeepLooping; fKeepLooping = (ioWrapper._nActiveClients > 0)) {
-        pClient = NULL;
-        lpo = NULL;
-        nBytes = 0;
-        b = GetQueuedCompletionStatus(ioWrapper._hCompletionPort,
-                                      &nBytes, (PULONG_PTR)&pClient, &lpo, INFINITE);
-
-        if (!b) {
-            if (pClient) {
-                if (GetLastError() == ERROR_BROKEN_PIPE)
-                    ioWrapper.VerbosePrintf("IOWrapper: client closed pipe\n");
-                else
-                    fprintf(stderr, "IOWrapper: GetQueuedCompletionStatus failed %d\n", GetLastError());
-                ioWrapper.CloseConnection(pClient);
-            }
-            continue;
-        }
-
-        if (pClient->bAwaitingAccept) {
-            BOOL fAgain = TRUE;
-            while (fAgain) {
-                LONG nClient = InterlockedIncrement(&ioWrapper._nTotalClients);
-                InterlockedIncrement(&ioWrapper._nActiveClients);
-                pClient->bAwaitingAccept = FALSE;
-
-                PCLIENT pNew = ioWrapper.CreatePipeConnection(nClient);
-
-                fAgain = FALSE;
-                if (pNew != NULL) {
-                    ioWrapper.VerbosePrintf("IOWrapper: new client #%d for pipe connection\n", pNew->nClient);
-                    fAgain = !pNew->bAwaitingAccept;
-                    ioWrapper.DoRead(pNew);
-                }
-            }
-        }
-        else {
-            ioWrapper.VerbosePrintf("IOWrapper: read %d bytes from client #%d with '%s' message\n", nBytes, pClient->nClient, pClient->Message.szMessage);
-            if (nBytes <= offsetof(FIODetouringMessage, szMessage)) {
-                ioWrapper.VerbosePrintf("IOWrapper: close client #%d\n", pClient->nClient);
-                ioWrapper.CloseConnection(pClient);
-                continue;
-            }
-            pClient->LogMessage(&pClient->Message, nBytes);
-        }
-
-        ioWrapper.DoRead(pClient);
-    }
-    return 0;
-}
-//----------------------------------------------------------------------------
-HANDLE FIOWrapper::CreateLogFile() {
-    HANDLE const hFile = CreateFileW(_szLogFile,
-            GENERIC_WRITE,
-            FILE_SHARE_READ,
-            NULL,
-            CREATE_ALWAYS,
-            FILE_ATTRIBUTE_NORMAL |
-            FILE_FLAG_SEQUENTIAL_SCAN,
-            NULL);
-
-    if (hFile == INVALID_HANDLE_VALUE) {
-        fprintf(stderr, "IOWrapper: error opening output file: %ls: %ld\n\n", _szLogFile, GetLastError());
-        fflush(stderr);
-        OnExit("CreateFile");
-    }
-
-    return hFile;
-}
-//----------------------------------------------------------------------------
-HANDLE FIOWrapper::CreateWorkerThread() {
-    SYSTEM_INFO SystemInfo;
-
-    GetSystemInfo(&SystemInfo);
-
-    DWORD dwThread = 0;
-    const HANDLE hThread = CreateThread(NULL, 0, FIOWrapper::WorkerThread, this, 0, &dwThread);
-    if (!hThread) {
-        OnExit("CreateThread WorkerThread");
-        // Unreachable: return FALSE;
-    }
-    // CloseHandle(hThread);
-    return hThread;
-}
-//----------------------------------------------------------------------------
-void FIOWrapper::VerbosePrintf(PCSTR pszMsg, ...) const {
-    if (_bVerbose) {
-        va_list args;
-        va_start(args, pszMsg);
-        vfprintf_s(stderr, pszMsg, args);
-        va_end(args);
-    }
-}
-//----------------------------------------------------------------------------
-static DWORD CopyEnvironment(PWCHAR pwzzOut, PCWSTR pwzzIn) {
+static DWORD CopyNullTerminatedStringList_(PWCHAR pwzzOut, PCWSTR pwzzIn) {
     PCWSTR pwzzBeg = pwzzOut;
     while (*pwzzIn) {
         while (*pwzzIn) {
@@ -305,223 +192,380 @@ static DWORD CopyEnvironment(PWCHAR pwzzOut, PCWSTR pwzzIn) {
         }
         *pwzzOut++ = *pwzzIn++;   // Copy zero.
     }
-    *pwzzOut++ = '\0';    // Add last zero.
+    *pwzzOut++ = TEXT('\0');    // Add last zero.
 
     return (DWORD)(pwzzOut - pwzzBeg);
 }
 //----------------------------------------------------------------------------
-DWORD FIOWrapper::main(int argc, TCHAR **argv) {
-    BOOL fNeedHelp = FALSE;
-    WCHAR wzzDrop[1024] = L"build\0nmake\0";
+static bool CopyDetourPayloadToProcess_(
+    HANDLE hProcess,
+    PCWSTR pwzNamedPipePrefix,
+    PCWSTR pwzzIgnoredApplications,
+    EIODetouringOptions nPayloadOptions) {
+    FIODetouringPayload payload;
+    ZeroMemory(&payload, sizeof(payload));
 
-    TCHAR szCurrentDirectory[2048];
-    szCurrentDirectory[0] = L'\0';
-    GetCurrentDirectoryW(ARRAYSIZE(szCurrentDirectory), szCurrentDirectory);
+    StringCchCopyW(payload.wzNamedPipe, ARRAYSIZE(payload.wzNamedPipe), pwzNamedPipePrefix);
 
+    payload.nPayloadOptions = nPayloadOptions;
+    payload.nParentProcessId = GetCurrentProcessId();
+    payload.nTraceProcessId = GetCurrentProcessId();
 
-    GetSystemTimeAsFileTime((FILETIME *)&_llStartTime);
-    StringCchPrintfA(_szPipe, ARRAYSIZE(_szPipe), "%s.%d", TBLOG_PIPE_NAMEA, GetCurrentProcessId());
+    payload.nGeneology = 1;
+    payload.rGeneology[0] = 0;
 
-    StringCchCopyW(_szLogFile, ARRAYSIZE(_szLogFile), L"IOWrapper.log");
+    StringCchCopyW(payload.wzStdin, ARRAYSIZE(payload.wzStdin), L"\\\\.\\CONIN$");
+    StringCchCopyW(payload.wzStdout, ARRAYSIZE(payload.wzStdout), L"\\\\.\\CONOUT$");
+    StringCchCopyW(payload.wzStderr, ARRAYSIZE(payload.wzStderr), L"\\\\.\\CONOUT$");
 
-    int arg = 1;
-    for (; arg < argc && (argv[arg][0] == '-' || argv[arg][0] == '/'); arg++) {
-        TCHAR *argn = argv[arg] + 1;
-        TCHAR *argp = argn;
-        while (*argp && *argp != ':' && *argp != '=') {
-            argp++;
+    CopyNullTerminatedStringList_(payload.wzzIgnoredApplications, pwzzIgnoredApplications);
+
+    return (!!DetourCopyPayloadToProcess(hProcess, GIODetouringGuid, &payload, sizeof(payload)));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+struct FIOWrapperPipeClient : OVERLAPPED {
+    CHAR szBuffer[32768];
+    HANDLE hPipe;
+    HANDLE hOutput;
+    PCWSTR pwzNamedPipe;
+    int nClientId;
+    bool bAwaitingAccept;
+};
+//----------------------------------------------------------------------------
+static void ClosePipeConnection_(FIOWrapperPipeClient** ppClient, int* pActiveClients) {
+    if (*ppClient == nullptr)
+        return;
+
+    IOWRAPPER_LOG("close named pipe client #%d at %p\n", (*ppClient)->nClientId, *ppClient);
+
+    if ((*ppClient)->hPipe != INVALID_HANDLE_VALUE) {
+        DisconnectNamedPipe((*ppClient)->hPipe);
+        CloseHandle((*ppClient)->hPipe);
+        (*ppClient)->hPipe = INVALID_HANDLE_VALUE;
+    }
+
+    GlobalFree(*ppClient);
+    *ppClient = nullptr;
+
+    --(*pActiveClients);
+}
+//----------------------------------------------------------------------------
+static bool ReadPipeContent_(FIOWrapperPipeClient** ppClient, int* pActiveClients) {
+    SetLastError(NO_ERROR);
+
+    IOWRAPPER_LOG("read named pipe client %d at %p\n", (*ppClient)->nClientId, *ppClient);
+
+    DWORD nBytesRead = 0;
+    const BOOL bSucceed = ReadFile((*ppClient)->hPipe, &(*ppClient)->szBuffer, sizeof((*ppClient)->szBuffer), &nBytesRead, *ppClient);
+
+    const DWORD err = GetLastError();
+    if (bSucceed && err == NO_ERROR)
+        return true;
+
+    IOWRAPPER_LOG("read named pipe client %d at %p failed with error [%d] !\n", (*ppClient)->nClientId, *ppClient, err);
+    if (err == ERROR_IO_PENDING || err == ERROR_PIPE_LISTENING)
+        return true;
+
+    ClosePipeConnection_(ppClient, pActiveClients);
+    return false;
+}
+//----------------------------------------------------------------------------
+static ERunProcess CreateNamedPipeConnection_(FIOWrapperPipeClient** ppClient, HANDLE hCompletionPort, PCWSTR pwzNamedPipe, HANDLE hOutput, int* pActiveClients) {
+    IOWRAPPER_LOG("create named pipe '%ls'\n", pwzNamedPipe);
+
+    HANDLE hPipe = CreateNamedPipe(
+        pwzNamedPipe,                // pipe name
+        PIPE_ACCESS_INBOUND |       // read-only access
+        FILE_FLAG_OVERLAPPED,       // overlapped mode
+        PIPE_TYPE_MESSAGE |         // message-type pipe
+        PIPE_READMODE_MESSAGE |     // message read mode
+        PIPE_WAIT,                  // blocking mode
+        PIPE_UNLIMITED_INSTANCES,   // unlimited instances
+        0,                          // output buffer size
+        0,                          // input buffer size
+        GIOWrapperTimeoutInMs,      // client time-out (default: 50ms)
+        NULL);                      // no security attributes
+    if (hPipe == INVALID_HANDLE_VALUE)
+        return RP_CREATE_PIPE;
+
+    *ppClient = (FIOWrapperPipeClient*)GlobalAlloc(GPTR, sizeof(FIOWrapperPipeClient));
+    if (*ppClient == NULL) {
+        CloseHandle(hPipe);
+        return RP_BAD_ALLOC;
+    }
+
+    ZeroMemory(*ppClient, sizeof(FIOWrapperPipeClient));
+    (*ppClient)->hPipe = hPipe;
+    (*ppClient)->hOutput = hOutput;
+    (*ppClient)->pwzNamedPipe = pwzNamedPipe;
+    (*ppClient)->nClientId = (*pActiveClients)++;
+    (*ppClient)->bAwaitingAccept = true;
+
+    IOWRAPPER_LOG("create pipe client #%d at %p\n", (*ppClient)->nClientId, *ppClient);
+
+    if (!CreateIoCompletionPort((*ppClient)->hPipe, hCompletionPort, (ULONG_PTR)*ppClient, 0)) {
+        const int lastError = GetLastError();
+        IOWRAPPER_LOG("CreateIoCompletionPort: failed with %d", GetLastError());
+        ClosePipeConnection_(ppClient, pActiveClients);
+        SetLastError(lastError);
+        return RP_COMPLETION_PORT;
+    }
+
+    if (ConnectNamedPipe(hPipe, *ppClient)) {
+        (*ppClient)->bAwaitingAccept = false;
+    }
+    else {
+        const DWORD lastError = GetLastError();
+        if (lastError == ERROR_IO_PENDING)
+            return RP_NO_ERROR;
+
+        if (lastError == ERROR_PIPE_CONNECTED) {
+            (*ppClient)->bAwaitingAccept = false;
         }
-        if (*argp == ':' || *argp == '=') {
-            *argp++ = '\0';
+        else if (lastError != ERROR_IO_PENDING && lastError != ERROR_PIPE_LISTENING) {
+            ClosePipeConnection_(ppClient, pActiveClients);
+            SetLastError(lastError);
+            return RP_BROKEN_PIPE;
+        }
+    }
+
+    if (!(*ppClient)->bAwaitingAccept && !ReadPipeContent_(ppClient, pActiveClients)) {
+        //ClosePipeConnection_(ppClient, pActiveClients); // <-- already cleaned by ReadPipeContent_()
+        return RP_BROKEN_PIPE;
+    }
+
+    return RP_NO_ERROR;
+}
+//----------------------------------------------------------------------------
+static void IOCompletionLoop_(HANDLE hCompletionPort, FIOWrapperPipeClient** ppSpuriousClient, int* pActiveClients) {
+    int completionStatuslastError = NO_ERROR;
+    const auto fShouldContinue = [&]() -> bool {
+        if (*ppSpuriousClient && *pActiveClients == 1) {
+            IOWRAPPER_LOG("child process closed the connection, close spurious client #%d\n", pSpuriousClient->nClientId);
+            ClosePipeConnection_(ppSpuriousClient, pActiveClients);
+        }
+        return (*pActiveClients > 0);
+    };
+
+    do {
+        DWORD nBytesTransferred = 0;
+        FIOWrapperPipeClient* pClient = nullptr;
+        LPOVERLAPPED lpOverlapped = nullptr;
+
+        SetLastError(NO_ERROR);
+        const BOOL bSucceed = GetQueuedCompletionStatus(hCompletionPort, &nBytesTransferred, (PULONG_PTR)&pClient, &lpOverlapped, GIOWrapperTimeoutInMs);
+        completionStatuslastError = GetLastError();
+
+        IOWRAPPER_LOG("pipe completion loop: active clients = %d (error: %d)\n", *pActiveClients, completionStatuslastError);
+
+        if (!bSucceed) {
+            if (pClient != nullptr && completionStatuslastError != ERROR_IO_PENDING && completionStatuslastError != ERROR_PIPE_LISTENING) {
+                IOWRAPPER_LOG("close client #%d with error %d\n", pClient->nClientId, completionStatuslastError);
+                ClosePipeConnection_(&pClient, pActiveClients);
+            }
+            continue;
         }
 
-        switch (argn[0]) {
-        case 'd':                                     // Drop Processes
-        case 'D':
-            if (*argp) {
-                PWCHAR pwz = wzzDrop;
-                while (*argp) {
-                    if (*argp == ';') {
-                        *pwz++ = '\0';
-                    }
-                    else {
-                        *pwz++ = *argp++;
+        IOWRAPPER_LOG("pipe completion port: ping clients #%d\n", pClient->nClientId);
+
+        if (pClient->bAwaitingAccept) {
+            pClient->bAwaitingAccept = false;
+
+            if (pClient == *ppSpuriousClient && pClient->pwzNamedPipe) {
+                // create a new client for potential new child processes
+                *ppSpuriousClient = nullptr;
+
+                for (;;) {
+                    FIOWrapperPipeClient* pNew = nullptr;
+                    if (CreateNamedPipeConnection_(&pNew, hCompletionPort, pClient->pwzNamedPipe, pClient->hOutput, pActiveClients) == RP_NO_ERROR) {
+                        if (pNew->bAwaitingAccept) {
+                            *ppSpuriousClient = pNew;
+                            ReadPipeContent_(ppSpuriousClient, pActiveClients);
+                            break;
+                        }
                     }
                 }
-                *pwz++ = '\0';
-                *pwz = '\0';
             }
-        case 'o':                                 // Output file.
-        case 'O':
-            StringCchCopyW(_szLogFile, ARRAYSIZE(_szLogFile), argp);
-            break;
-
-        case 'w':                                 // Working directory
-        case 'W':
-            StringCchCopyW(szCurrentDirectory, ARRAYSIZE(szCurrentDirectory), argp);
-            break;
-
-        case 'v':                                 // Verbose
-        case 'V':
-            _bVerbose = TRUE;
-            break;
-
-        case '?':                                 // Help.
-            fNeedHelp = TRUE;
-            break;
-
-        default:
-            fNeedHelp = TRUE;
-            fprintf(stderr, "IOWrapper: Bad argument: %ls:%ls\n", argn, argp);
-            break;
         }
+
+        if (nBytesTransferred > 0) {
+            if (nBytesTransferred <= offsetof(FIODetouringMessage, szMessage)) {
+                ClosePipeConnection_(&pClient, pActiveClients);
+                continue;
+            }
+
+            // dump file access message to dependency output file
+            const FIODetouringMessage* const pMessage = (const FIODetouringMessage*)pClient->szBuffer;
+
+            pClient->szBuffer[nBytesTransferred] = '\n';
+            pClient->szBuffer[nBytesTransferred + 1] = '\0';
+
+            // the first char is used to encode access mode
+            bool bRead{ 0 }, bWrite{ 0 }, bExecute{ 0 };
+            IODetouring_CharToFileAccess(pMessage->szMessage[0], &bRead, &bWrite, &bExecute);
+
+            IOWRAPPER_LOG("[%c%c%c] %s",
+                bRead ? 'R' : '-',
+                bWrite ? 'W' : '-',
+                bExecute ? 'X' : '-',
+                &pMessage->szMessage[1]);
+
+            // start an asynchronous/overlapped write through `writeClient`
+            DWORD nBytesWritten = 0;
+            WriteFile(pClient->hOutput, pMessage->szMessage, nBytesTransferred - offsetof(FIODetouringMessage, szMessage) + 1, &nBytesWritten, NULL);
+        }
+
+        ReadPipeContent_(&pClient, pActiveClients);
+
+    } while (fShouldContinue());
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+static ERunProcess RunProcessWithDetours(
+    int* pExitCode,                     // exit code returned by process, or GetLastError() when failed
+    PCSTR pszIODetouringDll,            // path to the IODetouring-WinXX-XXX.dll to inject in child process
+    PCWSTR pwzNamedPipePrefix,          // prefix of the pipe for this particular process, should be unique
+    PCWSTR pwzExecutableName,           // executable path, provide an absolute path to bypass %PATH% resolution
+    PCWSTR pwzCommandLine,              // process arguments as a string, separated by spaces and within quotes when needed
+    PCWSTR pwzzIgnoredApplications,     // child application matching those name won't be detoured, as a null-terminated array of null-terminated strings
+    EIODetouringOptions nOptions,       // file matching any of those attribute won't pass through `onFilename` event
+    HANDLE hDependencyFile              // handle to dependency output file
+) {
+    // Format named pipe path
+    WCHAR wzNamedPipe[MAX_PATH] = TEXT("");
+    StringCchPrintfW(wzNamedPipe, ARRAYSIZE(wzNamedPipe), L"\\\\.\\pipe\\%ls-%ls.%d",
+        GIODetougingGlobalPrefix, pwzNamedPipePrefix, GetCurrentProcessId());
+
+    // Create IO completion port for named pipe
+    HANDLE const hCompletionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 1);
+    if (hCompletionPort == NULL) {
+        *pExitCode = GetLastError();
+        return RP_COMPLETION_PORT;
     }
+    ON_SCOPE_EXIT([hCompletionPort]() {
+        CloseHandle(hCompletionPort);
+    });
 
-    if (arg >= argc) {
-        fNeedHelp = TRUE;
+    // Create named pipe connection
+    int nActiveClients = 0;
+    FIOWrapperPipeClient* pPipeClient = nullptr;
+    if (ERunProcess err = CreateNamedPipeConnection_(&pPipeClient, hCompletionPort, wzNamedPipe, hDependencyFile, &nActiveClients)) {
+        *pExitCode = GetLastError();
+        return err;
     }
+    ON_SCOPE_EXIT([&pPipeClient, &nActiveClients]() {
+        ClosePipeConnection_(&pPipeClient, &nActiveClients);
+    });
 
-    if (fNeedHelp) {
-        printf("Usage:\n"
-               "    iowrapper [options] command {command arguments}\n"
-               "Options:\n"
-               "    /o:file    Log all events to the output files.\n"
-               "    /?         Display this help message.\n"
-               "Summary:\n"
-               "    Runs the build commands and figures out which files have dependencies..\n"
-               "\n");
-        exit(9001);
+#if USE_IOWRAPPER_THREAD
+    // Launch IO completion port on a separate thread
+    struct FIOCompletionParameter {
+        HANDLE hCompletionPort;
+        FIOWrapperPipeClient* pSpuriousClient;
+        int* pActiveClients;
+    } IOCompletionParameter{
+        .hCompletionPort = hCompletionPort,
+            .pSpuriousClient = pPipeClient,
+            .pActiveClients = &nActiveClients,
+    };
+
+    IOWRAPPER_LOG("launch IO completion thread\n");
+    pPipeClient = nullptr;
+
+    DWORD dwIOCompletionThread = 0;
+    HANDLE const hIOCompletionThread = CreateThread(
+        NULL, 0,
+        [](LPVOID lpParameter) -> DWORD {
+            FIOCompletionParameter* const pIOCompletion = (FIOCompletionParameter*)lpParameter;
+            IOCompletionLoop_(pIOCompletion->hCompletionPort, &pIOCompletion->pSpuriousClient, pIOCompletion->pActiveClients);
+            return 0;
+        },
+        &IOCompletionParameter,
+        0, &dwIOCompletionThread);
+
+    if (hIOCompletionThread == NULL || hIOCompletionThread == INVALID_HANDLE_VALUE) {
+        *pExitCode = GetLastError();
+        return RP_WORKER_THREAD;
     }
+#endif
 
-    // Create the log file for output
-    _hLogFile = CreateLogFile();
-    if (_hCompletionPort == NULL) {
-        OnExit("CreateLogFile");
-    }
-
-    // Create the completion port.
-    _hCompletionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 0);
-    if (_hCompletionPort == NULL) {
-        OnExit("CreateIoCompletionPort");
-    }
-
-    // Create completion port worker threads.
-    //
-    _hWorkerThread = CreateWorkerThread();
-    CreatePipeConnection(0);
-
-    VerbosePrintf("IOWrapper: Ready for clients.  Press Ctrl-C to stop.\n");
-
-    /////////////////////////////////////////////////////////// Validate DLLs.
-    //
-    TCHAR szTmpPath[MAX_PATH];
-    TCHAR szExePath[MAX_PATH];
-    TCHAR szDllPath[MAX_PATH];
-    PTCHAR pszFilePart = NULL;
-
-    if (!GetModuleFileName(NULL, szTmpPath, ARRAYSIZE(szTmpPath))) {
-        fprintf(stderr, "IOWrapper: couldn't retrieve executable name.\n");
-        return 9002;
-    }
-    if (!GetFullPathName(szTmpPath, ARRAYSIZE(szExePath), szExePath, &pszFilePart) ||
-        pszFilePart == NULL) {
-        fprintf(stderr, "IOWrapper: %ls is not a valid path name..\n", szTmpPath);
-        return 9002;
-    }
-
-    StringCchCopy(pszFilePart, szExePath + ARRAYSIZE(szExePath) - pszFilePart,
-             TEXT("Runtime-IODetouring-" STRINGIZE(BUILD_FAMILY) ".dll"));
-    StringCchCopy(szDllPath, ARRAYSIZE(szDllPath), szExePath);
-
-    //////////////////////////////////////////////////////////////////////////
+    // Prepare detoured process informations
     STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    TCHAR szCommand[2048];
-    TCHAR szExe[MAX_PATH];
-    TCHAR szFullExe[MAX_PATH] = TEXT("\0");
-    PTCHAR pszFileExe = NULL;
-
     ZeroMemory(&si, sizeof(si));
-    ZeroMemory(&pi, sizeof(pi));
     si.cb = sizeof(si);
 
-    szCommand[0] = L'\0';
+    PROCESS_INFORMATION pi;
+    ZeroMemory(&pi, sizeof(pi));
 
-    StringCchCopy(szExe, sizeof(szExe), argv[arg]);
-    for (; arg < argc; arg++) {
-        if (wcschr(argv[arg], L' ') != NULL || wcschr(argv[arg], L'\t') != NULL) {
-            StringCchCat(szCommand, sizeof(szCommand), TEXT("\""));
-            StringCchCat(szCommand, sizeof(szCommand), argv[arg]);
-            StringCchCat(szCommand, sizeof(szCommand), TEXT("\""));
-        }
-        else {
-            StringCchCat(szCommand, sizeof(szCommand), argv[arg]);
-        }
+    constexpr DWORD dwProcessFlags =
+        CREATE_DEFAULT_ERROR_MODE |
+        CREATE_SUSPENDED;
 
-        if (arg + 1 < argc) {
-            StringCchCat(szCommand, sizeof(szCommand), TEXT(" "));
-        }
+    // Redirect child process output to current process
+    si.dwFlags |= STARTF_USESTDHANDLES;
+    si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+    si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+    si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+
+    // Launch detoured process with DLL injection
+    if (!DetourCreateProcessWithDllEx(
+        pwzExecutableName,
+        (LPWCH)pwzCommandLine,
+        NULL, NULL, TRUE, dwProcessFlags,
+        NULL, // inherit current process environment block
+        NULL, // inherit current process working directory
+        &si, &pi,
+        pszIODetouringDll, NULL)) {
+        *pExitCode = GetLastError();
+        return RP_CREATE_PROCESS;
     }
-    VerbosePrintf("IOWrapper: Starting: `%ls'\n", szCommand);
-    VerbosePrintf("IOWrapper:   with `%ls'\n", szDllPath);
-    fflush(stdout);
+    ON_SCOPE_EXIT([&pi]() {
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    });
 
-    SetLastError(0);
-    SearchPath(NULL, szExe, TEXT(".exe"), ARRAYSIZE(szFullExe), szFullExe, &pszFileExe);
-
-    CHAR szDllPathA[2048];
-    size_t count = 0;
-    if (const errno_t converr = wcstombs_s(&count, szDllPathA, szDllPath, ARRAYSIZE(szDllPathA))) {
-        fprintf(stderr, "IOWrapper: wcstombs_s failed: %ld\n", converr);
-        ExitProcess(9006);
-    }
-
-    const DWORD dwProcessFlags = CREATE_DEFAULT_ERROR_MODE | CREATE_SUSPENDED;
-    if (!DetourCreateProcessWithDllEx( szFullExe[0] ? szFullExe : NULL, szCommand,
-                                       NULL, NULL, TRUE, dwProcessFlags,
-                                       NULL, szCurrentDirectory,
-                                       &si, &pi, szDllPathA, NULL)) {
-        fprintf(stderr, "IOWrapper: DetourCreateProcessWithDllEx failed: %ld\n", GetLastError());
-        ExitProcess(9007);
+    // Copy detour payload to the new process
+    IOWRAPPER_LOG("copy detour payload to process %08X\n", pi.hProcess);
+    if (!CopyDetourPayloadToProcess_(pi.hProcess, pwzNamedPipePrefix, pwzzIgnoredApplications, nOptions)) {
+        *pExitCode = GetLastError();
+        return RP_PAYLOAD_COPY;
     }
 
-    ZeroMemory(&_payload, sizeof(_payload));
-    _payload.nParentProcessId = GetCurrentProcessId();
-    _payload.nTraceProcessId = GetCurrentProcessId();
-    _payload.nGeneology = 1;
-    _payload.rGeneology[0] = 0;
-    StringCchCopyW(_payload.wzStdin, ARRAYSIZE(_payload.wzStdin), L"\\\\.\\CONIN$");
-    StringCchCopyW(_payload.wzStdout, ARRAYSIZE(_payload.wzStdout), L"\\\\.\\CONOUT$");
-    StringCchCopyW(_payload.wzStderr, ARRAYSIZE(_payload.wzStderr), L"\\\\.\\CONOUT$");
-    StringCchCopyW(_payload.wzParents, ARRAYSIZE(_payload.wzParents), L"");
-    CopyEnvironment(_payload.wzzDrop, wzzDrop);
-    LPWCH pwStrings = GetEnvironmentStringsW();
-    CopyEnvironment(_payload.wzzEnvironment, pwStrings);
-    FreeEnvironmentStringsW(pwStrings);
-
-    if (!DetourCopyPayloadToProcess(pi.hProcess, GIODetouringGuid,
-                                    &_payload, sizeof(_payload))) {
-        fprintf(stderr, "IOWrapper: DetourCopyPayloadToProcess failed: %ld\n", GetLastError());
-        ExitProcess(9008);
-    }
-
+    // Resume process execution and process messages
+    IOWRAPPER_LOG("resume suspended child process %08X\n", pi.hProcess);
     ResumeThread(pi.hThread);
 
+#if !USE_IOWRAPPER_THREAD
+    // Consume all IO (every read requests goes through IO completion port with overlapped events)
+    IOWRAPPER_LOG("launch pipe completion loop for process %08X\n", pi.hProcess);
+    IOCompletionLoop_(hCompletionPort, &pPipeClient, &nActiveClients);
+#endif
+
+    // Wait for process exit and cleanup resources
+    IOWRAPPER_LOG("wait for process %08X exit\n", pi.hProcess);
     WaitForSingleObject(pi.hProcess, INFINITE);
 
-    DWORD dwResult = 0;
-    if (!GetExitCodeProcess(pi.hProcess, &dwResult)) {
-        fprintf(stderr, "IOWrapper: GetExitCodeProcess failed: %ld\n", GetLastError());
-        return 9008;
+    // Try to retrieve exit code
+    IOWRAPPER_LOG("get process %08X exit code\n", pi.hProcess);
+    DWORD dwExitCode = 0;
+    if (!GetExitCodeProcess(pi.hProcess, &dwExitCode)) {
+        *pExitCode = GetLastError();
+        return RP_EXIT_CODE;
     }
 
-    WaitForSingleObject(_hWorkerThread, INFINITE);
-    CloseHandle(_hWorkerThread);
-    CloseHandle(_hLogFile);
+    IOWRAPPER_LOG("exit code: %d (%X)\n", dwExitCode, dwExitCode);
+    *pExitCode = dwExitCode;
 
-    VerbosePrintf("IOWrapper: %ld processes, exit code = %08X.\n", _nTotalClients, dwResult);
+#if USE_IOWRAPPER_THREAD
+    // Wait for worker thread to process all pipe messages
+    IOWRAPPER_LOG("wait for worker thread %08X exit\n", hIOCompletionThread);
+    WaitForSingleObject(hIOCompletionThread, INFINITE);
+#endif
 
-    return dwResult;
+    return RP_NO_ERROR;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

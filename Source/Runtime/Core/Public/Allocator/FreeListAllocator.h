@@ -10,6 +10,9 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Holds a free blocks cache to avoid call _Allocator for each allocation
+//
+// /!\ BEWARE: this variant is not thread safe!
+//
 //----------------------------------------------------------------------------
 template <typename _Allocator, size_t _MinSize, size_t _MaxSize, size_t _MaxBlocks>
 class TFreeListAllocator : private _Allocator {
@@ -88,7 +91,7 @@ public:
     }
 
     FAllocatorBlock Allocate(size_t s) NOEXCEPT {
-        if (FitInFreeList(s) & NumBlocks) {
+        if (FitInFreeList(s) && NumBlocks) {
             FFreeBlock* p = nullptr;
             for (FFreeBlock* f = FreeList.Head(); f; f = p = f, f->Next)
                 if (f->SizeInBytes > s) {
@@ -101,7 +104,7 @@ public:
     }
 
     void Deallocate(FAllocatorBlock b) NOEXCEPT {
-        if (FitInFreeList(b.SizeInBytes) & (NumBlocks < MaxBlocks)) {
+        if (FitInFreeList(b.SizeInBytes) && (NumBlocks < MaxBlocks)) {
             auto* f = reinterpret_cast<FFreeBlock*>(b.Data);
             f->SizeInBytes = b.SizeInBytes;
             NumBlocks++;
@@ -166,7 +169,7 @@ protected: // free list
     INTRUSIVESINGLELIST(&FFreeBlock::Next) FreeList;
 
     static bool FitInFreeList(size_t s) const NOEXCEPT {
-        return ((s >= MinSize) & (s <= MaxSize));
+        return ((s >= MinSize) && (s <= MaxSize));
     }
 
     void ReleaseFreeBlock(FFreeBlock* f) {

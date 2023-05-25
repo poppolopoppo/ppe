@@ -46,12 +46,14 @@ namespace details {
 template <template <class> typename _Allocator, typename _Elt0, typename... _Elts>
 struct TTupleVectorAllocator_ {
     template <typename T>
-    using elt0 = _Elt0;
+    using TAllocator_ = _Allocator<T>;
+    template <typename T>
+    using TAllocatorElt0_ = _Allocator<_Elt0>;
     using type = Meta::TConditional<std::is_same_v<
-        std::tuple<_Allocator<_Elt0>, _Allocator<_Elts>...>,
-        std::tuple<_Allocator<_Elt0>, _Allocator<elt0<_Elts>>...> >,
-        _Allocator<_Elt0>,
-        std::tuple<_Allocator<_Elt0>, _Allocator<_Elts>...> >;
+        std::tuple<TAllocator_<_Elt0>, TAllocator_<_Elts>...>,
+        std::tuple<TAllocator_<_Elt0>, TAllocatorElt0_<_Elts>...> >,
+        TAllocator_<_Elt0>,
+        std::tuple<TAllocator_<_Elt0>, TAllocator_<_Elts>...> >;
 };
 } //!details
 //----------------------------------------------------------------------------

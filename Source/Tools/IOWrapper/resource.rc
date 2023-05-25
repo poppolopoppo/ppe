@@ -2,4 +2,4 @@
 #include "Runtime/Application/Public/HAL/Windows/resource.rc"
 
 // ICONS
-IDI_APP_ICON				ICON	"../../../Data/Icons/Test.ico"
+IDI_APP_ICON				ICON	"../../../Data/Icons/Hook.ico"

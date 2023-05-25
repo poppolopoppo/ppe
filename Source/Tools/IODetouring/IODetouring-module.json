@@ -1,6 +1,6 @@
 {
 	"Archetypes": [
-		"PPE/External"
+		"PPE/Module"
 	],
 	"AllowedPlatforms": [
 		"Win32", "Win64"
@@ -11,6 +11,9 @@
 	],
 	"Link": "Dynamic",
 	"PCH": "Disabled",
+	"IncludePaths": [
+		"Source/Runtime/Core/Public"
+	],
 	"HAL": {
 		"Windows": {
 			"CompilerOptions": [

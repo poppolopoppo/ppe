@@ -1,5 +1,6 @@
 #include "IODetouringFiles.h"
 
+#include "IODetouringDebug.h"
 #include "IODetouringTblog.h"
 
 //----------------------------------------------------------------------------
@@ -16,7 +17,6 @@ FIODetouringFiles::FIODetouringFiles(PCWSTR pwzStdin, PCWSTR pwzStdout, PCWSTR p
 , _pwzStdout(pwzStdout)
 , _pwzStderr(pwzStderr)
 {
-
     InitSystemPaths_();
 }
 //----------------------------------------------------------------------------
@@ -36,18 +36,23 @@ VOID FIODetouringFiles::Dump() {
 
     _files.Foreach([&Tblog](const files_type::public_type& it) {
         const FFileInfo& file = it.second;
+        const EIODetouringOptions nOptions = Tblog.Payload().nPayloadOptions;
 
-        BOOL bIgnoreFile = false;
-        bIgnoreFile |= (file.bDirectory); // ignore directories
-        bIgnoreFile |= (file.bDelete | file.bCleanup); // ignore files deleted
-        bIgnoreFile |= (file.bTemporaryFile | file.bTemporaryPath); // ignore temporary files
-        bIgnoreFile |= (file.bPipe | file.bStdio); // ignore pipes and stdio handles
-        bIgnoreFile |= (file.bAbsorbed); // ignore response files
-        bIgnoreFile |= not (file.bRead|file.bWrite|file.bDelete|file.bCleanup); // ignore do "none" files
+        bool bIgnoreFile = false;
+        bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreDirectory) && (file.bDirectory); // ignore directories
+        bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreDelete) && (file.bDelete || file.bCleanup); // ignore files deleted
+        bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreTemporary) && (file.bTemporaryFile || file.bTemporaryPath); // ignore temporary files
+        bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreStdio) && (file.bPipe || file.bStdio); // ignore pipes and stdio handles
+        bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreSystem) && (file.bSystemPath); // ignore system files
+        bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreAbsorbed) && (file.bAbsorbed); // ignore response files
+        bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreDoNone) && not (file.bRead || file.bWrite || file.bExecute); // ignore do "none" files
 
         if (not bIgnoreFile) {
-            const PCSTR ppzFlags[4] = {"--", "R-", "-W", "RW"};
-            Tblog.Printf("%ls,%s\n", file.pwzPath, ppzFlags[((file.bRead ? 1 : 0) | (file.bWrite ? 2 : 0))]);
+            const CHAR nAccess = IODetouring_FileAccessToChar(
+                file.bRead,
+                file.bWrite,
+                file.bExecute);
+            Tblog.Printf("%c%ls", nAccess, file.pwzPath);
         }
     });
 }
@@ -58,10 +63,10 @@ auto FIODetouringFiles::FindFull(PCWSTR pwzPath) -> PFileInfo {
     const FFileKey key{pwzPath};
     const auto exclusiveHeap = _heap.LockExclusive();
 
-    bool added = false;
-    auto& it = _files.FindOrAdd(key, &added);
+    bool bAdded = false;
+    auto& it = _files.FindOrAdd(key, &bAdded);
 
-    if (added) {
+    if (bAdded) {
 
         if (it.first.Value().c_str() == pwzPath/* some other thread could have already allocated content */) {
             // copy the key once we sure we need to add it
@@ -87,12 +92,12 @@ auto FIODetouringFiles::FindPartial(PCWSTR pwzPath) -> PFileInfo {
         return FindFull(wzFullPath);
 }
 //----------------------------------------------------------------------------
-auto FIODetouringFiles::FindPartial(PCSTR pwzPath) -> PFileInfo {
+auto FIODetouringFiles::FindPartial(PCSTR pszPath) -> PFileInfo {
     WCHAR wzPath[MAX_PATH];
     PWCHAR pwzFile = wzPath;
 
-    while (*pwzPath)
-        *pwzFile++ = *pwzPath++;
+    while (*pszPath)
+        *pwzFile++ = *pszPath++;
     *pwzFile = '\0';
 
     return FindPartial(wzPath);
@@ -107,6 +112,7 @@ VOID FIODetouringFiles::InitFileInfo_(FFileInfo& file, PPE::FConstWChar pwzPath)
         PrefixMatch(file.pwzPath, _wzS64Path));
     file.bTemporaryPath = PrefixMatch(file.pwzPath, _wzTmpPath);
     file.bTemporaryFile = SuffixMatch(file.pwzPath, L".tmp");
+    file.bPipe = PrefixMatch(file.pwzPath, L"\\\\.\\pipe\\");
     file.bStdio = (
         PrefixMatch(file.pwzPath, _pwzStdin) ||
         PrefixMatch(file.pwzPath, _pwzStdout) ||
@@ -114,6 +120,13 @@ VOID FIODetouringFiles::InitFileInfo_(FFileInfo& file, PPE::FConstWChar pwzPath)
         SuffixMatch(file.pwzPath, L"\\conout$") ||
         SuffixMatch(file.pwzPath, L"\\conin$") ||
         SuffixMatch(file.pwzPath, L"\\nul"));
+
+    IODETOURING_DEBUGPRINTF("found new file '%ls' (sys:%d, tmp:%d, pipe:%d, stdio:%d)\n",
+        pwzPath,
+        file.bSystemPath,
+        file.bTemporaryFile||file.bTemporaryPath,
+        file.bPipe,
+        file.bStdio);
 }
 //----------------------------------------------------------------------------
 VOID FIODetouringFiles::InitSystemPaths_() {
@@ -149,32 +162,70 @@ VOID FIODetouringFiles::InitSystemPaths_() {
 // Procs:
 //----------------------------------------------------------------------------
 auto FIODetouringFiles::CreateProc(HANDLE hProc, DWORD nProcId) -> PProcInfo {
-    bool added = false;
-    auto& it = _procs.FindOrAdd(hProc, &added);
-
-    if (added) {
-        if (it.second.hProc == INVALID_HANDLE_VALUE) {
-            it.second.hProc = hProc;
-            it.second.nProcId = nProcId;
-            it.second.nIndex = _nProcs.fetch_add(1);
-        }
+    bool bAdded = false;
+    if (hProc && hProc != INVALID_HANDLE_VALUE) {
+        auto& it = _procs.FindOrAdd(hProc, FProcInfo{
+            .hProc = hProc,
+            .nProcId = nProcId,
+            .nIndex = _nProcs.fetch_add(1),
+        }, &bAdded);
+        return &it.second;
     }
-
-    return &it.second;
+    return nullptr;
 }
 //----------------------------------------------------------------------------
 BOOL FIODetouringFiles::Close(HANDLE hProc) {
-    return _procs.Erase(hProc);
+    if (hProc && hProc != INVALID_HANDLE_VALUE)
+        return _procs.Erase(hProc);
+    return false;
+}
+//----------------------------------------------------------------------------
+BOOL FIODetouringFiles::ShouldDetourApplication(PCWSTR pwzPath) NOEXCEPT {
+    PCWSTR pzzIgnoredApplication = FIODetouringTblog::Get().Payload().wzzIgnoredApplications;
+
+    while (*pzzIgnoredApplication) {
+        // check if this application was explicitly ignored in detours payload
+        if (SuffixMatch(pwzPath, pzzIgnoredApplication)) {
+            IODETOURING_DEBUGPRINTF("ignore IO detouring on child process '%ls'\n", pwzPath);
+            return FALSE;
+        }
+
+        // pzzIgnoredApplication is null-terminated list of null-terminated strings
+        while (*pzzIgnoredApplication++);
+    }
+
+    return TRUE;
+}
+//----------------------------------------------------------------------------
+BOOL FIODetouringFiles::ShouldDetourApplication(PCSTR pszPath) NOEXCEPT {
+    WCHAR wzPath[MAX_PATH];
+    PWCHAR pwzFile = wzPath;
+
+    while (*pszPath)
+        *pwzFile++ = *pszPath++;
+    *pwzFile = '\0';
+
+    return ShouldDetourApplication(wzPath);
 }
 //----------------------------------------------------------------------------
 // Open files:
 //----------------------------------------------------------------------------
 BOOL FIODetouringFiles::Forget(HANDLE hHandle) {
-    return _opens.Erase(hHandle);
+    if (hHandle && hHandle != INVALID_HANDLE_VALUE)
+        return _opens.Erase(hHandle);
+    return false;
+}
+//----------------------------------------------------------------------------
+VOID FIODetouringFiles::SetExecute(HANDLE hFile) {
+    if (PFileInfo const pInfo = RecallFile(hFile)) {
+        IODETOURING_DEBUGPRINTF("file '%ls' has been executed\n", pInfo->pwzPath);
+        pInfo->bExecute = true;
+    }
 }
 //----------------------------------------------------------------------------
 VOID FIODetouringFiles::SetRead(HANDLE hFile, DWORD cbData) {
     if (PFileInfo const pInfo = RecallFile(hFile)) {
+        IODETOURING_DEBUGPRINTF("file '%ls' has read %d bytes\n", pInfo->pwzPath, cbData);
         pInfo->bRead = true;
         pInfo->cbRead += cbData;
     }
@@ -182,63 +233,86 @@ VOID FIODetouringFiles::SetRead(HANDLE hFile, DWORD cbData) {
 //----------------------------------------------------------------------------
 VOID FIODetouringFiles::SetWrite(HANDLE hFile, DWORD cbData) {
     if (PFileInfo const pInfo = RecallFile(hFile)) {
+        IODETOURING_DEBUGPRINTF("file '%ls' has written %d bytes\n", pInfo->pwzPath, cbData);
         pInfo->bWrite = true;
         pInfo->cbWrite += cbData;
     }
 }
 //----------------------------------------------------------------------------
+VOID FIODetouringFiles::SetStdio(HANDLE hFile) {
+    if (PFileInfo const pInfo = RecallFile(hFile)) {
+        IODETOURING_DEBUGPRINTF("file '%ls' was used as stdio\n", pInfo->pwzPath);
+        pInfo->bStdio = true;
+    }
+}
+//----------------------------------------------------------------------------
 auto FIODetouringFiles::RecallFile(HANDLE hFile) const NOEXCEPT -> PFileInfo {
-    if (auto* it = _opens.Lookup(hFile))
-        return it->second.pFile;
+    if (hFile && hFile != INVALID_HANDLE_VALUE) {
+        if (auto* it = _opens.Lookup(hFile))
+            return it->second.pFile;
+    }
     return nullptr;
 }
 //----------------------------------------------------------------------------
 auto FIODetouringFiles::RecallProc(HANDLE hProc) const NOEXCEPT -> PProcInfo {
-    if (auto* it = _opens.Lookup(hProc))
-        return it->second.pProc;
+    if (hProc && hProc != INVALID_HANDLE_VALUE) {
+        if (auto* it = _opens.Lookup(hProc))
+            return it->second.pProc;
+    }
     return nullptr;
 }
 //----------------------------------------------------------------------------
 BOOL FIODetouringFiles::Remember(HANDLE hFile, PFileInfo pInfo) {
-    bool added = false;
-    auto& it = _opens.FindOrAdd(hFile, &added);
-
-    if (added) {
-        it.second.hHandle = hFile;
-        it.second.pFile = pInfo;
-        it.second.pProc = nullptr;
+    bool bAdded = false;
+    if (hFile && hFile != INVALID_HANDLE_VALUE) {
+        _opens.FindOrAdd(hFile, FOpenFile{
+            .hHandle = hFile,
+            .pFile = pInfo,
+            .pProc = nullptr,
+        }, &bAdded);
     }
-
-    return added;
+    return bAdded;
 }
 //----------------------------------------------------------------------------
 BOOL FIODetouringFiles::Remember(HANDLE hProc, PProcInfo pInfo) {
-    bool added = false;
-    auto& it = _opens.FindOrAdd(hProc, &added);
-
-    if (added) {
-        it.second.hHandle = hProc;
-        it.second.pFile = nullptr;
-        it.second.pProc = pInfo;
+    bool bAdded = false;
+    if (hProc && hProc != INVALID_HANDLE_VALUE) {
+        _opens.FindOrAdd(hProc, FOpenFile{
+            .hHandle = hProc,
+            .pFile = nullptr,
+            .pProc = pInfo,
+        }, &bAdded);
     }
-
-    return added;
+    return bAdded;
+}
+//----------------------------------------------------------------------------
+BOOL FIODetouringFiles::Duplicate(HANDLE hDst, HANDLE hSrc) {
+    if (hSrc && hSrc != INVALID_HANDLE_VALUE) {
+        if (auto* it = _opens.Lookup(hSrc)) {
+            _opens.FindOrAdd(hDst, FOpenFile{ it->second });
+            return TRUE;
+        }
+    }
+    return FALSE;
 }
 //----------------------------------------------------------------------------
 // Environment variables:
 //----------------------------------------------------------------------------
 VOID FIODetouringFiles::UseEnvVar(PCWSTR pwzVarname) {
-    FCaseInsensitiveConstChar key{ pwzVarname };
+    const FCaseInsensitiveConstChar key{ pwzVarname };
 
     const heap_type::FExclusiveLock exclusiveHeap{ _heap };
 
     bool added = false;
     envs_type::public_type& it = _envs.FindOrAdd(key, &added);
 
-    if (added)
+    if (added) {
         const_cast<FCaseInsensitiveConstChar&>(it.first) = FCaseInsensitiveConstChar{
             AllocString_(exclusiveHeap, pwzVarname),
-            key.Hash()};
+            key.Hash() };
+
+        IODETOURING_DEBUGPRINTF("use environment variable '%ls'\n", pwzVarname);
+    }
 
     it.second.bRead = true;
     InterlockedIncrement(&it.second.nCount);
@@ -255,15 +329,119 @@ VOID FIODetouringFiles::UseEnvVar(PCSTR pwzVarname) {
     return UseEnvVar(wzVarname);
 }
 //----------------------------------------------------------------------------
-// Path helpes:
+// File access helpers:
 //----------------------------------------------------------------------------
-VOID FIODetouringFiles::StringCopy(PWCHAR pwzDst, PCWSTR pwzSrc) {
+VOID FIODetouringFiles::NoteRead(PCSTR psz) {
+    if (PFileInfo const pInfo = FindPartial(psz)) {
+        IODETOURING_DEBUGPRINTF("file '%s' note read\n", psz);
+        pInfo->bRead = TRUE;
+    }
+}
+//----------------------------------------------------------------------------
+VOID FIODetouringFiles::NoteRead(PCWSTR pwz) {
+    if (PFileInfo const pInfo = FindPartial(pwz)) {
+        IODETOURING_DEBUGPRINTF("file '%ls' note read\n", pwz);
+        pInfo->bRead = TRUE;
+    }
+}
+//----------------------------------------------------------------------------
+VOID FIODetouringFiles::NoteWrite(PCSTR psz) {
+    if (PFileInfo const pInfo = FindPartial(psz)) {
+        IODETOURING_DEBUGPRINTF("file '%s' note write\n", psz);
+        pInfo->bWrite = TRUE;
+
+        if (!pInfo->bRead) {
+            pInfo->bCantRead = TRUE;
+        }
+    }
+}
+//----------------------------------------------------------------------------
+VOID FIODetouringFiles::NoteWrite(PCWSTR pwz) {
+    if (PFileInfo const pInfo = FindPartial(pwz)) {
+        IODETOURING_DEBUGPRINTF("file '%ls' note write\n", pwz);
+        pInfo->bWrite = TRUE;
+
+        if (!pInfo->bRead) {
+            pInfo->bCantRead = TRUE;
+        }
+    }
+}
+//----------------------------------------------------------------------------
+VOID FIODetouringFiles::NoteExecute(HMODULE hModule) {
+    // LoadLibraryA/W() is searching through %PATH%,
+    // query actual Dll normalized path instead of trying to replicate this behavior
+    // https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibrarya#remarks
+
+    TCHAR wzModulePath[MAX_PATH];
+    const DWORD dwLen = GetModuleFileNameW(hModule, wzModulePath, ARRAYSIZE(wzModulePath));
+
+    if (dwLen > 0 && dwLen <= ARRAYSIZE(wzModulePath)) {
+        FIODetouringFiles& files = FIODetouringFiles::Get();
+
+        const FIODetouringFiles::PFileInfo pFileInfo = files.FindFull(wzModulePath);
+        pFileInfo->bExecute = TRUE;
+
+        files.Remember(hModule, pFileInfo);
+
+        IODETOURING_DEBUGPRINTF("module '%ls' note execute\n", pFileInfo->pwzPath);
+    }
+}
+//----------------------------------------------------------------------------
+VOID FIODetouringFiles::NoteDelete(PCSTR psz) {
+    if (PFileInfo const pInfo = FindPartial(psz)) {
+        IODETOURING_DEBUGPRINTF("file '%s' note delete\n", psz);
+        if (pInfo->bWrite || pInfo->bRead)
+            pInfo->bCleanup = TRUE;
+        else
+            pInfo->bDelete = TRUE;
+
+        if (!pInfo->bRead)
+            pInfo->bCantRead = TRUE;
+    }
+}
+//----------------------------------------------------------------------------
+VOID FIODetouringFiles::NoteDelete(PCWSTR pwz) {
+    if (PFileInfo const pInfo = FindPartial(pwz)) {
+        IODETOURING_DEBUGPRINTF("file '%ls' note delete\n", pwz);
+        if (pInfo->bWrite || pInfo->bRead)
+            pInfo->bCleanup = TRUE;
+        else
+            pInfo->bDelete = TRUE;
+
+        if (!pInfo->bRead)
+            pInfo->bCantRead = TRUE;
+    }
+}
+//----------------------------------------------------------------------------
+VOID FIODetouringFiles::NoteCleanup(PCSTR psz) {
+    if (PFileInfo const pInfo = FindPartial(psz)) {
+        IODETOURING_DEBUGPRINTF("file '%s' note cleanup\n", psz);
+        pInfo->bCleanup = TRUE;
+    }
+}
+//----------------------------------------------------------------------------
+VOID FIODetouringFiles::NoteCleanup(PCWSTR pwz) {
+    if (PFileInfo const pInfo = FindPartial(pwz)) {
+        IODETOURING_DEBUGPRINTF("file '%ls' note cleanup\n", pwz);
+        pInfo->bCleanup = TRUE;
+    }
+}
+//----------------------------------------------------------------------------
+// Path helpers:
+//----------------------------------------------------------------------------
+VOID FIODetouringFiles::StringCopy(PWCHAR pwzDst, PCWSTR pwzSrc) NOEXCEPT {
     while (*pwzSrc)
         *pwzDst++ = *pwzSrc++;
     *pwzDst = '\0';
 }
 //----------------------------------------------------------------------------
-DWORD FIODetouringFiles::StringLen(PCWSTR pwzSrc) {
+VOID FIODetouringFiles::StringCopy(PCHAR pszDst, PCSTR pszSrc) NOEXCEPT {
+    while (*pszSrc)
+        *pszDst++ = *pszSrc++;
+    *pszDst = '\0';
+}
+//----------------------------------------------------------------------------
+DWORD FIODetouringFiles::StringLen(PCWSTR pwzSrc) NOEXCEPT {
     DWORD c = 0;
     while (pwzSrc[c])
         c++;

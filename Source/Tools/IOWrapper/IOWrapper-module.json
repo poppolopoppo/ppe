@@ -1,9 +1,9 @@
 {
+	"Archetypes": [
+		"PPE/Program/Tools"
+	],
 	"AllowedPlatforms": [
 		"Win32", "Win64"
-	],
-	"ExtraFiles": [
-		"resource.rc"
 	],
 	"PCH": "Disabled",
 	"Unity": "Disabled",
@@ -11,11 +11,21 @@
 		"USE_PPE_MEMORYDOMAINS=0",
 		"PPE_OVERRIDE_NEW_OPERATORS=0"
 	],
+	"ExtraFiles": [
+		"resource.rc"
+	],
 	"IncludePaths": [
-		"Source/Runtime/Core/Public"
+		"Source/Runtime/Core/Public",
+		"Source/Tools/IODetouring/Public/"
+	],
+	"RuntimeDependencies": [
+		"Tools/IODetouring"
 	],
 	"HAL": {
 		"Windows": {
+			"LinkerOptions": [
+				"/SUBSYSTEM:CONSOLE"
+			],
 			"PrivateDependencies": [
 				"External/detours"
 			]

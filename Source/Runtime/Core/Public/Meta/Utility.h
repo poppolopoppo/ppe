@@ -28,7 +28,7 @@ auto on_scope_exit(_Lambda&& trigger) NOEXCEPT {
     return details::on_scope_exit_t{ std::move(trigger) };
 }
 #define ON_SCOPE_EXIT(...) \
-    const auto ANONYMIZE(scopeExit){ Meta::on_scope_exit(__VA_ARGS__) }
+    const auto ANONYMIZE(scopeExit){ ::PPE::Meta::on_scope_exit(__VA_ARGS__) }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

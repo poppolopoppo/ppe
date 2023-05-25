@@ -21,6 +21,9 @@ namespace PPE {
 // - Each node uses its own allocation, but the allocator can be override (could use a slab or a pool easily).
 // - The number of buckets is fixed by constructor parameter, and buckets should be allocated outside of this container.
 //----------------------------------------------------------------------------
+template <typename _Key, typename _Value>
+using TConcurrentHashMapValue = TPair<_Key, _Value>;
+//----------------------------------------------------------------------------
 template <
     typename _Key, typename _Value,
     typename _Hash = Meta::THash<_Key>,
@@ -29,13 +32,13 @@ template <
 class TConcurrentHashMap : Meta::FNonCopyableNorMovable, _Hash, _EqualTo, _Allocator {
 public:
     using key_type = _Key;
-    using mapped_type = _Key;
+    using mapped_type = _Value;
     using hash_type = _Hash;
     using equalto_type = _EqualTo;
     using allocator_type = _Allocator;
 
-    using value_type = TPair<_Key, _Value>;
-    using public_type = TPair<const _Key, _Value>;
+    using value_type = TConcurrentHashMapValue<_Key, _Value>;
+    using public_type = TConcurrentHashMapValue<Meta::TAddConst<_Key>, _Value>;
     using allocator_traits = TAllocatorTraits<_Allocator>;
 
     struct FEntry {
@@ -73,7 +76,7 @@ public:
         const FAtomicMaskLock::FScopeLock scopeLock(_barrier, LockSubset_(bucket));
 
         for (FEntry* pEntry = _buckets[bucket]; pEntry; pEntry = pEntry->NextEntry) {
-            if (pEntry->Value.first == key)
+            if (static_cast<const equalto_type&>(*this)(pEntry->Value.first, key))
                 return reinterpret_cast<public_type*>(&pEntry->Value);
         }
 
@@ -82,11 +85,15 @@ public:
 
     template <typename _KeyLike>
     public_type& FindOrAdd(const _KeyLike& key, bool *pAdded = nullptr) {
+        return FindOrAdd(key, mapped_type{}, pAdded);
+    }
+    template <typename _KeyLike>
+    public_type& FindOrAdd(const _KeyLike& key, mapped_type&& rvalue, bool *pAdded = nullptr) {
         const size_t bucket = BucketFromKey_(key);
         const FAtomicMaskLock::FScopeLock scopeLock(_barrier, LockSubset_(bucket));
 
         for (FEntry* pEntry = _buckets[bucket]; pEntry; pEntry = pEntry->NextEntry) {
-            if (pEntry->Value.first == key) {
+            if (static_cast<const equalto_type&>(*this)(pEntry->Value.first, key)) {
                 if (pAdded) *pAdded = false;
                 return *reinterpret_cast<public_type*>(&pEntry->Value);
             }
@@ -94,6 +101,7 @@ public:
 
         FEntry* const pNewEntry = INPLACE_NEW(allocator_traits::AllocateOneT<FEntry>(*this), FEntry);
         pNewEntry->Value.first = key_type{key};
+        pNewEntry->Value.second = std::move(rvalue);
         pNewEntry->NextEntry = _buckets[bucket];
 
         _buckets[bucket] = pNewEntry;
@@ -110,7 +118,7 @@ public:
 
         FEntry** ppPrev = &_buckets[bucket];
         for (FEntry* pEntry = _buckets[bucket]; pEntry; pEntry = pEntry->NextEntry) {
-            if (pEntry->Value.first == key) {
+            if (static_cast<const equalto_type&>(*this)(pEntry->Value.first, key)) {
                 (*ppPrev) = pEntry->NextEntry;
                 _size.fetch_sub(1);
 

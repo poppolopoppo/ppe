@@ -21,19 +21,35 @@ public:
     };
     using PMessage = FMessage*;
 
+    enum class EOptions : DWORD {
+        None = 0,
+
+        IgnoreAbsorbed      = 1<<0,
+        IgnoreCleanup       = 1<<1,
+        IgnoreDelete        = 1<<2,
+        IgnoreDirectory     = 1<<3,
+        IgnoreDoNone        = 1<<4,
+        IgnorePipe          = 1<<5,
+        IgnoreTemporary     = 1<<6,
+        IgnoreStdio         = 1<<7,
+        IgnoreSystem        = 1<<8,
+
+        AppendStdout        = 1<<9,
+        AppendStderr        = 1<<10,
+    };
+    ENUM_FLAGS_FRIEND(EOptions);
+
     struct FPayload {
-        DWORD   nParentProcessId;
-        DWORD   nTraceProcessId;
-        DWORD   nGeneology;
-        DWORD   rGeneology[64];
-        WCHAR   wzParents[256];
-        WCHAR   wzStdin[256];
-        WCHAR   wzStdout[256];
-        WCHAR   wzStderr[256];
-        BOOL    bStdoutAppend;
-        BOOL    bStderrAppend;
-        WCHAR   wzzDrop[1024];  // Like an environment: zero terminated strings with a last zero.
-        WCHAR   wzzEnvironment[32768];
+        WCHAR       wzzIgnoredApplications[1024] = L"";
+        WCHAR       wzNamedPipe[256] = L"";
+        WCHAR       wzStdin[256] = L"";
+        WCHAR       wzStdout[256] = L"";
+        WCHAR       wzStderr[256] = L"";
+        DWORD       rGeneology[64] = { 0 };
+        DWORD       nGeneology = 0;
+        DWORD       nParentProcessId = 0;
+        DWORD       nTraceProcessId = 0;
+        EOptions    nPayloadOptions = EOptions::None;
     };
     using PPayload = FPayload*;
 
@@ -42,6 +58,7 @@ public:
 
     static VOID Create() { singleton_type::Create(); }
 
+    const FPayload& Payload() const { return _payload; }
     void CopyPayload(PPayload pPayload);
     BOOL ChildPayload(HANDLE hProcess, DWORD nProcessId, PCHAR pszId, HANDLE hStdin, HANDLE hStdout, HANDLE hStderr);
 
@@ -69,6 +86,7 @@ private:
 };
 //----------------------------------------------------------------------------
 using FIODetouringMessage = FIODetouringTblog::FMessage;
+using EIODetouringOptions = FIODetouringTblog::EOptions;
 using FIODetouringPayload = FIODetouringTblog::FPayload;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

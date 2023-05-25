@@ -2,13 +2,13 @@
 	"Archetypes": [
 		"PPE/External"
 	],
-	"ForceIncludes": [
-		"Public/detours-external.h"
-	],
 	"ExtraFiles": [
 		"Public/detours-external.h",
 		"detours.git/src/detours.h",
 		"detours.git/src/detver.h"
+	],
+	"ForceIncludes": [
+		"Public/detours-external.h"
 	],
 	"SourceFiles": [
 		"detours.git/src/creatwth.cpp",
@@ -18,7 +18,8 @@
 		"detours.git/src/modules.cpp"
 	],
 	"AllowedPlatforms": [
-		"Win32", "Win64"
+		"Win32",
+		"Win64"
 	],
 	"ModuleType": "Library"
 }

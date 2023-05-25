@@ -1,13 +1,6 @@
 {
-	"Archetypes": [
-		"PPE/Program/Tools"
-	],
 	"Modules": [
-		"BuildRobot",
-		"IOWrapper",
-		"ShaderToy",
-		"VoxelCube",
-		"UnitTest",
-		"WindowTest"
+		"IODetouring",
+		"IOWrapper"
 	]
 }
