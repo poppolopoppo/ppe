@@ -271,7 +271,7 @@ func (f Filename) String() string {
 func (d *Directory) Set(str string) error {
 	if str != "" {
 		if !filepath.IsAbs(str) {
-			str = filepath.Join(UFS.Working.String(), str)
+			str = filepath.Join(UFS.Root.String(), str)
 		}
 		*d = MakeDirectory(str)
 	} else {
@@ -283,7 +283,7 @@ func (d *Directory) Set(str string) error {
 func (f *Filename) Set(str string) error {
 	if str != "" {
 		if !filepath.IsAbs(str) {
-			str = filepath.Join(UFS.Working.String(), str)
+			str = filepath.Join(UFS.Root.String(), str)
 		}
 		*f = MakeFilename(str)
 	} else {

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"unicode"
 	"unsafe"
 )
 
@@ -72,19 +71,7 @@ func normBase(path string) (string, error) {
 	return syscall.UTF16ToString(data.FileName[:]), nil
 }
 
-func writeLowerString(w interface {
-	WriteRune(rune) (int, error)
-}, in string) error {
-	// avoid string copy
-	for _, ch := range in {
-		if _, err := w.WriteRune(unicode.ToLower(ch)); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func cacheCleanPath(in string) (string, error) {
+func cacheCleanPath(in, dirty string) (string, error) {
 	// see filepath.normBase(), this version is using a cache for each sub-directory
 
 	// skip special cases
@@ -92,50 +79,66 @@ func cacheCleanPath(in string) (string, error) {
 		return in, nil
 	}
 
-	volName := normVolumeName(in)
-	in = in[len(volName)+1:]
-
 	cleaned := TransientBuffer.Allocate()
 	defer TransientBuffer.Release(cleaned)
 
-	dirty := TransientBuffer.Allocate()
-	defer TransientBuffer.Release(dirty)
-
 	cleaned.Grow(len(in))
-	dirty.Grow(len(in))
 
-	cleaned.WriteString(volName)
-	writeLowerString(dirty, volName)
+	volName := normVolumeName(in)
 
+	// first look for a prefix directory which was already cleaned
+	dirtyOffset := len(dirty)
+	for {
+		var query string
+		separator, ok := lastIndexOfPathSeparator(dirty[:dirtyOffset])
+		if ok && separator > len(volName) {
+			dirtyOffset = separator
+			query = dirty[:separator]
+		} else {
+			dirtyOffset = len(volName)
+			cleaned.WriteString(volName)
+			break
+		}
+
+		if realpath, ok := cleanPathCache.Get(query); ok {
+			cleaned.WriteString(realpath)
+			break
+		}
+	}
+
+	in = in[dirtyOffset+1:]
+
+	// then clean the remaining dirty part
 	var err error
 	for len(in) > 0 {
-		dirty.WriteRune(OSPathSeparator)
-
-		var dirtyName string
+		var entryName string
 		if i, ok := firstIndexOfPathSeparator(in); ok {
-			dirtyName = in[:i]
+			entryName = in[:i]
 			in = in[i+1:]
+			dirtyOffset += i + 1
 		} else {
-			dirtyName = in
+			dirtyOffset = len(dirty)
+			entryName = in
 			in = ""
 		}
-		writeLowerString(dirty, dirtyName)
 
 		if err == nil {
-			dirtyPath := UnsafeStringFromBuffer(dirty)
+			query := dirty[:dirtyOffset]
 
-			if realpath, ok := cleanPathCache.Get(dirtyPath); ok {
+			if realpath, ok := cleanPathCache.Get(query); ok { // some other thread might have allocated the string already
 				cleaned.Reset()
 				cleaned.WriteString(realpath)
 
-			} else if realname, er := normBase(dirtyPath); er == nil {
+			} else if realname, er := normBase(query); er == nil {
 				cleaned.WriteRune(OSPathSeparator)
 				cleaned.WriteString(realname)
 
 				// store in cache for future queries, avoid querying all files all paths all the time
 				cleanPathCache.Add(
 					// need string copies for caching here
-					dirty.String(), filepath.Clean(cleaned.String()))
+					strings.ToLower(query),
+					filepath.Clean(cleaned.String()))
+
 			} else {
 				err = er
 			}
@@ -143,7 +146,7 @@ func cacheCleanPath(in string) (string, error) {
 
 		if err != nil {
 			cleaned.WriteRune(OSPathSeparator)
-			cleaned.WriteString(dirtyName)
+			cleaned.WriteString(entryName)
 		}
 	}
 
@@ -165,14 +168,8 @@ func CleanPath(in string) string {
 		return cleaned // cache-hit: already processed
 	}
 
-	if cleaned, err := filepath.Abs(in); err == nil {
-		in = cleaned
-	} else {
-		LogPanicErr(err)
-	}
-
 	// result, err := filepath.EvalSymlinks(in)
-	result, err := cacheCleanPath(in)
+	result, err := cacheCleanPath(in, query)
 	if err != nil {
 		// result = in
 		err = nil // if path does not exist yet
