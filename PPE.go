@@ -226,8 +226,8 @@ func makePPE_Common(rules *ModuleRules) {
 	})
 }
 func makePPE_Internal(rules *ModuleRules) {
-	rules.Source.SourceDirs.Append(rules.PrivateDir())
-	rules.Source.SourceGlobs.Append("*.cpp")
+	rules.Source.SourceDirs.AppendUniq(rules.PrivateDir())
+	rules.Source.SourceGlobs.AppendUniq("*.cpp")
 
 	Inherit(&rules.PCH, PCH_MONOLITHIC)
 
@@ -252,14 +252,14 @@ func makePPE_Internal(rules *ModuleRules) {
 func makePPE_Headers(rules *ModuleRules) {
 	Inherit(&rules.ModuleType, MODULE_HEADERS)
 	Inherit(&rules.DebugSymbols, DEBUG_EMBEDDED)
-	rules.IncludePaths.Append(CorePublicDir)
+	rules.IncludePaths.AppendUniq(CorePublicDir)
 }
 func makePPE_External(rules *ModuleRules) {
 	makePPE_Common(rules)
 	Inherit(&rules.ModuleType, MODULE_EXTERNAL)
 	Inherit(&rules.DebugSymbols, DEBUG_EMBEDDED)
 	Inherit(&rules.Unity, UNITY_DISABLED)
-	rules.IncludePaths.Append(CorePublicDir)
+	rules.IncludePaths.AppendUniq(CorePublicDir)
 }
 func makePPE_Module(rules *ModuleRules) {
 	makePPE_Common(rules)
@@ -268,7 +268,7 @@ func makePPE_Module(rules *ModuleRules) {
 
 	moduleCpp := rules.PrivateDir().File(rules.ModuleAlias.ModuleName + "Module.cpp")
 	if moduleCpp.Exists() { // isolate module since it's including BuildXXX.generated.h files
-		rules.Source.IsolatedFiles.Append(moduleCpp)
+		rules.Source.IsolatedFiles.AppendUniq(moduleCpp)
 	}
 }
 func makePPE_Program(rules *ModuleRules, usage UsageType) {

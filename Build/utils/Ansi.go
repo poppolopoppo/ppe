@@ -148,19 +148,27 @@ func ansi_escaped_len(in string) int {
 	return n
 }
 
+//lint:ignore U1000 ignore unused function
 func make_ansi_fg_truecolor(col ...uint8) string {
 	return make_ansi_truecolor(ANSI_FG_TRUECOLOR_FMT, col[0], col[1], col[2])
 }
+
+//lint:ignore U1000 ignore unused function
 func make_ansi_bg_truecolor(col ...uint8) string {
 	return make_ansi_truecolor(ANSI_BG_TRUECOLOR_FMT, col[0], col[1], col[2])
 }
+
+//lint:ignore U1000 ignore unused function
 func lerp_ansi_fg_truecolor(col0, col1 [3]uint8, f float64) string {
 	return lerp_ansi_truecolor(ANSI_FG_TRUECOLOR_FMT, col0, col1, f)
 }
+
+//lint:ignore U1000 ignore unused function
 func lerp_ansi_bg_truecolor(col0, col1 [3]uint8, f float64) string {
 	return lerp_ansi_truecolor(ANSI_BG_TRUECOLOR_FMT, col0, col1, f)
 }
 
+//lint:ignore U1000 ignore unused function
 func make_ansi_color(prefix string, color string) AnsiCode {
 	if enableAnsiColor {
 		return ANSI_CODES[prefix+"_"+color]
@@ -168,6 +176,8 @@ func make_ansi_color(prefix string, color string) AnsiCode {
 		return AnsiCode("")
 	}
 }
+
+//lint:ignore U1000 ignore unused function
 func make_ansi_truecolor(fgOrbg AnsiCode, r, g, b uint8) string {
 	if enableAnsiColor {
 		return fmt.Sprintf(fgOrbg.String(), r, g, b)
@@ -175,6 +185,8 @@ func make_ansi_truecolor(fgOrbg AnsiCode, r, g, b uint8) string {
 		return ""
 	}
 }
+
+//lint:ignore U1000 ignore unused function
 func lerp_color(col0, col1 [3]uint8, f float64) [3]uint8 {
 	f = saturate(f)
 	return [3]uint8{
@@ -182,6 +194,8 @@ func lerp_color(col0, col1 [3]uint8, f float64) [3]uint8 {
 		uint8(float64(col0[1])*(1.0-f) + float64(col1[1])*f),
 		uint8(float64(col0[2])*(1.0-f) + float64(col1[2])*f)}
 }
+
+//lint:ignore U1000 ignore unused function
 func lerp_ansi_truecolor(fgOrbg AnsiCode, col0, col1 [3]uint8, f float64) string {
 	if enableAnsiColor {
 		col := lerp_color(col0, col1, f)
@@ -190,6 +204,8 @@ func lerp_ansi_truecolor(fgOrbg AnsiCode, col0, col1 [3]uint8, f float64) string
 		return ""
 	}
 }
+
+//lint:ignore U1000 ignore unused function
 func heatmap_truecolor(x float64) [3]uint8 {
 	x = saturate(x)
 	x1 := [4]float64{1, x, x * x, x * x * x}   // 1 x x2 x3
@@ -222,6 +238,8 @@ func saturate(x float64) float64 {
 		return x
 	}
 }
+
+//lint:ignore U1000 ignore unused function
 func pastelizer_truecolor(f float64) [3]uint8 {
 	_, h := math.Modf(f + 0.92620819117478)
 	h = math.Abs(h) * 6.2831853071796
@@ -233,6 +251,8 @@ func pastelizer_truecolor(f float64) [3]uint8 {
 		uint8(math.Floor(math.MaxUint8 * saturate(c_y*c_y))),
 		uint8(math.Floor(math.MaxUint8 * saturate(c_z*c_z)))}
 }
+
+//lint:ignore U1000 ignore unused function
 func expose_truecolor(c [3]uint8, f float64) [3]uint8 {
 	brightness := math.Exp2((f*2.0 - 1.0) * 4.0)
 	lin := [3]float64{

@@ -7,6 +7,8 @@ import (
 	"io"
 
 	"github.com/goccy/go-json"
+
+	slowJson "encoding/json"
 )
 
 type JsonMap map[string]interface{}
@@ -93,7 +95,7 @@ func PrettyPrint(x interface{}) string {
 	buf := bytes.NewBuffer(tmp)
 	buf.Reset()
 
-	encoder := json.NewEncoder(buf)
+	encoder := slowJson.NewEncoder(buf)
 
 	var err error
 	if err = encoder.Encode(x); err == nil {
@@ -103,7 +105,7 @@ func PrettyPrint(x interface{}) string {
 		pretty := bytes.NewBuffer(tmp2)
 		pretty.Reset()
 
-		if err = json.Indent(pretty, buf.Bytes(), "", "\t"); err == nil {
+		if err = slowJson.Indent(pretty, buf.Bytes(), "", "\t"); err == nil {
 			return pretty.String()
 		}
 	}

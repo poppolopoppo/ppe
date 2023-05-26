@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 )
@@ -105,6 +106,7 @@ func (flags *CompileFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Persistent("CompilerVerbose", "enable/disable compiler verbose output", &flags.CompilerVerbose)
 	cfv.Persistent("CppRtti", "override C++ rtti support ["+JoinString(",", CppRttiTypes()...)+"]", &flags.CppRtti)
 	cfv.Persistent("CppStd", "override C++ standard ["+JoinString(",", CppStdTypes()...)+"]", &flags.CppStd)
+	cfv.Persistent("DebugFastLink", "override debug symbols fastlink mode ["+JoinString(",", DebugTypes()...)+"]", &flags.DebugFastLink)
 	cfv.Persistent("DebugSymbols", "override debug symbols mode ["+JoinString(",", DebugTypes()...)+"]", &flags.DebugSymbols)
 	cfv.Persistent("Deterministic", "enable/disable deterministic compilation output", &flags.Deterministic)
 	cfv.Persistent("Exceptions", "override exceptions mode ["+JoinString(",", ExceptionTypes()...)+"]", &flags.Exceptions)

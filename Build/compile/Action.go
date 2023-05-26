@@ -1,10 +1,13 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"strings"
 )
+
+var LogAction = NewLogCategory("Action")
 
 /***************************************
  * ActionFlags
@@ -14,6 +17,7 @@ type ActionFlags struct {
 	CacheMode  CacheModeType
 	CachePath  Directory
 	ShowCmds   BoolVar
+	ShowFiles  BoolVar
 	ShowOutput BoolVar
 }
 
@@ -21,6 +25,7 @@ func (x *ActionFlags) Flags(cfv CommandFlagsVisitor) {
 	cfv.Persistent("CacheMode", "use input hashing to store/retrieve action outputs", &x.CacheMode)
 	cfv.Persistent("CachePath", "set path used to store cached actions", &x.CachePath)
 	cfv.Variable("ShowCmds", "print executed compilation commands", &x.ShowCmds)
+	cfv.Variable("ShowFiles", "print file accesses for external commands", &x.ShowFiles)
 	cfv.Variable("ShowOutput", "always show compilation commands output", &x.ShowOutput)
 }
 
@@ -28,6 +33,7 @@ var GetActionFlags = NewCommandParsableFlags(&ActionFlags{
 	CacheMode:  CACHE_NONE,
 	CachePath:  UFS.Cache,
 	ShowCmds:   INHERITABLE_FALSE,
+	ShowFiles:  INHERITABLE_FALSE,
 	ShowOutput: INHERITABLE_FALSE,
 })
 
@@ -57,7 +63,7 @@ type ActionRules struct {
 	Dependencies BuildAliases
 }
 
-func (x ActionRules) Alias() BuildAlias {
+func (x *ActionRules) Alias() BuildAlias {
 	return MakeBuildAlias("Action", x.Outputs.Join(";"))
 }
 func (x *ActionRules) Build(bc BuildContext) error {
@@ -88,7 +94,7 @@ func (x *ActionRules) Build(bc BuildContext) error {
 
 	// limit number of concurrent external processes with MakeGlobalWorkerFuture()
 	if needToRunProcess {
-		future := MakeGlobalWorkerFuture(func() (bool, error) {
+		future := MakeGlobalWorkerFuture(func() (FileSet, error) {
 			// check if we should log executed command-line
 			if flags.ShowCmds.Get() {
 				LogForwardf("%q %v", x.Executable, MakeStringer(func() string {
@@ -96,14 +102,39 @@ func (x *ActionRules) Build(bc BuildContext) error {
 				}))
 			}
 
-			// run the external process with action command-line
-			return true, RunProcess(x.Executable, x.Arguments,
+			// run the external process with action command-line and file access hooking
+			var readFiles FileSet
+			return readFiles, RunProcess(x.Executable, x.Arguments,
 				OptionProcessEnvironment(x.Environment),
 				OptionProcessWorkingDir(x.WorkingDir),
 				OptionProcessCaptureOutputIf(flags.ShowOutput.Get()),
+				OptionProcessFileAccess(func(far FileAccessRecord) error {
+					if flags.ShowFiles.Get() {
+						LogForwardf("%v: [%s]  %s", MakeStringer(func() string {
+							return x.Alias().String()
+						}), far.Access, far.Path)
+					}
+
+					// only file access read/execute: output files could messed with writable mapped system Dll on Windows :'(
+					if far.Access.HasRead() && !(far.Access.HasWrite() || far.Access.HasExecute()) {
+						Assert(func() bool { return !x.Outputs.Contains(far.Path) })
+
+						if !x.Inputs.Contains(far.Path) {
+							readFiles.Append(far.Path)
+						}
+					}
+
+					return nil
+				}),
 				OptionProcessNoSpinner)
 		})
-		if err := future.Join().Failure(); err != nil {
+
+		readFiles := future.Join()
+		if err := readFiles.Failure(); err != nil {
+			return err
+		}
+
+		if err := bc.NeedFile(readFiles.Success()...); err != nil {
 			return err
 		}
 	}
@@ -360,10 +391,10 @@ func (x *buildActionGenerator) CreateActions(unit *Unit) error {
 func (x *buildActionGenerator) NewActionRules(
 	unit *Unit,
 	payload PayloadType,
+	cacheMode CacheModeType,
 	executable Filename,
 	workingDir Directory,
 	environment ProcessEnvironment,
-	cacheMode CacheModeType,
 	inputs, outputs, exports, extras FileSet,
 	dependentActions ActionSet,
 	arguments ...string) *ActionRules {
@@ -372,20 +403,6 @@ func (x *buildActionGenerator) NewActionRules(
 
 	// perform argument expansion now
 	arguments = performArgumentSubstitution(unit, payload, inputs, outputs, arguments...)
-
-	if cacheMode.HasRead() || cacheMode.HasWrite() {
-		// exclude locally modified files from caching
-		var scm *SourceControlModifiedFiles
-		scm, err := BuildSourceControlModifiedFiles().Need(x.BuildContext)
-		if err != nil {
-			for _, file := range inputs {
-				if scm.ModifiedFiles.Contains(file) {
-					cacheMode = CACHE_NONE
-					break
-				}
-			}
-		}
-	}
 
 	action := &ActionRules{
 		Target:       unit.Target,
@@ -405,42 +422,68 @@ func (x *buildActionGenerator) NewActionRules(
 	AssertMessage(func() bool { return len(outputs) > 0 }, "%v: no action output present", action.Alias())
 	AssertNotIn(action.CacheMode, CACHE_INHERIT)
 
+	if action.CacheMode.HasRead() || action.CacheMode.HasWrite() {
+		// exclude locally modified files from caching
+		if scm, err := BuildSourceControlModifiedFiles().Need(x.BuildContext); err == nil {
+			for _, file := range inputs {
+				if scm.ModifiedFiles.Contains(file) {
+					LogVerbose(LogAction, "%v: excluded from cache since %q is locally modified")
+					action.CacheMode = CACHE_NONE
+					break
+				}
+			}
+		}
+	}
+
 	return action
 }
 
 func (x *buildActionGenerator) NewAction(
 	unit *Unit,
 	payload PayloadType,
+	cacheMode CacheModeType,
 	executable Filename,
 	workingDir Directory,
 	environment ProcessEnvironment,
-	cacheMode CacheModeType,
 	inputs, outputs, exports, extras FileSet,
 	dependentActions ActionSet,
 	arguments ...string) (Action, error) {
 	rules := x.NewActionRules(
-		unit, payload, executable, workingDir, environment, cacheMode,
-		inputs, outputs, exports, extras, dependentActions, arguments...,
-	)
+		unit, payload, cacheMode,
+		executable, workingDir, environment,
+		inputs, outputs, exports, extras,
+		dependentActions, arguments...)
 	return rules, x.BuildContext.OutputNode(makeActionFactory(unit.CompilerAlias, rules))
 }
 func (x *buildActionGenerator) NewSourceDependencyAction(
 	compiler Compiler,
 	unit *Unit,
 	payload PayloadType,
+	cacheMode CacheModeType,
 	executable Filename,
 	workingDir Directory,
 	environment ProcessEnvironment,
-	cacheMode CacheModeType,
 	inputs, outputs, exports, extras FileSet,
 	dependentActions ActionSet,
 	arguments ...string) (Action, error) {
-	rules := x.NewActionRules(
-		unit, payload, executable, workingDir, environment, cacheMode,
-		inputs, outputs, exports, extras, dependentActions, arguments...,
-	)
-	action := compiler.SourceDependencies(rules)
-	return action, x.BuildContext.OutputNode(makeActionFactory(compiler.GetCompiler().CompilerAlias, action))
+	if OnRunCommandWithDetours != nil {
+		// platform supports running process with IO detouring
+		return x.NewAction(
+			unit, payload, cacheMode,
+			executable, workingDir, environment,
+			inputs, outputs, exports, extras,
+			dependentActions, arguments...)
+	} else {
+		// no support: must rely on compiler support for source dependencies
+		rules := x.NewActionRules(
+			unit, payload, cacheMode,
+			executable, workingDir, environment,
+			inputs, outputs, exports, extras,
+			dependentActions, arguments...,
+		)
+		action := compiler.SourceDependencies(rules)
+		return action, x.BuildContext.OutputNode(makeActionFactory(compiler.GetCompiler().CompilerAlias, action))
+	}
 }
 
 func (x *buildActionGenerator) ForEachTargetActions(each func(*TargetActions) error, targets ...TargetAlias) error {
@@ -492,10 +535,10 @@ func (x *buildActionGenerator) PrecompilerHeaderActions(unit *Unit, dependencies
 			compiler,
 			unit,
 			PAYLOAD_PRECOMPILEDHEADER,
+			compiler.AllowCaching(unit, PAYLOAD_PRECOMPILEDHEADER),
 			compilerRules.Executable,
 			UFS.Root,
 			compilerRules.Environment,
-			compiler.AllowCaching(unit, PAYLOAD_PRECOMPILEDHEADER),
 			inputs, outputs, exports, extras,
 			dependencies,
 			unit.PrecompiledHeaderOptions...)
@@ -531,10 +574,10 @@ func (x *buildActionGenerator) ObjectAction(
 		compiler,
 		unit,
 		PAYLOAD_OBJECTLIST,
+		compiler.AllowCaching(unit, PAYLOAD_OBJECTLIST),
 		compilerRules.Executable,
 		UFS.Root,
 		compilerRules.Environment,
-		compiler.AllowCaching(unit, PAYLOAD_OBJECTLIST),
 		FileSet{input}, FileSet{output}, FileSet{output}, FileSet{},
 		dependencies,
 		unit.CompilerOptions...)
@@ -595,10 +638,10 @@ func (x *buildActionGenerator) LibrarianActions(unit *Unit, pchs ActionSet, objs
 	lib, err := x.NewAction(
 		unit,
 		PAYLOAD_STATICLIB,
+		compiler.AllowCaching(unit, PAYLOAD_STATICLIB),
 		compilerRules.Librarian,
 		UFS.Root,
 		compilerRules.Environment,
-		compiler.AllowCaching(unit, PAYLOAD_STATICLIB),
 		inputs, outputs, exports, extras,
 		dependencies,
 		unit.LibrarianOptions...)
@@ -646,10 +689,10 @@ func (x *buildActionGenerator) LinkActions(unit *Unit, pchs ActionSet, objs Acti
 	link, err := x.NewAction(
 		unit,
 		unit.Payload,
+		compiler.AllowCaching(unit, unit.Payload),
 		compilerRules.Linker,
 		UFS.Root,
 		compilerRules.Environment,
-		compiler.AllowCaching(unit, unit.Payload),
 		inputs, outputs, exports, extras,
 		append(dependencies, runtimeDeps...),
 		unit.LinkerOptions...)

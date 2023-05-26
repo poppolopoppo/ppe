@@ -150,6 +150,7 @@ func (env *CompileEnv) GetCpp(module *ModuleRules) CppRules {
 	if compiler := env.GetCompiler(); compiler != nil {
 		Inherit(&result.CppStd, compiler.CppStd)
 	}
+
 	return result
 }
 func (env *CompileEnv) GetPayloadType(module *ModuleRules, link LinkType) (result PayloadType) {
@@ -267,7 +268,7 @@ func (env CompileEnv) Compile(compiler Compiler, module Module) (*Unit, error) {
 
 	return unit, unit.Decorate(&env, moduleRules, env.GetPlatform(), env.GetConfig())
 }
-func (env *CompileEnv) Link(moduleGraph ModuleGraph) (SetT[*Unit], error) {
+func (env *CompileEnv) Link(bc BuildContext, moduleGraph ModuleGraph) (SetT[*Unit], error) {
 	pbar := LogProgress(0, len(moduleGraph.SortedModules()), "%v/Link", env)
 	defer pbar.Close()
 
@@ -287,9 +288,9 @@ func (env *CompileEnv) Link(moduleGraph ModuleGraph) (SetT[*Unit], error) {
 
 			switch other.Unit.Payload {
 			case PAYLOAD_HEADERS:
-				node.Unit.IncludeDependencies.Append(other.Unit.Target)
+				node.Unit.IncludeDependencies.AppendUniq(other.Unit.Target)
 			case PAYLOAD_OBJECTLIST, PAYLOAD_PRECOMPILEDHEADER:
-				node.Unit.CompileDependencies.Append(other.Unit.Target)
+				node.Unit.CompileDependencies.AppendUniq(other.Unit.Target)
 			case PAYLOAD_STATICLIB, PAYLOAD_SHAREDLIB:
 				switch vis {
 				case PUBLIC, PRIVATE:
@@ -355,7 +356,16 @@ func (env *CompileEnv) Link(moduleGraph ModuleGraph) (SetT[*Unit], error) {
 			node.Unit.ForceIncludes.AppendUniq(other.Unit.TransitiveFacet.ForceIncludes...)
 		})
 
-		if err := node.Unit.Decorate(env, node.Unit.GetCompiler()); err != nil {
+		compiler, err := node.Unit.GetBuildCompiler()
+		if err != nil {
+			return err
+		}
+
+		if err := bc.DependsOn(compiler.Alias()); err != nil {
+			return err
+		}
+
+		if err := node.Unit.Decorate(env, compiler.GetCompiler()); err != nil {
 			return err
 		}
 		node.Unit.Facet.PerformSubstitutions()

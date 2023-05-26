@@ -5,15 +5,67 @@ import (
 	"io"
 	"os/exec"
 	"strings"
-	"time"
 )
+
+var LogProcess = NewLogCategory("Process")
 
 /***************************************
  * Process Options
  ***************************************/
 
+type FileAccessType int32
+
+const (
+	FILEACCESS_NONE      FileAccessType = 0
+	FILEACCESS_READ      FileAccessType = 1
+	FILEACCESS_WRITE     FileAccessType = 2
+	FILEACCESS_EXECUTE   FileAccessType = 4
+	FILEACCESS_READWRITE FileAccessType = FILEACCESS_READ | FILEACCESS_WRITE
+)
+
+func (x *FileAccessType) Append(other FileAccessType) {
+	*x = FileAccessType(*x | other)
+}
+func (x FileAccessType) HasRead() bool {
+	return (int32)(x)&int32(FILEACCESS_READ) == int32(FILEACCESS_READ)
+}
+func (x FileAccessType) HasWrite() bool {
+	return (int32)(x)&int32(FILEACCESS_WRITE) == int32(FILEACCESS_WRITE)
+}
+func (x FileAccessType) HasExecute() bool {
+	return (int32)(x)&int32(FILEACCESS_EXECUTE) == int32(FILEACCESS_EXECUTE)
+}
+func (x FileAccessType) String() string {
+	var ch rune
+	outp := strings.Builder{}
+	outp.Grow(4)
+
+	ch = '-'
+	if x.HasRead() {
+		ch = 'R'
+	}
+	outp.WriteRune(ch)
+	ch = '-'
+	if x.HasWrite() {
+		ch = 'W'
+	}
+	outp.WriteRune(ch)
+	ch = '-'
+	if x.HasExecute() {
+		ch = 'X'
+	}
+	outp.WriteRune(ch)
+	return outp.String()
+}
+
+type FileAccessRecord struct {
+	Path   Filename
+	Access FileAccessType
+}
+
 type ProcessOptions struct {
 	Environment   ProcessEnvironment
+	OnFileAccess  PublicEvent[FileAccessRecord]
 	WorkingDir    Directory
 	CaptureOutput bool
 	NoSpinner     bool
@@ -35,6 +87,11 @@ func OptionProcessEnvironment(environment ProcessEnvironment) ProcessOptionFunc 
 func OptionProcessExport(name string, values ...string) ProcessOptionFunc {
 	return func(po *ProcessOptions) {
 		po.Environment.Append(name, values...)
+	}
+}
+func OptionProcessFileAccess(onFileAccess EventDelegate[FileAccessRecord]) ProcessOptionFunc {
+	return func(po *ProcessOptions) {
+		po.OnFileAccess.Add(onFileAccess)
 	}
 }
 func OptionProcessWorkingDir(value Directory) ProcessOptionFunc {
@@ -63,6 +120,10 @@ func OptionProcessNoSpinnerIf(enabled bool) ProcessOptionFunc {
  * RunProcess
  ***************************************/
 
+type RunCommandWithDetoursFunc = func(executable Filename, arguments StringSet, options ProcessOptions) error
+
+var OnRunCommandWithDetours RunCommandWithDetoursFunc = nil
+
 func RunProcess(executable Filename, arguments StringSet, userOptions ...ProcessOptionFunc) error {
 	options := ProcessOptions{
 		Environment: NewProcessEnvironment(),
@@ -75,6 +136,14 @@ func RunProcess(executable Filename, arguments StringSet, userOptions ...Process
 		defer pbar.Close()
 	}
 
+	if options.OnFileAccess.Bound() && OnRunCommandWithDetours != nil {
+		return OnRunCommandWithDetours(executable, arguments, options)
+	} else {
+		return RunProcess_Vanilla(executable, arguments, options)
+	}
+}
+
+func RunProcess_Vanilla(executable Filename, arguments StringSet, options ProcessOptions) error {
 	cmd := exec.Command(executable.String(), arguments...)
 	LogTrace(LogProcess, "run %v", cmd)
 
@@ -107,32 +176,13 @@ func RunProcess(executable Filename, arguments StringSet, userOptions ...Process
 		scanner := bufio.NewScanner(stdout)
 		scanner.Buffer(buf, capacity)
 
-		done := make(chan struct{})
-		go func() {
-			defer close(done)
-
-			for scanner.Scan() {
-				line := scanner.Text()
-				line = strings.TrimRight(line, "\r\n")
-				line = strings.TrimSpace(line)
-				if len(line) > 0 {
-					LogForward(line)
-				}
-			}
-
-			done <- struct{}{}
-		}()
-
-		for {
-			select {
-			case <-done:
-				return cmd.Wait()
-			case <-time.After(200 * time.Millisecond):
-				if pbar != nil {
-					pbar.Inc()
-				}
+		for scanner.Scan() {
+			if line := scanner.Text(); len(line) > 0 {
+				LogForwardln(line)
 			}
 		}
+
+		return cmd.Wait()
 
 	} else {
 		outputForError := TransientBuffer.Allocate()

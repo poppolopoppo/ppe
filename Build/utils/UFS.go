@@ -18,6 +18,8 @@ import (
 	"github.com/djherbis/times"
 )
 
+var LogUFS = NewLogCategory("UFS")
+
 /***************************************
  * Path to string
  ***************************************/

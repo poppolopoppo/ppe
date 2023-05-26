@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"io"
@@ -78,7 +79,7 @@ func (x *actionCache) GetCachePath() Directory {
 
 func (x *actionCache) CacheRead(a *ActionRules, artifacts FileSet) (key ActionCacheKey, err error) {
 	readStat := StartBuildStats()
-	defer x.stats.CacheRead.Append(readStat)
+	defer x.stats.CacheRead.Append(&readStat)
 
 	key = x.makeActionKey(a)
 	entry, err := x.fetchCacheEntry(key, false)
@@ -100,7 +101,7 @@ func (x *actionCache) CacheRead(a *ActionRules, artifacts FileSet) (key ActionCa
 }
 func (x *actionCache) CacheWrite(action BuildAlias, key ActionCacheKey, artifacts FileSet, inputs FileSet) (err error) {
 	scopedStat := StartBuildStats()
-	defer x.stats.CacheWrite.Append(scopedStat)
+	defer x.stats.CacheWrite.Append(&scopedStat)
 
 	if entry, err := x.fetchCacheEntry(key, true); err == nil {
 		var dirty bool
@@ -287,7 +288,7 @@ func (x *ActionCacheBulk) CacheHit() bool {
 }
 func (x *ActionCacheBulk) Deflate(artifacts ...Filename) error {
 	deflateStat := StartBuildStats()
-	defer actionCacheStats.CacheInflate.Append(deflateStat)
+	defer actionCacheStats.CacheInflate.Append(&deflateStat)
 
 	return UFS.CreateBuffered(x.Path, func(w io.Writer) error {
 		zw := zip.NewWriter(w)
@@ -325,7 +326,7 @@ func (x *ActionCacheBulk) Deflate(artifacts ...Filename) error {
 }
 func (x *ActionCacheBulk) Inflate(dst Directory) (FileSet, error) {
 	inflateStat := StartBuildStats()
-	defer actionCacheStats.CacheInflate.Append(inflateStat)
+	defer actionCacheStats.CacheInflate.Append(&inflateStat)
 
 	var artifacts FileSet
 	return artifacts, UFS.OpenFile(x.Path, func(r *os.File) error {

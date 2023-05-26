@@ -1,7 +1,9 @@
 package windows
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/compile"
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"strconv"
 )
@@ -29,6 +31,8 @@ func InitWindows() {
 	AllCompilers.Append(
 		COMPILER_CLANGCL.String(),
 		COMPILER_MSVC.String())
+
+	SetupWin32IODetouring()
 }
 
 /***************************************

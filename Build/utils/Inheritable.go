@@ -49,7 +49,7 @@ func Inherit[T InheritableBase](result *T, values ...T) {
 func Overwrite[T InheritableBase](result *T, values ...T) {
 	wrapper := MakeInheritable(*result)
 	for _, it := range values {
-		wrapper.Inherit(it)
+		wrapper.Overwrite(it)
 	}
 	*result = wrapper.Value
 }

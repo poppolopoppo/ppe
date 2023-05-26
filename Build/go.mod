@@ -10,11 +10,13 @@ require github.com/djherbis/times v1.5.0
 
 require github.com/klauspost/compress v1.16.5
 
-require github.com/pierrec/lz4/v4 v4.1.17
+require (
+	github.com/goccy/go-json v0.10.2
+	github.com/pierrec/lz4/v4 v4.1.17
+)
 
 require (
 	github.com/felixge/fgprof v0.9.3 // indirect
-	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/google/pprof v0.0.0-20230429030804-905365eefe3e // indirect
 )
 

@@ -96,6 +96,15 @@ func (x *MsvcSourceDependenciesAction) Build(bc BuildContext) error {
 	LogDebug(LogWindows, "sourceDependencies: parsed output in %q\n%v", x.SourceDependenciesFile, MakeStringer(func() string {
 		return PrettyPrint(dependentFiles)
 	}))
+
+	if flags := GetActionFlags(); flags.ShowFiles.Get() {
+		for _, file := range dependentFiles {
+			LogForwardf("%v: [%s]  %s", MakeStringer(func() string {
+				return x.Alias().String()
+			}), FILEACCESS_READ, file)
+		}
+	}
+
 	return bc.NeedFile(dependentFiles...)
 }
 func (x *MsvcSourceDependenciesAction) Serialize(ar Archive) {

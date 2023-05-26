@@ -13,6 +13,8 @@ var Commands = SharedMapT[string, func() *commandItem]{}
 var ParsableFlags = SharedMapT[string, CommandParsableFlags]{}
 var GlobalParsableFlags = commandItem{}
 
+var LogCommand = NewLogCategory("Command")
+
 /***************************************
  * CommandName
  ***************************************/
@@ -526,29 +528,7 @@ func (x *commandParsableArgument) Help(w *StructuredFile) {
 	})
 }
 
-func (x *commandParsableArgument) makeVariable(name, usage string, value PersistentVar, flags ...CommandArgumentFlag) {
-	Assert(func() bool { return len(name) > 0 })
-	Assert(func() bool { return len(usage) > 0 })
-
-	v := commandPersistentVar{
-		Name:   name,
-		Usage:  usage,
-		Switch: fmt.Sprint("-", name),
-		Value:  value,
-		Flags:  MakeEnumSet(append(flags, COMMANDARG_OPTIONAL)...),
-	}
-
-	x.Variables = append(x.Variables, v)
-}
-
-func (x *commandParsableArgument) Persistent(name, usage string, value PersistentVar) {
-	x.makeVariable(name, usage, value, COMMANDARG_PERSISTENT)
-}
-func (x *commandParsableArgument) Variable(name, usage string, value PersistentVar) {
-	x.makeVariable(name, usage, value)
-}
-
-func OptionCommandParsableFlags(name, description string, value CommandParsableFlags, flags ...CommandArgumentFlag) CommandOptionFunc {
+func newCommandParsableFlags(name, description string, value CommandParsableFlags, flags ...CommandArgumentFlag) *commandParsableArgument {
 	arg := &commandParsableArgument{
 		Value: value,
 		commandBasicArgument: commandBasicArgument{
@@ -557,22 +537,38 @@ func OptionCommandParsableFlags(name, description string, value CommandParsableF
 			Flags:       MakeEnumSet(append(flags, COMMANDARG_OPTIONAL, COMMANDARG_VARIADIC)...),
 		},
 	}
-	arg.Value.Flags(arg)
+
+	VisitParsableFlags(arg.Value, func(name, usage string, value PersistentVar, persistent bool) {
+		Assert(func() bool { return len(name) > 0 })
+		Assert(func() bool { return len(usage) > 0 })
+
+		v := commandPersistentVar{
+			Name:   name,
+			Usage:  usage,
+			Switch: fmt.Sprint("-", name),
+			Value:  value,
+			Flags:  MakeEnumSet(COMMANDARG_OPTIONAL),
+		}
+
+		if persistent {
+			v.Flags.Add(COMMANDARG_PERSISTENT)
+		}
+
+		arg.Variables = append(arg.Variables, v)
+	})
+
+	return arg
+}
+
+func OptionCommandParsableFlags(name, description string, value CommandParsableFlags, flags ...CommandArgumentFlag) CommandOptionFunc {
+	arg := newCommandParsableFlags(name, description, value, flags...)
 	return OptionCommandArg(arg)
 }
 
 func OptionCommandParsableAccessor[T CommandParsableFlags](name, description string, service func() T, flags ...CommandArgumentFlag) CommandOptionFunc {
 	return func(ci *commandItem) {
 		value := service()
-		arg := &commandParsableArgument{
-			Value: value,
-			commandBasicArgument: commandBasicArgument{
-				Long:        getCommandParsableFlagsName(value),
-				Description: description,
-				Flags:       MakeEnumSet(append(flags, COMMANDARG_OPTIONAL, COMMANDARG_VARIADIC)...),
-			},
-		}
-		arg.Value.Flags(arg)
+		arg := newCommandParsableFlags(name, description, value, flags...)
 		ci.arguments = append(ci.arguments, arg)
 	}
 }
@@ -598,6 +594,12 @@ func (x *CommandParsableBuilder[T, P]) Build(BuildContext) error {
 	} else {
 		return fmt.Errorf("could not find command parsable flags %q", x.Name)
 	}
+
+	VisitParsableFlags(P(&x.Flags), func(name, usage string, value PersistentVar, persistent bool) {
+		if persistent {
+			CommandEnv.persistent.LoadData(x.Name, name, value)
+		}
+	})
 	return nil
 }
 func (x *CommandParsableBuilder[T, P]) Serialize(ar Archive) {
@@ -605,17 +607,28 @@ func (x *CommandParsableBuilder[T, P]) Serialize(ar Archive) {
 	SerializeParsableFlags(ar, P(&x.Flags))
 }
 
-type commandParsableSerializer struct {
-	ar Archive
+type commandParsableFunctor struct {
+	onPersistent func(name, usage string, value PersistentVar, persistent bool)
 }
 
-func (x commandParsableSerializer) Persistent(name, usage string, value PersistentVar) {
-	x.ar.Serializable(value)
+func (x commandParsableFunctor) Persistent(name, usage string, value PersistentVar) {
+	x.onPersistent(name, usage, value, true)
 }
-func (x commandParsableSerializer) Variable(name, usage string, value PersistentVar) {}
+func (x commandParsableFunctor) Variable(name, usage string, value PersistentVar) {
+	x.onPersistent(name, usage, value, false)
+}
+
+func VisitParsableFlags(parsable CommandParsableFlags,
+	onPersistent func(name, usage string, value PersistentVar, persistent bool)) {
+	parsable.Flags(commandParsableFunctor{onPersistent: onPersistent})
+}
 
 func SerializeParsableFlags(ar Archive, parsable CommandParsableFlags) {
-	parsable.Flags(commandParsableSerializer{ar})
+	VisitParsableFlags(parsable, func(name, usage string, value PersistentVar, persistent bool) {
+		if persistent {
+			ar.Serializable(value)
+		}
+	})
 }
 
 func GetBuildableFlags[T any, P interface {
