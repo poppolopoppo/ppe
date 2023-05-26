@@ -817,17 +817,20 @@ func (x *interactiveLogger) attachMessages() bool {
 	fmt.Fprintln(&x.transient, "")
 
 	for _, it := range x.messages {
-		AssertNotIn(it, nil)
-		offset := x.transient.Len()
+		if it != nil {
+			offset := x.transient.Len()
 
-		fmt.Fprint(&x.transient, "\r", ANSI_ERASE_END_LINE.Always(), make_ansi_fg_truecolor(it.color[:]...))
-		{
-			it.format(&x.transient)
-		}
-		fmt.Fprintln(&x.transient, ANSI_RESET.Always())
+			fmt.Fprint(&x.transient, "\r", ANSI_ERASE_END_LINE.Always(), make_ansi_fg_truecolor(it.color[:]...))
+			{
+				it.format(&x.transient)
+			}
+			fmt.Fprintln(&x.transient, ANSI_RESET.Always())
 
-		if len := int(x.transient.Len() - offset); x.maxLen < len {
-			x.maxLen = len
+			if len := int(x.transient.Len() - offset); x.maxLen < len {
+				x.maxLen = len
+			}
+		} else {
+			x.inflight -= 1
 		}
 	}
 
