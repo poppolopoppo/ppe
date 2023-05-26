@@ -129,7 +129,7 @@ type BuildTargets struct {
 	Aliases []TargetAlias
 }
 
-func (x BuildTargets) Alias() BuildAlias {
+func (x *BuildTargets) Alias() BuildAlias {
 	return MakeBuildAlias("Targets", x.EnvironmentAlias.String())
 }
 func (x *BuildTargets) Build(bc BuildContext) error {
@@ -187,7 +187,7 @@ func (x *BuildTargets) Build(bc BuildContext) error {
 		return err
 	}
 
-	units, err := compileEnv.Link(moduleGraph)
+	units, err := compileEnv.Link(bc, moduleGraph)
 	if err != nil {
 		return err
 	}
@@ -197,7 +197,7 @@ func (x *BuildTargets) Build(bc BuildContext) error {
 		x.Aliases = append(x.Aliases, unit.Target)
 
 		err := bc.OutputNode(WrapBuildFactory(func(bi BuildInitializer) (*Unit, error) {
-			if err := bi.NeedBuildable(unit.Target.ModuleAlias, compileEnv.EnvironmentAlias); err != nil {
+			if err := bi.NeedBuildable(unit.Target.ModuleAlias.Alias(), compileEnv.EnvironmentAlias.Alias()); err != nil {
 				return nil, err
 			}
 			for _, outputFile := range unit.GeneratedFiles {

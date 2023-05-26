@@ -59,7 +59,7 @@ func BuildActionCache(path Directory) BuildFactoryTyped[*actionCache] {
 	})
 }
 
-func (x actionCache) Alias() BuildAlias {
+func (x *actionCache) Alias() BuildAlias {
 	return MakeBuildAlias("Cache", "Actions", x.path.String())
 }
 func (x *actionCache) Serialize(ar Archive) {

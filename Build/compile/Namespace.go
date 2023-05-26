@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"strings"
@@ -26,7 +27,7 @@ type NamespaceAliases = SetT[NamespaceAlias]
 func (x NamespaceAlias) Valid() bool {
 	return len(x.NamespaceName) > 0
 }
-func (x NamespaceAlias) Alias() BuildAlias {
+func (x *NamespaceAlias) Alias() BuildAlias {
 	return MakeBuildAlias("Rules", "Namespace", x.String())
 }
 func (x *NamespaceAlias) Serialize(ar Archive) {
@@ -109,13 +110,13 @@ func (rules *NamespaceRules) Serialize(ar Archive) {
  * Build Namespace
  ***************************************/
 
-func (x NamespaceRules) Alias() BuildAlias {
+func (x *NamespaceRules) Alias() BuildAlias {
 	return x.GetNamespace().NamespaceAlias.Alias()
 }
 func (x *NamespaceRules) Build(bc BuildContext) error {
 	return nil
 }
 
-func GetBuildNamespace(namespaceAlias NamespaceAlias) (Namespace, error) {
-	return FindGlobalBuildable[Namespace](namespaceAlias)
+func GetBuildNamespace(namespace NamespaceAlias) (Namespace, error) {
+	return FindGlobalBuildable[Namespace](namespace.Alias())
 }

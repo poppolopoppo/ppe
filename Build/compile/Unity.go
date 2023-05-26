@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"io"
@@ -192,7 +193,7 @@ func BuildUnityFile(output Filename, includes StringSet, inputs FileSet) BuildFa
 		}, bi.NeedFile(inputs...)
 	})
 }
-func (x UnityFile) Alias() BuildAlias {
+func (x *UnityFile) Alias() BuildAlias {
 	return MakeBuildAlias("Compile", "Unity", x.Output.String())
 }
 func (x *UnityFile) Build(bc BuildContext) error {

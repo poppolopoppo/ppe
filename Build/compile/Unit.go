@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"strings"
@@ -33,10 +34,10 @@ func NewTargetAlias(module Module, platform Platform, config Configuration) Targ
 		ModuleAlias:      module.GetModule().ModuleAlias,
 	}
 }
-func (x TargetAlias) Valid() bool {
+func (x *TargetAlias) Valid() bool {
 	return x.EnvironmentAlias.Valid() && x.ModuleAlias.Valid()
 }
-func (x TargetAlias) Alias() BuildAlias {
+func (x *TargetAlias) Alias() BuildAlias {
 	return MakeBuildAlias("Unit", x.String())
 }
 func (x *TargetAlias) Serialize(ar Archive) {
@@ -69,7 +70,7 @@ func (x *TargetAlias) Set(in string) error {
 func (x TargetAlias) String() string {
 	return fmt.Sprintf("%v-%v-%v", x.ModuleAlias, x.PlatformName, x.ConfigName)
 }
-func (x TargetAlias) MarshalText() ([]byte, error) {
+func (x *TargetAlias) MarshalText() ([]byte, error) {
 	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *TargetAlias) UnmarshalText(data []byte) error {
@@ -135,13 +136,13 @@ func (unit *Unit) String() string {
 }
 
 func (unit *Unit) GetEnvironment() (*CompileEnv, error) {
-	return FindGlobalBuildable[*CompileEnv](unit.Target.EnvironmentAlias)
+	return FindGlobalBuildable[*CompileEnv](unit.Target.EnvironmentAlias.Alias())
 }
 func (unit *Unit) GetBuildCompiler() (Compiler, error) {
-	return FindGlobalBuildable[Compiler](unit.CompilerAlias)
+	return FindGlobalBuildable[Compiler](unit.CompilerAlias.Alias())
 }
 func (unit *Unit) GetBuildPreprocessor() (Compiler, error) {
-	return FindGlobalBuildable[Compiler](unit.PreprocessorAlias)
+	return FindGlobalBuildable[Compiler](unit.PreprocessorAlias.Alias())
 }
 
 func (unit *Unit) GetCompiler() *CompilerRules {
@@ -256,7 +257,7 @@ func (unit *Unit) Serialize(ar Archive) {
  * Unit Factory
  ***************************************/
 
-func (unit Unit) Alias() BuildAlias {
+func (unit *Unit) Alias() BuildAlias {
 	return unit.Target.Alias()
 }
 func (unit *Unit) Build(bc BuildContext) error {
@@ -276,6 +277,6 @@ func (unit *Unit) Build(bc BuildContext) error {
 	return nil
 }
 
-func GetBuildUnit(alias TargetAlias) (*Unit, error) {
-	return FindBuildable[*Unit](CommandEnv.BuildGraph(), alias)
+func GetBuildUnit(target TargetAlias) (*Unit, error) {
+	return FindBuildable[*Unit](CommandEnv.BuildGraph(), target.Alias())
 }

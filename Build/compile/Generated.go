@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"io"
 )
@@ -23,7 +24,7 @@ type BuildGenerated struct {
 	Generated
 }
 
-func (x BuildGenerated) Alias() BuildAlias {
+func (x *BuildGenerated) Alias() BuildAlias {
 	return MakeGeneratedAlias(x.OutputFile)
 }
 func (x *BuildGenerated) Build(bc BuildContext) error {

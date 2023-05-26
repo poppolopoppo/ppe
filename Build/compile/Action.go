@@ -200,7 +200,7 @@ type TargetActions struct {
 	Payloads   PayloadBuildAliases
 }
 
-func (x TargetActions) Alias() BuildAlias {
+func (x *TargetActions) Alias() BuildAlias {
 	return MakeBuildAlias("Targets", x.TargetAlias.String())
 }
 func (x *TargetActions) Build(bc BuildContext) error {
@@ -255,7 +255,7 @@ func GetBuildActions(aliases ...BuildAlias) (ActionSet, error) {
 
 func GetTargetActions(target TargetAlias) BuildFactoryTyped[*TargetActions] {
 	return MakeBuildFactory(func(bi BuildInitializer) (TargetActions, error) {
-		return TargetActions{TargetAlias: target}, bi.NeedBuildable(target)
+		return TargetActions{TargetAlias: target}, bi.NeedBuildable(target.Alias())
 	})
 }
 

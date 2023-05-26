@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"strings"
@@ -17,27 +18,27 @@ type ConfigurationAlias struct {
 func NewConfigurationAlias(configName string) ConfigurationAlias {
 	return ConfigurationAlias{ConfigName: configName}
 }
-func (x ConfigurationAlias) Valid() bool {
+func (x *ConfigurationAlias) Valid() bool {
 	return len(x.ConfigName) > 0
 }
-func (x ConfigurationAlias) Alias() BuildAlias {
+func (x *ConfigurationAlias) Alias() BuildAlias {
 	return MakeBuildAlias("Rules", "Config", x.String())
 }
-func (x ConfigurationAlias) String() string {
+func (x *ConfigurationAlias) String() string {
 	Assert(func() bool { return x.Valid() })
 	return x.ConfigName
 }
 func (x *ConfigurationAlias) Serialize(ar Archive) {
 	ar.String(&x.ConfigName)
 }
-func (x ConfigurationAlias) Compare(o ConfigurationAlias) int {
+func (x *ConfigurationAlias) Compare(o ConfigurationAlias) int {
 	return strings.Compare(x.ConfigName, o.ConfigName)
 }
 func (x *ConfigurationAlias) Set(in string) (err error) {
 	x.ConfigName = in
 	return nil
 }
-func (x ConfigurationAlias) MarshalText() ([]byte, error) {
+func (x *ConfigurationAlias) MarshalText() ([]byte, error) {
 	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *ConfigurationAlias) UnmarshalText(data []byte) error {
@@ -209,7 +210,7 @@ type BuildConfig struct {
 	Configuration
 }
 
-func (x BuildConfig) Alias() BuildAlias {
+func (x *BuildConfig) Alias() BuildAlias {
 	return x.GetConfig().ConfigurationAlias.Alias()
 }
 func (x *BuildConfig) Build(bc BuildContext) error {

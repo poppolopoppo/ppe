@@ -54,6 +54,7 @@ func (r result[S]) String() string {
  * Sync Future (for debug)
  ***************************************/
 
+//lint:ignore U1000 ignore unused function
 type sync_future[T any] struct {
 	await   func() (T, error)
 	result  *result[T]
@@ -61,6 +62,7 @@ type sync_future[T any] struct {
 	barrier sync.Mutex
 }
 
+//lint:ignore U1000 ignore unused function
 func make_sync_future[T any](f func() (T, error), debug ...fmt.Stringer) Future[T] {
 	AssertMessage(func() bool { return f != nil }, "invalid future!\n%s", strings.Join(Stringize(debug...), "\n"))
 	return &sync_future[T]{
@@ -69,6 +71,8 @@ func make_sync_future[T any](f func() (T, error), debug ...fmt.Stringer) Future[
 		debug:  debug,
 	}
 }
+
+//lint:ignore U1000 ignore unused function
 func (future *sync_future[T]) Join() Result[T] {
 	future.barrier.Lock()
 	defer future.barrier.Unlock()
@@ -90,32 +94,45 @@ func (future *sync_future[T]) Join() Result[T] {
  * Async Future (using goroutine)
  ***************************************/
 
+//lint:ignore U1000 ignore unused function
 type async_future[T any] struct {
 	wait   chan any
 	once   sync.Once
 	result result[T]
 }
 
-func MakeGlobalWorkerFuture[T any](f func() (T, error)) Future[T] {
+//lint:ignore U1000 ignore unused function
+func MakeWorkerFuture[T any](pool WorkerPool, f func() (T, error)) Future[T] {
 	future := &async_future[T]{wait: AnyChannels.Allocate()}
-	GetGlobalWorkerPool().Queue(func() {
+	pool.Queue(func() {
 		future.invoke(f)
 	})
 	return future
 }
 
+//lint:ignore U1000 ignore unused function
+func MakeGlobalWorkerFuture[T any](f func() (T, error)) Future[T] {
+	return MakeWorkerFuture(GetGlobalWorkerPool(), f)
+}
+
+//lint:ignore U1000 ignore unused function
 func make_async_future[T any](f func() (T, error)) Future[T] {
 	return (&async_future[T]{wait: AnyChannels.Allocate()}).run_in_background(f)
 }
 
+//lint:ignore U1000 ignore unused function
 func (future *async_future[T]) run_in_background(f func() (T, error)) *async_future[T] {
 	go future.invoke(f)
 	return future
 }
+
+//lint:ignore U1000 ignore unused function
 func (future *async_future[T]) invoke(f func() (T, error)) {
 	success, failure := f()
 	future.wait <- result[T]{success, failure}
 }
+
+//lint:ignore U1000 ignore unused function
 func (future *async_future[T]) Join() Result[T] {
 	future.once.Do(func() {
 		future.result = (<-future.wait).(result[T])
@@ -129,15 +146,19 @@ func (future *async_future[T]) Join() Result[T] {
  * Timeout Async Future (using goroutine)
  ***************************************/
 
+//lint:ignore U1000 ignore unused function
 type timeout_async_future[T any] struct {
 	inner async_future[T]
 }
 
+//lint:ignore U1000 ignore unused function
 func make_timeout_async_future[T any](f func() (T, error)) Future[T] {
 	result := &timeout_async_future[T]{}
 	result.inner.run_in_background(f)
 	return result
 }
+
+//lint:ignore U1000 ignore unused function
 func (future *timeout_async_future[T]) Join() Result[T] {
 	future.inner.once.Do(func() {
 		defer AnyChannels.Release(future.inner.wait)

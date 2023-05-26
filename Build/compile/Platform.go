@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"strings"
@@ -17,27 +18,27 @@ type PlatformAlias struct {
 func NewPlatformAlias(platformName string) PlatformAlias {
 	return PlatformAlias{PlatformName: platformName}
 }
-func (x PlatformAlias) Valid() bool {
+func (x *PlatformAlias) Valid() bool {
 	return len(x.PlatformName) > 0
 }
-func (x PlatformAlias) Alias() BuildAlias {
+func (x *PlatformAlias) Alias() BuildAlias {
 	return MakeBuildAlias("Rules", "Platform", x.String())
 }
-func (x PlatformAlias) String() string {
+func (x *PlatformAlias) String() string {
 	Assert(func() bool { return x.Valid() })
 	return x.PlatformName
 }
 func (x *PlatformAlias) Serialize(ar Archive) {
 	ar.String(&x.PlatformName)
 }
-func (x PlatformAlias) Compare(o PlatformAlias) int {
+func (x *PlatformAlias) Compare(o PlatformAlias) int {
 	return strings.Compare(x.PlatformName, o.PlatformName)
 }
 func (x *PlatformAlias) Set(in string) (err error) {
 	x.PlatformName = in
 	return nil
 }
-func (x PlatformAlias) MarshalText() ([]byte, error) {
+func (x *PlatformAlias) MarshalText() ([]byte, error) {
 	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *PlatformAlias) UnmarshalText(data []byte) error {
@@ -120,7 +121,7 @@ var Platform_ARM = &PlatformRules{
  * Build Platform Factory
  ***************************************/
 
-func (x PlatformRules) Alias() BuildAlias {
+func (x *PlatformRules) Alias() BuildAlias {
 	return x.GetPlatform().PlatformAlias.Alias()
 }
 func (x *PlatformRules) Build(bc BuildContext) error {

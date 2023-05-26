@@ -356,7 +356,7 @@ type BuildModules struct {
 	Root       Namespace
 }
 
-func (x BuildModules) Alias() BuildAlias {
+func (x *BuildModules) Alias() BuildAlias {
 	return MakeBuildAlias("Modules", x.Source.String())
 }
 func (x *BuildModules) Build(bc BuildContext) error {

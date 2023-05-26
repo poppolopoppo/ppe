@@ -97,7 +97,7 @@ type GnuSourceDependenciesAction struct {
 	GnuDepFile Filename
 }
 
-func (x GnuSourceDependenciesAction) Alias() BuildAlias {
+func (x *GnuSourceDependenciesAction) Alias() BuildAlias {
 	return MakeBuildAlias("Action", "Gnu", x.Outputs.Join(";"))
 }
 func (x *GnuSourceDependenciesAction) Build(bc BuildContext) error {

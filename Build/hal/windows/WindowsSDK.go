@@ -1,7 +1,9 @@
 package windows
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/compile"
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"regexp"
 	"sort"
@@ -78,7 +80,7 @@ type WindowsSDKBuilder struct {
 	WindowsSDK
 }
 
-func (x WindowsSDKBuilder) Alias() BuildAlias {
+func (x *WindowsSDKBuilder) Alias() BuildAlias {
 	return MakeBuildAlias("HAL", "Windows", "SDK", x.MajorVer)
 }
 func (x *WindowsSDKBuilder) Build(bc BuildContext) error {

@@ -288,7 +288,7 @@ type LlvmProductInstall struct {
 	ClangPlusPlus Filename
 }
 
-func (x LlvmProductInstall) Alias() BuildAlias {
+func (x *LlvmProductInstall) Alias() BuildAlias {
 	return MakeBuildAlias("HAL", "Linux", "LLVM", x.WantedVer.String(), x.Arch)
 }
 func (x *LlvmProductInstall) Serialize(ar Archive) {

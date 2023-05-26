@@ -1,7 +1,9 @@
 package windows
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/compile"
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"os"
@@ -675,7 +677,7 @@ func (x *MsvcProductInstall) VcToolsHostPath() Directory {
 	return x.VcToolsPath.Folder("bin", "Host"+x.HostArch, x.Arch)
 }
 
-func (x MsvcProductInstall) Alias() BuildAlias {
+func (x *MsvcProductInstall) Alias() BuildAlias {
 	variant := "Stable"
 	if x.Insider {
 		variant = "Insider"
@@ -1049,11 +1051,12 @@ func GetMsvcProductInstall(prms MsvcProductVer) BuildFactoryTyped[*MsvcProductIn
 
 func GetMsvcCompiler(arch ArchType) BuildFactoryTyped[*MsvcCompiler] {
 	return MakeBuildFactory(func(bi BuildInitializer) (MsvcCompiler, error) {
-		return MsvcCompiler{
-				Arch:          arch,
-				CompilerRules: NewCompilerRules(NewCompilerAlias("msvc", "VisualStudio", arch.String())),
-			}, bi.NeedFactories(
-				GetBuildableFlags(GetCompileFlags()),
-				GetBuildableFlags(GetWindowsFlags()))
+		msvc := MsvcCompiler{
+			Arch:          arch,
+			CompilerRules: NewCompilerRules(NewCompilerAlias("msvc", "VisualStudio", arch.String())),
+		}
+		return msvc, bi.NeedFactories(
+			GetBuildableFlags(GetCompileFlags()),
+			GetBuildableFlags(GetWindowsFlags()))
 	})
 }

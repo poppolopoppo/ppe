@@ -75,7 +75,7 @@ type BffBuilder struct {
 	Version string
 }
 
-func (x BffBuilder) Alias() BuildAlias {
+func (x *BffBuilder) Alias() BuildAlias {
 	return MakeBuildAlias("Bff", x.Output.String())
 }
 func (x *BffBuilder) Serialize(ar Archive) {

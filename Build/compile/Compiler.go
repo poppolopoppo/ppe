@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"strings"
@@ -28,7 +29,7 @@ func NewCompilerAlias(family, name, variant string) CompilerAlias {
 func (x CompilerAlias) Valid() bool {
 	return len(x.CompilerName) > 0
 }
-func (x CompilerAlias) Alias() BuildAlias {
+func (x *CompilerAlias) Alias() BuildAlias {
 	return MakeBuildAlias("Rules", "Compiler", x.String())
 }
 func (x *CompilerAlias) Serialize(ar Archive) {
@@ -123,7 +124,7 @@ func NewCompilerRules(alias CompilerAlias) CompilerRules {
 	}
 }
 
-func (rules CompilerRules) Alias() BuildAlias {
+func (rules *CompilerRules) Alias() BuildAlias {
 	return rules.CompilerAlias.Alias()
 }
 func (rules *CompilerRules) String() string {

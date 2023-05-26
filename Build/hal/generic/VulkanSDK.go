@@ -763,7 +763,7 @@ func GetVulkanBindings(f Filename) BuildFactoryTyped[*VulkanBindings] {
 	})
 }
 
-func (vk VulkanBindings) Alias() BuildAlias {
+func (vk *VulkanBindings) Alias() BuildAlias {
 	return MakeBuildAlias("External", "Vulkan", vk.Src.Relative(UFS.Root))
 }
 func (vk *VulkanBindings) Build(bc BuildContext) error {
@@ -829,7 +829,7 @@ func GetVulkanHeaders(src Directory) BuildFactoryTyped[*VulkanHeaders] {
 	})
 }
 
-func (vk VulkanHeaders) Alias() BuildAlias {
+func (vk *VulkanHeaders) Alias() BuildAlias {
 	return MakeBuildAlias("External", "Vulkan", vk.Src.Relative(UFS.Root))
 }
 func (vk *VulkanHeaders) Build(bc BuildContext) error {
@@ -960,7 +960,7 @@ func GetVulkanInterface(prms VulkanInterfaceParams) BuildFactoryTyped[*VulkanInt
 	})
 }
 
-func (vk VulkanInterface) Alias() BuildAlias {
+func (vk *VulkanInterface) Alias() BuildAlias {
 	return MakeBuildAlias("External", "Vulkan", "Interface")
 }
 func (vk *VulkanInterface) Build(bc BuildContext) error {

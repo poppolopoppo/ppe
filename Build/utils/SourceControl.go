@@ -31,7 +31,7 @@ type SourceControlStatus struct {
 	Timestamp time.Time
 }
 
-func (x SourceControlStatus) Alias() BuildAlias {
+func (x *SourceControlStatus) Alias() BuildAlias {
 	return MakeBuildAlias("SourceControl", "Status", x.Path.String())
 }
 func (x *SourceControlStatus) Build(BuildContext) (err error) {
@@ -65,7 +65,7 @@ type SourceControlModifiedFiles struct {
 	ModifiedFiles FileSet
 }
 
-func (x SourceControlModifiedFiles) Alias() BuildAlias {
+func (x *SourceControlModifiedFiles) Alias() BuildAlias {
 	return MakeBuildAlias("SourceControl", "ModifiedFiles", x.OutputFile.String())
 }
 func (x *SourceControlModifiedFiles) Build(bc BuildContext) (err error) {

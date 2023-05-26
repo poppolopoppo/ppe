@@ -1,7 +1,9 @@
 package windows
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/compile"
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 )

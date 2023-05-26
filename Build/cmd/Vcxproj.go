@@ -84,7 +84,7 @@ type VcxprojBuilder struct {
 	projects     map[ModuleAlias]VcxProject
 }
 
-func (vcx VcxprojBuilder) Alias() BuildAlias {
+func (vcx *VcxprojBuilder) Alias() BuildAlias {
 	return MakeBuildAlias("Vcxproj", vcx.Output.String())
 }
 func (vcx *VcxprojBuilder) SolutionFile() Filename {

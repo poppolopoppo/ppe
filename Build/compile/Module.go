@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"path"
@@ -36,7 +37,7 @@ func NewModuleAlias(namespace Namespace, moduleName string) ModuleAlias {
 func (x ModuleAlias) Valid() bool {
 	return x.NamespaceAlias.Valid() && len(x.ModuleName) > 0
 }
-func (x ModuleAlias) Alias() BuildAlias {
+func (x *ModuleAlias) Alias() BuildAlias {
 	return MakeBuildAlias("Rules", "Module", x.String())
 }
 func (x *ModuleAlias) Serialize(ar Archive) {
@@ -338,13 +339,13 @@ func (x *ModuleRules) Prepend(other *ModuleRules) {
  * Build Module
  ***************************************/
 
-func (x ModuleRules) Alias() BuildAlias {
+func (x *ModuleRules) Alias() BuildAlias {
 	return x.ModuleAlias.Alias()
 }
 func (x *ModuleRules) Build(bc BuildContext) error {
 	return nil
 }
 
-func GetBuildModule(moduleAlias ModuleAlias) (Module, error) {
-	return FindGlobalBuildable[Module](moduleAlias)
+func GetBuildModule(module ModuleAlias) (Module, error) {
+	return FindGlobalBuildable[Module](module.Alias())
 }

@@ -1,8 +1,11 @@
 package windows
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/compile"
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/hal/generic"
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"os/exec"
@@ -222,7 +225,7 @@ func (clang *ClangCompiler) Build(bc BuildContext) error {
 
 var re_clangClVersion = regexp.MustCompile(`(?m)^clang\s+version\s+([\.\d]+)$`)
 
-func (llvm LlvmProductInstall) Alias() BuildAlias {
+func (llvm *LlvmProductInstall) Alias() BuildAlias {
 	return MakeBuildAlias("HAL", "Windows", "LLVM", "Latest")
 }
 func (llvm *LlvmProductInstall) Serialize(ar Archive) {

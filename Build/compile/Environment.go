@@ -1,6 +1,7 @@
 package compile
 
 import (
+	//lint:ignore ST1001 ignore dot imports warning
 	. "build/utils"
 	"fmt"
 	"strings"
@@ -21,10 +22,10 @@ func NewEnvironmentAlias(platform Platform, config Configuration) EnvironmentAli
 		ConfigurationAlias: config.GetConfig().ConfigurationAlias,
 	}
 }
-func (x EnvironmentAlias) Valid() bool {
+func (x *EnvironmentAlias) Valid() bool {
 	return x.PlatformAlias.Valid() && x.ConfigurationAlias.Valid()
 }
-func (x EnvironmentAlias) Alias() BuildAlias {
+func (x *EnvironmentAlias) Alias() BuildAlias {
 	return MakeBuildAlias("Rules", "Environment", x.String())
 }
 func (x *EnvironmentAlias) Serialize(ar Archive) {
@@ -55,7 +56,7 @@ func (x EnvironmentAlias) String() string {
 	Assert(func() bool { return x.Valid() })
 	return fmt.Sprintf("%v-%v", x.PlatformName, x.ConfigName)
 }
-func (x EnvironmentAlias) MarshalText() ([]byte, error) {
+func (x *EnvironmentAlias) MarshalText() ([]byte, error) {
 	return UnsafeBytesFromString(x.String()), nil
 }
 func (x *EnvironmentAlias) UnmarshalText(data []byte) error {
@@ -94,13 +95,13 @@ func (env *CompileEnv) Serialize(ar Archive) {
 }
 
 func (env *CompileEnv) GetBuildPlatform() (Platform, error) {
-	return FindGlobalBuildable[Platform](env.EnvironmentAlias.PlatformAlias)
+	return FindGlobalBuildable[Platform](env.EnvironmentAlias.PlatformAlias.Alias())
 }
 func (env *CompileEnv) GetBuildConfig() (*BuildConfig, error) {
-	return FindGlobalBuildable[*BuildConfig](env.EnvironmentAlias.ConfigurationAlias)
+	return FindGlobalBuildable[*BuildConfig](env.EnvironmentAlias.ConfigurationAlias.Alias())
 }
 func (env *CompileEnv) GetBuildCompiler() (Compiler, error) {
-	return FindGlobalBuildable[Compiler](env.CompilerAlias)
+	return FindGlobalBuildable[Compiler](env.CompilerAlias.Alias())
 }
 
 func (env *CompileEnv) GetPlatform() *PlatformRules {
@@ -370,7 +371,7 @@ func (env *CompileEnv) Link(moduleGraph ModuleGraph) (SetT[*Unit], error) {
  * Compilation Environment Factory
  ***************************************/
 
-func (env CompileEnv) Alias() BuildAlias {
+func (env *CompileEnv) Alias() BuildAlias {
 	return env.EnvironmentAlias.Alias()
 }
 func (env *CompileEnv) Build(bc BuildContext) error {

@@ -1156,7 +1156,7 @@ func MakeGlobRegexp(glob ...string) *regexp.Regexp {
  * UFS Bindings for Build Graph
  ***************************************/
 
-func (x Filename) Alias() BuildAlias {
+func (x *Filename) Alias() BuildAlias {
 	return BuildAlias(x.String())
 }
 func (x Filename) Digest() (BuildStamp, error) {
@@ -1181,7 +1181,7 @@ func (x *Filename) Serialize(ar Archive) {
 	ar.String(&x.Basename)
 }
 
-func (x Directory) Alias() BuildAlias {
+func (x *Directory) Alias() BuildAlias {
 	return BuildAlias(x.String())
 }
 func (x Directory) Build(bc BuildContext) error {
@@ -1230,7 +1230,7 @@ func BuildFileDigest(source Filename) BuildFactoryTyped[*FileDigest] {
 	})
 }
 
-func (x FileDigest) Alias() BuildAlias {
+func (x *FileDigest) Alias() BuildAlias {
 	return MakeBuildAlias("UFS", "Digest", x.Source.String())
 }
 func (x *FileDigest) Build(bc BuildContext) (err error) {
@@ -1264,7 +1264,7 @@ func BuildDirectoryCreator(source Directory) BuildFactoryTyped[*DirectoryCreator
 	})
 }
 
-func (x DirectoryCreator) Alias() BuildAlias {
+func (x *DirectoryCreator) Alias() BuildAlias {
 	return MakeBuildAlias("UFS", "Create", x.Source.String())
 }
 func (x *DirectoryCreator) Build(bc BuildContext) error {
@@ -1305,7 +1305,7 @@ func BuildDirectoryList(source Directory) BuildFactoryTyped[*DirectoryList] {
 	})
 }
 
-func (x DirectoryList) Alias() BuildAlias {
+func (x *DirectoryList) Alias() BuildAlias {
 	return MakeBuildAlias("UFS", "List", x.Source.String())
 }
 func (x *DirectoryList) Build(bc BuildContext) error {
@@ -1376,7 +1376,7 @@ func BuildDirectoryGlob(
 	})
 }
 
-func (x DirectoryGlob) Alias() BuildAlias {
+func (x *DirectoryGlob) Alias() BuildAlias {
 	return MakeBuildAlias("UFS", "Glob", strings.Join([]string{
 		x.Source.String(),
 		x.IncludedGlobs.Join(";"),

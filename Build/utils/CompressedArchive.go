@@ -112,7 +112,7 @@ type CompressedArchiveExtractor struct {
 	ExtractedFiles FileSet
 }
 
-func (x CompressedArchiveExtractor) Alias() BuildAlias {
+func (x *CompressedArchiveExtractor) Alias() BuildAlias {
 	return MakeBuildAlias(x.Type.String(), x.Destination.String())
 }
 func (x *CompressedArchiveExtractor) Build(bc BuildContext) error {
