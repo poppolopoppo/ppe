@@ -27,7 +27,7 @@ func JoinAllWorkerPools() {
 
 var GetGlobalWorkerPool = Memoize(func() (result WorkerPool) {
 	result = NewFixedSizeWorkerPool("global", runtime.NumCPU()-1)
-	allWorkerPools = append([]WorkerPool{result}, allWorkerPools...)
+	allWorkerPools = append(allWorkerPools, result)
 	return
 })
 
@@ -35,9 +35,6 @@ type fixedSizeWorkerPool struct {
 	give       chan TaskFunc
 	name       string
 	numWorkers int
-
-	mutex sync.Mutex
-	cond  *sync.Cond
 }
 
 func NewFixedSizeWorkerPool(name string, numWorkers int) WorkerPool {
@@ -50,9 +47,7 @@ func NewFixedSizeWorkerPoolEx(name string, numWorkers int, loop func(*fixedSizeW
 		give:       make(chan TaskFunc, 8192),
 		name:       name,
 		numWorkers: numWorkers,
-		mutex:      sync.Mutex{},
 	}
-	pool.cond = sync.NewCond(&pool.mutex)
 	for i := 0; i < pool.numWorkers; i += 1 {
 		workerIndex := i
 		go loop(pool, workerIndex)
@@ -69,50 +64,44 @@ func (x *fixedSizeWorkerPool) Queue(task TaskFunc) {
 	x.give <- task
 }
 func (x *fixedSizeWorkerPool) Close() {
-	x.cond.L.Lock()
-	defer x.cond.L.Unlock()
-
 	for i := 0; i < x.numWorkers; i += 1 {
 		x.give <- nil // push a nil task to kill the future
 	}
 }
 func (x *fixedSizeWorkerPool) Join() {
-	x.cond.L.Lock()
-	defer x.cond.L.Unlock()
+	wg := sync.WaitGroup{}
+	wg.Add(x.numWorkers)
 
 	for i := 0; i < x.numWorkers; i += 1 {
 		x.Queue(func() {
-			x.cond.L.Lock()
-			defer x.cond.L.Unlock()
-
-			x.cond.Broadcast()
+			wg.Done()
+			wg.Wait()
 		})
 	}
 
-	x.cond.Wait()
+	wg.Wait()
 }
 func (x *fixedSizeWorkerPool) Resize(n int) {
 	Assert(func() bool { return n > 0 })
-	x.mutex.Lock()
-	defer x.mutex.Unlock()
 
-	if n == x.numWorkers {
+	delta := n - x.numWorkers
+	if delta == 0 {
 		return
 	}
 
 	LogTrace(LogWorkerPool, "resizing %q pool from %d to %d worker threads", x.name, x.numWorkers, n)
 
-	delta := n - x.numWorkers
 	if delta > 0 {
 		for i := 0; i < delta; i += 1 {
-			workerIndex := x.numWorkers + i // create a new worker
-			go x.workerLoop(workerIndex)
+			workerIndex := x.numWorkers + i
+			go x.workerLoop(workerIndex) // create a new worker
 		}
 	} else {
 		for i := 0; i < -delta; i += 1 {
-			x.give <- nil // push a nil task to kill the future
+			x.give <- nil // push a nil task to kill a worker goroutine
 		}
 	}
+
 	x.numWorkers += delta
 }
 func onWorkerThreadStart(pool WorkerPool, workerIndex int) {
@@ -126,7 +115,7 @@ func onWorkerThreadStart(pool WorkerPool, workerIndex int) {
 	runtime.LockOSThread()
 }
 func onWorkerThreadStop(pool WorkerPool, workerIndex int) {
-	runtime.UnlockOSThread() // let acquired thread die with the pool?
+	//runtime.UnlockOSThread() // let acquired thread die with the pool
 }
 func (x *fixedSizeWorkerPool) workerLoop(workerIndex int) {
 	onWorkerThreadStart(x, workerIndex)

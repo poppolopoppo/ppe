@@ -127,6 +127,7 @@ func (flags *CommandFlags) Apply() {
 	// queue print summary if specified on command-line
 	if flags.Summary.Get() {
 		CommandEnv.onExit.Add(func(cet *CommandEnvT) error {
+			PurgePinnedLogs()
 			printBuildGraphSummary(cet.startedAt, cet.buildGraph)
 			return nil
 		})
@@ -246,6 +247,12 @@ func (env *CommandEnvT) OnPanic(err error) bool {
 }
 
 func (env *CommandEnvT) Run() (result error) {
+	defer func() {
+		JoinAllWorkerPools()
+		env.onExit.Invoke(env)
+		PurgePinnedLogs()
+	}()
+
 	env.buildGraph.PostLoad()
 
 	// prepare specified commands
@@ -262,11 +269,6 @@ func (env *CommandEnvT) Run() (result error) {
 		LogWarning(LogCommand, "missing argument, use `help` to learn about command usage")
 		return nil
 	}
-
-	defer func() {
-		JoinAllWorkerPools()
-		env.onExit.Invoke(env)
-	}()
 
 	if result = env.commandEvents.Run(); result == nil {
 		result = env.buildGraph.Join()
