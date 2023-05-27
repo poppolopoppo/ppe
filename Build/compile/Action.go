@@ -87,7 +87,6 @@ func (x *ActionRules) Build(bc BuildContext) error {
 	if flags.CacheMode.HasRead() && x.CacheMode.HasRead() {
 		var err error
 		if cacheKey, err = GetActionCache().CacheRead(x, outputFiles); err == nil {
-			LogInfo(LogBuildGraph, "cache-hit %q", x.Outputs[0])
 			needToRunProcess = false // cache-hit
 		}
 	}

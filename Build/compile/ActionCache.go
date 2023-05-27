@@ -276,10 +276,11 @@ func (x *ActionCacheBulk) CacheHit() bool {
 	}, x.Inputs...) {
 		result := future.Join()
 		if err := result.Failure(); err != nil {
+			LogDebug(LogActionCache, "cache-miss due to error: %v", err)
 			return false
 		}
 		if result.Success().Digest != x.Inputs[i].Digest {
-			LogDebug(LogActionCache, "cache miss due to %q, was %v ang got %v",
+			LogDebug(LogActionCache, "cache-miss due to %q, was %v ang got %v",
 				x.Inputs[i].Source, x.Inputs[i].Digest, result.Success().Digest)
 			return false
 		}
@@ -395,6 +396,9 @@ func (x *ActionCacheEntry) CacheRead(a *ActionRules, artifacts FileSet) error {
 
 			if err == nil && !retrieved.Equals(artifacts) {
 				err = fmt.Errorf("action-cache: artifacts file set do not match for action %q", a.Alias())
+			}
+			if err == nil {
+				LogInfo(LogActionCache, "cache-hit %q", a.Outputs[0])
 			}
 			return err
 		}
