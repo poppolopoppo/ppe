@@ -116,10 +116,8 @@ func (x *ActionRules) Build(bc BuildContext) error {
 
 					// only file access read/execute: output files could messed with writable mapped system Dll on Windows :'(
 					if far.Access.HasRead() && !(far.Access.HasWrite() || far.Access.HasExecute()) {
-						Assert(func() bool { return !x.Outputs.Contains(far.Path) })
-
-						if !x.Inputs.Contains(far.Path) {
-							readFiles.Append(far.Path)
+						if !x.Inputs.Contains(far.Path) && !x.Outputs.Contains(far.Path) {
+							readFiles.AppendUniq(far.Path)
 						}
 					}
 
