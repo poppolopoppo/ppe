@@ -323,7 +323,7 @@ func (x *buildActionGenerator) CreateActions(unit *Unit) error {
 
 		x.Payloads[PAYLOAD_PRECOMPILEDHEADER] = pchs.Aliases()
 
-		objs, err := x.ObjectListActions(unit, append(customs, pchs...))
+		objs, err := x.ObjectListActions(unit, pchs)
 		if err != nil {
 			return err
 		}
@@ -332,7 +332,7 @@ func (x *buildActionGenerator) CreateActions(unit *Unit) error {
 
 		switch unit.Payload {
 		case PAYLOAD_EXECUTABLE, PAYLOAD_SHAREDLIB:
-			link, err := x.LinkActions(unit, pchs, objs)
+			link, err := x.LinkActions(unit, pchs, append(objs, customs...))
 			if err != nil {
 				return err
 			}
@@ -348,7 +348,7 @@ func (x *buildActionGenerator) CreateActions(unit *Unit) error {
 			targetOutputs = link
 
 		case PAYLOAD_STATICLIB:
-			lib, err := x.LibrarianActions(unit, pchs, objs)
+			lib, err := x.LibrarianActions(unit, pchs, append(objs, customs...))
 			if err != nil {
 				return err
 			}

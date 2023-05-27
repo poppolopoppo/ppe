@@ -289,9 +289,12 @@ func (msvc *MsvcCompiler) AddResources(compileEnv *CompileEnv, u *Unit, rc Filen
 			ModuleDir:       u.ModuleDir,
 			GeneratedDir:    u.GeneratedDir,
 			IntermediateDir: u.IntermediateDir,
-			Payload:         u.Payload,
+			Payload:         PAYLOAD_OBJECTLIST,
 			Facet:           u.Facet,
-			CompilerAlias:   msvc.ResourceCompiler.GetCompiler().CompilerAlias,
+			UnityRules: UnityRules{
+				SourceFiles: NewFileSet(rc),
+			},
+			CompilerAlias: msvc.ResourceCompiler.GetCompiler().CompilerAlias,
 			CppRules: CppRules{
 				PCH:   PCH_DISABLED,
 				Unity: UNITY_DISABLED,
@@ -300,7 +303,6 @@ func (msvc *MsvcCompiler) AddResources(compileEnv *CompileEnv, u *Unit, rc Filen
 	}
 
 	resources.Target.ModuleName += "-RC"
-	resources.Source.SourceFiles.Append(rc)
 	resources.AnalysisOptions.Clear()
 	resources.CompilerOptions.Clear()
 	resources.PreprocessorOptions.Clear()
