@@ -20,6 +20,10 @@ func SetEnableDiagnostics(enabled bool) {
 	enableDiagnostics = enabled
 }
 
+func NewLogger() Logger {
+	return newDeferredLogger(newInteractiveLogger(newBasicLogger()))
+}
+
 func AssertMessage(pred func() bool, msg string, args ...interface{}) {}
 
 func Assert(pred func() bool)                    {}

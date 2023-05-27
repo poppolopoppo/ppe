@@ -23,7 +23,7 @@ import (
 
 var LogGlobal = NewLogCategory("Global")
 
-var gLogger Logger = newDeferredLogger(newInteractiveLogger(newBasicLogger()))
+var gLogger Logger = NewLogger()
 
 func LogDebug(category LogCategory, msg string, args ...interface{}) {
 	gLogger.Log(category, LOG_DEBUG, msg, args...)
@@ -625,6 +625,124 @@ func (x deferredLogger) Refresh() {
 }
 
 /***************************************
+ * Immediate Logger
+ ***************************************/
+
+type immediateLogger struct {
+	logger  Logger
+	barrier *sync.Mutex
+}
+
+func newImmediateLogger(logger Logger) immediateLogger {
+	barrier := &sync.Mutex{}
+	return immediateLogger{
+		logger:  logger,
+		barrier: barrier,
+	}
+}
+
+func (x immediateLogger) IsInteractive() bool {
+	return x.logger.IsInteractive()
+}
+func (x immediateLogger) IsVisible(level LogLevel) bool {
+	return x.logger.IsVisible(level)
+}
+
+func (x immediateLogger) SetLevel(level LogLevel) LogLevel {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	return x.logger.SetLevel(level)
+}
+func (x immediateLogger) SetLevelMinimum(level LogLevel) LogLevel {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	return x.logger.SetLevelMinimum(level)
+}
+func (x immediateLogger) SetLevelMaximum(level LogLevel) LogLevel {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	return x.logger.SetLevelMaximum(level)
+}
+func (x immediateLogger) SetWarningAsError(enabled bool) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.SetWarningAsError(enabled)
+}
+func (x immediateLogger) SetShowCategory(enabled bool) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.SetShowCategory(enabled)
+}
+func (x immediateLogger) SetShowTimestamp(enabled bool) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.SetShowTimestamp(enabled)
+}
+func (x immediateLogger) SetWriter(dst LogWriter) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.SetWriter(dst)
+}
+
+func (x immediateLogger) Forward(msg string) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.Forward(msg)
+}
+func (x immediateLogger) Forwardln(msg string) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.Forwardln(msg)
+}
+func (x immediateLogger) Forwardf(msg string, args ...interface{}) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.Forwardf(msg, args...)
+}
+func (x immediateLogger) Log(category LogCategory, level LogLevel, msg string, args ...interface{}) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	if category.Level.IsVisible(level) && x.logger.IsVisible(level) {
+		x.logger.Log(category, level, msg, args...)
+	}
+}
+func (x immediateLogger) Pin(msg string, args ...interface{}) PinScope {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	return x.logger.Pin(msg, args...)
+}
+func (x immediateLogger) Progress(first, last int, msg string, args ...interface{}) ProgressScope {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	return x.logger.Progress(first, last, msg, args...)
+}
+func (x immediateLogger) WithoutPin(block func()) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.WithoutPin(block)
+}
+func (x immediateLogger) Close(pin PinScope) {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.Close(pin)
+}
+func (x immediateLogger) Flush() {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.Flush()
+}
+func (x immediateLogger) Purge() {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.Purge()
+}
+func (x immediateLogger) Refresh() {
+	x.barrier.Lock()
+	defer x.barrier.Unlock()
+	x.logger.Refresh()
+}
+
+/***************************************
  * Interactive Logger
  ***************************************/
 
@@ -831,6 +949,7 @@ func (x *interactiveLogger) attachMessages() bool {
 			}
 		} else {
 			x.inflight -= 1
+			UnreachableCode()
 		}
 	}
 

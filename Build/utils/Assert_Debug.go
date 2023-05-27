@@ -22,6 +22,10 @@ func SetEnableDiagnostics(enabled bool) {
 	enableDiagnostics = enabled
 }
 
+func NewLogger() Logger {
+	return newImmediateLogger(newInteractiveLogger(newBasicLogger()))
+}
+
 func AssertMessage(pred func() bool, msg string, args ...interface{}) {
 	if !pred() {
 		LogPanic(LogAssert, msg, args...)
