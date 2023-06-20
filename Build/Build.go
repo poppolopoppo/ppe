@@ -5,32 +5,50 @@ import (
 	"build/compile"
 	"build/hal"
 	"build/utils"
+	"os"
 	"time"
 )
 
-func initInternals() {
-	hal.InitHAL()
-	utils.InitUtils()
-	compile.InitCompile()
-	cmd.InitCmd()
-}
-
-func LaunchCommand(prefix string, rootFile utils.Filename, args []string) {
+func WithBuild(prefix string, scope func(*utils.CommandEnvT) error) error {
 	startedAt := time.Now()
 
 	defer utils.StartTrace()()
 	defer utils.PurgePinnedLogs()
 
-	env := utils.InitCommandEnv(prefix, rootFile, args, startedAt)
+	env := utils.InitCommandEnv(prefix, os.Args[1:], startedAt)
 
 	defer utils.StartProfiling()()
-	initInternals()
 
-	env.Load()
+	hal.InitHAL()
+	utils.InitUtils()
+	compile.InitCompile()
+	cmd.InitCmd()
 
-	if err := env.Run(); err != nil {
+	err := scope(env)
+	if err != nil {
 		utils.LogError(utils.LogCommand, "%v", err)
 	}
+	return err
+}
 
-	env.Save()
+/***************************************
+ * Launch Command (program entry point)
+ ***************************************/
+
+func LaunchCommand(prefix string, rootFile utils.Filename) error {
+	return WithBuild(prefix, func(env *utils.CommandEnvT) error {
+		env.SetRootFile(rootFile)
+
+		env.LoadConfig()
+		env.LoadBuildGraph()
+
+		err := env.Run()
+		if err != nil {
+			utils.LogError(utils.LogCommand, "%v", err)
+		}
+
+		env.SaveConfig()
+		env.SaveBuildGraph()
+		return err
+	})
 }

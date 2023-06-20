@@ -235,10 +235,24 @@
     - if the key hits a cache entry, we retrieve all indirect inputs and compare again fingerprints
     - finally if everything matches, we have a cache-hit
 - [ ] Distribute ~~build actions~~ buildable jobs
-    - [ ] write a client/server architecture to distribute buildables
-        - https://dzone.com/articles/a-simple-clustered-task-distri
-    - [ ] create a [webdav server](https://gist.github.com/staaldraad/d835126cd46969330a8fdadba62b9b69) on host to share input files with workers
     - [ ] implement a protocol for available worker discovery
+        - [ ] Cluster membership and failure detection
+            - https://www.youtube.com/watch?v=Wt-iEuwMPVc
+        - [ ] JCluster
+            - https://dzone.com/articles/a-simple-clustered-task-distri
+        - [ ] PeerDiscovery
+            - https://github.com/schollz/peerdiscovery
+        - [ ] Scuttlebutt
+            - https://github.com/ssbc/go-secretstream
+            - https://quickwit.io/blog/chitchat
+            - https://ssbc.github.io/scuttlebutt-protocol-guide/
+            - https://www.cs.cornell.edu/home/rvr/papers/flowgossip.pdf
+        - [ ] Libp2p
+            - https://github.com/libp2p/go-libp2p/tree/master/examples
+        - [ ] Failure detection
+            - https://manuel.bernhardt.io/2017/07/26/a-new-adaptive-accrual-failure-detector-for-akka/
+            - https://www.researchgate.net/publication/29682135_The_ph_accrual_failure_detector
+    - [ ] create a [webdav server](https://gist.github.com/staaldraad/d835126cd46969330a8fdadba62b9b69) on host to share input files with workers
     - [ ] monitor available ressources on worker machines to opt-out when already busy
     - [x] use [Minhook](https://github.com/NaniteFactory/gominhook) on Windows to hook all IO Win32 functions
         - MinHook does not support payload injection in another process :'(

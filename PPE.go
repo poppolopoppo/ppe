@@ -6,7 +6,6 @@ import (
 	. "build/utils"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 )
@@ -304,6 +303,5 @@ func main() {
 
 	LaunchCommand(
 		"ppe",
-		UFS.Source.File("Source-namespace.json"),
-		os.Args[1:])
+		UFS.Source.File("Source-namespace.json"))
 }

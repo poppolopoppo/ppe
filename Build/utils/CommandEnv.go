@@ -194,11 +194,10 @@ type CommandEnvT struct {
 
 var CommandEnv *CommandEnvT
 
-func InitCommandEnv(prefix string, rootFile Filename, args []string, startedAt time.Time) *CommandEnvT {
+func InitCommandEnv(prefix string, args []string, startedAt time.Time) *CommandEnvT {
 	CommandEnv = &CommandEnvT{
 		prefix:     prefix,
 		persistent: NewPersistentMap(prefix),
-		rootFile:   rootFile,
 		startedAt:  startedAt,
 		lastPanic:  nil,
 	}
@@ -216,6 +215,7 @@ func InitCommandEnv(prefix string, rootFile Filename, args []string, startedAt t
 	// use UFS.Output only after having parsed -OutputDir= flags
 	CommandEnv.configPath = UFS.Output.File(fmt.Sprint(".", prefix, "-config.json"))
 	CommandEnv.databasePath = UFS.Output.File(fmt.Sprint(".", prefix, "-cache.db"))
+	CommandEnv.rootFile = UFS.Source.File(prefix + "-namespace.json")
 
 	// finally create the build graph (empty)
 	CommandEnv.buildGraph = NewBuildGraph(GetCommandFlags())
@@ -230,6 +230,10 @@ func (env *CommandEnvT) DatabasePath() Filename     { return env.databasePath }
 func (env *CommandEnvT) RootFile() Filename         { return env.rootFile }
 func (env *CommandEnvT) StartedAt() time.Time       { return env.startedAt }
 func (env *CommandEnvT) BuildTime() time.Time       { return PROCESS_INFO.Timestamp }
+
+func (env *CommandEnvT) SetRootFile(rootFile Filename) {
+	env.rootFile = rootFile
+}
 
 func (env *CommandEnvT) OnExit(e EventDelegate[*CommandEnvT]) DelegateHandle {
 	return env.onExit.Add(e)
@@ -246,13 +250,7 @@ func (env *CommandEnvT) OnPanic(err error) bool {
 	return false // a fatal error was already reported
 }
 
-func (env *CommandEnvT) Run() (result error) {
-	defer func() {
-		JoinAllWorkerPools()
-		env.onExit.Invoke(env)
-		PurgePinnedLogs()
-	}()
-
+func (env *CommandEnvT) Run() error {
 	env.buildGraph.PostLoad()
 
 	// prepare specified commands
@@ -260,9 +258,15 @@ func (env *CommandEnvT) Run() (result error) {
 		if err := env.commandEvents.Parse(cl); err != nil {
 			LogError(LogCommand, "%s", err)
 			PrintCommandHelp(os.Stderr, false)
-			return nil
+			return err
 		}
 	}
+
+	defer func() {
+		JoinAllWorkerPools()
+		env.onExit.Invoke(env)
+		PurgePinnedLogs()
+	}()
 
 	// check if any command was successfully parsed
 	if !env.commandEvents.Bound() {
@@ -270,38 +274,44 @@ func (env *CommandEnvT) Run() (result error) {
 		return nil
 	}
 
-	if result = env.commandEvents.Run(); result == nil {
-		result = env.buildGraph.Join()
+	err := env.commandEvents.Run()
+	if err == nil {
+		err = env.buildGraph.Join()
 	}
-
-	return
+	return err
 }
-
-func (env *CommandEnvT) Load() {
-	benchmark := LogBenchmark(LogCommand, "load from disk")
+func (env *CommandEnvT) LoadConfig() error {
+	benchmark := LogBenchmark(LogCommand, "loading config from '%v'...", env.configPath)
 	defer benchmark.Close()
 
-	LogTrace(LogCommand, "loading config from '%v'...", env.configPath)
-	UFS.OpenBuffered(env.configPath, env.persistent.Deserialize)
+	return UFS.OpenBuffered(env.configPath, env.persistent.Deserialize)
+}
+func (env *CommandEnvT) LoadBuildGraph() error {
+	benchmark := LogBenchmark(LogCommand, "loading build graph from '%v'...", env.databasePath)
+	defer benchmark.Close()
 
-	LogTrace(LogCommand, "loading build graph from '%v'...", env.databasePath)
-	if UFS.OpenBuffered(env.databasePath, env.buildGraph.Load) != nil {
+	err := UFS.OpenBuffered(env.databasePath, env.buildGraph.Load)
+	if err != nil {
 		env.buildGraph.(*buildGraph).makeDirty()
 	}
+	return err
 }
-func (env *CommandEnvT) Save() {
-	benchmark := LogBenchmark(LogCommand, "save to disk")
+func (env *CommandEnvT) SaveConfig() error {
+	benchmark := LogBenchmark(LogCommand, "saving config to '%v'...", env.configPath)
 	defer benchmark.Close()
 
-	LogTrace(LogCommand, "saving config to '%v'...", env.configPath)
-	UFS.SafeCreate(env.configPath, env.persistent.Serialize)
-
+	return UFS.SafeCreate(env.configPath, env.persistent.Serialize)
+}
+func (env *CommandEnvT) SaveBuildGraph() error {
 	if env.lastPanic != nil {
 		LogTrace(LogCommand, "won't save build graph since a panic occured")
 	} else if env.buildGraph.Dirty() {
-		LogTrace(LogCommand, "saving build graph to '%v'...", env.databasePath)
-		UFS.SafeCreate(env.databasePath, env.buildGraph.Save)
+		benchmark := LogBenchmark(LogCommand, "saving build graph to '%v'...", env.databasePath)
+		defer benchmark.Close()
+
+		return UFS.SafeCreate(env.databasePath, env.buildGraph.Save)
 	} else {
 		LogTrace(LogCommand, "skipped saving unmodified build graph")
 	}
+	return nil
 }

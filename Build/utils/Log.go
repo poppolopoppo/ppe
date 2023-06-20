@@ -287,6 +287,8 @@ type basicLogger struct {
 	ShowCategory   bool
 	ShowTimestamp  bool
 	Writer         *bufio.Writer
+
+	lastFlush time.Time
 }
 
 func newBasicLogger() *basicLogger {
@@ -301,6 +303,7 @@ func newBasicLogger() *basicLogger {
 		ShowCategory:   true,
 		ShowTimestamp:  false,
 		Writer:         bufio.NewWriter(os.Stdout),
+		lastFlush:      time.Now(),
 	}
 }
 
@@ -419,6 +422,8 @@ func (x *basicLogger) Refresh() { x.Writer.Flush() }
 func (x *basicLogger) flushLogToAvoidCropIFN() {
 	if x.Writer.Available() < 200 {
 		x.Writer.Flush()
+	} else if time.Since(x.lastFlush) > 500*time.Millisecond {
+		x.lastFlush = time.Now()
 	}
 }
 

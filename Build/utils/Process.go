@@ -57,15 +57,24 @@ func (x FileAccessType) String() string {
 	outp.WriteRune(ch)
 	return outp.String()
 }
+func (x *FileAccessType) Serialize(ar Archive) {
+	ar.Int32((*int32)(x))
+}
 
 type FileAccessRecord struct {
 	Path   Filename
 	Access FileAccessType
 }
 
+func (x *FileAccessRecord) Serialize(ar Archive) {
+	ar.Serializable(&x.Path)
+	ar.Serializable(&x.Access)
+}
+
 type ProcessOptions struct {
 	Environment   ProcessEnvironment
 	OnFileAccess  PublicEvent[FileAccessRecord]
+	OnOutput      PublicEvent[string]
 	WorkingDir    Directory
 	CaptureOutput bool
 	NoSpinner     bool
@@ -92,6 +101,11 @@ func OptionProcessExport(name string, values ...string) ProcessOptionFunc {
 func OptionProcessFileAccess(onFileAccess EventDelegate[FileAccessRecord]) ProcessOptionFunc {
 	return func(po *ProcessOptions) {
 		po.OnFileAccess.Add(onFileAccess)
+	}
+}
+func OptionProcessOutput(onFileAccess EventDelegate[string]) ProcessOptionFunc {
+	return func(po *ProcessOptions) {
+		po.OnOutput.Add(onFileAccess)
 	}
 }
 func OptionProcessWorkingDir(value Directory) ProcessOptionFunc {
@@ -178,7 +192,11 @@ func RunProcess_Vanilla(executable Filename, arguments StringSet, options Proces
 
 		for scanner.Scan() {
 			if line := scanner.Text(); len(line) > 0 {
-				LogForwardln(line)
+				if options.OnOutput.Bound() {
+					options.OnOutput.Invoke(line)
+				} else {
+					LogForwardln(line)
+				}
 			}
 		}
 
@@ -192,7 +210,12 @@ func RunProcess_Vanilla(executable Filename, arguments StringSet, options Proces
 		cmd.Stdout = outputForError
 		if err := cmd.Run(); err != nil {
 			// print output if the command failed
-			LogForward(UnsafeStringFromBytes(outputForError.Bytes()))
+			output := UnsafeStringFromBytes(outputForError.Bytes())
+			if options.OnOutput.Bound() {
+				options.OnOutput.Invoke(output)
+			} else {
+				LogForward(output)
+			}
 			return err
 		}
 

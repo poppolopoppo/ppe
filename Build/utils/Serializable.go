@@ -29,6 +29,8 @@ type ArchiveFlag int32
 const (
 	AR_LOADING ArchiveFlag = iota
 	AR_DETERMINISM
+	AR_TOLERANT
+	AR_GUARD
 )
 
 func (x ArchiveFlag) Ord() int32        { return int32(x) }
@@ -39,6 +41,10 @@ func (x *ArchiveFlag) Set(in string) (err error) {
 		*x = AR_LOADING
 	case AR_DETERMINISM.String():
 		*x = AR_DETERMINISM
+	case AR_TOLERANT.String():
+		*x = AR_TOLERANT
+	case AR_GUARD.String():
+		*x = AR_GUARD
 	default:
 		err = fmt.Errorf("unkown archive flags: %v", in)
 	}
@@ -51,6 +57,10 @@ func (x ArchiveFlag) String() (str string) {
 		str = "LOADING"
 	case AR_DETERMINISM:
 		str = "DETERMINISM"
+	case AR_TOLERANT:
+		str = "TOLERANT"
+	case AR_GUARD:
+		str = "GUARD"
 	default:
 		UnexpectedValuePanic(x, x)
 	}
@@ -66,6 +76,12 @@ func (fl ArchiveFlags) IsLoading() bool {
 }
 func (fl ArchiveFlags) IsDeterministic() bool {
 	return fl.Has(AR_DETERMINISM)
+}
+func (fl ArchiveFlags) IsTolerant() bool {
+	return fl.Has(AR_TOLERANT)
+}
+func (fl ArchiveFlags) IsGuarded() bool {
+	return fl.Has(AR_GUARD)
 }
 
 const (
@@ -385,8 +401,11 @@ func (x basicArchive) Error() error {
 	return x.err
 }
 func (x *basicArchive) OnError(err error) {
-	x.err = err
-	LogPanic(LogSerialize, "%v", err)
+	if x.err = err; x.flags.IsTolerant() {
+		LogError(LogSerialize, "%v", err)
+	} else {
+		LogPanic(LogSerialize, "%v", err)
+	}
 }
 func (x basicArchive) Flags() ArchiveFlags {
 	return x.flags
@@ -599,16 +618,8 @@ func (ar *ArchiveBinaryWriter) String(value *string) {
 			ar.OnError(fmt.Errorf("serializable: not enough bytes written -> %d != %d", size, n))
 		}
 
-	} else { // try to make a temporary copy instead of relying on []byte conversion
-		var raw []byte
-		if len(*value) <= len(ar.bytes) {
-			raw = ar.bytes[:len(*value)]
-			copy(raw, *value)
-		} else { // resort to type conversion if buffer is too small
-			raw = ([]byte)(*value)
-		}
-
-		ar.Raw(raw)
+	} else {
+		ar.Raw(UnsafeBytesFromString(*value))
 	}
 }
 func (ar *ArchiveBinaryWriter) Time(value *time.Time) {
@@ -966,7 +977,13 @@ type ArchiveGuard struct {
 }
 
 func NewArchiveGuard(ar Archive) Archive {
-	if ARCHIVEGUARD_ENABLED {
+	shouldUseGuard := false
+	if ar.Flags().IsLoading() {
+		shouldUseGuard = ar.Flags().IsGuarded()
+	} else {
+		shouldUseGuard = ARCHIVEGUARD_ENABLED
+	}
+	if shouldUseGuard {
 		return ArchiveGuard{inner: ar}
 	} else {
 		return ar
@@ -1021,7 +1038,9 @@ func (ar ArchiveGuard) OnError(err error) {
 	ar.inner.OnError(err)
 }
 func (ar ArchiveGuard) Flags() ArchiveFlags {
-	return ar.inner.Flags()
+	flags := ar.inner.Flags()
+	flags.Add(AR_GUARD)
+	return flags
 }
 func (ar ArchiveGuard) HasTags(tags ...FourCC) bool {
 	return ar.inner.HasTags(tags...)

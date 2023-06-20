@@ -52,8 +52,7 @@ func JsonSerialize(x interface{}, dst io.Writer, options ...JsonOptionFunc) erro
 		tmp := TransientLargePage.Allocate()
 		defer TransientLargePage.Release(tmp)
 
-		buf := bytes.NewBuffer(tmp)
-		buf.Reset()
+		buf := bytes.NewBuffer(tmp[:0])
 
 		encoder := json.NewEncoder(buf)
 
@@ -64,8 +63,7 @@ func JsonSerialize(x interface{}, dst io.Writer, options ...JsonOptionFunc) erro
 		tmp2 := TransientLargePage.Allocate()
 		defer TransientLargePage.Release(tmp2)
 
-		pretty := bytes.NewBuffer(tmp2)
-		pretty.Reset()
+		pretty := bytes.NewBuffer(tmp2[:0])
 
 		if err := json.Indent(pretty, buf.Bytes(), "", "\t"); err == nil {
 			dst.Write(pretty.Bytes())
@@ -92,8 +90,7 @@ func PrettyPrint(x interface{}) string {
 	tmp := TransientLargePage.Allocate()
 	defer TransientLargePage.Release(tmp)
 
-	buf := bytes.NewBuffer(tmp)
-	buf.Reset()
+	buf := bytes.NewBuffer(tmp[:0])
 
 	encoder := slowJson.NewEncoder(buf)
 
@@ -102,8 +99,7 @@ func PrettyPrint(x interface{}) string {
 		tmp2 := TransientLargePage.Allocate()
 		defer TransientLargePage.Release(tmp2)
 
-		pretty := bytes.NewBuffer(tmp2)
-		pretty.Reset()
+		pretty := bytes.NewBuffer(tmp2[:0])
 
 		if err = slowJson.Indent(pretty, buf.Bytes(), "", "\t"); err == nil {
 			return pretty.String()
