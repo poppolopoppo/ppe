@@ -50,3 +50,6 @@
 [submodule "Source/External/detours/detours.git"]
 	path = Source/External/detours/detours.git
 	url = https://github.com/microsoft/Detours.git
+[submodule "Build"]
+	path = Build
+	url = https://github.com/poppolopoppo/ppb
