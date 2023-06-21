@@ -1,13 +1,14 @@
 package main
 
 import (
-	. "build"
-	. "build/compile"
-	. "build/utils"
 	"fmt"
 	"io"
 	"strconv"
 	"strings"
+
+	. "github.com/poppolopoppo/ppb"
+	. "github.com/poppolopoppo/ppb/compile"
+	. "github.com/poppolopoppo/ppb/utils"
 )
 
 var LogPPE = LogCategory{Name: "PPE"}
