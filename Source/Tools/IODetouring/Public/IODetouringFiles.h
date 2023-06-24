@@ -12,6 +12,8 @@
 
 #include <atomic>
 
+#include "IODetouringTblog.h"
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -25,15 +27,17 @@ public:
     using singleton_type::Get;
     using singleton_type::Destroy;
 
-    static VOID Create(PCWSTR pwzStdin, PCWSTR pwzStdout, PCWSTR pwzStderr) {
-        singleton_type::Create(pwzStdin, pwzStdout, pwzStderr);
+    static VOID Create(const FIODetouringPayload& payload) {
+        singleton_type::Create(payload);
     }
 
     VOID Dump();
 
     // filenames
     struct FFileInfo {
-        PCWSTR  pwzPath{ nullptr };
+        PCWSTR  pwzInputPath{ nullptr };
+        PCWSTR  pwzRealPath{ nullptr };
+        PCSTR   pszRealPath{ nullptr };
         PBYTE   pbContent{ nullptr };
 
         SIZE_T  cbRead{ 0 };
@@ -59,6 +63,8 @@ public:
         bool    bAppend{ false };
         bool    bAbsorbed{ false };        // Absorbed by TraceBld.
         bool    bDirectory{ false };
+
+        bool WasMounted() const { return (pwzRealPath != pwzInputPath); }
     };
     using PFileInfo = FFileInfo*;
 
@@ -83,8 +89,8 @@ public:
     PProcInfo CreateProc(HANDLE hProc, DWORD nProcId);
     BOOL Close(HANDLE hProc);
 
-    BOOL ShouldDetourApplication(PCWSTR pwzPath) NOEXCEPT;
-    BOOL ShouldDetourApplication(PCSTR pszPath) NOEXCEPT;
+    BOOL ShouldDetourApplication(PCWSTR pwzPath) const NOEXCEPT;
+    BOOL ShouldDetourApplication(PCSTR pszPath) const NOEXCEPT;
 
     // file handles
     struct FOpenFile {
@@ -114,8 +120,10 @@ public:
     VOID UseEnvVar(PCSTR pwzVarname);
 
     // path helpers
-    static VOID StringCopy(PWCHAR pwzDst, PCWSTR pwzSrc) NOEXCEPT;
-    static VOID StringCopy(PCHAR pszDst, PCSTR pszSrc) NOEXCEPT;
+    static PWCHAR StringCopy(PWCHAR pwzDst, PCSTR pszSrc) NOEXCEPT;
+    static PCHAR StringCopy(PCHAR pwzDst, PCWSTR pwzSrc) NOEXCEPT;
+    static PWCHAR StringCopy(PWCHAR pwzDst, PCWSTR pwzSrc) NOEXCEPT;
+    static PCHAR StringCopy(PCHAR pszDst, PCSTR pszSrc) NOEXCEPT;
     static DWORD StringLen(PCWSTR pwzSrc) NOEXCEPT;
     static VOID EndInSlash(PWCHAR pwzPath) NOEXCEPT;
     static BOOL PrefixMatch(PCWSTR pwzPath, PCWSTR pwzPrefix) NOEXCEPT;
@@ -136,15 +144,18 @@ public:
     VOID NoteCleanup(PCSTR psz);
     VOID NoteCleanup(PCWSTR pwz);
 
+    STATIC_CONST_INTEGRAL(u32, MaxPath, MAX_PATH*2);
+
 private:
-    FIODetouringFiles(PCWSTR pwzStdin, PCWSTR pwzStdout, PCWSTR pwzStderr);
+    FIODetouringFiles(const FIODetouringPayload& payload);
     ~FIODetouringFiles();
 
-    VOID InitSystemPaths_();
+    VOID InitSystemPaths_(const FIODetouringPayload& payload);
     VOID InitFileInfo_(FFileInfo& file, PPE::FConstWChar pwzPath) NOEXCEPT;
 
     using heap_type = PPE::TThreadSafe<PPE::TSlabHeap<PPE::FWin32GlobalAllocatorPtr>, PPE::EThreadBarrier::CriticalSection>;
     static PPE::FConstWChar AllocString_(const heap_type::FExclusiveLock& heap, PCWSTR pwzPath);
+    static PPE::FConstChar AllocString_(const heap_type::FExclusiveLock& heap, PCSTR pszPath);
 
     heap_type _heap;
 
@@ -174,14 +185,23 @@ private:
     using envs_type = concurrent_hashmap_t<FCaseInsensitiveConstChar, FEnvVar>;
     envs_type _envs;
 
-    WCHAR _wzSysPath[MAX_PATH];
-    WCHAR _wzS64Path[MAX_PATH];
-    WCHAR _wzTmpPath[MAX_PATH];
-    WCHAR _wzExePath[MAX_PATH];
-    DWORD _wcSysPath;
-    DWORD _wcS64Path;
-    DWORD _wcTmpPath;
-    DWORD _wcExePath;
+    PPE::TMemoryView<PCWSTR> _pzzIgnoredApplications;
+
+    struct FMountedPath_ {
+        PCWSTR pzInputPath;
+        PCWSTR pzRealPath;
+    };
+
+    PPE::TMemoryView<FMountedPath_> _pzzMountedPaths;
+
+    WCHAR _wzSysPath[MaxPath];
+    WCHAR _wzS64Path[MaxPath];
+    WCHAR _wzTmpPath[MaxPath];
+    WCHAR _wzExePath[MaxPath];
+    DWORD _wcSysPath{0};
+    DWORD _wcS64Path{0};
+    DWORD _wcTmpPath{0};
+    DWORD _wcExePath{0};
 
     PCWSTR _pwzStdin = L"";
     PCWSTR _pwzStdout = L"";

@@ -16,7 +16,7 @@ class PPE_IODETOURING_API FIODetouringTblog : PPE::Meta::TSingleton<FIODetouring
     static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT; // for shared lib
 public:
     struct FMessage {
-        DWORD   nBytes;
+        DWORD   nBytes{ 0 };
         CHAR    szMessage[32764]; // 32768 - sizeof(nBytes)
     };
     using PMessage = FMessage*;
@@ -40,6 +40,7 @@ public:
     ENUM_FLAGS_FRIEND(EOptions);
 
     struct FPayload {
+        WCHAR       wzzMountedPaths[4096] = L"";
         WCHAR       wzzIgnoredApplications[1024] = L"";
         WCHAR       wzNamedPipe[256] = L"";
         WCHAR       wzStdin[256] = L"";

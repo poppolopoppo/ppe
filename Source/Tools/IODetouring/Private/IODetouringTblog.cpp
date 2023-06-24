@@ -42,7 +42,7 @@ static void SaveStdHandleName_(HANDLE hFile, PWCHAR pwzBuffer, BOOL* bAppend) {
 
     if ((hFile != INVALID_HANDLE_VALUE) && IsInherited_(hFile)) {
         if (FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().RecallFile(hFile)) {
-            FIODetouringFiles::StringCopy(pwzBuffer, pInfo->pwzPath);
+            FIODetouringFiles::StringCopy(pwzBuffer, pInfo->pwzInputPath);
 
             pInfo->bStdio = true;
             if (pInfo->bAppend && bAppend != nullptr)
@@ -55,7 +55,8 @@ static void SaveStdHandleName_(HANDLE hFile, PWCHAR pwzBuffer, BOOL* bAppend) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FIODetouringTblog::FIODetouringTblog() {
+FIODetouringTblog::FIODetouringTblog()
+{
     InitializeCriticalSection(&_csPipe);
     InitializeCriticalSection(&_csChildPayload);
 
@@ -63,14 +64,15 @@ FIODetouringTblog::FIODetouringTblog() {
 
     _payload.nPayloadOptions = (
         // ignore every "special" files by default
-        EOptions::IgnoreAbsorbed    |
-        EOptions::IgnoreCleanup     |
-        EOptions::IgnoreDelete      |
-        EOptions::IgnoreDirectory   |
-        EOptions::IgnorePipe        |
-        EOptions::IgnoreStdio       |
-        EOptions::IgnoreSystem      );
+        EOptions::IgnoreAbsorbed |
+        EOptions::IgnoreCleanup |
+        EOptions::IgnoreDelete |
+        EOptions::IgnoreDirectory |
+        EOptions::IgnorePipe |
+        EOptions::IgnoreStdio |
+        EOptions::IgnoreSystem);
 }
+
 //----------------------------------------------------------------------------
 FIODetouringTblog::~FIODetouringTblog() {
     DeleteCriticalSection(&_csPipe);

@@ -13,6 +13,8 @@
 #include <random>
 #include <strsafe.h>
 
+#include "Maths/ScalarVectorHelpers.h"
+
 #define USE_IOWRAPPER_DEBUG     0 // %_NOCOMMIT%
 #define USE_IOWRAPPER_THREAD    0 // %_NOCOMMIT%
 
@@ -62,23 +64,22 @@ static ERunProcess RunProcessWithDetours(
     PCWSTR pwzExecutableName,           // executable path, provide an absolute path to bypass %PATH% resolution
     PCWSTR pwzCommandLine,              // process arguments as a string, separated by spaces and within quotes when needed
     PCWSTR pwzzIgnoredApplications,     // child application matching those name won't be detoured, as a null-terminated array of null-terminated strings
+    PCWSTR pwzzMountedPaths,            // pair of strings to expand filenames in executed process (can be used to remap file accesses to a remote machine)
     EIODetouringOptions nOptions,       // file matching any of those attribute won't pass through `onFilename` event
     HANDLE hDependencyFile              // handle to dependency output file
 );
 
 int _tmain(int argc, TCHAR* argv[], TCHAR* []) {
-    if (argc < 4) {
-        fprintf(stderr, "%ls <dependency_path> <ignored_applications> <application_path> [application_args]*\n", argv[0]);
+    if (argc < 3) {
+        fprintf(stderr, "%ls <dependency_path> <application_path> [application_args]*\n", argv[0]);
         return -1;
     }
 
-    const int nCommandLineFirstArg = 4;
+    const int nCommandLineFirstArg = 3;
     PCWSTR const pwzDependenciesPath = argv[1];
-    PCWSTR const pwzIgnoredApplications = argv[2];
-    PCWSTR const pwzExecutableName = argv[3];
+    PCWSTR const pwzExecutableName = argv[2];
 
     IOWRAPPER_LOG("dependency file: '%ls'\n", pwzDependenciesPath);
-    IOWRAPPER_LOG("ignored applications: '%ls'\n", pwzIgnoredApplications);
     IOWRAPPER_LOG("executable name: '%ls'\n", pwzExecutableName);
 
     // open output handle to write file dependencies
@@ -123,15 +124,14 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* []) {
     IOWRAPPER_LOG("command-line: '%ls'\n", wzCommandLine);
 
     // construct ignored applications block
-    TCHAR wzzIgnoredApplications[8192] = TEXT("");
-    for (int nOff = 0; nOff < ARRAYSIZE(wzzIgnoredApplications) - 1; ) {
-        wzzIgnoredApplications[nOff] = (pwzIgnoredApplications[nOff] != TEXT(',') ? pwzIgnoredApplications[nOff] : TEXT('\0'));
-        if (pwzIgnoredApplications[++nOff] == TEXT('\0')) {
-            wzzIgnoredApplications[nOff] = TEXT('\0');
-            wzzIgnoredApplications[nOff + 1] = TEXT('\0');
-            break;
-        }
-    }
+    TCHAR wzzIgnoredApplications[ARRAYSIZE(FIODetouringPayload::wzzIgnoredApplications)] = TEXT("");
+    GetEnvironmentVariableW(L"IOWRAPPER_IGNORED_APPLICATION", wzzIgnoredApplications, ARRAYSIZE(wzzIgnoredApplications));
+    IOWRAPPER_LOG("ignored applications: '%ls'\n", wzzIgnoredApplications);
+
+    // construct mounted path pairs block
+    TCHAR wzzMountedPaths[ARRAYSIZE(FIODetouringPayload::wzzMountedPaths)] = TEXT("");
+    GetEnvironmentVariableW(L"IOWRAPPER_MOUNTED_PATHS", wzzMountedPaths, ARRAYSIZE(wzzMountedPaths));
+    IOWRAPPER_LOG("mounted paths: '%ls'\n", wzzMountedPaths);
 
     // construct a pseudo unique identifier for named pipe
     const u32 nRandomSeed{ u32(PPE::hash_size_t_constexpr(GetTickCount64(), GetCurrentProcessId(), PPE::FConstWChar(wzCommandLine).HashValue())) };
@@ -147,9 +147,6 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* []) {
         return wzRandomCharset[distrib(rnd)];
     });
     wzNamedPipePrefix[16] = TEXT('\0');
-
-
-    IOWRAPPER_LOG("ignored applications: '%ls'\n", pwzIgnoredApplications);
 
     // ignore all _special_ file types
     EIODetouringOptions nOptions = (
@@ -172,6 +169,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* []) {
         pwzExecutableName,
         wzCommandLine,
         wzzIgnoredApplications,
+        wzzMountedPaths,
         nOptions,
         hDependencyFile);
 
@@ -201,6 +199,7 @@ static bool CopyDetourPayloadToProcess_(
     HANDLE hProcess,
     PCWSTR pwzNamedPipePrefix,
     PCWSTR pwzzIgnoredApplications,
+    PCWSTR pwzzMountedPaths,
     EIODetouringOptions nPayloadOptions) {
     FIODetouringPayload payload;
     ZeroMemory(&payload, sizeof(payload));
@@ -219,6 +218,7 @@ static bool CopyDetourPayloadToProcess_(
     StringCchCopyW(payload.wzStderr, ARRAYSIZE(payload.wzStderr), L"\\\\.\\CONOUT$");
 
     CopyNullTerminatedStringList_(payload.wzzIgnoredApplications, pwzzIgnoredApplications);
+    CopyNullTerminatedStringList_(payload.wzzMountedPaths, pwzzMountedPaths);
 
     return (!!DetourCopyPayloadToProcess(hProcess, GIODetouringGuid, &payload, sizeof(payload)));
 }
@@ -431,6 +431,7 @@ static ERunProcess RunProcessWithDetours(
     PCWSTR pwzExecutableName,           // executable path, provide an absolute path to bypass %PATH% resolution
     PCWSTR pwzCommandLine,              // process arguments as a string, separated by spaces and within quotes when needed
     PCWSTR pwzzIgnoredApplications,     // child application matching those name won't be detoured, as a null-terminated array of null-terminated strings
+    PCWSTR pwzzMountedPaths,            // pair of strings to expand filenames in executed process (can be used to remap file accesses to a remote machine)
     EIODetouringOptions nOptions,       // file matching any of those attribute won't pass through `onFilename` event
     HANDLE hDependencyFile              // handle to dependency output file
 ) {
@@ -529,7 +530,7 @@ static ERunProcess RunProcessWithDetours(
 
     // Copy detour payload to the new process
     IOWRAPPER_LOG("copy detour payload to process %08X\n", pi.hProcess);
-    if (!CopyDetourPayloadToProcess_(pi.hProcess, pwzNamedPipePrefix, pwzzIgnoredApplications, nOptions)) {
+    if (!CopyDetourPayloadToProcess_(pi.hProcess, pwzNamedPipePrefix, pwzzIgnoredApplications, pwzzMountedPaths, nOptions)) {
         *pExitCode = GetLastError();
         return RP_PAYLOAD_COPY;
     }

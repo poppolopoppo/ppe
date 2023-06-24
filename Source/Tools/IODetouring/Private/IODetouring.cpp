@@ -9,43 +9,23 @@
 
 #include "detours-external.h"
 
+namespace {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Install/Uninstall the hooks when DLL is loaded/unloaded:
 //----------------------------------------------------------------------------
-static BOOL OnProcessAttach_(FIODetouringHooks& H, HMODULE hDll);
-static BOOL OnProcessDetach_(FIODetouringHooks& H, HMODULE hDll);
+static BOOL OnThreadAttach_(FIODetouringHooks& H, HMODULE hDll) {
+    IODETOURING_DEBUGPRINTF("thread attach\n");
+
+    PPE::Unused(H, hDll);
+    return TRUE;
+}
 //----------------------------------------------------------------------------
-static BOOL OnThreadAttach_(FIODetouringHooks& H, HMODULE hDll);
-static BOOL OnThreadDetach_(FIODetouringHooks& H, HMODULE hDll);
-//----------------------------------------------------------------------------
-extern "C" BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD dwReason, PVOID lpReserved) {
-    PPE::Unused(hModule);
-    PPE::Unused(lpReserved);
+static BOOL OnThreadDetach_(FIODetouringHooks& H, HMODULE hDll) {
+    IODETOURING_DEBUGPRINTF("thread detach\n");
 
-    if (DetourIsHelperProcess()) {
-        return TRUE;
-    }
-
-    FIODetouringHooks& H = FIODetouringHooks::Get();
-
-    switch (dwReason) {
-    case DLL_PROCESS_ATTACH:
-        DetourRestoreAfterWith();
-        H.Real_EntryPoint =  (int (WINAPI *)(VOID))DetourGetEntryPoint(NULL);
-        return OnProcessAttach_(H, hModule);
-
-    case DLL_PROCESS_DETACH:
-        return OnProcessDetach_(H, hModule);
-
-    case DLL_THREAD_ATTACH:
-        return OnThreadAttach_(H, hModule);
-
-    case DLL_THREAD_DETACH:
-        return OnThreadDetach_(H, hModule);
-    }
-
+    PPE::Unused(H, hDll);
     return TRUE;
 }
 //----------------------------------------------------------------------------
@@ -58,7 +38,7 @@ static BOOL OnProcessAttach_(FIODetouringHooks& H, HMODULE hDll) {
     H.hKernel32 = NULL;
     H.bLog = FALSE;
 
-    PBYTE xCreate = (PBYTE)DetourCodeFromPointer((PVOID)H.Real_CreateProcessW, NULL);
+    const PBYTE xCreate = (PBYTE)DetourCodeFromPointer((PVOID)H.Real_CreateProcessW, NULL);
     FIODetouringTblog::PPayload pPayload = NULL;
 
     for (HMODULE hMod = NULL; (hMod = DetourEnumerateModules(hMod)) != NULL;) {
@@ -77,7 +57,7 @@ static BOOL OnProcessAttach_(FIODetouringHooks& H, HMODULE hDll) {
     if (pPayload == NULL || H.hKernel32 == NULL)
         return FALSE;
 
-    FIODetouringFiles::Create(pPayload->wzStdin, pPayload->wzStdout, pPayload->wzStderr);
+    FIODetouringFiles::Create(*pPayload);
 
     FIODetouringTblog& Tblog = FIODetouringTblog::Get();
     Tblog.CopyPayload(pPayload);
@@ -127,19 +107,36 @@ static BOOL OnProcessDetach_(FIODetouringHooks& H, HMODULE hDll) {
     return TRUE;
 }
 //----------------------------------------------------------------------------
-static BOOL OnThreadAttach_(FIODetouringHooks& H, HMODULE hDll) {
-    IODETOURING_DEBUGPRINTF("thread attach\n");
-
-    PPE::Unused(H, hDll);
-    return TRUE;
-}
-//----------------------------------------------------------------------------
-static BOOL OnThreadDetach_(FIODetouringHooks& H, HMODULE hDll) {
-    IODETOURING_DEBUGPRINTF("thread detach\n");
-
-    PPE::Unused(H, hDll);
-    return TRUE;
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+} //!namespace
+
+extern "C" BOOL APIENTRY DllMain(HINSTANCE hModule, DWORD dwReason, PVOID lpReserved) {
+    PPE::Unused(hModule);
+    PPE::Unused(lpReserved);
+
+    if (DetourIsHelperProcess()) {
+        return TRUE;
+    }
+
+    FIODetouringHooks& H = FIODetouringHooks::Get();
+
+    switch (dwReason) {
+    case DLL_PROCESS_ATTACH:
+        DetourRestoreAfterWith();
+        H.Real_EntryPoint =  (int (WINAPI *)(VOID))DetourGetEntryPoint(NULL);
+        return OnProcessAttach_(H, hModule);
+
+    case DLL_PROCESS_DETACH:
+        return OnProcessDetach_(H, hModule);
+
+    case DLL_THREAD_ATTACH:
+        return OnThreadAttach_(H, hModule);
+
+    case DLL_THREAD_DETACH:
+        return OnThreadDetach_(H, hModule);
+
+    default:
+        return TRUE;
+    }
+}

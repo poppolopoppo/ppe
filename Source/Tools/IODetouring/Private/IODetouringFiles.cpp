@@ -1,5 +1,7 @@
 #include "IODetouringFiles.h"
 
+#include <strsafe.h>
+
 #include "IODetouringDebug.h"
 #include "IODetouringTblog.h"
 
@@ -8,16 +10,16 @@
 //----------------------------------------------------------------------------
 // Log all file accesses (read & write), can also alias files
 //----------------------------------------------------------------------------
-FIODetouringFiles::FIODetouringFiles(PCWSTR pwzStdin, PCWSTR pwzStdout, PCWSTR pwzStderr)
+FIODetouringFiles::FIODetouringFiles(const FIODetouringPayload& payload)
 : _files(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<files_type::FEntry*>(4049))
 , _procs(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<procs_type::FEntry*>(4049))
 , _opens(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<opens_type::FEntry*>(4049))
 , _envs(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<envs_type::FEntry*>(319))
-, _pwzStdin(pwzStdin)
-, _pwzStdout(pwzStdout)
-, _pwzStderr(pwzStderr)
+, _pwzStdin(payload.wzStdin)
+, _pwzStdout(payload.wzStdout)
+, _pwzStderr(payload.wzStderr)
 {
-    InitSystemPaths_();
+    InitSystemPaths_(payload);
 }
 //----------------------------------------------------------------------------
 FIODetouringFiles::~FIODetouringFiles() {
@@ -52,7 +54,7 @@ VOID FIODetouringFiles::Dump() {
                 file.bRead,
                 file.bWrite,
                 file.bExecute);
-            Tblog.Printf("%c%ls", nAccess, file.pwzPath);
+            Tblog.Printf("%c%ls", nAccess, file.pwzInputPath);
         }
     });
 }
@@ -83,7 +85,7 @@ auto FIODetouringFiles::FindFull(PCWSTR pwzPath) -> PFileInfo {
 }
 //----------------------------------------------------------------------------
 auto FIODetouringFiles::FindPartial(PCWSTR pwzPath) -> PFileInfo {
-    WCHAR wzFullPath[MAX_PATH];
+    WCHAR wzFullPath[MaxPath];
     PWCHAR pwzFile = NULL;
 
     if (!GetFullPathNameW(pwzPath, ARRAYSIZE(wzFullPath), wzFullPath, &pwzFile))
@@ -93,33 +95,49 @@ auto FIODetouringFiles::FindPartial(PCWSTR pwzPath) -> PFileInfo {
 }
 //----------------------------------------------------------------------------
 auto FIODetouringFiles::FindPartial(PCSTR pszPath) -> PFileInfo {
-    WCHAR wzPath[MAX_PATH];
-    PWCHAR pwzFile = wzPath;
-
-    while (*pszPath)
-        *pwzFile++ = *pszPath++;
-    *pwzFile = '\0';
+    WCHAR wzPath[MaxPath];
+    StringCopy(wzPath, pszPath);
 
     return FindPartial(wzPath);
 }
 //----------------------------------------------------------------------------
 VOID FIODetouringFiles::InitFileInfo_(FFileInfo& file, PPE::FConstWChar pwzPath) NOEXCEPT {
-    file.pwzPath = pwzPath;
+    file.pwzInputPath = pwzPath;
+    file.pwzRealPath = pwzPath;
     file.nIndex = _nFiles.fetch_add(1);
 
     file.bSystemPath = (
-        PrefixMatch(file.pwzPath, _wzSysPath) ||
-        PrefixMatch(file.pwzPath, _wzS64Path));
-    file.bTemporaryPath = PrefixMatch(file.pwzPath, _wzTmpPath);
-    file.bTemporaryFile = SuffixMatch(file.pwzPath, L".tmp");
-    file.bPipe = PrefixMatch(file.pwzPath, L"\\\\.\\pipe\\");
+        PrefixMatch(file.pwzInputPath, _wzSysPath) ||
+        PrefixMatch(file.pwzInputPath, _wzS64Path));
+    file.bTemporaryPath = PrefixMatch(file.pwzInputPath, _wzTmpPath);
+    file.bTemporaryFile = SuffixMatch(file.pwzInputPath, L".tmp");
+    file.bPipe = PrefixMatch(file.pwzInputPath, L"\\\\.\\pipe\\");
     file.bStdio = (
-        PrefixMatch(file.pwzPath, _pwzStdin) ||
-        PrefixMatch(file.pwzPath, _pwzStdout) ||
-        PrefixMatch(file.pwzPath, _pwzStderr) ||
-        SuffixMatch(file.pwzPath, L"\\conout$") ||
-        SuffixMatch(file.pwzPath, L"\\conin$") ||
-        SuffixMatch(file.pwzPath, L"\\nul"));
+        PrefixMatch(file.pwzInputPath, _pwzStdin) ||
+        PrefixMatch(file.pwzInputPath, _pwzStdout) ||
+        PrefixMatch(file.pwzInputPath, _pwzStderr) ||
+        SuffixMatch(file.pwzInputPath, L"\\conout$") ||
+        SuffixMatch(file.pwzInputPath, L"\\conin$") ||
+        SuffixMatch(file.pwzInputPath, L"\\nul"));
+
+    for (const FMountedPath_& mount : _pzzMountedPaths) {
+        if (SuffixMatch(pwzPath, mount.pzInputPath)) {
+            const DWORD prefixLen = StringLen(mount.pzInputPath);
+
+            WCHAR wzPath[MaxPath];
+            StringCopy(StringCopy(wzPath, mount.pzRealPath), &pwzPath[prefixLen]);
+
+            CHAR szPath[MaxPath];
+            StringCopy(szPath, wzPath);
+
+            const heap_type::FExclusiveLock exclusiveHeap{ _heap };
+            file.pwzRealPath = AllocString_(exclusiveHeap, wzPath);
+            file.pszRealPath = AllocString_(exclusiveHeap, szPath);
+
+            IODETOURING_DEBUGPRINTF("mount '%ls' to '%ls'\n", file.pwzInputPath, file.pwzRealPath);
+            break;
+        }
+    }
 
     IODETOURING_DEBUGPRINTF("found new file '%ls' (sys:%d, tmp:%d, pipe:%d, stdio:%d)\n",
         pwzPath,
@@ -129,7 +147,7 @@ VOID FIODetouringFiles::InitFileInfo_(FFileInfo& file, PPE::FConstWChar pwzPath)
         file.bStdio);
 }
 //----------------------------------------------------------------------------
-VOID FIODetouringFiles::InitSystemPaths_() {
+VOID FIODetouringFiles::InitSystemPaths_(const FIODetouringPayload& payload) {
     _wzSysPath[0] = '\0';
     GetSystemDirectoryW(_wzSysPath, ARRAYSIZE(_wzSysPath));
     EndInSlash(_wzSysPath);
@@ -157,6 +175,40 @@ VOID FIODetouringFiles::InitSystemPaths_() {
     _wcS64Path = StringLen(_wzS64Path);
     _wcTmpPath = StringLen(_wzTmpPath);
     _wcExePath = StringLen(_wzExePath);
+
+    u32 numIgnoredApplications = 0;
+    for (PCWSTR pzzIgnoredApplication = payload.wzzIgnoredApplications; *pzzIgnoredApplication; ++numIgnoredApplications) {
+        // pzzIgnoredApplication is null-terminated list of null-terminated strings
+        while (*pzzIgnoredApplication++);
+    }
+
+    _pzzIgnoredApplications = _heap.LockExclusive()->AllocateT<PCWSTR>(numIgnoredApplications);
+
+    numIgnoredApplications = 0;
+    for (PCWSTR pzzIgnoredApplication = payload.wzzIgnoredApplications; *pzzIgnoredApplication; ++numIgnoredApplications) {
+        // store the c-strings in an array for later
+        _pzzIgnoredApplications[numIgnoredApplications] = pzzIgnoredApplication;
+        while (*pzzIgnoredApplication++);
+    }
+
+    u32 numMountedPaths = 0;
+    for (PCWSTR pzzMountedPath = payload.wzzMountedPaths; *pzzMountedPath; ++numMountedPaths) {
+        // pzzMountedPath is null-terminated list of null-terminated strings
+        while (*pzzMountedPath++);
+    }
+
+    _pzzMountedPaths = _heap.LockExclusive()->AllocateT<FMountedPath_>(numMountedPaths/2);
+
+    numMountedPaths = 0;
+    for (PCWSTR pzzMountedPath = payload.wzzMountedPaths; *pzzMountedPath; ++numMountedPaths) {
+        // items must be grouped 2 by 2 in pairs
+        FMountedPath_& pair = _pzzMountedPaths[numMountedPaths/2];
+        if ((numMountedPaths % 2) == 0)
+            pair.pzInputPath = pzzMountedPath;
+        else
+            pair.pzRealPath = pzzMountedPath;
+        while (*pzzMountedPath++);
+    }
 }
 //----------------------------------------------------------------------------
 // Procs:
@@ -180,30 +232,21 @@ BOOL FIODetouringFiles::Close(HANDLE hProc) {
     return false;
 }
 //----------------------------------------------------------------------------
-BOOL FIODetouringFiles::ShouldDetourApplication(PCWSTR pwzPath) NOEXCEPT {
-    PCWSTR pzzIgnoredApplication = FIODetouringTblog::Get().Payload().wzzIgnoredApplications;
-
-    while (*pzzIgnoredApplication) {
+BOOL FIODetouringFiles::ShouldDetourApplication(PCWSTR pwzPath) const NOEXCEPT {
+    for (PCWSTR pzIgnoredApplication : _pzzIgnoredApplications) {
         // check if this application was explicitly ignored in detours payload
-        if (SuffixMatch(pwzPath, pzzIgnoredApplication)) {
+        if (SuffixMatch(pwzPath, pzIgnoredApplication)) {
             IODETOURING_DEBUGPRINTF("ignore IO detouring on child process '%ls'\n", pwzPath);
             return FALSE;
         }
-
-        // pzzIgnoredApplication is null-terminated list of null-terminated strings
-        while (*pzzIgnoredApplication++);
     }
 
     return TRUE;
 }
 //----------------------------------------------------------------------------
-BOOL FIODetouringFiles::ShouldDetourApplication(PCSTR pszPath) NOEXCEPT {
-    WCHAR wzPath[MAX_PATH];
-    PWCHAR pwzFile = wzPath;
-
-    while (*pszPath)
-        *pwzFile++ = *pszPath++;
-    *pwzFile = '\0';
+BOOL FIODetouringFiles::ShouldDetourApplication(PCSTR pszPath) const NOEXCEPT {
+    WCHAR wzPath[MaxPath];
+    StringCopy(wzPath, pszPath);
 
     return ShouldDetourApplication(wzPath);
 }
@@ -301,14 +344,12 @@ BOOL FIODetouringFiles::Duplicate(HANDLE hDst, HANDLE hSrc) {
 VOID FIODetouringFiles::UseEnvVar(PCWSTR pwzVarname) {
     const FCaseInsensitiveConstChar key{ pwzVarname };
 
-    const heap_type::FExclusiveLock exclusiveHeap{ _heap };
-
     bool added = false;
     envs_type::public_type& it = _envs.FindOrAdd(key, &added);
 
     if (added) {
         const_cast<FCaseInsensitiveConstChar&>(it.first) = FCaseInsensitiveConstChar{
-            AllocString_(exclusiveHeap, pwzVarname),
+            AllocString_(_heap.LockExclusive(), pwzVarname),
             key.Hash() };
 
         IODETOURING_DEBUGPRINTF("use environment variable '%ls'\n", pwzVarname);
@@ -318,13 +359,9 @@ VOID FIODetouringFiles::UseEnvVar(PCWSTR pwzVarname) {
     InterlockedIncrement(&it.second.nCount);
 }
 //----------------------------------------------------------------------------
-VOID FIODetouringFiles::UseEnvVar(PCSTR pwzVarname) {
-    WCHAR wzVarname[MAX_PATH];
-    PWCHAR pwzPath = wzVarname;
-
-    while (*pwzVarname)
-        *pwzPath++ = *pwzVarname++;
-    *pwzPath = L'\0';
+VOID FIODetouringFiles::UseEnvVar(PCSTR pszVarname) {
+    WCHAR wzVarname[MaxPath];
+    StringCopy(wzVarname, pszVarname);
 
     return UseEnvVar(wzVarname);
 }
@@ -372,7 +409,7 @@ VOID FIODetouringFiles::NoteExecute(HMODULE hModule) {
     // query actual Dll normalized path instead of trying to replicate this behavior
     // https://learn.microsoft.com/en-us/windows/win32/api/libloaderapi/nf-libloaderapi-loadlibrarya#remarks
 
-    TCHAR wzModulePath[MAX_PATH];
+    TCHAR wzModulePath[MaxPath];
     const DWORD dwLen = GetModuleFileNameW(hModule, wzModulePath, ARRAYSIZE(wzModulePath));
 
     if (dwLen > 0 && dwLen <= ARRAYSIZE(wzModulePath)) {
@@ -429,16 +466,32 @@ VOID FIODetouringFiles::NoteCleanup(PCWSTR pwz) {
 //----------------------------------------------------------------------------
 // Path helpers:
 //----------------------------------------------------------------------------
-VOID FIODetouringFiles::StringCopy(PWCHAR pwzDst, PCWSTR pwzSrc) NOEXCEPT {
+PWCHAR FIODetouringFiles::StringCopy(PWCHAR pwzDst, PCSTR pszSrc) NOEXCEPT {
+    while (*pszSrc)
+        *pwzDst++ = static_cast<WCHAR>(*pszSrc++);
+    *pwzDst = '\0';
+    return pwzDst;
+}
+//----------------------------------------------------------------------------
+PCHAR FIODetouringFiles::StringCopy(PCHAR pszDst, PCWSTR pwzSrc) NOEXCEPT {
+    while (*pwzSrc)
+        *pszDst++ = static_cast<CHAR>(*pwzSrc++);
+    *pszDst = '\0';
+    return pszDst;
+}
+//----------------------------------------------------------------------------
+PWCHAR FIODetouringFiles::StringCopy(PWCHAR pwzDst, PCWSTR pwzSrc) NOEXCEPT {
     while (*pwzSrc)
         *pwzDst++ = *pwzSrc++;
     *pwzDst = '\0';
+    return pwzDst;
 }
 //----------------------------------------------------------------------------
-VOID FIODetouringFiles::StringCopy(PCHAR pszDst, PCSTR pszSrc) NOEXCEPT {
+PCHAR FIODetouringFiles::StringCopy(PCHAR pszDst, PCSTR pszSrc) NOEXCEPT {
     while (*pszSrc)
         *pszDst++ = *pszSrc++;
     *pszDst = '\0';
+    return pszDst;
 }
 //----------------------------------------------------------------------------
 DWORD FIODetouringFiles::StringLen(PCWSTR pwzSrc) NOEXCEPT {
@@ -512,6 +565,16 @@ PPE::FConstWChar FIODetouringFiles::AllocString_(const heap_type::FExclusiveLock
     StringCopy(pwzCopy, pwzPath);
 
     return PPE::FConstWChar(pwzCopy);
+}
+//----------------------------------------------------------------------------
+PPE::FConstChar FIODetouringFiles::AllocString_(const heap_type::FExclusiveLock& heap, PCSTR pszPath) {
+    const PPE::FConstChar in(pszPath);
+    const size_t len = in.length();
+
+    PSTR const pszCopy = (PSTR)heap->Allocate((len+1/* zero char */) * sizeof(char));
+    StringCopy(pszCopy, pszPath);
+
+    return PPE::FConstChar(pszCopy);
 }
 //----------------------------------------------------------------------------
 void* FIODetouringFiles::class_singleton_storage() NOEXCEPT {

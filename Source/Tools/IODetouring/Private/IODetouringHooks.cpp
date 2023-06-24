@@ -326,14 +326,19 @@ VOID WINAPI FIODetouringHooks::Hook_ExitProcess(UINT uExitCode) {
 //----------------------------------------------------------------------------
 BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryA(LPCSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes) {
     IODETOURING_DEBUGPRINTF("call Hook_CreateDirectoryA\n");
+
+    FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().FindPartial(lpPathName);
+    if (pInfo->WasMounted()) {
+        lpPathName = pInfo->pszRealPath;
+    }
+
     BOOL rv = 0;
     __try {
         rv = Get().Real_CreateDirectoryA(lpPathName, lpSecurityAttributes);
     }
     __finally {
         if (rv) {
-            if (FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().FindPartial(lpPathName))
-                pInfo->bDirectory = TRUE;
+            pInfo->bDirectory = TRUE;
         }
     };
     return rv;
@@ -341,13 +346,15 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryA(LPCSTR lpPathName, LPSECURI
 //----------------------------------------------------------------------------
 BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryW(LPCWSTR lpPathName, LPSECURITY_ATTRIBUTES lpSecurityAttributes) {
     IODETOURING_DEBUGPRINTF("call Hook_CreateDirectoryW\n");
+
+    FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().FindPartial(lpPathName);
+
     BOOL rv = 0;
     __try {
-        rv = Get().Real_CreateDirectoryW(lpPathName, lpSecurityAttributes);
+        rv = Get().Real_CreateDirectoryW(pInfo->pwzRealPath, lpSecurityAttributes);
     } __finally {
         if (rv) {
-            if (FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().FindPartial(lpPathName))
-                pInfo->bDirectory = TRUE;
+            pInfo->bDirectory = TRUE;
         }
     };
     return rv;
@@ -355,14 +362,22 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryW(LPCWSTR lpPathName, LPSECUR
 //----------------------------------------------------------------------------
 BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryExA(LPCSTR lpTemplateDirectory, LPCSTR lpNewDirectory, LPSECURITY_ATTRIBUTES lpSecurityAttributes) {
     IODETOURING_DEBUGPRINTF("call Hook_CreateDirectoryExA\n");
+
+    if (lpTemplateDirectory) {
+        FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().FindPartial(lpTemplateDirectory);
+        if (pInfo->WasMounted())
+            lpTemplateDirectory = pInfo->pszRealPath;
+    }
+
+    FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().FindPartial(lpNewDirectory);
+
     BOOL rv = 0;
     __try {
-        rv = Get().Real_CreateDirectoryExA(lpTemplateDirectory, lpNewDirectory, lpSecurityAttributes);
+        rv = Get().Real_CreateDirectoryExA(lpTemplateDirectory, pInfo->pszRealPath, lpSecurityAttributes);
     }
     __finally {
         if (rv) {
-            if (FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().FindPartial(lpNewDirectory))
-                pInfo->bDirectory = TRUE;
+            pInfo->bDirectory = TRUE;
         }
     };
     return rv;
@@ -370,13 +385,20 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryExA(LPCSTR lpTemplateDirector
 //----------------------------------------------------------------------------
 BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryExW(LPCWSTR lpTemplateDirectory, LPCWSTR lpNewDirectory, LPSECURITY_ATTRIBUTES lpSecurityAttributes) {
     IODETOURING_DEBUGPRINTF("call Hook_CreateDirectoryExW\n");
+
+    if (lpTemplateDirectory) {
+        FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().FindPartial(lpTemplateDirectory);
+        lpTemplateDirectory = pInfo->pwzRealPath;
+    }
+
+    FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().FindPartial(lpNewDirectory);
+
     BOOL rv = 0;
     __try {
-        rv = Get().Real_CreateDirectoryExW(lpTemplateDirectory, lpNewDirectory, lpSecurityAttributes);
+        rv = Get().Real_CreateDirectoryExW(lpTemplateDirectory, pInfo->pwzRealPath, lpSecurityAttributes);
     } __finally {
         if (rv) {
-            if (FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().FindPartial(lpNewDirectory))
-                pInfo->bDirectory = TRUE;
+            pInfo->bDirectory = TRUE;
         }
     };
     return rv;
@@ -384,16 +406,19 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryExW(LPCWSTR lpTemplateDirecto
 //----------------------------------------------------------------------------
 HANDLE WINAPI FIODetouringHooks::Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
     IODETOURING_DEBUGPRINTF("call Hook_CreateFileA\n");
+
+    FIODetouringFiles& files = FIODetouringFiles::Get();
+    FIODetouringFiles::PFileInfo const pInfo = files.FindPartial(lpFileName);
+    if (pInfo->WasMounted()) {
+        lpFileName = pInfo->pszRealPath;
+    }
+
     HANDLE rv = 0;
     __try {
         rv = Get().Real_CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
     }
     __finally {
         if (dwDesiredAccess != 0 && rv != NULL && rv != INVALID_HANDLE_VALUE) {
-
-            FIODetouringFiles& files = FIODetouringFiles::Get();
-            FIODetouringFiles::PFileInfo const pInfo = files.FindPartial(lpFileName);
-
             // FILE_FLAG_WRITE_THROUGH              0x80000000
             // FILE_FLAG_OVERLAPPED                 0x40000000
             // FILE_FLAG_NO_BUFFERING               0x20000000
@@ -456,15 +481,15 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDes
 //----------------------------------------------------------------------------
 HANDLE WINAPI FIODetouringHooks::Hook_CreateFileW(LPCWSTR lpFileName, DWORD dwDesiredAccess, DWORD dwShareMode, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD dwCreationDisposition, DWORD dwFlagsAndAttributes, HANDLE hTemplateFile) {
     IODETOURING_DEBUGPRINTF("call Hook_CreateFileW\n");
+
+    FIODetouringFiles& files = FIODetouringFiles::Get();
+    FIODetouringFiles::PFileInfo const pInfo = files.FindPartial(lpFileName);
+
     HANDLE rv = 0;
     __try {
-        rv = Get().Real_CreateFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+        rv = Get().Real_CreateFileW(pInfo->pwzRealPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
     } __finally {
         if (dwDesiredAccess != 0 && rv != NULL && rv != INVALID_HANDLE_VALUE) {
-
-            FIODetouringFiles& files = FIODetouringFiles::Get();
-            FIODetouringFiles::PFileInfo const pInfo = files.FindPartial(lpFileName);
-
             // FILE_FLAG_WRITE_THROUGH              0x80000000
             // FILE_FLAG_OVERLAPPED                 0x40000000
             // FILE_FLAG_NO_BUFFERING               0x20000000
@@ -527,6 +552,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileW(LPCWSTR lpFileName, DWORD dwDe
 //----------------------------------------------------------------------------
 HANDLE WINAPI FIODetouringHooks::Hook_CreateFileMappingA(HANDLE hFile, LPSECURITY_ATTRIBUTES lpAttributes, DWORD flProtect, DWORD dwMaximumSizeHigh, DWORD dwMaximumSizeLow, LPCSTR lpName) {
     IODETOURING_DEBUGPRINTF("call Hook_CreateFileMappingA\n");
+
     HANDLE rv = 0;
     __try {
         rv = Get().Real_CreateFileMappingA(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
@@ -794,11 +820,11 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessA(LPCSTR lpApplicationName, LPS
         lpCommandLine = (LPSTR)lpApplicationName;
     }
 
-    CHAR szProc[MAX_PATH];
+    CHAR szProc[FIODetouringFiles::MaxPath];
     BOOL rv = FALSE;
 
     // retrieve application name either from user param or from command-line
-    CHAR szPath[MAX_PATH];
+    CHAR szPath[FIODetouringFiles::MaxPath];
     if (lpApplicationName == NULL) {
         PCHAR pszDst = szPath;
         PCHAR pszSrc = lpCommandLine;
@@ -825,10 +851,14 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessA(LPCSTR lpApplicationName, LPS
         FIODetouringFiles::StringCopy(szPath, lpApplicationName);
     }
 
-    __try {
-        FIODetouringFiles& files = FIODetouringFiles::Get();
+    FIODetouringFiles::PFileInfo pInfo = FIODetouringFiles::Get().FindPartial(szPath);
+    if (pInfo->WasMounted()) {
+        FIODetouringFiles::StringCopy(szPath, pInfo->pszRealPath);
+        lpApplicationName = szPath;
+    }
 
-        if (files.ShouldDetourApplication(szPath)) {
+    __try {
+        if (FIODetouringFiles::Get().ShouldDetourApplication(szPath)) {
             // use IO detouring on child process by copying parent's payload
 
             LPPROCESS_INFORMATION ppi = lpProcessInformation;
@@ -888,8 +918,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessA(LPCSTR lpApplicationName, LPS
     __finally {
         // always record access for executable path, weather using IO detouring or not
         if (rv) {
-            if (FIODetouringFiles::PFileInfo pInfo = FIODetouringFiles::Get().FindPartial(szPath))
-                pInfo->bExecute = true;
+            pInfo->bExecute = true;
         }
     }
     return rv;
@@ -901,11 +930,11 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessW(LPCWSTR lpApplicationName, LP
         lpCommandLine = (LPWSTR)lpApplicationName;
     }
 
-    CHAR szProc[MAX_PATH];
+    CHAR szProc[FIODetouringFiles::MaxPath];
     BOOL rv = 0;
 
     // retrieve application name either from user param or from command-line
-    WCHAR wzPath[MAX_PATH];
+    WCHAR wzPath[FIODetouringFiles::MaxPath];
     if (lpApplicationName == NULL) {
         PWCHAR pwzDst = wzPath;
         PWCHAR pwzSrc = lpCommandLine;
@@ -932,10 +961,14 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessW(LPCWSTR lpApplicationName, LP
         FIODetouringFiles::StringCopy(wzPath, lpApplicationName);
     }
 
-    __try {
-        FIODetouringFiles& files = FIODetouringFiles::Get();
+    FIODetouringFiles::PFileInfo pInfo = FIODetouringFiles::Get().FindPartial(wzPath);
+    if (pInfo->WasMounted()) {
+        FIODetouringFiles::StringCopy(wzPath, pInfo->pszRealPath);
+        lpApplicationName = wzPath;
+    }
 
-        if (files.ShouldDetourApplication(wzPath)) {
+    __try {
+        if (FIODetouringFiles::Get().ShouldDetourApplication(wzPath)) {
             // use IO detouring on child process by copying parent's payload
 
             LPPROCESS_INFORMATION ppi = lpProcessInformation;
@@ -995,8 +1028,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessW(LPCWSTR lpApplicationName, LP
     } __finally {
         // always record access for executable path, weather using IO detouring or not
         if (rv) {
-            if (FIODetouringFiles::PFileInfo pInfo = FIODetouringFiles::Get().FindPartial(wzPath))
-                pInfo->bExecute = true;
+            pInfo->bExecute = true;
         }
     }
     return rv;
@@ -1004,6 +1036,12 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessW(LPCWSTR lpApplicationName, LP
 //----------------------------------------------------------------------------
 BOOL WINAPI FIODetouringHooks::Hook_DeleteFileA(LPCSTR lpFileName) {
     IODETOURING_DEBUGPRINTF("call Hook_DeleteFileA\n");
+
+    FIODetouringFiles::PFileInfo pInfo = FIODetouringFiles::Get().FindPartial(lpFileName);
+    if (pInfo->WasMounted()) {
+        lpFileName = pInfo->pszRealPath;
+    }
+
     BOOL rv = 0;
     __try {
         rv = Get().Real_DeleteFileA(lpFileName);
@@ -1016,11 +1054,15 @@ BOOL WINAPI FIODetouringHooks::Hook_DeleteFileA(LPCSTR lpFileName) {
 //----------------------------------------------------------------------------
 BOOL WINAPI FIODetouringHooks::Hook_DeleteFileW(LPCWSTR lpFileName) {
     IODETOURING_DEBUGPRINTF("call Hook_DeleteFileW\n");
+
+    FIODetouringFiles& files = FIODetouringFiles::Get();
+    FIODetouringFiles::PFileInfo pInfo = files.FindPartial(lpFileName);
+
     BOOL rv = 0;
     __try {
-        rv = Get().Real_DeleteFileW(lpFileName);
+        rv = Get().Real_DeleteFileW(pInfo->pwzRealPath);
     } __finally {
-        FIODetouringFiles::Get().NoteDelete(lpFileName);
+        files.NoteDelete(lpFileName);
     };
     return rv;
 }
