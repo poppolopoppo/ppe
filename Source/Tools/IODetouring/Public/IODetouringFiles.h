@@ -144,7 +144,8 @@ public:
     VOID NoteCleanup(PCSTR psz);
     VOID NoteCleanup(PCWSTR pwz);
 
-    STATIC_CONST_INTEGRAL(u32, MaxPath, MAX_PATH*2);
+    // https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#unc-paths
+    STATIC_CONST_INTEGRAL(u32, MaxPath, 32000);
 
 private:
     FIODetouringFiles(const FIODetouringPayload& payload);

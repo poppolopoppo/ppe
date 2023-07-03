@@ -370,10 +370,12 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryExA(LPCSTR lpTemplateDirector
     }
 
     FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().FindPartial(lpNewDirectory);
+    if (pInfo->WasMounted())
+        lpNewDirectory = pInfo->pszRealPath;
 
     BOOL rv = 0;
     __try {
-        rv = Get().Real_CreateDirectoryExA(lpTemplateDirectory, pInfo->pszRealPath, lpSecurityAttributes);
+        rv = Get().Real_CreateDirectoryExA(lpTemplateDirectory, lpNewDirectory, lpSecurityAttributes);
     }
     __finally {
         if (rv) {

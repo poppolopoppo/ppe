@@ -125,7 +125,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* []) {
 
     // construct ignored applications block
     TCHAR wzzIgnoredApplications[ARRAYSIZE(FIODetouringPayload::wzzIgnoredApplications)] = TEXT("");
-    GetEnvironmentVariableW(L"IOWRAPPER_IGNORED_APPLICATION", wzzIgnoredApplications, ARRAYSIZE(wzzIgnoredApplications));
+    GetEnvironmentVariableW(L"IOWRAPPER_IGNORED_APPLICATIONS", wzzIgnoredApplications, ARRAYSIZE(wzzIgnoredApplications));
     IOWRAPPER_LOG("ignored applications: '%ls'\n", wzzIgnoredApplications);
 
     // construct mounted path pairs block
@@ -135,7 +135,7 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* []) {
 
     // construct a pseudo unique identifier for named pipe
     const u32 nRandomSeed{ u32(PPE::hash_size_t_constexpr(GetTickCount64(), GetCurrentProcessId(), PPE::FConstWChar(wzCommandLine).HashValue())) };
-    wchar_t wzNamedPipePrefix[17] = TEXT("");
+    WCHAR wzNamedPipePrefix[17] = TEXT("");
     constexpr wchar_t wzRandomCharset[] = TEXT(
         "0123456789"
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -181,6 +181,41 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* []) {
 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#if 0
+static BOOL MountPathname_(
+    PCWSTR pwzPathname,
+    PCWSTR pwzzMountedPaths,
+    WCHAR (&wzMountedPath)[FIODetouringFiles::MaxPath]) {
+
+    size_t nFilename{};
+    if (HRESULT hResult = StringCbLengthW(pwzPathname, FIODetouringFiles::MaxPath, &nFilename); IS_ERROR(hResult)) {
+        goto UNMOUNTED_FILE; // oupsy, revert to un-mounted path by skipping path expansion bellow
+    }
+
+    while (*pwzzMountedPaths) {
+        size_t nPrefix{};
+        if (HRESULT hResult = StringCbLengthW(pwzzMountedPaths, ARRAYSIZE(FIODetouringPayload::wzzMountedPaths), &nPrefix); IS_ERROR(hResult)) {
+            break; // oupsy, revert to un-mounted path
+        }
+
+        if (nPrefix < nFilename && wcsncmp(pwzPathname, pwzzMountedPaths, nPrefix) == 0) {
+            StringCbCatW(wzMountedPath, ARRAYSIZE(wzMountedPath), pwzzMountedPaths);
+            StringCbCatW(wzMountedPath, ARRAYSIZE(wzMountedPath), &pwzPathname[nPrefix]);
+
+            IOWRAPPER_LOG("mount executable = `%ls` + `%ls` -> `%ls`\n", pwzFilename, pwzzMountedPaths, wzMountedPath);
+            return TRUE;
+        }
+
+        pwzzMountedPaths += nPrefix + 1;
+    }
+
+UNMOUNTED_FILE:
+    // not mounted: simply copy input string to destination buffer
+    StringCbCopyW(wzMountedPath, ARRAYSIZE(wzMountedPath), pwzPathname);
+    return false;
+}
+#endif
 //----------------------------------------------------------------------------
 static DWORD CopyNullTerminatedStringList_(PWCHAR pwzzOut, PCWSTR pwzzIn) {
     PCWSTR pwzzBeg = pwzzOut;

@@ -464,7 +464,7 @@ VOID FIODetouringFiles::NoteCleanup(PCWSTR pwz) {
     }
 }
 //----------------------------------------------------------------------------
-// Path helpers:
+// Path helpers: (do no want to be using any std libraries here)
 //----------------------------------------------------------------------------
 PWCHAR FIODetouringFiles::StringCopy(PWCHAR pwzDst, PCSTR pszSrc) NOEXCEPT {
     while (*pszSrc)
