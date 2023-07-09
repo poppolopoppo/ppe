@@ -117,8 +117,9 @@ inline void* FMipmapPage::Allocate(const FPaging& page, std::atomic<i32>* pUnuse
             FBlock& block = Blocks[blk];
             Assert_NoAssume(DeletedMask != block.Mips);
 
+            u64 mip = block.Mips.load(std::memory_order_relaxed);
+
             for (i32 backoff = 0;;) {
-                u64 mip = block.Mips.load(std::memory_order_relaxed);
                 Assert_NoAssume(DeletedMask != mip);
 
                 const u64 avail = mip & msk;
@@ -257,8 +258,8 @@ Assert(ptr);
     // so we can't allocate from MipMask when SizeMask is still set
     block.Size &= ~(u64(1) << obit);
 
+    u64 mip = block.Mips.load(std::memory_order_relaxed);
     for (i32 backoff = 0;;) {
-        u64 mip = block.Mips.load(std::memory_order_relaxed);
         Assert_NoAssume(DeletedMask != mip);
 
         // reset old block mask

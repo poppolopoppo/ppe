@@ -786,7 +786,9 @@ BOOL WINAPI FIODetouringHooks::Hook_CloseHandle(HANDLE hObject) {
 
             SetLastError(dwErr);
         }
+
         rv = Get().Real_CloseHandle(hObject);
+
     } __finally {
         if (rv)
             FIODetouringFiles::Get().Forget(hObject);
@@ -808,7 +810,7 @@ BOOL WINAPI FIODetouringHooks::Hook_DuplicateHandle(HANDLE hSourceProcessHandle,
         rv = Get().Real_DuplicateHandle(hSourceProcessHandle, hSourceHandle, hTargetProcessHandle, lpTargetHandle, dwDesiredAccess, bInheritHandle, dwOptions);
 
     } __finally {
-        if (*lpTargetHandle != INVALID_HANDLE_VALUE) {
+        if (rv) {
             FIODetouringFiles::Get().Duplicate(*lpTargetHandle, hSourceHandle);
         }
     };

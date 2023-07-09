@@ -17,6 +17,9 @@
 
 //  But diverged importantly to keep blocking threads when there is no task in flight
 
+// #TODO: implement MDList lock free priority queue
+// https://www.osti.gov/servlets/purl/1237474
+
 #include "Container/Vector.h"
 
 #define USE_PPE_TASK_SCHEDULER_SHUFFLING (USE_PPE_ASSERT)

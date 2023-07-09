@@ -20,28 +20,59 @@ namespace PPE {
 // https://github.com/efficient/libcuckoo/blob/master/src/cuckoohash_map.hh
 // Update:
 // https://probablydance.com/2019/12/30/measuring-mutexes-spinlocks-and-how-bad-the-linux-scheduler-really-is/
+// Update:
+// use C++20 new std::atomic<>.wait()/notify_one() to avoid busy waiting
+//----------------------------------------------------------------------------
+constexpr i32 ATOMIC_SPINLOCK_CYCLES = 100;
+//----------------------------------------------------------------------------
+namespace details {
+template <typename _AtomicBarrier>
+static FORCE_INLINE void WakeAtomicBarrier(_AtomicBarrier* pBarrier) NOEXCEPT {
+#if PPE_HAS_CXX20
+    pBarrier->notify_one();
+#else
+    Unused(pBarrier);
+#endif
+}
+template <typename _AtomicBarrier, typename _Value>
+static FORCE_INLINE void SpinAtomicBarrier(_AtomicBarrier* pBarrier, _Value expected, i32& backoff) NOEXCEPT {
+#if PPE_HAS_CXX20
+    if (backoff++ < ATOMIC_SPINLOCK_CYCLES)
+        std::this_thread::yield();
+    else
+        pBarrier->wait(expected, std::memory_order_relaxed);
+#else
+    Unused(pBarrier, expected);
+    FPlatformProcess::SleepForSpinning(backoff);
+#endif
+}
+} //!details
 //----------------------------------------------------------------------------
 class FAtomicSpinLock : Meta::FNonCopyableNorMovable {
-    std::atomic<bool> _locked{ false };
+    std::atomic_flag _locked = ATOMIC_FLAG_INIT;
 
-public:
 #if USE_PPE_ASSERT
+public:
     FAtomicSpinLock() = default;
     ~FAtomicSpinLock() NOEXCEPT {
-        Assert_Lightweight(!_locked);
+        Assert_NoAssume(TryLock());
     }
 #endif
 
+public:
     void Lock() NOEXCEPT {
-        for (i32 backoff = 0; !TryLock(); )
-            FPlatformProcess::SleepForSpinning(backoff);
+        for (i32 backoff = 0;; ) {
+            if (not _locked.test_and_set(std::memory_order_acquire))
+                return;
+            details::SpinAtomicBarrier(&_locked, true, backoff);
+        }
     }
     NODISCARD bool TryLock() NOEXCEPT {
-        return (not _locked.load(std::memory_order_relaxed) &&
-                not _locked.exchange(true, std::memory_order_acquire) );
+        return (not _locked.test_and_set(std::memory_order_acquire));
     }
     void Unlock() NOEXCEPT {
-        _locked.store(false, std::memory_order_release);
+        _locked.clear(std::memory_order_relaxed);
+        details::WakeAtomicBarrier(&_locked);
     }
 
     struct FScope : Meta::FNonCopyableNorMovable {
@@ -111,14 +142,21 @@ class CACHELINE_ALIGNED FAtomicOrderedLock : Meta::FNonCopyableNorMovable {
 public:
     unsigned Lock() NOEXCEPT {
         const unsigned ticket{ In.fetch_add(1, std::memory_order_relaxed) };
-        for (i32 backoff = 0; Out.load(std::memory_order_acquire) != ticket; )
-            FPlatformProcess::SleepForSpinning(backoff);
+
+        for (i32 backoff = 0;; ) {
+            const unsigned current = Out.load(std::memory_order_acquire);
+            if (current == ticket)
+                break;
+            details::SpinAtomicBarrier(&Out, current, backoff);
+        }
+
         return ticket;
     }
 
     void Unlock() NOEXCEPT {
         // release the locks, the next waiting thread will stop spinning
         Out.store(Out.load(std::memory_order_relaxed) + 1, std::memory_order_release );
+        details::WakeAtomicBarrier(&Out);
     }
 
     struct FScope : Meta::FNonCopyableNorMovable {
@@ -182,7 +220,7 @@ public: // Reader
                     return; // lock read
             }
 
-            FPlatformProcess::SleepForSpinning(backoff);
+            details::SpinAtomicBarrier(&Readers, WRITER_LOCK, backoff);
         }
     }
 
@@ -196,6 +234,8 @@ public: // Reader
 
             FPlatformProcess::SleepForSpinning(backoff);
         }
+
+        details::WakeAtomicBarrier(&Readers);
     }
 
 public: // Writer
@@ -213,13 +253,12 @@ public: // Writer
     void AcquireWriter() NOEXCEPT {
         for (i32 backoff = 0;;) {
             unsigned r = Readers.load(std::memory_order_relaxed);
-            if (0 == r) {
-                if (Readers.compare_exchange_weak(r, WRITER_LOCK,
-                    std::memory_order_release, std::memory_order_relaxed))
-                    return; // lock write
-            }
+            if (0 == r && Readers.compare_exchange_weak(r, WRITER_LOCK,
+                std::memory_order_release, std::memory_order_relaxed))
+                return; // lock write
 
-            FPlatformProcess::SleepForSpinning(backoff);
+            if (r != 0)
+                details::SpinAtomicBarrier(&Readers, r, backoff);
         }
     }
 
@@ -231,7 +270,8 @@ public: // Writer
 
     void ReleaseWriter() NOEXCEPT {
         Assert_NoAssume(WRITER_LOCK == Readers);
-        Readers = 0; // release write lock
+        Readers.store(0, std::memory_order_release); // release write lock
+        details::WakeAtomicBarrier(&Readers);
     }
 
 };
@@ -265,11 +305,11 @@ public:
             if (Likely(_phase.compare_exchange_strong(expected, nextPhase | TransitionBit_))) {
                 onTransition();
                 _phase.store(nextPhase, std::memory_order_release);
-
+                details::WakeAtomicBarrier(&_phase);
                 return true;
             }
             else for (i32 backoff = 0; expected != nextPhase;) {
-                FPlatformProcess::SleepForSpinning(backoff);
+                details::SpinAtomicBarrier(&_phase, expected, backoff);
                 expected = _phase.load(std::memory_order_relaxed);
             }
 
@@ -321,7 +361,8 @@ public:
                 return;
             }
 
-            FPlatformProcess::SleepForSpinning(backoff);
+            if ((msk & subset) != 0)
+                details::SpinAtomicBarrier(&_mask, msk, backoff);
         }
     }
 
@@ -337,9 +378,8 @@ public:
 
     void Unlock(size_type subset) NOEXCEPT {
         Assert(subset);
-        size_type msk = _mask.load(std::memory_order_relaxed);
-        Assert((msk & subset) == subset);
-        _mask = (msk & ~subset);
+        Verify((_mask.fetch_and(~subset, std::memory_order_release) & subset) == subset);
+        details::WakeAtomicBarrier(&_mask);
     }
 
 private:
@@ -348,6 +388,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#if 0 // other atomic locks are better now since C++20, as they avoid busy waiting
 // Order preserving + read/write
 // "Scalable Reader-Writer Synchronization for Shared-Memory Multiprocessors"
 // https://www.cs.utexas.edu/~pingali/CS378/2015sp/lectures/Spinlocks%20and%20Read-Write%20Locks.htm
@@ -449,6 +490,7 @@ public: // Write
             static_cast<i32>(cmpnew)) == static_cast<i32>(cmp));
     }
 };
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

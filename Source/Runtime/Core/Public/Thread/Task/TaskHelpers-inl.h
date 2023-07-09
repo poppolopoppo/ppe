@@ -5,6 +5,7 @@
 #include "Container/Stack.h"
 #include "HAL/PlatformMisc.h"
 #include "HAL/PlatformProcess.h"
+#include "Thread/AtomicSpinLock.h"
 #include "Thread/Task/CompletionPort.h"
 
 namespace PPE {
@@ -25,9 +26,13 @@ TFuture<T>::~TFuture() {
 template <typename T>
 T& TFuture<T>::Result() {
     Assert(Idle != _state);
-    i32 backoff = 0;
-    while (Ready != _state)
-        FPlatformProcess::SleepForSpinning(backoff);
+
+    for (i32 backoff = 0;; ) {
+        const int current = _state.load(std::memory_order_acquire);
+        if (Ready == _state)
+            break;
+        details::SpinAtomicBarrier(&_state, current, backoff);
+    }
     return _value;
 }
 //----------------------------------------------------------------------------
@@ -43,6 +48,7 @@ void TFuture<T>::Async(ETaskPriority priority, ITaskContext* context) {
         _value = _func();
         RemoveSafeRef(this);
         _state = Ready; // set Ready *AFTER* releasing TSafePtr<>
+        details::WakeAtomicBarrier(&_state);
     },  priority, context );
 }
 //----------------------------------------------------------------------------
