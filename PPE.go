@@ -222,7 +222,7 @@ func makePPE_Common(rules *ModuleRules) {
 	}
 
 	IfWindows(func() {
-		rules.LinkerOptions.Append("/NATVIS:\"" + NatvisFile.String() + "\"")
+		rules.LinkerOptions.Append("/NATVIS:" + NatvisFile.String())
 	})
 }
 func makePPE_Internal(rules *ModuleRules) {
@@ -302,7 +302,5 @@ func main() {
 		})
 	}
 
-	LaunchCommand(
-		"ppe",
-		UFS.Source.File("Source-namespace.json"))
+	LaunchCommand("ppe")
 }
