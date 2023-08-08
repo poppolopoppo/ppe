@@ -197,7 +197,7 @@ static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, u
 //----------------------------------------------------------------------------
 // Helpers used when calling FTaskManager outside of a Fiber
 FWD_REFPTR(WaitForTask_);
-class FWaitForTask_ : public FRefCountable {
+class FWaitForTask_ : public FRefCountable, Meta::FNonCopyableNorMovable {
 public:
     const FTaskFunc Task;
 
@@ -210,7 +210,7 @@ public:
     :   Task(std::move(rtask))
     {}
 
-    void Run(ITaskContext& ctx) {
+    NO_INLINE void Run(ITaskContext& ctx) {
         Task(ctx);
         {
             const Meta::FLockGuard scopeLock(Barrier);
@@ -249,7 +249,7 @@ public:
 
         pimpl.Scheduler().Produce(priority, broadcast, nullptr);
 
-        waitFor.OnFinished.wait(scopeLock, [&waitFor]() NOEXCEPT{
+        waitFor.OnFinished.wait(scopeLock, [&waitFor]() NOEXCEPT -> bool {
             return waitFor.ActuallyReady;
         });
     }
@@ -263,7 +263,7 @@ public:
         Meta::FUniqueLock scopeLock(pWaitFor->Barrier);
         pimpl.Scheduler().Produce(priority, FTaskFunc::Bind<&FWaitForTask_::Run>(pWaitFor/* copy TRefPtr<> */), nullptr);
 
-        pWaitFor->OnFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS), [&pWaitFor]() NOEXCEPT{
+        pWaitFor->OnFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS), [&pWaitFor]() NOEXCEPT -> bool {
             return pWaitFor->ActuallyReady;
         });
 

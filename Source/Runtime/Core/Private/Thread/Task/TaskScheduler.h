@@ -137,7 +137,7 @@ PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 inline FTaskScheduler::FTaskScheduler(size_t numWorkers) {
     Assert(numWorkers);
-
+    STATIC_ASSERT(sizeof(FWorkerQueue_) >= CACHELINE_SIZE);
     _queues.resize_AssumeEmpty(numWorkers);
 }
 //----------------------------------------------------------------------------
