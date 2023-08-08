@@ -44,7 +44,7 @@ static constexpr EKeyboardKey GEachKeyboardKeys[] = {
     EKeyboardKey::Q,
     EKeyboardKey::R,
     EKeyboardKey::S,
-    EKeyboardKey::T,
+    EKeyboardKey::_T,
     EKeyboardKey::U,
     EKeyboardKey::V,
     EKeyboardKey::W,
@@ -196,7 +196,7 @@ FStringView KeyboardKeyToCStr(EKeyboardKey value) {
         return MakeStringView("R");
     case PPE::Application::EKeyboardKey::S:
         return MakeStringView("S");
-    case PPE::Application::EKeyboardKey::T:
+    case PPE::Application::EKeyboardKey::_T:
         return MakeStringView("T");
     case PPE::Application::EKeyboardKey::U:
         return MakeStringView("U");

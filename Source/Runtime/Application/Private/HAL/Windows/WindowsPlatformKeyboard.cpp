@@ -49,7 +49,7 @@ CONSTEXPR EKeyboardKey VirtualKeyToKeyboardKey_(u8 vkey) {
     case 'Q': return EKeyboardKey::Q;
     case 'R': return EKeyboardKey::R;
     case 'S': return EKeyboardKey::S;
-    case 'T': return EKeyboardKey::T;
+    case 'T': return EKeyboardKey::_T;
     case 'U': return EKeyboardKey::U;
     case 'V': return EKeyboardKey::V;
     case 'W': return EKeyboardKey::W;

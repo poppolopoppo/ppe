@@ -44,7 +44,7 @@ enum class EKeyboardKey : u8 {
     Q   = 'Q',
     R   = 'R',
     S   = 'S',
-    T   = 'T',
+    _T   = 'T',
     U   = 'U',
     V   = 'V',
     W   = 'W',
