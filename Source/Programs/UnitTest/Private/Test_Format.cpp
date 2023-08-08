@@ -50,7 +50,7 @@ static void Test_Format_() {
         FStringBuilder oss;
         {
             wchar_t buffer[1024];
-            Format(buffer, L"string = {0}, decimal = {1}, float = {1}\n\0", L"test", 42, 0.123456f);
+            Format(buffer, L"string = {0}, decimal = {1}, float = {2}\n\0", L"test", 42, 0.123456f);
             oss << MakeCStringView(buffer);
         }
         {
