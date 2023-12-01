@@ -64,7 +64,7 @@ public:
     const PVulkanSharedDebugUtils& DebugInfo() const NOEXCEPT { return _debugInfo; }
 
     bool ParseDebugOutput(TAppendable<FString> outp, EShaderDebugMode mode, FRawMemoryConst trace) override {
-        LOG_CHECK(PipelineCompiler, EShaderDebugMode::Trace == mode || EShaderDebugMode::Profiling == mode);
+        PPE_LOG_CHECK(PipelineCompiler, EShaderDebugMode::Trace == mode || EShaderDebugMode::Profiling == mode);
         if (not _debugInfo)
             return false;
 
@@ -128,7 +128,7 @@ public:
     }
 
     bool ParseDebugOutput(TAppendable<FString> outp, EShaderDebugMode mode, FRawMemoryConst trace) override final {
-        LOG_CHECK(PipelineCompiler, EShaderDebugMode::Trace == mode || EShaderDebugMode::Profiling == mode);
+        PPE_LOG_CHECK(PipelineCompiler, EShaderDebugMode::Trace == mode || EShaderDebugMode::Profiling == mode);
         if (not _debugInfo)
             return false;
 

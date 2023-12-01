@@ -127,7 +127,7 @@ enum class EDrawDynamicState : u32 {
 };
 ENUM_FLAGS(EDrawDynamicState);
 //----------------------------------------------------------------------------
-struct FDrawDynamicStates {
+struct  FDrawDynamicStates {
     FDrawDynamicStates() NOEXCEPT
     :   _states{ Default }
 #define INIT_DYNAMICSTATE_FIELD(ID, TYPE, NAME, SUFF) , CONCAT(_, NAME){ Default }

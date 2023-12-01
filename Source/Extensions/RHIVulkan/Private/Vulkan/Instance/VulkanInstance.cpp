@@ -123,7 +123,7 @@ bool LoadVulkanGlobalAPI_(FDynamicLibrary* pLib, FVulkanExportedAPI* pExported, 
 
     for (const wchar_t* wpath : vulkanLibPaths) {
         if (pLib->AttachOrLoad(wpath)) {
-            LOG(RHI, Verbose, L"successfuly loaded vulkan library '{0}'", pLib->ModuleName());
+            PPE_LOG(RHI, Verbose, "successfuly loaded vulkan library '{0}'", pLib->ModuleName());
 
             pExported->vkGetInstanceProcAddr = reinterpret_cast<PFN_vkGetInstanceProcAddr>(pLib->FunctionAddr("vkGetInstanceProcAddr"));
             if (pExported->vkGetInstanceProcAddr) {
@@ -131,20 +131,20 @@ bool LoadVulkanGlobalAPI_(FDynamicLibrary* pLib, FVulkanExportedAPI* pExported, 
                 if (nullptr == err)
                     return true;
 
-                LOG(RHI, Error, L"failed to load vulkan global API: {0}", MakeCStringView(err));
+                PPE_LOG(RHI, Error, "failed to load vulkan global API: {0}", MakeCStringView(err));
             }
             else {
-                LOG(RHI, Error, L"failed to bind exported vulkan function <vkGetInstanceProcAddr>, abort library");
+                PPE_LOG(RHI, Error, "failed to bind exported vulkan function <vkGetInstanceProcAddr>, abort library");
             }
 
             pLib->Unload();
         }
         else {
-            LOG(RHI, Warning, L"could not load vulkan library from '{0}'", MakeCStringView(wpath));
+            PPE_LOG(RHI, Warning, "could not load vulkan library from '{0}'", MakeCStringView(wpath));
         }
     }
 
-    LOG(RHI, Error, L"failed to load vulkan library");
+    PPE_LOG(RHI, Error, "failed to load vulkan library");
     return false;
 }
 //----------------------------------------------------------------------------
@@ -155,7 +155,7 @@ bool ValidateInstanceLayers_(VECTOR(RHIInstance, FConstChar)* pLayerNames, const
     VK_CHECK( api.vkEnumerateInstanceLayerProperties(&numLayers, nullptr) );
 
     if (0 == numLayers) {
-        CLOG(numLayers != pLayerNames->size(), RHI, Warning, L"vulkan layer are not supported and will be ignored");
+        PPE_CLOG(numLayers != pLayerNames->size(), RHI, Warning, "vulkan layer are not supported and will be ignored");
         pLayerNames->clear();
         return true;
     }
@@ -163,7 +163,7 @@ bool ValidateInstanceLayers_(VECTOR(RHIInstance, FConstChar)* pLayerNames, const
     STACKLOCAL_POD_ARRAY(VkLayerProperties, layerProperties, numLayers);
     VK_CHECK( api.vkEnumerateInstanceLayerProperties(&numLayers, layerProperties.data()) );
 
-    LOG(RHI, Info, L"available vulkan layers: [\n    {0} ]",
+    PPE_LOG(RHI, Info, "available vulkan layers: [\n    {0} ]",
         Fmt::Join(MakeIterable(layerProperties).Map([](const VkLayerProperties& x) {
                 return FConstChar(x.layerName);
             }), MakeStringView(L",\n    ")));
@@ -174,11 +174,11 @@ bool ValidateInstanceLayers_(VECTOR(RHIInstance, FConstChar)* pLayerNames, const
         });
 
         if (layerProperties.end() == found) {
-            LOG(RHI, Warning, L"vulkan layer '{0}' is not supported and will be removed", it->MakeView());
+            PPE_LOG(RHI, Warning, "vulkan layer '{0}' is not supported and will be removed", it->MakeView());
             it = pLayerNames->erase(it);
         }
         else {
-            LOG(RHI, Verbose, L"vulkan layer '{0}' is supported and will be initialized", it->MakeView());
+            PPE_LOG(RHI, Verbose, "vulkan layer '{0}' is supported and will be initialized", it->MakeView());
             ++it;
         }
     }
@@ -216,7 +216,7 @@ bool ValidateInstanceExtensions_(
         FConstChar name{ vk::instance_extension_name(ext) };
         AssertRelease(name);
 
-        CLOG(not (userInstanceExts & ext), RHI, Warning, L"add vulkan instance extension '{0}' required by user input", name.MakeView());
+        PPE_CLOG(not (userInstanceExts & ext), RHI, Info, "add vulkan instance extension '{0}' required by user input", name.MakeView());
 
         pExtensionNames->push_back_AssumeNoGrow(std::move(name));
     }
@@ -225,7 +225,7 @@ bool ValidateInstanceExtensions_(
     VK_CHECK( api.vkEnumerateInstanceExtensionProperties(nullptr, &numExtensions, nullptr) );
 
     if (0 == numExtensions) {
-        CLOG(numExtensions != pExtensionNames->size(), RHI, Warning, L"vulkan instance extensions are not supported and will be ignored");
+        PPE_CLOG(numExtensions != pExtensionNames->size(), RHI, Warning, "vulkan instance extensions are not supported and will be ignored");
         pExtensionNames->clear();
         return true;
     }
@@ -241,17 +241,17 @@ bool ValidateInstanceExtensions_(
         if (extProperties.end() == found) {
             const EVulkanInstanceExtension ext = vk::instance_extension_from(*jt);
             if (userInstanceExts & ext) {
-                LOG(RHI, Error, L"required vulkan instance extension '{0}' is not supported and will be removed!", jt->MakeView());
+                PPE_LOG(RHI, Error, "required vulkan instance extension '{0}' is not supported and will be removed!", jt->MakeView());
                 requiredInstanceExts -= ext;
             }
             else {
-                LOG(RHI, Warning, L"optional vulkan instance extension '{0}' is not supported and will be removed", jt->MakeView());
+                PPE_LOG(RHI, Warning, "optional vulkan instance extension '{0}' is not supported and will be removed", jt->MakeView());
                 optionalInstanceExts -= ext;
             }
             jt = pExtensionNames->erase(jt);
         }
         else {
-            LOG(RHI, Verbose, L"vulkan instance extension '{0}' is supported and will be initialized", jt->MakeView());
+            PPE_LOG(RHI, Verbose, "vulkan instance extension '{0}' is supported and will be initialized", jt->MakeView());
             ++jt;
         }
     }
@@ -307,7 +307,7 @@ bool CreateVulkanInstance_(
     createInfo.enabledExtensionCount = checked_cast<u32>(extensionNames.size());
     createInfo.ppEnabledExtensionNames = reinterpret_cast<const char* const*>(extensionNames.data());
 
-    LOG(RHI, Debug, L"create vulkan instance version {0}\n\t- Layers: {1}\n\t- Extensions: {2}",
+    PPE_LOG(RHI, Debug, "create vulkan instance version {0}\n\t- Layers: {1}\n\t- Extensions: {2}",
         version, Fmt::CommaSeparatedW(layerNames.MakeView()), Fmt::CommaSeparatedW(extensionNames.MakeView()) );
 
     VK_CHECK( api.vkCreateInstance(&createInfo, pVkAllocator, pVkInstance) );
@@ -351,18 +351,19 @@ static void CreateDebugUtilsMessengerIFP_(
             AssertNotImplemented();
         }
 
-        const FLoggerCategory* pLogCategory = &LOG_CATEGORY_GET(RHI);
+        TPtrRef<const FLoggerCategory> pLogCategory = LOG_CATEGORY_GET(RHI);
         if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT)
-            pLogCategory = &LOG_CATEGORY_GET(VkGeneral);
+            pLogCategory = LOG_CATEGORY_GET(VkGeneral);
         if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT)
-            pLogCategory = &LOG_CATEGORY_GET(VkValidation);
+            pLogCategory = LOG_CATEGORY_GET(VkValidation);
         if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
-            pLogCategory = &LOG_CATEGORY_GET(VkPerformance);
+            pLogCategory = LOG_CATEGORY_GET(VkPerformance);
 
         if (not (pLogCategory->Verbosity & level))
             return false;
 
-        auto fmtCallbackData = [pCallbackData, level](FWTextWriter& oss) {
+        FLogger::LogDirect(pLogCategory, FLoggerSiteInfo{level, __FILE__, __LINE__}, [&](FTextWriter& oss) {
+            oss << MakeCStringView(pCallbackData->pMessage);
             if (level <= ELoggerVerbosity::Verbose)
                 return;
 
@@ -370,79 +371,75 @@ static void CreateDebugUtilsMessengerIFP_(
             const TMemoryView<const VkDebugUtilsLabelEXT> queues{ pCallbackData->pQueueLabels, pCallbackData->queueLabelCount };
             for (const VkDebugUtilsLabelEXT& queue : queues) {
                 oss << Eol;
-                Format(oss, L" --QUEUE-- \"{0}\"", MakeCStringView(queue.pLabelName));
+                Format(oss, " --QUEUE-- \"{0}\"", MakeCStringView(queue.pLabelName));
             }
             // COMMAND-BUFFERS
             const TMemoryView<const VkDebugUtilsLabelEXT> cmdBufs{ pCallbackData->pCmdBufLabels, pCallbackData->cmdBufLabelCount };
             for (const VkDebugUtilsLabelEXT& cmd : cmdBufs) {
                 oss << Eol;
-                Format(oss, L" --CMDBUF-- \"{0}\"", MakeCStringView(cmd.pLabelName));
+                Format(oss, " --CMDBUF-- \"{0}\"", MakeCStringView(cmd.pLabelName));
             }
             // OBJECTS
             const TMemoryView<const VkDebugUtilsObjectNameInfoEXT> objects{ pCallbackData->pObjects, pCallbackData->objectCount };
             for (const VkDebugUtilsObjectNameInfoEXT& obj : objects) {
                 oss << Eol;
 
-                FWStringView objectTypeName;
+                FStringView objectTypeName;
                 switch (obj.objectType) {
-                case VK_OBJECT_TYPE_UNKNOWN: objectTypeName = L"UNKNOWN"; break;
-                case VK_OBJECT_TYPE_INSTANCE: objectTypeName = L"INSTANCE"; break;
-                case VK_OBJECT_TYPE_PHYSICAL_DEVICE: objectTypeName = L"PHYSICAL_DEVICE"; break;
-                case VK_OBJECT_TYPE_DEVICE: objectTypeName = L"DEVICE"; break;
-                case VK_OBJECT_TYPE_QUEUE: objectTypeName = L"QUEUE"; break;
-                case VK_OBJECT_TYPE_SEMAPHORE: objectTypeName = L"SEMAPHORE"; break;
-                case VK_OBJECT_TYPE_COMMAND_BUFFER: objectTypeName = L"COMMAND_BUFFER"; break;
-                case VK_OBJECT_TYPE_FENCE: objectTypeName = L"FENCE"; break;
-                case VK_OBJECT_TYPE_DEVICE_MEMORY: objectTypeName = L"DEVICE_MEMORY"; break;
-                case VK_OBJECT_TYPE_BUFFER: objectTypeName = L"BUFFER"; break;
-                case VK_OBJECT_TYPE_IMAGE: objectTypeName = L"IMAGE"; break;
-                case VK_OBJECT_TYPE_EVENT: objectTypeName = L"EVENT"; break;
-                case VK_OBJECT_TYPE_QUERY_POOL: objectTypeName = L"QUERY_POOL"; break;
-                case VK_OBJECT_TYPE_BUFFER_VIEW: objectTypeName = L"BUFFER_VIEW"; break;
-                case VK_OBJECT_TYPE_IMAGE_VIEW: objectTypeName = L"IMAGE_VIEW"; break;
-                case VK_OBJECT_TYPE_SHADER_MODULE: objectTypeName = L"SHADER_MODULE"; break;
-                case VK_OBJECT_TYPE_PIPELINE_CACHE: objectTypeName = L"PIPELINE_CACHE"; break;
-                case VK_OBJECT_TYPE_PIPELINE_LAYOUT: objectTypeName = L"PIPELINE_LAYOUT"; break;
-                case VK_OBJECT_TYPE_RENDER_PASS: objectTypeName = L"RENDER_PASS"; break;
-                case VK_OBJECT_TYPE_PIPELINE: objectTypeName = L"PIPELINE"; break;
-                case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: objectTypeName = L"DESCRIPTOR_SET_LAYOUT"; break;
-                case VK_OBJECT_TYPE_SAMPLER: objectTypeName = L"SAMPLER"; break;
-                case VK_OBJECT_TYPE_DESCRIPTOR_POOL: objectTypeName = L"DESCRIPTOR_POOL"; break;
-                case VK_OBJECT_TYPE_DESCRIPTOR_SET: objectTypeName = L"DESCRIPTOR_SET"; break;
-                case VK_OBJECT_TYPE_FRAMEBUFFER: objectTypeName = L"FRAMEBUFFER"; break;
-                case VK_OBJECT_TYPE_COMMAND_POOL: objectTypeName = L"COMMAND_POOL"; break;
-                case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION: objectTypeName = L"SAMPLER_YCBCR_CONVERSION"; break;
-                case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE: objectTypeName = L"DESCRIPTOR_UPDATE_TEMPLATE"; break;
-                case VK_OBJECT_TYPE_SURFACE_KHR: objectTypeName = L"SURFACE_KHR"; break;
-                case VK_OBJECT_TYPE_SWAPCHAIN_KHR: objectTypeName = L"SWAPCHAIN_KHR"; break;
-                case VK_OBJECT_TYPE_DISPLAY_KHR: objectTypeName = L"DISPLAY_KHR"; break;
-                case VK_OBJECT_TYPE_DISPLAY_MODE_KHR: objectTypeName = L"DISPLAY_MODE_KHR"; break;
-                case VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT: objectTypeName = L"DEBUG_REPORT_CALLBACK_EXT"; break;
-                case VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT: objectTypeName = L"DEBUG_UTILS_MESSENGER_EXT"; break;
-                case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR: objectTypeName = L"ACCELERATION_STRUCTURE_KHR"; break;
-                case VK_OBJECT_TYPE_VALIDATION_CACHE_EXT: objectTypeName = L"VALIDATION_CACHE_EXT"; break;
-                case VK_OBJECT_TYPE_PERFORMANCE_CONFIGURATION_INTEL: objectTypeName = L"PERFORMANCE_CONFIGURATION_INTEL"; break;
-                case VK_OBJECT_TYPE_DEFERRED_OPERATION_KHR: objectTypeName = L"DEFERRED_OPERATION_KHR"; break;
-                case VK_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NV: objectTypeName = L"INDIRECT_COMMANDS_LAYOUT_NV"; break;
-                case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV: objectTypeName = L"ACCELERATION_STRUCTURE_NV"; break;
+                case VK_OBJECT_TYPE_UNKNOWN: objectTypeName = "UNKNOWN"; break;
+                case VK_OBJECT_TYPE_INSTANCE: objectTypeName = "INSTANCE"; break;
+                case VK_OBJECT_TYPE_PHYSICAL_DEVICE: objectTypeName = "PHYSICAL_DEVICE"; break;
+                case VK_OBJECT_TYPE_DEVICE: objectTypeName = "DEVICE"; break;
+                case VK_OBJECT_TYPE_QUEUE: objectTypeName = "QUEUE"; break;
+                case VK_OBJECT_TYPE_SEMAPHORE: objectTypeName = "SEMAPHORE"; break;
+                case VK_OBJECT_TYPE_COMMAND_BUFFER: objectTypeName = "COMMAND_BUFFER"; break;
+                case VK_OBJECT_TYPE_FENCE: objectTypeName = "FENCE"; break;
+                case VK_OBJECT_TYPE_DEVICE_MEMORY: objectTypeName = "DEVICE_MEMORY"; break;
+                case VK_OBJECT_TYPE_BUFFER: objectTypeName = "BUFFER"; break;
+                case VK_OBJECT_TYPE_IMAGE: objectTypeName = "IMAGE"; break;
+                case VK_OBJECT_TYPE_EVENT: objectTypeName = "EVENT"; break;
+                case VK_OBJECT_TYPE_QUERY_POOL: objectTypeName = "QUERY_POOL"; break;
+                case VK_OBJECT_TYPE_BUFFER_VIEW: objectTypeName = "BUFFER_VIEW"; break;
+                case VK_OBJECT_TYPE_IMAGE_VIEW: objectTypeName = "IMAGE_VIEW"; break;
+                case VK_OBJECT_TYPE_SHADER_MODULE: objectTypeName = "SHADER_MODULE"; break;
+                case VK_OBJECT_TYPE_PIPELINE_CACHE: objectTypeName = "PIPELINE_CACHE"; break;
+                case VK_OBJECT_TYPE_PIPELINE_LAYOUT: objectTypeName = "PIPELINE_LAYOUT"; break;
+                case VK_OBJECT_TYPE_RENDER_PASS: objectTypeName = "RENDER_PASS"; break;
+                case VK_OBJECT_TYPE_PIPELINE: objectTypeName = "PIPELINE"; break;
+                case VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT: objectTypeName = "DESCRIPTOR_SET_LAYOUT"; break;
+                case VK_OBJECT_TYPE_SAMPLER: objectTypeName = "SAMPLER"; break;
+                case VK_OBJECT_TYPE_DESCRIPTOR_POOL: objectTypeName = "DESCRIPTOR_POOL"; break;
+                case VK_OBJECT_TYPE_DESCRIPTOR_SET: objectTypeName = "DESCRIPTOR_SET"; break;
+                case VK_OBJECT_TYPE_FRAMEBUFFER: objectTypeName = "FRAMEBUFFER"; break;
+                case VK_OBJECT_TYPE_COMMAND_POOL: objectTypeName = "COMMAND_POOL"; break;
+                case VK_OBJECT_TYPE_SAMPLER_YCBCR_CONVERSION: objectTypeName = "SAMPLER_YCBCR_CONVERSION"; break;
+                case VK_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE: objectTypeName = "DESCRIPTOR_UPDATE_TEMPLATE"; break;
+                case VK_OBJECT_TYPE_SURFACE_KHR: objectTypeName = "SURFACE_KHR"; break;
+                case VK_OBJECT_TYPE_SWAPCHAIN_KHR: objectTypeName = "SWAPCHAIN_KHR"; break;
+                case VK_OBJECT_TYPE_DISPLAY_KHR: objectTypeName = "DISPLAY_KHR"; break;
+                case VK_OBJECT_TYPE_DISPLAY_MODE_KHR: objectTypeName = "DISPLAY_MODE_KHR"; break;
+                case VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT: objectTypeName = "DEBUG_REPORT_CALLBACK_EXT"; break;
+                case VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT: objectTypeName = "DEBUG_UTILS_MESSENGER_EXT"; break;
+                case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_KHR: objectTypeName = "ACCELERATION_STRUCTURE_KHR"; break;
+                case VK_OBJECT_TYPE_VALIDATION_CACHE_EXT: objectTypeName = "VALIDATION_CACHE_EXT"; break;
+                case VK_OBJECT_TYPE_PERFORMANCE_CONFIGURATION_INTEL: objectTypeName = "PERFORMANCE_CONFIGURATION_INTEL"; break;
+                case VK_OBJECT_TYPE_DEFERRED_OPERATION_KHR: objectTypeName = "DEFERRED_OPERATION_KHR"; break;
+                case VK_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NV: objectTypeName = "INDIRECT_COMMANDS_LAYOUT_NV"; break;
+                case VK_OBJECT_TYPE_ACCELERATION_STRUCTURE_NV: objectTypeName = "ACCELERATION_STRUCTURE_NV"; break;
+                case VK_OBJECT_TYPE_CU_MODULE_NVX: objectTypeName = "CU_MODULE_NVX"; break;
+                case VK_OBJECT_TYPE_CU_FUNCTION_NVX: objectTypeName = "CU_FUNCTION_NVX"; break;
+                case VK_OBJECT_TYPE_PRIVATE_DATA_SLOT_EXT: objectTypeName = "PRIVATE_DATA_SLOT_EXT"; break;
+
                 default:
                     AssertNotImplemented();
                 }
 
-                Format(oss, L" --OBJECT-- {0} - <{1}> - \"{2}\"",
+                Format(oss, " --OBJECT-- {0} - <{1}> - \"{2}\"",
                     Fmt::Pointer(bit_cast<void*>(obj.objectHandle)),
                     objectTypeName,
                     MakeCStringView(obj.pObjectName));
             }
-        };
-
-        FLogger::Log(
-            *pLogCategory,
-            level,
-            FLogger::FSiteInfo::Make(WIDESTRING(__FILE__), __LINE__),
-            L"{0}{1}",
-            MakeCStringView(pCallbackData->pMessage),
-            Fmt::Formator<wchar_t>(fmtCallbackData));
+        });
 
         return VK_FALSE;
     };
@@ -466,7 +463,7 @@ static void CreateDebugUtilsMessengerIFP_(
     *pDebugUtilsMessenger = VK_NULL_HANDLE;
     VK_CALL( vkCreateDebugUtilsMessengerEXT(vkInstance, &createInfo, vkAllocator, pDebugUtilsMessenger) );
 
-    LOG(RHI, Verbose, L"created vulkan debug utils messenger for performance and validation");
+    PPE_LOG(RHI, Verbose, "created vulkan debug utils messenger for performance and validation");
 }
 #endif //!USE_PPE_LOGGER
 //----------------------------------------------------------------------------
@@ -690,7 +687,7 @@ bool ChooseVulkanQueueIndex_(
         return true;
     }
 
-    LOG(RHI, Error, L"no suitable vulkan queue family found");
+    PPE_LOG(RHI, Error, "no suitable vulkan queue family found");
     return false;
 }
 //----------------------------------------------------------------------------
@@ -787,7 +784,7 @@ bool ValidateDeviceExtensions_(
         // Need to handle this extension dynamically, see EAttachmentLoadOp/StoreOp
         if (requiredDeviceExts & EVulkanDeviceExtension::EXT_load_store_op_none ||
             optionalDeviceExts & EVulkanDeviceExtension::EXT_load_store_op_none ) {
-            LOG(RHI, Warning, L"disabled EXT_load_store_op_none extension since it's not compatible with KHRONOS validation layer");
+            PPE_LOG(RHI, Warning, "disabled EXT_load_store_op_none extension since it's not compatible with KHRONOS validation layer");
 
             requiredDeviceExts -= EVulkanDeviceExtension::EXT_load_store_op_none;
             optionalDeviceExts -= EVulkanDeviceExtension::EXT_load_store_op_none;
@@ -814,7 +811,7 @@ bool ValidateDeviceExtensions_(
         FConstChar name{ vk::device_extension_name(ext) };
         AssertRelease(name);
 
-        CLOG(not (userDeviceExts & ext), RHI, Warning, L"add vulkan device extension '{0}' required by user input", name.MakeView());
+        PPE_CLOG(not (userDeviceExts & ext), RHI, Info, "add vulkan device extension '{0}' required by user input", name.MakeView());
 
         // check for missing instance extensions required by this device extension
         FVulkanInstanceExtensionSet missingInstanceExts{
@@ -824,7 +821,7 @@ bool ValidateDeviceExtensions_(
         for (;;) {
             const auto missingBit = missingInstanceExts.PopFront();
             if (not missingBit) break;
-            LOG(RHI, Error, L"missing vulkan instance extension {0} required by device extension {1}",
+            PPE_LOG(RHI, Error, "missing vulkan instance extension {0} required by device extension {1}",
                 MakeCStringView(vk::instance_extension_name(static_cast<vk::instance_extension>(missingBit - 1))),
                 MakeCStringView(vk::device_extension_name(ext)) );
         }
@@ -836,7 +833,7 @@ bool ValidateDeviceExtensions_(
     VK_CHECK( api.vkEnumerateDeviceExtensionProperties(deviceInfo.vkPhysicalDevice, nullptr, &numExtensions, nullptr) );
 
     if (0 == numExtensions) {
-        CLOG(numExtensions != pExtensionNames->size(), RHI, Warning, L"vulkan device extensions are not supported and will be ignored");
+        PPE_CLOG(numExtensions != pExtensionNames->size(), RHI, Warning, "vulkan device extensions are not supported and will be ignored");
         pExtensionNames->clear();
         return true;
     }
@@ -852,17 +849,17 @@ bool ValidateDeviceExtensions_(
         if (extProperties.end() == found) {
             const EVulkanDeviceExtension ext = vk::device_extension_from(*jt);
             if (userDeviceExts & ext) {
-                LOG(RHI, Error, L"required vulkan device extension '{0}' is not supported and will be removed!", jt->MakeView());
+                PPE_LOG(RHI, Error, "required vulkan device extension '{0}' is not supported and will be removed!", jt->MakeView());
                 requiredDeviceExts -= ext;
             }
             else {
-                LOG(RHI, Warning, L"optional vulkan device extension '{0}' is not supported and will be removed", jt->MakeView());
+                PPE_LOG(RHI, Warning, "optional vulkan device extension '{0}' is not supported and will be removed", jt->MakeView());
                 optionalDeviceExts -= ext;
             }
             jt = pExtensionNames->erase(jt);
         }
         else {
-            LOG(RHI, Verbose, L"vulkan device extension '{0}' is supported and will be initialized", jt->MakeView());
+            PPE_LOG(RHI, Verbose, "vulkan device extension '{0}' is supported and will be initialized", jt->MakeView());
             ++jt;
         }
     }
@@ -879,10 +876,10 @@ bool CreateVulkanDevice_(
     pDevice->vkPhysicalDevice = physicalDevice->vkPhysicalDevice;
     Assert(pDevice->vkPhysicalDevice);
 
-    LOG(RHI, Info, L"pick vulkan gpu: {0}", *physicalDevice);
+    PPE_LOG(RHI, Info, "pick vulkan gpu: {0}", *physicalDevice);
 
     if (not SetupVulkanQueues_(&pDevice->Queues, pDevice->vkPhysicalDevice, vkSurface, api, queues)) {
-        LOG(RHI, Error, L"failed to setup vulkan device queues");
+        PPE_LOG(RHI, Error, "failed to setup vulkan device queues");
         return false;
     }
     Assert_NoAssume(not pDevice->Queues.empty());
@@ -895,7 +892,7 @@ bool CreateVulkanDevice_(
     // extensions
     VECTOR(RHIInstance, FConstChar) extensionNames;
     if (not ValidateDeviceExtensions_(&extensionNames, api, *pDevice)) {
-        LOG(RHI, Error, L"failed to validate vulkan device extensions");
+        PPE_LOG(RHI, Error, "failed to validate vulkan device extensions");
         return false;
     }
 
@@ -934,7 +931,7 @@ bool CreateVulkanDevice_(
         else
             ++q;
     }
-    AssertReleaseMessage(L"no valid device queue", not queueInfos.empty());
+    AssertReleaseMessage("no valid device queue", not queueInfos.empty());
 
     deviceInfo.queueCreateInfoCount = checked_cast<u32>(queueInfos.size());
     deviceInfo.pQueueCreateInfos = queueInfos.data();
@@ -968,7 +965,7 @@ bool CreateVulkanDevice_(
     // finally try to create the device
     VK_CHECK( api.vkCreateDevice(pDevice->vkPhysicalDevice, &deviceInfo, pDevice->pAllocator, &pDevice->vkDevice) );
 
-    LOG(RHI, Info, L"created vulkan device {3} with {0} queues and {1} extensions: {2}",
+    PPE_LOG(RHI, Info, "created vulkan device {3} with {0} queues and {1} extensions: {2}",
         pDevice->Queues.size(),
         allDeviceExtensions.Count(),
         allDeviceExtensions,
@@ -977,7 +974,7 @@ bool CreateVulkanDevice_(
     const char* apiError = pDevice->API.attach_return_error(api, pDevice->vkDevice,
         pDevice->RequiredDeviceExtensions, pDevice->OptionalDeviceExtensions );
     if (Unlikely(apiError)) {
-        LOG(RHI, Error, L"failed to attach to vulkan device API: {0}", MakeCStringView(apiError));
+        PPE_LOG(RHI, Error, "failed to attach to vulkan device API: {0}", MakeCStringView(apiError));
         pDevice->API.vkDestroyDevice(pDevice->vkDevice, pDevice->pAllocator);
         pDevice->vkDevice = VK_NULL_HANDLE;
         return false;
@@ -1064,13 +1061,13 @@ bool FVulkanInstance::Construct(
         instance_api_ = &_instanceAPI;
 
         if (const char* err = _instanceAPI.attach_return_error(&_globalAPI, _vkInstance, version, requiredInstanceExtensions, optionalInstanceExtensions)) {
-            LOG(RHI, Error, L"failed to attach vulkan instance API: {0}, abort!", MakeCStringView(err));
+            PPE_LOG(RHI, Error, "failed to attach vulkan instance API: {0}, abort!", MakeCStringView(err));
 
             vkDestroyInstance(_vkInstance, vkAllocationCallbacks());
             _vkInstance = VK_NULL_HANDLE;
         }
         else {
-            LOG(RHI, Info, L"vulkan instance {0} available with {1} extensions: {2}", version, _instanceAPI.instance_extensions_.Count(), _instanceAPI.instance_extensions_);
+            PPE_LOG(RHI, Info, "vulkan instance {0} available with {1} extensions: {2}", version, _instanceAPI.instance_extensions_.Count(), _instanceAPI.instance_extensions_);
 
             _instanceAPI.setup_backward_compatibility();
 
@@ -1098,7 +1095,7 @@ bool FVulkanInstance::Construct(
                 vkGetPhysicalDeviceMemoryProperties(physicalDevice.vkPhysicalDevice, &physicalDevice.Memory);
             }
 
-            LOG(RHI, Debug, L"listed {0} available physical devices for vulkan:\n {1}",
+            PPE_LOG(RHI, Debug, "listed {0} available physical devices for vulkan:\n {1}",
                 numPhysicalDevices,
                 Fmt::Join(_physicalDevices.MakeView(), L"\n"));
 
@@ -1126,7 +1123,7 @@ void FVulkanInstance::TearDown() {
     Assert_NoAssume(VK_NULL_HANDLE != _vkInstance);
     Assert_NoAssume(_vulkanLib.IsValid());
 
-    LOG(RHI, Debug, L"destroying vulkan instance");
+    PPE_LOG(RHI, Debug, "destroying vulkan instance");
 
 #if USE_PPE_LOGGER
     if (VK_NULL_HANDLE != _vkDebugUtilsMessenger) {
@@ -1181,7 +1178,7 @@ bool FVulkanInstance::CreateSurface(VkSurfaceKHR* pSurface, FVulkanWindowHandle 
 #   error "platform not supported"
 #endif
 
-    LOG(RHI, Debug, L"created vulkan surface {0} -> {1}", Fmt::Pointer((void*)window), Fmt::Pointer((void*)*pSurface));
+    PPE_LOG(RHI, Debug, "created vulkan surface {0} -> {1}", Fmt::Pointer((void*)window), Fmt::Pointer((void*)*pSurface));
 
     Assert_NoAssume(VK_NULL_HANDLE != *pSurface);
     return true;
@@ -1191,7 +1188,7 @@ void FVulkanInstance::DestroySurface(VkSurfaceKHR vkSurface) const {
     Assert(VK_NULL_HANDLE != vkSurface);
     Assert_NoAssume(VK_NULL_HANDLE != _vkInstance);
 
-    LOG(RHI, Debug, L"destroying vulkan surface {0}", Fmt::Pointer((void*)vkSurface));
+    PPE_LOG(RHI, Debug, "destroying vulkan surface {0}", Fmt::Pointer((void*)vkSurface));
 
     vkDestroySurfaceKHR(_vkInstance, vkSurface, vkAllocationCallbacks());
 }
@@ -1245,7 +1242,7 @@ void FVulkanInstance::DestroyDevice(FVulkanDeviceInfo* pDevice) const {
     Assert_NoAssume(VK_NULL_HANDLE != _vkInstance);
     Assert_NoAssume(vkAllocationCallbacks() == pDevice->pAllocator);
 
-    LOG(RHI, Debug, L"destroying vulkan device {0}", Fmt::Pointer(pDevice->vkDevice));
+    PPE_LOG(RHI, Debug, "destroying vulkan device {0}", Fmt::Pointer(pDevice->vkDevice));
 
     pDevice->API.vkDestroyDevice(pDevice->vkDevice, pDevice->pAllocator);
 
@@ -1300,6 +1297,7 @@ auto FVulkanInstance::PickPhysicalDeviceByName(FStringView deviceName) const NOE
 TMemoryView<const FConstChar> FVulkanInstance::DebuggingInstanceLayers(EVulkanVersion) NOEXCEPT {
     static const FConstChar GLayerNames[] = {
         //"VK_LAYER_LUNARG_api_dump", // for logging all VK calls %_NOCOMMIT%
+
         "VK_LAYER_KHRONOS_validation",
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR) && VK_USE_PLATFORM_ANDROID_KHR
@@ -1308,8 +1306,12 @@ TMemoryView<const FConstChar> FVulkanInstance::DebuggingInstanceLayers(EVulkanVe
         "VK_LAYER_ARM_mali_perf_doc",
 
 #else
-        "VK_LAYER_LUNARG_standard_validation", // for old VulkanSDK
+        // for old VulkanSDK
+
+        "VK_LAYER_LUNARG_core_validation",
+        "VK_LAYER_LUNARG_standard_validation",
         "VK_LAYER_LUNARG_parameter_validation",
+        "VK_LAYER_LUNARG_object_tracker",
 
 #endif
     };

@@ -55,35 +55,35 @@ void main() {
 	ARGS_IF_RHIDEBUG("Compiler_Reflection1_FS"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::GLSL_450);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
 
-	LOG_CHECK(WindowTest, ppln.VertexInput("at_Position"_vertex));
-	LOG_CHECK(WindowTest, ppln.VertexInput("at_Texcoord"_vertex));
+	PPE_LOG_CHECK(WindowTest, ppln.VertexInput("at_Position"_vertex));
+	PPE_LOG_CHECK(WindowTest, ppln.VertexInput("at_Texcoord"_vertex));
 
-    LOG_CHECK(WindowTest, TestFragmentOutput(ppln, EFragmentOutput::Float4, 0));
+    PPE_LOG_CHECK(WindowTest, TestFragmentOutput(ppln, EFragmentOutput::Float4, 0));
 
     const FDescriptorSet* ds = ppln.DescriptorSet("0"_descriptorset);
-    LOG_CHECK(WindowTest, !!ds);
+    PPE_LOG_CHECK(WindowTest, !!ds);
 
-    LOG_CHECK(WindowTest, ds->Uniform<FPipelineDesc::FTexture>("un_ColorTexture"_uniform).second);
-    LOG_CHECK(WindowTest, ds->Uniform<FPipelineDesc::FUniformBuffer>("UB"_uniform).second);
+    PPE_LOG_CHECK(WindowTest, ds->Uniform<FPipelineDesc::FTexture>("un_ColorTexture"_uniform).second);
+    PPE_LOG_CHECK(WindowTest, ds->Uniform<FPipelineDesc::FUniformBuffer>("UB"_uniform).second);
 
-    LOG_CHECK(WindowTest, ppln.EarlyFragmentTests);
+    PPE_LOG_CHECK(WindowTest, ppln.EarlyFragmentTests);
 
-    LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::Point);
-    LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::LineList);
-    LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::LineStrip);
-    LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::TriangleList);
-    LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::TriangleStrip);
-    LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::TriangleFan);
+    PPE_LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::Point);
+    PPE_LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::LineList);
+    PPE_LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::LineStrip);
+    PPE_LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::TriangleList);
+    PPE_LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::TriangleStrip);
+    PPE_LOG_CHECK(WindowTest, ppln.SupportedTopology & EPrimitiveTopology::TriangleFan);
 
-    LOG_CHECK(WindowTest, not (ppln.SupportedTopology & EPrimitiveTopology::LineListAdjacency));
-    LOG_CHECK(WindowTest, not (ppln.SupportedTopology & EPrimitiveTopology::LineStripAdjacency));
-    LOG_CHECK(WindowTest, not (ppln.SupportedTopology & EPrimitiveTopology::TriangleListAdjacency));
-    LOG_CHECK(WindowTest, not (ppln.SupportedTopology & EPrimitiveTopology::TriangleStripAdjacency));
-    LOG_CHECK(WindowTest, not (ppln.SupportedTopology & EPrimitiveTopology::Patch));
+    PPE_LOG_CHECK(WindowTest, not (ppln.SupportedTopology & EPrimitiveTopology::LineListAdjacency));
+    PPE_LOG_CHECK(WindowTest, not (ppln.SupportedTopology & EPrimitiveTopology::LineStripAdjacency));
+    PPE_LOG_CHECK(WindowTest, not (ppln.SupportedTopology & EPrimitiveTopology::TriangleListAdjacency));
+    PPE_LOG_CHECK(WindowTest, not (ppln.SupportedTopology & EPrimitiveTopology::TriangleStripAdjacency));
+    PPE_LOG_CHECK(WindowTest, not (ppln.SupportedTopology & EPrimitiveTopology::Patch));
 
     return true;
 }

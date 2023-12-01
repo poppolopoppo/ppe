@@ -20,7 +20,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FMarkupException : public PPE::Serialize::FSerializeException {
+class FMarkupException : public PPE::Serialize::FSerializeException {
 public:
     typedef PPE::Serialize::FSerializeException parent_type;
 
@@ -30,12 +30,10 @@ public:
     FMarkupException(const char *what, const Lexer::FLocation& site)
         : parent_type(what), _site(site) {}
 
-    virtual ~FMarkupException() = default;
-
     const Lexer::FLocation& Site() const { return _site; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    PPE_SERIALIZE_API virtual FTextWriter& Description(FTextWriter& oss) const override final;
 #endif
 
 private:
@@ -116,7 +114,7 @@ protected:
     virtual void WriteHeaders(FTextWriter& oss, bool minify) const = 0;
 
 private:
-    SLABHEAP_POOLED(Markup) _heap;
+    SLABHEAP(Markup) _heap;
     FElement _root;
     FTextHeap _textHeap;
 };

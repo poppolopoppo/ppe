@@ -23,6 +23,8 @@ struct ALIGN(16) FGuid {
         u16 as_u16[ 8];
         u8  as_u8 [16];
 
+        u128 as_u128;
+
         struct {
             u32 G0;
             u16 G1;
@@ -33,8 +35,6 @@ struct ALIGN(16) FGuid {
     }   Data;
 
     CONSTEXPR u64 ToUID() const { return Data.as_u64[0] ^ Data.as_u64[1]; }
-    CONSTEXPR u128 To128() const { return u128{ Data.as_u64[0], Data.as_u64[1] }; }
-    CONSTEXPR operator u128 () const { return To128(); }
 
     FString ToString() const;
     FWString ToWString() const;

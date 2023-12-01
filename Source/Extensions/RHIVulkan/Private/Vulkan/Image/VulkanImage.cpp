@@ -190,7 +190,7 @@ bool FVulkanImage::Construct(
         device.vkAllocator(),
         &exclusiveData->vkImage ));
 
-    LOG_CHECK(RHI, memoryObject.AllocateImage(resources.MemoryManager(), exclusiveData->vkImage));
+    PPE_LOG_CHECK(RHI, memoryObject.AllocateImage(resources.MemoryManager(), exclusiveData->vkImage));
 
     exclusiveData->AspectMask = ChooseAspect_(exclusiveData->Desc.Format);
     exclusiveData->DefaultLayout = ChooseDefaultLayout_(
@@ -231,7 +231,7 @@ bool FVulkanImage::Construct(
 
     exclusiveData->Desc.Validate();
 
-    LOG_CHECK(RHI, IsSupported(device, exclusiveData->Desc, EMemoryType::Default));
+    PPE_LOG_CHECK(RHI, IsSupported(device, exclusiveData->Desc, EMemoryType::Default));
 
 #if USE_PPE_RHIDEBUG
     if (debugName) {
@@ -240,8 +240,8 @@ bool FVulkanImage::Construct(
     }
 #endif
 
-    LOG_CHECK(RHI, VK_QUEUE_FAMILY_IGNORED == desc.QueueFamily); // not supported
-    LOG_CHECK(RHI, desc.ConcurrentQueueFamilyIndices.empty() || desc.ConcurrentQueueFamilyIndices.size() >= 2);
+    PPE_LOG_CHECK(RHI, VK_QUEUE_FAMILY_IGNORED == desc.QueueFamily); // not supported
+    PPE_LOG_CHECK(RHI, desc.ConcurrentQueueFamilyIndices.empty() || desc.ConcurrentQueueFamilyIndices.size() >= 2);
 
     exclusiveData->QueueFamilyMask = Default;
     for (u32 index : desc.ConcurrentQueueFamilyIndices)
@@ -266,8 +266,8 @@ bool FVulkanImage::Construct(
     Assert(VK_NULL_HANDLE == exclusiveData->vkImage);
     Assert(desc.IsExternal);
     Assert(externalImage);
-    AssertMessage_NoAssume(L"not supported", desc.Queues == EQueueUsage::Unknown);
-    AssertMessage_NoAssume(L"not supported", queueFamilyIndices.empty() or queueFamilyIndices.size() >= 2);
+    AssertMessage_NoAssume("not supported", desc.Queues == EQueueUsage::Unknown);
+    AssertMessage_NoAssume("not supported", queueFamilyIndices.empty() or queueFamilyIndices.size() >= 2);
 
     exclusiveData->vkImage = FVulkanExternalObject(externalImage.Value).Cast<VkImage>();
     exclusiveData->Desc = desc;
@@ -353,8 +353,8 @@ VkImageView FVulkanImage::MakeView(const FVulkanDevice& device, const FImageView
 
     auto[it, inserted] = exclusiveViewMap->insert({ desc, VK_NULL_HANDLE });
     if (inserted) {
-        LOG_CHECK(RHI, IsSupported(device, desc) );
-        LOG_CHECK(RHI, CreateView_(&it->second, *sharedData, device, desc ARGS_IF_RHIDEBUG(_debugName)) );
+        PPE_LOG_CHECK(RHI, IsSupported(device, desc) );
+        PPE_LOG_CHECK(RHI, CreateView_(&it->second, *sharedData, device, desc ARGS_IF_RHIDEBUG(_debugName)) );
     }
 
     Assert_NoAssume(VK_NULL_HANDLE != it->second);

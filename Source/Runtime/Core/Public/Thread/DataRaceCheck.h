@@ -35,7 +35,7 @@ public:
 
         owner = 0;
         const bool locked = _state.compare_exchange_strong(owner, id, std::memory_order_relaxed);
-        AssertReleaseMessage_NoAssume(L"Race condition detected!", locked && 0 == owner); // locked by another thread
+        AssertReleaseMessage_NoAssume("Race condition detected!", locked && 0 == owner); // locked by another thread
         Unused(locked);
 
         return true;
@@ -71,13 +71,13 @@ public:
 
     NODISCARD bool LockExclusive() {
         const bool locked = _lockWrite.try_lock();
-        AssertReleaseMessage(L"Locked by another thread!", locked); // race condition detected
+        AssertReleaseMessage("Locked by another thread!", locked); // race condition detected
 
         int expected = _readCounter.load(std::memory_order_acquire);
-        AssertReleaseMessage(L"Has read lock(s)!", expected <= 0); // race condition detected
+        AssertReleaseMessage("Has read lock(s)!", expected <= 0); // race condition detected
 
         Verify(_readCounter.compare_exchange_strong(expected, expected - 1, std::memory_order_relaxed));
-        AssertReleaseMessage(L"Has read lock(s)!", expected <= 0); // race condition detected
+        AssertReleaseMessage("Has read lock(s)!", expected <= 0); // race condition detected
 
         return true;
     }
@@ -99,7 +99,7 @@ public:
                 return false; // don't call UnlockShared()
             }
 
-            AssertReleaseMessage(L"Has write lock(s)", expected >= 0);
+            AssertReleaseMessage("Has write lock(s)", expected >= 0);
 
         } while (not locked);
 

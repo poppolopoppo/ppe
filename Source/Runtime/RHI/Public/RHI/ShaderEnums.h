@@ -55,7 +55,7 @@ enum class EShaderStages : u32 {
 };
 ENUM_FLAGS(EShaderStages);
 //----------------------------------------------------------------------------
-enum class EShaderAccess : u32 {
+enum class EShaderAccess : u8 {
     ReadOnly,
     WriteOnly,
     WriteDiscard, // (optimization) same as WriteOnly, but previous data will be discarded

@@ -145,7 +145,7 @@ const FMetaFunction* FMetaClass::OnMissingFunction(const FName& name, EFunctionF
     Unused(name);
     Unused(flags);
 
-    LOG(RTTI, Error, L"missing function {0}::{1} !", _name, name);
+    PPE_LOG(RTTI, Error, "missing function {0}::{1} !", _name, name);
 
     AssertNotReached();
 }
@@ -235,7 +235,7 @@ const FMetaProperty* FMetaClass::OnMissingProperty(const FName& name, EPropertyF
     Unused(name);
     Unused(flags);
 
-    LOG(RTTI, Error, L"missing property {0}::{1} !", _name, name);
+    PPE_LOG(RTTI, Error, "missing property {0}::{1} !", _name, name);
 
     AssertNotReached();
 }
@@ -309,34 +309,28 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, RTTI::EClassFlags flags) {
-    auto sep = Fmt::NotFirstTime('|');
+template <typename _Char>
+static TBasicTextWriter<_Char>& Print_(TBasicTextWriter<_Char>& oss, RTTI::EClassFlags flags) {
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
-    if (flags & RTTI::EClassFlags::Concrete)    { oss << sep << "Concrete"; }
-    if (flags & RTTI::EClassFlags::Abstract)    { oss << sep << "Abstract"; }
-    if (flags & RTTI::EClassFlags::Dynamic)     { oss << sep << "Dynamic"; }
-    if (flags & RTTI::EClassFlags::Public)      { oss << sep << "Public"; } else {
-                                                  oss << sep << "Private"; }
-    if (flags & RTTI::EClassFlags::Mergeable)   { oss << sep << "Mergeable"; }
-    if (flags & RTTI::EClassFlags::Deprecated)  { oss << sep << "Deprecated"; }
-    if (flags & RTTI::EClassFlags::Registered)  { oss << sep << "Registered"; }
+    if (flags & RTTI::EClassFlags::Concrete)    { oss << sep << STRING_LITERAL(_Char, "Concrete"); }
+    if (flags & RTTI::EClassFlags::Abstract)    { oss << sep << STRING_LITERAL(_Char, "Abstract"); }
+    if (flags & RTTI::EClassFlags::Dynamic)     { oss << sep << STRING_LITERAL(_Char, "Dynamic"); }
+    if (flags & RTTI::EClassFlags::Public)      { oss << sep << STRING_LITERAL(_Char, "Public"); } else {
+                                                  oss << sep << STRING_LITERAL(_Char, "Private"); }
+    if (flags & RTTI::EClassFlags::Mergeable)   { oss << sep << STRING_LITERAL(_Char, "Mergeable"); }
+    if (flags & RTTI::EClassFlags::Deprecated)  { oss << sep << STRING_LITERAL(_Char, "Deprecated"); }
+    if (flags & RTTI::EClassFlags::Registered)  { oss << sep << STRING_LITERAL(_Char, "Registered"); }
 
     return oss;
 }
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, RTTI::EClassFlags flags) {
+    return Print_(oss, flags);
+}
+//----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EClassFlags flags) {
-    auto sep = Fmt::NotFirstTime(L'|');
-
-    if (flags & RTTI::EClassFlags::Concrete)    { oss << sep << L"Concrete"; }
-    if (flags & RTTI::EClassFlags::Abstract)    { oss << sep << L"Abstract"; }
-    if (flags & RTTI::EClassFlags::Dynamic)     { oss << sep << L"Dynamic"; }
-    if (flags & RTTI::EClassFlags::Public)      { oss << sep << L"Public"; } else {
-                                                  oss << sep << L"Private"; }
-    if (flags & RTTI::EClassFlags::Mergeable)   { oss << sep << L"Mergeable"; }
-    if (flags & RTTI::EClassFlags::Deprecated)  { oss << sep << L"Deprecated"; }
-    if (flags & RTTI::EClassFlags::Registered)  { oss << sep << L"Registered"; }
-
-    return oss;
+    return Print_(oss, flags);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

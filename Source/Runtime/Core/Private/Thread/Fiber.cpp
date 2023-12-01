@@ -13,7 +13,6 @@ namespace PPE {
 namespace {
 //----------------------------------------------------------------------------
 enum : size_t {
-    FiberStackCommitSize    = 0,
     FiberStackReserveSize   = 1_MiB,
 };
 //----------------------------------------------------------------------------
@@ -43,26 +42,19 @@ void FFiber::Create(callback_t entryPoint, void *arg, size_t stackSize/* = 0 */)
     Assert(!_pimpl);
     Assert(entryPoint);
 
-    size_t commitSize = FiberStackCommitSize;
-    size_t reservedSize = stackSize;
-    if (0 == reservedSize)
-        reservedSize = FiberStackReserveSize;
-    Assert_NoAssume(commitSize <= reservedSize);
+    if (0 == stackSize)
+        stackSize = FiberStackReserveSize;
 
-    _pimpl = FPlatformThread::CreateFiber(
-        commitSize,
-        reservedSize,
-        entryPoint,
-        arg );
+    _pimpl = FPlatformThread::CreateFiber(stackSize, entryPoint, arg);
 
     Assert(_pimpl);
 
 #if USE_PPE_MEMORYDOMAINS
-    MEMORYDOMAIN_TRACKING_DATA(Fibers).AllocateSystem(reservedSize);
+    MEMORYDOMAIN_TRACKING_DATA(Fibers).AllocateSystem(stackSize);
 #endif
 }
 //----------------------------------------------------------------------------
-void FFiber::Resume() {
+void FFiber::Resume() const {
     Assert(_pimpl);
     Assert(GCurrentThreadFiber);
     Assert(FPlatformThread::IsInFiber());
@@ -79,11 +71,10 @@ void FFiber::Destroy(size_t stackSize) {
     _pimpl = nullptr;
 
 #if USE_PPE_MEMORYDOMAINS
-    size_t reservedSize = stackSize;
-    if (0 == reservedSize)
-        reservedSize = FiberStackReserveSize;
+    if (0 == stackSize)
+        stackSize = FiberStackReserveSize;
 
-    MEMORYDOMAIN_TRACKING_DATA(Fibers).DeallocateSystem(reservedSize);
+    MEMORYDOMAIN_TRACKING_DATA(Fibers).DeallocateSystem(stackSize);
 #else
     Unused(stackSize);
 #endif
@@ -91,6 +82,10 @@ void FFiber::Destroy(size_t stackSize) {
 //----------------------------------------------------------------------------
 void FFiber::Reset(void* pimpl /* = nullptr */) {
     _pimpl = pimpl;
+}
+//----------------------------------------------------------------------------
+void FFiber::StackRegion(const void** pStackBottom, size_t* pStackSize) const NOEXCEPT {
+    FPlatformThread::FiberStackRegion(static_cast<FPlatformThread::FFiber>(_pimpl), pStackBottom, pStackSize);
 }
 //----------------------------------------------------------------------------
 void FFiber::Start() {

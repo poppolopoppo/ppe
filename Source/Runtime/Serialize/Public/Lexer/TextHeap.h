@@ -21,7 +21,7 @@ class TTextHeap : Meta::FNonCopyable {
 public:
     STATIC_CONST_INTEGRAL(size_t, GMaxSizeForMerge, 100);
 
-    using heap_type = TPoolingSlabHeap<_Allocator>;
+    using heap_type = TSlabHeap<_Allocator>;
 
     class FText {
     public:

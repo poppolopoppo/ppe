@@ -65,7 +65,7 @@ void FVulkanLocalImage::SetInitialState(bool immutable, bool invalidate) {
     _isImmutable = immutable;
 
     if (invalidate) {
-        AssertMessage(L"must be mutable to allow image layout transition", not _isImmutable);
+        AssertMessage("must be mutable to allow image layout transition", not _isImmutable);
 
         _accessForReadWrite->front().Layout = VK_IMAGE_LAYOUT_UNDEFINED;
     }
@@ -92,7 +92,7 @@ void FVulkanLocalImage::AddPendingState(const FImageState& st) const {
     pending.Stages = EResourceState_ToPipelineStages(st.State);
     pending.Access = EResourceState_ToAccess(st.State);
     pending.Layout = st.Layout;
-    pending.Index = st.Task->ExecutionOrder();
+    pending.Index = st.Task->ExecutionOrder;
 
     // extract sub ranges
 
@@ -132,8 +132,8 @@ void FVulkanLocalImage::AddPendingState(const FImageState& st) const {
         }
 
         for (; it != _accessPending->end() and it->Range.Overlaps(range); ++it) {
-            AssertMessage(L"something goes wrong - resource has uncommited state from another task", it->Index == pending.Index);
-            AssertMessage(L"can't use different layouts inside single task", it->Layout == pending.Layout);
+            AssertMessage("something goes wrong - resource has uncommited state from another task", it->Index == pending.Index);
+            AssertMessage("can't use different layouts inside single task", it->Layout == pending.Layout);
 
             it->Range.First = Min(it->Range.First, range.First);
             range.First = it->Range.Last;
@@ -154,7 +154,7 @@ void FVulkanLocalImage::AddPendingState(const FImageState& st) const {
 }
 //----------------------------------------------------------------------------
 void FVulkanLocalImage::ResetState(EVulkanExecutionOrder index, FVulkanBarrierManager& barriers ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP)) {
-    AssertMessage(L"you must commit all pending states before reseting", _accessPending->empty());
+    AssertMessage("you must commit all pending states before reseting", _accessPending->empty());
 
     // add full range barrier
     {

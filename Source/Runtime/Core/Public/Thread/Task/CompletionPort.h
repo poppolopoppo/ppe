@@ -36,6 +36,10 @@ public:
     ITaskContext* Context() const { return _taskContextAndPriority.Get(); }
     ETaskPriority Priority() const { return ETaskPriority(_taskContextAndPriority.Flag01()); }
 
+    friend bool operator==(const FInterruptedTask& lhs, const FInterruptedTask& rhs) NOEXCEPT {
+        return (lhs._fiber == rhs._fiber && lhs._taskContextAndPriority == rhs._taskContextAndPriority);
+    }
+
     friend bool operator <(const FInterruptedTask& lhs, const FInterruptedTask& rhs) NOEXCEPT {
         return (lhs.Priority() < rhs.Priority());
     }
@@ -96,6 +100,7 @@ private:
     VECTORINSITU(Task, FCompletionPort*, CODE3264(4,3)) _children;
 #endif
 
+    void QueueWaitingFiber_(const FInterruptedTask& waiting);
     void ResetToNotReady_AssumeFinished_();
 
     static NO_INLINE void OnCountDownReachedZero_(FCompletionPort* port);

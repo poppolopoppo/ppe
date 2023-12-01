@@ -85,9 +85,9 @@ bool FWindowsPlatformApplicationMisc::SetHighDPIAwareness() {
     ::GetProcessDpiAwareness(NULL, &CurrentAwareness);
 
     if (CurrentAwareness != PROCESS_PER_MONITOR_DPI_AWARE) {
-        LOG(Application, Info, L"setting application aware of per monitor DPI");
+        PPE_LOG(Application, Info, "setting application aware of per monitor DPI");
         if (not SUCCEEDED(::SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE))) {
-            LOG_LASTERROR(Application, L"SetProcessDpiAwareness");
+            PPE_LOG_LASTERROR(Application, "SetProcessDpiAwareness");
             success = false;
         }
     }

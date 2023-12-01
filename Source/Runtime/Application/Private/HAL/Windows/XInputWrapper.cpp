@@ -74,20 +74,20 @@ FXInputWrapper::FXInputWrapper()
         Assert(_XInputSetState);
         Assert(_XInputGetCapabilities);
 
-        LOG(XInput, Info, L"successfully loaded : gamepad controller are available");
+        PPE_LOG(XInput, Info, "successfully loaded : gamepad controller are available");
     }
     else {
         _XInputGetState = &XInputGetState_Dummy_;
         _XInputSetState = &XInputSetState_Dummy_;
         _XInputGetCapabilities = &XInputGetCapabilities_Dummy_;
 
-        LOG(XInput, Warning, L"failed to load : fall back on dummy controller !");
+        PPE_LOG(XInput, Warning, "failed to load : fall back on dummy controller !");
     }
 }
 //----------------------------------------------------------------------------
 FXInputWrapper::~FXInputWrapper() {
     if (_XInputDLL) {
-        LOG(XInput, Info, L"destroying wrapper");
+        PPE_LOG(XInput, Info, "destroying wrapper");
 
         // unload the DLL explicitly while holding the lock
         Meta::FLockGuard scopeLock(_barrier);

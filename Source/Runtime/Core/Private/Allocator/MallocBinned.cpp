@@ -329,7 +329,7 @@ struct FBinnedStats_ {
     std::atomic<i64> SizeInBytes;
 
     static FBinnedStats_& Get() NOEXCEPT {
-        ONE_TIME_INITIALIZE(TInitSegAlloc<FBinnedStats_>, GStats, 1000);
+        ONE_TIME_INITIALIZE(TInitSegAlloc<FBinnedStats_>, GStats, 2000);
         return GStats;
     }
 
@@ -819,7 +819,7 @@ static NO_INLINE void* BinnedMalloc_(FBinnedBucket_& bk, size_t size, size_t siz
 
         void* p = nullptr;
 #if USE_MALLOCBINNED_BITMAPS
-        p = FMallocBitmap::HeapAlloc(size, ALLOCATION_BOUNDARY);
+        p = FMallocBitmap::HeapAlloc(size, ALLOCATION_BOUNDARY).Data;
 
         if (nullptr == p) // also handle bitmap OOM
 #endif
@@ -1084,7 +1084,7 @@ static NO_INLINE void LargeFree_(void* const ptr) {
 
 #if USE_MALLOCBINNED_BITMAPS
     if (FMallocBitmap::AliasesToHeaps(ptr))
-        FMallocBitmap::HeapFree(ptr);
+        FMallocBitmap::HeapFree(FAllocatorBlock(ptr, 0));
     else
 #elif USE_MALLOCBINNED_MIPMAPS
     if (FMallocMipMap::AliasesToMips(ptr))
@@ -1106,10 +1106,10 @@ NODISCARD static NO_INLINE void* LargeRealloc_(void* const oldp, size_t newSize,
     // only called when both new and old size are large blocks
 
     void* newp = nullptr;
-#if USE_MALLOCBINNED_BITMAPS
+#if USE_MALLOCBINNED_BITMAPS && 0
     if (oldSize <= FMallocBitmap::MaxAllocSize &&
         FMallocBitmap::AliasesToHeaps(oldp))
-        newp = FMallocBitmap::HeapResize(oldp, newSize, oldSize); // try to resize the mipmap allocation
+        newp = FMallocBitmap::HeapResize(FAllocatorBlock(oldp, oldSize), newSize).Data; // try to resize the mipmap allocation
     else
         Assert_NoAssume(FMallocBitmap::AliasesToHeaps(oldp) == false);
 
@@ -1125,7 +1125,7 @@ NODISCARD static NO_INLINE void* LargeRealloc_(void* const oldp, size_t newSize,
 #endif
     {
 #if USE_MALLOCBINNED_BITMAPS
-        newp = FMallocBitmap::HeapAlloc(newSize, ALLOCATION_BOUNDARY);
+        newp = FMallocBitmap::HeapAlloc(newSize, ALLOCATION_BOUNDARY).Data;
 
         if (nullptr == newp) // also handle mip map OOM
 #elif USE_MALLOCBINNED_MIPMAPS
@@ -1151,7 +1151,7 @@ NODISCARD static NO_INLINE void* LargeRealloc_(void* const oldp, size_t newSize,
 
 #if USE_MALLOCBINNED_BITMAPS
         if (FMallocBitmap::AliasesToHeaps(oldp))
-            FMallocBitmap::HeapFree(oldp);
+            FMallocBitmap::HeapFree(FAllocatorBlock(oldp, 0));
         else
 #elif USE_MALLOCBINNED_MIPMAPS
         if (FMallocMipMap::AliasesToMips(oldp))
@@ -1426,7 +1426,7 @@ void* FMallocBinned::AlignedRealloc(void* const ptr, size_t size, size_t alignme
 }
 //----------------------------------------------------------------------------
 void FMallocBinned::ReleaseCacheMemory() {
-    LOG(MallocBinned, Debug, L"release cache memory in {0}", std::this_thread::get_id());
+    PPE_LOG(MallocBinned, Debug, "release cache memory in {0}", std::this_thread::get_id());
 
     auto& tc = FBinnedThreadCache_::Get();
     ReleaseDanglingBlocks_(tc);
@@ -1444,7 +1444,7 @@ void FMallocBinned::ReleaseCacheMemory() {
 }
 //----------------------------------------------------------------------------
 void FMallocBinned::ReleasePendingBlocks() {
-    //LOG(MallocBinned, Debug, L"release pending blocks in {0}", std::this_thread::get_id()); // too verbose
+    //PPE_LOG(MallocBinned, Debug, "release pending blocks in {0}", std::this_thread::get_id()); // too verbose
 
     ReleaseDanglingBlocks_(FBinnedThreadCache_::Get());
 }

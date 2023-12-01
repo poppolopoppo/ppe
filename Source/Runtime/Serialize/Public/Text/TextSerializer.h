@@ -10,14 +10,14 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FTextSerializerException : public FSerializeException {
+class FTextSerializerException : public FSerializeException {
 public:
     FTextSerializerException(const char* what) : FSerializeException(what) {}
 };
 //----------------------------------------------------------------------------
 class PPE_SERIALIZE_API FTextSerializer final : public ISerializer {
 public:
-    virtual ~FTextSerializer();
+    virtual ~FTextSerializer() override;
 
     static FExtname Extname();
     static PSerializer Get();

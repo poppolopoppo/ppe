@@ -53,7 +53,7 @@ bool FListener::Connect() {
 
     // if socket() returned an error then return OTHER_ERROR
     if (INVALID_SOCKET == sock) {
-        LOG_NETWORKERROR(L"socket()");
+        PPE_LOG_NETWORKERROR("socket()");
         return false;
     }
 
@@ -70,9 +70,9 @@ bool FListener::Connect() {
         // if there is a specific ip to listen on
         // if inet_pton couldn't convert the ip then return an error
         if (1 != ::inet_pton(AF_INET, _listening.Host().c_str(), &SOCKET_S_ADDR(sa.sin_addr)) ) {
-            LOG_NETWORKERROR(L"inet_pton()");
+            PPE_LOG_NETWORKERROR("inet_pton()");
             if (::closesocket(sock))
-                LOG_NETWORKERROR(L"closesocket()");
+                PPE_LOG_NETWORKERROR("closesocket()");
             return false;
         }
     }
@@ -80,24 +80,24 @@ bool FListener::Connect() {
     // set the SO_REUSEADDR option
     int flag_value = 1;
     if (SOCKET_ERROR == ::setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<const char*>(&flag_value), sizeof(int))) {
-        LOG_NETWORKERROR(L"setsockopt()");
+        PPE_LOG_NETWORKERROR("setsockopt()");
         if (::closesocket(sock))
-            LOG_NETWORKERROR(L"closesocket()");
+            PPE_LOG_NETWORKERROR("closesocket()");
     }
 
     // bind the new socket to the requested port and ip
     if (SOCKET_ERROR == ::bind(sock, reinterpret_cast<sockaddr*>(&sa), sizeof(::sockaddr_in)) ) {
-        LOG_NETWORKERROR(L"bind()");
+        PPE_LOG_NETWORKERROR("bind()");
         if (::closesocket(sock))
-            LOG_NETWORKERROR(L"closesocket()");
+            PPE_LOG_NETWORKERROR("closesocket()");
         return false;
     }
 
     // tell the new socket to listen
     if (SOCKET_ERROR == ::listen(sock, SOMAXCONN)) {
-        LOG_NETWORKERROR(L"listen()");
+        PPE_LOG_NETWORKERROR("listen()");
         if (::closesocket(sock))
-            LOG_NETWORKERROR(L"closesocket()");
+            PPE_LOG_NETWORKERROR("closesocket()");
         return false;
     }
 
@@ -107,9 +107,9 @@ bool FListener::Connect() {
         ::socklen_t length = sizeof(local_info);
 
         if (SOCKET_ERROR == ::getsockname(sock, (::sockaddr*)&local_info, &length) ) {
-            LOG_NETWORKERROR(L"getsockname()");
+            PPE_LOG_NETWORKERROR("getsockname()");
             if (::closesocket(sock))
-                LOG_NETWORKERROR(L"closesocket()");
+                PPE_LOG_NETWORKERROR("closesocket()");
             return false;
         }
 
@@ -119,7 +119,7 @@ bool FListener::Connect() {
 
     _handle = PackSocket_(sock);
 
-    LOG(Network, Info, L"started listening to {0}", _listening);
+    PPE_LOG(Network, Info, "started listening to {0}", _listening);
 
     Assert(IsConnected());
     return true;
@@ -135,7 +135,7 @@ bool FListener::Disconnect() {
     if (status == -1)
         return false;
 
-    LOG(Network, Info, L"stopped listening to {0}", _listening);
+    PPE_LOG(Network, Info, "stopped listening to {0}", _listening);
 
     Assert(!IsConnected());
     return true;
@@ -177,7 +177,7 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
 
         // if select returned an error
         if (SOCKET_ERROR == status) {
-            LOG_NETWORKERROR(L"select()");
+            PPE_LOG_NETWORKERROR("select()");
             return false;
         }
     }
@@ -187,7 +187,7 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
 
     // if there was an error return OTHER_ERROR
     if (INVALID_SOCKET == incoming) {
-        LOG_NETWORKERROR(L"accept()");
+        PPE_LOG_NETWORKERROR("accept()");
         return false;
     }
 
@@ -202,9 +202,9 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
 
         // check if inet_ntop() returned an error
         if (nullptr == real_foreign_ip) {
-            LOG_NETWORKERROR(L"inet_ntop()");
+            PPE_LOG_NETWORKERROR("inet_ntop()");
             if (::closesocket(incoming))
-                LOG_NETWORKERROR(L"closesocket()");
+                PPE_LOG_NETWORKERROR("closesocket()");
             return false;
         }
 
@@ -219,9 +219,9 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
 
         // get the local sockaddr_in structure associated with this new connection
         if (SOCKET_ERROR == ::getsockname(incoming, reinterpret_cast<::sockaddr*>(&local_info), &length)) {
-            LOG_NETWORKERROR(L"getsockname()");
+            PPE_LOG_NETWORKERROR("getsockname()");
             if (::closesocket(incoming))
-                LOG_NETWORKERROR(L"closesocket()");
+                PPE_LOG_NETWORKERROR("closesocket()");
             return false;
         }
 
@@ -230,9 +230,9 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
 
         // check if inet_ntop() returned an error
         if (nullptr == real_local_ip) {
-            LOG_NETWORKERROR(L"inet_ntop()");
+            PPE_LOG_NETWORKERROR("inet_ntop()");
             if (::closesocket(incoming))
-                LOG_NETWORKERROR(L"closesocket()");
+                PPE_LOG_NETWORKERROR("closesocket()");
             return false;
         }
 
@@ -245,9 +245,9 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
     // set the SO_OOBINLINE option
     int flag_value = 1;
     if (SOCKET_ERROR == ::setsockopt(incoming, SOL_SOCKET, SO_OOBINLINE, reinterpret_cast<const char*>(&flag_value), sizeof(int)) ) {
-        LOG_NETWORKERROR(L"setsockopt()");
+        PPE_LOG_NETWORKERROR("setsockopt()");
         if (::closesocket(incoming))
-            LOG_NETWORKERROR(L"closesocket()");
+            PPE_LOG_NETWORKERROR("closesocket()");
         return false;
     }
 
@@ -259,7 +259,7 @@ bool FListener::Accept(FSocket& socket, const FMilliseconds& timeout) {
 
     socket.SetTimeout(socket.Timeout()); // force set the SO_RCVTIMEO socket option
 
-    LOG(Network, Info, L"accept socket from {0} to {1}", socket._local, socket._remote );
+    PPE_LOG(Network, Info, "accept socket from {0} to {1}", socket._local, socket._remote );
 
     Assert(socket.IsConnected());
     return true;

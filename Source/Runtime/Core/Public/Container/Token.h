@@ -82,7 +82,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename _TokenTraits, typename _Char>
-bool IsValidToken(const TBasicStringView<_Char>& content) NOEXCEPT;
+NODISCARD bool IsValidToken(const TBasicStringView<_Char>& content) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _TokenTraits, typename _Char>
 void SanitizeToken(const TMemoryView<_Char>& content) NOEXCEPT;
@@ -123,8 +123,8 @@ public:
     FTokenFactory(const FTokenFactory&) = delete;
     FTokenFactory& operator =(const FTokenFactory&) = delete;
 
-    const FEntry* Lookup(size_t len, size_t hash, const FEntry* head) const;
-    const FEntry* Allocate(void* src, size_t len, size_t stride, size_t hash, const FEntry* tail);
+    NODISCARD const FEntry* Lookup(size_t len, size_t hash, const FEntry* head) const;
+    NODISCARD const FEntry* Allocate(void* src, size_t len, size_t stride, size_t hash, const FEntry* tail);
 
 private:
     STATIC_CONST_INTEGRAL(size_t, MaskBuckets, 0x7FFF);
@@ -201,52 +201,54 @@ public:
         return operator =(MakeStringView(content));
     }
 
-    size_t size() const { return (_handle ? _handle->Length : 0); }
-    bool empty() const { return (_handle == nullptr); }
+    NODISCARD size_t size() const { return (_handle ? _handle->Length : 0); }
+    NODISCARD bool empty() const { return (_handle == nullptr); }
 
-    const _Char* c_str() const { return reinterpret_cast<const _Char*>(_handle ? _handle->Data() : nullptr); }
-    const _Char* data() const { return reinterpret_cast<const _Char*>(_handle ? _handle->Data() : nullptr); }
+    NODISCARD const _Char* c_str() const { return reinterpret_cast<const _Char*>(_handle ? _handle->Data() : nullptr); }
+    NODISCARD const _Char* data() const { return reinterpret_cast<const _Char*>(_handle ? _handle->Data() : nullptr); }
 
-    stringview_type MakeView() const {
+    NODISCARD stringview_type MakeView() const {
         return ((_handle)
             ? stringview_type(reinterpret_cast<const _Char*>(_handle->Data()), _handle->Length)
             : stringview_type() );
     }
 
-    hash_t HashValue() const { return (_handle ? _handle->HashValue : 0); }
+    NODISCARD hash_t HashValue() const { return (_handle ? _handle->HashValue : 0); }
 
     void Swap(TToken& other) { std::swap(_handle, other._handle); }
 
-    bool Equals(const TToken& other) const { return (_handle == other._handle); }
-    bool Less(const TToken& other) const {
+    NODISCARD bool Equals(const TToken& other) const { return (_handle == other._handle); }
+    NODISCARD bool Less(const TToken& other) const {
         return ((_handle != other._handle)
             ? less_type{}(MakeView(), other.MakeView())
             : false );
     }
 
-    bool Equals(const stringview_type& str) const { return equalto_type{}(MakeView(), str); }
-    bool Less(const stringview_type& str) const { return less_type{}(MakeView(), str); }
+    NODISCARD bool Equals(const stringview_type& str) const { return equalto_type{}(MakeView(), str); }
+    NODISCARD bool Less(const stringview_type& str) const { return less_type{}(MakeView(), str); }
 
     friend void swap(TToken& lhs, TToken& rhs) NOEXCEPT { lhs.Swap(rhs); }
-    friend hash_t hash_value(const TToken& token) NOEXCEPT { return token.HashValue(); }
-    friend stringview_type MakeStringView(const TToken& token) NOEXCEPT { return token.MakeView(); }
+    NODISCARD friend hash_t hash_value(const TToken& token) NOEXCEPT { return token.HashValue(); }
+    NODISCARD friend stringview_type MakeStringView(const TToken& token) NOEXCEPT { return token.MakeView(); }
 
-    friend bool operator ==(const TToken& lhs, const TToken& rhs) NOEXCEPT { return lhs.Equals(rhs); }
-    friend bool operator !=(const TToken& lhs, const TToken& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
-    friend bool operator < (const TToken& lhs, const TToken& rhs) NOEXCEPT { return lhs.Less(rhs); }
-    friend bool operator >=(const TToken& lhs, const TToken& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
+    NODISCARD friend bool operator ==(const TToken& lhs, const TToken& rhs) NOEXCEPT { return lhs.Equals(rhs); }
+    NODISCARD friend bool operator !=(const TToken& lhs, const TToken& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
+    NODISCARD friend bool operator < (const TToken& lhs, const TToken& rhs) NOEXCEPT { return lhs.Less(rhs); }
+    NODISCARD friend bool operator >=(const TToken& lhs, const TToken& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
+    NODISCARD friend bool operator > (const TToken& lhs, const TToken& rhs) NOEXCEPT { return rhs.Less(lhs); }
+    NODISCARD friend bool operator <=(const TToken& lhs, const TToken& rhs) NOEXCEPT { return not operator > (lhs, rhs); }
 
-    friend bool operator ==(const TToken& lhs, const stringview_type& rhs) NOEXCEPT { return lhs.Equals(rhs); }
-    friend bool operator !=(const TToken& lhs, const stringview_type& rhs) NOEXCEPT { return not (lhs == rhs); }
-    friend bool operator ==(const stringview_type& lhs, const TToken& rhs) NOEXCEPT { return rhs.Equals(lhs); }
-    friend bool operator !=(const stringview_type& lhs, const TToken& rhs) NOEXCEPT { return not (lhs == rhs); }
+    NODISCARD friend bool operator ==(const TToken& lhs, const stringview_type& rhs) NOEXCEPT { return lhs.Equals(rhs); }
+    NODISCARD friend bool operator !=(const TToken& lhs, const stringview_type& rhs) NOEXCEPT { return not (lhs == rhs); }
+    NODISCARD friend bool operator ==(const stringview_type& lhs, const TToken& rhs) NOEXCEPT { return rhs.Equals(lhs); }
+    NODISCARD friend bool operator !=(const stringview_type& lhs, const TToken& rhs) NOEXCEPT { return not (lhs == rhs); }
 
     operator stringview_type () const NOEXCEPT { return MakeView(); }
 
     static void Start() { token_traits::CreateFactory(); }
     static void Shutdown() { token_traits::DestroyFactory(); }
 
-    static bool IsValidToken(const stringview_type& str) NOEXCEPT {
+    NODISCARD static bool IsValidToken(const stringview_type& str) NOEXCEPT {
         return PPE::IsValidToken<token_traits>(str);
     }
 
@@ -254,7 +256,7 @@ public:
         PPE::SanitizeToken<token_traits>(str);
     }
 
-    static hash_t HashValue(const stringview_type& str) NOEXCEPT {
+    NODISCARD static hash_t HashValue(const stringview_type& str) NOEXCEPT {
         return hasher_type{}(str);
     }
 

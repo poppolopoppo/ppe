@@ -515,6 +515,26 @@ TBasicStringView<_Char> Slice(const TBasicString<_Char>& str, size_t offset, siz
     return str.MakeView().SubRange(offset, count);
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+NODISCARD TMemoryView<_Char> MakeView(TBasicString<_Char>& s) NOEXCEPT {
+    return s.MutableView();
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+NODISCARD TMemoryView<const _Char> MakeView(const TBasicString<_Char>& s) NOEXCEPT {
+    return s.MakeView();
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+NODISCARD size_t SizeOf(const TBasicString<_Char>& s) NOEXCEPT {
+    return s.size();
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
+void Resize_DiscardData(TBasicString<_Char>& str, size_t size) {
+    str.resize(size);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PPE_CORE_API size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr, size_t length);

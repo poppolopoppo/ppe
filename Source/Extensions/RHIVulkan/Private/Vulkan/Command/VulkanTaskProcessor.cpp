@@ -7,6 +7,7 @@
 #include "Vulkan/Pipeline/VulkanPipelineCache.h"
 
 #include "RHI/DrawContext.h"
+#include "RHI/PixelFormatHelpers.h"
 
 #if USE_PPE_RHIDEBUG
 #   include "Diagnostic/Logger.h"
@@ -33,7 +34,7 @@ static void VisitDrawTask_(void* visitor, void* data) {
         *static_cast<TVulkanDrawTask<_Task>*>(data) );
 }
 //----------------------------------------------------------------------------
-static void OverrideBlendStates_(FBlendState* pBlendState, const FColorBuffers& overrides) {
+static void OverrideBlendStates_(FBlendState* pBlendState, const TMemoryView<const details::FVulkanBaseDrawVerticesTask::FColorBuffer>& overrides) {
     Assert(pBlendState);
 
     for (const auto& it : overrides) {
@@ -201,7 +202,7 @@ private:
     void BindTaskPipeline_(const TVulkanDrawTask<_Desc>& task);
 
     void BindVertexBuffers_(
-        TMemoryView<const FVulkanLocalBuffer* const> vertexBuffers,
+        TMemoryView<const TPtrRef<const FVulkanLocalBuffer>> vertexBuffers,
         TMemoryView<const VkDeviceSize> vertexOffsets ) const;
 
     template <typename _DrawTask>
@@ -327,7 +328,7 @@ FVulkanTaskProcessor::FVulkanTaskProcessor(const SVulkanCommandBuffer& workerCmd
 ,   _enableRayTracingKHR(_workerCmd->Device().Enabled().RayTracingKHR)
 ,   _maxDrawIndirectCount(_workerCmd->Device().Limits().maxDrawIndirectCount)
 ,   _maxDrawMeshTaskCount(_workerCmd->Device().Capabilities().MeshShaderProperties.maxDrawMeshTasksCount)
-,   _pendingResourceBarriers(_workerCmd->Allocator()) {
+,   _pendingResourceBarriers(_workerCmd->Write()->MainAllocator) {
     Assert_NoAssume(_vkCommandBuffer);
 
 #if USE_PPE_RHIDEBUG
@@ -461,6 +462,10 @@ void FVulkanTaskProcessor::Visit2_CustomDraw(void* visitor, void* data) {
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 //----------------------------------------------------------------------------
+void FVulkanTaskProcessor::CmdDebugMarker_(FConstChar text, const FColor& color) const {
+    CmdDebugMarker_(text, color.ToLinear());
+}
+//----------------------------------------------------------------------------
 void FVulkanTaskProcessor::CmdDebugMarker_(FConstChar text, const FLinearColor& color) const {
     if (_enableDebugUtils) {
         Assert(text);
@@ -473,6 +478,10 @@ void FVulkanTaskProcessor::CmdDebugMarker_(FConstChar text, const FLinearColor& 
 
         this->vkCmdInsertDebugUtilsLabelEXT(_vkCommandBuffer, &info);
     }
+}
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::CmdPushDebugGroup_(FConstChar text, const FColor& color) const {
+    CmdPushDebugGroup_(text, color.ToLinear());
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::CmdPushDebugGroup_(FConstChar text, const FLinearColor& color) const {
@@ -643,7 +652,7 @@ bool FVulkanTaskProcessor::CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPas
     FVulkanResourceManager& resources = _workerCmd->ResourceManager();
 
     const FRawRenderPassID renderPassId = resources.CreateRenderPass(passes ARGS_IF_RHIDEBUG(debugName));
-    LOG_CHECK(RHI, renderPassId.Valid());
+    PPE_LOG_CHECK(RHI, renderPassId.Valid());
 
     // need to release the reference added by CreateRenderPass() after this batch, since CreateFramebuffer() will also add its own
     _workerCmd->ReleaseResource(renderPassId);
@@ -667,7 +676,7 @@ bool FVulkanTaskProcessor::CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPas
             auto& dst = renderTargets[depthAttachmentIndex];
 
             // compare attachments
-            LOG_CHECK(RHI, not dst.first or (dst.first == src.ImageId && dst.second == src.Desc));
+            PPE_LOG_CHECK(RHI, not dst.first or (dst.first == src.ImageId && dst.second == src.Desc));
 
             dst.first = src.ImageId;
             dst.second = src.Desc;
@@ -677,7 +686,7 @@ bool FVulkanTaskProcessor::CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPas
             auto& dst = renderTargets[src.Index];
 
             // compare attachments
-            LOG_CHECK(RHI, not dst.first or (dst.first == src.ImageId && dst.second == src.Desc));
+            PPE_LOG_CHECK(RHI, not dst.first or (dst.first == src.ImageId && dst.second == src.Desc));
 
             dst.first = src.ImageId;
             dst.second = src.Desc;
@@ -690,7 +699,7 @@ bool FVulkanTaskProcessor::CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPas
         checked_cast<unsigned int>(totalArea.Extents()),
         1
         ARGS_IF_RHIDEBUG(debugName) );
-    LOG_CHECK(RHI, framebufferId.Valid());
+    PPE_LOG_CHECK(RHI, framebufferId.Valid());
 
     _workerCmd->ReleaseResource(framebufferId);
 
@@ -709,8 +718,8 @@ void FVulkanTaskProcessor::BeginRenderPass_(const TVulkanFrameTask<FSubmitRender
     TFixedSizeStack<FVulkanLogicalRenderPass*, 32> logicalRenderPasses;
 
     for (const TVulkanFrameTask<FSubmitRenderPass>* pSubmit = &task; pSubmit; pSubmit = pSubmit->NextSubpass()) {
-        Assert(pSubmit->LogicalPass());
-        logicalRenderPasses.Push(pSubmit->LogicalPass());
+        Assert(pSubmit->LogicalPass);
+        logicalRenderPasses.Push(pSubmit->LogicalPass);
     }
 
     // add barriers
@@ -738,26 +747,26 @@ void FVulkanTaskProcessor::BeginRenderPass_(const TVulkanFrameTask<FSubmitRender
 
     // set shading rate
     VkImageView shadingRateView = VK_NULL_HANDLE;
-    SetShadingRateImage_(&shadingRateView, *task.LogicalPass());
+    SetShadingRateImage_(&shadingRateView, *task.LogicalPass);
 
     // commit all barriers
-    AddRenderTargetBarriers_(*task.LogicalPass(), barriers);
+    AddRenderTargetBarriers_(*task.LogicalPass, barriers);
     CommitBarriers_();
 
     // create render pass and frame buffer
-    VerifyRelease( CreateRenderPass_(logicalRenderPasses.MakeView() ARGS_IF_RHIDEBUG(task.TaskName())) );
+    VerifyRelease( CreateRenderPass_(logicalRenderPasses.MakeView() ARGS_IF_RHIDEBUG(task.TaskName)) );
 
     // begin render pass
-    const FVulkanFramebuffer* const pFramebuffer = Resource_(task.LogicalPass()->FramebufferId());
+    const FVulkanFramebuffer* const pFramebuffer = Resource_(task.LogicalPass->FramebufferId());
     Assert(pFramebuffer);
-    const FVulkanRenderPass* const pRenderPass = Resource_(task.LogicalPass()->RenderPassId());
+    const FVulkanRenderPass* const pRenderPass = Resource_(task.LogicalPass->RenderPassId());
     Assert(pRenderPass);
 
     const auto sharedRp = pRenderPass->Read();
     Assert(VK_NULL_HANDLE != sharedRp->RenderPass);
-    Assert_NoAssume(checked_cast<u32>(task.LogicalPass()->ClearValues().size()) >= sharedRp->CreateInfo.attachmentCount);
+    Assert_NoAssume(checked_cast<u32>(task.LogicalPass->ClearValues().size()) >= sharedRp->CreateInfo.attachmentCount);
 
-    const FRectangleU& area = task.LogicalPass()->Area();
+    const FRectangleU& area = task.LogicalPass->Area();
     Assert(area.HasPositiveExtentsStrict());
 
     VkRenderPassBeginInfo info{};
@@ -768,7 +777,7 @@ void FVulkanTaskProcessor::BeginRenderPass_(const TVulkanFrameTask<FSubmitRender
     info.renderArea.extent.width = area.Width();
     info.renderArea.extent.height = area.Height();
     info.clearValueCount = sharedRp->CreateInfo.attachmentCount;
-    info.pClearValues = task.LogicalPass()->ClearValues().data();
+    info.pClearValues = task.LogicalPass->ClearValues().data();
     info.framebuffer = pFramebuffer->Handle();
 
     vkCmdBeginRenderPass(_vkCommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
@@ -785,7 +794,7 @@ void FVulkanTaskProcessor::BeginSubpass_(const TVulkanFrameTask<FSubmitRenderPas
 
     // #TODO: clear attachments
 
-    //vkCmdClearAttachments(_vkCommandBuffer, checked_cast<u32>(task.LogicalPass()->Render) );
+    //vkCmdClearAttachments(_vkCommandBuffer, checked_cast<u32>(task.LogicalPass->Render) );
 }
 //----------------------------------------------------------------------------
 // Pipeline resources
@@ -793,23 +802,24 @@ void FVulkanTaskProcessor::BeginSubpass_(const TVulkanFrameTask<FSubmitRenderPas
 void FVulkanTaskProcessor::ExtractDescriptorSets_(
     FVulkanDescriptorSets* pDescriptorSets,
     const FVulkanPipelineLayout& layout,
-    const FVulkanPipelineResourceSet& resourceSet ) {
+    TMemoryView<u32> dynamicOffsets,
+    TMemoryView<const FVulkanPipelineResourceSet::FResource> resources) {
     Assert(pDescriptorSets);
 
     const u32 firstDescriptorSet = layout.Read()->FirstDescriptorSet;
 
     TStaticArray<TPair<u32, u32>, MaxDescriptorSets> newDynamicOffsets;
-    const auto oldDynamicOffsets = resourceSet.DynamicOffsets;
+    const TFixedSizeStack<u32, MaxBufferDynamicOffsets> oldDynamicOffsets{ dynamicOffsets };
 
-    pDescriptorSets->Resize(resourceSet.Resources.size());
+    pDescriptorSets->Resize(resources.size());
 
-    for (const auto& res : resourceSet.Resources) {
+    for (const auto& res : resources) {
         u32 binding = 0;
         FRawDescriptorSetLayoutID dsLayoutId;
         if (not layout.DescriptorSetLayout(&binding, &dsLayoutId, res.DescriptorSetId))
             continue;
 
-        FPipelineResourceBarriers barriers{ *this, resourceSet.DynamicOffsets.MakeView() };
+        FPipelineResourceBarriers barriers{ *this, dynamicOffsets };
         res.PipelineResources->EachUniform(barriers);
 
         Assert_NoAssume(binding >= firstDescriptorSet);
@@ -825,20 +835,21 @@ void FVulkanTaskProcessor::ExtractDescriptorSets_(
     u32 dst = 0;
     for (const TPair<u32, u32>& range : newDynamicOffsets) {
         forrange(i, 0, range.second)
-            resourceSet.DynamicOffsets[dst++] = oldDynamicOffsets[range.first + i];
+            dynamicOffsets[dst++] = oldDynamicOffsets[range.first + i];
     }
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::BindPipelineResources_(
     const FVulkanPipelineLayout& layout,
-    const FVulkanPipelineResourceSet& resourceSet,
+    TMemoryView<u32> dynamicOffsets,
+    TMemoryView<const FVulkanPipelineResourceSet::FResource> resources,
     VkPipelineBindPoint bindPoint
     ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex)) {
 
     // update descriptor sets and add pipeline barriers
 
     FVulkanDescriptorSets descriptorSets;
-    ExtractDescriptorSets_(&descriptorSets, layout, resourceSet);
+    ExtractDescriptorSets_(&descriptorSets, layout, dynamicOffsets, resources);
 
     if (not descriptorSets.empty()) {
         vkCmdBindDescriptorSets(
@@ -848,8 +859,8 @@ void FVulkanTaskProcessor::BindPipelineResources_(
             layout.Read()->FirstDescriptorSet,
             checked_cast<u32>(descriptorSets.size()),
             descriptorSets.data(),
-            checked_cast<u32>(resourceSet.DynamicOffsets.size()),
-            resourceSet.DynamicOffsets.data() );
+            checked_cast<u32>(dynamicOffsets.size()),
+            dynamicOffsets.data() );
 
         ONLY_IF_RHIDEBUG(EditStatistics_([](FFrameStatistics::FRendering& rendering) {
             rendering.NumDescriptorBinds++;
@@ -892,7 +903,7 @@ void FVulkanTaskProcessor::BindPipelinePerPassStates_(const FVulkanLogicalRender
         }));
     }
 
-    // all pipelines un current render pass have same viewport count and same dynamic states,
+    // all pipelines in current render pass have same viewport count and same dynamic states,
     // so those values should not be invalidated
     if (_perPassStatesUpdated)
         return;
@@ -908,6 +919,7 @@ void FVulkanTaskProcessor::BindPipelinePerPassStates_(const FVulkanLogicalRender
     }
 
     if (not rp.ShadingRatePalette().empty()) {
+        Assert_NoAssume(rp.ShadingRatePalette().size() == rp.Viewports().size());
         vkCmdSetViewportShadingRatePaletteNV(
             _vkCommandBuffer,
             0,
@@ -946,12 +958,17 @@ bool FVulkanTaskProcessor::BindPipeline_(
         task.DynamicStates );
     SetupExtensions_(&pipelineDynamicStates, rp);
 
+    const FVertexInputState vertexInput{
+        .BufferBindings = task.BufferBindings,
+        .Vertices = task.VertexInputs,
+    };
+
     VkPipeline vkPipeline;
-    LOG_CHECK(RHI, _workerCmd->Write()->PipelineCache.CreatePipelineInstance(
+    PPE_LOG_CHECK(RHI, _workerCmd->Write()->PipelineCache.CreatePipelineInstance(
         &vkPipeline, pPplnLayout,
         *_workerCmd, rp, *task.Pipeline,
-        task.VertexInput, renderState, pipelineDynamicStates
-        ARGS_IF_RHIDEBUG(task.DebugModeIndex()) ));
+        vertexInput, renderState, pipelineDynamicStates
+        ARGS_IF_RHIDEBUG(task.DebugModeIndex) ));
 
     BindPipelinePerPassStates_(rp, vkPipeline);
     return true;
@@ -983,11 +1000,11 @@ bool FVulkanTaskProcessor::BindPipeline_(
     SetupExtensions_(&pipelineDynamicStates, rp);
 
     VkPipeline vkPipeline;
-    LOG_CHECK(RHI, _workerCmd->Write()->PipelineCache.CreatePipelineInstance(
+    PPE_LOG_CHECK(RHI, _workerCmd->Write()->PipelineCache.CreatePipelineInstance(
         &vkPipeline, pPplnLayout,
         *_workerCmd, rp, *task.Pipeline,
         renderState, pipelineDynamicStates
-        ARGS_IF_RHIDEBUG(task.DebugModeIndex()) ));
+        ARGS_IF_RHIDEBUG(task.DebugModeIndex) ));
 
     BindPipelinePerPassStates_(rp, vkPipeline);
     return true;
@@ -1001,7 +1018,7 @@ bool FVulkanTaskProcessor::BindPipeline_(
     ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex) ) {
 
     VkPipeline vkPipeline;
-    LOG_CHECK(RHI, _workerCmd->Write()->PipelineCache.CreatePipelineInstance(
+    PPE_LOG_CHECK(RHI, _workerCmd->Write()->PipelineCache.CreatePipelineInstance(
         &vkPipeline, pPplnLayout,
         *_workerCmd,
         compute, localSize, flags
@@ -1080,7 +1097,7 @@ void FVulkanTaskProcessor::CommitBarriers_() {
 void FVulkanTaskProcessor::PushContants_(const FVulkanPipelineLayout& layout, const FPushConstantDatas& pushConstants) {
     const FPipelineDesc::FPushConstants& map = layout.Read()->PushConstants;
     AssertReleaseMessage(
-        L"will be used push constants from previous draw/dispatch calls or may contains undefined values",
+        "will be used push constants from previous draw/dispatch calls or may contains undefined values",
         map.size() == pushConstants.size() );
 
     for (const FPushConstantData& src : pushConstants) {
@@ -1105,7 +1122,7 @@ void FVulkanTaskProcessor::PushContants_(const FVulkanPipelineLayout& layout, co
 // Submit
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanSubmitRenderPassTask& task) {
-    if (task.LogicalPass()->DrawTasks().empty())
+    if (task.LogicalPass->DrawTasks().empty())
         return;
 
     // invalidate state partially
@@ -1113,13 +1130,13 @@ void FVulkanTaskProcessor::Visit(const FVulkanSubmitRenderPassTask& task) {
     _perPassStatesUpdated = false;
 
     if (Likely(not task.IsSubpass())) {
-        ONLY_IF_RHIDEBUG( CmdPushDebugGroup_(task.TaskName(), task.DebugColor()) );
+        ONLY_IF_RHIDEBUG( CmdPushDebugGroup_(task.TaskName, task.DebugColor) );
 
         BeginRenderPass_(task);
     }
     else {
         ONLY_IF_RHIDEBUG( CmdPopDebugGroup_() );
-        ONLY_IF_RHIDEBUG( CmdPushDebugGroup_(task.TaskName(), task.DebugColor()) );
+        ONLY_IF_RHIDEBUG( CmdPushDebugGroup_(task.TaskName, task.DebugColor) );
 
         BeginSubpass_(task);
     }
@@ -1127,7 +1144,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanSubmitRenderPassTask& task) {
     // draw
     FDrawTaskCommands commands{ *this, &task, _vkCommandBuffer };
 
-    for (IVulkanDrawTask* pDraw : task.LogicalPass()->DrawTasks()) {
+    for (IVulkanDrawTask* pDraw : task.LogicalPass->DrawTasks()) {
         Assert(pDraw);
         pDraw->Process2(&commands);
     }
@@ -1143,10 +1160,10 @@ void FVulkanTaskProcessor::Visit(const FVulkanSubmitRenderPassTask& task) {
 // Compute dispatch
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanDispatchComputeTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const FVulkanPipelineLayout* pLayout = nullptr;
-    LOG_CHECKVOID(RHI, BindPipeline_(
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(
         &pLayout,
         *task.Pipeline, task.LocalGroupSize,
         VK_PIPELINE_CREATE_DISPATCH_BASE
@@ -1154,7 +1171,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanDispatchComputeTask& task) {
 
     BindPipelineResources_(
         *pLayout,
-        task.Resources(),
+        task.DynamicOffsets,
+        task.Resources,
         VK_PIPELINE_BIND_POINT_COMPUTE
         ARGS_IF_RHIDEBUG(task.DebugModeIndex) );
     PushContants_(*pLayout, task.PushConstants);
@@ -1182,10 +1200,10 @@ void FVulkanTaskProcessor::Visit(const FVulkanDispatchComputeTask& task) {
 }
 //----------------------------------------------------------------------------*
 void FVulkanTaskProcessor::Visit(const FVulkanDispatchComputeIndirectTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const FVulkanPipelineLayout* pLayout = nullptr;
-    LOG_CHECKVOID(RHI, BindPipeline_(
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(
         &pLayout,
         *task.Pipeline, task.LocalGroupSize,
         0
@@ -1193,7 +1211,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanDispatchComputeIndirectTask& task)
 
     BindPipelineResources_(
         *pLayout,
-        task.Resources(),
+        task.DynamicOffsets,
+        task.Resources,
         VK_PIPELINE_BIND_POINT_COMPUTE
         ARGS_IF_RHIDEBUG(task.DebugModeIndex) );
     PushContants_(*pLayout, task.PushConstants);
@@ -1223,7 +1242,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanDispatchComputeIndirectTask& task)
 // Transfer ops
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanCopyBufferTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const auto srcBuffer = task.SrcBuffer->Read();
     const auto dstBuffer = task.DstBuffer->Read();
@@ -1266,7 +1285,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanCopyBufferTask& task) {
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanCopyImageTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const auto srcImage = task.SrcImage->Read();
     const auto dstImage = task.DstImage->Read();
@@ -1319,7 +1338,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanCopyImageTask& task) {
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanCopyBufferToImageTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const auto srcBuffer = task.SrcBuffer->Read();
     const auto dstImage = task.DstImage->Read();
@@ -1364,7 +1383,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanCopyBufferToImageTask& task) {
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanCopyImageToBufferTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const auto srcImage = task.SrcImage->Read();
     const auto dstBuffer = task.DstBuffer->Read();
@@ -1409,7 +1428,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanCopyImageToBufferTask& task) {
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanBlitImageTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const auto srcImage = task.SrcImage->Read();
     const auto dstImage = task.DstImage->Read();
@@ -1457,7 +1476,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanBlitImageTask& task) {
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanResolveImageTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const auto srcImage = task.SrcImage->Read();
     const auto dstImage = task.DstImage->Read();
@@ -1505,7 +1524,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanResolveImageTask& task) {
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanGenerateMipmapsTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const auto sharedImage = task.Image->Read();
     const uint3 dimension = (sharedImage->Dimensions() / (1u << task.BaseMipLevel));
@@ -1607,7 +1626,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanGenerateMipmapsTask& task) {
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanFillBufferTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     AddBuffer_(task.DstBuffer, EResourceState::TransferDst, task.DstOffset, task.Size);
     CommitBarriers_();
@@ -1625,7 +1644,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanFillBufferTask& task) {
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanClearColorImageTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const auto dstImage = task.DstImage->Read();
 
@@ -1661,7 +1680,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanClearColorImageTask& task) {
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanClearDepthStencilImageTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const auto dstImage = task.DstImage->Read();
 
@@ -1697,7 +1716,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanClearDepthStencilImageTask& task) 
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanUpdateBufferTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     const auto dstBuffer = task.DstBuffer->Read();
 
@@ -1724,13 +1743,13 @@ void FVulkanTaskProcessor::Visit(const FVulkanUpdateBufferTask& task) {
 // Present
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanPresentTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     FRawImageID swapchainImageId;
     VerifyRelease( task.Swapchain->Acquire(&swapchainImageId, *_workerCmd ARGS_IF_RHIDEBUG(_workerCmd->Read()->DebugQueueSync) ));
     Assert(swapchainImageId);
 
-    const FVulkanLocalImage* const pDstImage = ToLocal_(swapchainImageId);
+    const TPtrRef<const FVulkanLocalImage> pDstImage = ToLocal_(swapchainImageId);
     Assert(pDstImage);
     Assert(pDstImage != task.SrcImage);
 
@@ -1775,10 +1794,10 @@ void FVulkanTaskProcessor::Visit(const FVulkanUpdateRayTracingShaderTableTask& t
     if (not (_enableRayTracingKHR || _enableRayTracingNV))
         return;
 
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     FVulkanPipelineCache::FBufferCopyRegions regions;
-    LOG_CHECKVOID(RHI, _workerCmd->Write()->PipelineCache.CreateShaderTable(
+    PPE_LOG_CHECKVOID(RHI, _workerCmd->Write()->PipelineCache.CreateShaderTable(
         task.ShaderTable,
         &regions,
         *_workerCmd,
@@ -1815,7 +1834,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingGeometryTask& task)
     if (not (_enableRayTracingKHR || _enableRayTracingNV))
         return;
 
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     AddRTGeometry_(task.RTGeometry, EResourceState::BuildRayTracingStructWrite);
     AddBuffer_(task.ScratchBuffer, EResourceState::RTASBuildingBufferReadWrite, 0, VK_WHOLE_SIZE);
@@ -1848,7 +1867,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingSceneTask& task) {
     if (not (_enableRayTracingKHR || _enableRayTracingNV))
         return;
 
-    ONLY_IF_RHIDEBUG(CmdDebugMarker_(task.TaskName(), task.DebugColor()));
+    ONLY_IF_RHIDEBUG(CmdDebugMarker_(task.TaskName, task.DebugColor));
 
     // copy instance data to GPU memory
     AddBuffer_(task.InstanceStagingBuffer, EResourceState::TransferSrc, task.InstanceStagingBufferOffset, task.InstanceBufferSizeInBytes());
@@ -1877,7 +1896,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingSceneTask& task) {
     AddBuffer_(task.ScratchBuffer, EResourceState::RTASBuildingBufferReadWrite, task.ScratchBufferOffset(), task.ScratchBufferSizeInBytes());
     AddBuffer_(task.InstanceBuffer, EResourceState::RTASBuildingBufferRead, task.InstanceBufferOffset, task.InstanceBufferSizeInBytes());
 
-    for (const FVulkanRayTracingLocalGeometry* blas : task.RTGeometries)
+    for (const TPtrRef<const FVulkanRayTracingLocalGeometry>& blas : task.RTGeometries)
         AddRTGeometry_(blas, EResourceState::BuildRayTracingStructRead);
 
     CommitBarriers_();
@@ -1908,7 +1927,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanTraceRaysTask& task) {
     if (not (_enableRayTracingKHR || _enableRayTracingNV))
         return;
 
-    ONLY_IF_RHIDEBUG(CmdDebugMarker_(task.TaskName(), task.DebugColor()));
+    ONLY_IF_RHIDEBUG(CmdDebugMarker_(task.TaskName, task.DebugColor));
 
     EShaderDebugMode debugMode = Default;
 
@@ -1920,7 +1939,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanTraceRaysTask& task) {
         auto& debugger = *_workerCmd->Batch();
         const FVulkanRayTracingPipeline* const ppln = Resource_(task.ShaderTable->Pipeline());
 
-        LOG_CHECKVOID(RHI, !!ppln);
+        PPE_LOG_CHECKVOID(RHI, !!ppln);
         Verify( debugger.FindModeInfoForDebug(&debugMode, &debugStages, task.DebugModeIndex) );
 
         for (const auto& shader : ppln->Read()->Shaders) {
@@ -1941,7 +1960,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanTraceRaysTask& task) {
     VkDeviceSize callableOffset = 0;
     VkDeviceSize callableStride = 0;
     Meta::TStaticBitset<3> availableShaders;
-    LOG_CHECKVOID(RHI, task.ShaderTable->BindingsFor(
+    PPE_LOG_CHECKVOID(RHI, task.ShaderTable->BindingsFor(
         &layoutId, &pipeline, &blockSize,
         &raygenOffset,
         &raymissOffset, &raymissStride,
@@ -1965,7 +1984,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanTraceRaysTask& task) {
         }));
     }
 
-    BindPipelineResources_(*pLayout, task.Resources(), VK_PIPELINE_BIND_POINT_RAY_TRACING_NV ARGS_IF_RHIDEBUG(task.DebugModeIndex) );
+    BindPipelineResources_(*pLayout, task.DynamicOffsets, task.Resources, VK_PIPELINE_BIND_POINT_RAY_TRACING_NV ARGS_IF_RHIDEBUG(task.DebugModeIndex) );
     PushContants_(*pLayout, task.PushConstants);
 
     Assert(pShaderTableBuffer->Desc().Usage & EBufferUsage::RayTracing);
@@ -1988,7 +2007,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanTraceRaysTask& task) {
 }
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::Visit(const FVulkanCustomTaskTask& task) {
-    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
     EResourceState stages = _workerCmd->Device().GraphicsShaderStages();
 

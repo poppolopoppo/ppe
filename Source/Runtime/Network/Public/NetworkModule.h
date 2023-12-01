@@ -19,7 +19,6 @@ public:
 
     explicit FNetworkModule() NOEXCEPT;
 
-
     virtual void Start(FModularDomain& domain) override;
     virtual void Shutdown(FModularDomain& domain) override;
 

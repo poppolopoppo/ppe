@@ -395,12 +395,12 @@ FJson::FAllocator::~FAllocator() {
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FJsonException::Description(FWTextWriter& oss) const {
+FTextWriter& FJsonException::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What())
-        << L": in json file '"
+        << ": in json file '"
         << _site
-        << L"' !";
+        << "' !";
 }
 #endif
 //----------------------------------------------------------------------------

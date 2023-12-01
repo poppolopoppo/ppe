@@ -53,3 +53,9 @@
 [submodule "Build"]
 	path = Build
 	url = https://github.com/poppolopoppo/ppb
+[submodule "Source/External/imgui/IconCppFontHeaders.git"]
+	path = Source/External/imgui/IconFontCppHeaders.git
+	url = https://github.com/juliettef/IconFontCppHeaders.git
+[submodule "Source/External/imgui/implot.git"]
+	path = Source/External/imgui/implot.git
+	url = https://github.com/epezent/implot.git

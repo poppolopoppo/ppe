@@ -39,7 +39,7 @@ static bool WindowsMonitorInfo_(::HMONITOR hMonitor, FWindowsPlatformSurvey::FMo
     mi.cbSize = sizeof(mi);
 
     if (not ::GetMonitorInfoW(hMonitor, &mi)) {
-        LOG_LASTERROR(Survey, L"GetMonitorInfoW");
+        PPE_LOG_LASTERROR(Survey, "GetMonitorInfoW");
         return false;
     }
 
@@ -60,7 +60,7 @@ static bool WindowsMonitorInfo_(::HMONITOR hMonitor, FWindowsPlatformSurvey::FMo
     u32 dpiScaleX{ FPlatformApplicationMisc::DefaultScreenDPI };
     u32 dpiScaleY{ FPlatformApplicationMisc::DefaultScreenDPI };
     if (not SUCCEEDED(::GetDpiForMonitor(hMonitor, MDT_EFFECTIVE_DPI, &dpiScaleX, &dpiScaleY))) {
-        LOG_LASTERROR(Survey, L"GetDpiForMonitor");
+        PPE_LOG_LASTERROR(Survey, "GetDpiForMonitor");
         return false;
     }
 
@@ -142,7 +142,7 @@ static bool WindowsStorageInfo_(const wchar_t* path, FWindowsPlatformSurvey::FSt
         &maximumComponentLength,
         &filesystemFlags,
         filesystemName, static_cast<::DWORD>(lengthof(filesystemName))) ) {
-        LOG_LASTERROR(Survey, L"GetVolumeInformationW");
+        PPE_LOG_LASTERROR(Survey, "GetVolumeInformationW");
         return false;
     }
 
@@ -168,7 +168,7 @@ static bool WindowsStorageInfo_(const wchar_t* path, FWindowsPlatformSurvey::FSt
     ::ULARGE_INTEGER totalNumberOfBytes;
     ::ULARGE_INTEGER totalNumberOfFreeBytes;
     if (not ::GetDiskFreeSpaceExW(path, &bytesAvailableToCaller, &totalNumberOfBytes, &totalNumberOfFreeBytes)) {
-        LOG_LASTERROR(Survey, L"GetDiskFreeSpaceExW");
+        PPE_LOG_LASTERROR(Survey, "GetDiskFreeSpaceExW");
         return false;
     }
 
@@ -198,14 +198,14 @@ bool FWindowsPlatformSurvey::PrimaryDisplayAdapter(FDisplayAdapter* displayAdapt
 
     for (::DWORD iDevNum = 0; ; ++iDevNum) {
         if (not ::EnumDisplayDevicesW(NULL, iDevNum, &dev, EDD_GET_DEVICE_INTERFACE_NAME)) {
-            LOG_LASTERROR(Survey, L"EnumDisplayDevicesW");
+            PPE_LOG_LASTERROR(Survey, "EnumDisplayDevicesW");
             break;
         }
 
         if (dev.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) {
             WindowsDisplayAdapter_(dev, displayAdapter);
 
-            LOG(Survey, Info, L"primary display adapter <{0}> : {1}",
+            PPE_LOG(Survey, Info, "primary display adapter <{0}> : {1}",
                 displayAdapter->DeviceName, displayAdapter->DeviceDescription);
 
             return true;
@@ -239,7 +239,7 @@ bool FWindowsPlatformSurvey::PrimaryMonitor(FMonitorInfo* monitor) {
     ::HMONITOR const hMonitor = ::MonitorFromWindow(NULL, MONITOR_DEFAULTTOPRIMARY);
 
     if (WindowsMonitorInfo_(hMonitor, monitor)) {
-        LOG(Survey, Info, L"primary monitor <{0}> : {1}x{2} {3}bpp @ {4}hz",
+        PPE_LOG(Survey, Info, "primary monitor <{0}> : {1}x{2} {3}bpp @ {4}hz",
             monitor->MonitorName,
             monitor->CurrentResolution.Width,
             monitor->CurrentResolution.Height,
@@ -262,7 +262,7 @@ bool FWindowsPlatformSurvey::MonitorFromPoint(int x, int y, FMonitorInfo* monito
 
     ::HMONITOR const hMonitor = ::MonitorFromPoint(pt, MONITOR_DEFAULTTONULL);
     if (NULL == hMonitor) {
-        LOG_LASTERROR(Survey, L"MonitorFromPoint");
+        PPE_LOG_LASTERROR(Survey, "MonitorFromPoint");
         return false;
     }
 
@@ -282,7 +282,7 @@ bool FWindowsPlatformSurvey::MonitorFromWindow(const FWindowsWindow& window, FMo
 
     ::HMONITOR const hMonitor = ::MonitorFromWindow(window.HandleWin32(), MONITOR_DEFAULTTONULL);
     if (NULL == hMonitor) {
-        LOG_LASTERROR(Survey, L"MonitorFromWindow");
+        PPE_LOG_LASTERROR(Survey, "MonitorFromWindow");
         return false;
     }
 
@@ -311,11 +311,11 @@ bool FWindowsPlatformSurvey::MonitorInfos(FMonitorInfos* monitors) {
 
     ::MONITORENUMPROC const addMonitor = &FMonitorIterator_::Iterate;
     if (::EnumDisplayMonitors(NULL, NULL, addMonitor, (::LPARAM)monitors)) {
-        LOG(Survey, Info, L"found {0} monitors", monitors->size());
+        PPE_LOG(Survey, Info, "found {0} monitors", monitors->size());
         return true;
     }
     else {
-        LOG_LASTERROR(Survey, L"EnumDisplayMonitors");
+        PPE_LOG_LASTERROR(Survey, "EnumDisplayMonitors");
         return false;
     }
 }
@@ -339,7 +339,7 @@ bool FWindowsPlatformSurvey::StorageFromPath(const FWStringView& path, FStorageI
     const FWString cpath(path); // null terminated
     wchar_t fullname[MAX_PATH + 1];
     if (0 == ::GetFullPathNameW(cpath.data(), static_cast<::DWORD>(lengthof(fullname)), fullname, NULL)) {
-        LOG_LASTERROR(Survey, L"GetFullPathNameW");
+        PPE_LOG_LASTERROR(Survey, "GetFullPathNameW");
         return false;
     }
 

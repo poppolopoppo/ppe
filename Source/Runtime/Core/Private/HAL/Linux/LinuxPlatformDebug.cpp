@@ -110,7 +110,7 @@ void FLinuxPlatformDebug::SetThreadDebugName(const char* name) {
     const int error = ::pthread_setname_np(
         ::pthread_self(), name
     );
-    CLOG(0 != error, HAL, Error, L"failed to set thread debug name: '{1}' ({0})", error, MakeCStringView(name));
+    PPE_CLOG(0 != error, HAL, Error, "failed to set thread debug name: '{1}' ({0})", error, MakeCStringView(name));
     Unused(error);
 }
 //----------------------------------------------------------------------------

@@ -152,14 +152,14 @@ void main()
 ARGS_IF_RHIDEBUG("Compiler_RayTracing1_RI"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::VKSL_110);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_110));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_110));
 
 	const FDescriptorSet* const ds = ppln.DescriptorSet("0"_descriptorset);
-	LOG_CHECK(WindowTest, !!ds);
+	PPE_LOG_CHECK(WindowTest, !!ds);
 
-    LOG_CHECK(WindowTest, TestRaytracingScene(*ds, "accNV"_uniform, 0, EShaderStages::RayGen | EShaderStages::RayClosestHit | EShaderStages::RayMiss));
+    PPE_LOG_CHECK(WindowTest, TestRaytracingScene(*ds, "accNV"_uniform, 0, EShaderStages::RayGen | EShaderStages::RayClosestHit | EShaderStages::RayMiss));
 
     return true;
 }

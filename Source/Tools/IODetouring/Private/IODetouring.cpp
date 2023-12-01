@@ -92,18 +92,13 @@ static BOOL OnProcessDetach_(FIODetouringHooks& H, HMODULE hDll) {
     OnThreadDetach_(H, hDll);
     H.bLog = FALSE;
 
-    FIODetouringFiles::Get().Dump();
-    FIODetouringFiles::Destroy();
-
-    FIODetouringTblog& Tblog = FIODetouringTblog::Get();
-
     LONG const error = H.DetachDetours();
     if (error != NO_ERROR) {
         PPE_DEBUG_BREAK();
-        Tblog.Printf("Error detaching detours: %d\n", error);
     }
 
-    Tblog.Close();
+    FIODetouringFiles::Destroy();
+
     return TRUE;
 }
 //----------------------------------------------------------------------------

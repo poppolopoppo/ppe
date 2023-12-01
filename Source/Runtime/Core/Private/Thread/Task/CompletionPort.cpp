@@ -33,21 +33,18 @@ void FCompletionPort::AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPrio
 
     // *IMPORTANT* once in the waiting queue, any decref could resume the fiber,
     // so when a fiber is added it *MUST* be dormant and ready to be resumed.
-    // This is why we have to switch to a new fiber to queue to the counter.
+    // This is why we have to switch to a new fiber to queue the counter.
 
-    FTaskFiberPool::FHandleRef const cur = FTaskFiberPool::CurrentHandleRef();
-    FTaskFiberPool::FHandleRef const nxt = fibers.AcquireFiber();
-
-    FInterruptedTask waiting{ ITaskContext::Get(), cur, priority };
+    FTaskFiberPool::FHandleRef const preparedFiber = fibers.AcquireFiber();
 
     // The wakeup callback will be executed just after YieldFiber(), and will perform
     // the actual call to Queue(). If by this time the counter would have been
     // already finished then we'd switch directly back to the original fiber.
 
-    nxt->AttachWakeUpCallback([this, waiting]() {
-        _queue.push_back(waiting);
-        _barrier.Unlock();
-    });
+    FTaskFiberPool::AttachWakeUpCallback(preparedFiber,
+        TFunction<void()>::Bind<&FCompletionPort::QueueWaitingFiber_>(this, FInterruptedTask{
+            ITaskContext::Get(), FTaskFiberPool::CurrentHandleRef(), priority
+        }));
 
     _barrier.Lock();
 
@@ -55,13 +52,19 @@ void FCompletionPort::AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPrio
         // task already completed, abort call to YieldFiber()
         _barrier.Unlock();
 
-        nxt->OnWakeUp.Reset();
-        fibers.ReleaseFiber(nxt);
+        FTaskFiberPool::ResetWakeUpCallback(preparedFiber);
+        fibers.ReleaseFiber(preparedFiber);
     }
     else {
         // the lock will be closed *only* when the next fiber awaken
-        cur->YieldFiber(nxt, false/* keep current fiber alive */);
+        FTaskFiberPool::YieldCurrentFiber(preparedFiber, false/* keep current fiber alive */);
     }
+}
+//----------------------------------------------------------------------------
+void FCompletionPort::QueueWaitingFiber_(const FInterruptedTask& waiting) {
+    _queue.push_back(waiting);
+
+    _barrier.Unlock();
 }
 //----------------------------------------------------------------------------
 void FCompletionPort::Start(size_t n) NOEXCEPT {

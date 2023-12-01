@@ -67,7 +67,7 @@ private:
     RTTI::PMetaObject _scopeObject;
     local_scope_t _localScope;
 
-    SLABHEAP_POOLED(Atom)& Heap_() const;
+    SLABHEAP(Atom)& Heap_() const;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

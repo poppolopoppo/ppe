@@ -63,12 +63,12 @@ void main() {
 ARGS_IF_RHIDEBUG("Compiler_PushConst1_PS"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::VKSL_100);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
 
-    LOG_CHECK(WindowTest, TestPushConstant(ppln, "VSPushConst"_pushconstant, EShaderStages::Vertex, 0_b, 24_b));
-    LOG_CHECK(WindowTest, TestPushConstant(ppln, "FSPushConst"_pushconstant, EShaderStages::Fragment, 32_b, 48_b));
+    PPE_LOG_CHECK(WindowTest, TestPushConstant(ppln, "VSPushConst"_pushconstant, EShaderStages::Vertex, 0_b, 24_b));
+    PPE_LOG_CHECK(WindowTest, TestPushConstant(ppln, "FSPushConst"_pushconstant, EShaderStages::Fragment, 32_b, 48_b));
 
     return true;
 }

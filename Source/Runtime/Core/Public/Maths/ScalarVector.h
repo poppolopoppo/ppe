@@ -70,21 +70,21 @@ struct TScalarVectorExprBase : _Expr {
 
     NODISCARD CONSTEXPR T HSum() const {
         return Meta::static_for<_Dim>([this](auto... idx) {
-            return (this->template Get<idx>() + ...);
+            return (this->Get<idx>() + ...);
         });
     }
 
     NODISCARD CONSTEXPR T MaxComponent() const {
         return Meta::static_for<_Dim - 1>([this](auto... idx) {
-            T result = this->template Get<0>();
-            FOLD_EXPR(result = Max(result, this->template Get<idx + 1>()));
+            T result = Get<0>();
+            FOLD_EXPR(result = Max(result, this->Get<idx + 1>()));
             return result;
         });
     }
     NODISCARD CONSTEXPR T MinComponent() const {
         return Meta::static_for<_Dim - 1>([this](auto... idx) {
-            T result = this->template Get<0>();
-            FOLD_EXPR(result = Min(result, this->template Get<idx + 1>()));
+            T result = Get<0>();
+            FOLD_EXPR(result = Min(result, this->Get<idx + 1>()));
             return result;
         });
     }
@@ -92,28 +92,43 @@ struct TScalarVectorExprBase : _Expr {
     NODISCARD CONSTEXPR u32 MaxComponentIndex() const {
         return Meta::static_for<_Dim - 1>([this](auto... idx) {
             u32 result = 0;
-            FOLD_EXPR(result = this->Get(result) < this->template Get<idx + 1>() ? static_cast<u32>(idx + 1) : result);
+            FOLD_EXPR(result = this->Get(result) < this->Get<idx + 1>() ? static_cast<u32>(idx + 1) : result);
             return result;
         });
     }
     NODISCARD CONSTEXPR u32 MinComponentIndex() const {
         return Meta::static_for<_Dim - 1>([this](auto... idx) {
             u32 result = 0;
-            FOLD_EXPR(result = this->Get(result) > this->template Get<idx + 1>() ? static_cast<u32>(idx + 1) : result);
+            FOLD_EXPR(result = this->Get(result) > this->Get<idx + 1>() ? static_cast<u32>(idx + 1) : result);
             return result;
+        });
+    }
+
+    NODISCARD CONSTEXPR auto Extend(const T& value) const {
+        return Meta::static_for<_Dim>([&](auto... idx) {
+            return TScalarVector<T, sizeof...(idx) + 1>{ this->Get<idx>()..., value };
+        });
+    }
+
+    template <u32 _Dim2, typename _Other>
+    NODISCARD CONSTEXPR auto Extend(const TScalarVectorExpr<T, _Dim2, _Other>& other) const {
+        return Meta::static_for<_Dim>([&](auto... idx) {
+            return Meta::static_for<_Dim2>([&](auto... jdx) {
+                return TScalarVector<T, sizeof...(idx) + sizeof...(jdx)>{ this->Get<idx>()..., other.template Get<jdx>()... };
+            });
         });
     }
 
     template <u32 _Count = 1>
     NODISCARD CONSTEXPR auto Shift() const {
         return Meta::static_for<(_Dim > _Count ? _Dim - _Count : 1)>([this](auto... idx) {
-            return TScalarVector<T, sizeof...(idx)>(this->template Get<idx>()...);
+            return TScalarVector<T, sizeof...(idx)>(this->Get<idx>()...);
         });
     }
 
     template <u32... _Idx>
     NODISCARD CONSTEXPR auto Shuffle() const {
-        return TScalarVector<T, sizeof...(_Idx)>(this->template Get<_Idx>()...);
+        return TScalarVector<T, sizeof...(_Idx)>(this->Get<_Idx>()...);
     }
 };
 } //!details
@@ -128,11 +143,12 @@ struct TScalarVectorExpr : TScalarVectorExprBase<T, _Dim, _Expr> {
     using TScalarVectorExprBase<T, _Dim, _Expr>::operator [];
 
     CONSTEXPR TScalarVectorExpr() = default;
+    CONSTEXPR ~TScalarVectorExpr() = default;
 
     TScalarVectorExpr(const TScalarVectorExpr&) = delete;
     TScalarVectorExpr& operator =(const TScalarVectorExpr&) = delete;
 
-    TScalarVectorExpr(TScalarVectorExpr&&) = default;
+    CONSTEXPR TScalarVectorExpr(TScalarVectorExpr&&) = default;
     TScalarVectorExpr& operator =(TScalarVectorExpr&&) = delete;
 };
 template <typename T, u32 _Dim, typename _Expr>
@@ -143,6 +159,7 @@ struct TScalarVectorExpr<T, _Dim, TScalarVectorAssignable<T, _Dim, _Expr>> : TSc
     using TScalarVectorAssignable<T, _Dim, _Expr>::Assign;
 
     CONSTEXPR TScalarVectorExpr() = default;
+    CONSTEXPR ~TScalarVectorExpr() = default;
 
     CONSTEXPR TScalarVectorExpr(const TScalarVectorExpr& other) {
         Assign(other);
@@ -210,7 +227,21 @@ struct TScalarVectorLiteral {
 template <u32 _Dim, typename T>
 inline CONSTEXPR auto MakeScalarVectorLiteral(T&& literal) {
     using literal_type = TScalarVectorLiteral<std::decay_t<T>>;
-    return TScalarVectorExpr<std::decay_t<T>, _Dim, literal_type>{ std::move(literal) };
+    return TScalarVectorExpr<std::decay_t<T>, _Dim, literal_type>{ std::forward<T>(literal) };
+}
+// use comma operator to extend scalar vectors, should be alright?
+// ex:  int4 xy01 = (v.xy, 0, 1);
+template <typename T, u32 _Dim, typename _Expr>
+inline CONSTEXPR auto operator ,(T lhs, const TScalarVectorExpr<T, _Dim, _Expr>& rhs) {
+    return details::MakeScalarVectorLiteral<1>(std::move(lhs)).Extend(rhs);
+}
+template <typename T, u32 _Dim, typename _Expr>
+inline CONSTEXPR auto operator ,(const TScalarVectorExpr<T, _Dim, _Expr>& lhs, T rhs) {
+    return lhs.Extend(rhs);
+}
+template <typename T, u32 _Dim, typename _Lhs, u32 _Dim2, typename _Rhs>
+inline CONSTEXPR auto operator ,(const TScalarVectorExpr<T, _Dim, _Lhs>& lhs, const TScalarVectorExpr<T, _Dim2, _Rhs>& rhs) {
+    return lhs.Extend(rhs);
 }
 } //!namespace details
 //----------------------------------------------------------------------------
@@ -351,11 +382,19 @@ struct TScalarVectorStorage {
     T data[_Dim];
 
     CONSTEXPR TScalarVectorStorage() = default;
-    CONSTEXPR explicit TScalarVectorStorage(T broadcast) {
-        Meta::static_for([&](auto... idx) {
+    CONSTEXPR TScalarVectorStorage(Meta::FNoInit) NOEXCEPT {}
+
+    CONSTEXPR explicit TScalarVectorStorage(T broadcast) NOEXCEPT {
+        Meta::static_for<_Dim>([&](auto... idx) {
             ((data[idx] = broadcast), ...);
         });
     }
+
+    // forced to use a variadic template with SFINAE to handle N-ary constructor
+    template <typename... _Args, decltype(decltype(data){std::forward<_Args>(std::declval<_Args>())...})* = nullptr>
+    CONSTEXPR explicit TScalarVectorStorage(_Args&&... args) NOEXCEPT
+    :   data{ std::forward<_Args>(args)... }
+    {}
 
     CONSTEXPR T& Get(u32 index) {
         return data[index];
@@ -375,8 +414,9 @@ struct TScalarVectorStorage<T, 1> {
         };
     };
 
-    CONSTEXPR TScalarVectorStorage() : data{} {}
-    CONSTEXPR explicit TScalarVectorStorage(T _x) : data{ _x } {}
+    CONSTEXPR TScalarVectorStorage() NOEXCEPT : data{} {}
+    CONSTEXPR TScalarVectorStorage(Meta::FNoInit) NOEXCEPT {}
+    CONSTEXPR explicit TScalarVectorStorage(T _x) NOEXCEPT : data{ _x } {}
 
     CONSTEXPR T& Get(u32 index) {
         return data[index];
@@ -414,10 +454,11 @@ struct TScalarVectorStorage<T, 2> {
         TMakeScalarVectorShuffleExpr<T, 2, 1, 1, 1, 1> yyyy;
     };
 
-    CONSTEXPR TScalarVectorStorage() : data{} {}
-    CONSTEXPR TScalarVectorStorage(T _x, T _y) : data{ _x, _y } {}
+    CONSTEXPR TScalarVectorStorage() NOEXCEPT : data{} {}
+    CONSTEXPR TScalarVectorStorage(Meta::FNoInit) NOEXCEPT {}
+    CONSTEXPR TScalarVectorStorage(T _x, T _y) NOEXCEPT : data{ _x, _y } {}
 
-    CONSTEXPR explicit TScalarVectorStorage(T broadcast) : TScalarVectorStorage(broadcast, broadcast) {}
+    CONSTEXPR explicit TScalarVectorStorage(T broadcast) NOEXCEPT : TScalarVectorStorage(broadcast, broadcast) {}
 
     CONSTEXPR T& Get(u32 index) {
         return data[index];
@@ -471,15 +512,16 @@ struct TScalarVectorStorage<T, 3> {
 
     };
 
-    CONSTEXPR TScalarVectorStorage() : data{} {}
-    CONSTEXPR TScalarVectorStorage(T _x, T _y, T _z) : data{ _x, _y, _z } {}
+    CONSTEXPR TScalarVectorStorage() NOEXCEPT : data{} {}
+    CONSTEXPR TScalarVectorStorage(Meta::FNoInit) NOEXCEPT {}
+    CONSTEXPR TScalarVectorStorage(T _x, T _y, T _z) NOEXCEPT : data{ _x, _y, _z } {}
 
-    CONSTEXPR explicit TScalarVectorStorage(T broadcast) : TScalarVectorStorage(broadcast, broadcast, broadcast) {}
+    CONSTEXPR explicit TScalarVectorStorage(T broadcast) NOEXCEPT : TScalarVectorStorage(broadcast, broadcast, broadcast) {}
 
     template <typename _Expr>
-    CONSTEXPR TScalarVectorStorage(T _x, const TScalarVectorExpr<T, 2, _Expr>& yz) : TScalarVectorStorage(_x, yz.template Get<0>(), yz.template Get<1>()) {}
+    CONSTEXPR TScalarVectorStorage(T _x, const TScalarVectorExpr<T, 2, _Expr>& yz) NOEXCEPT : TScalarVectorStorage(_x, yz.template Get<0>(), yz.template Get<1>()) {}
     template <typename _Expr>
-    CONSTEXPR TScalarVectorStorage(const TScalarVectorExpr<T, 2, _Expr>& xy, T _z) : TScalarVectorStorage(xy.template Get<0>(), xy.template Get<1>(), _z) {}
+    CONSTEXPR TScalarVectorStorage(const TScalarVectorExpr<T, 2, _Expr>& xy, T _z) NOEXCEPT : TScalarVectorStorage(xy.template Get<0>(), xy.template Get<1>(), _z) {}
 
     CONSTEXPR T& Get(u32 index) {
         return data[index];
@@ -585,22 +627,23 @@ struct TScalarVectorStorage<T, 4> {
         TMakeScalarVectorShuffleExpr<T, 4, 3, 2, 1, 0> wzyx;
     };
 
-    CONSTEXPR TScalarVectorStorage() : data{} {}
-    CONSTEXPR TScalarVectorStorage(T _x, T _y, T _z, T _w) : data{ _x, _y, _z, _w } {}
+    CONSTEXPR TScalarVectorStorage() NOEXCEPT : data{} {}
+    CONSTEXPR TScalarVectorStorage(Meta::FNoInit) NOEXCEPT {}
+    CONSTEXPR TScalarVectorStorage(T _x, T _y, T _z, T _w) NOEXCEPT : data{ _x, _y, _z, _w } {}
 
-    CONSTEXPR explicit TScalarVectorStorage(T broadcast) : TScalarVectorStorage(broadcast, broadcast, broadcast, broadcast) {}
-
-    template <typename _Expr>
-    CONSTEXPR TScalarVectorStorage(T _x, T _y, const TScalarVectorExpr<T, 2, _Expr>& zw) : TScalarVectorStorage(_x, _y, zw.template Get<0>(), zw.template Get<1>()) {}
-    template <typename _Expr>
-    CONSTEXPR TScalarVectorStorage(const TScalarVectorExpr<T, 2, _Expr>& xy, T _z, T _w) : TScalarVectorStorage(xy.template Get<0>(), xy.template Get<1>(), _z, _w) {}
-    template <typename _Expr>
-    CONSTEXPR TScalarVectorStorage(const TScalarVectorExpr<T, 2, _Expr>& xy, const TScalarVectorExpr<T, 2, _Expr>& zw) : TScalarVectorStorage(xy.template Get<0>(), xy.template Get<1>(), zw.template Get<0>(), zw.template Get<1>()) {}
+    CONSTEXPR explicit TScalarVectorStorage(T broadcast) NOEXCEPT : TScalarVectorStorage(broadcast, broadcast, broadcast, broadcast) {}
 
     template <typename _Expr>
-    CONSTEXPR TScalarVectorStorage(T _x, const TScalarVectorExpr<T, 3, _Expr>& yzw) : TScalarVectorStorage(_x, yzw.template Get<0>(), yzw.template Get<1>(), yzw.template Get<2>()) {}
+    CONSTEXPR TScalarVectorStorage(T _x, T _y, const TScalarVectorExpr<T, 2, _Expr>& zw) NOEXCEPT : TScalarVectorStorage(_x, _y, zw.template Get<0>(), zw.template Get<1>()) {}
     template <typename _Expr>
-    CONSTEXPR TScalarVectorStorage(const TScalarVectorExpr<T, 3, _Expr>& xyz, T _w) : TScalarVectorStorage(xyz.template Get<0>(), xyz.template Get<1>(), xyz.template Get<2>(), _w) {}
+    CONSTEXPR TScalarVectorStorage(const TScalarVectorExpr<T, 2, _Expr>& xy, T _z, T _w) NOEXCEPT : TScalarVectorStorage(xy.template Get<0>(), xy.template Get<1>(), _z, _w) {}
+    template <typename _Expr>
+    CONSTEXPR TScalarVectorStorage(const TScalarVectorExpr<T, 2, _Expr>& xy, const TScalarVectorExpr<T, 2, _Expr>& zw) NOEXCEPT : TScalarVectorStorage(xy.template Get<0>(), xy.template Get<1>(), zw.template Get<0>(), zw.template Get<1>()) {}
+
+    template <typename _Expr>
+    CONSTEXPR TScalarVectorStorage(T _x, const TScalarVectorExpr<T, 3, _Expr>& yzw) NOEXCEPT : TScalarVectorStorage(_x, yzw.template Get<0>(), yzw.template Get<1>(), yzw.template Get<2>()) {}
+    template <typename _Expr>
+    CONSTEXPR TScalarVectorStorage(const TScalarVectorExpr<T, 3, _Expr>& xyz, T _w) NOEXCEPT : TScalarVectorStorage(xyz.template Get<0>(), xyz.template Get<1>(), xyz.template Get<2>(), _w) {}
 
     CONSTEXPR T& Get(u32 index) {
         return data[index];
@@ -646,7 +689,7 @@ NODISCARD CONSTEXPR auto MakeScalarVectorOp(
     _Op&& unaryOp) {
     using op_type = TScalarVectorUnaryOp<T, _Dim, _Prm, _Op>;
     using destination_type = decltype(unaryOp(std::declval<T>()));
-    return TScalarVectorExpr<destination_type, _Dim, op_type>{ prm, std::move(unaryOp) };
+    return TScalarVectorExpr<destination_type, _Dim, op_type>{ prm,std::forward<_Op>(unaryOp) };
 }
 //----------------------------------------------------------------------------k
 } //!namespace details
@@ -657,7 +700,7 @@ NODISCARD CONSTEXPR auto MakeScalarVectorOp(
         return details::MakeScalarVectorOp(prm, __VA_ARGS__); \
     }
 #define PPE_SCALARVECTOR_UNARYOP_FUNC(_FunctionName) \
-    PPE_SCALARVECTOR_UNARYOP_DECL(_FunctionName, [](const T& x) { return PPE::_FunctionName(x); })
+    PPE_SCALARVECTOR_UNARYOP_DECL(_FunctionName, [](const T& x) CONSTEXPR { return PPE::_FunctionName(x); })
 //----------------------------------------------------------------------------
 namespace details {
 PPE_SCALARVECTOR_UNARYOP_DECL(operator !, std::bit_not<T>{})
@@ -697,7 +740,7 @@ NODISCARD CONSTEXPR auto MakeScalarVectorOp(
     _Op&& binaryOp) {
     using op_type = TScalarVectorBinaryOp<T, _Dim, _Lhs, _Rhs, _Op>;
     using destination_type = decltype(binaryOp(std::declval<T>(), std::declval<T>()));
-    return TScalarVectorExpr<destination_type, _Dim, op_type>{ std::move(lhs), std::move(rhs), std::move(binaryOp) };
+    return TScalarVectorExpr<destination_type, _Dim, op_type>{ std::move(lhs), std::move(rhs),std::forward<_Op>(binaryOp) };
 }
 //----------------------------------------------------------------------------
 } //!namespace details
@@ -728,7 +771,7 @@ NODISCARD CONSTEXPR auto MakeScalarVectorOp(
         return lhs; \
     }
 #define PPE_SCALARVECTOR_BINARYOP_FUNC(_FunctionName) \
-    PPE_SCALARVECTOR_BINARYOP_DECL(_FunctionName, [](const T& a, const T& b) { return PPE::_FunctionName(a, b); })
+    PPE_SCALARVECTOR_BINARYOP_DECL(_FunctionName, [](const T& a, const T& b) CONSTEXPR { return PPE::_FunctionName(a, b); })
 //----------------------------------------------------------------------------
 namespace details {
 PPE_SCALARVECTOR_BINARYOP_OPERATOR(operator +, std::plus<T>{})
@@ -776,12 +819,12 @@ PPE_ASSUME_TEMPLATE_AS_POD(TScalarVector<T COMMA _Dim>, typename T, u32 _Dim)
 //----------------------------------------------------------------------------
 template <typename _Dst, typename T, u32 _Dim, typename _Expr>
 CONSTEXPR auto bit_cast(const details::TScalarVectorExpr<T, _Dim, _Expr>& v) {
-    return details::MakeScalarVectorOp(v, [](const T& x) { return PPE::bit_cast<_Dst>(x); });
+    return details::MakeScalarVectorOp(v, [](const T& x) CONSTEXPR { return PPE::bit_cast<_Dst>(x); });
 }
 //----------------------------------------------------------------------------
 template <typename _Dst, typename T, u32 _Dim, typename _Expr>
 CONSTEXPR auto checked_cast(const details::TScalarVectorExpr<T, _Dim, _Expr>& v) {
-    return details::MakeScalarVectorOp(v, [](const T& x) { return PPE::checked_cast<_Dst>(x); });
+    return details::MakeScalarVectorOp(v, [](const T& x) CONSTEXPR { return PPE::checked_cast<_Dst>(x); });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -809,11 +852,24 @@ struct TNumericLimits< TScalarVector<T, _Dim> > {
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#if BUILD_LINK_DYNAMIC
-#   define EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(T, N) EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) details::TScalarVectorExpr<T, N, details::TScalarVectorAssignable<T, N, details::TScalarVectorStorage<T, N> >>
-#   define EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(T, N)
+#if defined(BUILD_LINK_DYNAMIC)
+#   ifdef __clang__
+// Temporary workaround for LLVM 17: remove when LNK2001 link issue if fixed
+#       define EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(T, N)
+#       define EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(T, N)
+#   else
+#       define EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(T, N) EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) details::TScalarVectorExpr<T, N, details::TScalarVectorAssignable<T, N, details::TScalarVectorStorage<T, N> >>
+#       define EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(T, N)
+#   endif
 #else
 #   define EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(T, N) EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) details::TScalarVectorExpr<T, N, details::TScalarVectorAssignable<T, N, details::TScalarVectorStorage<T, N> >>
+#   define EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(T, N) EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) details::TScalarVectorExpr<T, N, details::TScalarVectorAssignable<T, N, details::TScalarVectorStorage<T, N> >>
+#endif
+
+#ifndef EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL
+#   define EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(T, N) EXTERN_TEMPLATE_STRUCT_DECL(PPE_CORE_API) details::TScalarVectorExpr<T, N, details::TScalarVectorAssignable<T, N, details::TScalarVectorStorage<T, N> >>
+#endif
+#ifndef EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF
 #   define EXTERN_RUNTIME_CORE_SCALARVECTOR_DEF(T, N) EXTERN_TEMPLATE_STRUCT_DEF(PPE_CORE_API) details::TScalarVectorExpr<T, N, details::TScalarVectorAssignable<T, N, details::TScalarVectorStorage<T, N> >>
 #endif
 

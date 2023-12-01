@@ -71,6 +71,7 @@ struct TDrawCallDesc : TDrawTaskDesc<_Task> {
     TDrawCallDesc(FConstChar name, const FLinearColor& color) NOEXCEPT : TDrawTaskDesc<_Task>(name, color) {}
 #endif
 
+    _Task& AddResources(FDescriptorSetID&& rid, PCPipelineResources&& rres);
     _Task& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res);
 
     _Task& AddScissor(const FRectangleU& clip);
@@ -118,10 +119,10 @@ struct TDrawVerticesDesc : TDrawCallDesc<_Task> {
     FRawGPipelineID Pipeline;
     EPrimitiveTopology Topology{ Default };
 
+    bool EnablePrimitiveRestart{ false };
+
     FVertexInputState VertexInput;
     FVertexBuffers VertexBuffers;
-
-    bool EnablePrimitiveRestart{ false };
 
     TDrawVerticesDesc() = default;
 #if USE_PPE_RHITASKNAME
@@ -344,6 +345,7 @@ struct FDrawMeshesIndirect final : details::TDrawCallDesc<FDrawMeshesIndirect> {
 // FDrawMeshesIndirectCount
 //----------------------------------------------------------------------------
 struct FDrawMeshesIndirectCount final : details::TDrawCallDesc<FDrawMeshesIndirectCount> {
+    using FDrawCommand = FDrawVerticesIndirectCount::FDrawCommand;
     using FDrawCommands = FDrawVerticesIndirectCount::FDrawCommands;
     using FIndirectCommand =  FDrawMeshesIndirect::FIndirectCommand;
 

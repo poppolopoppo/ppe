@@ -21,6 +21,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4996) // 'sprintf': This function or variable may be
 #ifdef __clang__
 #   pragma clang system_header
 #   pragma clang diagnostic ignored "-Wunused-function"
+#   pragma clang diagnostic ignored "-Wdeprecated-this-capture"
 #endif
 
 #ifdef __gcc__

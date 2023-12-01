@@ -46,15 +46,15 @@ static bool ParseUri_(const FStringView& str) {
     if (not FUri::Parse(uri, str))
         return false;
 
-    LOG(Test_Network, Info,
-        L"{0}\n"
-        L"   Scheme: {0}\n"
-        L"   Username: {1}\n"
-        L"   Hostname: {2}\n"
-        L"   Post: {3}\n"
-        L"   Path: {4}\n"
-        L"   Query: {5}\n"
-        L"   Anchor: {6}",
+    PPE_LOG(Test_Network, Info,
+        "{0}\n"
+        "   Scheme: {0}\n"
+        "   Username: {1}\n"
+        "   Hostname: {2}\n"
+        "   Post: {3}\n"
+        "   Path: {4}\n"
+        "   Query: {5}\n"
+        "   Anchor: {6}",
         uri.Scheme(),
         uri.Username(),
         uri.Hostname(),
@@ -68,16 +68,16 @@ static bool ParseUri_(const FStringView& str) {
         return false;
 
 #if USE_PPE_LOGGER
-    LOG(Test_Network, Info, L"Args[{0}]:", args.size());
+    PPE_LOG(Test_Network, Info, "Args[{0}]:", args.size());
     for (const auto& it : args)
-        LOG(Test_Network, Info, L"    - {0} = '{1}'", it.first, it.second);
+        PPE_LOG(Test_Network, Info, "    - {0} = '{1}'", it.first, it.second);
 #endif
 
     FUri test;
     if (not FUri::Pack(test, uri.Scheme(), uri.Username(), uri.Port(), uri.Hostname(), uri.Path(), args, uri.Anchor()))
         return false;
 
-    LOG(Test_Network, Info, L"{0}\n -> {1}", uri, test);
+    PPE_LOG(Test_Network, Info, "{0}\n -> {1}", uri, test);
 
     if (test.Str() != uri.Str())
         return false;
@@ -93,55 +93,45 @@ static void Test_ParseUri_() {
 }
 //----------------------------------------------------------------------------
 static void LogRequest_(const FHttpRequest& req) {
-#if USE_PPE_LOGGER
-    FWStringBuilder oss;
-    oss << L"#HTTP_REQUEST" << Eol
-        << L"> URI      : " << req.Uri() << Eol
-        << L"> Method   : " << req.Method() << Eol
-        << L"> Headers  : " << Eol;
+    Unused(req);
+    PPE_LOG_DIRECT(Test_Network, Debug, [&](FTextWriter& oss) {
+        oss << "#HTTP_REQUEST" << Eol
+            << "> URI      : " << req.Uri() << Eol
+            << "> Method   : " << req.Method() << Eol
+            << "> Headers  : " << Eol;
 
-    for (const auto& it : req.Headers()) {
-        Format(oss, L" - {{0}} = \"{1}\"", it.first, it.second);
-        oss << Eol;
-    }
-
-    FHttpRequest::FCookieMap cookies;
-    if (FHttpRequest::UnpackCookie(&cookies, req)) {
-        oss << L"> Cookies  :" << Eol;
-        for (const auto& it : cookies) {
-            Format(oss, L" - {{0}} = \"{1}\"", it.first, it.second);
+        for (const auto& it : req.Headers()) {
+            Format(oss, " - {0} = \"{1}\"", it.first, it.second);
             oss << Eol;
         }
-    }
 
-    FLogger::Log(LOG_MAKESITE(Test_Network, Debug),oss.Written() );
-
-#else
-    Unused(req);
-#endif
+        FHttpRequest::FCookieMap cookies;
+        if (FHttpRequest::UnpackCookie(&cookies, req)) {
+            oss << "> Cookies  :" << Eol;
+            for (const auto& it : cookies) {
+                Format(oss, " - {0} = \"{1}\"", it.first, it.second);
+                oss << Eol;
+            }
+        }
+    });
 }
 //----------------------------------------------------------------------------
 static void LogResponse_(const FHttpResponse& resp) {
-#if USE_PPE_LOGGER
-    FWStringBuilder oss;
-    oss << L"#HTTP_RESPONSE" << Eol
-        << L"> Status   : " << resp.Status() << Eol
-        << L"> Reason   : " << resp.Reason() << Eol
-        << L"> Headers  : " << Eol;
-
-    for (const auto& it : resp.Headers()) {
-        Format(oss, L" - {{0}} = \"{1}\"", it.first, it.second);
-        oss << Eol;
-    }
-
-    oss << L"> Body     : " << Fmt::FSizeInBytes{ checked_cast<size_t>(resp.Body().SizeInBytes()) } << Eol
-        << resp.MakeView();
-
-    FLogger::Log(LOG_MAKESITE(Test_Network, Debug), oss.Written());
-
-#else
     Unused(resp);
-#endif
+    PPE_LOG_DIRECT(Test_Network, Debug, [&](FTextWriter& oss) {
+        oss << "#HTTP_RESPONSE" << Eol
+            << "> Status   : " << resp.Status() << Eol
+            << "> Reason   : " << resp.Reason() << Eol
+            << "> Headers  : " << Eol;
+
+        for (const auto& it : resp.Headers()) {
+            Format(oss, " - {0} = \"{1}\"", it.first, it.second);
+            oss << Eol;
+        }
+
+        oss << "> Body     : " << Fmt::FSizeInBytes{ checked_cast<size_t>(resp.Body().SizeInBytes()) } << Eol
+            << resp.MakeView();
+    });
 }
 //----------------------------------------------------------------------------
 #if WITH_PPE_NETWORK_Test_SocketAccept_
@@ -150,7 +140,7 @@ static void Test_SocketAccept_() {
 
     const FListener::FConnectionScope connection(listener);
     if (not connection.Succeed) {
-        LOG(Test_Network, Error, L"failed to open listener on '{0}'", listener.Listening());
+        PPE_LOG(Test_Network, Error, "failed to open listener on '{0}'", listener.Listening());
         return;
     }
 
@@ -161,11 +151,11 @@ static void Test_SocketAccept_() {
         FSocketBuffered socket;
         socket.SetTimeout(FSeconds(0.3));
 
-        LOG(Test_Network, Info, L"Listening on '{0}'...", listener.Listening());
+        PPE_LOG(Test_Network, Info, "Listening on '{0}'...", listener.Listening());
 
         if (FSocketBuffered::Accept(socket, listener, FSeconds(5))) {
             succeed = true;
-            LOG(Test_Network, Info, L"Accepted from '{0}' to '{1}' :)", socket.Local(), socket.Remote());
+            PPE_LOG(Test_Network, Info, "Accepted from '{0}' to '{1}' :)", socket.Local(), socket.Remote());
 
             PPE_TRY
             {
@@ -197,7 +187,7 @@ static void Test_SocketAccept_() {
             PPE_CATCH(FHttpException e)
             PPE_CATCH_BLOCK({
                 Unused(e);
-                LOG(Test_Network, Error, L"HTTP error {0} : {1}", e.Status(), MakeCStringView(e.What()));
+                PPE_LOG(Test_Network, Error, "HTTP error {0} : {1}", e.Status(), MakeCStringView(e.What()));
             });
 
             socket.Disconnect(true);
@@ -206,7 +196,7 @@ static void Test_SocketAccept_() {
     }
 
     if (not succeed)
-        LOG(Test_Network, Warning, L"no incomming HTTP connexion :'(");
+        PPE_LOG(Test_Network, Warning, "no incomming HTTP connexion :'(");
 }
 #endif //!WITH_PPE_NETWORK_Test_SocketAccept_
 //----------------------------------------------------------------------------
@@ -222,7 +212,7 @@ static void Test_HttpGet_() {
         const EHttpStatus status = HttpGet(&response, uri);
 
         if (EHttpStatus::ServiceUnavailable == status) {
-            LOG(Test_Network, Warning, L"service unavailable for {0}", uri);
+            PPE_LOG(Test_Network, Warning, "service unavailable for {0}", uri);
             return;
         }
 
@@ -234,12 +224,12 @@ static void Test_HttpGet_() {
         if (response.Status() == EHttpStatus::OK) {
             Serialize::FJson json{ alloc };
             if (not Serialize::FJson::Load(&json, MakeStringView(L"network.tmp"), &response.Body()))
-                LOG(Test_Network, Error, L"request failed for {0}", uri);
+                PPE_LOG(Test_Network, Error, "request failed for {0}", uri);
             else
-                LOG(Test_Network, Info, L"request result:\n{0}", json);
+                PPE_LOG(Test_Network, Info, "request result:\n{0}", json);
         }
         else {
-            LOG(Test_Network, Error, L"HTTP request to '{0}' failed : {1}", uri, response.Status());
+            PPE_LOG(Test_Network, Error, "HTTP request to '{0}' failed : {1}", uri, response.Status());
         }
     }
 }
@@ -260,7 +250,7 @@ static void Test_HttpPost_() {
     const EHttpStatus status = HttpPost(&response, uri, post);
 
     if (EHttpStatus::ServiceUnavailable == status) {
-        LOG(Test_Network, Warning, L"service unavailable for {0}", uri);
+        PPE_LOG(Test_Network, Warning, "service unavailable for {0}", uri);
         return;
     }
 
@@ -332,7 +322,7 @@ static void Test_HttpServer_() {
 void Test_Network() {
     PPE_DEBUG_NAMEDSCOPE("Test_Network");
 
-    LOG(Test_Network, Emphasis, L"starting network tests ...");
+    PPE_LOG(Test_Network, Emphasis, "starting network tests ...");
 
     Test_ParseUri_();
     Test_HttpGet_();

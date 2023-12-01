@@ -90,22 +90,22 @@ bool FVertexInputState::CopyAttributes(const TMemoryView<const FVertexAttribute>
         FVertexInput* const pinput = Vertices.GetIFP(attr.Id);
         if (nullptr == pinput) {
 #if USE_PPE_RHIDEBUG
-            LOG(RHI, Error,
-                L"can't find vertex attribute called {1} at index {0}",
+            PPE_LOG(RHI, Error,
+                "can't find vertex attribute called {1} at index {0}",
                 attr.Index, attr.Id );
 #endif
             return false;
         }
 
-        pinput->Index = attr.Index;
+        pinput->Index = checked_cast<u8>(attr.Index);
 
         const EVertexFormat decl = pinput->DestinationFormat();
         if (attr.Format != decl) {
 #if USE_PPE_RHIDEBUG
-            LOG(RHI, Error,
-                L"vertex attribute at index {0} called {1} mismatch:\n"
-                L"    - in shader: {2}\n"
-                L"    - in declaration: {3}",
+            PPE_LOG(RHI, Error,
+                "vertex attribute at index {0} called {1} mismatch:\n"
+                "    - in shader: {2}\n"
+                "    - in declaration: {3}",
                 attr.Index, attr.Id, attr.Format,
                 decl );
 #endif

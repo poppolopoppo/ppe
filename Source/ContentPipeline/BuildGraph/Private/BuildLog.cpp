@@ -23,78 +23,78 @@ class FDiagnosticBuildLog : public IBuildLog {
 public:
     virtual void NodeBegin(const FBuildNode& node) override final {
         Unused(node);
-        LOG(BuildGraph, Emphasis, L" >> {0}", node.RTTI_PathName());
+        PPE_LOG(BuildGraph, Emphasis, " >> {0}", node.RTTI_PathName());
     }
 
     virtual void NodeEnd(const FBuildNode& node, EBuildResult result) override {
         Unused(node);
         switch (result) {
         case PPE::ContentPipeline::EBuildResult::Unbuilt:
-            LOG(BuildGraph, Debug, L" ---- {0}", node.RTTI_PathName());
+            PPE_LOG(BuildGraph, Debug, " ---- {0}", node.RTTI_PathName());
             break;
         case PPE::ContentPipeline::EBuildResult::UpToDate:
-            LOG(BuildGraph, Info, L" ---> {0}", node.RTTI_PathName());
+            PPE_LOG(BuildGraph, Info, " ---> {0}", node.RTTI_PathName());
             break;
         case PPE::ContentPipeline::EBuildResult::Built:
-            LOG(BuildGraph, Emphasis, L" [OK] {0}", node.RTTI_PathName());
+            PPE_LOG(BuildGraph, Emphasis, " [OK] {0}", node.RTTI_PathName());
             break;
         case PPE::ContentPipeline::EBuildResult::Failed:
-            LOG(BuildGraph, Error, L" !KO! {0}", node.RTTI_PathName());
+            PPE_LOG(BuildGraph, Error, " !KO! {0}", node.RTTI_PathName());
             break;
         default:
             AssertNotImplemented();
         }
     }
 
-    virtual void TraceDebug(const FWStringView& text) override final {
+    virtual void TraceDebug(const FStringView& text) override final {
         Unused(text);
-        LOG_DIRECT(BuildGraph, Debug, text);
+        PPE_LOG_DIRECT(BuildGraph, Debug, [&](FTextWriter& oss){ oss << text; });
     }
-    virtual void TraceError(const FWStringView& text) override final {
+    virtual void TraceError(const FStringView& text) override final {
         Unused(text);
-        LOG_DIRECT(BuildGraph, Error, text);
+        PPE_LOG_DIRECT(BuildGraph, Error, [&](FTextWriter& oss){ oss << text; });
     }
-    virtual void TraceInfo(const FWStringView& text) override final {
+    virtual void TraceInfo(const FStringView& text) override final {
         Unused(text);
-        LOG_DIRECT(BuildGraph, Info, text);
+        PPE_LOG_DIRECT(BuildGraph, Info, [&](FTextWriter& oss){ oss << text; });
     }
-    virtual void TraceVerbose(const FWStringView& text) override final {
+    virtual void TraceVerbose(const FStringView& text) override final {
         Unused(text);
-        LOG_DIRECT(BuildGraph, Verbose, text);
+        PPE_LOG_DIRECT(BuildGraph, Verbose, [&](FTextWriter& oss){ oss << text; });
     }
-    virtual void TraceWarning(const FWStringView& text) override final {
+    virtual void TraceWarning(const FStringView& text) override final {
         Unused(text);
-        LOG_DIRECT(BuildGraph, Warning, text);
+        PPE_LOG_DIRECT(BuildGraph, Warning, [&](FTextWriter& oss){ oss << text; });
     }
 
-    virtual void TraceDebugArgs(const FWStringView& fmt, const FWFormatArgList& args) override final {
+    virtual void TraceDebugArgs(const FStringView& fmt, const FFormatArgList& args) override final {
         Unused(fmt);
         Unused(args);
-        LOG_ARGS(BuildGraph, Debug, fmt, args);
+        PPE_LOG_DIRECT(BuildGraph, Debug, [&](FTextWriter& oss){ FormatArgs(oss, fmt, args); });
     }
-    virtual void TraceErrorArgs(const FWStringView& fmt, const FWFormatArgList& args) override final {
+    virtual void TraceErrorArgs(const FStringView& fmt, const FFormatArgList& args) override final {
         Unused(fmt);
         Unused(args);
-        LOG_ARGS(BuildGraph, Error, fmt, args);
+        PPE_LOG_DIRECT(BuildGraph, Error, [&](FTextWriter& oss){ FormatArgs(oss, fmt, args); });
     }
-    virtual void TraceInfoArgs(const FWStringView& fmt, const FWFormatArgList& args) override final {
+    virtual void TraceInfoArgs(const FStringView& fmt, const FFormatArgList& args) override final {
         Unused(fmt);
         Unused(args);
-        LOG_ARGS(BuildGraph, Info, fmt, args);
+        PPE_LOG_DIRECT(BuildGraph, Info, [&](FTextWriter& oss){ FormatArgs(oss, fmt, args); });
     }
-    virtual void TraceVerboseArgs(const FWStringView& fmt, const FWFormatArgList& args) override final {
+    virtual void TraceVerboseArgs(const FStringView& fmt, const FFormatArgList& args) override final {
         Unused(fmt);
         Unused(args);
-        LOG_ARGS(BuildGraph, Verbose, fmt, args);
+        PPE_LOG_DIRECT(BuildGraph, Verbose, [&](FTextWriter& oss){ FormatArgs(oss, fmt, args); });
     }
-    virtual void TraceWarningArgs(const FWStringView& fmt, const FWFormatArgList& args) override final {
+    virtual void TraceWarningArgs(const FStringView& fmt, const FFormatArgList& args) override final {
         Unused(fmt);
         Unused(args);
-        LOG_ARGS(BuildGraph, Warning, fmt, args);
+        PPE_LOG_DIRECT(BuildGraph, Warning, [&](FTextWriter& oss){ FormatArgs(oss, fmt, args); });
     }
 
     void Flush() override {
-        FLUSH_LOG();
+        PPE_LOG_FLUSH();
     }
 };
 //----------------------------------------------------------------------------

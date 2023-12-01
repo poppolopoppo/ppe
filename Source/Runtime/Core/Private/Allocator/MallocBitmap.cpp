@@ -9,6 +9,7 @@
 #if !USE_PPE_FINAL_RELEASE
 #   include "IO/Format.h"
 #   include "IO/FormatHelpers.h"
+#   include "IO/StringView.h"
 #   include "IO/TextWriter.h"
 #endif
 #if USE_PPE_MEMORYDOMAINS
@@ -50,8 +51,8 @@ struct FBitmapHeaps_ {
 };
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
-template <typename _Traits>
-static void DumpHeapInfo_(FWTextWriter& oss, const FWStringView& name, const TBitmapHeap<_Traits>& heap) {
+template <typename _Char, typename _Traits>
+static void DumpHeapInfo_(TBasicTextWriter<_Char>& oss, const TBasicStringView<_Char>& name, const TBitmapHeap<_Traits>& heap) {
     // call with nullptr to know how much we must reserve
     const size_t numPagesReserved = (heap.DebugInfo(nullptr) + 16/* extra reserve for MT */);
 
@@ -62,49 +63,53 @@ static void DumpHeapInfo_(FWTextWriter& oss, const FWStringView& name, const TBi
     info.Pages = info.Pages.CutBefore(heap.DebugInfo(&info));
 
     CONSTEXPR size_t width = 175;
-    const auto hr = Fmt::Repeat(L'-', width);
+    const auto hr = Fmt::Repeat('-', width);
 
     oss << Eol << hr << Eol
         << FTextFormat::Float(FTextFormat::FixedFloat, 2)
-        << L"Report allocation internal fragmentation for <"
+        << STRING_LITERAL(_Char, "Report allocation internal fragmentation for <")
         << name
-        << L"> : "
-        << FTextFormat::PadLeft(2, L' ')
+        << STRING_LITERAL(_Char, "> : ")
+        << FTextFormat::PadLeft(2, STRING_LITERAL(_Char, ' '))
         << Fmt::CountOfElements(info.Stats.NumAllocations)
-        << L" , "
+        << STRING_LITERAL(_Char, " , ")
         << info.PagesPerBlock
-        << L" x "
+        << STRING_LITERAL(_Char, " x ")
         << Fmt::SizeInBytes(info.Granularity)
-        << L" -> "
+        << STRING_LITERAL(_Char, " -> ")
         << Fmt::SizeInBytes(info.Stats.LargestFreeBlock)
-        << L" / "
+        << STRING_LITERAL(_Char, " / ")
         << Fmt::SizeInBytes(info.Stats.TotalSizeAvailable)
-        << L" + "
+        << STRING_LITERAL(_Char, " + ")
         << Fmt::SizeInBytes(info.Stats.TotalSizeAllocated)
-        << L" = "
+        << STRING_LITERAL(_Char, " = ")
         << Fmt::SizeInBytes(info.Stats.TotalSizeCommitted
         )
-        << L" (" << Fmt::CountOfElements(info.Pages.size()) << L" pages)"
+        << STRING_LITERAL(_Char, " (") << Fmt::CountOfElements(info.Pages.size()) << STRING_LITERAL(_Char, " pages)")
         << Eol;
 
-    CONSTEXPR const FWStringView AllocationTags = L"█▓"; // L"░▒▓█"
-        // L"❶❷❸❹❺❻❼❽❾";
-        // L"▬";// L"●◉"; // L"◇◈";// L"►◄"; // L"▪▫";// L"▮▯"; // L"▼▲";// L"◉○";
+    ////CONSTEXPR const wchar_t AllocationTags[2] = { L'▓', L'█' }; /* {
+    //    STRING_LITERAL(_Char, "\xE2\x96\x92"),
+    //    STRING_LITERAL(_Char, "\xE2\x96\x91"),
+    //};*/ // "░▒▓█"
+    //    // L"❶❷❸❹❺❻❼❽❾";
+    //    // L"▬";// L"●◉"; // L"◇◈";// L"►◄"; // L"▪▫";// L"▮▯"; // L"▼▲";// L"◉○";
 
     forrange(p, 0, info.Pages.size()) {
         const FBitmapPageInfo& page = info.Pages[p];
 
+        oss << STRING_LITERAL(_Char, "   ")
+            << Fmt::Pointer(page.vAddressSpace)
+            << STRING_LITERAL(_Char, "   ");
 
-        oss << L"   " << Fmt::Pointer(page.vAddressSpace) << L"   ";
-
-        size_t tag = size_t(0);
+        char tag = 0;
         forrange(b, 0, info.PagesPerBlock) {
-            const u64 select = (u64(1) << b);
-            oss.Put(not (page.Pages & select) ? AllocationTags[tag] : /*L'▒'*/L'░');
-            tag = (tag + ((page.Sizes & select) ? 1 : 0)) % AllocationTags.size();
+            const u64 select = (1_u64 << b);
+            oss.Put((page.Pages & select) ? '_' : '0' + tag);
+            tag = (tag + ((page.Sizes & select) ? 1 : 0)) % 10;
         }
 
-        Format(oss, L" #{0:#2}: {1:4} allocs, {2:10f2}/{3:10f2}/{4:10f2}, fragmentation: {5}",
+        Format(oss, STRING_LITERAL(_Char, " #{0:#2}: {1:4} allocs, {2:10f2}/{3:10f2}/{4:10f2}, fragmentation: {5}"),
             p,
             Fmt::CountOfElements(page.Stats.NumAllocations),
             Fmt::SizeInBytes(page.Stats.LargestFreeBlock),
@@ -133,25 +138,12 @@ void* FMallocBitmap::MediumAlloc(size_t sz, size_t alignment) {
     void* const newp = FBitmapHeaps_::Get().Medium.Allocate(sz);
     Assert_NoAssume(!newp || Meta::IsAlignedPow2(alignment, newp));
     Assert_NoAssume(!newp || Meta::IsAlignedPow2(FBitmapHeapMedium_::Granularity, newp));
+    Assert_NoAssume(FBitmapHeaps_::Get().Medium.AllocationSize(newp) == sz);
     return newp;
 }
 //----------------------------------------------------------------------------
-void* FMallocBitmap::MediumResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT {
-    Assert(ptr);
-    Assert_NoAssume(newSize <= FBitmapHeapMedium_::MaxAllocSize);
-    Assert_NoAssume(oldSize <= FBitmapHeapMedium_::MaxAllocSize);
-    Assert_NoAssume(oldSize >= FBitmapHeapMedium_::MinAllocSize);
-    Assert_NoAssume(FBitmapHeaps_::Get().Medium.AllocationSize(ptr) == oldSize);
-
-    void* const newp = FBitmapHeaps_::Get().Medium.Resize(ptr, newSize);
-    if (Likely(newp)) {
-        Assert(newp == ptr);
-        Assert_NoAssume(FBitmapHeaps_::Get().Medium.AllocationSize(newp) == newSize);
-        Unused(oldSize);
-        return newp;
-    }
-
-    return nullptr;
+void* FMallocBitmap::MediumReallocIFP(void* ptr, size_t sz) {
+    return FBitmapHeaps_::Get().Medium.Resize(ptr, sz);
 }
 //----------------------------------------------------------------------------
 void FMallocBitmap::MediumFree(void* ptr) {
@@ -184,22 +176,8 @@ void* FMallocBitmap::LargeAlloc(size_t sz, size_t alignment) {
     return newp;
 }
 //----------------------------------------------------------------------------
-void* FMallocBitmap::LargeResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT {
-    Assert(ptr);
-    Assert_NoAssume(newSize <= FBitmapHeapLarge_::MaxAllocSize);
-    Assert_NoAssume(oldSize <= FBitmapHeapLarge_::MaxAllocSize);
-    Assert_NoAssume(oldSize >= FBitmapHeapLarge_::MinAllocSize);
-    Assert_NoAssume(FBitmapHeaps_::Get().Large.AllocationSize(ptr) == oldSize);
-
-    void* const newp = FBitmapHeaps_::Get().Large.Resize(ptr, newSize);
-    if (Likely(newp)) {
-        Assert(newp == ptr);
-        Assert_NoAssume(FBitmapHeaps_::Get().Large.AllocationSize(newp) == newSize);
-        Unused(oldSize);
-        return newp;
-    }
-
-    return nullptr;
+void* FMallocBitmap::LargeReallocIFP(void* ptr, size_t sz) {
+    return FBitmapHeaps_::Get().Large.Resize(ptr, sz);
 }
 //----------------------------------------------------------------------------
 void FMallocBitmap::LargeFree(void* ptr) {
@@ -224,33 +202,17 @@ size_t FMallocBitmap::LargeRegionSize(void* ptr) NOEXCEPT {
     return FBitmapHeaps_::Get().Large.AllocationSize(ptr);
 }
 //----------------------------------------------------------------------------
-void* FMallocBitmap::HeapAlloc(size_t sz, size_t alignment) {
-    if (Likely(sz <= FBitmapHeapMedium_::MaxAllocSize))
-        return MediumAlloc(MediumSnapSize(sz), alignment);
-    if (sz <= FBitmapHeapLarge_::MaxAllocSize)
-        return LargeAlloc(LargeSnapSize(sz), alignment);
-
-    return nullptr;
-}
-//----------------------------------------------------------------------------
-void* FMallocBitmap::HeapResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT {
-    Assert(ptr);
-    Assert(newSize);
-    Assert(oldSize);
-    Assert(newSize != oldSize);
-
-    if (Likely((newSize <= FBitmapHeapMedium_::MaxAllocSize) && (oldSize <= FBitmapHeapMedium_::MaxAllocSize))) {
-        Assert_NoAssume(AliasesToMediumHeap(ptr));
-        return MediumResize(ptr, MediumSnapSize(newSize), MediumSnapSize(oldSize));
+FAllocatorBlock FMallocBitmap::HeapAlloc(size_t sz, size_t alignment) {
+    if (Likely(sz <= FBitmapHeapMedium_::MaxAllocSize)) {
+        sz = MediumSnapSize(sz);
+        return FAllocatorBlock(MediumAlloc(sz, alignment), sz);
+    }
+    if (sz <= FBitmapHeapLarge_::MaxAllocSize) {
+        sz = LargeSnapSize(sz);
+        return FAllocatorBlock(LargeAlloc(sz, alignment), sz);
     }
 
-    if ((newSize <= FBitmapHeapLarge_::MaxAllocSize) && (oldSize <= FBitmapHeapLarge_::MaxAllocSize) &&
-        (newSize > FBitmapHeapMedium_::MaxAllocSize) && (oldSize > FBitmapHeapMedium_::MaxAllocSize)) {
-        Assert_NoAssume(AliasesToLargeHeap(ptr));
-        return LargeResize(ptr, LargeSnapSize(newSize), LargeSnapSize(oldSize));
-    }
-
-    return nullptr; // can't resize without moving the data, but there might still be some space left
+    return Default;
 }
 //----------------------------------------------------------------------------
 bool FMallocBitmap::HeapFree_ReturnIfAliases(void* ptr) {
@@ -298,11 +260,23 @@ bool FMallocBitmap::RegionSize_ReturnIfAliases(size_t* pSizeInBytes, void* ptr) 
 }
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
+size_t FMallocBitmap::DumpMediumHeapInfo(FBitmapHeapInfo* pInfos) NOEXCEPT {
+    return FBitmapHeaps_::Get().Medium.DebugInfo(pInfos);
+}
+size_t FMallocBitmap::DumpLargeHeapInfo(FBitmapHeapInfo* pInfos) NOEXCEPT {
+    return FBitmapHeaps_::Get().Large.DebugInfo(pInfos);
+}
+void FMallocBitmap::DumpMediumHeapInfo(FTextWriter& oss) NOEXCEPT {
+    DumpHeapInfo_(oss, MakeStringView("BitmapHeapMedium"), FBitmapHeaps_::Get().Medium);
+}
+void FMallocBitmap::DumpLargeHeapInfo(FTextWriter& oss) NOEXCEPT {
+    DumpHeapInfo_(oss, MakeStringView("BitmapHeapLarge"), FBitmapHeaps_::Get().Large);
+}
 void FMallocBitmap::DumpMediumHeapInfo(FWTextWriter& oss) NOEXCEPT {
-    DumpHeapInfo_(oss, L"BitmapHeapMedium", FBitmapHeaps_::Get().Medium);
+    DumpHeapInfo_(oss, MakeStringView(L"BitmapHeapMedium"), FBitmapHeaps_::Get().Medium);
 }
 void FMallocBitmap::DumpLargeHeapInfo(FWTextWriter& oss) NOEXCEPT {
-    DumpHeapInfo_(oss, L"BitmapHeapLarge", FBitmapHeaps_::Get().Large);
+    DumpHeapInfo_(oss, MakeStringView(L"BitmapHeapLarge"), FBitmapHeaps_::Get().Large);
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------

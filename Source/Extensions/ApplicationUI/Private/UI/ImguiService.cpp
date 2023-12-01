@@ -31,7 +31,7 @@ EXTERN_LOG_CATEGORY(PPE_APPLICATIONUI_API, UI);
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-NODISCARD bool CreateImguiPipeline_(RHI::FGPipelineID* pPipeline, RHI::PPipelineResources* pResources, RHI::IFrameGraph& fg) {
+NODISCARD bool CreateImguiPipeline_(RHI::FGPipelineID* pPipeline, RHI::IFrameGraph& fg) {
     RHI::FGraphicsPipelineDesc desc;
 
     desc.AddShader(RHI::EShaderType::Vertex, RHI::EShaderLangFormat::VKSL_100, "main", R"#(
@@ -80,28 +80,22 @@ NODISCARD bool CreateImguiPipeline_(RHI::FGPipelineID* pPipeline, RHI::PPipeline
 
     *pPipeline = fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("ImGui/Pipeline"));
     if (not *pPipeline) {
-        LOG(UI, Error, L"failed to create imgui graphics pipeline");
-        return false;
-    }
-
-    *pResources = fg.CreatePipelineResources(*pPipeline, "0"_descriptorset);
-    if (not *pResources) {
-        LOG(UI, Error, L"failed to initialize imgui pipeline resources");
+        PPE_LOG(UI, Error, "failed to create imgui graphics pipeline");
         return false;
     }
 
     return true;
 }
 //----------------------------------------------------------------------------*
-NODISCARD bool CreateImguiFontSampler_(RHI::FSamplerID* pSampler, RHI::IFrameGraph& fg) {
+NODISCARD bool CreateImguiTextureSampler_(RHI::FSamplerID* pSampler, RHI::IFrameGraph& fg) {
     RHI::FSamplerDesc desc;
     desc.SetFilter(RHI::ETextureFilter::Linear, RHI::ETextureFilter::Linear, RHI::EMipmapFilter::Linear);
     desc.SetAddressMode(RHI::EAddressMode::Repeat);
     desc.SetLodRange(-1000.f, 1000.f);
 
-    *pSampler = fg.CreateSampler(desc ARGS_IF_RHIDEBUG("ImGui/FontSampler"));
+    *pSampler = fg.CreateSampler(desc ARGS_IF_RHIDEBUG("ImGui/TextureSampler"));
     if (not *pSampler) {
-        LOG(UI, Error, L"failed to create imgui font sampler");
+        PPE_LOG(UI, Error, "failed to create imgui texture sampler");
         return false;
     }
 
@@ -222,7 +216,7 @@ static void PollImguiKeyboardEvents_(ImGuiIO& io, const IInputService& input) {
     MAP_KEYBOARD(ImGuiKey_Q, Q);
     MAP_KEYBOARD(ImGuiKey_R, R);
     MAP_KEYBOARD(ImGuiKey_S, S);
-    MAP_KEYBOARD(ImGuiKey_T, T);
+    MAP_KEYBOARD(ImGuiKey_T, _T);
     MAP_KEYBOARD(ImGuiKey_U, U);
     MAP_KEYBOARD(ImGuiKey_V, V);
     MAP_KEYBOARD(ImGuiKey_W, W);
@@ -379,25 +373,100 @@ static void PollImguiMouseEvents_(ImGuiIO& io, const IInputService& input) {
     }
 }
 //----------------------------------------------------------------------------
+static bool LoadImGuiFonts_(const FFilename& baseFontTTF, float baseFontSize) {
+    PPE_LOG(UI, Info, "load base font for text from {0}", baseFontTTF);
+
+    ImGuiIO& io = ImGui::GetIO();
+
+    // using FiraCode as base font for text
+    ImFont* const imBaseFont = io.Fonts->AddFontFromFileTTF(
+        *ToString(VFS_Unalias(baseFontTTF)), baseFontSize);
+    PPE_LOG_CHECK(UI, imBaseFont);
+    io.FontDefault = imBaseFont;
+
+    // merged additional fonts to display cute icons
+    // order of declarations seems to matter: glyph ranges should be sorted by ascending order
+    static CONSTEXPR const struct iconfont_type {
+        FWStringView FilenameTTF;
+        ImWchar GlyphRanges[3];
+        float FontScale;
+        float GlyphOffsetY;
+    }   GIconFonts[] = {
+        // using Kenney for game/pad icons
+        { WIDESTRING(FONT_ICON_FILE_NAME_KI), { ICON_MIN_KI, ICON_MAX_16_KI, 0 }, 1.f, 0.f },
+        // using Visual Studio Codicons for debugger/symbols icons
+        { WIDESTRING(FONT_ICON_FILE_NAME_CI), { ICON_MIN_CI, ICON_MAX_16_CI, 0 }, 1.f, 1.f/5 },
+        // using ForkAwesome for base icons
+        { WIDESTRING(FONT_ICON_FILE_NAME_FK), { ICON_MIN_FK, ICON_MAX_16_FK, 0 }, 1.f, 0.f },
+    };
+
+    for (const iconfont_type& iconsFontInfo : GIconFonts) {
+        Assert_NoAssume(iconsFontInfo.GlyphRanges[0] <= iconsFontInfo.GlyphRanges[1]);
+
+        const float iconsFontSize = (baseFontSize * iconsFontInfo.FontScale);
+
+        ImFontConfig iconsConfig{};
+        iconsConfig.MergeMode = true; // append to base font
+        iconsConfig.PixelSnapH = true;
+        iconsConfig.GlyphMinAdvanceX = iconsFontSize;
+        iconsConfig.GlyphOffset.y += baseFontSize * iconsFontInfo.GlyphOffsetY;
+
+        const FFilename iconsFontTTF(StringFormat(
+            L"Data://Fonts/Icons/{0}", iconsFontInfo.FilenameTTF));
+
+        PPE_LOG(UI, Info, "load icons font glyphs [{0}, {1}] from {2}",
+            int(iconsFontInfo.GlyphRanges[0]),
+            int(iconsFontInfo.GlyphRanges[1]),
+            iconsFontTTF);
+
+        PPE_LOG_CHECK(UI, !!io.Fonts->AddFontFromFileTTF(
+            *ToString(VFS_Unalias(iconsFontTTF)),
+            iconsFontSize,
+            &iconsConfig,
+            iconsFontInfo.GlyphRanges));
+    }
+
+    return true;
+}
+//----------------------------------------------------------------------------
+static void* ImGuiMemAlloc_(size_t sz, void* user_data) {
+    Unused(user_data);
+    return TRACKING_MALLOC(ImGui, sz);
+}
+//----------------------------------------------------------------------------
+static void ImGuiMemFree_(void* ptr, void* user_data) {
+    Unused(user_data);
+    return TRACKING_FREE(ImGui, ptr);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FImguiService::FImguiService(PImguiContext imguiContext) NOEXCEPT
-:   _imguiContext(imguiContext)
-,   _clearColor(0.45f, 0.55f, 0.60f, 1.00f) {
-    AssertRelease(_imguiContext);
+FImGuiService::FImGuiService()
+:   _clearColor(0.45f, 0.55f, 0.60f, 1.00f) {
+    IMGUI_CHECKVERSION();
+
+    ImGui::SetAllocatorFunctions(&ImGuiMemAlloc_, &ImGuiMemFree_);
+
+    _imGuiContext = ImGui::CreateContext();
+    AssertRelease_NoAssume(_imGuiContext);
+
+    _imPlotContext = ImPlot::CreateContext();
+    AssertRelease_NoAssume(_imPlotContext);
 }
 //----------------------------------------------------------------------------
-FImguiService::~FImguiService() {
-    ImGui::DestroyContext(_imguiContext);
+FImGuiService::~FImGuiService() {
+    ImPlot::DestroyContext(_imPlotContext);
+    ImGui::DestroyContext(_imGuiContext);
 }
 //----------------------------------------------------------------------------
-bool FImguiService::Construct(IInputService& input, IRHIService& rhi) {
+bool FImGuiService::Construct(IInputService& input, IRHIService& rhi) {
     Assert(not _onInputUpdate);
     Assert(not _onRenderFrame);
+    Assert(_textureResources.empty());
 
-    LOG(UI, Info, L"creating imgui service");
+    PPE_LOG(UI, Info, "creating ImGui service");
 
     const RHI::SFrameGraph fg = rhi.FrameGraph();
 
@@ -405,9 +474,10 @@ bool FImguiService::Construct(IInputService& input, IRHIService& rhi) {
     {
         ImGuiIO& io = ImGui::GetIO();
 
-        io.BackendPlatformName = "PPE::Application::FImguiService";
+        io.BackendPlatformName = "PPE::Application::FImGuiService";
         io.BackendPlatformUserData = this;
 
+        io.BackendFlags |= ImGuiBackendFlags_RendererHasVtxOffset; // Support for large meshes (https://github.com/ocornut/imgui/issues/2591)
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
         if (rhi.Features() & ERHIFeature::HighDPIAwareness) {
@@ -434,11 +504,8 @@ bool FImguiService::Construct(IInputService& input, IRHIService& rhi) {
             static_cast<float>(swapchain.Dimensions.x),
             static_cast<float>(swapchain.Dimensions.y) };
 
-        // change default font
-        ImFontConfig fontConfig{};
-        //fontConfig.GlyphOffset.y = -2;
-        const FFilename font = L"Data:/Fonts/FiraSansExtraCondensed-Regular.ttf";
-        io.FontDefault = io.Fonts->AddFontFromFileTTF(*ToString(VFS_Unalias(font)), 16.0f, &fontConfig);
+        // setup text and icons fonts
+        PPE_LOG_CHECK(UI, LoadImGuiFonts_(L"Data://Fonts/FiraSansExtraCondensed-Regular.ttf", 16.f));
     }
 
     // initialize style
@@ -450,6 +517,7 @@ bool FImguiService::Construct(IInputService& input, IRHIService& rhi) {
         style.FrameRounding = 3;
         style.ItemSpacing.y = 3;
         style.WindowRounding = 4;
+        style.GrabRounding = 2;
 
         ImVec4* colors = style.Colors;
         colors[ImGuiCol_WindowBg] = ImVec4(0.09f, 0.05f, 0.11f, 0.85f);
@@ -461,23 +529,23 @@ bool FImguiService::Construct(IInputService& input, IRHIService& rhi) {
     {
         unsigned char* textureData;
         int textureWidth, textureHeight;
-        _imguiContext->IO.Fonts->GetTexDataAsRGBA32(&textureData, &textureWidth, &textureHeight);
+        _imGuiContext->IO.Fonts->GetTexDataAsRGBA32(&textureData, &textureWidth, &textureHeight);
     }
 
-    LOG_CHECK(UI, CreateImguiPipeline_(&_pipeline, &_resources, *fg));
-    LOG_CHECK(UI, CreateImguiFontSampler_(&_fontSampler, *fg));
+    PPE_LOG_CHECK(UI, CreateImguiPipeline_(&_pipeline, *fg));
+    PPE_LOG_CHECK(UI, CreateImguiTextureSampler_(&_textureSampler, *fg));
 
-    _onInputUpdate = input.OnInputUpdate().Bind<&FImguiService::OnUpdateInput>(this);
-    _onWindowFocus = input.OnWindowFocus().Bind<&FImguiService::OnWindowFocus>(this);
+    _onInputUpdate = input.OnInputUpdate().Bind<&FImGuiService::OnUpdateInput>(this);
+    _onWindowFocus = input.OnWindowFocus().Bind<&FImGuiService::OnWindowFocus>(this);
 
-    _onRenderFrame = rhi.OnRenderFrame().Bind<&FImguiService::OnRenderFrame>(this);
-    _onWindowResized = rhi.OnWindowResized().Bind<&FImguiService::OnWindowResized>(this);
+    _onRenderFrame = rhi.OnRenderFrame().Bind<&FImGuiService::OnRenderFrame>(this);
+    _onWindowResized = rhi.OnWindowResized().Bind<&FImGuiService::OnWindowResized>(this);
 
     return true;
 }
 //----------------------------------------------------------------------------
-void FImguiService::TearDown(IInputService& input, IRHIService& rhi) {
-    LOG(UI, Info, L"destroying imgui service");
+void FImGuiService::TearDown(IInputService& input, IRHIService& rhi) {
+    PPE_LOG(UI, Info, "destroying imgui service");
 
     input.OnInputUpdate().Remove(_onInputUpdate);
     input.OnWindowFocus().Remove(_onWindowFocus);
@@ -485,11 +553,11 @@ void FImguiService::TearDown(IInputService& input, IRHIService& rhi) {
     rhi.OnRenderFrame().Remove(_onRenderFrame);
     rhi.OnWindowResized().Remove(_onWindowResized);
 
-    _resources.reset();
+    _textureResources.clear_ReleaseMemory();
 
     rhi.FrameGraph()->ReleaseResources(
         _fontTexture,
-        _fontSampler,
+        _textureSampler,
         _pipeline,
         _indexBuffer,
         _vertexBuffer,
@@ -503,9 +571,9 @@ void FImguiService::TearDown(IInputService& input, IRHIService& rhi) {
     }
 }
 //----------------------------------------------------------------------------
-void FImguiService::OnUpdateInput(const IInputService& input, FTimespan dt) {
+void FImGuiService::OnUpdateInput(const IInputService& input, FTimespan dt) {
     ImGuiIO& io = ImGui::GetIO();
-    LOG_CHECKVOID(UI, io.Fonts->IsBuilt());
+    PPE_LOG_CHECKVOID(UI, io.Fonts->IsBuilt());
 
     io.DeltaTime = static_cast<float>(*FSeconds{ dt });
 
@@ -516,13 +584,13 @@ void FImguiService::OnUpdateInput(const IInputService& input, FTimespan dt) {
     ImGui::NewFrame();
 }
 //----------------------------------------------------------------------------
-void FImguiService::OnWindowFocus(const IInputService& input, const FGenericWindow* ) {
+void FImGuiService::OnWindowFocus(const IInputService& input, const FGenericWindow* ) {
     ImGuiIO& io = ImGui::GetIO();
 
     io.AddFocusEvent(!!input.FocusedWindow());
 }
 //----------------------------------------------------------------------------
-void FImguiService::OnRenderFrame(const IRHIService& rhi, FTimespan ) {
+void FImGuiService::OnRenderFrame(const IRHIService& rhi, FTimespan ) {
     using namespace RHI;
 
     ImGui::Render();
@@ -534,10 +602,10 @@ void FImguiService::OnRenderFrame(const IRHIService& rhi, FTimespan ) {
     const SFrameGraph fg = rhi.FrameGraph();
 
     FCommandBufferBatch cmd = fg->Begin(FCommandBufferDesc{EQueueType::Graphics}.SetName("ImGui"));
-    LOG_CHECKVOID(UI, !!cmd);
+    PPE_LOG_CHECKVOID(UI, !!cmd);
 
     const FRawImageID swapchainImage = cmd->SwapchainImage(rhi.Swapchain());
-    LOG_CHECKVOID(UI, !!swapchainImage);
+    PPE_LOG_CHECKVOID(UI, !!swapchainImage);
 
     const float2 viewport{ pDrawData->DisplaySize.x, pDrawData->DisplaySize.y };
 
@@ -545,14 +613,13 @@ void FImguiService::OnRenderFrame(const IRHIService& rhi, FTimespan ) {
         .AddViewport(viewport)
         .AddTarget(ERenderTargetID::Color0, swapchainImage, _clearColor, EAttachmentStoreOp::Store));
 
-    PFrameTask tDrawUI = PrepareRenderCommand_(cmd, renderPass, {});
-    LOG_CHECKVOID(UI, !!tDrawUI);
+    PFrameTask tDrawUI = PrepareRenderCommand_(*fg, cmd, renderPass, {});
+    PPE_LOG_CHECKVOID(UI, !!tDrawUI);
 
-    LOG_CHECKVOID(UI, fg->Execute(cmd));
-    LOG_CHECKVOID(UI, fg->Flush());
+    PPE_LOG_CHECKVOID(UI, fg->Execute(cmd));
 }
 //----------------------------------------------------------------------------
-void FImguiService::OnWindowResized(const IRHIService&, const FRHISurfaceCreateInfo& surface) {
+void FImGuiService::OnWindowResized(const IRHIService&, const FRHISurfaceCreateInfo& surface) {
     ImGuiIO& io = ImGui::GetIO();
 
     io.DisplaySize = {
@@ -560,16 +627,17 @@ void FImguiService::OnWindowResized(const IRHIService&, const FRHISurfaceCreateI
         static_cast<float>(surface.Dimensions.y) };
 }
 //----------------------------------------------------------------------------
-RHI::PFrameTask FImguiService::PrepareRenderCommand_(
+RHI::PFrameTask FImGuiService::PrepareRenderCommand_(
+    RHI::IFrameGraph& fg,
     RHI::FCommandBufferBatch& cmd,
     RHI::FLogicalPassID renderPass,
     TMemoryView<const RHI::PFrameTask> dependencies ) {
-    LOG_CHECK(UI, cmd && _pipeline && _resources);
+    PPE_LOG_CHECK(UI, cmd && _pipeline);
 
     using namespace RHI;
 
     ImDrawData* const pDrawData = ImGui::GetDrawData();
-    LOG_CHECK(UI, pDrawData);
+    PPE_LOG_CHECK(UI, pDrawData);
     Assert(pDrawData->TotalVtxCount > 0);
 
     FSubmitRenderPass submit{ renderPass };
@@ -586,9 +654,6 @@ RHI::PFrameTask FImguiService::PrepareRenderCommand_(
     vertexInput.Add("aPos"_vertex, EVertexFormat::Float2, Meta::StandardLayoutOffset(&ImDrawVert::pos));
     vertexInput.Add("aUV"_vertex, EVertexFormat::Float2, Meta::StandardLayoutOffset(&ImDrawVert::uv));
     vertexInput.Add("aColor"_vertex, EVertexFormat::UByte4_Norm, Meta::StandardLayoutOffset(&ImDrawVert::col));
-
-    _resources->BindBuffer("uPushConstant"_uniform, _uniformBuffer);
-    _resources->BindTexture("sTexture"_uniform, _fontTexture, _fontSampler);
 
     u32 indexOffset{0}, vertexOffset{0};
     forrange(i, 0, pDrawData->CmdListsCount) {
@@ -610,9 +675,16 @@ RHI::PFrameTask FImguiService::PrepareRenderCommand_(
                     Max(scissor.Min(), int2::Zero),
                     Max(scissor.Max(), int2::Zero));
 
+                FImageID textureCmd{ _fontTexture.Id };
+                if (const FResourceHandle textureHandle{ drawCmd.GetTexID() }; textureHandle != Default)
+                    textureCmd = FImageID::Unpack(textureHandle);
+
+                PPipelineResources resources = FindOrAddTextureResources_(fg, textureCmd);
+                Assert_NoAssume(resources.valid());
+
                 cmd->Task(renderPass, FDrawIndexed{}
                     .SetPipeline(_pipeline)
-                    .AddResources("0"_descriptorset, _resources)
+                    .AddResources("0"_descriptorset, std::move(resources))
                     .SetTopology(EPrimitiveTopology::TriangleList)
                     .SetIndexBuffer(_indexBuffer, 0, IndexAttrib<ImDrawIdx>())
                     .AddVertexBuffer(""_vertexbuffer, _vertexBuffer)
@@ -621,7 +693,7 @@ RHI::PFrameTask FImguiService::PrepareRenderCommand_(
                     .SetEnableDepthTest(false)
                     .SetCullMode(ECullMode::None)
                     .AddScissor(FRectangleU(scissor))
-                    .Draw(drawCmd.ElemCount, 1, indexOffset, checked_cast<i32>(vertexOffset), 0));
+                    .Draw(drawCmd.ElemCount, 1, indexOffset, checked_cast<i32>(vertexOffset + drawCmd.VtxOffset), 0));
 
             } else {
                 drawCmd.UserCallback(&drawList, &drawCmd);
@@ -633,10 +705,12 @@ RHI::PFrameTask FImguiService::PrepareRenderCommand_(
         vertexOffset += drawList.VtxBuffer.Size;
     }
 
+    GCUnusedTextureResources_(fg);
+
     return cmd->Task(submit);
 }
 //----------------------------------------------------------------------------
-RHI::PFrameTask FImguiService::CreateFontTexture_(const RHI::FCommandBufferBatch& cmd) {
+RHI::PFrameTask FImGuiService::CreateFontTexture_(const RHI::FCommandBufferBatch& cmd) {
     using namespace RHI;
 
     if (_fontTexture)
@@ -644,23 +718,25 @@ RHI::PFrameTask FImguiService::CreateFontTexture_(const RHI::FCommandBufferBatch
 
     int2 textureDim;
     unsigned char* textureData;
-    _imguiContext->IO.Fonts->GetTexDataAsRGBA32(&textureData, &textureDim.x, &textureDim.y);
+    _imGuiContext->IO.Fonts->GetTexDataAsRGBA32(&textureData, &textureDim.x, &textureDim.y);
 
     const size_t uploadSize = sizeof(char) * 4 * static_cast<size_t>(textureDim.x) * textureDim.y;
 
+    uint2 fontDim = checked_cast<u32>(textureDim);
+
     _fontTexture = cmd->FrameGraph()->CreateImage(FImageDesc{}
-        .SetDimension(checked_cast<u32>(textureDim))
+        .SetDimension(fontDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
         Default ARGS_IF_RHIDEBUG("ImGui/FontTexture"));
-    LOG_CHECK(UI, _fontTexture);
+    PPE_LOG_CHECK(UI, _fontTexture);
 
     return cmd->Task(FUpdateImage{}
         .SetImage(_fontTexture)
         .SetData(FRawMemoryConst{textureData, uploadSize}, checked_cast<u32>(textureDim)));
 }
 //----------------------------------------------------------------------------
-RHI::PFrameTask FImguiService::UpdateUniformBuffer_(const RHI::FCommandBufferBatch& cmd) {
+RHI::PFrameTask FImGuiService::UpdateUniformBuffer_(const RHI::FCommandBufferBatch& cmd) {
     using namespace RHI;
 
     const ImDrawData& drawData = *ImGui::GetDrawData();
@@ -669,13 +745,13 @@ RHI::PFrameTask FImguiService::UpdateUniformBuffer_(const RHI::FCommandBufferBat
         _uniformBuffer = cmd->FrameGraph()->CreateBuffer(FBufferDesc{
             16_b, EBufferUsage::Uniform | EBufferUsage::TransferDst },
             Default ARGS_IF_RHIDEBUG("ImGui/UniformBuffer"));
-        LOG_CHECK(UI, _uniformBuffer);
+        PPE_LOG_CHECK(UI, _uniformBuffer);
     }
 
     float4 pcData;
     pcData.xy = float2{
-        2.0f / (drawData.DisplaySize.x * _imguiContext->IO.DisplayFramebufferScale.x),
-        2.0f / (drawData.DisplaySize.y * _imguiContext->IO.DisplayFramebufferScale.y) };
+        2.0f / (drawData.DisplaySize.x * _imGuiContext->IO.DisplayFramebufferScale.x),
+        2.0f / (drawData.DisplaySize.y * _imGuiContext->IO.DisplayFramebufferScale.y) };
     pcData.zw = float2{
         -1.f - (drawData.DisplayPos.x * pcData.x),
         -1.f - (drawData.DisplayPos.y * pcData.y) };
@@ -685,7 +761,7 @@ RHI::PFrameTask FImguiService::UpdateUniformBuffer_(const RHI::FCommandBufferBat
         .AddData(MakeRawConstView(pcData)) );
 }
 //----------------------------------------------------------------------------
-RHI::PFrameTask FImguiService::RecreateBuffers_(const RHI::FCommandBufferBatch& cmd) {
+RHI::PFrameTask FImGuiService::RecreateBuffers_(const RHI::FCommandBufferBatch& cmd) {
     using namespace RHI;
 
     IFrameGraph& fg = *cmd->FrameGraph();
@@ -703,7 +779,7 @@ RHI::PFrameTask FImguiService::RecreateBuffers_(const RHI::FCommandBufferBatch& 
             _indexBufferSize, EBufferUsage::TransferDst | EBufferUsage::Index },
             Default ARGS_IF_RHIDEBUG("ImGui/IndexBuffer") );
 
-        LOG_CHECK(UI, _indexBuffer);
+        PPE_LOG_CHECK(UI, _indexBuffer);
     }
 
     if (not _vertexBuffer or vertexSize > _vertexBufferSize) {
@@ -715,7 +791,7 @@ RHI::PFrameTask FImguiService::RecreateBuffers_(const RHI::FCommandBufferBatch& 
             _vertexBufferSize, EBufferUsage::TransferDst | EBufferUsage::Vertex },
             Default ARGS_IF_RHIDEBUG("ImGui/VertexBuffer") );
 
-        LOG_CHECK(UI, _vertexBuffer);
+        PPE_LOG_CHECK(UI, _vertexBuffer);
     }
 
     size_t indexOffset{0}, vertexOffset{0};
@@ -741,6 +817,43 @@ RHI::PFrameTask FImguiService::RecreateBuffers_(const RHI::FCommandBufferBatch& 
     Assert_NoAssume(indexOffset == indexSize);
     Assert_NoAssume(vertexOffset == vertexSize);
     return lastTask;
+}
+//----------------------------------------------------------------------------
+RHI::PPipelineResources FImGuiService::FindOrAddTextureResources_(RHI::IFrameGraph& fg, const RHI::FImageID& texture) {
+    Assert_NoAssume(texture.Valid());
+
+    if (const auto it = _textureResources.Find(texture.Pack()); it != _textureResources.end()) {
+        Assert_NoAssume(it->second);
+        return it->second;
+    }
+
+    RHI::PPipelineResources resources = fg.CreatePipelineResources(*_pipeline, "0"_descriptorset);
+
+    if (not resources) {
+        PPE_LOG(UI, Error, "failed to initialize imgui pipeline resources");
+        return Default;
+    }
+
+    resources->BindBuffer("uPushConstant"_uniform, _uniformBuffer);
+    resources->BindTexture("sTexture"_uniform, texture, _textureSampler);
+
+    _textureResources.Emplace_Overwrite(texture.Pack(), resources);
+    return resources;
+}
+//----------------------------------------------------------------------------
+void FImGuiService::GCUnusedTextureResources_(RHI::IFrameGraph& fg) {
+    Unused(fg);
+
+    // release resources when cache is the only referencer:
+    for (u32 index = 0; index < _textureResources.size(); ) {
+        auto [texture, resources] = _textureResources.Vector().at(index);
+        if (resources->RefCount() > 1) {
+            ++index;
+            continue;
+        }
+
+        _textureResources.Erase(_textureResources.begin() + index);
+    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

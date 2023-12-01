@@ -10,11 +10,10 @@
 VOID PPE_IODETOURING_API VSafePrintf(PCSTR pszMsg, va_list args, PCHAR pszBuffer, LONG cbBuffer);
 PCHAR PPE_IODETOURING_API SafePrintf(PCHAR pszBuffer, LONG cbBuffer, PCSTR pszMsg, ...);
 //----------------------------------------------------------------------------
-class PPE_IODETOURING_API FIODetouringTblog : PPE::Meta::TSingleton<FIODetouringTblog> {
-    using singleton_type = PPE::Meta::TSingleton<FIODetouringTblog>;
-    friend class singleton_type;
-    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT; // for shared lib
+class FIODetouringTblog {
 public:
+    STATIC_CONST_INTEGRAL(int, PayloadExitCode, -42);
+
     struct FMessage {
         DWORD   nBytes{ 0 };
         CHAR    szMessage[32764]; // 32768 - sizeof(nBytes)
@@ -54,20 +53,20 @@ public:
     };
     using PPayload = FPayload*;
 
-    using singleton_type::Get;
-    using singleton_type::Destroy;
-
-    static VOID Create() { singleton_type::Create(); }
-
     const FPayload& Payload() const { return _payload; }
-    void CopyPayload(PPayload pPayload);
-    BOOL ChildPayload(HANDLE hProcess, DWORD nProcessId, PCHAR pszId, HANDLE hStdin, HANDLE hStdout, HANDLE hStderr);
 
-    BOOL Open();
-    VOID Close();
+    PPE_IODETOURING_API static void Create();
+    PPE_IODETOURING_API static void Destroy();
+    NODISCARD PPE_IODETOURING_API static FIODetouringTblog& Get() NOEXCEPT;
 
-    VOID PrintV(PCSTR pszMsgf, va_list args);
-    VOID Printf(PCSTR pszMsgf, ...);
+    PPE_IODETOURING_API void CopyPayload(PPayload pPayload);
+    NODISCARD PPE_IODETOURING_API BOOL ChildPayload(HANDLE hProcess, DWORD nProcessId, PCHAR pszId, HANDLE hStdin, HANDLE hStdout, HANDLE hStderr);
+
+    NODISCARD PPE_IODETOURING_API BOOL Open();
+    PPE_IODETOURING_API VOID Close();
+
+    PPE_IODETOURING_API VOID PrintV(PCSTR pszMsgf, va_list args);
+    PPE_IODETOURING_API VOID Printf(PCSTR pszMsgf, ...);
 
 private:
     FIODetouringTblog();
@@ -80,7 +79,7 @@ private:
 
     CRITICAL_SECTION _csPipe;
     HANDLE _hPipe = INVALID_HANDLE_VALUE;
-    FMessage _rMessage;
+    FMessage _rMessage{};
 
     DWORD _nTraceProcessId = 0;
     LONG _nChildCnt = 0;

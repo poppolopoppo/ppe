@@ -56,7 +56,7 @@ struct FStompPayload_ {
     {}
 
     void CheckCanary() const {
-        AssertReleaseMessage(L"Corrupted payload !", GStompDefaultCanary == Canary);
+        AssertReleaseMessage("Corrupted payload !", GStompDefaultCanary == Canary);
     }
 };
 STATIC_ASSERT(sizeof(FStompPayload_) == ALLOCATION_BOUNDARY);
@@ -104,7 +104,7 @@ static void StompCheckPadding_(const void* pbegin, const void* pend) {
     forrange(p, p2, p3)
         succeed &= (0xAA == *p);
 
-    AssertReleaseMessage(L"Corrupted memory block !", succeed);
+    AssertReleaseMessage("Corrupted memory block !", succeed);
 }
 //----------------------------------------------------------------------------
 static const FStompPayload_* StompGetPayload_(const void* userPtr) {

@@ -73,7 +73,7 @@ FBasename& FBasename::operator =(const FileSystem::FStringView& content) {
 }
 //----------------------------------------------------------------------------
 FBasename FBasename::RemoveExtname() const {
-    return FBasename(_basenameNoExt, FExtname());
+    return FBasename(_basenameNoExt.MakeView());
 }
 //----------------------------------------------------------------------------
 FString FBasename::ToString() const {

@@ -39,7 +39,7 @@ void FServicingPort::Servicing(ITaskContext& ctx) {
         if (_socket.IsConnected()) {
             // check port lifetime to see if it timeout
             if (Timeout()) {
-                LOG(Network, Info, L"HandShaker: servicing port {0} -> {1} timeouted ({2} > {3})",
+                PPE_LOG(Network, Info, "HandShaker: servicing port {0} -> {1} timeouted ({2} > {3})",
                     _socket.Local(), _socket.Remote(),
                     FTimepoint::ElapsedSince(_lastAlive),
                     _owner->KeepAliveTimeout() );

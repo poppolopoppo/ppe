@@ -38,43 +38,43 @@ ARGS_IF_RHIDEBUG("Compute_InvalidID_CS"));
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("Image0")) };
-    LOG_CHECK(WindowTest, image0.Valid());
+    PPE_LOG_CHECK(WindowTest, image0.Valid());
 
     TAutoResource<FImageID> image1{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("Image1")) };
-    LOG_CHECK(WindowTest, image1.Valid());
+    PPE_LOG_CHECK(WindowTest, image1.Valid());
 
     FImageID image2{ fg.AcquireResource(image0->Get()) };
-    LOG_CHECK(WindowTest, image2.Valid());
+    PPE_LOG_CHECK(WindowTest, image2.Valid());
 
     // some invalid IDs:
     FImageID image3{ FRawImageID(1111, 0) };
     FImageID image4{ FRawImageID(2222, 0) };
 
     TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Compute_InvalidID")) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
 
     const FImageDesc& invalidDesc = fg.Description(*image3);
     Unused(invalidDesc);
-    LOG(WindowTest, Info, L"invalid image dimension: {0}", invalidDesc.Dimensions);
+    PPE_LOG(WindowTest, Info, "invalid image dimension: {0}", invalidDesc.Dimensions);
 
     // Frame 1
     FCommandBufferBatch cmd1{ fg.Begin(FCommandBufferDesc{}
         .SetName("Compute_InvalidID_Frame1")) };
-    LOG_CHECK(WindowTest, !!cmd1);
+    PPE_LOG_CHECK(WindowTest, !!cmd1);
     {
         resources->BindImage(FUniformID{ "un_OutImage" }, image0);
 
         PFrameTask tRun = cmd1->Task(FDispatchCompute{}
             .SetPipeline(ppln)
             .AddResources(FDescriptorSetID{ "0" }, resources));
-        LOG_CHECK(WindowTest, tRun);
+        PPE_LOG_CHECK(WindowTest, tRun);
         Unused(tRun);
 
         {
@@ -82,12 +82,12 @@ ARGS_IF_RHIDEBUG("Compute_InvalidID_CS"));
             PFrameTask tCopy = cmd1->Task(FCopyImage{}
                 .From(*image2).To(*image4) // should assert, but not crash
                 .AddRegion(Default, int2::Zero, Default, int2::Zero, imageDim));
-            LOG_CHECK(WindowTest, tCopy);
+            PPE_LOG_CHECK(WindowTest, tCopy);
             Unused(tCopy);
             Unused(expectAssertOnInvalidID);
         }
 
-        LOG_CHECK(WindowTest, fg.Execute(cmd1));
+        PPE_LOG_CHECK(WindowTest, fg.Execute(cmd1));
     }
 
     Unused(fg.ReleaseResource(image2));
@@ -96,25 +96,25 @@ ARGS_IF_RHIDEBUG("Compute_InvalidID_CS"));
     // Frame 2
     FCommandBufferBatch cmd2{ fg.Begin(FCommandBufferDesc{}
         .SetName("Compute_InvalidID_Frame2")) };
-    LOG_CHECK(WindowTest, !!cmd2);
+    PPE_LOG_CHECK(WindowTest, !!cmd2);
     {
         PFrameTask tRun = cmd2->Task(FDispatchCompute{}
             .SetPipeline(ppln)
             .AddResources(FDescriptorSetID{ "0" }, resources));
-        LOG_CHECK(WindowTest, tRun);
+        PPE_LOG_CHECK(WindowTest, tRun);
 
         PFrameTask tCopy = cmd2->Task(FCopyImage{}
             .From(image0).To(image1)
             .AddRegion(Default, int2::Zero, Default, int2::Zero, imageDim));
-        LOG_CHECK(WindowTest, tCopy);
+        PPE_LOG_CHECK(WindowTest, tCopy);
 
         Unused(tRun);
         Unused(tCopy);
 
-        LOG_CHECK(WindowTest, fg.Execute(cmd2));
+        PPE_LOG_CHECK(WindowTest, fg.Execute(cmd2));
     }
 
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
     Unused(image3.Release());
     Unused(image4.Release());

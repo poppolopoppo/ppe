@@ -6,6 +6,13 @@
 
 #include <memory>
 
+#define _FWD_INSITUPTR_IMPL(T, _PREFIX)                                     \
+    class CONCAT(_PREFIX, T);                                               \
+    typedef ::PPE::TInSituPtr<const CONCAT(_PREFIX, T)> CONCAT(U,  T);
+
+#define FWD_INSITUPTR(T_WITHOUT_F)              _FWD_INSITUPTR_IMPL(T_WITHOUT_F, F)
+#define FWD_INTEFARCE_INSITUPTR(T_WITHOUT_I)    _FWD_INSITUPTR_IMPL(T_WITHOUT_I, I)
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -26,17 +33,17 @@ struct TInSituPtr {
 
     CONSTEXPR TInSituPtr() NOEXCEPT : VTable(NullMagick) {}
 
-    CONSTEXPR bool Valid() const { return (VTable != NullMagick); }
+    NODISCARD CONSTEXPR bool Valid() const { return (VTable != NullMagick); }
     PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
-    CONSTEXPR T* get() {
+    NODISCARD CONSTEXPR T* get() {
         Assert(Valid());
         return reinterpret_cast<T*>(std::addressof(InSitu));
     }
-    CONSTEXPR const T* get() const { return const_cast<TInSituPtr*>(this)->get(); }
+    NODISCARD CONSTEXPR const T* get() const { return const_cast<TInSituPtr*>(this)->get(); }
 
-    CONSTEXPR T& operator *() { return *get(); }
-    CONSTEXPR const T& operator *() const { return *get(); }
+    NODISCARD CONSTEXPR T& operator *() { return *get(); }
+    NODISCARD CONSTEXPR const T& operator *() const { return *get(); }
 
     CONSTEXPR T* operator ->() { return get(); }
     CONSTEXPR const T* operator ->() const { return get(); }
@@ -59,12 +66,12 @@ struct TInSituPtr {
     CONSTEXPR void CreateRawCopy(const T& src) {
         STATIC_ASSERT(std::is_trivially_destructible_v<T>);
         Assert(not Valid());
-        FPlatformMemory::Memcpy(&InSitu, (void*)&src, sizeof(T));
+        FPlatformMemory::Memcpy(&InSitu, static_cast<void*>(&src), sizeof(T));
         Assert(Valid());
     }
 
     CONSTEXPR void CreateRawCopy_AssumeNotInitialized(const T& src) {
-        FPlatformMemory::Memcpy(&InSitu, (void*)&src, sizeof(T));
+        FPlatformMemory::Memcpy(&InSitu, static_cast<void*>(&src), sizeof(T));
         Assert(Valid());
     }
 
@@ -75,13 +82,13 @@ struct TInSituPtr {
     }
 
     template <typename U, typename... _Args>
-    CONSTEXPR static TInSituPtr Make(_Args&&... args) {
+    NODISCARD CONSTEXPR static TInSituPtr Make(_Args&&... args) {
         TInSituPtr p(Meta::NoInit);
         p.template Create_AssumeNotValid<U>(std::forward<_Args>(args)...);
         return p;
     }
 
-    inline friend bool operator ==(const TInSituPtr& lhs, const TInSituPtr& rhs) {
+    NODISCARD inline friend bool operator ==(const TInSituPtr& lhs, const TInSituPtr& rhs) {
 #if 0
         STATIC_ASSERT(sizeof(lhs) == sizeof(intptr_t));
         STATIC_ASSERT(sizeof(rhs) == sizeof(intptr_t));
@@ -91,12 +98,12 @@ struct TInSituPtr {
 
 #endif
     }
-    inline friend bool operator !=(const TInSituPtr& lhs, const TInSituPtr& rhs) {
+    NODISCARD inline friend bool operator !=(const TInSituPtr& lhs, const TInSituPtr& rhs) {
         return (not operator ==(lhs, rhs));
     }
 
     // Consider TInSituPtr<T> as POD if and only if T is considered as POD
-    friend CONSTEXPR bool is_pod_type(TInSituPtr<T>*) { return Meta::is_pod_v<T>; }
+    NODISCARD friend CONSTEXPR bool is_pod_type(TInSituPtr*) { return Meta::is_pod_v<T>; }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

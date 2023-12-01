@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Time_fwd.h"
 
 #include "IO/TextWriter_fwd.h"
 #include "Memory/HashFunctions.h"
@@ -9,7 +9,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FTimestamp;
 class PPE_CORE_API FDateTime {
 public:
     u64 DayOfWeek   : 3;
@@ -81,7 +80,6 @@ public:
     friend bool operator !=(const FDateTime& lhs, const FDateTime& rhs) { return lhs.Ord() != rhs.Ord(); }
 };
 STATIC_ASSERT(sizeof(FDateTime) == sizeof(u64));
-PPE_ASSUME_TYPE_AS_POD(FDateTime)
 //----------------------------------------------------------------------------
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FDateTime& d);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDateTime& d);

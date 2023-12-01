@@ -9,7 +9,7 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_NETWORK_API FNetworkException : public FException {
+class FNetworkException : public FException {
 public:
     explicit FNetworkException(const char* what) : FException(what) {}
 };

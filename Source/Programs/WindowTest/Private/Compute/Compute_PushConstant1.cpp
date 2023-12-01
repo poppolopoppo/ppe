@@ -51,10 +51,10 @@ ARGS_IF_RHIDEBUG("Compute_PushConstant1_CS"));
         dstBufferSize,
         EBufferUsage::Storage | EBufferUsage::TransferSrc },
         Default ARGS_IF_RHIDEBUG("DstBuffer")) };
-    LOG_CHECK(WindowTest, dstBuffer.Valid());
+    PPE_LOG_CHECK(WindowTest, dstBuffer.Valid());
 
     const TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Compute_PushConstant1")) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     FPushConstant_ pc;
     pc.f3 = { 10.1f, 11.2f, 18.5f };
@@ -62,7 +62,7 @@ ARGS_IF_RHIDEBUG("Compute_PushConstant1_CS"));
     pc.f1 = 33.0f;
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
 
     bool callbackWasCalled = false;
     bool dataIsCorrect = false;
@@ -87,7 +87,7 @@ ARGS_IF_RHIDEBUG("Compute_PushConstant1_CS"));
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Compute_PushConstant1")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->BindBuffer(FUniformID{ "SSB" }, dstBuffer);
 
@@ -96,23 +96,23 @@ ARGS_IF_RHIDEBUG("Compute_PushConstant1_CS"));
         .Dispatch({ 1, 1 })
         .AddPushConstant(FPushConstantID{ "MyPushConstant" }, MakeRawView(pc))
         .AddResources(FDescriptorSetID{ "0" }, resources));
-    LOG_CHECK(WindowTest, tDispatch);
+    PPE_LOG_CHECK(WindowTest, tDispatch);
 
     PFrameTask tRead = cmd->Task(FReadBuffer{}
         .SetBuffer(dstBuffer, 0_b, dstBufferSize)
         .DependsOn(tDispatch)
         .SetCallback(onLoaded));
-    LOG_CHECK(WindowTest, tRead);
+    PPE_LOG_CHECK(WindowTest, tRead);
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
 
-    LOG_CHECK(WindowTest, not callbackWasCalled);
+    PPE_LOG_CHECK(WindowTest, not callbackWasCalled);
 
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, callbackWasCalled);
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, callbackWasCalled);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

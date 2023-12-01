@@ -882,7 +882,7 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
     _Containers&& tests ) {
     // prepare input data
 
-    LOG(Test_Containers, Emphasis, L"Running benchmark <{0}> with {1} tests :", name, dim);
+    PPE_LOG(Test_Containers, Emphasis, "Running benchmark <{0}> with {1} tests :", name, dim);
 
 #if 0
     // mt19937 has better distribution than FRandomGenerator for generating benchmark data
@@ -1123,7 +1123,7 @@ static void Benchmark_Containers_FindSpeed_Impl_(
 }
 template <typename T, typename _Generator, typename _Containers>
 NO_INLINE static void Benchmark_Containers_FindSpeed_(const FStringView& name, _Generator&& generator, _Containers&& tests) {
-    LOG(Test_Containers, Emphasis, L"Running find speed benchmarks <{0}> :", name);
+    PPE_LOG(Test_Containers, Emphasis, "Running find speed benchmarks <{0}> :", name);
 
 #if 0
     // mt19937 has better distribution than FRandomGenerator for generating benchmark data
@@ -1799,7 +1799,7 @@ NO_INLINE void Test_MinMaxHeap_() {
     AssertRelease(vmin == 0);
     AssertRelease(vmax == 3);
 
-    LOG(Test_Containers, Emphasis, L"MinMax heap: {0} -> [{1}, {2}]", heap.MakeView(), vmin, vmax);
+    PPE_LOG(Test_Containers, Emphasis, "MinMax heap: {0} -> [{1}, {2}]", heap.MakeView(), vmin, vmax);
 }
 //----------------------------------------------------------------------------
 NO_INLINE void Test_SSEHashSet() {
@@ -1939,7 +1939,7 @@ NO_INLINE void Test_TupleVector() {
 void Test_Containers() {
     PPE_DEBUG_NAMEDSCOPE("Test_Containers");
 
-    LOG(Test_Containers, Emphasis, L"starting container tests ...");
+    PPE_LOG(Test_Containers, Emphasis, "starting container tests ...");
 
     EProcessPriority prio = EProcessPriority::Normal;
     Verify(FPlatformProcess::Priority(&prio, FPlatformProcess::CurrentProcess()));
@@ -1968,7 +1968,7 @@ void Test_Containers() {
 #   endif
 #endif
 
-    FLUSH_LOG();
+    PPE_LOG_FLUSH();
     ReleaseMemoryInModules();
 }
 //----------------------------------------------------------------------------

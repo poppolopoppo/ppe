@@ -73,7 +73,7 @@ bool FVulkanFramebuffer::Construct(const FVulkanResourceManager& resources ARGS_
 
         Meta::TOptional<FImageViewDesc> desc;
         const VkImageView vkImageView = img.MakeView(device, desc);
-        LOG_CHECK(RHI, VK_NULL_HANDLE != vkImageView);
+        PPE_LOG_CHECK(RHI, VK_NULL_HANDLE != vkImageView);
 
         Assert(desc.has_value());
         rt.second = desc.value();

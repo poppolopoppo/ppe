@@ -3,10 +3,16 @@
 #include "ShaderToyApp.h"
 
 #include "ApplicationModule.h"
+
 #include "RHIModule.h"
 #include "UI/Imgui.h"
+#include "UI/Widgets/ConsoleWidget.h"
+#include "UI/Widgets/FileDialogWidget.h"
+#include "UI/Widgets/LogViewerWidget.h"
+#include "UI/Widgets/MemoryUsageWidget.h"
 #include "Window/WindowService.h"
 
+#include "Diagnostic/Logger.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "Maths/Threefy.h"
@@ -106,14 +112,43 @@ void FShaderToyApp::Render(FTimespan dt) {
 
 	ImGui::Begin("Left");
 	ImGui::Text("Hello, left!");
+
+
+
+
 	ImGui::End();
 
 	ImGui::Begin("Down");
-	ImGui::Text("Hello, down!");
+	ImGui::Text("Hello, down !");
 	ImGui::End();
 
 	ImGui::ShowDemoWindow();
 	ImGui::ShowUserGuide();
+
+	ImPlot::ShowDemoWindow();
+	ImPlot::ShowUserGuide();
+
+	FFilename selectedFile;
+	static Application::FFileDialogWidget fileDialog;
+	if (fileDialog.Show()) {
+		if (not fileDialog.SelectedFiles.empty())
+			selectedFile = fileDialog.SelectedFiles.front();
+	}
+
+	static Application::FMemoryUsageWidget memoryUsage;
+	if (memoryUsage.Show()) {
+		NOOP();
+	}
+
+	static Application::FLogViewerWidget  logViewer;
+	if (logViewer.Show()) {
+		NOOP();
+	}
+
+	static Application::FConsoleWidget console;
+	if (console.Show()) {
+		NOOP();
+	}
 
 	/*using namespace RHI;
 	const auto& fg = RHI().FrameGraph();

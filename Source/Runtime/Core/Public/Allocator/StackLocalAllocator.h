@@ -11,7 +11,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 // FStackLocalAllocator is wrapping global Alloca/RelocateAlloca/FreeAlloca()
 //----------------------------------------------------------------------------
-class PPE_CORE_API FStackLocalAllocator : private FGenericAllocator {
+class PPE_CORE_API FStackLocalAllocator : private FAllocatorPolicy {
 public:
     using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;

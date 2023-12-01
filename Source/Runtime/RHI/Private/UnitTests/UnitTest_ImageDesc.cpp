@@ -424,7 +424,7 @@ void UnitTest_ImageDesc() {
     Test_ImageView1_();
     Test_ImageView2_();
 
-    LOG(RHI, Info, L"UnitTest_ImageDesc [PASSED]");
+    PPE_LOG(RHI, Info, "UnitTest_ImageDesc [PASSED]");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

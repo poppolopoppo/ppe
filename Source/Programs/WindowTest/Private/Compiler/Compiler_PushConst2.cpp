@@ -64,13 +64,13 @@ void main() {
 ARGS_IF_RHIDEBUG("Compiler_PushConst2_PS"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::VKSL_100);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
     const EShaderCompilationFlags flags = compiler->CompilationFlags();
     compiler->SetCompilationFlags(EShaderCompilationFlags::Quiet);
 
     // overlapping pusd constants with different names
-    LOG_CHECK(WindowTest, not compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, not compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
 
     compiler->SetCompilationFlags(flags);
 

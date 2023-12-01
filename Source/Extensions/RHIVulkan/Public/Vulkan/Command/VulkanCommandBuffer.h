@@ -41,7 +41,7 @@ public:
         Compiling,
     };
 
-    using FAllocator = SLABHEAP_POOLED(RHICommand);
+    using FAllocator = SLABHEAP(RHICommand);
     using FTransientTaskArray = VECTOR_SLAB(RHICommand, PVulkanFrameTask);
     using FTaskGraph = TVulkanTaskGraph<FVulkanTaskProcessor>;
 
@@ -52,7 +52,7 @@ public:
     STATIC_CONST_INTEGRAL(u32, MaxImageParts, FVulkanCommandBatch::MaxImageParts);
     STATIC_CONST_INTEGRAL(size_t, MinBufferPart, 4_KiB);
 
-    using FPerQueuePool = ARRAYINSITU(RHICommand, FVulkanCommandPool, u32(EQueueType::_Count));
+    using FPerQueuePool = TStaticArray<FVulkanCommandPool, u32(EQueueType::_Count)>;
     using FResourceIndex = FVulkanResourceManager::FIndex;
 
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
@@ -120,9 +120,9 @@ public:
     auto Read() const { return _data.LockShared(); }
     auto Write() { return _data.LockExclusive(); }
 
-    FAllocator& Allocator() { return Write()->MainAllocator; }
     SVulkanCommandBatch Batch() const { return Read()->Batch; }
     EVulkanQueueFamily QueueFamily() const { return Read()->QueueIndex; }
+
 #if USE_PPE_RHIDEBUG
     const FVulkanDebugName& DebugName() const { return Read()->Batch->DebugName(); }
     FVulkanLocalDebugger* Debugger() const { return Read()->Debugger.get(); }
@@ -210,6 +210,48 @@ public:
     NODISCARD virtual PFrameTask EndShaderTimeMap(FRawImageID dstImage, FImageLayer layer = Default, FMipmapLevel level = Default, TMemoryView<PFrameTask> dependsOn = Default) override;
 #endif
 
+    // intra-command allocation helpers
+
+    template <typename T, typename... _Args>
+    TPtrRef<T> EmbedAlloc(_Args&&... args) {
+        return new (Write()->MainAllocator) T{ std::forward<_Args>(args)... };
+    }
+    template <typename T>
+    TMemoryView<T> EmbedView(size_t numElements) {
+        return Write()->MainAllocator.AllocateT<T>(numElements);
+    }
+    template <typename T>
+    auto EmbedCopy(TMemoryView<T> src) {
+        return EmbedCopy(src.Iterable(), src.size());
+    }
+    template <typename _Key, typename _Value, size_t _Capacity, typename _Hash, typename _EmptyKey, typename _EqualTo>
+    auto EmbedCopy(const TFixedSizeHashMap<_Key, _Value, _Capacity, _Hash, _EmptyKey, _EqualTo>& src) {
+        return EmbedCopy(MakeIterable(src), src.size());
+    }
+    template <typename _Iterator>
+    auto EmbedCopy(const TIterable<_Iterator>& src, size_t size = UMax) {
+        using value_type = typename TIterable<_Iterator>::value_type;
+        TMemoryView<Meta::TRemoveConst<value_type>> result;
+        if (not src.empty()) {
+            if (size == UMax)
+                size = src.size();
+            result = Write()->MainAllocator.AllocateT<value_type>(size);
+            src.UninitializedCopyTo(result.begin());
+        }
+        return result;
+    }
+    template <typename _Char>
+    TBasicConstChar<_Char> EmbedString(const TBasicStringView<_Char>& str) {
+        TBasicConstChar<_Char> result;
+        if (not str.empty()) {
+            TMemoryView<_Char> view = Write()->MainAllocator.AllocateT<_Char>(str.size() + 1/* '\0' */);
+            str.CopyTo(view.ShiftBack());
+            view.back() = STRING_LITERAL(_Char, '\0');
+            result = view.data();
+        }
+        return result;
+    }
+
 private:
     const SVulkanFrameGraph _frameGraph;
     const u32 _indexInPool; // index in FVulkanFrameGraph::_cmdBufferPool
@@ -219,8 +261,8 @@ private:
     // staging buffer
 
     template <typename T>
-    NODISCARD bool StagingAlloc_(FInternalData& data, const FVulkanLocalBuffer** pBuffer, VkDeviceSize* pOffset, T** pData, size_t count);
-    NODISCARD bool StagingStore_(FInternalData& data, const FVulkanLocalBuffer** pBuffer, VkDeviceSize* pOffset, const void* srcData, size_t dataSize, size_t offsetAlign);
+    NODISCARD bool StagingAlloc_(FInternalData& data, TPtrRef<const FVulkanLocalBuffer>* pBuffer, VkDeviceSize* pOffset, T** pData, size_t count);
+    NODISCARD bool StagingStore_(FInternalData& data, TPtrRef<const FVulkanLocalBuffer>* pBuffer, VkDeviceSize* pOffset, const void* srcData, size_t dataSize, size_t offsetAlign);
     NODISCARD static bool StorePartialData_(FInternalData& data, FStagingBlock* pDstStaging, size_t* pOutSize, const FRawMemoryConst& srcData, size_t srcOffset);
     NODISCARD static bool StagingImageStore_(FInternalData& data, FStagingBlock* pDstStaging, size_t* pOutSize, const FRawMemoryConst& srcData, size_t srcOffset, size_t srcPitch, size_t srcTotalSize);
 

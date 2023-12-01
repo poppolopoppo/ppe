@@ -80,6 +80,9 @@ public:
     const_iterator begin() const { return _vector.begin(); }
     const_iterator end() const { return _vector.end(); }
 
+    const_iterator cbegin() const { return _vector.begin(); }
+    const_iterator cend() const { return _vector.end(); }
+
     reverse_iterator rbegin() { return _vector.rbegin(); }
     reverse_iterator rend() { return _vector.rend(); }
 

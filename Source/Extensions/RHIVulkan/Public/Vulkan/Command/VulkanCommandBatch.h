@@ -302,7 +302,7 @@ private:
     NODISCARD bool AllocStorageForDebug_(FDebugMode& debugMode, size_t size);
     NODISCARD bool AllocDescriptorSetForDebug_(VkDescriptorSet* pDescSet, EShaderDebugMode debugMode, EShaderStages stages, FRawBufferID storageBuffer, size_t size);
 
-    using FDebugStrings = VECTORINSITU(RHIDebug, FString, 8);
+    using FDebugStrings = VECTOR(RHIDebug, FString);
 
     void ParseDebugOutput_(const FShaderDebugCallback& callback);
     NODISCARD bool ParseDebugOutput2_(FDebugStrings* pDump, const FShaderDebugCallback& callback, const FDebugMode& dbg) const;

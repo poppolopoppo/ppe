@@ -26,12 +26,7 @@ TRACELOGGING_DEFINE_PROVIDER(
     "PPE Logger",
     (0xf42256f3, 0x2773, 0x4c4f, 0x9e, 0x81, 0x99, 0x24, 0xdf, 0x0d, 0xcd, 0xb3) );
 //----------------------------------------------------------------------------
-#ifdef __clang__
-#   pragma clang diagnostic push,
-#   pragma clang diagnostic ignored "-Wbitwise-op-parentheses"
-#endif
-template <int _TraceLevel>
-static void TraceLoggingImpl_(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+static ::SYSTEMTIME MakeSystemTime_(i64 timestamp) {
     const FDateTime utc = FTimestamp{ timestamp }.ToDateTimeUTC();
 
     ::SYSTEMTIME syst;
@@ -44,16 +39,52 @@ static void TraceLoggingImpl_(const wchar_t* category, i64 timestamp, const wcha
     syst.wSecond = checked_cast<::WORD>(utc.Seconds);
     syst.wMilliseconds = 0;
 
-    const ::DWORD dwThreadId = ::GetThreadId(NULL);
+    return syst;
+}
+//----------------------------------------------------------------------------
+#ifdef __clang__
+#   pragma clang diagnostic push,
+#   pragma clang diagnostic ignored "-Wbitwise-op-parentheses"
+#endif
+template <int _TraceLevel>
+static void TraceLoggingImpl_(const std::thread::id& threadId, FConstChar category, i64 timestamp, FConstChar filename, size_t line, FConstChar text, const Opaq::value_view& data) {
+#if 0 // don't have access to native thread id, use hash value?
+    const u32 tid = static_cast<u32>(std::hash<std::thread::id>{}(threadId));
+#else
+    const u32 tid = bit_cast<u32, std::thread::id>(threadId);
+#endif
+
+    Unused(data); // #TODO: macros with va_args are annoying...
 
     TraceLoggingWrite(GWindowsTraceLogging_,
         "LogEvent",
         TraceLoggingLevel(_TraceLevel),
-        TraceLoggingTid(dwThreadId),
-        TraceLoggingWideString(category, "category"),
-        TraceLoggingWideString(text, "message"),
-        TraceLoggingSystemTimeUtc(syst, "date"),
-        TraceLoggingWideString(filename, "filename"),
+        TraceLoggingTid(tid),
+        TraceLoggingString(category.c_str(), "category"),
+        TraceLoggingString(text.c_str(), "message"),
+        TraceLoggingSystemTimeUtc(MakeSystemTime_(timestamp), "date"),
+        TraceLoggingString(filename.c_str(), "filename"),
+        TraceLoggingUInt32(u32(line), "line") );
+}
+template <int _TraceLevel>
+static void TraceLoggingImpl_(const std::thread::id& threadId, FConstWChar category, i64 timestamp, FConstWChar filename, size_t line, FConstWChar text, const Opaq::value_view& data) {
+
+#if 0 // don't have access to native thread id, use hash value?
+    const u32 tid = static_cast<u32>(std::hash<std::thread::id>{}(threadId));
+#else
+    const u32 tid = bit_cast<u32, std::thread::id>(threadId);
+#endif
+
+    Unused(data); // #TODO: macros with va_args are annoying...
+
+    TraceLoggingWrite(GWindowsTraceLogging_,
+        "LogEvent",
+        TraceLoggingLevel(_TraceLevel),
+        TraceLoggingTid(tid),
+        TraceLoggingWideString(category.c_str(), "category"),
+        TraceLoggingWideString(text.c_str(), "message"),
+        TraceLoggingSystemTimeUtc(MakeSystemTime_(timestamp), "date"),
+        TraceLoggingWideString(filename.c_str(), "filename"),
         TraceLoggingUInt32(u32(line), "line") );
 }
 #ifdef __clang__
@@ -72,24 +103,36 @@ void FWindowsTraceLogging::Destroy() {
     ::TraceLoggingUnregister(GWindowsTraceLogging_);
 }
 //----------------------------------------------------------------------------
-void FWindowsTraceLogging::TraceVerbose(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
-    TraceLoggingImpl_<TRACE_LEVEL_VERBOSE>(category, timestamp, filename, line, text);
+void FWindowsTraceLogging::TraceVerbose(const std::thread::id& tid, FConstChar category, i64 timestamp, FConstChar filename, size_t line, FConstChar text, const Opaq::value_view& data) {
+    return TraceLoggingImpl_<TRACE_LEVEL_VERBOSE>(tid, category, timestamp, filename, line, text, data);
+}
+void FWindowsTraceLogging::TraceInformation(const std::thread::id& tid, FConstChar category, i64 timestamp, FConstChar filename, size_t line, FConstChar text, const Opaq::value_view& data) {
+    return TraceLoggingImpl_<TRACE_LEVEL_INFORMATION>(tid, category, timestamp, filename, line, text, data);
+}
+void FWindowsTraceLogging::TraceWarning(const std::thread::id& tid, FConstChar category, i64 timestamp, FConstChar filename, size_t line, FConstChar text, const Opaq::value_view& data) {
+    return TraceLoggingImpl_<TRACE_LEVEL_WARNING>(tid, category, timestamp, filename, line, text, data);
+}
+void FWindowsTraceLogging::TraceError(const std::thread::id& tid, FConstChar category, i64 timestamp, FConstChar filename, size_t line, FConstChar text, const Opaq::value_view& data) {
+    return TraceLoggingImpl_<TRACE_LEVEL_ERROR>(tid, category, timestamp, filename, line, text, data);
+}
+void FWindowsTraceLogging::TraceFatal(const std::thread::id& tid, FConstChar category, i64 timestamp, FConstChar filename, size_t line, FConstChar text, const Opaq::value_view& data) {
+    return TraceLoggingImpl_<TRACE_LEVEL_CRITICAL/* TRACE_LEVEL_FATAL <- deprecated */>(tid, category, timestamp, filename, line, text, data);
 }
 //----------------------------------------------------------------------------
-void FWindowsTraceLogging::TraceInformation(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
-    TraceLoggingImpl_<TRACE_LEVEL_INFORMATION>(category, timestamp, filename, line, text);
+void FWindowsTraceLogging::TraceVerbose(const std::thread::id& tid, FConstWChar category, i64 timestamp, FConstWChar filename, size_t line, FConstWChar text, const Opaq::value_view& data) {
+    return TraceLoggingImpl_<TRACE_LEVEL_VERBOSE>(tid, category, timestamp, filename, line, text, data);
 }
-//----------------------------------------------------------------------------
-void FWindowsTraceLogging::TraceWarning(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
-    TraceLoggingImpl_<TRACE_LEVEL_WARNING>(category, timestamp, filename, line, text);
+void FWindowsTraceLogging::TraceInformation(const std::thread::id& tid, FConstWChar category, i64 timestamp, FConstWChar filename, size_t line, FConstWChar text, const Opaq::value_view& data) {
+    return TraceLoggingImpl_<TRACE_LEVEL_INFORMATION>(tid, category, timestamp, filename, line, text, data);
 }
-//----------------------------------------------------------------------------
-void FWindowsTraceLogging::TraceError(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
-    TraceLoggingImpl_<TRACE_LEVEL_ERROR>(category, timestamp, filename, line, text);
+void FWindowsTraceLogging::TraceWarning(const std::thread::id& tid, FConstWChar category, i64 timestamp, FConstWChar filename, size_t line, FConstWChar text, const Opaq::value_view& data) {
+    return TraceLoggingImpl_<TRACE_LEVEL_WARNING>(tid, category, timestamp, filename, line, text, data);
 }
-//----------------------------------------------------------------------------
-void FWindowsTraceLogging::TraceFatal(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
-    TraceLoggingImpl_<TRACE_LEVEL_CRITICAL/* TRACE_LEVEL_FATAL <- deprecated */>(category, timestamp, filename, line, text);
+void FWindowsTraceLogging::TraceError(const std::thread::id& tid, FConstWChar category, i64 timestamp, FConstWChar filename, size_t line, FConstWChar text, const Opaq::value_view& data) {
+    return TraceLoggingImpl_<TRACE_LEVEL_ERROR>(tid, category, timestamp, filename, line, text, data);
+}
+void FWindowsTraceLogging::TraceFatal(const std::thread::id& tid, FConstWChar category, i64 timestamp, FConstWChar filename, size_t line, FConstWChar text, const Opaq::value_view& data) {
+    return TraceLoggingImpl_<TRACE_LEVEL_CRITICAL/* TRACE_LEVEL_FATAL <- deprecated */>(tid, category, timestamp, filename, line, text, data);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

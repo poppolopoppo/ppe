@@ -71,7 +71,7 @@ void GracefulTerminationHandler_(i32 signal, ::siginfo_t* info, void* context) {
         _exit(128 + signal);
     }
     else {
-        FLUSH_LOG();
+        PPE_LOG_FLUSH();
         GHasRequestedExit_ = true;
     }
 }
@@ -154,7 +154,7 @@ struct FPersistentData_ : Meta::FNonCopyableNorMovable {
 
                 const auto eq = ln.Find('=');
                 if (eq == ln.end()) {
-                    LOG(HAL, Error, L"malformed entry while reading persistent store {0}: {1}",
+                    PPE_LOG(HAL, Error, "malformed entry while reading persistent store {0}: {1}",
                         _storeId.MakeView(), ln );
                     return false;
                 }
@@ -237,7 +237,7 @@ private:
         if (oss.good())
             store.Write(oss);
         else
-            LOG(HAL, Error, L"failed to write persistent data store {0}", store.StoreId());
+            PPE_LOG(HAL, Error, "failed to write persistent data store {0}", store.StoreId());
     }
 
     bool FetchStore_(const FStringView& storeId, FStore** pStore) {
@@ -545,11 +545,11 @@ bool FLinuxPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t line
         args << Eos;
 
         if (FLinuxPlatformProcess::ExecDetachedProcess(editor.first.data(), args.Written().data(), nullptr)) {
-            LOG(HAL, Emphasis, L"opened external editor: {0} {1}", editor.first, args.Written());
+            PPE_LOG(HAL, Emphasis, "opened external editor: {0} {1}", editor.first, args.Written());
             return true;
         }
         else {
-            LOG(HAL, Error, L"failed to open external editor: {0} {1}",
+            PPE_LOG(HAL, Error, "failed to open external editor: {0} {1}",
                 editor.first, args.Written() );
         }
     }

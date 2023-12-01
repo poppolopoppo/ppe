@@ -12,6 +12,14 @@ namespace RHI {
 namespace details {
 //----------------------------------------------------------------------------
 template <typename _Task>
+_Task& TDrawCallDesc<_Task>::AddResources(FDescriptorSetID&& rid, PCPipelineResources&& rres) {
+    Assert(rid);
+    Assert(rres);
+    Resources.Emplace_Overwrite(std::move(rid), std::move(rres));
+    return static_cast<_Task&>(*this);
+}
+//----------------------------------------------------------------------------
+template <typename _Task>
 _Task& TDrawCallDesc<_Task>::AddResources(const FDescriptorSetID& id, const PCPipelineResources& res) {
     Assert(id);
     Assert(res);

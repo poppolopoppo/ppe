@@ -80,7 +80,7 @@ bool FModularDomain::IsModuleLoaded(const FStringView& name) const NOEXCEPT {
 //----------------------------------------------------------------------------
 IModuleInterface& FModularDomain::Module(const FStringView& name) const NOEXCEPT {
     IModuleInterface* const pmod = ModuleIFP(name);
-    AssertReleaseMessage(L"failed to find module", pmod);
+    AssertReleaseMessage("failed to find module", pmod);
     return (*pmod);
 }
 //----------------------------------------------------------------------------
@@ -95,7 +95,7 @@ IModuleInterface* FModularDomain::ModuleIFP(const FStringView& name) const NOEXC
 //----------------------------------------------------------------------------
 IModuleInterface& FModularDomain::LoadModule(const FStringView& name) {
     IModuleInterface* const pmod = LoadModuleIFP(name);
-    AssertReleaseMessage(L"failed to load module", pmod);
+    AssertReleaseMessage("failed to load module", pmod);
     return (*pmod);
 }
 //----------------------------------------------------------------------------
@@ -116,13 +116,13 @@ IModuleInterface* FModularDomain::LoadModuleIFP(const FStringView& name) {
     if (FModuleDynamicRegistration::Get().Load(&info, name))
         return LoadModule_(info);
 
-    LOG(Modular, Error, L"failed to find module <{0}>", name);
+    PPE_LOG(Modular, Error, "failed to find module <{0}>", name);
     return nullptr;
 }
 //----------------------------------------------------------------------------
 void FModularDomain::LoadDependencyList(FModuleDependencyList dependencyList) {
     for (const FStringView& dependencyName : dependencyList) {
-        LOG(Modular, Info, L" -> load module dependency <{0}>", dependencyName);
+        PPE_LOG(Modular, Info, " -> load module dependency <{0}>", dependencyName);
         LoadModule(dependencyName);
     }
 }
@@ -139,7 +139,7 @@ bool FModularDomain::UnloadModuleIFP(const FStringView& name) {
         return false;
 
     AssertReleaseMessage(
-        L"unloading a module when phase is still running",
+        "unloading a module when phase is still running",
         not HasPhaseStarted(it->second->Phase()) );
 
     _modules.Erase(it);
@@ -147,7 +147,7 @@ bool FModularDomain::UnloadModuleIFP(const FStringView& name) {
     // maybe it's a dynamically loaded module?
     FModuleDynamicRegistration::Get().UnloadIFP(name);
 
-    LOG(Modular, Info, L"unloaded module <{0}>", name);
+    PPE_LOG(Modular, Info, "unloaded module <{0}>", name);
 
     return true;
 }
@@ -157,7 +157,7 @@ bool FModularDomain::HasPhaseStarted(EModulePhase phase) const NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void FModularDomain::StartPhase(EModulePhase phase) {
-    LOG(Modular, Emphasis, L"start application domain <{0}> phase {1}", _name, phase);
+    PPE_LOG(Modular, Emphasis, "start application domain <{0}> phase {1}", _name, phase);
 
     _OnPrePhaseStart(*this, phase);
 
@@ -172,7 +172,7 @@ void FModularDomain::StartPhase(EModulePhase phase) {
 }
 //----------------------------------------------------------------------------
 void FModularDomain::ShutdownPhase(EModulePhase phase) {
-    LOG(Modular, Emphasis, L"shutdown application domain <{0}> phase {1}", _name, phase);
+    PPE_LOG(Modular, Emphasis, "shutdown application domain <{0}> phase {1}", _name, phase);
 
     _OnPrePhaseShutdown(*this, phase);
 
@@ -201,7 +201,7 @@ void FModularDomain::Start(FModularDomain& domain) {
     foreachitem(it, domain._modules)
         it->second->PostStart(domain);
 
-    FLUSH_LOG();
+    PPE_LOG_FLUSH();
 }
 //----------------------------------------------------------------------------
 void FModularDomain::Shutdown(FModularDomain& domain) {
@@ -215,7 +215,7 @@ void FModularDomain::Shutdown(FModularDomain& domain) {
 
     GAppDomainRef_ = nullptr;
 
-    FLUSH_LOG();
+    PPE_LOG_FLUSH();
 }
 //----------------------------------------------------------------------------
 void FModularDomain::DutyCycle() {
@@ -246,7 +246,7 @@ void FModularDomain::ReleaseMemory() NOEXCEPT {
 //----------------------------------------------------------------------------
 IModuleInterface* FModularDomain::LoadModule_(const FModuleInfo& info) {
     if (not (info.Usage ^ _usage)) {
-        LOG(Modular, Warning, L"ignored module <{0}> because of usage: {1} != {2}",
+        PPE_LOG(Modular, Warning, "ignored module <{0}> because of usage: {1} != {2}",
             info.Name, info.Usage, _usage );
         return nullptr;
     }
@@ -256,7 +256,7 @@ IModuleInterface* FModularDomain::LoadModule_(const FModuleInfo& info) {
     TUniquePtr<IModuleInterface> pmod{
         info.Initializer()
     };
-    CLOG(not pmod, Modular, Fatal, L"failed to initialize module <{0}>", info.Name);
+    PPE_CLOG(not pmod, Modular, Fatal, "failed to initialize module <{0}>", info.Name);
 
     Assert_NoAssume(pmod->Name() == info.Name);
     Assert_NoAssume(pmod->Phase() == info.Phase);
@@ -264,7 +264,7 @@ IModuleInterface* FModularDomain::LoadModule_(const FModuleInfo& info) {
     IModuleInterface* const result = pmod.get();
     _modules.Emplace_AssertUnique(FStringView{ info.Name }, std::move(pmod));
 
-    LOG(Modular, Info, L"loaded module <{0}>", info.Name);
+    PPE_LOG(Modular, Info, "loaded module <{0}>", info.Name);
 
     return result;
 }

@@ -27,7 +27,7 @@ TVulkanFrameTask<_Task>* TVulkanTaskGraph<_Visitor>::AddTask(FVulkanCommandBuffe
     using FVulkanTask = TVulkanFrameTask<_Task>;
 
     const IVulkanFrameTask::FProcessFunc visit = &Visitor_<_Task>;
-    FVulkanTask* const pTask = INPLACE_NEW(cmd.Allocator().AllocateT<FVulkanTask>(), FVulkanTask)(cmd, desc, visit);
+    FVulkanTask* const pTask = cmd.EmbedAlloc<FVulkanTask>(cmd, desc, visit);
     Assert_NoAssume(pTask->Valid());
 
     _nodes->insert(pTask);
@@ -36,8 +36,8 @@ TVulkanFrameTask<_Task>* TVulkanTaskGraph<_Visitor>::AddTask(FVulkanCommandBuffe
         _entries->Emplace(pTask);
 
     for (auto pInputNode : pTask->Inputs()) {
-        Assert(!!_nodes->Contains(pInputNode));
-        pInputNode->Attach(pTask);
+        Assert_NoAssume(!!_nodes->Contains(pInputNode));
+        pInputNode->Attach(cmd, pTask);
     }
 
     return pTask;

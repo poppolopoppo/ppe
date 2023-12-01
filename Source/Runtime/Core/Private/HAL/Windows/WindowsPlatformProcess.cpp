@@ -93,7 +93,7 @@ static bool MakeNamedMutex_(const char* name) {
 }
 //----------------------------------------------------------------------------
 static bool OpenWebURL_(const FWStringView& url) {
-    LOG(HAL, Info, L"OpenWebURL({0})", url);
+    PPE_LOG(HAL, Info, "OpenWebURL({0})", url);
 
     FWString browserOpenCommand;
 
@@ -138,7 +138,7 @@ static bool OpenWebURL_(const FWStringView& url) {
         if (intptr_t(code) > 32) // https://docs.microsoft.com/en-us/windows/desktop/api/shellapi/nf-shellapi-shellexecutea
             return true;
 
-        LOG(HAL, Error, L"failed open web url : {0}", url);
+        PPE_LOG(HAL, Error, "failed open web url : {0}", url);
     }
 
     return false;
@@ -251,19 +251,19 @@ bool FWindowsPlatformProcess::EnableDebugPrivileges() {
     ::TOKEN_PRIVILEGES tkp;
 
     if (not ::OpenProcessToken(::GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
-        LOG_LASTERROR(HAL, L"OpenProcessToken");
+        PPE_LOG_LASTERROR(HAL, "OpenProcessToken");
         return false;
     }
 
     ON_SCOPE_EXIT([&]() {
         if (not ::CloseHandle(hToken)) {
-            LOG_LASTERROR(HAL, L"CloseHandle(hToken)");
+            PPE_LOG_LASTERROR(HAL, "CloseHandle(hToken)");
             AssertNotReached();
         }
     });
 
     if (not ::LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &luid)) {
-        LOG_LASTERROR(HAL, L"LookupPrivilegeValue");
+        PPE_LOG_LASTERROR(HAL, "LookupPrivilegeValue");
         return false;
     }
 
@@ -272,7 +272,7 @@ bool FWindowsPlatformProcess::EnableDebugPrivileges() {
     tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
     if (not ::AdjustTokenPrivileges(hToken, false, &tkp, sizeof(tkp), NULL, NULL)) {
-        LOG_LASTERROR(HAL, L"AdjustTokenPrivileges");
+        PPE_LOG_LASTERROR(HAL, "AdjustTokenPrivileges");
         return false;
     }
 
@@ -294,7 +294,7 @@ bool FWindowsPlatformProcess::IsForeground() {
         return (::GetCurrentProcessId() == dwPid);
     }
     else {
-        LOG_LASTERROR(HAL, L"GetWindowThreadProcessId");
+        PPE_LOG_LASTERROR(HAL, "GetWindowThreadProcessId");
         return false;
     }
 }
@@ -318,7 +318,7 @@ auto FWindowsPlatformProcess::OpenProcess(FProcessId pid, bool fullAccess/* = tr
         FALSE, pid );
 
     if (NULL == hProc)
-        LOG_LASTERROR(HAL, L"OpenProcess");
+        PPE_LOG_LASTERROR(HAL, "OpenProcess");
 
     return hProc;
 }
@@ -339,7 +339,7 @@ NODISCARD bool FWindowsPlatformProcess::WaitForProcess(FProcessHandle process, s
         return true;
 
     case WAIT_FAILED:
-        LOG_LASTERROR(HAL, L"WaitForSingleObject");
+        PPE_LOG_LASTERROR(HAL, "WaitForSingleObject");
     case WAIT_ABANDONED:
     case WAIT_TIMEOUT:
         return false;
@@ -353,7 +353,7 @@ void FWindowsPlatformProcess::CloseProcess(FProcessHandle process) {
     Assert(process);
 
     if (not ::CloseHandle(process))
-        LOG_LASTERROR(HAL, L"CloseHandle");
+        PPE_LOG_LASTERROR(HAL, "CloseHandle");
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::TerminateProcess(FProcessHandle process, bool killTree) {
@@ -365,7 +365,7 @@ void FWindowsPlatformProcess::TerminateProcess(FProcessHandle process, bool kill
         if (snapShot != INVALID_HANDLE_VALUE) {
             ON_SCOPE_EXIT([&]() {
                 if (not ::CloseHandle(snapShot)) {
-                    LOG_LASTERROR(HAL, L"CloseHandle(snapShot)");
+                    PPE_LOG_LASTERROR(HAL, "CloseHandle(snapShot)");
                     AssertNotReached();
                 }
             });
@@ -387,12 +387,12 @@ void FWindowsPlatformProcess::TerminateProcess(FProcessHandle process, bool kill
             }
         }
         else {
-            LOG_LASTERROR(HAL, L"CreateToolhelp32Snapshot");
+            PPE_LOG_LASTERROR(HAL, "CreateToolhelp32Snapshot");
         }
     }
 
     if (not ::TerminateProcess(process, 0))
-        LOG_LASTERROR(HAL, L"TerminateProcess");
+        PPE_LOG_LASTERROR(HAL, "TerminateProcess");
 }
 //------------------------------------------------------------------------
 bool FWindowsPlatformProcess::FindByName(FProcessId* pPid, const FWStringView& name) {
@@ -404,7 +404,7 @@ bool FWindowsPlatformProcess::FindByName(FProcessId* pPid, const FWStringView& n
     if (snapShot != INVALID_HANDLE_VALUE) {
         ON_SCOPE_EXIT([&]() {
             if (not ::CloseHandle(snapShot)) {
-                LOG_LASTERROR(HAL, L"CloseHandle(snapShot)");
+                PPE_LOG_LASTERROR(HAL, "CloseHandle(snapShot)");
                 AssertNotReached();
             }
         });
@@ -423,7 +423,7 @@ bool FWindowsPlatformProcess::FindByName(FProcessId* pPid, const FWStringView& n
         }
     }
     else {
-        LOG_LASTERROR(HAL, L"CreateToolhelp32Snapshot");
+        PPE_LOG_LASTERROR(HAL, "CreateToolhelp32Snapshot");
     }
 
     *pPid = 0;
@@ -441,7 +441,7 @@ bool FWindowsPlatformProcess::ExitCode(int* pExitCode, FProcessHandle process) {
         return true;
     }
     else {
-        LOG_LASTERROR(HAL, L"GetExitCodeProcess");
+        PPE_LOG_LASTERROR(HAL, "GetExitCodeProcess");
         return false;
     }
 }
@@ -462,7 +462,7 @@ bool FWindowsPlatformProcess::MemoryStats(FMemoryStats* pStats, FProcessHandle p
         return true;
     }
     else {
-        LOG_LASTERROR(HAL, L"GetProcessMemoryInfo");
+        PPE_LOG_LASTERROR(HAL, "GetProcessMemoryInfo");
         return false;
     }
 }
@@ -479,7 +479,7 @@ bool FWindowsPlatformProcess::Name(FString* pName, FProcessHandle process) {
         return true;
     }
     else {
-        LOG_LASTERROR(HAL, L"GetProcessImageFileNameA");
+        PPE_LOG_LASTERROR(HAL, "GetProcessImageFileNameA");
         return false;
     }
 #else
@@ -488,7 +488,7 @@ bool FWindowsPlatformProcess::Name(FString* pName, FProcessHandle process) {
         return true;
     }
     else {
-        LOG_LASTERROR(HAL, L"QueryFullProcessImageNameA");
+        PPE_LOG_LASTERROR(HAL, "QueryFullProcessImageNameA");
         return false;
     }
 #endif
@@ -524,7 +524,7 @@ bool FWindowsPlatformProcess::Priority(EProcessPriority* pPriority, FProcessHand
         return true;
 
     default:
-        LOG_LASTERROR(HAL, L"GetPriorityClass");
+        PPE_LOG_LASTERROR(HAL, "GetPriorityClass");
         return false;
     }
 }
@@ -554,7 +554,7 @@ bool FWindowsPlatformProcess::SetPriority(FProcessHandle process, EProcessPriori
         return true;
     }
     else {
-        LOG_LASTERROR(HAL, L"SetPriorityClass");
+        PPE_LOG_LASTERROR(HAL, "SetPriorityClass");
         return false;
     }
 }
@@ -569,7 +569,7 @@ auto FWindowsPlatformProcess::AffinityMask(FProcessHandle process) -> FAffinityM
         return checked_cast<FAffinityMask>(dwProcessAffinityMask);
     }
     else {
-        LOG_LASTERROR(HAL, L"GetProcessAffinityMask");
+        PPE_LOG_LASTERROR(HAL, "GetProcessAffinityMask");
         return FAffinityMask{ 0 };
     }
 }
@@ -580,7 +580,7 @@ bool FWindowsPlatformProcess::SetAffinityMask(FProcessHandle process, FAffinityM
         return true;
     }
     else {
-        LOG_LASTERROR(HAL, L"SetProcessAffinityMask");
+        PPE_LOG_LASTERROR(HAL, "SetProcessAffinityMask");
         return false;
     }
 }
@@ -602,7 +602,7 @@ bool FWindowsPlatformProcess::CreatePipe(FPipeHandle* pRead, FPipeHandle* pWrite
     saAttr.lpSecurityDescriptor = NULL;
 
     if (not ::CreatePipe(pRead, pWrite, &saAttr, 0)) {
-        LOG_LASTERROR(HAL, L"CreatePipe");
+        PPE_LOG_LASTERROR(HAL, "CreatePipe");
         return false;
     }
 
@@ -612,13 +612,13 @@ bool FWindowsPlatformProcess::CreatePipe(FPipeHandle* pRead, FPipeHandle* pWrite
     const ::HANDLE hProc = ::GetCurrentProcess();
     if (shareRead) {
         if (not ::DuplicateHandle(hProc, *pWrite, hProc, pWrite, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
-            LOG_LASTERROR(HAL, L"DuplicateHandle");
+            PPE_LOG_LASTERROR(HAL, "DuplicateHandle");
             return false;
         }
     }
     else {
         if (not ::DuplicateHandle(hProc, *pRead, hProc, pRead, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
-            LOG_LASTERROR(HAL, L"DuplicateHandle");
+            PPE_LOG_LASTERROR(HAL, "DuplicateHandle");
             return false;
         }
     }
@@ -634,7 +634,7 @@ size_t FWindowsPlatformProcess::PeekPipe(FPipeHandle read) {
         return checked_cast<size_t>(bytesAvailable);
     }
     else {
-        //LOG_LASTERROR(HAL, L"PeekNamedPipe"); too much log generated ^^;
+        //PPE_LOG_LASTERROR(HAL, "PeekNamedPipe"); too much log generated ^^;
         return 0;
     }
 }
@@ -649,7 +649,7 @@ size_t FWindowsPlatformProcess::ReadPipe(FPipeHandle read, const FRawMemory& buf
     }
     else {
         Assert(bytesRead == 0);
-        //LOG_LASTERROR(HAL, L"ReadFile"); // too much verbose
+        //PPE_LOG_LASTERROR(HAL, "ReadFile"); // too much verbose
         return 0;
     }
 }
@@ -670,17 +670,17 @@ size_t FWindowsPlatformProcess::WritePipe(FPipeHandle write, const FRawMemoryCon
     }
     else {
         Assert(bytesWritten == 0);
-        LOG_LASTERROR(HAL, L"WriteFile");
+        PPE_LOG_LASTERROR(HAL, "WriteFile");
         return 0;
     }
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::ClosePipe(FPipeHandle read, FPipeHandle write) {
     if (((read != NULL) & (read != INVALID_HANDLE_VALUE)) && not ::CloseHandle(read))
-        LOG_LASTERROR(HAL, L"CloseHandle(read)");
+        PPE_LOG_LASTERROR(HAL, "CloseHandle(read)");
 
     if (((write != NULL) & (write != INVALID_HANDLE_VALUE)) && not ::CloseHandle(write))
-        LOG_LASTERROR(HAL, L"CloseHandle(write)");
+        PPE_LOG_LASTERROR(HAL, "CloseHandle(write)");
 }
 //----------------------------------------------------------------------------
 // Spawn process
@@ -775,14 +775,14 @@ auto FWindowsPlatformProcess::CreateProcess(
         &startupInfo, &procInfo )) {
         const ::DWORD errorCode = ::GetLastError();
 
-        LOG(HAL, Error, L"CreateProcess failed: {0}\n\turl: {1}\n\t{2}",
+        PPE_LOG(HAL, Error, "CreateProcess failed: {0}\n\turl: {1}\n\t{2}",
             FLastError(errorCode), MakeCStringView(commandLine.Data), MakeCStringView(workingDir) );
 
         if (errorCode == ERROR_NOT_ENOUGH_MEMORY || errorCode == ERROR_OUTOFMEMORY) {
             // These errors are common enough that we want some available memory information
             const FPlatformMemory::FStats stats = FPlatformMemory::Stats();
             Unused(stats);
-            LOG(HAL, Warning, TEXT("Mem used: {0}, OS Free {1}"),
+            PPE_LOG(HAL, Warning, "Mem used: {0}, OS Free {1}",
                 Fmt::SizeInBytes(stats.UsedPhysical),
                 Fmt::SizeInBytes(stats.AvailablePhysical) );
         }
@@ -850,14 +850,14 @@ bool FWindowsPlatformProcess::ExecDetachedProcess(
         &startupInfo, &procInfo)) {
         const ::DWORD errorCode = ::GetLastError();
 
-        LOG(HAL, Error, L"CreateProcess failed: {0}\n\turl: {1}\n\t{2}",
+        PPE_LOG(HAL, Error, "CreateProcess failed: {0}\n\turl: {1}\n\t{2}",
             FLastError(errorCode), MakeCStringView(commandLine.Data), MakeCStringView(workingDir) );
 
         if (errorCode == ERROR_NOT_ENOUGH_MEMORY || errorCode == ERROR_OUTOFMEMORY) {
             // These errors are common enough that we want some available memory information
             const FPlatformMemory::FStats stats = FPlatformMemory::Stats();
             Unused(stats);
-            LOG(HAL, Warning, TEXT("Mem used: {0}, OS Free {1}"),
+            PPE_LOG(HAL, Warning, "Mem used: {0}, OS Free {1}",
                 Fmt::SizeInBytes(stats.UsedPhysical),
                 Fmt::SizeInBytes(stats.AvailablePhysical));
         }
@@ -921,7 +921,7 @@ bool FWindowsPlatformProcess::OpenWithDefaultApp(const wchar_t* filename) {
     // ShellExecute will open the default handler for a URL
     const ::HINSTANCE code = ::ShellExecuteW(NULL, L"open", filename, NULL, NULL, SW_SHOWNORMAL);
     if (intptr_t(code) <= 32) { // https://docs.microsoft.com/en-us/windows/desktop/api/shellapi/nf-shellapi-shellexecutea
-        LOG(HAL, Error, L"failed open with default app : {0}", MakeCStringView(filename));
+        PPE_LOG(HAL, Error, "failed open with default app : {0}", MakeCStringView(filename));
         return false;
     }
     else {
@@ -935,7 +935,7 @@ bool FWindowsPlatformProcess::EditWithDefaultApp(const wchar_t* filename) {
     // ShellExecute will open the default handler for a URL
     const ::HINSTANCE code = ::ShellExecuteW(NULL, L"edit", filename, NULL, NULL, SW_SHOWNORMAL);
     if (intptr_t(code) <= 32) { // https://docs.microsoft.com/en-us/windows/desktop/api/shellapi/nf-shellapi-shellexecutea
-        LOG(HAL, Error, L"failed edit with default app : {0}", MakeCStringView(filename));
+        PPE_LOG(HAL, Error, "failed edit with default app : {0}", MakeCStringView(filename));
         return false;
     }
     else {
@@ -953,7 +953,7 @@ auto FWindowsPlatformProcess::CreateSemaphore(const char* name, bool create, siz
     if (create) {
         semaphore = ::CreateSemaphoreA(NULL, checked_cast<long>(maxLocks), checked_cast<long>(maxLocks), name);
         if (NULL == semaphore) {
-            LOG(HAL, Error, L"CreateSemaphore(Attrs=NULL, InitialValue={0}, MaxValue={0}, Name='{1}') failed with = {2}",
+            PPE_LOG(HAL, Error, "CreateSemaphore(Attrs=NULL, InitialValue={0}, MaxValue={0}, Name='{1}') failed with = {2}",
                 maxLocks, MakeCStringView(name), FLastError() );
 
             return NULL;
@@ -964,7 +964,7 @@ auto FWindowsPlatformProcess::CreateSemaphore(const char* name, bool create, siz
         ::DWORD accessRights = SYNCHRONIZE | SEMAPHORE_MODIFY_STATE;
         semaphore = ::OpenSemaphoreA(accessRights, FALSE, name);
         if (NULL == semaphore) {
-            LOG(HAL, Error, L"OpenSemaphore(AccessRights={0:#8x}, bInherit=false, Name='{1}') failed with = {2}",
+            PPE_LOG(HAL, Error, "OpenSemaphore(AccessRights={0:#8x}, bInherit=false, Name='{1}') failed with = {2}",
                 accessRights, MakeCStringView(name), FLastError() );
 
             return NULL;
@@ -981,7 +981,7 @@ void FWindowsPlatformProcess::LockSemaphore(FSemaphore semaphore) {
     ::DWORD waitResult = ::WaitForSingleObject(semaphore, INFINITE);
 
     if (waitResult != WAIT_OBJECT_0) {
-        LOG(HAL, Error, L"WaitForSingleObject(,INFINITE) for semaphore failed with return code {0:#8x} and = {1}",
+        PPE_LOG(HAL, Error, "WaitForSingleObject(,INFINITE) for semaphore failed with return code {0:#8x} and = {1}",
             waitResult, FLastError() );
     }
 }
@@ -993,7 +993,7 @@ bool FWindowsPlatformProcess::TryLockSemaphore(FSemaphore semaphore, u64 nanoSec
     ::DWORD waitResult = ::WaitForSingleObject(semaphore, millisecondsToWait);
 
     if (waitResult != WAIT_OBJECT_0 && waitResult != WAIT_TIMEOUT) { // timeout is not a warning
-        LOG(HAL, Error, L"WaitForSingleObject(,INFINITE) for semaphore failed with return code {0:#8x} and = {1}",
+        PPE_LOG(HAL, Error, "WaitForSingleObject(,INFINITE) for semaphore failed with return code {0:#8x} and = {1}",
             waitResult, FLastError() );
     }
 
@@ -1004,7 +1004,7 @@ void FWindowsPlatformProcess::UnlockSemaphore(FSemaphore semaphore) {
     Assert(semaphore);
 
     if (not ::ReleaseSemaphore(semaphore, 1, NULL)) {
-        LOG(HAL, Error, L"ReleaseSemaphore(,ReleaseCount=1,) for semaphore failed with = {0}",
+        PPE_LOG(HAL, Error, "ReleaseSemaphore(,ReleaseCount=1,) for semaphore failed with = {0}",
             FLastError() );
     }
 }
@@ -1017,7 +1017,7 @@ bool FWindowsPlatformProcess::DestroySemaphore(FSemaphore semaphore) {
         return true;
     }
     else {
-        LOG(HAL, Error, L"CloseHandle() for semaphore failed with = {0}", FLastError());
+        PPE_LOG(HAL, Error, "CloseHandle() for semaphore failed with = {0}", FLastError());
         return false;
     }
 }
@@ -1040,7 +1040,7 @@ auto FWindowsPlatformProcess::OpenDynamicLibrary(const wchar_t* name) -> FDynami
     Assert(name);
 
     const FDynamicLibraryHandle hDll = ::LoadLibraryW(name);
-    CLOG(NULL == hDll, HAL, Error, L"LoadLibraryW({0}) failed with : {1}", MakeCStringView(name), FLastError());
+    PPE_CLOG(NULL == hDll, HAL, Error, "LoadLibraryW({0}) failed with : {1}", MakeCStringView(name), FLastError());
 
     return hDll;
 }
@@ -1049,7 +1049,7 @@ void FWindowsPlatformProcess::CloseDynamicLibrary(FDynamicLibraryHandle lib) {
     Assert(lib);
 
     if (not ::FreeLibrary(lib))
-        LOG_LASTERROR(HAL, L"FreeLibrary()");
+        PPE_LOG_LASTERROR(HAL, "FreeLibrary()");
 }
 //----------------------------------------------------------------------------
 FWString FWindowsPlatformProcess::DynamicLibraryFilename(FDynamicLibraryHandle lib) {
@@ -1057,7 +1057,7 @@ FWString FWindowsPlatformProcess::DynamicLibraryFilename(FDynamicLibraryHandle l
 
     wchar_t buffer[MAX_PATH + 1];
     const ::DWORD len = ::GetModuleFileNameW(lib, buffer, MAX_PATH);
-    CLOG(len == 0, HAL, Error, L"GetModuleFileName({0}) failed with : {1}", (void*)lib, FLastError());
+    PPE_CLOG(len == 0, HAL, Error, "GetModuleFileName({0}) failed with : {1}", (void*)lib, FLastError());
 
     return FWString(buffer, checked_cast<size_t>(len));
 }
@@ -1067,7 +1067,7 @@ void* FWindowsPlatformProcess::DynamicLibraryFunction(FDynamicLibraryHandle lib,
     Assert(name);
 
     const ::FARPROC fnAddr = ::GetProcAddress(lib, name);
-    CLOG(fnAddr == nullptr, HAL, Error, L"GetProcAddress({0}) failed with : {1}", MakeCStringView(name), FLastError());
+    PPE_CLOG(fnAddr == nullptr, HAL, Error, "GetProcAddress({0}) failed with : {1}", MakeCStringView(name), FLastError());
 
     return (void*)fnAddr;
 }

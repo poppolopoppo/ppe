@@ -81,7 +81,7 @@ public:
     FAllocatorBlock Allocate(size_t s) {
         const FMemoryTracking::FThreadScope threadTracking{ StaticTracking() };
         const FAllocatorBlock r = allocator_traits::Allocate(*this, s);
-        threadTracking->Allocate(r.SizeInBytes, SnapSize(r.SizeInBytes));
+        threadTracking->Allocate(s, SnapSize(r.SizeInBytes));
         return r;
     }
 

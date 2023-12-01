@@ -14,24 +14,23 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_CORE_API FLastError {
+struct FLastError {
     long Code;
-    FLastError();
+    PPE_CORE_API FLastError();
     FLastError(long code) : Code(code) {}
 };
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FLastError& error);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FLastError& error);
 //----------------------------------------------------------------------------
-class PPE_CORE_API FLastErrorException : public FException {
+class FLastErrorException : public FException {
 public:
-    FLastErrorException(const char* what);
-    FLastErrorException(const char* what, long errorCode);
-    virtual ~FLastErrorException();
+    PPE_CORE_API explicit FLastErrorException(const char* what);
+    PPE_CORE_API FLastErrorException(const char* what, long errorCode);
 
     const FLastError& ErrorCode() const { return _errorCode; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    PPE_CORE_API virtual FTextWriter& Description(FTextWriter& oss) const override final;
 #endif
 
 private:
@@ -39,13 +38,13 @@ private:
 };
 //----------------------------------------------------------------------------
 #if USE_PPE_LOGGER && defined(PLATFORM_WINDOWS)
-#   define LOG_LASTERROR(_CATEGORY, _CONTEXT) \
-        LOG(_CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::PPE::FLastError())
-#   define CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) \
-        CLOG(_CONDITION, _CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::PPE::FLastError())
+#   define PPE_LOG_LASTERROR(_CATEGORY, _CONTEXT) \
+        PPE_LOG(_CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::PPE::FLastError())
+#   define PPE_CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) \
+        PPE_CLOG(_CONDITION, _CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::PPE::FLastError())
 #else
-#   define LOG_LASTERROR(_CATEGORY, _CONTEXT) NOOP()
-#   define CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) Unused(_CONDITION)
+#   define PPE_LOG_LASTERROR(_CATEGORY, _CONTEXT) NOOP()
+#   define PPE_CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) Unused(_CONDITION)
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

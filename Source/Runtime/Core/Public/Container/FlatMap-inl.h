@@ -49,6 +49,16 @@ TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TFlatMap(std::initializer_list
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
+TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TFlatMap(TMemoryView<const value_type> values) : TFlatMap() {
+    insert(std::begin(values), std::end(values));
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
+TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TFlatMap(TMemoryView<const TPair<const key_type, mapped_type>> values) : TFlatMap() {
+    insert(std::begin(values), std::end(values));
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::operator =(std::initializer_list<value_type> values) -> TFlatMap& {
     _vector.clear();
     insert(std::begin(values), std::end(values));
@@ -223,7 +233,7 @@ bool TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::TryGet(const _Key& key, _
     Assert(value);
 
     const const_iterator it = find(key);
-    if (end() == it)
+    if (cend() == it)
         return false;
 
     *value = it->second;
@@ -240,7 +250,7 @@ const _Value& TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::At(const _Key& k
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 bool TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Erase(const _Key& key) {
     const const_iterator it = find(key);
-    if (end() == it)
+    if (cend() == it)
         return false;
     Erase(it);
     return true;
@@ -255,7 +265,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typ
 void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Remove_AssertExists(const _Key& key, const _Value& valueForDebug) {
     Unused(valueForDebug);
     const const_iterator it = find(key);
-    Assert(end() != it);
+    Assert(cend() != it);
     Assert(valueForDebug == it->second);
     Erase(it);
 }
@@ -263,7 +273,7 @@ void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Remove_AssertExists(const
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
 void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Remove_AssertExists(const _Key& key) {
     const const_iterator it = find(key);
-    Assert(end() != it);
+    Assert(cend() != it);
     Erase(it);
 }
 //----------------------------------------------------------------------------

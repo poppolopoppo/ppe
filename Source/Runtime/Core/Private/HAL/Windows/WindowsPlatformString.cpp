@@ -280,7 +280,7 @@ size_t FWindowsPlatformString::CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, s
         0,
         cstr, checked_cast<int>(length),
         dst, checked_cast<int>(capacity));
-    CLOG(0 == written, HAL, Fatal, L"CHAR_to_WCHAR failed : {0}\n{1}", FLastError{}, Fmt::HexDump(cstr, length));
+    PPE_CLOG(0 == written, HAL, Fatal, "CHAR_to_WCHAR failed : {0}\n{1}", FLastError{}, Fmt::HexDump(cstr, length));
 
     Assert(written >= length);
     Assert(written < capacity);
@@ -310,7 +310,7 @@ size_t FWindowsPlatformString::WCHAR_to_CHAR(ECodePage codePage, char* dst, size
         wcstr, checked_cast<int>(length),
         dst, checked_cast<int>(capacity),
         0, 0);
-    CLOG(0 == written, HAL, Fatal, L"WCHAR_to_CHAR failed : {0}\n{1}", FLastError{}, Fmt::HexDump(wcstr, length));
+    PPE_CLOG(0 == written, HAL, Fatal, "WCHAR_to_CHAR failed : {0}\n{1}", FLastError{}, Fmt::HexDump(wcstr, length));
 
     Assert(written >= length);
     Assert(written < capacity);

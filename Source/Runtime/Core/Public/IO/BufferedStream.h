@@ -19,7 +19,7 @@ constexpr size_t GBufferedStreamDefaultBufferSize = 64_KiB;
 class PPE_CORE_API FBufferedStreamReader : public IBufferedStreamReader, FBufferedStreamAllocator {
 public:
     FBufferedStreamReader();
-    virtual ~FBufferedStreamReader();
+    virtual ~FBufferedStreamReader() override;
 
     explicit FBufferedStreamReader(IStreamReader* nonBuffered, size_t bufferSize = GBufferedStreamDefaultBufferSize);
 
@@ -59,12 +59,12 @@ public: // IBufferedStreamReader
     virtual bool ReadAt_SkipBuffer(const FRawMemory& storage, std::streamoff absolute) override final;
 
 private:
-    IStreamReader* _nonBuffered;
-    u8* _buffer;
-    std::streamoff _origin;
-    u32 _offset;
-    u32 _capacity;
-    size_t _bufferSize;
+    IStreamReader* _nonBuffered{ nullptr };
+    u8* _buffer{ nullptr };
+    std::streamoff _origin{ 0 };
+    u32 _offset{ 0 };
+    u32 _capacity{ 0 };
+    size_t _bufferSize{ 0 };
 
     bool RefillBuffer_();
 };
@@ -72,7 +72,7 @@ private:
 class PPE_CORE_API FBufferedStreamWriter : public IBufferedStreamWriter, FBufferedStreamAllocator {
 public:
     FBufferedStreamWriter();
-    virtual ~FBufferedStreamWriter();
+    virtual ~FBufferedStreamWriter() override;
 
     explicit FBufferedStreamWriter(IStreamWriter* nonBuffered, size_t bufferSize = GBufferedStreamDefaultBufferSize);
 
@@ -108,11 +108,11 @@ public: // IBufferedStreamWriter
     virtual void Flush() override final;
 
 private:
-    IStreamWriter* _nonBuffered;
-    u8* _buffer;
-    std::streamoff _origin;
-    size_t _offset;
-    size_t _bufferSize;
+    IStreamWriter* _nonBuffered{ nullptr };
+    u8* _buffer{ nullptr };
+    std::streamoff _origin{ 0 };
+    size_t _offset{ 0 };
+    size_t _bufferSize{ 0 };
 
     bool CommitBuffer_();
 };

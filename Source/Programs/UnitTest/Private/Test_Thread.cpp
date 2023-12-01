@@ -122,13 +122,13 @@ NO_INLINE void Test_Aggregation_() {
 //--------------------1--------------------------------------------------------
 NO_INLINE void Test_Event_() {
     TEvent< TFunction<void(int)> > evt;
-    evt.Emplace([](int i) { Unused(i); LOG(Test_Thread, Info, L"A = {0}", i); });
-    evt.Emplace([](int i) { Unused(i); LOG(Test_Thread, Info, L"B = {0}", i); });
-    evt.Emplace([](int i) { Unused(i); LOG(Test_Thread, Info, L"C = {0}", i); });
+    evt.Emplace([](int i) { Unused(i); PPE_LOG(Test_Thread, Info, "A = {0}", i); });
+    evt.Emplace([](int i) { Unused(i); PPE_LOG(Test_Thread, Info, "B = {0}", i); });
+    evt.Emplace([](int i) { Unused(i); PPE_LOG(Test_Thread, Info, "C = {0}", i); });
 
     FEventHandle id = evt.Add([](int i) {
         Unused(i);
-        LOG(Test_Thread, Info, L"DELETED = {0}", i);
+        PPE_LOG(Test_Thread, Info, "DELETED = {0}", i);
     });
 
     evt(42);
@@ -147,7 +147,7 @@ NO_INLINE void Test_Task_() {
     public:
         FTest() {}
         void Log(ITaskContext&) const {
-            LOG(Test_Thread, Info, L"Test task !");
+            PPE_LOG(Test_Thread, Info, "Test task !");
         }
     };
 
@@ -171,29 +171,29 @@ NO_INLINE void Test_Async_() {
     */
 
     Async([](ITaskContext&) {
-        LOG(Test_Thread, Info, L"{0}: async fire and forget with context",
+        PPE_LOG(Test_Thread, Info, "{0}: async fire and forget with context",
             MakeCStringView(CurrentThreadContext().Name()));
     });
 }
 //----------------------------------------------------------------------------
 NO_INLINE void Test_Future_() {
-    LOG(Test_Thread, Info, L"Start future");
+    PPE_LOG(Test_Thread, Info, "Start future");
 
     const PFuture<int> future = Future<int>([]() -> int {
         auto threadName = MakeCStringView(CurrentThreadContext().Name());
         Unused(threadName);
-        LOG(Test_Thread, Info, L"{0}: future start", threadName);
+        PPE_LOG(Test_Thread, Info, "{0}: future start", threadName);
         std::this_thread::sleep_for(std::chrono::milliseconds(0));
-        LOG(Test_Thread, Info, L"{0}: future stop", threadName);
+        PPE_LOG(Test_Thread, Info, "{0}: future stop", threadName);
         return 42;
     });
 
     while (not future->Available()) {
-        LOG(Test_Thread, Debug, L"Waiting for future ...");
+        PPE_LOG(Test_Thread, Debug, "Waiting for future ...");
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
-    LOG(Test_Thread, Info, L"Result from future = {0}", future->Result());
+    PPE_LOG(Test_Thread, Info, "Result from future = {0}", future->Result());
 
     Assert(42 == future->Result());
 }
@@ -204,12 +204,12 @@ NO_INLINE void Test_ParallelFor_() {
         21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37
     };
 
-    LOG(Test_Thread, Info, L"ParallelFor start");
+    PPE_LOG(Test_Thread, Info, "ParallelFor start");
 
     std::atomic<size_t> parallel_sum{ 0 };
     ParallelForEachValue(std::begin(values), std::end(values), [&parallel_sum](size_t v) {
         Unused(v);
-        LOG(Test_Thread, Info, L"ParallelFor: {0} -> {1}",
+        PPE_LOG(Test_Thread, Info, "ParallelFor: {0} -> {1}",
             MakeCStringView(CurrentThreadContext().Name()), v );
         parallel_sum += v;
         FPlatformProcess::Sleep(0);
@@ -217,7 +217,7 @@ NO_INLINE void Test_ParallelFor_() {
 
     AssertRelease(MakeIterable(values).Accumulate() == parallel_sum);
 
-    LOG(Test_Thread, Info, L"ParallelFor stop");
+    PPE_LOG(Test_Thread, Info, "ParallelFor stop");
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -255,7 +255,7 @@ struct FGraphNode {
         //FPlatformProcess::Sleep(0);
         Timestamp = FTimestamp::Now();
 
-        LOG(Test_Thread, Debug, L"Build: {0} -> {1} (depth = {2:3})",
+        PPE_LOG(Test_Thread, Debug, "Build: {0} -> {1} (depth = {2:3})",
             Fmt::Pointer(this), Timestamp, Depth);
     }
 
@@ -315,7 +315,7 @@ struct FGraph {
 
         FPlatformAtomics::MemoryBarrier();
 
-        LOG(Test_Thread, Info, L"executor<{0}>: built {1} nodes in {2} with {3} max workers",
+        PPE_LOG(Test_Thread, Info, "executor<{0}>: built {1} nodes in {2} with {3} max workers",
             executor,
             Fmt::CountOfElements(NumBuilt.load()),
             Timer.Elapsed(),
@@ -373,7 +373,7 @@ NO_INLINE void Test_Graph_Preprocess_(FGraph& g) {
         for (FGraphNode* node : g.Nodes)
             node->Pass(&q, g.Revision);
 
-        LOG(Test_Thread, Info, L"Collected {0} tasks to build",
+        PPE_LOG(Test_Thread, Info, "Collected {0} tasks to build",
             Fmt::CountOfElements(q.size()));
 
         FTimedScope time;
@@ -554,7 +554,7 @@ NO_INLINE void Test_Graph_ParallelExecution_() {
 void Test_Thread() {
     PPE_DEBUG_NAMEDSCOPE("Test_Thread");
 
-    LOG(Test_Thread, Emphasis, L"starting thread tests ...");
+    PPE_LOG(Test_Thread, Emphasis, "starting thread tests ...");
 
     Test_Function_();
     Test_Aggregation_();

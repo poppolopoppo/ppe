@@ -8,6 +8,7 @@
 #include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
 #include "Memory/VirtualMemory.h"
+#include "Meta/Utility.h"
 #include "Thread/CriticalSection.h"
 
 #include <atomic>
@@ -53,7 +54,7 @@ struct CACHELINE_ALIGNED FVirtualPageCache_ : Meta::FNonCopyableNorMovable {
         void SetUsedPages(const TBitMask<u32>& mask) {
             Assert_NoAssume((mask.Data & BitMask) == mask.Data);
             const auto addr = reinterpret_cast<uintptr_t>(Packed);
-            Packed = Packed - (addr & BitMask) + mask.Data;
+            Packed = (Packed - (addr & BitMask)) + mask.Data;
         }
 
         void Reset(void* alloc, size_t sizeInBytes) {
@@ -83,7 +84,7 @@ struct CACHELINE_ALIGNED FVirtualPageCache_ : Meta::FNonCopyableNorMovable {
     STATIC_ASSERT(sizeof(FFreePage) == PageSize);
 
 #if USE_PPE_MEMORYDOMAINS
-    static FMemoryTracking& TrackingData() NOEXCEPT {
+    NODISCARD static FMemoryTracking& TrackingData() NOEXCEPT {
         return MEMORYDOMAIN_TRACKING_DATA(PageAllocator);
     }
 #endif
@@ -98,7 +99,7 @@ struct CACHELINE_ALIGNED FVirtualPageCache_ : Meta::FNonCopyableNorMovable {
     std::atomic<i32> NumUsedPages{ 0 };
 #endif
 
-    static FVirtualPageCache_& Get() {
+    NODISCARD static FVirtualPageCache_& Get() {
         ONE_TIME_INITIALIZE(TInitSegAlloc<FVirtualPageCache_>, GInstance, 200);
         return GInstance;
     }

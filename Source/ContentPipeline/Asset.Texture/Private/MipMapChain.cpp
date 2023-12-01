@@ -95,7 +95,7 @@ static void ScaleAlphaTestCoverage_(FFloatImage* img, float cutoff, float desire
         currentCoverage = AlphaTestCoverage_(img, cutoff, alphaScale);
     }
 
-    LOG(Pixmap, Info, L"upscaling alpha coverage of a {0}x{1} FFloatImage from {2} to {3}, desired = {4} (x{5})",
+    PPE_LOG(Pixmap, Info, "upscaling alpha coverage of a {0}x{1} FFloatImage from {2} to {3}, desired = {4} (x{5})",
         img->Width(), img->Height(),
         initialCoverage, currentCoverage, desiredCoverage, alphaScale );
 
@@ -125,7 +125,7 @@ void FMipMapChain::Generate(FFloatImage* topMip, bool hq/* = false */) {
 
     const size_t mipCount = FPlatformMaths::FloorLog2(Min(topMip->Width(), topMip->Height())) - 1;
 
-    LOG(Pixmap, Info, L"generate {2} mips from a FFloatImage {0}x{1}",
+    PPE_LOG(Pixmap, Info, "generate {2} mips from a FFloatImage {0}x{1}",
         topMip->Width(), topMip->Height(),
         mipCount );
 

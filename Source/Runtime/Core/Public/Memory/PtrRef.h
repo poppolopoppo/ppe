@@ -53,6 +53,12 @@ struct TPtrRef {
     CONSTEXPR operator T& () const NOEXCEPT { Assert(Ptr); return (*Ptr); }
     CONSTEXPR operator T* () const NOEXCEPT { return Ptr; }
 
+    // can forward operator () calls to inner ptr if T defines it
+    template <typename... _Args, decltype(std::declval<T&>()(std::forward<_Args>(std::declval<_Args&&>())...))* = nullptr>
+    CONSTEXPR auto operator ()(_Args&& ...args) const {
+        return (*Ptr)(std::forward<_Args>(args)...);
+    }
+
     CONSTEXPR TPtrRef& operator++() {
         ++Ptr;
         return (*this);

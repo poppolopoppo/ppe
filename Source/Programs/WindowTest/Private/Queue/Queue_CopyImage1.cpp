@@ -22,14 +22,14 @@ bool Queue_CopyImage1_(FWindowTestApp& app) {
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Transfer),
         Default ARGS_IF_RHIDEBUG("SrcImage")));
-    LOG_CHECK(WindowTest, srcImage.Valid());
+    PPE_LOG_CHECK(WindowTest, srcImage.Valid());
 
     auto dstImage = fg.ScopedResource(fg.CreateImage(FImageDesc{}
         .SetDimension(dstDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Transfer),
         Default ARGS_IF_RHIDEBUG("DstImage")));
-    LOG_CHECK(WindowTest, dstImage.Valid());
+    PPE_LOG_CHECK(WindowTest, dstImage.Valid());
 
     RAWSTORAGE(UnitTest, u8) srcData;
     srcData.Resize_DiscardData(srcRowPitch * srcDim.y);
@@ -62,7 +62,7 @@ bool Queue_CopyImage1_(FWindowTestApp& app) {
                     src[2] == dst[2] &&
                     src[3] == dst[3]);
 
-                /*LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}",
+                /*PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}",
                     uint2(x,y),
                     ubyte4(src[0], src[1], src[2], src[3]),
                     ubyte4(dst[0], dst[1], dst[2], dst[3]),
@@ -75,7 +75,7 @@ bool Queue_CopyImage1_(FWindowTestApp& app) {
     auto cmd = fg.Begin(FCommandBufferDesc{}
         .SetName("Queue_CopyImage1_")
         .SetDebugFlags(Default));
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     const PFrameTask tUpdate = cmd->Task(FUpdateImage{}
         .SetImage(srcImage)
@@ -90,16 +90,16 @@ bool Queue_CopyImage1_(FWindowTestApp& app) {
         .DependsOn(tCopy));
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
 
     // after execution 'src_data' was copied to 'src_image', 'src_image' copied to 'dst_image', 'dst_image' copied to staging buffer...
-    LOG_CHECK(WindowTest, not cbWasCalled);
+    PPE_LOG_CHECK(WindowTest, not cbWasCalled);
 
     // all staging buffers will be synchronized, all 'ReadImage' callbacks will be called.
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, cbWasCalled);
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, cbWasCalled);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

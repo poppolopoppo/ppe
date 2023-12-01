@@ -8,6 +8,8 @@
 #   include "HAL/Windows/TraceLogging.h"
 #   include "HAL/Windows/VSToolsWrapper.h"
 
+#   include "IO/ConstChar.h"
+
 #if USE_PPE_PLATFORM_DEBUG_MEM_POISONS
 #   include <sanitizer/asan_interface.h>
 #endif
@@ -64,63 +66,83 @@ PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 // Windows trace logging
 //----------------------------------------------------------------------------
-void FWindowsPlatformDebug::TraceVerbose(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+void FWindowsPlatformDebug::TraceVerbose(const std::thread::id& tid, const char* category, i64 timestamp, const char* filename, size_t line, const char* text) {
 #if USE_PPE_WINDOWS_TRACELOGGING
-    FWindowsTraceLogging::TraceVerbose(category, timestamp, filename, line, text);
+    FWindowsTraceLogging::TraceVerbose(tid, category, timestamp, filename, line, text, Opaq::value_view{});
 #else
-    Unused(category);
-    Unused(timestamp);
-    Unused(filename);
-    Unused(line);
-    Unused(text);
+    Unused(tid, category, timestamp, filename, line, text);
 #endif
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformDebug::TraceInformation(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+void FWindowsPlatformDebug::TraceInformation(const std::thread::id& tid, const char* category, i64 timestamp, const char* filename, size_t line, const char* text) {
 #if USE_PPE_WINDOWS_TRACELOGGING
-    FWindowsTraceLogging::TraceInformation(category, timestamp, filename, line, text);
+    FWindowsTraceLogging::TraceInformation(tid, category, timestamp, filename, line, text, Opaq::value_view{});
 #else
-    Unused(category);
-    Unused(timestamp);
-    Unused(filename);
-    Unused(line);
-    Unused(text);
+    Unused(tid, category, timestamp, filename, line, text);
 #endif
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformDebug::TraceWarning(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+void FWindowsPlatformDebug::TraceWarning(const std::thread::id& tid, const char* category, i64 timestamp, const char* filename, size_t line, const char* text) {
 #if USE_PPE_WINDOWS_TRACELOGGING
-    FWindowsTraceLogging::TraceWarning(category, timestamp, filename, line, text);
+    FWindowsTraceLogging::TraceWarning(tid, category, timestamp, filename, line, text, Opaq::value_view{});
 #else
-    Unused(category);
-    Unused(timestamp);
-    Unused(filename);
-    Unused(line);
-    Unused(text);
+    Unused(tid, category, timestamp, filename, line, text);
 #endif
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformDebug::TraceError(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+void FWindowsPlatformDebug::TraceError(const std::thread::id& tid, const char* category, i64 timestamp, const char* filename, size_t line, const char* text) {
 #if USE_PPE_WINDOWS_TRACELOGGING
-    FWindowsTraceLogging::TraceError(category, timestamp, filename, line, text);
+    FWindowsTraceLogging::TraceError(tid, category, timestamp, filename, line, text, Opaq::value_view{});
 #else
-    Unused(category);
-    Unused(timestamp);
-    Unused(filename);
-    Unused(line);
-    Unused(text);
+    Unused(tid, category, timestamp, filename, line, text);
 #endif
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformDebug::TraceFatal(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+void FWindowsPlatformDebug::TraceFatal(const std::thread::id& tid, const char* category, i64 timestamp, const char* filename, size_t line, const char* text) {
 #if USE_PPE_WINDOWS_TRACELOGGING
-    FWindowsTraceLogging::TraceFatal(category, timestamp, filename, line, text);
+    FWindowsTraceLogging::TraceFatal(tid, category, timestamp, filename, line, text, Opaq::value_view{});
 #else
-    Unused(category);
-    Unused(timestamp);
-    Unused(filename);
-    Unused(line);
-    Unused(text);
+    Unused(tid, category, timestamp, filename, line, text);
+#endif
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::TraceVerbose(const std::thread::id& tid, const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::TraceVerbose(tid, category, timestamp, filename, line, text, Opaq::value_view{});
+#else
+    Unused(tid, category, timestamp, filename, line, text);
+#endif
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::TraceInformation(const std::thread::id& tid, const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::TraceInformation(tid, category, timestamp, filename, line, text, Opaq::value_view{});
+#else
+    Unused(tid, category, timestamp, filename, line, text);
+#endif
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::TraceWarning(const std::thread::id& tid, const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::TraceWarning(tid, category, timestamp, filename, line, text, Opaq::value_view{});
+#else
+    Unused(tid, category, timestamp, filename, line, text);
+#endif
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::TraceError(const std::thread::id& tid, const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::TraceError(tid, category, timestamp, filename, line, text, Opaq::value_view{});
+#else
+    Unused(tid, category, timestamp, filename, line, text);
+#endif
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDebug::TraceFatal(const std::thread::id& tid, const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text) {
+#if USE_PPE_WINDOWS_TRACELOGGING
+    FWindowsTraceLogging::TraceFatal(tid, category, timestamp, filename, line, text, Opaq::value_view{});
+#else
+    Unused(tid, category, timestamp, filename, line, text);
 #endif
 }
 //----------------------------------------------------------------------------

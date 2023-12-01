@@ -45,7 +45,7 @@ namespace {
 //----------------------------------------------------------------------------
 static void XdgOpen_(const wchar_t* path) {
     ::pid_t child = ::fork();
-    LOG(HAL, Verbose, L"XdgOpen({0})", MakeCStringView(path));
+    PPE_LOG(HAL, Verbose, "XdgOpen({0})", MakeCStringView(path));
 
     if (0 == child) {
         ::exit(::execl("/usr/bin/xdg-open", "xdg-open",
@@ -114,7 +114,7 @@ bool FLinuxProcessState::IsRunning() {
         // if child if a zombie, wait() immediately to free up kernel resources.
         // will avoid higher level code to maintain handles for process no longer running.
         if (not (_state & kRunning)) {
-            LOG(HAL, Verbose, L"child with pid={0} is no longer running (zombie), wait()ing immediately", Pid());
+            PPE_LOG(HAL, Verbose, "child with pid={0} is no longer running (zombie), wait()ing immediately", Pid());
             Wait();
         }
     }
@@ -123,7 +123,7 @@ bool FLinuxProcessState::IsRunning() {
 }
 //----------------------------------------------------------------------------
 bool FLinuxProcessState::ExitCode(i32* pExitCode) {
-    AssertMessage(L"cannot get exit code of a running process", not (_state & kRunning));
+    AssertMessage("cannot get exit code of a running process", not (_state & kRunning));
 
     if (not (_state & kWaitFor))
         Wait();
@@ -159,7 +159,7 @@ void FLinuxProcessState::Wait() {
             _exitCode = (sig.si_code == CLD_EXITED ? sig.si_status : -1);
             _state = _state + kWaitFor - kRunning;
 
-            LOG(HAL, Verbose, L"child with pid={0} exited with code {1}", Pid(), _exitCode);
+            PPE_LOG(HAL, Verbose, "child with pid={0} exited with code {1}", Pid(), _exitCode);
             break;
         }
     }
@@ -188,7 +188,7 @@ bool FLinuxProcessState::WaitFor(int timeoutMs) {
                 _exitCode = sig.si_status;
                 _state = _state + kWaitFor - kRunning;
 
-                LOG(HAL, Verbose, L"child with pid={0} exited with code {1}", Pid(), _exitCode);
+                PPE_LOG(HAL, Verbose, "child with pid={0} exited with code {1}", Pid(), _exitCode);
 
                 return true;
             }
@@ -256,7 +256,7 @@ bool FLinuxPlatformProcess::EnableDebugPrivileges() {
 void FLinuxPlatformProcess::Daemonize() {
     if (::daemon(1, 1) == -1) {
         const FErrno thisErrno;
-        LOG(HAL, Error, L"daemon(1, 1) failed with errno: {0}",
+        PPE_LOG(HAL, Error, "daemon(1, 1) failed with errno: {0}",
             thisErrno );
     }
 }
@@ -428,7 +428,7 @@ bool FLinuxPlatformProcess::Priority(EProcessPriority* pPriority, FProcessHandle
     int selfPriority = ::getpriority(PRIO_PROCESS, 0);
     if (errno != 0) {
         const FErrno thisErrno;
-        LOG(HAL, Warning, L"could not get current process priority, errno: {0}",
+        PPE_LOG(HAL, Warning, "could not get current process priority, errno: {0}",
             thisErrno );
 
         return false;
@@ -437,7 +437,7 @@ bool FLinuxPlatformProcess::Priority(EProcessPriority* pPriority, FProcessHandle
     int otherPriority = ::getpriority(PRIO_PROCESS, process.Pid());
     if (errno != 0) {
         const FErrno thisErrno;
-        LOG(HAL, Warning, L"could not get process priority with pid={0}, errno: {1}",
+        PPE_LOG(HAL, Warning, "could not get process priority with pid={0}, errno: {1}",
             process.Pid(), thisErrno );
 
         return false;
@@ -461,7 +461,7 @@ bool FLinuxPlatformProcess::SetPriority(FProcessHandle process, EProcessPriority
 
     if (errno != 0) {
         const FErrno thisErrno;
-        LOG(HAL, Warning, L"could not get process priority with pid={0}, errno: {1}",
+        PPE_LOG(HAL, Warning, "could not get process priority with pid={0}, errno: {1}",
             process.Pid(), thisErrno );
 
         return false;
@@ -471,7 +471,7 @@ bool FLinuxPlatformProcess::SetPriority(FProcessHandle process, EProcessPriority
     ::rlimit priorityLimits;
     if (::getrlimit(RLIMIT_NICE, &priorityLimits) == -1) {
         const FErrno thisErrno;
-        LOG(HAL, Warning, L"could not get process priority limits, errno: {0}",
+        PPE_LOG(HAL, Warning, "could not get process priority limits, errno: {0}",
             thisErrno );
 
         return false;
@@ -497,13 +497,13 @@ bool FLinuxPlatformProcess::SetPriority(FProcessHandle process, EProcessPriority
 
     if (::setpriority(PRIO_PROCESS, process.Pid(), newPriority) == -1) {
         const FErrno thisErrno;
-        LOG(HAL, Warning, L"failed to set process priority with pid={0}, errno: {1}",
+        PPE_LOG(HAL, Warning, "failed to set process priority with pid={0}, errno: {1}",
             process.Pid(), thisErrno );
 
         return false;
     }
     else {
-        LOG(HAL, Verbose, L"change process pid={0} priority from {1} to {2} ({3})",
+        PPE_LOG(HAL, Verbose, "change process pid={0} priority from {1} to {2} ({3})",
             process.Pid(), actualPriority, newPriority, (int)priority );
 
         return true;
@@ -550,7 +550,7 @@ bool FLinuxPlatformProcess::CreatePipe(FPipeHandle* pRead, FPipeHandle* pWrite, 
     int pipeFd[2];
     if (-1 == ::pipe(pipeFd)) {
         const FErrno thisErrno;
-        LOG(HAL, Error, L"failed to create pipe with errno: {0}",
+        PPE_LOG(HAL, Error, "failed to create pipe with errno: {0}",
             thisErrno );
         return false;
     }
@@ -588,7 +588,7 @@ size_t FLinuxPlatformProcess::ReadPipe(FPipeHandle read, const FRawMemory& buffe
     }
     else {
         const FErrno thisErrno;
-        LOG(HAL, Fatal, L"ioctl(..., FIONREAD, ...) failed with errno: {0}",
+        PPE_LOG(HAL, Fatal, "ioctl(..., FIONREAD, ...) failed with errno: {0}",
             thisErrno );
     }
 
@@ -634,7 +634,7 @@ auto FLinuxPlatformProcess::CreateProcess(
     Unused(inheritHandles);
     Unused(noWindow);
 
-    CLOG(workingDir != nullptr, HAL, Error,
+    PPE_CLOG(workingDir != nullptr, HAL, Error,
         L"::posix_spawn() doesn't support working directory yet: {0}",
         MakeCStringView(workingDir) );
 
@@ -715,7 +715,7 @@ auto FLinuxPlatformProcess::CreateProcess(
 
     if (posixSpawnErrno != 0) {
         const FErrno thisErrno{ posixSpawnErrno };
-        LOG(HAL, Error, L"posix_spawn({0}, {1}) failed with errno: {2}",
+        PPE_LOG(HAL, Error, "posix_spawn({0}, {1}) failed with errno: {2}",
             MakeCStringView(executable),
             MakeCStringView(parameters),
             thisErrno );
@@ -739,7 +739,7 @@ bool FLinuxPlatformProcess::ExecDetachedProcess(
     const wchar_t* workingDir) {
     Assert(executable);
 
-    LOG(HAL, Verbose, L"execl(\"{0} {1}\") in {2}",
+    PPE_LOG(HAL, Verbose, "execl(\"{0} {1}\") in {2}",
         MakeCStringView(executable), MakeCStringView(parameters), MakeCStringView(workingDir));
 
     if (0 == ::fork()) {
@@ -800,7 +800,7 @@ auto FLinuxPlatformProcess::CreateSemaphore(const char* name, bool create, size_
     else
         sem = ::sem_open(name, O_EXCL);
 
-    CLOG(nullptr == sem, HAL, Error,
+    PPE_CLOG(nullptr == sem, HAL, Error,
         L"sem_open({0}) failed with errno: {1}",
         UTF_8_TO_WCHAR<>(name),
         FErrno{} );
@@ -813,7 +813,7 @@ void FLinuxPlatformProcess::LockSemaphore(FSemaphore semaphore) {
 
     ::sem_t* sem = (::sem_t*)semaphore;
     int waitResult = ::sem_wait(sem);
-    CLOG(waitResult != 0, HAL, Error, L"sem_wait() failed with errno: {0}",
+    PPE_CLOG(waitResult != 0, HAL, Error, "sem_wait() failed with errno: {0}",
         FErrno{} );
 }
 //----------------------------------------------------------------------------
@@ -828,7 +828,7 @@ bool FLinuxPlatformProcess::TryLockSemaphore(FSemaphore semaphore, u64 nanoSecon
     ::sem_t* sem = (::sem_t*)semaphore;
     int waitResult = ::sem_timedwait(sem, &tm);
 
-    CLOG(waitResult != 0, HAL, Error, L"sem_wait() failed with errno: {0}",
+    PPE_CLOG(waitResult != 0, HAL, Error, "sem_wait() failed with errno: {0}",
         FErrno{} );
 
     return (waitResult == 0);
@@ -839,7 +839,7 @@ void FLinuxPlatformProcess::UnlockSemaphore(FSemaphore semaphore) {
 
     ::sem_t* sem = (::sem_t*)semaphore;
     if (::sem_post(sem) != 0)
-        LOG(HAL, Error, L"sem_post() failed with errno: {0}",
+        PPE_LOG(HAL, Error, "sem_post() failed with errno: {0}",
             FErrno{} );
 }
 //----------------------------------------------------------------------------
@@ -848,7 +848,7 @@ bool FLinuxPlatformProcess::DestroySemaphore(FSemaphore semaphore) {
 
     ::sem_t* sem = (::sem_t*)semaphore;
     if (::sem_destroy(sem) != 0) {
-        LOG(HAL, Error, L"sem_destroy() failed with errno: {0}",
+        PPE_LOG(HAL, Error, "sem_destroy() failed with errno: {0}",
             FErrno{} );
 
         return false;
@@ -869,7 +869,7 @@ static void* LoadDynamicLibrary_(const wchar_t* name, bool attach) {
 
     void* handle = ::dlopen(WCHAR_TO_UTF_8<>(name), dlOpenMode | RTLD_LOCAL );
 
-    CLOG(not handle, HAL, Error, L"dlopen({0}) failed: {1}",
+    PPE_CLOG(not handle, HAL, Error, "dlopen({0}) failed: {1}",
         MakeCStringView(name),
         UTF_8_TO_WCHAR<>(::dlerror()) );
 
@@ -879,7 +879,7 @@ static void* LoadDynamicLibrary_(const wchar_t* name, bool attach) {
 static void UnloadDynamicLibrary_(void* lib) {
     Assert(lib);
     if (::dlclose(lib))
-        LOG(HAL, Error, L"dlclose() failed: {0}",
+        PPE_LOG(HAL, Error, "dlclose() failed: {0}",
             UTF_8_TO_WCHAR<>(::dlerror()) );
 }
 //----------------------------------------------------------------------------
@@ -905,7 +905,7 @@ FWString FLinuxPlatformProcess::DynamicLibraryFilename(FDynamicLibraryHandle lib
         return ToWString(MakeCStringView(buf));
     }
     else {
-        LOG(HAL, Error, L"dlinfo() failed: {0}",
+        PPE_LOG(HAL, Error, "dlinfo() failed: {0}",
             UTF_8_TO_WCHAR<>(::dlerror()) );
         return FWString();
     }
@@ -916,7 +916,7 @@ void* FLinuxPlatformProcess::DynamicLibraryFunction(FDynamicLibraryHandle lib, c
     Assert(name);
 
     void* fnAddr = ::dlsym(lib, name);
-    CLOG(!fnAddr, HAL, Error,
+    PPE_CLOG(!fnAddr, HAL, Error,
         L"dlsym({0}) failed: {1}",
         MakeCStringView(name),
         UTF_8_TO_WCHAR<>(::dlerror()) );

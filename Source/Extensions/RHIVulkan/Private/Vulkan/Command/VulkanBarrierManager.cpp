@@ -65,7 +65,7 @@ void FVulkanBarrierManager::AddBufferBarrier(VkPipelineStageFlags srcStages, VkP
     _dstStages |= dstStages;
     _bufferBarriers.push_back(barrier);
 
-    RHI_TRACE(L"AddBufferBarrier",
+    RHI_TRACE("AddBufferBarrier",
         static_cast<VkPipelineStageFlagBits>(srcStages),
         static_cast<VkPipelineStageFlagBits>(dstStages),
         static_cast<VkAccessFlagBits>(barrier.srcAccessMask),
@@ -78,7 +78,7 @@ void FVulkanBarrierManager::AddImageBarrier(VkPipelineStageFlags srcStages, VkPi
     _dependencies |= dependencies;
     _imageBarriers.push_back(barrier);
 
-    RHI_TRACE(L"AddImageBarrier",
+    RHI_TRACE("AddImageBarrier",
         static_cast<VkPipelineStageFlagBits>(srcStages),
         static_cast<VkPipelineStageFlagBits>(dstStages),
         static_cast<VkAccessFlagBits>(barrier.srcAccessMask),
@@ -96,7 +96,7 @@ void FVulkanBarrierManager::AddMemoryBarrier(VkPipelineStageFlags srcStages, VkP
     _memoryBarrier.srcAccessMask |= barrier.srcAccessMask;
     _memoryBarrier.dstAccessMask |= barrier.dstAccessMask;
 
-    RHI_TRACE(L"AddMemoryBarrier",
+    RHI_TRACE("AddMemoryBarrier",
         static_cast<VkPipelineStageFlagBits>(srcStages),
         static_cast<VkPipelineStageFlagBits>(dstStages),
         static_cast<VkAccessFlagBits>(barrier.srcAccessMask),

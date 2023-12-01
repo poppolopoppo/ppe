@@ -4,15 +4,9 @@
 
 #include "Allocator/Alloca.h"
 #include "Container/Hash.h"
-#include "Container/Stack.h"
-#include "Container/Vector.h"
 #include "IO/FileSystem.h"
 
 #include <algorithm>
-
-#define PPE_USE_FSTRIENODE_SORTVALUE_FOR_HASH (1)
-//  1: use hash_value(sortValue), since sortValue is unique in the tree
-//  0: use hash_tuple() by combining tokens hash_value
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -24,74 +18,24 @@ static bool IsMountingPoint_(const FFileSystemToken& token) {
     return (not token.empty() && token.MakeView().back() == L':');
 }
 //----------------------------------------------------------------------------
-static size_t ExpandFileSystemNode_(
-    const TMemoryView<FFileSystemToken>& tokens,
-    const FFileSystemNode* pnode,
-    const FFileSystemNode* proot ) {
-    if (nullptr == pnode)
-        return 0;
-
-    size_t count = 0;
-    for (; proot != pnode; pnode = pnode->Parent())
-        tokens[count++] = pnode->Token();
-
-    Assert(tokens.size() == count);
-    std::reverse(tokens.begin(), tokens.begin() + count);
-
-    return count;
-}
-//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FFileSystemNode::FFileSystemNode() NOEXCEPT
-:   _parent(nullptr)
-,   _child(nullptr)
-,   _sibbling(nullptr)
-,   _leaf(nullptr)
-,   _depth(0)
-,   _flags(EInternalFlags::None)
-#if !PPE_USE_FSTRIENODE_SORTVALUE_FOR_HASH
-,   _hashValue(PPE_HASH_VALUE_SEED)
-#else
-,   _hashValue(0)
-#endif
-,   _sortValue(-1.0)
-{}
-//----------------------------------------------------------------------------
 FFileSystemNode::FFileSystemNode(
-    FFileSystemNode& parent,
-    const FFileSystemToken& token,
-    double sortValue, size_t uid,
-    bool isMountingPoint) NOEXCEPT
-:   _parent(&parent)
-,   _child(nullptr)
-,   _sibbling(nullptr)
-,   _leaf(nullptr)
-,   _token(token)
-,   _depth(parent._depth + 1)
-,   _flags(isMountingPoint || parent.HasMountingPoint() ? EInternalFlags::HasMountingPoint : EInternalFlags::None)
-#if !PPE_USE_FSTRIENODE_SORTVALUE_FOR_HASH
-,   _hashValue(hash_tuple(parent._hashValue, token))
-#else
-,   _hashValue(hash_value(sortValue))
-#endif
-,   _sortValue(sortValue)
-,   _genealogy(FGenealogy::Combine(parent._genealogy, FGenealogy::Prime(uid))) {
-    Assert_NoAssume(-1.0 <= _sortValue && _sortValue <= 1.0);
-}
-//----------------------------------------------------------------------------
-bool FFileSystemNode::Greater(const FFileSystemNode& other) const {
-    return (_sortValue > other._sortValue);
-}
-//----------------------------------------------------------------------------
-bool FFileSystemNode::Less(const FFileSystemNode& other) const {
-    return (_sortValue < other._sortValue);
-}
-//----------------------------------------------------------------------------
-bool FFileSystemNode::IsChildOf(const FFileSystemNode& parent) const {
-    return _genealogy.Contains(parent._genealogy);
+    PFileSystemNode parent,
+    hash_t hashValue,
+    size_t depth,
+    size_t uid,
+    bool hasMountingPoint) NOEXCEPT
+:   _parent(parent)
+,   _hashValue(hashValue)
+,   _genealogy(parent
+        ? FGenealogy::Combine(parent->_genealogy, FGenealogy::Prime(uid))
+        : FGenealogy::Prime(uid))
+,   _depth(checked_cast<u32>(depth))
+,   _hasMountingPoint(hasMountingPoint)
+{
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -101,204 +45,66 @@ void* FFileSystemTrie::class_singleton_storage() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 FFileSystemTrie::FFileSystemTrie()
-:   _numNodes(0) {
-    CreateRootNode_();
+:   _hashMap(
+        _heap.AllocateT<path_hashmap_t::FEntry*>(4049),
+        TSlabAllocator<ALLOCATOR(FileSystem)>{ _heap })
+{
 }
 //----------------------------------------------------------------------------
 FFileSystemTrie::~FFileSystemTrie() {
-    Clear_ReleaseMemory_();
+    // nodes are trivially destructible, release all in one call
+    _hashMap.Clear_ForgetMemory();
+    _heap.ReleaseAll();
 }
 //----------------------------------------------------------------------------
-void FFileSystemTrie::CreateRootNode_() {
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE(); // handled by trie at destruction
-
-    _root._child = _root._leaf = new (_heap) FFileSystemNode{ _root, FFileSystemToken{}, 1.0, 0, false };
-}
-//----------------------------------------------------------------------------
-FFileSystemNode* FFileSystemTrie::CreateNode_(
-    FFileSystemNode& parent,
-    const FFileSystemToken& token,
-    const FFileSystemNode& prev,
-    const FFileSystemNode& next) {
-    PPE_LEAKDETECTOR_WHITELIST_SCOPE(); // handled by trie at destruction
-
-    const double s = ((prev._sortValue + next._sortValue) * 0.5);
-    Assert_NoAssume(s > prev._sortValue);
-    Assert_NoAssume(s < next._sortValue);
-
-    return new (_heap) FFileSystemNode{
-        parent, token, s, token.empty() ? 0 : _numNodes++, IsMountingPoint_(token) };
-}
-//----------------------------------------------------------------------------
-const FFileSystemNode* FFileSystemTrie::Get_(const FFileSystemNode& root, const FFileSystemToken& token) const {
-    Assert_NoAssume(not token.empty());
-
-    for (const FFileSystemNode* n = root._child; n != root._leaf; n = n->_sibbling) {
-        if (n->_token == token)
-            return n;
-        else if (token < n->_token)
-            break;
-    }
-
-    return nullptr;
-}
-//----------------------------------------------------------------------------
-FFileSystemNode* FFileSystemTrie::GetOrCreate_(FFileSystemNode& root, const FFileSystemToken& token) {
-    Assert_NoAssume(not token.empty());
-
-    FFileSystemNode* n = root._child;
-    if (nullptr == n) {
-        auto* const l = CreateNode_(root, FFileSystemToken{}, root, *root._sibbling);
-        auto* const r = CreateNode_(root, token, root, *l);
-
-        root._child = r;
-        root._leaf = l;
-        r->_sibbling = l;
-
-        return r;
-    }
-    else if (n->_token.empty() || token < n->_token) {
-        auto* const r = CreateNode_(root, token, root, *n);
-
-        r->_sibbling = n;
-        n->_parent->_child = r;
-
-        return r;
-    }
-    else {
-        FFileSystemNode* p = n;
-        n = n->_sibbling;
-
-        while (n != root._leaf && n->_token < token) {
-            p = n;
-            n = n->_sibbling;
-        }
-
-        if (n->_token == token) return n;
-        if (p->_token == token) return p;
-
-        auto* const r = CreateNode_(root, token, p->_leaf ? *p->_leaf : *p, *n);
-        p->_sibbling = r;
-        r->_sibbling = n;
-
-        return r;
-    }
-}
-//----------------------------------------------------------------------------
-const FFileSystemNode *FFileSystemTrie::GetIFP(const TMemoryView<const FFileSystemToken>& path) const {
+PFileSystemNode FFileSystemTrie::GetIFP(const FPath& path) const NOEXCEPT {
     Assert_NoAssume(not path.empty());
 
-    const FFileSystemNode* n = &_root;
+    const auto* it = _hashMap.Lookup(path);
+    if (Likely(it != nullptr))
+        return it->second;
 
-    READSCOPELOCK(_barrier);
-
-    for (const FFileSystemToken& token : path) {
-        n = Get_(*n, token);
-        if (nullptr == n)
-            return nullptr;
-    }
-
-    Assert(n);
-    return n;
+    return Default;
 }
 //----------------------------------------------------------------------------
-const FFileSystemNode *FFileSystemTrie::Concat(const FFileSystemNode* basedir, const FFileSystemToken& append) {
-    return Concat(basedir, MakeView(&append, &append + 1));
+PFileSystemNode FFileSystemTrie::Concat(const PFileSystemNode& baseDir, const FFileSystemToken& append) {
+    return Concat(baseDir, MakeView(&append, &append + 1));
 }
 //----------------------------------------------------------------------------
-const FFileSystemNode *FFileSystemTrie::Concat(const FFileSystemNode* basedir, const TMemoryView<const FFileSystemToken>& path) {
-    if (path.empty())
-        return basedir;
+PFileSystemNode FFileSystemTrie::Concat(const PFileSystemNode& baseDir, const FPath& relative) {
+    if (relative.empty())
+        return baseDir;
 
-    FFileSystemNode* n = (basedir ? const_cast<FFileSystemNode*>(basedir) : &_root);
+    if (not baseDir)
+        return GetOrCreate(relative);
 
-    WRITESCOPELOCK(_barrier);
+    STACKLOCAL_POD_ARRAY(FFileSystemToken, absolute, baseDir->_depth + relative.size());
+    baseDir->MakeView().CopyTo(absolute.CutBefore(baseDir->_depth));
+    relative.CopyTo(absolute.CutStartingAt(baseDir->_depth));
 
-    for (const FFileSystemToken& token : path)
-        n = GetOrCreate_(*n, token);
-
-    return n;
+    return GetOrCreate(absolute);
 }
 //----------------------------------------------------------------------------
-void FFileSystemTrie::Clear_ReleaseMemory_() {
-    Assert_NoAssume(_root._child);
-    Assert_NoAssume(not _root._sibbling);
+PFileSystemNode FFileSystemTrie::GetOrCreate(const FPath& path) {
+    Assert(not path.empty());
 
-    WRITESCOPELOCK(_barrier);
+    PFileSystemNode parent;
+    if (path.size() > 1)
+        parent = GetOrCreate(path.ShiftBack());
 
-#if 0
-    ONLY_IF_ASSERT(size_t numDeleteds = 0);
-    STACKLOCAL_POD_STACK(FFileSystemNode*, queue, 128);
+    const auto& [_, node] =
+        _hashMap.FindOrAdd(path, [&](path_hashmap_t::FEntry* entryAdded) {
+            entryAdded->Value.second = INPLACE_NEW(_heap.Allocate(sizeof(FFileSystemNode) + path.SizeInBytes()), FFileSystemNode)(
+                parent,
+                path_hasher_t{}(path),
+                path.size(),
+                _nextNodeUid++,
+                IsMountingPoint_(path[0]));
+            entryAdded->Value.first = entryAdded->Value.second->MakeView();
+            FPlatformMemory::Memcpy((void*)entryAdded->Value.first.data(), path.data(), path.SizeInBytes());
+        });
 
-    queue.Push(_root._child);
-
-    FFileSystemNode* n;
-    for (;;) {
-        if (not queue.Pop(&n))
-            break;
-
-        Assert(n);
-
-        if (n->_child)
-            queue.Push(n->_child);
-        if (n->_sibbling)
-            queue.Push(n->_sibbling);
-
-        Meta::Destroy(n);
-        allocator_traits::DeallocateOneT(*this, n);
-
-        ONLY_IF_ASSERT(++numDeleteds);
-    }
-
-    Assert_NoAssume(numDeleteds >= _numNodes);
-
-#else
-    // nodes are trivially destructible, release all in one call
-    _heap.ReleaseAll();
-
-#endif
-}
-//----------------------------------------------------------------------------
-void FFileSystemTrie::Clear() {
-    Clear_ReleaseMemory_();
-    CreateRootNode_(); // need to recreate the root node when invalidating the heap
-}
-//----------------------------------------------------------------------------
-const FFileSystemNode& FFileSystemTrie::FirstNode(const FFileSystemNode& pnode) const {
-    Assert_NoAssume(&_root != &pnode);
-
-    READSCOPELOCK(_barrier);
-
-    const FFileSystemNode* n = &pnode;
-    for (; n->_parent != &_root; n = n->_parent);
-
-    Assert(n);
-    Assert_NoAssume(n->_parent == &_root);
-    return (*n);
-}
-//----------------------------------------------------------------------------
-size_t FFileSystemTrie::Expand(const TMemoryView<FFileSystemToken>& tokens, const FFileSystemNode *pnode) const {
-    Assert_NoAssume(not tokens.empty());
-
-    if (nullptr == pnode)
-        return 0;
-
-    READSCOPELOCK(_barrier);
-
-    return ExpandFileSystemNode_(tokens, pnode, &_root);
-}
-//----------------------------------------------------------------------------
-size_t FFileSystemTrie::Expand(const TMemoryView<FFileSystemToken>& tokens, const FFileSystemNode *pbegin, const FFileSystemNode *pend) const {
-    Assert_NoAssume(not tokens.empty());
-    Assert(pbegin);
-    Assert(pend);
-
-    if (pbegin == pend)
-        return 0;
-
-    READSCOPELOCK(_barrier);
-
-    return ExpandFileSystemNode_(tokens, pend, pbegin);
+    return node;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

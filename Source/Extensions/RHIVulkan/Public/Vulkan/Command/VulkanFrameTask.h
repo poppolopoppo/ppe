@@ -45,55 +45,43 @@ public:
     using FDependencies = TFixedSizeStack<PVulkanFrameTask, MaxTaskDependencies>;
     using FProcessFunc = void (*)(void* visitor, const void* data);
 
-    u32 VisitorId() const { return _visitorId; }
-    void SetVisitorId(u32 value) { _visitorId = value; }
+    u32 VisitorId{ 0 };
+    EVulkanExecutionOrder ExecutionOrder{ EVulkanExecutionOrder::Initial };
 
-    EVulkanExecutionOrder ExecutionOrder() const { return _executionOrder; }
-    void SetExecutionOrder(EVulkanExecutionOrder value) { _executionOrder = value; }
+    TMemoryView<const PVulkanFrameTask> Inputs() const { return _inputs; }
+    TMemoryView<const PVulkanFrameTask> Outputs() const { return _outputs; }
 
-    TMemoryView<const PVulkanFrameTask> Inputs() const { return _inputs.MakeView(); }
-    TMemoryView<const PVulkanFrameTask> Outputs() const { return _outputs.MakeView(); }
-
-    void Attach(const PVulkanFrameTask& output) {
-        Assert(output);
-        Add_AssertUnique(_outputs, output);
-    }
+    void Attach(FVulkanCommandBuffer& cmd, const PVulkanFrameTask& output);
 
     void Process(void* visitor) const {
         Assert(visitor);
         _process(visitor, this);
     }
 
-#if USE_PPE_RHIDEBUG
-    const FTaskName& TaskName() const { return _taskName; }
-    const FLinearColor& DebugColor() const { return _debugColor; }
-    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT = 0;
-#endif
-
     static void CopyDescriptorSets(
         FVulkanPipelineResourceSet* outResources,
         FVulkanLogicalRenderPass* pRenderPass,
         FVulkanCommandBuffer& cmd,
-        const FPipelineResourceSet& input );
+        const FPipelineResourceSet& input ) NOEXCEPT;
 
 protected:
     IVulkanFrameTask() NOEXCEPT;
     ~IVulkanFrameTask();
 
     template <typename T>
-    IVulkanFrameTask(const details::TFrameTaskDesc<T>& desc, FProcessFunc process) NOEXCEPT;
+    IVulkanFrameTask(FVulkanCommandBuffer& cmd, const details::TFrameTaskDesc<T>& desc, FProcessFunc process) NOEXCEPT;
 
     FProcessFunc _process{ nullptr };
 
-    u32 _visitorId{ 0 };
-    EVulkanExecutionOrder _executionOrder{ EVulkanExecutionOrder::Initial };
+    TMemoryView<const PVulkanFrameTask> _inputs;
+    TMemoryView<PVulkanFrameTask> _outputs;
 
-    FDependencies _inputs;
-    FDependencies _outputs;
-
+public:
 #if USE_PPE_RHIDEBUG
-    FTaskName _taskName;
-    FLinearColor _debugColor{ FLinearColor::PaperWhite };
+    FConstChar TaskName;
+    FColor DebugColor{ FColor::PaperWhite() };
+
+    virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT = 0;
 #endif
 };
 //----------------------------------------------------------------------------
@@ -105,12 +93,12 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FSubmitRenderPass& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
 
-    bool Valid() const { return (!!_logicalPass); }
+    TPtrRef<FVulkanLogicalRenderPass> LogicalPass;
+
+    bool Valid() const { return (!!LogicalPass); }
 
     bool IsSubpass() const { return (!!_prevSubpass); }
     bool IsLastPass() const { return (!_nextSubpass); }
-
-    FVulkanLogicalRenderPass* LogicalPass() const { return _logicalPass; }
 
     TVulkanFrameTask* PrevSubpass() const { return _prevSubpass; }
     TVulkanFrameTask* NextSubpass() const { return _nextSubpass; }
@@ -120,7 +108,6 @@ public:
 #endif
 
 private:
-    FVulkanLogicalRenderPass* _logicalPass;
     TVulkanFrameTask* _prevSubpass{ nullptr };
     TVulkanFrameTask* _nextSubpass{ nullptr };
 };
@@ -131,10 +118,15 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FDispatchCompute> final : public IVulkanFrameTask {
 public:
     const TPtrRef<const FVulkanComputePipeline> Pipeline;
-    const FPushConstantDatas PushConstants;
 
-    const FDispatchCompute::FComputeCommands Commands;
     const Meta::TOptional<uint3> LocalGroupSize;
+
+    TMemoryView<const FPushConstantData> PushConstants;
+    TMemoryView<const FDispatchCompute::FComputeCommand> Commands;
+
+    using FResource = FVulkanPipelineResourceSet::FResource;
+    TMemoryView<u32> DynamicOffsets;
+    TMemoryView<const FResource> Resources;
 
 #if USE_PPE_RHIDEBUG
     EShaderDebugIndex DebugModeIndex{ Default };
@@ -145,11 +137,6 @@ public:
     ~TVulkanFrameTask();
 
     bool Valid() const { return (!!Pipeline); }
-
-    const FVulkanPipelineResourceSet& Resources() const { return _resources; }
-
-private:
-    FVulkanPipelineResourceSet _resources;
 };
 //----------------------------------------------------------------------------
 // FDispatchComputeIndirect:
@@ -158,12 +145,17 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FDispatchComputeIndirect> final : public IVulkanFrameTask {
 public:
     const TPtrRef<const FVulkanComputePipeline> Pipeline;
-    const FPushConstantDatas PushConstants;
 
-    const FDispatchComputeIndirect::FComputeCommands Commands;
+    const TPtrRef<const FVulkanLocalBuffer> IndirectBuffer;
+
     const Meta::TOptional<uint3> LocalGroupSize;
 
-    const FVulkanLocalBuffer* const IndirectBuffer;
+    TMemoryView<const FPushConstantData> PushConstants;
+    TMemoryView<const FDispatchComputeIndirect::FComputeCommand> Commands;
+
+    using FResource = FVulkanPipelineResourceSet::FResource;
+    TMemoryView<u32> DynamicOffsets;
+    TMemoryView<const FResource> Resources;
 
 #if USE_PPE_RHIDEBUG
     EShaderDebugIndex DebugModeIndex{ Default };
@@ -174,11 +166,6 @@ public:
     ~TVulkanFrameTask();
 
     bool Valid() const { return (!!Pipeline && !!IndirectBuffer); }
-
-    const FVulkanPipelineResourceSet& Resources() const { return _resources; }
-
-    private:
-    FVulkanPipelineResourceSet _resources;
 };
 //----------------------------------------------------------------------------
 // FCopyBuffer:
@@ -187,11 +174,11 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyBuffer> final : public IVulkanFrameTask {
 public:
     using FRegion = FCopyBuffer::FRegion;
-    using FRegions = FCopyBuffer::FRegions;
 
-    const FVulkanLocalBuffer* const SrcBuffer;
-    const FVulkanLocalBuffer* const DstBuffer;
-    const FRegions Regions;
+    const TPtrRef<const FVulkanLocalBuffer> SrcBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> DstBuffer;
+
+    TMemoryView<const FRegion> Regions;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBuffer& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
@@ -209,13 +196,14 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyImage> final : public IVulkanFrameTask {
     public:
     using FRegion = FCopyImage::FRegion;
-    using FRegions = FCopyImage::FRegions;
 
-    const FVulkanLocalImage* const SrcImage;
+    const TPtrRef<const FVulkanLocalImage> SrcImage;
+    const TPtrRef<const FVulkanLocalImage> DstImage;
+
     const VkImageLayout SrcLayout;
-    const FVulkanLocalImage* const DstImage;
     const VkImageLayout DstLayout;
-    const FRegions Regions;
+
+    TMemoryView<const FRegion> Regions;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImage& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
@@ -231,14 +219,14 @@ class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyImage> final : public IVulkanFrame
 //----------------------------------------------------------------------------
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyBufferToImage> final : public IVulkanFrameTask {
-    public:
+public:
     using FRegion = FCopyBufferToImage::FRegion;
-    using FRegions = FCopyBufferToImage::FRegions;
 
-    const FVulkanLocalBuffer* const SrcBuffer;
-    const FVulkanLocalImage* const DstImage;
+    const TPtrRef<const FVulkanLocalBuffer> SrcBuffer;
+    const TPtrRef<const FVulkanLocalImage> DstImage;
+
     const VkImageLayout DstLayout;
-    const FRegions Regions;
+    TMemoryView<const FRegion> Regions;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyBufferToImage& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
@@ -256,12 +244,13 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyImageToBuffer> final : public IVulkanFrameTask {
     public:
     using FRegion = FCopyImageToBuffer::FRegion;
-    using FRegions = FCopyImageToBuffer::FRegions;
 
-    const FVulkanLocalImage* const SrcImage;
+    const TPtrRef<const FVulkanLocalImage> SrcImage;
+    const TPtrRef<const FVulkanLocalBuffer> DstBuffer;
+
     const VkImageLayout SrcLayout;
-    const FVulkanLocalBuffer* const DstBuffer;
-    const FRegions Regions;
+
+    TMemoryView<const FRegion> Regions;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCopyImageToBuffer& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
@@ -279,14 +268,15 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FBlitImage> final : public IVulkanFrameTask {
 public:
     using FRegion = FBlitImage::FRegion;
-    using FRegions = FBlitImage::FRegions;
 
-    const FVulkanLocalImage* const SrcImage;
+    const TPtrRef<const FVulkanLocalImage> SrcImage;
+    const TPtrRef<const FVulkanLocalImage> DstImage;
+
     const VkImageLayout SrcLayout;
-    const FVulkanLocalImage* const DstImage;
     const VkImageLayout DstLayout;
+
     const VkFilter Filter;
-    const FRegions Regions;
+    TMemoryView<const FRegion> Regions;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FBlitImage& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
@@ -303,7 +293,7 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FGenerateMipmaps> final : public IVulkanFrameTask {
 public:
-    const FVulkanLocalImage* const Image;
+    const TPtrRef<const FVulkanLocalImage> Image;
     const u32 BaseMipLevel;
     const u32 LevelCount;
     const u32 BaseLayer;
@@ -325,13 +315,14 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FResolveImage> final : public IVulkanFrameTask {
 public:
     using FRegion = FResolveImage::FRegion;
-    using FRegions = FResolveImage::FRegions;
 
-    const FVulkanLocalImage* const SrcImage;
+    const TPtrRef<const FVulkanLocalImage> SrcImage;
+    const TPtrRef<const FVulkanLocalImage> DstImage;
+
     const VkImageLayout SrcLayout;
-    const FVulkanLocalImage* const DstImage;
     const VkImageLayout DstLayout;
-    const FRegions Regions;
+
+    TMemoryView<const FRegion> Regions;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FResolveImage& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
@@ -348,7 +339,7 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FFillBuffer> final : public IVulkanFrameTask {
 public:
-    const FVulkanLocalBuffer* const DstBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> DstBuffer;
     const VkDeviceSize DstOffset;
     const VkDeviceSize Size;
     const u32 Pattern;
@@ -369,12 +360,12 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FClearColorImage> final : public IVulkanFrameTask {
 public:
     using FRange = FClearColorImage::FRange;
-    using FRanges = FClearColorImage::FRanges;
 
-    const FVulkanLocalImage* const DstImage;
+    const TPtrRef<const FVulkanLocalImage> DstImage;
     const VkImageLayout DstLayout;
-    const FRanges Ranges;
     const VkClearColorValue ClearValue;
+
+    TMemoryView<const FRange> Ranges;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearColorImage& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
@@ -392,12 +383,12 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FClearDepthStencilImage> final : public IVulkanFrameTask {
 public:
     using FRange = FClearDepthStencilImage::FRange;
-    using FRanges = FClearDepthStencilImage::FRanges;
 
-    const FVulkanLocalImage* const DstImage;
+    const TPtrRef<const FVulkanLocalImage> DstImage;
     const VkImageLayout DstLayout;
-    const FRanges Ranges;
     const VkClearDepthStencilValue ClearValue;
+
+    TMemoryView<const FRange> Ranges;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FClearDepthStencilImage& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
@@ -420,7 +411,7 @@ public:
         VkDeviceSize BufferOffset{ 0 };
     };
 
-    const FVulkanLocalBuffer* const DstBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> DstBuffer;
     const TMemoryView<const FRegion> Regions;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateBuffer& desc, FProcessFunc process) NOEXCEPT;
@@ -438,8 +429,8 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FPresent> final : public IVulkanFrameTask {
 public:
-    const FVulkanSwapchain* const Swapchain;
-    const FVulkanLocalImage* const SrcImage;
+    const TPtrRef<const FVulkanSwapchain> Swapchain;
+    const TPtrRef<const FVulkanLocalImage> SrcImage;
     const FImageLayer Layer;
     const FMipmapLevel Mipmap;
 
@@ -459,12 +450,12 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FCustomTask> final : public IVulkanFrameTask {
 public:
     using FCallback = FCustomTask::FCallback;
-    using FImages = TMemoryView<const TPair<const FVulkanLocalImage*, EResourceState>>;
-    using FBuffers = TMemoryView<const TPair<const FVulkanLocalBuffer*, EResourceState>>;
+    using FImage = TPair<TPtrRef<const FVulkanLocalImage>, EResourceState>;
+    using FBuffer = TPair<TPtrRef<const FVulkanLocalBuffer>, EResourceState>;
 
     const FCallback Callback;
-    const FImages Images;
-    const FBuffers Buffers;
+    TMemoryView<const FImage> Images;
+    TMemoryView<const FBuffer> Buffers;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCustomTask& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();

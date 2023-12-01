@@ -56,7 +56,7 @@ void FBufferedStreamReader::SetStream(IStreamReader* nonBuffered) {
 }
 //----------------------------------------------------------------------------
 bool FBufferedStreamReader::ReadAt_SkipBuffer(const FRawMemory& storage, std::streamoff absolute) {
-    Assert(storage.size());
+    Assert(not storage.empty());
 
     const std::streamoff org = _nonBuffered->TellI();
     const bool success = _nonBuffered->ReadAt(storage, absolute);
@@ -96,7 +96,7 @@ std::streamoff FBufferedStreamReader::SeekI(std::streamoff offset, ESeekOrigin o
         newOrigin = (_origin + _offset) + offset;
         break;
     case PPE::ESeekOrigin::End:
-        newOrigin = std::streamoff(-1);
+        newOrigin = static_cast<std::streamoff>(-1);
         break;
     default:
         AssertNotImplemented();
@@ -118,22 +118,24 @@ std::streamoff FBufferedStreamReader::SeekI(std::streamoff offset, ESeekOrigin o
     return (_origin + _offset);
 }
 //----------------------------------------------------------------------------
-bool FBufferedStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
+bool FBufferedStreamReader::Read(void* storage, std::streamsize sizeInBytesL) {
     Assert(_nonBuffered);
     Assert_NoAssume(_nonBuffered->TellI() == _origin + _capacity);
+    if (sizeInBytesL == 0)
+        return true;
 
-    u8* pdst = (u8*)storage;
+    size_t sizeInBytes = checked_cast<size_t>(sizeInBytesL);
+    u8* pdst = static_cast<u8*>(storage);
 
-    if (checked_cast<size_t>(sizeInBytes) <= _bufferSize) {
+    if (sizeInBytes <= _bufferSize / 2) {
         // Buffered read
 
-        u8* pend = pdst + checked_cast<ptrdiff_t>(sizeInBytes);
+        const u8* pend = (pdst + sizeInBytes);
         while (pdst != pend) {
             Assert(_offset <= _capacity);
 
             if (_offset != _capacity) {
-                Assert(_buffer);
-                Assert(_capacity);
+                Assert(_buffer && _capacity);
 
                 const u32 toRead = Min(checked_cast<u32>(pend - pdst), _capacity - _offset);
                 Assert(toRead > 0);
@@ -143,11 +145,12 @@ bool FBufferedStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
                 pdst += toRead;
                 _offset += toRead;
             }
-            else if (not RefillBuffer_()) {
-                return false;
-            }
+
+            if (_offset == _capacity && not RefillBuffer_())
+                break;
         }
-        return true;
+
+        return (pdst - static_cast<u8*>(storage) == sizeInBytesL);
     }
     else {
         // Non buffered read
@@ -157,43 +160,88 @@ bool FBufferedStreamReader::Read(void* storage, std::streamsize sizeInBytes) {
             Assert(_buffer);
 
             const size_t toCopy = (_capacity - _offset);
-            FPlatformMemory::MemcpyLarge(pdst, _buffer + _offset, toCopy);
+            FPlatformMemory::Memcpy(pdst, _buffer + _offset, toCopy);
 
             pdst += toCopy;
             sizeInBytes -= toCopy;
         }
 
-        _origin = (_origin + _capacity + sizeInBytes);
         _offset = _capacity = 0;
-        if (_nonBuffered->Read(pdst, sizeInBytes)) {
+        if (_nonBuffered->Read(pdst, checked_cast<std::streamsize>(sizeInBytes))) {
+            _origin = (_origin + checked_cast<std::streamsize>(_capacity + sizeInBytes));
             Assert_NoAssume(_nonBuffered->TellI() == TellI());
             return true;
         }
-        else {
-            _origin = _nonBuffered->TellI();
-            return false;
-        }
+
+        _origin = _nonBuffered->TellI();
+        return false;
     }
 }
 //----------------------------------------------------------------------------
 size_t FBufferedStreamReader::ReadSome(void* storage, size_t eltsize, size_t count) {
     Assert(_nonBuffered);
-    Assert(eltsize);
+    Assert_NoAssume(_nonBuffered->TellI() == _origin + _capacity);
 
-    size_t read = 0;
-    u8* pdst = (u8*)storage;
-    for (; read < count; read++, pdst += eltsize) {
-        if (Likely(_offset + eltsize <= _capacity)) {
-            FPlatformMemory::Memcpy(pdst, _buffer + _offset, eltsize);
-            _offset = checked_cast<u32>(_offset + eltsize);
-        }
-        else {
-            if (not FBufferedStreamReader::Read(pdst, eltsize))
+    size_t sizeInBytes = checked_cast<size_t>(eltsize * count);
+    if (sizeInBytes == 0)
+        return 0;
+
+    u8* pdst = static_cast<u8*>(storage);
+    if (sizeInBytes <= _bufferSize / 2) {
+        // Buffered read
+
+        const u8* pend = (pdst + sizeInBytes);
+        while (pdst != pend) {
+            Assert(_offset <= _capacity);
+
+            if (_offset != _capacity) {
+                Assert(_buffer && _capacity);
+
+                const u32 toRead = Min(checked_cast<u32>(pend - pdst), _capacity - _offset);
+                Assert(toRead > 0);
+
+                FPlatformMemory::Memcpy(pdst, _buffer + _offset, toRead);
+
+                pdst += toRead;
+                _offset += toRead;
+            }
+
+            if (_offset == _capacity && not RefillBuffer_())
                 break;
         }
-    }
 
-    return read;
+        return (pdst - static_cast<u8*>(storage));
+    }
+    else {
+        // Non buffered read
+
+        Assert(_offset <= _capacity);
+        size_t read = 0;
+        if (_offset != _capacity) {
+            // read remaining data in buffer
+            Assert(_buffer);
+
+            const u32 toCopy = (_capacity - _offset);
+            FPlatformMemory::Memcpy(pdst, _buffer + _offset, toCopy);
+
+            read += toCopy;
+            pdst += toCopy;
+            _offset += toCopy;
+            sizeInBytes -= toCopy;
+        }
+
+        // perform a native read for the rest
+        _offset = _capacity = 0;
+        const size_t nativeRead = _nonBuffered->ReadSome(pdst, 1, checked_cast<std::streamsize>(sizeInBytes));
+        if (nativeRead > 0) {
+            _origin = (_origin + checked_cast<std::streamsize>(_capacity + nativeRead));
+            Assert_NoAssume(_nonBuffered->TellI() == TellI());
+            return (read + nativeRead);
+        }
+
+        _origin = _nonBuffered->TellI();
+        return read;
+    }
 }
 //----------------------------------------------------------------------------
 bool FBufferedStreamReader::Peek(char& ch) {
@@ -201,12 +249,12 @@ bool FBufferedStreamReader::Peek(char& ch) {
     Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI());
 
     if (_offset + sizeof(char) > _capacity && not RefillBuffer_()) {
-        ch = char(EOF);
+        ch = static_cast<char>(EOF);
         return false;
     }
     else {
         Assert(_offset + sizeof(char) <= _capacity);
-        ch = *(const char*)(_buffer + _offset);
+        ch = *reinterpret_cast<const char*>(_buffer + _offset);
         return true;
     }
 }
@@ -216,12 +264,12 @@ bool FBufferedStreamReader::Peek(wchar_t& wch) {
     Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI());
 
     if (_offset + sizeof(wchar_t) > _capacity && not RefillBuffer_()) {
-        wch = wchar_t(EOF);
+        wch = static_cast<wchar_t>(EOF);
         return false;
     }
     else {
         Assert(_offset + sizeof(wchar_t) <= _capacity);
-        wch = *(const wchar_t*)(_buffer + _offset);
+        wch = *reinterpret_cast<const wchar_t*>(_buffer + _offset);
         return true;
     }
 }
@@ -229,12 +277,13 @@ bool FBufferedStreamReader::Peek(wchar_t& wch) {
 bool FBufferedStreamReader::RefillBuffer_() {
     Assert(_nonBuffered);
     Assert_NoAssume(_nonBuffered->TellI() == _origin + _capacity);
+    Assert_NoAssume(_offset == _capacity);
 
     if (_capacity & _offset) {
         // keep unread relative difference
 
         const std::streamoff streamoff = _nonBuffered->SeekI(_origin + _offset);
-        Assert(std::streamoff(-1) != streamoff);
+        Assert(static_cast<std::streamoff>(-1) != streamoff);
         Assert(_origin + _offset == streamoff);
 
         _origin = streamoff;
@@ -321,7 +370,7 @@ std::streamoff FBufferedStreamWriter::TellO() const NOEXCEPT {
     Assert(_offset <= _bufferSize);
     Assert_NoAssume(_nonBuffered->TellO() == _origin);
 
-    return (_origin + _offset);
+    return (_origin + checked_cast<std::streamsize>(_offset));
 }
 //----------------------------------------------------------------------------
 std::streamoff FBufferedStreamWriter::SeekO(std::streamoff offset, ESeekOrigin origin/* = ESeekOrigin::Begin */) {
@@ -336,10 +385,10 @@ std::streamoff FBufferedStreamWriter::SeekO(std::streamoff offset, ESeekOrigin o
         newOrigin = offset;
         break;
     case PPE::ESeekOrigin::Relative:
-        newOrigin = (_origin + _offset) + offset;
+        newOrigin = (_origin + checked_cast<std::streamsize>(_offset)) + offset;
         break;
     case PPE::ESeekOrigin::End:
-        newOrigin = std::streamoff(-1);
+        newOrigin = static_cast<std::streamoff>(-1);
         break;
     default:
         AssertNotImplemented();
@@ -358,21 +407,23 @@ std::streamoff FBufferedStreamWriter::SeekO(std::streamoff offset, ESeekOrigin o
         _origin = _nonBuffered->SeekO(offset, origin);
     }
 
-    return (_origin + _offset);
+    return (_origin + checked_cast<std::streamsize>(_offset));
 }
 //----------------------------------------------------------------------------
 bool FBufferedStreamWriter::Write(const void* storage, std::streamsize sizeInBytes) {
     Assert(_nonBuffered);
     Assert_NoAssume(_nonBuffered->TellO() == _origin);
+    if (sizeInBytes == 0)
+        return true;
 
-    if (checked_cast<size_t>(sizeInBytes) <= _bufferSize) {
+    if (checked_cast<size_t>(sizeInBytes) <= _bufferSize / 2) {
         // Buffered write
 
         if (nullptr == _buffer) // allocate write buffer lazily IFN
             ForceAllocateInnerBuffer();
 
-        const u8* psrc = (const u8*)storage;
-        const u8* pend = psrc + checked_cast<ptrdiff_t>(sizeInBytes);
+        const u8* psrc = static_cast<const u8*>(storage);
+        const u8* const pend = psrc + checked_cast<ptrdiff_t>(sizeInBytes);
         while (psrc != pend) {
             Assert(_offset <= _bufferSize);
 
@@ -386,10 +437,11 @@ bool FBufferedStreamWriter::Write(const void* storage, std::streamsize sizeInByt
                 _offset += toWrite;
             }
             else if (not CommitBuffer_()) {
-                return false;
+                break;
             }
         }
-        return true;
+
+        return (psrc == pend);
     }
     else {
         // Commit buffer and native write
@@ -405,14 +457,46 @@ size_t FBufferedStreamWriter::WriteSome(const void* storage, size_t eltsize, siz
     Assert(_nonBuffered);
     Assert(eltsize);
 
-    size_t written = 0;
-    const u8* psrc = (const u8*)storage;
-    for (; written < count; written++, psrc += eltsize) {
-        if (not FBufferedStreamWriter::Write(psrc, eltsize))
-            break;
-    }
+    const size_t sizeInBytes = (eltsize * count);
+    if (sizeInBytes == 0)
+        return 0;
 
-    return written;
+    if (sizeInBytes <= _bufferSize / 2) {
+        if (nullptr == _buffer) // allocate write buffer lazily IFN
+            ForceAllocateInnerBuffer();
+
+        size_t written = 0;
+        const u8* psrc = static_cast<const u8*>(storage);
+        const u8* const pend = psrc + checked_cast<ptrdiff_t>(sizeInBytes);
+        while (psrc != pend) {
+            Assert(_offset <= _bufferSize);
+
+            if (_offset != _bufferSize) {
+                const size_t toWrite = Min(checked_cast<size_t>(pend - psrc), _bufferSize - _offset);
+                Assert(toWrite > 0);
+
+                FPlatformMemory::Memcpy(_buffer + _offset, psrc, toWrite);
+
+                written += toWrite;
+                psrc += toWrite;
+                _offset += toWrite;
+            }
+            else if (not CommitBuffer_()) {
+                break;
+            }
+        }
+
+        return written;
+    }
+    else {
+        // Commit buffer and native write
+        if (not CommitBuffer_())
+            return 0;
+
+        const size_t written = _nonBuffered->WriteSome(storage, eltsize, count);
+        _origin = _nonBuffered->TellO();
+        return  written;
+    }
 }
 //----------------------------------------------------------------------------
 size_t FBufferedStreamWriter::StreamCopy(const read_f& read, size_t blockSz) {

@@ -23,6 +23,27 @@ template <typename T>
 TBasicMatch<T>::~TBasicMatch() = default;
 //----------------------------------------------------------------------------
 template <typename T>
+TBasicMatch<T>::TBasicMatch(TBasicMatch&& rvalue) NOEXCEPT
+    : _symbol(rvalue._symbol)
+    , _value(std::move(rvalue._value))
+    , _site(std::move(rvalue._site))
+{
+    rvalue._symbol = FSymbols::Invalid;
+    rvalue._site = Default;
+}
+//----------------------------------------------------------------------------
+template <typename T>
+TBasicMatch<T>& TBasicMatch<T>::operator =(TBasicMatch&& rvalue) NOEXCEPT {
+    _symbol = rvalue._symbol;
+    _value = std::move(rvalue._value);
+    _site = std::move(rvalue._site);
+
+    rvalue._symbol = FSymbols::Invalid;
+    rvalue._site = Default;
+    return (*this);
+}
+//----------------------------------------------------------------------------
+template <typename T>
 TBasicMatch<T>::TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FSpan& site) NOEXCEPT
     : _symbol(symbol), _value(std::move(rvalue)), _site(site)
 {}

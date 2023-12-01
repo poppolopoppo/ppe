@@ -375,7 +375,7 @@ inline void FVulkanLocalDebugger::FRawTextDump_::DumpTaskInfo(const FVulkanDispa
     if (task.LocalGroupSize.has_value())
         Out << Indent << Align_("localGroupSize:") << *task.LocalGroupSize << Eol;
     Out << Indent << "commands = [ "
-        << Fmt::Join(task.Commands.MakeView().Map(
+        << Fmt::Join(task.Commands.Map(
             [](const FDispatchComputeIndirect::FComputeCommand& cmd) {
                 return cmd.IndirectBufferOffset;
             }), ", ")

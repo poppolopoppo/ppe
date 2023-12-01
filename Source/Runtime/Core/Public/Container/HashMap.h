@@ -26,20 +26,12 @@ template <
 >
 using THashMap = TBasicHashTable< details::THashMapTraits_<_Key, _Value>, _Hasher, _EqualTo, _Allocator >;
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-FTextWriter& operator <<(FTextWriter& oss, const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {
-    oss << "{ ";
+template <typename _Char, typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {
+    oss << STRING_LITERAL(_Char, "{ ");
     for (const auto& it : hashMap)
-        oss << '(' << it.first << ", " << it.second << "), ";
-    return oss << '}';
-}
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _Hasher, typename _EqualTo, typename _Allocator>
-FWTextWriter& operator <<(FWTextWriter& oss, const THashMap<_Key, _Value, _Hasher, _EqualTo, _Allocator>& hashMap) {
-    oss << L"{ ";
-    for (const auto& it : hashMap)
-        oss << L'(' << it.first << L", " << it.second << L"), ";
-    return oss << L'}';
+        oss << STRING_LITERAL(_Char, '(') << it.first << STRING_LITERAL(_Char, ", ") << it.second << STRING_LITERAL(_Char, "), ");
+    return oss << STRING_LITERAL(_Char, '}');
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

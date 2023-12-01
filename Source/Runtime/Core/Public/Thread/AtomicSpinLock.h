@@ -27,9 +27,17 @@ constexpr i32 ATOMIC_SPINLOCK_CYCLES = 100;
 //----------------------------------------------------------------------------
 namespace details {
 template <typename _AtomicBarrier>
-static FORCE_INLINE void WakeAtomicBarrier(_AtomicBarrier* pBarrier) NOEXCEPT {
+static FORCE_INLINE void NotifyOneAtomicBarrier(_AtomicBarrier* pBarrier) NOEXCEPT {
 #if PPE_HAS_CXX20
     pBarrier->notify_one();
+#else
+    Unused(pBarrier);
+#endif
+}
+template <typename _AtomicBarrier>
+static FORCE_INLINE void NotifyAllAtomicBarrier(_AtomicBarrier* pBarrier) NOEXCEPT {
+#if PPE_HAS_CXX20
+    pBarrier->notify_all();
 #else
     Unused(pBarrier);
 #endif
@@ -72,7 +80,7 @@ public:
     }
     void Unlock() NOEXCEPT {
         _locked.clear(std::memory_order_relaxed);
-        details::WakeAtomicBarrier(&_locked);
+        details::NotifyOneAtomicBarrier(&_locked);
     }
 
     struct FScope : Meta::FNonCopyableNorMovable {
@@ -156,7 +164,7 @@ public:
     void Unlock() NOEXCEPT {
         // release the locks, the next waiting thread will stop spinning
         Out.store(Out.load(std::memory_order_relaxed) + 1, std::memory_order_release );
-        details::WakeAtomicBarrier(&Out);
+        details::NotifyOneAtomicBarrier(&Out);
     }
 
     struct FScope : Meta::FNonCopyableNorMovable {
@@ -235,7 +243,7 @@ public: // Reader
             FPlatformProcess::SleepForSpinning(backoff);
         }
 
-        details::WakeAtomicBarrier(&Readers);
+        details::NotifyOneAtomicBarrier(&Readers);
     }
 
 public: // Writer
@@ -271,7 +279,7 @@ public: // Writer
     void ReleaseWriter() NOEXCEPT {
         Assert_NoAssume(WRITER_LOCK == Readers);
         Readers.store(0, std::memory_order_release); // release write lock
-        details::WakeAtomicBarrier(&Readers);
+        details::NotifyOneAtomicBarrier(&Readers);
     }
 
 };
@@ -305,7 +313,7 @@ public:
             if (Likely(_phase.compare_exchange_strong(expected, nextPhase | TransitionBit_))) {
                 onTransition();
                 _phase.store(nextPhase, std::memory_order_release);
-                details::WakeAtomicBarrier(&_phase);
+                details::NotifyAllAtomicBarrier(&_phase);
                 return true;
             }
             else for (i32 backoff = 0; expected != nextPhase;) {
@@ -379,7 +387,7 @@ public:
     void Unlock(size_type subset) NOEXCEPT {
         Assert(subset);
         Verify((_mask.fetch_and(~subset, std::memory_order_release) & subset) == subset);
-        details::WakeAtomicBarrier(&_mask);
+        details::NotifyAllAtomicBarrier(&_mask);
     }
 
 private:

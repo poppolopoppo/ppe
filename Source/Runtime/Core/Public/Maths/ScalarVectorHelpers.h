@@ -24,6 +24,7 @@ PPE_SCALARVECTOR_UNARYOP_FUNC(Rcp)
 PPE_SCALARVECTOR_UNARYOP_FUNC(RSqrt)
 PPE_SCALARVECTOR_UNARYOP_FUNC(RSqrt_Low)
 PPE_SCALARVECTOR_UNARYOP_FUNC(Sqrt)
+PPE_SCALARVECTOR_UNARYOP_FUNC(SStep)
 PPE_SCALARVECTOR_UNARYOP_FUNC(CeilToFloat)
 PPE_SCALARVECTOR_UNARYOP_FUNC(FloorToFloat)
 PPE_SCALARVECTOR_UNARYOP_FUNC(RoundToFloat)
@@ -364,8 +365,35 @@ CONSTEXPR auto BarycentricLerp(
     const details::TScalarVectorExpr<T, _Dim, A>& a,
     const details::TScalarVectorExpr<T, _Dim, B>& b,
     const details::TScalarVectorExpr<T, _Dim, C>& c,
-    const details::TScalarVectorExpr<float, _Dim, D>& f) NOEXCEPT {
-    return BarycentricLerp(a, b, c, f.x, f.y, f.z);
+    const details::TScalarVectorExpr<float, 3, D>& f) NOEXCEPT {
+    return BarycentricLerp(a, b, c, f.template Get<0>(), f.template Get<1>(), f.template Get<2>());
+}
+//----------------------------------------------------------------------------
+// BilateralLerp
+//----------------------------------------------------------------------------
+template <typename T, u32 _Dim, typename A, typename B, typename C, typename D>
+CONSTEXPR auto BilateralLerp(
+    const details::TScalarVectorExpr<T, _Dim, A>& p00,
+    const details::TScalarVectorExpr<T, _Dim, B>& p10,
+    const details::TScalarVectorExpr<T, _Dim, C>& p11,
+    const details::TScalarVectorExpr<T, _Dim, D>& p01,
+    float f0, float f1) NOEXCEPT {
+    return Meta::static_for<_Dim>([&](auto... idx) {
+        return TScalarVector<T, _Dim>(Lerp(
+            Lerp(p00.template Get<idx>(), p01.template Get<idx>(), f1),
+            Lerp(p10.template Get<idx>(), p11.template Get<idx>(), f1),
+            f0)...);
+    });
+}
+//----------------------------------------------------------------------------
+template <typename T, u32 _Dim, typename A, typename B, typename C, typename D, typename E>
+CONSTEXPR auto BilateralLerp(
+    const details::TScalarVectorExpr<T, _Dim, A>& p00,
+    const details::TScalarVectorExpr<T, _Dim, B>& p10,
+    const details::TScalarVectorExpr<T, _Dim, C>& p11,
+    const details::TScalarVectorExpr<T, _Dim, D>& p01,
+    const details::TScalarVectorExpr<float, 2, E>& f) NOEXCEPT {
+    return BilateralLerp(p00, p10, p11, p01, f.template Get<0>(), f.template Get<1>());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

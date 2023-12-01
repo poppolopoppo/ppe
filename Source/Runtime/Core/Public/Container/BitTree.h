@@ -245,7 +245,7 @@ struct TBitTree {
     }
 
     u32 Allocate() NOEXCEPT {
-        // returns leaf index of UMax if full
+        // returns leaf index or UMax if full
         Assert(Bits);
         if (Unlikely(Full()))
             return UMax;

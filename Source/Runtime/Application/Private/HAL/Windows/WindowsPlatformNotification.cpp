@@ -119,7 +119,7 @@ private:
         AsyncSyscall([this](ITaskContext&) {
             const Meta::FLockGuard scopeLock(_barrier);
 
-            LOG_CHECKVOID(HAL, SUCCEEDED(::CoInitialize(NULL)));
+            PPE_LOG_CHECKVOID(HAL, SUCCEEDED(::CoInitialize(NULL)));
 
             ::ITaskbarList3* pTaskbar = nullptr;
             if (not SUCCEEDED(::CoCreateInstance(CLSID_TaskbarList, NULL, CLSCTX_INPROC_SERVER, IID_ITaskbarList3, (void**)&pTaskbar)))
@@ -166,19 +166,19 @@ public:
         switch (icon) {
         case ENotificationIcon::None:
             nid.dwInfoFlags = NIIF_NONE;
-            LOG(Notification, Debug, L"notify systray : {0} -- {1}", title, text);
+            PPE_LOG(Notification, Debug, "notify systray : {0} -- {1}", title, text);
             break;
         case ENotificationIcon::Info:
             nid.dwInfoFlags = NIIF_INFO;
-            LOG(Notification, Info, L"notify systray : {0} -- {1}", title, text);
+            PPE_LOG(Notification, Info, "notify systray : {0} -- {1}", title, text);
             break;
         case ENotificationIcon::Warning:
             nid.dwInfoFlags = NIIF_WARNING;
-            LOG(Notification, Warning, L"notify systray : {0} -- {1}", title, text);
+            PPE_LOG(Notification, Warning, "notify systray : {0} -- {1}", title, text);
             break;
         case ENotificationIcon::Error:
             nid.dwInfoFlags = NIIF_ERROR;
-            LOG(Notification, Error, L"notify systray : {0} -- {1}", title, text);
+            PPE_LOG(Notification, Error, "notify systray : {0} -- {1}", title, text);
             break;
         }
 
@@ -256,7 +256,7 @@ public:
             NULL );
 
         if (not cmdIDI)
-            LOG_LASTERROR(Notification, L"TrackPopupMenuEx");
+            PPE_LOG_LASTERROR(Notification, "TrackPopupMenuEx");
 
         if (hWnd)
             ::ShowWindow(hWnd, SW_HIDE);
@@ -275,7 +275,7 @@ public:
             const FWindowsTaskbar_::FUserCmd* const pUserCmd = systrayCmds._commands.Find(cmdIndex);
 
             if (pUserCmd) {
-                LOG(Notification, Emphasis, L"launch windows systray command <{0}/{1}>", pUserCmd->Category, pUserCmd->Label);
+                PPE_LOG(Notification, Emphasis, "launch windows systray command <{0}/{1}>", pUserCmd->Category, pUserCmd->Label);
                 pUserCmd->Delegate();
             }
         }
@@ -314,7 +314,7 @@ private:
             ShowSystray_(systray->_hWnd);
         }
 
-        LOG(HAL, Debug, L"started windows systray background thread for message pump");
+        PPE_LOG(HAL, Debug, "started windows systray background thread for message pump");
 
         while (systray->_active) {
             if (systray->_barrier.try_lock()) {
@@ -324,7 +324,7 @@ private:
             FPlatformProcess::Sleep(.3f);
         }
 
-        LOG(HAL, Debug, L"stopping windows systray background thread for message pump");
+        PPE_LOG(HAL, Debug, "stopping windows systray background thread for message pump");
 
         {
             const Meta::FLockGuard scopeLock(systray->_barrier);
@@ -391,7 +391,7 @@ private:
                 hLoadIconMetric(hInstance, MAKEINTRESOURCEW(idi), LIM_SMALL, &hIcon);
             }
             else {
-                LOG(HAL, Warning, L"failed to bind LoadIconMetric function from Comctl32.dll, fallback on LoadIcon");
+                PPE_LOG(HAL, Warning, "failed to bind LoadIconMetric function from Comctl32.dll, fallback on LoadIcon");
             }
 
             FPlatformProcess::DetachFromDynamicLibrary(hComctl32);
@@ -448,7 +448,7 @@ size_t FWindowsPlatformNotification::AddSystrayCommand(
         cmdIndex = cmds.Emplace(category, label, std::move(cmd));
     });
 
-    LOG(Notification, Debug, L"add systray command <{0}/{1}> -> #{2}", category, label, cmdIndex);
+    PPE_LOG(Notification, Debug, "add systray command <{0}/{1}> -> #{2}", category, label, cmdIndex);
 
     return cmdIndex;
 }
@@ -456,7 +456,7 @@ size_t FWindowsPlatformNotification::AddSystrayCommand(
 bool FWindowsPlatformNotification::RemoveSystrayCommand(size_t index) {
     Assert(index != INDEX_NONE);
 
-    LOG(Notification, Debug, L"remove systray command #{0}", index);
+    PPE_LOG(Notification, Debug, "remove systray command #{0}", index);
 
     bool cmdFound = false;
     FWindowsTaskbar_::Get().Commands([&](FWindowsTaskbar_::FUserCommands& cmds) {

@@ -71,6 +71,9 @@ public:
     TFlatMap(std::initializer_list<value_type> values);
     TFlatMap& operator =(std::initializer_list<value_type> values);
 
+    TFlatMap(TMemoryView<const value_type> values);
+    TFlatMap(TMemoryView<const TPair<const key_type, mapped_type>> values);
+
     template <typename _It>
     TFlatMap(_It&& begin, _It&& end) { insert(begin, end); }
 
@@ -100,6 +103,9 @@ public:
 
     const_iterator begin() const { return _vector.begin(); }
     const_iterator end() const { return _vector.end(); }
+
+    const_iterator cbegin() const { return _vector.begin(); }
+    const_iterator cend() const { return _vector.end(); }
 
     reverse_iterator rbegin() { return _vector.rbegin(); }
     reverse_iterator rend() { return _vector.rend(); }

@@ -67,9 +67,9 @@ public:
     CONSTEXPR TMemoryView(const TMemoryView& other) NOEXCEPT;
     CONSTEXPR TMemoryView& operator =(const TMemoryView& other) NOEXCEPT;
 
-    template <typename U>
+    template <typename U, Meta::TEnableIf<std::is_assignable_v<T*&, U*>>* = nullptr>
     CONSTEXPR TMemoryView(const TMemoryView<U>& other) NOEXCEPT;
-    template <typename U>
+    template <typename U, Meta::TEnableIf<std::is_assignable_v<T*&, U*>>* = nullptr>
     CONSTEXPR TMemoryView& operator =(const TMemoryView<U>& other) NOEXCEPT;
 
     CONSTEXPR CONSTF pointer Pointer() const { return _storage; }
@@ -130,67 +130,67 @@ public:
     }
 
     template <typename U>
-    auto Peek() const {
+    auto* Peek() const {
         Assert_NoAssume(sizeof(U) <= _size);
         using result_t = Meta::TConditional<std::is_const_v<T>, std::add_const_t<U>, U>;
         return reinterpret_cast<result_t*>(_storage);
     }
 
-    NODISCARD TMemoryView<T> Slice(size_t index, size_t stride) const;
+    NODISCARD TMemoryView Slice(size_t index, size_t stride) const;
     NODISCARD TMemoryView< Meta::TAddConst<T> > SliceConst(size_t index, size_t stride) const;
 
-    NODISCARD TMemoryView<T> SubRange(size_t offset, size_t count) const;
+    NODISCARD TMemoryView SubRange(size_t offset, size_t count) const;
     NODISCARD TMemoryView< Meta::TAddConst<T> > SubRangeConst(size_t offset, size_t count) const;
 
-    NODISCARD TMemoryView<T> SubRange(iterator first, iterator last) const;
+    NODISCARD TMemoryView SubRange(iterator first, iterator last) const;
     NODISCARD TMemoryView< Meta::TAddConst<T> > SubRangeConst(iterator first, iterator last) const;
 
-    NODISCARD TMemoryView<T> CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
+    NODISCARD TMemoryView CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
     NODISCARD TMemoryView< Meta::TAddConst<T> > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
 
-    NODISCARD TMemoryView<T> CutStartingAt(iterator it) const {
+    NODISCARD TMemoryView CutStartingAt(iterator it) const {
         Assert_NoAssume(end() == it || AliasesToContainer(it));
         return (end() != it
             ? TMemoryView(std::addressof(*it), std::distance(it, end()))
             : TMemoryView(_storage+_size, size_type(0)) );
     }
 
-    NODISCARD TMemoryView<T> CutStartingAt(reverse_iterator it) const {
+    NODISCARD TMemoryView CutStartingAt(reverse_iterator it) const {
         Assert_NoAssume(rend() == it || AliasesToContainer(it));
         return (rend() != it
             ? TMemoryView(std::addressof(*it), _storage + _size - std::addressof(*it))
             : TMemoryView(_storage, size_type(0)) );
     }
 
-    NODISCARD TMemoryView<T> CutBefore(size_t offset) const { return SubRange(0, offset); }
+    NODISCARD TMemoryView CutBefore(size_t offset) const { return SubRange(0, offset); }
     NODISCARD TMemoryView< Meta::TAddConst<T> > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
 
-    NODISCARD TMemoryView<T> CutBefore(iterator it) const {
+    NODISCARD TMemoryView CutBefore(iterator it) const {
         Assert_NoAssume(end() == it || AliasesToContainer(it));
-        return TMemoryView<T>(_storage, std::distance(begin(), it));
+        return TMemoryView(_storage, std::distance(begin(), it));
     }
 
-    NODISCARD TMemoryView<T> CutBefore(reverse_iterator it) const {
+    NODISCARD TMemoryView CutBefore(reverse_iterator it) const {
         Assert_NoAssume(rend() == it || AliasesToContainer(it));
-        return TMemoryView<T>(_storage, std::addressof(*it) - _storage);
+        return TMemoryView(_storage, std::addressof(*it) - _storage);
     }
 
-    NODISCARD TMemoryView<T> FirstNElements(size_t count) const { return CutBefore(count); }
-    NODISCARD TMemoryView<T> LastNElements(size_t count) const { Assert(_size >= count); return CutStartingAt(_size - count); }
+    NODISCARD TMemoryView FirstNElements(size_t count) const { return CutBefore(count); }
+    NODISCARD TMemoryView LastNElements(size_t count) const { Assert(_size >= count); return CutStartingAt(_size - count); }
 
-    NODISCARD TMemoryView<T> TrimFirstNElements(size_t count) const { return CutStartingAt(count); }
-    NODISCARD TMemoryView<T> TrimLastNElements(size_t count) const { Assert(_size >= count); return CutBefore(_size - count); }
+    NODISCARD TMemoryView TrimFirstNElements(size_t count) const { return CutStartingAt(count); }
+    NODISCARD TMemoryView TrimLastNElements(size_t count) const { Assert(_size >= count); return CutBefore(_size - count); }
 
-    NODISCARD TMemoryView<T> ShiftBack(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage, _size - n); }
-    NODISCARD TMemoryView<T> ShiftFront(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage + n, _size - n); }
+    NODISCARD TMemoryView ShiftBack(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage, _size - n); }
+    NODISCARD TMemoryView ShiftFront(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage + n, _size - n); }
 
-    NODISCARD TMemoryView<T> GrowBack(const size_type n = 1) const { return TMemoryView<T>(_storage, _size + n); }
-    NODISCARD TMemoryView<T> GrowFront(const size_type n = 1) const { return TMemoryView<T>(_storage - n, _size + n); }
+    NODISCARD TMemoryView GrowBack(const size_type n = 1) const { return TMemoryView<T>(_storage, _size + n); }
+    NODISCARD TMemoryView GrowFront(const size_type n = 1) const { return TMemoryView<T>(_storage - n, _size + n); }
 
     template <typename U>
     bool IsSubRangeOf(const TMemoryView<U>& parent) const {
-        return (static_cast<void*>(parent.data()) <= static_cast<void*>(_storage) &&
-                static_cast<void*>(parent.data() + parent.size()) >= static_cast<void*>(_storage + _size));
+        return (static_cast<const void*>(parent.data()) <= static_cast<const void*>(_storage) &&
+                static_cast<const void*>(parent.data() + parent.size()) >= static_cast<const void*>(_storage + _size));
     }
 
     iterator Find(const T& elem) const { return std::find(begin(), end(), elem); }
@@ -259,7 +259,7 @@ public:
     bool RangeEqual(TMemoryView<T> other) const {
         return std::equal(begin(), end(), other.begin(), other.end());
     }
-    template <typename U, typename _Pred = Meta::TEqualTo<T>>
+    template <typename U, typename _Pred = Meta::TEqualTo<T>, Meta::TEnableIf<std::is_assignable_v<T*&, U*>>* = nullptr>
     bool RangeEqual(TMemoryView<U> other, _Pred pred = Default) const {
         return std::equal(begin(), end(), other.begin(), other.end(), pred);
     }
@@ -365,34 +365,35 @@ using FRawMemoryConst = TMemoryView<const u8>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR u32 lengthof(const TMemoryView<T>& view) { return checked_cast<u32>(view.size()); }
+NODISCARD CONSTEXPR u32 lengthof(const TMemoryView<T>& view) { return checked_cast<u32>(view.size()); }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-CONSTEXPR TMemoryView<T> MakeView(T(&staticArray)[_Dim]) {
+NODISCARD CONSTEXPR TMemoryView<T> MakeView(T(&staticArray)[_Dim]) {
     return TMemoryView<T>(&staticArray[0], _Dim);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(T(&staticArray)[_Dim]) {
+NODISCARD CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(T(&staticArray)[_Dim]) {
     return TMemoryView<Meta::TAddConst<T> >(&staticArray[0], _Dim);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-CONSTEXPR TMemoryView<T> MakeView(std::array<T, _Dim>& arr) {
+NODISCARD CONSTEXPR TMemoryView<T> MakeView(std::array<T, _Dim>& arr) {
     return TMemoryView<T>(arr.data(), _Dim);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-CONSTEXPR TMemoryView<const T> MakeView(const std::array<T, _Dim>& arr) {
+NODISCARD CONSTEXPR TMemoryView<const T> MakeView(const std::array<T, _Dim>& arr) {
     return TMemoryView<const T>(arr.data(), _Dim);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(const std::array<T, _Dim>& arr) {
+NODISCARD CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(const std::array<T, _Dim>& arr) {
     return TMemoryView<Meta::TAddConst<T> >(arr.data(), _Dim);
 }
 //----------------------------------------------------------------------------
 template <typename _It>
+NODISCARD
 typename std::enable_if<
     Meta::is_iterator<_It>::value,
     TMemoryView< typename std::iterator_traits<_It>::value_type >
@@ -403,7 +404,7 @@ typename std::enable_if<
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
-TMemoryView<typename _VectorLike::value_type> MakeView(_VectorLike& container) {
+NODISCARD TMemoryView<typename _VectorLike::value_type> MakeView(_VectorLike& container) {
     if (container.begin() != container.end())
         return TMemoryView<typename _VectorLike::value_type>(std::addressof(*std::begin(container)), std::distance(std::begin(container), std::end(container)) );
     else
@@ -411,7 +412,7 @@ TMemoryView<typename _VectorLike::value_type> MakeView(_VectorLike& container) {
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
-TMemoryView<const typename _VectorLike::value_type> MakeView(const _VectorLike& container) {
+NODISCARD TMemoryView<const typename _VectorLike::value_type> MakeView(const _VectorLike& container) {
     if (container.begin() != container.end())
         return TMemoryView<const typename _VectorLike::value_type>(std::addressof(*std::begin(container)), std::distance(std::begin(container), std::end(container)) );
     else
@@ -419,7 +420,7 @@ TMemoryView<const typename _VectorLike::value_type> MakeView(const _VectorLike& 
 }
 //----------------------------------------------------------------------------
 template <typename _VectorLike>
-TMemoryView<const typename _VectorLike::value_type> MakeConstView(const _VectorLike& container) {
+NODISCARD TMemoryView<const typename _VectorLike::value_type> MakeConstView(const _VectorLike& container) {
     if (container.begin() != container.end())
         return TMemoryView<const typename _VectorLike::value_type>(std::addressof(*std::begin(container)), std::distance(std::begin(container), std::end(container)) );
     else
@@ -427,65 +428,78 @@ TMemoryView<const typename _VectorLike::value_type> MakeConstView(const _VectorL
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR TMemoryView< T > MakeView(T* pbegin, T* pend) {
+NODISCARD CONSTEXPR TMemoryView< T > MakeView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
     return TMemoryView< T >(pbegin, std::distance(pbegin, pend));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(T* pbegin, T* pend) {
+NODISCARD CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(T* pbegin, T* pend) {
     Assert(pend >= pbegin);
     return TMemoryView<Meta::TAddConst<T> >(pbegin, std::distance(pbegin, pend));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTF TMemoryView<Meta::TEnableIf<std::is_standard_layout_v<T>, u8>> MakeRawView(T& assumePod) {
+NODISCARD CONSTF TMemoryView<Meta::TEnableIf<std::is_standard_layout_v<T>, u8>> MakeRawView(T& assumePod) {
     return { reinterpret_cast<u8*>(&assumePod), sizeof(T) };
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTF TMemoryView<Meta::TEnableIf<std::is_standard_layout_v<T>, const u8>> MakeRawView(const T& assumePod) {
+NODISCARD CONSTF TMemoryView<Meta::TEnableIf<std::is_standard_layout_v<T>, const u8>> MakeRawView(const T& assumePod) {
     return { reinterpret_cast<const u8*>(&assumePod), sizeof(T) };
 }
 //----------------------------------------------------------------------------
+NODISCARD inline TMemoryView<u8> MakeRawView(void* data, size_t sizeInBytes) {
+    return TMemoryView<u8>{ static_cast<u8*>(data), sizeInBytes };
+}
+//----------------------------------------------------------------------------
+NODISCARD inline TMemoryView<const u8> MakeRawView(const void* data, size_t sizeInBytes) {
+    return TMemoryView<const u8>{ static_cast<const u8*>(data), sizeInBytes };
+}
+//----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<u8> MakeRawView(const TMemoryView<T>& assumePods) {
+NODISCARD TMemoryView<u8> MakeRawView(const TMemoryView<T>& assumePods) {
     return assumePods.template Cast<u8>();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<const u8> MakeRawView(const TMemoryView<const T>& assumePods) {
+NODISCARD TMemoryView<const u8> MakeRawView(const TMemoryView<const T>& assumePods) {
     return assumePods.template Cast<const u8>();
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto MakeRawConstView(const T& assumePod) {
+NODISCARD auto MakeRawConstView(const T& assumePod) {
     return MakeRawView(assumePod);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TMemoryView<const u8> MakeRawConstView(const TMemoryView<T>& assumePods) {
+NODISCARD TMemoryView<const u8> MakeRawConstView(const TMemoryView<T>& assumePods) {
     return assumePods.template Cast<const u8>();
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-auto MakeRawView(T(&staticArray)[_Dim]) {
+NODISCARD auto MakeRawView(T(&staticArray)[_Dim]) {
     return MakeRawView(MakeView(staticArray));
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-auto MakeRawConstView(T(&staticArray)[_Dim]) {
+NODISCARD auto MakeRawConstView(T(&staticArray)[_Dim]) {
     return MakeRawConstView(MakeView(staticArray));
+}
+//----------------------------------------------------------------------------
+template <typename T>
+NODISCARD TMemoryView<Meta::TRemoveConst<T>> RemoveConstView(const TMemoryView<T>& view) {
+    return TMemoryView<Meta::TRemoveConst<T>>(const_cast<Meta::TRemoveConst<T>*>(view.data()), view.size());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename U, typename V>
+template <typename U, typename V, std::decay_t<decltype(std::declval<std::add_lvalue_reference_t<U>>() = std::declval<std::add_rvalue_reference_t<V>>())>* = nullptr>
 CONSTEXPR void Broadcast(const TMemoryView<U>& dst, V&& value) {
     std::fill(dst.begin(), dst.end(), std::forward<V>(value));
 }
 //----------------------------------------------------------------------------
-template <typename U, typename V>
+template <typename U, typename V, std::decay_t<decltype(std::declval<std::add_lvalue_reference_t<U>>() = std::declval<std::add_rvalue_reference_t<V>>())>* = nullptr>
 CONSTEXPR void Copy(const TMemoryView<U>& dst, const TMemoryView<V>& src) {
     Assert(dst.size() == src.size());
     std::copy(src.begin(), src.end(), dst.begin());
@@ -497,19 +511,28 @@ CONSTEXPR void Move(const TMemoryView<T>& dst, const TMemoryView<T>& src) {
     std::move(src.begin(), src.end(), dst.begin());
 }
 //----------------------------------------------------------------------------
-template <typename T, typename _Lambda>
+template <typename T, typename _Lambda, decltype(std::declval<_Lambda&&>()(std::declval<size_t>(), std::declval<T*>()))* = nullptr>
 CONSTEXPR void Collect(const TMemoryView<T>& dst, _Lambda&& collect) {
     forrange(i, 0, dst.size())
         collect(i, &dst[i]);
 }
 //----------------------------------------------------------------------------
-template <typename T, typename U>
-CONSTEXPR bool Contains(const TMemoryView<T>& v, const U& elt) {
+template <typename T, typename U, decltype(std::declval<std::add_rvalue_reference_t<T>>() == std::declval<std::add_rvalue_reference_t<U>>())* = nullptr>
+NODISCARD CONSTEXPR bool Contains(const TMemoryView<T>& v, const U& elt) {
     return (v.end() != std::find(v.begin(), v.end(), elt));
 }
 //----------------------------------------------------------------------------
-template <typename T, typename U>
-CONSTEXPR size_t IndexOf(const TMemoryView<T>& v, const U& elt) {
+template <typename T, Meta::TEnableIf<std::is_trivial_v<T>>* = nullptr>
+NODISCARD CONSTEXPR int Memcmp(const TMemoryView<T>& lhs, const TMemoryView<T>& rhs) {
+    const int cmp = std::memcmp(lhs.data(), rhs.data(),
+        Min(lhs.SizeInBytes(), rhs.SizeInBytes()));
+    if (cmp != 0)
+        return cmp;
+    return (lhs.size() < rhs.size() ? -1 : (lhs.size() == rhs.size() ? 0 : 1));
+}
+//----------------------------------------------------------------------------
+template <typename T, typename U, decltype(std::declval<std::add_rvalue_reference_t<T>>() == std::declval<std::add_rvalue_reference_t<U>>())* = nullptr>
+NODISCARD CONSTEXPR size_t IndexOf(const TMemoryView<T>& v, const U& elt) {
     const auto it = std::find(v.begin(), v.end(), elt);
     return (v.end() == it ? std::distance(v.begin(), it) : INDEX_NONE);
 }

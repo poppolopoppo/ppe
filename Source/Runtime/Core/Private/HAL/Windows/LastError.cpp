@@ -65,21 +65,19 @@ FWTextWriter& operator <<(FWTextWriter& oss, const FLastError& error) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FLastErrorException::FLastErrorException(const char* what)
-:   FLastErrorException(what, GetLastError())
+:   FLastErrorException(what, ::GetLastError())
 {}
 //----------------------------------------------------------------------------
 FLastErrorException::FLastErrorException(const char* what, long errorCode)
 :   FException(what)
 ,   _errorCode(errorCode) {
 #if !USE_PPE_FINAL_RELEASE
-    LOG(Exception, Error, L"{0}: {1}", MakeCStringView(what), FLastError(_errorCode));
+    PPE_LOG(Exception, Error, "{0}: {1}", MakeCStringView(what), FLastError(_errorCode));
 #endif
 }
 //----------------------------------------------------------------------------
-FLastErrorException::~FLastErrorException() = default;
-//----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FLastErrorException::Description(FWTextWriter& oss) const {
+FTextWriter& FLastErrorException::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What()) << L": "
         << FLastError(_errorCode);

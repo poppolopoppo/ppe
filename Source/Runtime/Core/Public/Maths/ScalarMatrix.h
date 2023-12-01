@@ -243,12 +243,11 @@ public:
     TScalarMatrix<T, _NWidth, _Height> operator *(const TScalarMatrix<T, _NWidth, _Width>& other) const {
         return Multiply(other);
     }
+
+    friend void swap(TScalarMatrix& lhs, TScalarMatrix& rhs) NOEXCEPT {
+        lhs.Swap(rhs);
+    }
 };
-//----------------------------------------------------------------------------
-template <typename T, u32 _Width, u32 _Height>
-void swap(TScalarMatrix<T, _Width, _Height>& lhs, TScalarMatrix<T, _Width, _Height>& rhs) NOEXCEPT {
-    lhs.Swap(rhs);
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

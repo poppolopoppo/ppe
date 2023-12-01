@@ -98,10 +98,9 @@ void FVulkanDebugger::LogDump() {
         });
 
     for (auto& [name, dump] : exclusiveData->FullDump) {
-        FWStringBuilder wchar;
-        wchar << L"--- frame dump <" << name << L"> ---" << Eol;
-        wchar << dump;
-        LOG_DIRECT(RHI, Verbose, wchar.Written());
+        PPE_LOG_DIRECT(RHI, Verbose, [&](FTextWriter& oss) {
+            oss << "--- frame dump <" << name << "> ---" << Eol << dump;
+        });
     }
 #endif
 

@@ -22,7 +22,9 @@
 #endif
 
 #ifdef __clang__
-#   pragma GCC system_header
+#   pragma GCC system_headerp
+#   pragma clang diagnostic ignored "-Wreorder-ctor"
+#   pragma clang diagnostic ignored "-Wsign-compare"
 #   pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
 

@@ -8,6 +8,9 @@
 #include "Memory/RefPtr.h"
 #include "Time/Timestamp.h"
 
+// structured logging without allocation:
+// https://godbolt.org/z/xh3P8GvP4
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -45,13 +48,16 @@ ENUM_FLAGS(ELoggerVerbosity);
 #   include "IO/Format.h"
 #   include "IO/String_fwd.h"
 #   include "IO/TextWriter.h"
-#   include "Memory/RefPtr.h"
 #   include "Time/Timepoint.h"
+
+#   include "IO/StringView.h"
+#   include "Memory/PtrRef.h"
+#   include "Misc/Function_fwd.h"
+#   include "Misc/Opaque.h"
 
 #   include <thread>
 
 namespace PPE {
-FWD_INTERFACE_REFPTR(Logger);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -66,60 +72,146 @@ struct FLoggerCategory {
     };
     ENUM_FLAGS_FRIEND(EFlags);
 
-    const wchar_t* Name = nullptr;
+    FStringView Name;
     ELoggerVerbosity Verbosity{ ELoggerVerbosity::All };
     EFlags Flags{ Default };
+    hash_t HashValue{ 0 };
+
+    template <size_t _Len>
+    CONSTEXPR FLoggerCategory(
+        const char (&staticName)[_Len],
+        ELoggerVerbosity verbosity = ELoggerVerbosity::All,
+        EFlags flags = Default)
+    :   Name(staticName)
+    ,   Verbosity(verbosity)
+    ,   Flags(flags)
+    ,   HashValue(hash_arr_constexpr(staticName))
+    {
+        Assert_NoAssume(HashValue > 0);
+    }
+};
+//----------------------------------------------------------------------------
+struct FLoggerSiteInfo {
+    FTimepoint LogTime;
+    FConstChar SourceFile;
+    std::thread::id ThreadId;
+    u32 SourceLine : 24;
+    u32 PackedLevel : 8;
+
+    ELoggerVerbosity Level() const { return static_cast<ELoggerVerbosity>(PackedLevel); }
+
+    FLoggerSiteInfo() = default;
+    FLoggerSiteInfo(ELoggerVerbosity level, FConstChar sourceFile, u32 sourceLine)
+    :   LogTime(FTimepoint::Now())
+    ,   SourceFile(sourceFile)
+    ,   ThreadId(std::this_thread::get_id())
+    ,   SourceLine(sourceLine)
+    ,   PackedLevel(static_cast<u8>(level))
+    {}
+};
+PPE_ASSUME_TYPE_AS_POD(FLoggerSiteInfo);
+//----------------------------------------------------------------------------
+struct FLoggerMessage {
+    TPtrRef<const FLoggerCategory> Category;
+    TPtrRef<const Opaq::object_view> Data;
+    Meta::TPointerWFlags<const char> TextWFlags;
+    FLoggerSiteInfo Site;
+
+    ELoggerVerbosity Level() const { return Site.Level(); }
+    FConstChar Text() const { return TextWFlags.Get(); };
+    bool IsTextAllocated() const { return TextWFlags.Flag0(); };
+
+    FLoggerMessage() = default;
+    FLoggerMessage(
+        const FLoggerCategory& category, FLoggerSiteInfo&& site,
+        const FConstChar text, bool isTextAllocated,
+        const Opaq::object_view& data) NOEXCEPT
+    :   Category(category)
+    ,   Data(std::move(data))
+    ,   Site(std::move(site)) {
+        TextWFlags.Reset(text.c_str(), isTextAllocated, false/* reserved */);
+    }
+    FLoggerMessage(
+        const FLoggerCategory& category, FLoggerSiteInfo&& site,
+        const FConstChar text, bool isTextAllocated) NOEXCEPT
+    :   Category(category)
+    ,   Site(std::move(site)) {
+        TextWFlags.Reset(text.c_str(), isTextAllocated, false/* reserved */);
+    }
+};
+PPE_ASSUME_TYPE_AS_POD(FLoggerMessage);
+//----------------------------------------------------------------------------
+class ILogger {
+public:
+    virtual ~ILogger() = default;
+
+    virtual void LogMessage(const FLoggerMessage& msg) = 0;
+    virtual void Flush(bool synchronous) = 0;
 };
 //----------------------------------------------------------------------------
 class FLogger {
 public:
+    using FCategory = FLoggerCategory;
+    using FMessage = FLoggerMessage;
+    using FSiteInfo = FLoggerSiteInfo;
     using EVerbosity = ELoggerVerbosity;
 
-    using FCategory = FLoggerCategory;
+    template <size_t _Len>
+    using TStaticStringArg = const char (&)[_Len];
 
-    struct FSiteInfo {
-        FTimepoint Timepoint;
-        std::thread::id ThreadId;
-        const wchar_t* Filename{ nullptr };
-        size_t Line{ 0 };
+    template <size_t _Len>
+    FORCE_INLINE static void Log(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> text) {
+        Log(category, std::move(site), MakeStringView(text));
+    }
+    template <size_t _Len>
+    FORCE_INLINE static void LogFmt(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> format, const FFormatArgList& args) {
+        LogFmt(category, std::move(site), MakeStringView(format), args);
+    }
+    template <size_t _Len>
+    FORCE_INLINE static void LogStructured(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> text, Opaq::object_init&& object) {
+        LogStructured(category, std::move(site), MakeStringView(text), std::move(object));
+    }
+    template <size_t _Len>
+    FORCE_INLINE static void Printf(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> text) {
+        Log(category, std::move(site), MakeStringView(text), text);
+    }
 
-        static FSiteInfo Make(const wchar_t* filename, size_t line) {
-            return FSiteInfo{ FTimepoint::Now(), std::this_thread::get_id(), filename, line };
-        }
-    };
 
-    static PPE_CORE_API void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text);
-    static PPE_CORE_API void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args);
+    FORCE_INLINE static void Printf(const FCategory& category, FSiteInfo&& site, const char* format, .../* va_list */) {
+        va_list args;
+        va_start(args, format);
+        Printf(category, std::move(site), FConstChar(format), args);
+        va_end(args);
+    }
 
-    static PPE_CORE_API void Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FConstWChar& format);
-    static PPE_CORE_API void Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const wchar_t* format, .../* va_list */);
-
-    static PPE_CORE_API void RecordArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWFormatArgList& record);
-
+    static PPE_CORE_API void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct);
+    static PPE_CORE_API void RecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record);
     static PPE_CORE_API void Flush(bool synchronous = true);
 
-    template <typename _Arg0, typename... _Args>
-    static void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, _Arg0&& arg0, _Args&&... args) {
-        LogArgs(category, level, site, format, {
-            MakeFormatArg<wchar_t>(arg0),
-            MakeFormatArg<wchar_t>(args)...
-        });
+    template <size_t _Len>
+    static void LogFmtT(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> formatWithoutArgs) {
+        Log(category, std::move(site), formatWithoutArgs);
+    }
+    template <size_t _Len, typename _Arg0, typename... _Args>
+    static void LogFmtT(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> format, _Arg0&& arg0, _Args&&... args) {
+        LogFmt(category, std::move(site), format, {
+            MakeFormatArg<char>(std::forward<_Arg0>(arg0)),
+            MakeFormatArg<char>(std::forward<_Args>(args))... });
     }
 
     template <typename _Arg0, typename... _Args>
-    static void Record(const FCategory& category, EVerbosity level, const FSiteInfo& site, _Arg0&& arg0, _Args&&... args) {
-        RecordArgs(category, level, site, {
-            MakeFormatArg<wchar_t>(arg0),
-            MakeFormatArg<wchar_t>(args)...
-        });
+    static void RecordArgsT(const FCategory& category, FSiteInfo&& site, _Arg0&& arg0, _Args&&... args) {
+        RecordArgs(category, std::move(site), {
+            MakeFormatArg<char>(std::forward<_Arg0>(arg0)),
+            MakeFormatArg<char>(std::forward<_Args>(args))... });
     }
 
 public:
     static PPE_CORE_API void Start();
     static PPE_CORE_API void Shutdown();
 
-    static PPE_CORE_API void RegisterLogger(const PLogger& logger);
-    static PPE_CORE_API void UnregisterLogger(const PLogger& logger);
+    static PPE_CORE_API void RegisterLogger(TPtrRef<ILogger> logger, bool autoDelete = true);
+    static PPE_CORE_API void UnregisterLogger(TPtrRef<ILogger> logger);
 
     static PPE_CORE_API ELoggerVerbosity GlobalVerbosity();
     static PPE_CORE_API void SetGlobalVerbosity(ELoggerVerbosity verbosity);
@@ -133,26 +225,23 @@ public:
 #endif
     }
 
-public:
-    static PPE_CORE_API PLogger MakeStdout();
-    static PPE_CORE_API PLogger MakeOutputDebug();
-    static PPE_CORE_API PLogger MakeAppendFile(const wchar_t* filename);
-    static PPE_CORE_API PLogger MakeRollFile(const wchar_t* filename);
-    static PPE_CORE_API PLogger MakeSystemTrace();
+    static PPE_CORE_API void RegisterStdoutLogger();
+    static PPE_CORE_API void RegisterOutputDebugLogger();
+    static PPE_CORE_API void RegisterAppendFileLogger(FConstWChar filename);
+    static PPE_CORE_API void RegisterAppendJsonLogger(FConstWChar filename);
+    static PPE_CORE_API void RegisterRollFileLogger(FConstWChar filename);
+    static PPE_CORE_API void RegisterRollJsonLogger(FConstWChar filename);
+    static PPE_CORE_API void RegisterSystemTraceLogger();
+
+private: // make FStringView private to ensure only static strings are passed as format/text
+    static PPE_CORE_API void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text);
+    static PPE_CORE_API void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args);
+    static PPE_CORE_API void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object);
+    static PPE_CORE_API void Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args);
 };
 //----------------------------------------------------------------------------
-class ILogger : FLogger, public FRefCountable {
-public:
-    virtual ~ILogger() = default;
-
-    using FLogger::EVerbosity;
-    using FLogger::FCategory;
-    using FLogger::FSiteInfo;
-
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) = 0;
-
-    virtual void Flush(bool synchronous) = 0;
-};
+PPE_CORE_API FConstChar ToString(FLogger::EVerbosity level) NOEXCEPT;
+PPE_CORE_API FConstWChar ToWString(FLogger::EVerbosity level) NOEXCEPT;
 //----------------------------------------------------------------------------
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level);
@@ -161,10 +250,31 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
+#define _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL) \
+    LOG_CATEGORY_GET(_CATEGORY), \
+    ::PPE::FLogger::FSiteInfo{ \
+        ::PPE::FLogger::EVerbosity::_LEVEL, \
+        _PPE_LOG_STRING(__FILE__), \
+        __LINE__ }
+
+#define _PPE_LOG_VALIDATEFORMAT(_FORMAT, ...) \
+    static_assert( /* validate format strings statically */ \
+        (::PPE::EValidateFormat::Valid == ::PPE::ValidateFormatString( _FORMAT, PP_NUM_ARGS(__VA_ARGS__) )), \
+        "invalid format : check arguments -> " STRINGIZE(PP_NUM_ARGS(__VA_ARGS__)) );
+
+// #TODO: remove this workaround when MSVC is fixed... (ShouldCompileMessage invalidly detected as not constexpr)
+#if defined(_MSC_VER) && !defined(__clang__) /* clang-cl works just fine */
+#   define _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) IF_CONSTEXPR(::PPE::FLogger::EVerbosity::_LEVEL ^ ::PPE::FLogger::EVerbosity::All)
+#else
+#   define _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) IF_CONSTEXPR(::PPE::FLogger::ShouldCompileMessage(::PPE::FLogger::EVerbosity::_LEVEL))
+#endif
+
 #define LOG_CATEGORY_EX(_API, _NAME, _VERBOSITY, _FLAGS) \
     _API ::PPE::FLoggerCategory& LOG_CATEGORY_GET(_NAME) { \
         ONE_TIME_INITIALIZE(::PPE::FLoggerCategory, GLogCategory, \
-            WIDESTRING(STRINGIZE(_NAME)), ::PPE::FLogger::EVerbosity::_VERBOSITY, ::PPE::FLoggerCategory::EFlags::_FLAGS ); \
+            _PPE_LOG_STRINGIZE(_NAME), \
+            ::PPE::FLogger::EVerbosity::_VERBOSITY, \
+            ::PPE::FLoggerCategory::EFlags::_FLAGS ); \
         return GLogCategory; \
     }
 #define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY) \
@@ -172,114 +282,92 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 #define LOG_CATEGORY(_API, _NAME) \
     LOG_CATEGORY_VERBOSITY(_API, _NAME, All)
 
-#define LOG_MAKESITE(_CATEGORY, _LEVEL) \
-    LOG_CATEGORY_GET(_CATEGORY), \
-    ::PPE::FLogger::EVerbosity::_LEVEL, \
-    ::PPE::FLogger::FSiteInfo::Make( \
-        WIDESTRING(__FILE__), \
-        __LINE__ )
-
-#define LOG_VALIDATEFORMAT(_FORMAT, ...) \
-    static_assert( /* validate format strings statically */ \
-        ::PPE::Meta::TCheckEquals<::PPE::EValidateFormat::Valid, ::PPE::ValidateFormatString( _FORMAT, PP_NUM_ARGS(__VA_ARGS__) )>::value, \
-        "invalid format : check arguments -> " STRINGIZE(PP_NUM_ARGS(__VA_ARGS__)) );
-
-// #TODO: remove this workaround when MSVC is fixed... (ShouldCompileMessage invalidly detected as not constexpr)
-#if defined(_MSC_VER) && !defined(__clang__) /* clang-cl works just fine */
-#   define LOG_SHOULDCOMPILE(_LEVEL) \
-    (::PPE::FLogger::EVerbosity::_LEVEL ^ ::PPE::FLogger::EVerbosity::All)
-#else
-#   define LOG_SHOULDCOMPILE(_LEVEL) \
-    (::PPE::FLogger::ShouldCompileMessage(::PPE::FLogger::EVerbosity::_LEVEL))
-#endif
-
-#define LOG(_CATEGORY, _LEVEL, ...) do { \
-    IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
-        EXPAND( LOG_VALIDATEFORMAT(__VA_ARGS__) ) \
-        ::PPE::FLogger::Log( LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
+#define PPE_LOG(_CATEGORY, _LEVEL, ...) do { \
+    _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
+        EXPAND( _PPE_LOG_VALIDATEFORMAT(__VA_ARGS__) ) \
+        ::PPE::FLogger::LogFmtT( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
     } } while(0)
 
-#define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) do { \
-    IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
-        ::PPE::FLogger::LogArgs( LOG_MAKESITE(_CATEGORY, _LEVEL), _FORMAT, _FORMAT_ARG_LIST ); \
+#define PPE_LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) do { \
+    _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
+        ::PPE::FLogger::LogFmt( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), _FORMAT, _FORMAT_ARG_LIST ); \
     } } while(0)
 
-#define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) do { \
-    IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
-        ::PPE::FLogger::Log( LOG_MAKESITE(_CATEGORY, _LEVEL), _MESSAGE ); \
+#define PPE_SLOG(_CATEGORY, _LEVEL, ...) do { \
+    _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
+        ::PPE::FLogger::LogStructured( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
     } } while(0)
 
-#define LOG_PRINTF(_CATEGORY, _LEVEL, ...) do { \
-    IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
-        ::PPE::FLogger::Printf( LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
+#define PPE_LOG_DIRECT(_CATEGORY, _LEVEL, ...) do { \
+    _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
+        ::PPE::FLogger::LogDirect( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
     } } while(0)
 
-#define LOG_RECORD(_CATEGORY, _LEVEL, ...) do { \
-    IF_CONSTEXPR(LOG_SHOULDCOMPILE(_LEVEL)) { \
-        ::PPE::FLogger::Record( LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
+#define PPE_LOG_PRINTF(_CATEGORY, _LEVEL, ...) do { \
+    _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
+        ::PPE::FLogger::Printf( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
     } } while(0)
 
-#define FLUSH_LOG() \
+#define PPE_LOG_RECORD(_CATEGORY, _LEVEL, ...) do { \
+    _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
+        ::PPE::FLogger::RecordArgsT( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
+    } } while(0)
+
+#define PPE_LOG_FLUSH() \
     ::PPE::FLogger::Flush()
 
 #else
 
 #   include "Meta/Assert.h"
 
-#   define LOG_CATEGORY_VERBOSITY(...)
-#   define LOG_CATEGORY(...)
-#   define FLUSH_LOG() NOOP()
-
 #   if USE_PPE_FINAL_RELEASE
-#       define LOG(_CATEGORY, _LEVEL, ...) NOOP()
-#       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) NOOP()
-#       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) NOOP()
-#       define LOG_PRINTF(_CATEGORY, _LEVEL, _FORMAT, ...) NOOP()
-#       define LOG_RECORD(_CATEGORY, _LEVEL, ...) NOOP()
+#       define _PPE_LOG_LEVEL_Debug() NOOP()
+#       define _PPE_LOG_LEVEL_Verbose() NOOP()
+#       define _PPE_LOG_LEVEL_Info() NOOP()
+#       define _PPE_LOG_LEVEL_Profiling() NOOP()
+#       define _PPE_LOG_LEVEL_Emphasis() NOOP()
+#       define _PPE_LOG_LEVEL_Warning() NOOP()
+#       define _PPE_LOG_LEVEL_Error() NOOP()
+#       define _PPE_LOG_LEVEL_Fatal() AssertReleaseFailed("log : fatal error")
+#       define _PPE_LOG_LEVEL(_LEVEL) EXPAND( CONCAT(_PPE_LOG_LEVEL_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
 #   else
-#       define _PPE_LOG_Debug() NOOP()
-#       define _PPE_LOG_Verbose() NOOP()
-#       define _PPE_LOG_Info() NOOP()
-#       define _PPE_LOG_Profiling() NOOP()
-#       define _PPE_LOG_Emphasis() NOOP()
-#       define _PPE_LOG_Warning() NOOP()
-#       define _PPE_LOG_Error() NOOP()
-#       define _PPE_LOG_Fatal() AssertReleaseFailed(L"log : fatal error")
-
-#       define LOG(_CATEGORY, _LEVEL, ...) EXPAND( CONCAT(_PPE_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
-#       define LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) EXPAND( CONCAT(_PPE_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
-#       define LOG_DIRECT(_CATEGORY, _LEVEL, _MESSAGE) EXPAND( CONCAT(_PPE_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
-#       define LOG_PRINTF(_CATEGORY, _LEVEL, _FORMAT, ...) EXPAND( CONCAT(_PPE_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
-#       define LOG_RECORD(_CATEGORY, _LEVEL, ...) EXPAND( CONCAT(_PPE_LOG_, _LEVEL) _LPARENTHESIS _RPARENTHESIS )
+#       define _PPE_LOG_LEVEL(_LEVEL) NOOP()
 #   endif
+
+#   define LOG_CATEGORY_EX(_API, _NAME, _VERBOSITY, _FLAGS)
+#   define LOG_CATEGORY_VERBOSITY(_API, _NAME, _VERBOSITY)
+#   define LOG_CATEGORY(_API, _NAME)
+
+#   define PPE_LOG(_CATEGORY, _LEVEL, ...) _PPE_LOG_LEVEL(_LEVEL)
+#   define PPE_LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) _PPE_LOG_LEVEL(_LEVEL)
+#   define PPE_SLOG(_CATEGORY, _LEVEL, ...) _PPE_LOG_LEVEL(_LEVEL)
+#   define PPE_LOG_DIRECT(_CATEGORY, _LEVEL, ...) _PPE_LOG_LEVEL(_LEVEL)
+#   define PPE_LOG_PRINTF(_CATEGORY, _LEVEL, ...) _PPE_LOG_LEVEL(_LEVEL)
+#   define PPE_LOG_RECORD(_CATEGORY, _LEVEL, ...) _PPE_LOG_LEVEL(_LEVEL)
+
+#   define PPE_LOG_FLUSH() NOOP()
 
 #endif //!#if USE_PPE_LOGGER
 
 #if USE_PPE_FINAL_RELEASE
-#   define CLOG(_CONDITION, _CATEGORY, _LEVEL, ...) NOOP()
+#   define PPE_CLOG(_CONDITION, _CATEGORY, _LEVEL, ...) NOOP()
 #else
-#   if !defined(_MSC_VER) || (defined(_MSVC_TRADITIONAL) && _MSVC_TRADITIONAL)
-#       define CLOG(_CONDITION, _CATEGORY, _LEVEL, ...) do { \
-        if (_CONDITION) LOG(_CATEGORY, _LEVEL, __VA_ARGS__); \
+#   define PPE_CLOG(_CONDITION, _CATEGORY, _LEVEL, ...) do { \
+        if (_CONDITION) PPE_LOG(_CATEGORY, _LEVEL, __VA_ARGS__); \
     } while (0)
-#   else
-#       define CLOG(_CONDITION, _CATEGORY, _LEVEL, ...) do { \
-        if (_CONDITION) LOG(_CATEGORY, _LEVEL, __VA_ARGS__); \
-    } while (0)
-#   endif
 #endif
 
-#define LOG_CHECKEX( _CATEGORY, _RETURN, ... ) do {\
-    if (Likely(!!( __VA_ARGS__ ))) {} \
+#define PPE_LOG_CHECKEX( _CATEGORY, _RETURN, ... ) do {\
+    if (Ensure(__VA_ARGS__)) {} \
     else { \
-        LOG( _CATEGORY, Error, L"failed expr: '{0}', at: {1}:{2}", WSTRINGIZE(__VA_ARGS__), WIDESTRING(__FILE__), WSTRINGIZE(__LINE__) ); \
+        PPE_LOG( _CATEGORY, Error, _PPE_LOG_STRING("failed expr: '{0}', at: {1}:{2}"), _PPE_LOG_STRINGIZE(__VA_ARGS__), _PPE_LOG_STRING(__FILE__), _PPE_LOG_STRINGIZE(__LINE__) ); \
         return (_RETURN); \
     }} while (0)
-#define LOG_CHECK( _CATEGORY, ... ) LOG_CHECKEX( _CATEGORY, ::PPE::Default, __VA_ARGS__ )
-#define LOG_CHECKVOID( _CATEGORY, ... ) LOG_CHECKEX( _CATEGORY, void(), __VA_ARGS__ )
+#define PPE_LOG_CHECK( _CATEGORY, ... ) PPE_LOG_CHECKEX( _CATEGORY, ::PPE::Default, __VA_ARGS__ )
+#define PPE_LOG_CHECKVOID( _CATEGORY, ... ) PPE_LOG_CHECKEX( _CATEGORY, void(), __VA_ARGS__ )
 
-#define LOG_UNSUPPORTED_FUNCTION( _CATEGORY ) \
-    LOG( _CATEGORY, Warning, L"unsupported: {0}, at {1}:{2}", \
+#define PPE_LOG_UNSUPPORTED_FUNCTION( _CATEGORY ) \
+    LOG( _CATEGORY, Warning, _PPE_LOG_STRING("unsupported: {0}, at {1}:{2}"), \
         ::PPE::MakeStringView(PPE_PRETTY_FUNCTION), \
-        WIDESTRING(__FILE__), \
+        _PPE_LOG_STRING(__FILE__), \
         __LINE__ )

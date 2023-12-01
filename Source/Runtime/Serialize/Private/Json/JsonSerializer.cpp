@@ -429,14 +429,14 @@ public:
         if (const FJson::FObject* const pJsonObj = src.AsObject()) {
             RTTI::PMetaObject rttiObj;
             if (Unlikely(not ParseObject(&rttiObj, *pJsonObj))) {
-                LOG(Serialize, Error, L"failed to parse json object for <{0}>", dst.Traits()->NamedTypeInfos());
+                PPE_LOG(Serialize, Error, "failed to parse json object for <{0}>", dst.Traits()->NamedTypeInfos());
                 return false;
             }
 
             Assert(rttiObj);
 
             if (not MakeAtom(&rttiObj).PromoteMove(dst)) {
-                LOG(Serialize, Error, L"incompatible object <{0}> parsed from json for <{1}>", rttiObj->RTTI_Class()->Name(), dst.Traits()->NamedTypeInfos());
+                PPE_LOG(Serialize, Error, "incompatible object <{0}> parsed from json for <{1}>", rttiObj->RTTI_Class()->Name(), dst.Traits()->NamedTypeInfos());
                 return false;
             }
         }
@@ -444,7 +444,7 @@ public:
             _values.push_back(std::addressof(src));
 
             if (Unlikely(not dst.Accept(this))) {
-                LOG(Serialize, Error, L"failed to parse json value for <{0}>", dst.Traits()->NamedTypeInfos());
+                PPE_LOG(Serialize, Error, "failed to parse json value for <{0}>", dst.Traits()->NamedTypeInfos());
                 return false;
             }
 
@@ -459,13 +459,13 @@ public:
 
         const FJson::FValue* const klassName = jsonObj.GetIFP(FJson::Class);
         if (nullptr == klassName || nullptr == klassName->GetIFP<FJson::FText>()) {
-            LOG_DIRECT(Serialize, Error, L"missing meta class name");
+            PPE_LOG(Serialize, Error, "missing meta class name");
             return false;
         }
 
         const FJson::FValue* const objAnchor = jsonObj.GetIFP(FJson::Id);
         if (nullptr == objAnchor || nullptr == objAnchor->GetIFP<FJson::FText>()) {
-            LOG_DIRECT(Serialize, Error, L"missing meta object anchor");
+            PPE_LOG(Serialize, Error, "missing meta object anchor");
             return false;
         }
 
@@ -474,15 +474,15 @@ public:
         if (const FJson::FValue* const jsonExported = jsonObj.GetIFP(FJson::Export)) {
             objName = jsonExported->GetIFP<FJson::FText>();
             if (nullptr == objName) {
-                LOG_DIRECT(Serialize, Error, L"wrong type for meta object export");
+                PPE_LOG(Serialize, Error, "wrong type for meta object export");
                 return false;
             }
             if (objName->empty()) {
-                LOG_DIRECT(Serialize, Error, L"empty meta object export");
+                PPE_LOG(Serialize, Error, "empty meta object export");
                 return false;
             }
             if (not RTTI::FName::IsValidToken(objName->MakeView())) {
-                LOG_DIRECT(Serialize, Error, L"invalid meta object export format");
+                PPE_LOG(Serialize, Error, "invalid meta object export format");
                 return false;
             }
             exported = true;
@@ -492,7 +492,7 @@ public:
         if (const FJson::FValue* const jsonTopObject = jsonObj.GetIFP(FJson::TopObject)) {
             const FJson::FBool* const boolTopObject = jsonTopObject->GetIFP<FJson::FBool>();
             if (nullptr == boolTopObject) {
-                LOG_DIRECT(Serialize, Error, L"invalid meta object top object flag");
+                PPE_LOG(Serialize, Error, "invalid meta object top object flag");
                 return false;
             }
             topObject = *boolTopObject;
@@ -503,7 +503,7 @@ public:
             RTTI::FName{ klassName->Get<FJson::FText>() });
 
         if (nullptr == klass) {
-            LOG(Serialize, Error, L"unknown meta class <{0}>", klassName->GetIFP<FJson::FText>());
+            PPE_LOG(Serialize, Error, "unknown meta class <{0}>", klassName->GetIFP<FJson::FText>());
             return false;
         }
 
@@ -822,7 +822,7 @@ bool Json_to_RTTI(const FJson& src, FTransactionLinker* link) {
 
     const FJson::FArray* arrIFP = src.Root().GetIFP<FJson::FArray>();
     if (nullptr == arrIFP) {
-        LOG_DIRECT(Serialize, Error, L"top json entry should be an array");
+        PPE_LOG(Serialize, Error, "top json entry should be an array");
         return false;
     }
 
@@ -830,12 +830,12 @@ bool Json_to_RTTI(const FJson& src, FTransactionLinker* link) {
 
     for (const FJson::FValue& item : *arrIFP) {
         if (not item.GetIFP<FJson::FObject>()) {
-            LOG_DIRECT(Serialize, Error, L"all top entries should be json objects");
+            PPE_LOG(Serialize, Error, "all top entries should be json objects");
             return false;
         }
 
         if (not toRTTI.ParseObject(nullptr, item.Get<FJson::FObject>())) {
-            LOG_DIRECT(Serialize, Error, L"failed to parse json object");
+            PPE_LOG(Serialize, Error, "failed to parse json object");
             return false;
         }
     }

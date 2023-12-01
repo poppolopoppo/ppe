@@ -86,7 +86,7 @@ u32 TComPtr<_ComInterface>::RefCount() const {
 }
 //----------------------------------------------------------------------------
 template <typename _ComInterface>
-void TComPtr<_ComInterface>::Swap(TComPtr& other) {
+void TComPtr<_ComInterface>::Swap(TComPtr& other) NOEXCEPT {
     CheckThreadAccess();
     std::swap(_comObject, other._comObject);
 }

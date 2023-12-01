@@ -6,6 +6,7 @@
 #include "RTTI/NativeTypes.h"
 #include "RTTI/TypeTraits.h"
 
+#include "Allocator/AllocatorBlock.h"
 #include "IO/TextWriter_fwd.h"
 #include "Meta/AlignedStorage.h"
 
@@ -24,11 +25,7 @@ public:
         not std::is_same_v<Meta::TDecay<T>, FAny>
     >;
 
-#if USE_PPE_ASSERT
-    FAny() NOEXCEPT;
-#else
-    FAny() = default;
-#endif
+    FAny() NOEXCEPT {}
     ~FAny();
 
     FAny(const FAny& other);
@@ -60,7 +57,7 @@ public:
             return this;
         if (Likely(IsFittingInSitu_()))
             return std::addressof(_inSitu);
-        return _externalBlock.Ptr;
+        return _allocatorBlock.Data;
     }
     const void* Data() const { return const_cast<FAny*>(this)->Data(); }
 
@@ -141,16 +138,12 @@ public:
 private:
     typedef ALIGNED_STORAGE(GInSituSize, GInSituAlignment) insitu_type;
 
-    struct FExternalData {
-        void* Ptr;
-        size_t SizeInBytes;
-    };
-    STATIC_ASSERT(sizeof(FExternalData) <= GInSituSize);
+    STATIC_ASSERT(sizeof(FAllocatorBlock) <= GInSituSize);
 
     Meta::TPointerWFlags<const ITypeTraits> _traitsWFlags{};
     union {
         mutable insitu_type _inSitu;
-        FExternalData _externalBlock;
+        FAllocatorBlock _allocatorBlock;
     };
 
     bool IsFittingInSitu_() const { return _traitsWFlags.Flag0(); }

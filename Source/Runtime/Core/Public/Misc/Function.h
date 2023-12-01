@@ -4,6 +4,7 @@
 #include "Container/TupleHelpers.h"
 #include "Memory/PtrRef.h"
 #include "Memory/RefPtr.h"
+#include "Memory/WeakPtr.h"
 #include "Meta/PointerWFlags.h"
 #include "Meta/TypeTraits.h"
 #include "Misc/Function_fwd.h"
@@ -262,7 +263,8 @@ struct TFunctionTupleArg<T&> {
 template <typename T>
 struct TFunctionTupleArg<T*> {
     using type = Meta::TConditional<
-        IsRefCountable<T>::value,
+        IsRefCountable<T>::value ||
+        IsWeakRefCountable<T>::value,
         TSafePtr<T>, TPtrRef<T> >;
 };
 //----------------------------------------------------------------------------
@@ -681,10 +683,6 @@ public:
         _vtable->Destroy(&_embed);
         _vtable = other._vtable;
         _vtable->Copy(&_embed, &other._embed);
-    }
-
-    FORCE_INLINE void swap(_Impl& lhs, _Impl& rhs) {
-        std::swap(lhs, rhs);
     }
 
     friend CONSTEXPR bool operator ==(const _Impl& lhs, const _Impl& rhs) NOEXCEPT {

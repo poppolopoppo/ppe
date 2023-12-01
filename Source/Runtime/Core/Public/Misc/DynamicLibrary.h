@@ -55,7 +55,7 @@ public: // events
     PUBLIC_EVENT(OnUnloadLibrary,   FLibraryUnloadDelegate)
 
 private:
-    Meta::TPointerWFlags<void> _handle;
+    Meta::FPointerWFlags _handle;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

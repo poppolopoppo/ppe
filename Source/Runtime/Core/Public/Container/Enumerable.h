@@ -26,30 +26,59 @@ namespace PPE {
 template <typename T>
 class TEnumerable {
 public:
-    typedef T value_type;
-
+    using value_type = T;
     using pointer = T*;
-    using const_pointer = const T*;
     using reference = T&;
-    using const_reference = const T&;
 
-    using FConsumeFunc = void (*)(void*, pointer*) NOEXCEPT;
+    using FEnumerableFunc = void (*)(TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData);
 
-    TEnumerable() = default;
-
-    CONSTEXPR TEnumerable(void* userData, FConsumeFunc consume)
-    :   _userData(userData)
-    ,   _consume(consume) {
-        Assert_NoAssume(userData);
-        Assert_NoAssume(_consume);
+    CONSTEXPR TEnumerable(void* internal, FEnumerableFunc enumerate) NOEXCEPT
+    :   _internal(internal)
+    ,   _enumerate(enumerate) {
+        Assert_NoAssume(_internal);
+        Assert_NoAssume(_enumerate);
     }
 
-    template <typename _It, class = Meta::TEnableIf<
-        std::is_same_v<value_type, typename TIterable<_It>::value_type> > >
-    CONSTEXPR TEnumerable(TIterable<_It>& iterable)
-    :   _userData(std::addressof(iterable))
-    ,   _consume([](void* userData, pointer* current) NOEXCEPT {
-        return static_cast<TIterable<_It>*>(userData)->Consume(current);
+    template <typename _Allocator>
+    CONSTEXPR TEnumerable(TVector<T, _Allocator>& vector)
+    :   TEnumerable(const_cast<void*>(&vector), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
+        auto& view = (*static_cast<TVector<T, _Allocator>*>(self._internal));
+        for (reference it : view) {
+            if (not each(userData, it))
+                return;
+        }
+    })
+    {}
+
+    template <typename _Allocator>
+    CONSTEXPR TEnumerable(const TVector<Meta::TRemoveConst<T>, _Allocator>& vector)
+    :   TEnumerable(const_cast<void*>(&vector), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
+        auto& view = (*static_cast<const TVector<Meta::TRemoveConst<T>, _Allocator>*>(self._internal));
+        for (reference it : view) {
+            if (not each(userData, it))
+                return;
+        }
+    })
+    {}
+
+    CONSTEXPR TEnumerable(const TMemoryView<T>& view)
+    :   TEnumerable(const_cast<void*>(&view), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
+        const auto& view = (*static_cast<const TMemoryView<T>*>(self._internal));
+        for (reference it : view) {
+            if (not each(userData, it))
+                return;
+        }
+    })
+    {}
+
+    template <typename _It, Meta::TEnableIf<std::is_same_v<typename Meta::TIteratorTraits<_It>::value_type, value_type>>* = nullptr>
+    CONSTEXPR TEnumerable(const TIterable<_It>& iterable) NOEXCEPT
+    :   TEnumerable(const_cast<void*>(&iterable), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
+        const auto& iterable = (*static_cast<const TIterable<_It>*>(self._internal));
+        for (reference it : iterable) {
+            if (not each(userData, it))
+                return;
+        }
     })
     {}
 
@@ -59,45 +88,36 @@ public:
     TEnumerable(TEnumerable&&) = default;
     TEnumerable& operator =(TEnumerable&&) = default;
 
-    CONSTEXPR void* UserData() const { return _userData; }
-
-    CONSTEXPR reference Get() const {
-        Assert(_current);
-        return _current;
-    }
-    CONSTEXPR pointer GetIFP() const {
-        return _current;
-    }
-
-    CONSTEXPR reference operator *() const { return Get(); }
-    CONSTEXPR pointer operator ->() const { return std::addressof(Get()); }
-
-    CONSTEXPR bool Next() NOEXCEPT {
-        return _consume(_userData, &_current);
+    CONSTEXPR void Each(bool (*each)(void* userData, reference it), void* userData = nullptr) {
+        Assert(_internal && _enumerate);
+        _enumerate(*this, each, userData);
     }
 
     friend CONSTEXPR bool operator ==(const TEnumerable& lhs, const TEnumerable& rhs) {
-        return (lhs._userData == rhs._userData && lhs._consume == rhs._consume);
+        return (lhs._internal == rhs._internal && lhs._enumerate == rhs._enumerate);
     }
     friend CONSTEXPR bool operator !=(const TEnumerable& lhs, const TEnumerable& rhs) {
         return (not operator ==(lhs, rhs));
     }
 
     friend CONSTEXPR void swap(TEnumerable& lhs, TEnumerable& rhs) NOEXCEPT {
-        std::swap(lhs._userData, rhs._userData);
-        std::swap(lhs._consume, rhs._consume);
+        std::swap(lhs._internal, rhs._internal);
+        std::swap(lhs._enumerate, rhs._enumerate);
     }
 
 private:
-    pointer* _current{ nullptr };
-    void* _userData;
-    FConsumeFunc _consume;
+    void* _internal{ nullptr };
+    FEnumerableFunc _enumerate{ nullptr };
 };
 //----------------------------------------------------------------------------
+template <typename T>
+TEnumerable(const TMemoryView<T>&) -> TEnumerable<Meta::TAddConst<T>>;
+template <typename T, typename _Allocator>
+TEnumerable(TVector<T, _Allocator>&) -> TEnumerable<T>;
+template <typename T, typename _Allocator>
+TEnumerable(const TVector<T, _Allocator>&) -> TEnumerable<Meta::TAddConst<T>>;
 template <typename _It>
-TEnumerable< typename TIterable<_It>::value_type > MakeEnumerable(TIterable<_It>& iterable) {
-    return { iterable };
-}
+TEnumerable(const TIterable<_It>&) -> TEnumerable<typename TIterable<_It>::value_type>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

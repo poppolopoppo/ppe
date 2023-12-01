@@ -90,7 +90,7 @@ static bool RayIntersectsOctree_(
 
         forrange(i, 0, 8) {
             const FOctreeNode::pointer& p = it.Node->Children[i];
-            if (not p._raw)
+            if (not p.Packed())
                 continue;
 
             const i16 x = it.X + GChildOffset_[i][0] * halfExtent;

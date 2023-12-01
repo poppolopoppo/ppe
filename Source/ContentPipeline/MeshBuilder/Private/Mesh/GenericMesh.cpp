@@ -209,10 +209,10 @@ void FGenericMesh::CleanAndOptimize(size_t index) {
         return;
 
     const size_t duplicated = MergeDuplicateVertices(*this);
-    LOG(MeshBuilder, Info, L"removed {0}/{1} duplicate vertices = {2:f2}%", duplicated, _vertexCount, duplicated * 100.f / _vertexCount);
+    PPE_LOG(MeshBuilder, Info, "removed {0}/{1} duplicate vertices = {2:f2}%", duplicated, _vertexCount, duplicated * 100.f / _vertexCount);
 
     const size_t unused = RemoveUnusedVertices(*this);
-    LOG(MeshBuilder, Info, L"removed {0}/{1} unused vertices = {2:f2}%", unused, _vertexCount + unused, unused * 100.f / (_vertexCount + unused));
+    PPE_LOG(MeshBuilder, Info, "removed {0}/{1} unused vertices = {2:f2}%", unused, _vertexCount + unused, unused * 100.f / (_vertexCount + unused));
 
     const FAabb3f bounds = ComputeBounds(*this, index);
     const float minDistance = bounds.Extents().MinComponent() * 0.001f; // 0.01%
@@ -220,21 +220,21 @@ void FGenericMesh::CleanAndOptimize(size_t index) {
 
 #if 0 // May merge needed vertices for interpolation : can't be in the default path
     const size_t close = MergeCloseVertices(*this, index, minDistance);
-    LOG(MeshBuilder, Info, L"removed {0}/{1} close vertices (epsilon = {2}) = {3:f2}%", close, _vertexCount, minDistance, close * 100.f / _vertexCount);
+    PPE_LOG(MeshBuilder, Info, "removed {0}/{1} close vertices (epsilon = {2}) = {3:f2}%", close, _vertexCount, minDistance, close * 100.f / _vertexCount);
 #endif
 
     const size_t zero = RemoveZeroAreaTriangles(*this, index, minArea);
-    LOG(MeshBuilder, Info, L"removed {0}/{1} zero area triangle indices (epsilon = {2}) = {3:f2}%", zero, _indexCount + zero, minArea, zero * 100.f / (_indexCount + zero));
+    PPE_LOG(MeshBuilder, Info, "removed {0}/{1} zero area triangle indices (epsilon = {2}) = {3:f2}%", zero, _indexCount + zero, minArea, zero * 100.f / (_indexCount + zero));
 
     const size_t unused2 = RemoveUnusedVertices(*this);
-    LOG(MeshBuilder, Info, L"removed {0}/{1} unused vertices = {2:f2}%", unused2, _vertexCount + unused2, unused2 * 100.f / (_vertexCount + unused2));
+    PPE_LOG(MeshBuilder, Info, "removed {0}/{1} unused vertices = {2:f2}%", unused2, _vertexCount + unused2, unused2 * 100.f / (_vertexCount + unused2));
 
     const float VACMR_Before = VertexAverageCacheMissRate(*this);
 
     OptimizeIndicesAndVerticesOrder(*this);
 
     const float VACMR_After = VertexAverageCacheMissRate(*this);
-    LOG(MeshBuilder, Info, L"optimized vertex average cache miss rate from {0:f3} to {1:f3} = {2:f2}%", VACMR_Before, VACMR_After, VACMR_After * 100.f / VACMR_Before);
+    PPE_LOG(MeshBuilder, Info, "optimized vertex average cache miss rate from {0:f3} to {1:f3} = {2:f2}%", VACMR_Before, VACMR_After, VACMR_After * 100.f / VACMR_Before);
 }
 //----------------------------------------------------------------------------
 bool FGenericMesh::ExportIndices(const TMemoryView<u16>& dst) const {

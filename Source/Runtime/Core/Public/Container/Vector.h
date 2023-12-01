@@ -62,7 +62,7 @@ public:
     typedef std::reverse_iterator<iterator> reverse_iterator;
     typedef std::reverse_iterator<const_iterator> const_reverse_iterator;
 
-    TVector() NOEXCEPT : _capacity(0), _size(0), _data(nullptr) {}
+    TVector() = default;
     ~TVector() {
         Assert(CheckInvariants());
         clear_ReleaseMemory();
@@ -70,11 +70,10 @@ public:
 
     explicit TVector(Meta::FForceInit) NOEXCEPT
     :   allocator_type(Meta::MakeForceInit<allocator_type>()) // used for non default-constructible allocators
-    ,   _capacity(0), _size(0), _data(nullptr)
     {}
 
-    explicit TVector(allocator_type&& alloc) : allocator_type(std::move(alloc)), _capacity(0), _size(0), _data(nullptr) {}
-    explicit TVector(const allocator_type& alloc) : allocator_type(alloc), _capacity(0), _size(0), _data(nullptr) {}
+    explicit TVector(allocator_type&& alloc) : allocator_type(std::move(alloc)) {}
+    explicit TVector(const allocator_type& alloc) : allocator_type(alloc) {}
 
     explicit TVector(size_type count) : TVector(ForceInit) { resize_AssumeEmpty(count); }
     TVector(size_type count, const_reference value) : TVector(ForceInit) { resize_AssumeEmpty(count, value); }
@@ -122,17 +121,18 @@ public:
         if (_data)
             clear_ReleaseMemory();
 
-        const TMemoryView<T> b{ rvalue._data, rvalue._capacity };
+        Assert_NoAssume(_data == nullptr && _allocationSize == 0 && _numElements == 0);
+
         Verify(TAllocatorTraits<_OtherAllocator>::StealAndAcquire(
             &allocator_traits::Get(*this),
             TAllocatorTraits<_OtherAllocator>::Get(rvalue),
-            FAllocatorBlock::From(b) ));
+            rvalue.allocator_block_()));
 
-        _capacity = rvalue._capacity;
-        _size = rvalue._size;
+        _allocationSize = rvalue._allocationSize;
+        _numElements = rvalue._numElements;
         _data = rvalue._data;
 
-        rvalue._capacity = rvalue._size = 0;
+        rvalue._allocationSize = rvalue._numElements = 0;
         rvalue._data = nullptr;
 
         return (*this);
@@ -150,19 +150,19 @@ public:
     template <typename _It>
     TVector(_It first, _It last, const allocator_type& alloc) : TVector(alloc) { assign(first, last); }
 
-    CONSTF size_type size() const { return _size; }
-    CONSTF size_type capacity() const { return _capacity; }
-    CONSTF size_type max_size() const { return std::numeric_limits<size_type>::max(); }
-    CONSTF bool empty() const { return (0 == _size); }
+    CONSTF size_type size() const { return _numElements; }
+    CONSTF size_type capacity() const { return (_allocationSize / sizeof(T)); }
+    CONSTF size_type max_size() const { return std::numeric_limits<size_type>::max() / sizeof(T); }
+    CONSTF bool empty() const { return (0 == _numElements); }
 
     CONSTF pointer data() { return _data; }
     CONSTF const_pointer data() const { return _data; }
 
-    iterator begin() { return MakeCheckedIterator(_data, _size, 0); }
-    iterator end() { return MakeCheckedIterator(_data, _size, _size); }
+    iterator begin() { return MakeCheckedIterator(_data, _numElements, 0); }
+    iterator end() { return MakeCheckedIterator(_data, _numElements, _numElements); }
 
-    const_iterator begin() const { return MakeCheckedIterator((const_pointer)_data, _size, 0); }
-    const_iterator end() const { return MakeCheckedIterator((const_pointer)_data, _size, _size); }
+    const_iterator begin() const { return MakeCheckedIterator(const_pointer(_data), _numElements, 0); }
+    const_iterator end() const { return MakeCheckedIterator(const_pointer(_data), _numElements, _numElements); }
 
     const_iterator cbegin() const { return begin(); }
     const_iterator cend() const { return end(); }
@@ -179,8 +179,8 @@ public:
     allocator_type& get_allocator() { return allocator_traits::Get(*this); }
     const allocator_type& get_allocator() const { return allocator_traits::Get(*this); }
 
-    reference at(size_type pos) { Assert(pos < _size); return _data[pos]; }
-    const_reference at(size_type pos) const { Assert(pos < _size); return _data[pos]; }
+    reference at(size_type pos) { Assert_NoAssume(pos < _numElements); return _data[pos]; }
+    const_reference at(size_type pos) const { Assert_NoAssume(pos < _numElements); return _data[pos]; }
 
     reference operator[](size_type pos) { return at(pos); }
     const_reference operator[](size_type pos) const { return at(pos); }
@@ -188,8 +188,8 @@ public:
     reference front() { return at(0); }
     const_reference front() const { return at(0); }
 
-    reference back() { return at(_size - 1); }
-    const_reference back() const { return at(_size - 1); }
+    reference back() { return at(_numElements - 1); }
+    const_reference back() const { return at(_numElements - 1); }
 
     template <typename _It>
     Meta::TEnableIf<Meta::is_iterator_v<_It>> assign(_It first, _It last);
@@ -241,7 +241,7 @@ public:
     void push_back(const T& value) { emplace_back(value); }
     void push_back(T&& rvalue) { emplace_back(std::move(rvalue)); }
     reference push_back_Default() { emplace_back(); return back(); }
-    pointer push_back_Uninitialized() { reserve_Additional(1); return &_data[_size++]; }
+    pointer push_back_Uninitialized() { reserve_Additional(1); return (_data + _numElements++); }
     void push_back_AssumeNoGrow(const T& value);
     void push_back_AssumeNoGrow(T&& rvalue);
 
@@ -252,7 +252,7 @@ public:
     void clear_ReleaseMemory();
     void reserve(size_type count);
     void reserve_AtLeast(size_type count);
-    void reserve_Additional(size_type count) { reserve_AtLeast(_size + count); }
+    void reserve_Additional(size_type count) { reserve_AtLeast(_numElements + count); }
     void reserve_AssumeEmpty(size_type count);
     void reserve_Exactly(size_type count);
     void resize(size_type count);
@@ -267,18 +267,18 @@ public:
 
     operator TMemoryView<Meta::TAddConst<value_type>>() const { return MakeConstView(); }
 
-    TMemoryView<value_type> MakeView() const { return TMemoryView<value_type>(_data, _size); }
-    TMemoryView<Meta::TAddConst<value_type>> MakeConstView() const { return TMemoryView<Meta::TAddConst<value_type>>(_data, _size); }
+    TMemoryView<value_type> MakeView() const { return TMemoryView<value_type>(_data, _numElements); }
+    TMemoryView<Meta::TAddConst<value_type>> MakeConstView() const { return TMemoryView<Meta::TAddConst<value_type>>(_data, _numElements); }
 
     bool CheckInvariants() const;
 
-    bool AliasesToContainer(const_reference v) const { return ((&v >= _data) && (&v < _data + _size)); }
-    bool AliasesToContainer(const iterator& it) const { return (it >= begin() && it < end()); }
+    bool AliasesToContainer(const_reference v) const { return ((&v >= _data) && (&v < _data + _numElements)); }
     bool AliasesToContainer(const const_iterator& it) const { return (it >= begin() && it < end()); }
     bool AliasesToContainer(const const_reverse_iterator& it) const { return (it >= rbegin() && it < rend()); }
 
 private:
     allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }
+    FAllocatorBlock allocator_block_() const { return { _data, _allocationSize }; }
 
     void allocator_copy_(const allocator_type& other, std::true_type );
     void allocator_copy_(const allocator_type& other, std::false_type ) { Unused(other); }
@@ -296,10 +296,23 @@ private:
     void swap_(TVector& other, std::true_type  ) NOEXCEPT;
     void swap_(TVector& other, std::false_type ) NOEXCEPT;
 
-    u32 _capacity;
-    u32 _size;
-    pointer _data;
+    pointer _data{ nullptr };
+    u32 _allocationSize{ 0 };
+    u32 _numElements{ 0 };
 };
+//----------------------------------------------------------------------------
+#if USE_PPE_MEMORY_DEBUGGING
+// memory debugging disables insitu allocators (makes sanitizer's job easier)
+template <typename T, u32 _NumInSitu, typename _Allocator>
+using TVectorInSitu = TVector<T, _Allocator>;
+#else
+// alias for templates when macros can't be used
+template <typename T, u32 _NumInSitu, typename _Allocator>
+using TVectorInSitu = TVector<T, TSegregateAllocator<
+    (sizeof(T) * _NumInSitu),
+    TInSituAllocator<sizeof(T) * _NumInSitu>,
+    _Allocator>>;
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -372,6 +385,16 @@ void Clear_ReleaseMemory(TVector<T, _Allocator>& v);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 void Reserve(TVector<T, _Allocator>& v, size_t capacity);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+NODISCARD size_t SizeOf(const TVector<T, _Allocator>& v) NOEXCEPT {
+    return v.size();
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Resize_DiscardData(TVector<T, _Allocator>& v, size_t size) {
+    v.resize(size);
+}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 hash_t hash_value(const TVector<T, _Allocator>& vector);

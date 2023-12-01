@@ -28,7 +28,8 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 using FAllocaHeap = TSlabHeap<ALLOCATOR(Alloca)>;
-PPE_CORE_API TThreadSafe<TPtrRef<FAllocaHeap>, EThreadBarrier::ThreadLocal> AllocaHeap();
+using FAllocaAllocator = TSlabAllocator<ALLOCATOR(Alloca)>;
+PPE_CORE_API FAllocaHeap& AllocaHeap();
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 PPE_CORE_API u32 AllocaDepth(); // used for detecting live alloca TLS blocks in debug

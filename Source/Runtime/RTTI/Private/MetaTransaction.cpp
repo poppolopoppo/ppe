@@ -54,8 +54,8 @@ void LinearizeTransaction_(
                         AssertRelease(obj.RTTI_IsLoaded());
 
 #if WITH_PPE_RTTI_TRANSACTION_CHECKS
-                        CLOG(obj.RTTI_Outer()->Linearized().HasImport(outer), RTTI, Fatal,
-                            L"found a circular transaction import : {0} <=> {1}",
+                        PPE_CLOG(obj.RTTI_Outer()->Linearized().HasImport(outer), RTTI, Fatal,
+                            "found a circular transaction import : {0} <=> {1}",
                             outer.Namespace(), obj.RTTI_Outer()->Namespace() );
 #endif
 
@@ -89,70 +89,69 @@ void LinearizeTransaction_(
 void ReportLoadedTransaction_(
     const FMetaTransaction& outer,
     const FLinearizedTransaction& linearized) {
-    LOG(RTTI, Info, L"loaded transaction '{0}' :", outer.Namespace());
+    PPE_LOG(RTTI, Info, "loaded transaction '{0}' :", outer.Namespace());
 
-    FWStringBuilder oss;
-    Fmt::FWIndent indent = Fmt::FWIndent::UsingTabs();
+    Fmt::FIndent indent = Fmt::FIndent::UsingTabs();
     indent.Inc();
 
-    oss << indent << L" - Top objects : " << outer.TopObjects().size() << Eol;
-    {
-        size_t index = 0;
-        const Fmt::FWIndent::FScope scopeIndent(indent);
-        for (const PMetaObject& obj : outer.TopObjects())
-            oss << indent << L'['
-            << Fmt::PadLeft(index++, 3, L'0') << L"]  "
-            << Fmt::Pointer(obj.get()) << L" : "
-            << obj->RTTI_Class()->Name() << L" ("
-            << obj->RTTI_Flags() << L')'
-            << Eol;
-
-        FLogger::Log(LOG_MAKESITE(RTTI, Info), oss.ToString());
-    }
-    oss << indent << L" - Exported objects : " << linearized.ExportedRefs.size() << Eol;
-    {
-        size_t index = 0;
-        const Fmt::FWIndent::FScope scopeIndent(indent);
-        for (const SMetaObject& obj : linearized.ExportedRefs)
-            oss << indent << L'['
-            << Fmt::PadLeft(index++, 3, L'0') << L"]  "
-            << Fmt::Pointer(obj.get()) << L" : "
-            << obj->RTTI_Class()->Name() << L" = '"
-            << obj->RTTI_Name() << L"' ("
-            << obj->RTTI_Flags() << L')'
-            << Eol;
-
-        FLogger::Log(LOG_MAKESITE(RTTI, Info), oss.ToString());
-    }
-    oss << indent << L" - Loaded objects : " << linearized.LoadedRefs.size() << Eol;
-    {
-        size_t index = 0;
-        const Fmt::FWIndent::FScope scopeIndent(indent);
-        for (const SMetaObject& obj : linearized.LoadedRefs)
-            oss << indent << L'['
-            << Fmt::PadLeft(index++, 3, L'0') << L"]  "
-            << Fmt::Pointer(obj.get()) << L" : "
-            << obj->RTTI_Class()->Name() << L" ("
-            << obj->RTTI_Flags() << L')'
-            << Eol;
-
-        FLogger::Log(LOG_MAKESITE(RTTI, Info), oss.ToString());
-    }
-    oss << indent << L" - Imported objects : " << linearized.ImportedRefs.size() << Eol;
-    {
-        size_t index = 0;
-        const Fmt::FWIndent::FScope scopeIndent(indent);
-        for (const SMetaObject& obj : linearized.ImportedRefs)
-            oss << indent << L'['
-            << Fmt::PadLeft(index++, 3, L'0') << L"]  "
-            << Fmt::Pointer(obj.get()) << L" : "
-            << obj->RTTI_Class()->Name() << L" = '"
-            << obj->RTTI_PathName() << L"' ("
-            << obj->RTTI_Flags() << L')'
-            << Eol;
-
-        FLogger::Log(LOG_MAKESITE(RTTI, Info), oss.ToString());
-    }
+    PPE_LOG_DIRECT(RTTI, Info, [&](FTextWriter& oss) {
+        oss << indent << " - Top objects : " << outer.TopObjects().size() << Eol;
+        {
+            size_t index = 0;
+            const Fmt::FIndent::FScope scopeIndent(indent);
+            for (const PMetaObject& obj : outer.TopObjects())
+                oss << indent << '['
+                << Fmt::PadLeft(index++, 3, '0') << "]  "
+                << Fmt::Pointer(obj.get()) << " : "
+                << obj->RTTI_Class()->Name() << " ("
+                << obj->RTTI_Flags() << ')'
+                << Eol;
+        }
+    });
+    PPE_LOG_DIRECT(RTTI, Info, [&](FTextWriter& oss) {
+        oss << indent << " - Exported objects : " << linearized.ExportedRefs.size() << Eol;
+        {
+            size_t index = 0;
+            const Fmt::FIndent::FScope scopeIndent(indent);
+            for (const SMetaObject& obj : linearized.ExportedRefs)
+                oss << indent << '['
+                << Fmt::PadLeft(index++, 3, '0') << "]  "
+                << Fmt::Pointer(obj.get()) << " : "
+                << obj->RTTI_Class()->Name() << " = '"
+                << obj->RTTI_Name() << "' ("
+                << obj->RTTI_Flags() << ')'
+                << Eol;
+        }
+    });
+    PPE_LOG_DIRECT(RTTI, Info, [&](FTextWriter& oss) {
+        oss << indent << " - Loaded objects : " << linearized.LoadedRefs.size() << Eol;
+        {
+            size_t index = 0;
+            const Fmt::FIndent::FScope scopeIndent(indent);
+            for (const SMetaObject& obj : linearized.LoadedRefs)
+                oss << indent << '['
+                << Fmt::PadLeft(index++, 3, '0') << "]  "
+                << Fmt::Pointer(obj.get()) << " : "
+                << obj->RTTI_Class()->Name() << " ("
+                << obj->RTTI_Flags() << ')'
+                << Eol;
+        }
+    });
+    PPE_LOG_DIRECT(RTTI, Info, [&](FTextWriter& oss) {
+        oss << indent << " - Imported objects : " << linearized.ImportedRefs.size() << Eol;
+        {
+            size_t index = 0;
+            const Fmt::FIndent::FScope scopeIndent(indent);
+            for (const SMetaObject& obj : linearized.ImportedRefs)
+                oss << indent << '['
+                << Fmt::PadLeft(index++, 3, '0') << "]  "
+                << Fmt::Pointer(obj.get()) << " : "
+                << obj->RTTI_Class()->Name() << " = '"
+                << obj->RTTI_PathName() << "' ("
+                << obj->RTTI_Flags() << ')'
+                << Eol;
+        }
+    });
 }
 #endif //!USE_PPE_LOGGER
 //----------------------------------------------------------------------------
@@ -170,7 +169,7 @@ public:
         _outer->_state = ETransactionState::Loading;
     }
 
-    ~FTransactionLoadContext() {
+    ~FTransactionLoadContext() override {
         Assert(ETransactionState::Loading == _outer->_state);
 
 #if WITH_PPE_RTTI_TRANSACTION_CHECKS
@@ -206,7 +205,7 @@ public:
         _outer->_state = ETransactionState::Unloading;
     }
 
-    ~FTransactionUnloadContext() {
+    ~FTransactionUnloadContext() override {
         Assert(ETransactionState::Unloading == _outer->_state);
 
 #if WITH_PPE_RTTI_TRANSACTION_CHECKS
@@ -319,7 +318,7 @@ void FMetaTransaction::Load(ILoadContext* load/* = nullptr */) {
 void FMetaTransaction::Mount() {
     Assert_NoAssume(IsLoaded());
 
-    LOG(RTTI, Info, L"mount transaction '{0}'", _namespace);
+    PPE_LOG(RTTI, Info, "mount transaction '{0}'", _namespace);
 
     // exports everything to database
 
@@ -340,7 +339,7 @@ void FMetaTransaction::Mount() {
 void FMetaTransaction::Unmount() {
     Assert_NoAssume(IsMounted());
 
-    LOG(RTTI, Info, L"unmount transaction '{0}'", _namespace);
+    PPE_LOG(RTTI, Info, "unmount transaction '{0}'", _namespace);
 
     // unregister everything from database
 
@@ -362,7 +361,7 @@ void FMetaTransaction::Unload(IUnloadContext* unload/* = nullptr */) {
     Assert_NoAssume(IsLoaded());
     Assert_NoAssume(_linearized.LoadedRefs.size() >= _topObjects.size());
 
-    LOG(RTTI, Info, L"unload transaction '{0}'", _namespace);
+    PPE_LOG(RTTI, Info, "unload transaction '{0}'", _namespace);
 
     // unload every loaded object and clear linearized data
 
@@ -376,7 +375,7 @@ void FMetaTransaction::Unload(IUnloadContext* unload/* = nullptr */) {
 }
 //----------------------------------------------------------------------------
 void FMetaTransaction::Reload() {
-    LOG(RTTI, Info, L"reloading transaction '{0}' ({1} top objects)",
+    PPE_LOG(RTTI, Info, "reloading transaction '{0}' ({1} top objects)",
         _namespace, _topObjects.size() );
 
     const bool wasMounted = IsMounted();
@@ -463,14 +462,14 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionFlags flags) {
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionFlags flags) {
-    auto sep = Fmt::NotFirstTime(L'|');
+    auto sep = Fmt::NotFirstTime('|');
 
     if (flags == RTTI::ETransactionFlags::Default)
-        return oss << L"Default";
+        return oss << "Default";
     if (flags ^ RTTI::ETransactionFlags::KeepDeprecated)
-        oss << sep << L"KeepDeprecated";
+        oss << sep << "KeepDeprecated";
     if (flags ^ RTTI::ETransactionFlags::KeepTransient)
-        oss << sep << L"KeepTransient";
+        oss << sep << "KeepTransient";
 
     return oss;
 }
@@ -492,13 +491,13 @@ FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionState state) {
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionState state) {
     switch (state) {
-    case RTTI::ETransactionState::Unloaded:     return oss << L"Unloaded";
-    case RTTI::ETransactionState::Loading:      return oss << L"Loading";
-    case RTTI::ETransactionState::Loaded:       return oss << L"Loaded";
-    case RTTI::ETransactionState::Mounting:     return oss << L"Mounting";
-    case RTTI::ETransactionState::Mounted:      return oss << L"Mounted";
-    case RTTI::ETransactionState::Unmounting:   return oss << L"Unmounting";
-    case RTTI::ETransactionState::Unloading:    return oss << L"Unloading";
+    case RTTI::ETransactionState::Unloaded:     return oss << "Unloaded";
+    case RTTI::ETransactionState::Loading:      return oss << "Loading";
+    case RTTI::ETransactionState::Loaded:       return oss << "Loaded";
+    case RTTI::ETransactionState::Mounting:     return oss << "Mounting";
+    case RTTI::ETransactionState::Mounted:      return oss << "Mounted";
+    case RTTI::ETransactionState::Unmounting:   return oss << "Unmounting";
+    case RTTI::ETransactionState::Unloading:    return oss << "Unloading";
     }
     AssertNotReached();
 }

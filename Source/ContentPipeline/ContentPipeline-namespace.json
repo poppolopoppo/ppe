@@ -6,6 +6,7 @@
 		"BuildGraph",
 		"MeshBuilder",
 		"PipelineCompiler",
-		"PipelineReflection"
+		"PipelineReflection",
+		"Texture"
 	]
 }

@@ -9,9 +9,9 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_RHI_API FRHIException : public FException {
+class FRHIException : public FException {
 protected:
-    FRHIException(const char* what);
+    PPE_RHI_API FRHIException(const char* what);
 public:
     virtual ~FRHIException() = default;
 };

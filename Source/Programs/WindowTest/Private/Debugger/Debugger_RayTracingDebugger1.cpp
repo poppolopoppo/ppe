@@ -11,7 +11,7 @@ bool Debugger_RayTracingDebugger1_(FWindowTestApp& app) {
 
     if (not EnableShaderDebugging) {
         Unused(app);
-        LOG(WindowTest, Warning, L"Debugger_RayTracingDebugger1_: skipped due to lack of debugger support (USE_PPE_RHIDEBUG={0})", USE_PPE_RHIDEBUG);
+        PPE_LOG(WindowTest, Warning, "Debugger_RayTracingDebugger1_: skipped due to lack of debugger support (USE_PPE_RHIDEBUG={0})", USE_PPE_RHIDEBUG);
         return true;
     }
 
@@ -20,7 +20,7 @@ bool Debugger_RayTracingDebugger1_(FWindowTestApp& app) {
     if (not (fg.DeviceProperties().RayTracingNV and (
         app.RHI().Features() & (ERHIFeature::Debugging+ERHIFeature::RayTracing))) ) {
         Unused(app);
-        LOG(WindowTest, Warning, L"Debugger_RayTracingDebugger1_: skipped due to lack of debugger support (USE_PPE_RHIDEBUG={0})", USE_PPE_RHIDEBUG);
+        PPE_LOG(WindowTest, Warning, "Debugger_RayTracingDebugger1_: skipped due to lack of debugger support (USE_PPE_RHIDEBUG={0})", USE_PPE_RHIDEBUG);
         return true;
     }
 
@@ -75,7 +75,7 @@ void main ()
 ARGS_IF_RHIDEBUG("RayClosestHit"));
 
     const TAutoResource<FRTPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Debugger_RayTracingDebugger1"))) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     const uint2 viewSize{ 800, 600 };
     const uint2 debugCoord{ viewSize / 2_u32 };
@@ -84,7 +84,7 @@ ARGS_IF_RHIDEBUG("RayClosestHit"));
         FImageDesc{}.SetDimension(viewSize).SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("OutputImage"))) };
-    LOG_CHECK(WindowTest, dstImage.Valid());
+    PPE_LOG_CHECK(WindowTest, dstImage.Valid());
 
     const u32 indices[] = {0, 1, 2};
     const float3 vertices[] = {
@@ -106,19 +106,19 @@ ARGS_IF_RHIDEBUG("RayClosestHit"));
     TAutoResource<FRTGeometryID> rtGeometry{ fg.ScopedResource(fg.CreateRayTracingGeometry(
         FRayTracingGeometryDesc({ trianglesDesc }),
         Default ARGS_IF_RHIDEBUG("RayTracingDebugger1_Geometry"))) };
-    LOG_CHECK(WindowTest, rtGeometry.Valid());
+    PPE_LOG_CHECK(WindowTest, rtGeometry.Valid());
 
     TAutoResource<FRTSceneID> rtScene{ fg.ScopedResource(fg.CreateRayTracingScene(
         FRayTracingSceneDesc(1),
         Default ARGS_IF_RHIDEBUG("RayTracingDebugger1_Scene"))) };
-    LOG_CHECK(WindowTest, rtScene.Valid());
+    PPE_LOG_CHECK(WindowTest, rtScene.Valid());
 
     TAutoResource<FRTShaderTableID> rtShaders{ fg.ScopedResource(
         fg.CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG("RayTracingDebugger1_Shaders"))) };
-    LOG_CHECK(WindowTest, rtShaders.Valid());
+    PPE_LOG_CHECK(WindowTest, rtShaders.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, "0"_descriptorset));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, "0"_descriptorset));
 
     bool dataIsCorrect = false;
     bool shaderOutputIsCorrect = false;
@@ -159,11 +159,11 @@ no source
 )#";
 
             shaderOutputIsCorrect &= (output.size() == 1 and output[0] == ref0);
-            LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
+            PPE_LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
         }
         else if (shaderName == "DefaultRayMissShader") {
             shaderOutputIsCorrect &= (output.empty());
-            LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
+            PPE_LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
         }
         else if (shaderName == "RayClosestHit") {
             const FStringView ref1 = R"#(//> gl_LaunchIDNV: uint3 {400, 300, 0}
@@ -179,11 +179,11 @@ no source
 )#";
 
             shaderOutputIsCorrect &= (output.size() == 1 and output[0] == ref1);
-            LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
+            PPE_LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
         }
         else {
             shaderOutputIsCorrect = false;
-            LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
+            PPE_LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
         }
     };
 
@@ -196,14 +196,14 @@ no source
         const FRgba32f color{ 0.249583f, 0.252086f,  0.498331f, 1.0f };
 
         dataIsCorrect = DistanceSq(color, texel) < LargeEpsilon;
-        LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", debugCoord, texel, color, dataIsCorrect);
-        LOG_CHECKVOID(WindowTest, dataIsCorrect);
+        PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", debugCoord, texel, color, dataIsCorrect);
+        PPE_LOG_CHECKVOID(WindowTest, dataIsCorrect);
     };
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Debugger_RayTracingDebugger1")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->BindImage("un_Output"_uniform, dstImage);
     resources->BindRayTracingScene("un_RtScene"_uniform, rtScene);
@@ -238,11 +238,11 @@ no source
         .DependsOn(tTrace));
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, dataIsCorrect);
-    LOG_CHECK(WindowTest, shaderOutputIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, shaderOutputIsCorrect);
 #endif
 
     return true;

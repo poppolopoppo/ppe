@@ -91,9 +91,9 @@ struct FMallocLowLevel {
     FORCE_INLINE static void*   AlignedCalloc(size_t nmemb, size_t size, size_t alignment);
     FORCE_INLINE static void*   AlignedRealloc(void *ptr, size_t size, size_t alignment);
 
-    FORCE_INLINE static void*   MallocForNew(size_t size);
-    FORCE_INLINE static void*   ReallocForNew(void* ptr, size_t size, size_t old);
-    FORCE_INLINE static void    FreeForDelete(void* ptr, size_t size);
+    FORCE_INLINE static FAllocatorBlock MallocForNew(size_t size);
+    FORCE_INLINE static FAllocatorBlock ReallocForNew(FAllocatorBlock blk, size_t size);
+    FORCE_INLINE static void FreeForDelete(FAllocatorBlock blk);
 
     FORCE_INLINE static void    ReleaseCacheMemory();
     FORCE_INLINE static void    ReleasePendingBlocks();
@@ -104,6 +104,7 @@ struct FMallocLowLevel {
     FORCE_INLINE static size_t  RegionSize(void* ptr);
 #endif
 #if !USE_PPE_FINAL_RELEASE
+    FORCE_INLINE static void    DumpMemoryInfo(FTextWriter& oss);
     FORCE_INLINE static void    DumpMemoryInfo(FWTextWriter& oss);
 #endif
 };
@@ -114,7 +115,7 @@ void  FMallocLowLevel::Free(void* ptr) { AlignedFree(ptr); }
 void* FMallocLowLevel::Calloc(size_t nmemb, size_t size) { return AlignedCalloc(nmemb, size, ALLOCATION_BOUNDARY); }
 void* FMallocLowLevel::Realloc(void *ptr, size_t size) { return AlignedRealloc(ptr, size, ALLOCATION_BOUNDARY); }
 void* FMallocLowLevel::AlignedMalloc(size_t size, size_t alignment) {
-    alignment = Max(alignment, ALLOCATION_BOUNDARY);
+    alignment = Max(alignment, size_t(ALLOCATION_BOUNDARY));
     Assert(alignment == ALLOCATION_BOUNDARY);
     return FPlatformMemory::SystemAlignedMalloc(size, alignment);
 }
@@ -122,26 +123,29 @@ void  FMallocLowLevel::AlignedFree(void *ptr) {
     FPlatformMemory::SystemAlignedFree(ptr, ALLOCATION_BOUNDARY);
 }
 void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment) {
-    alignment = Max(alignment, ALLOCATION_BOUNDARY);
+    alignment = Max(alignment, size_t(ALLOCATION_BOUNDARY));
     Assert(alignment == ALLOCATION_BOUNDARY);
     void* const p = FPlatformMemory::SystemAlignedMalloc(size * nmemb, alignment);
     FPlatformMemory::Memzero(p, size * nmemb);
     return p;
 }
 void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
-    alignment = Max(alignment, ALLOCATION_BOUNDARY);
+    alignment = Max(alignment, size_t(ALLOCATION_BOUNDARY));
     Assert(alignment == ALLOCATION_BOUNDARY);
     return FPlatformMemory::SystemAlignedRealloc(ptr, size, alignment);
 }
-void* FMallocLowLevel::MallocForNew(size_t size) { return Malloc(size); }
-void* FMallocLowLevel::ReallocForNew(void* ptr, size_t size, size_t) { return Realloc(ptr, size); }
-void  FMallocLowLevel::FreeForDelete(void* ptr, size_t) { Free(ptr); }
+FAllocatorBlock FMallocLowLevel::MallocForNew(size_t size) { return FAllocatorBlock(Malloc(size), size); }
+FAllocatorBlock FMallocLowLevel::ReallocForNew(FAllocatorBlock blk, size_t size) { return FAllocatorBlock(Realloc(blk.Data, size), size); }
+void  FMallocLowLevel::FreeForDelete(FAllocatorBlock blk) { Free(blk.Data); }
 void  FMallocLowLevel::ReleaseCacheMemory() {}
 void  FMallocLowLevel::ReleasePendingBlocks() {}
 size_t FMallocLowLevel::SnapSize(size_t size) NOEXCEPT { return size; }
 #if !USE_PPE_FINAL_RELEASE
 size_t FMallocLowLevel::RegionSize(void* ptr) {
     return FPlatformMemory::SystemAlignedRegionSize(ptr, ALLOCATION_BOUNDARY);
+}
+void FMallocLowLevel::DumpMemoryInfo(FTextWriter&) {
+    // #TODO
 }
 void FMallocLowLevel::DumpMemoryInfo(FWTextWriter&) {
     // #TODO
@@ -168,9 +172,9 @@ void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment
 void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return FMallocBinned::AlignedRealloc(ptr, size, alignment);
 }
-void* FMallocLowLevel::MallocForNew(size_t size) { return Malloc(size); }
-void* FMallocLowLevel::ReallocForNew(void* ptr, size_t size, size_t) { return Realloc(ptr, size); }
-void  FMallocLowLevel::FreeForDelete(void* ptr, size_t ) { Free(ptr); }
+FAllocatorBlock FMallocLowLevel::MallocForNew(size_t size) { return FAllocatorBlock(Malloc(size), size); }
+FAllocatorBlock FMallocLowLevel::ReallocForNew(FAllocatorBlock blk, size_t size) { return FAllocatorBlock(Realloc(blk.Data, size), size); }
+void  FMallocLowLevel::FreeForDelete(FAllocatorBlock blk) { Free(blk.Data); }
 void  FMallocLowLevel::ReleaseCacheMemory() {
     FMallocBinned::ReleaseCacheMemory();
 }
@@ -186,6 +190,9 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 }
 #endif
 #if !USE_PPE_FINAL_RELEASE
+void FMallocLowLevel::DumpMemoryInfo(FTextWriter& oss) {
+    FMallocBinned::DumpMemoryInfo(oss);
+}
 void FMallocLowLevel::DumpMemoryInfo(FWTextWriter& oss) {
     FMallocBinned::DumpMemoryInfo(oss);
 }
@@ -211,9 +218,9 @@ void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment
 void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return FMallocBinned2::AlignedRealloc(ptr, size, alignment);
 }
-void* FMallocLowLevel::MallocForNew(size_t size) { return FMallocBinned2::MallocForNew(size); }
-void* FMallocLowLevel::ReallocForNew(void* ptr, size_t size, size_t old) { return FMallocBinned2::ReallocForNew(ptr, size, old); }
-void  FMallocLowLevel::FreeForDelete(void* ptr, size_t size) { FMallocBinned2::FreeForDelete(ptr, size); }
+FAllocatorBlock FMallocLowLevel::MallocForNew(size_t size) { return FMallocBinned2::MallocForNew(size); }
+FAllocatorBlock FMallocLowLevel::ReallocForNew(FAllocatorBlock blk, size_t size) { return FMallocBinned2::ReallocForNew(FAllocatorBlock{ blk.Data, blk.SizeInBytes }, size); }
+void FMallocLowLevel::FreeForDelete(FAllocatorBlock blk) { FMallocBinned2::FreeForDelete(FAllocatorBlock{ blk.Data, blk.SizeInBytes }); }
 void  FMallocLowLevel::ReleaseCacheMemory() {
     FMallocBinned2::ReleaseCacheMemory();
 }
@@ -229,6 +236,9 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 }
 #endif
 #if !USE_PPE_FINAL_RELEASE
+void FMallocLowLevel::DumpMemoryInfo(FTextWriter& oss) {
+    FMallocBinned2::DumpMemoryInfo(oss);
+}
 void FMallocLowLevel::DumpMemoryInfo(FWTextWriter& oss) {
     FMallocBinned2::DumpMemoryInfo(oss);
 }
@@ -254,9 +264,9 @@ void* FMallocLowLevel::AlignedCalloc(size_t nmemb, size_t size, size_t alignment
 void* FMallocLowLevel::AlignedRealloc(void *ptr, size_t size, size_t alignment) {
     return FMallocStomp::AlignedRealloc(ptr, size, alignment);
 }
-void* FMallocLowLevel::MallocForNew(size_t size) { return Malloc(size); }
-void* FMallocLowLevel::ReallocForNew(void* ptr, size_t size, size_t) { return Realloc(ptr, size); }
-void  FMallocLowLevel::FreeForDelete(void* ptr, size_t) { Free(ptr); }
+FAllocatorBlock FMallocLowLevel::MallocForNew(size_t size) { return FAllocatorBlock(Malloc(size), size); }
+FAllocatorBlock FMallocLowLevel::ReallocForNew(FAllocatorBlock blk, size_t size) { return FAllocatorBlock(Realloc(blk.Data, size), size); }
+void  FMallocLowLevel::FreeForDelete(FAllocatorBlock blk) { Free(blk.Data); }
 void  FMallocLowLevel::ReleaseCacheMemory() {}
 void  FMallocLowLevel::ReleasePendingBlocks() {}
 size_t FMallocLowLevel::SnapSize(size_t size) NOEXCEPT { return size; }
@@ -266,6 +276,7 @@ size_t FMallocLowLevel::RegionSize(void* ptr) {
 }
 #endif
 #if !USE_PPE_FINAL_RELEASE
+void FMallocLowLevel::DumpMemoryInfo(FTextWriter&) {/* #TODO */}
 void FMallocLowLevel::DumpMemoryInfo(FWTextWriter&) {/* #TODO */}
 #endif
 #endif //!PPE_MALLOC_ALLOCATOR_STOMP
@@ -313,6 +324,8 @@ struct FMallocHistogram {
     }
 
     void Allocate(size_t userSize, size_t systemSize) NOEXCEPT {
+        Assert(userSize == systemSize);
+
         const u32 sizeClass = MakeSizeClass(systemSize);
         Assert_NoAssume(BlockSizes[sizeClass] >= systemSize);
 
@@ -321,6 +334,8 @@ struct FMallocHistogram {
     }
 
     void Deallocate(size_t userSize, size_t systemSize) NOEXCEPT {
+        Assert(userSize == systemSize);
+
         const u32 sizeClass = MakeSizeClass(systemSize);
         Assert_NoAssume(BlockSizes[sizeClass] >= systemSize);
 
@@ -368,19 +383,19 @@ public:
     };
     ENUM_FLAGS_FRIEND(EFlags);
 
-    FORCE_INLINE static void* Malloc(size_t size) { return AllocateBlock(FMallocLowLevel::Malloc(size), size); }
-    FORCE_INLINE static void  Free(void* ptr) { FMallocLowLevel::Free(ReleaseBlock(ptr)); }
-    FORCE_INLINE static void* Calloc(size_t nmemb, size_t size) { return AllocateBlock(FMallocLowLevel::Calloc(nmemb, size), size); }
-    FORCE_INLINE static void* Realloc(void *ptr, size_t size) { return ReallocAllocateBlock(FMallocLowLevel::Realloc(ReallocReleaseBlock(ptr), size), ptr, size); }
+    FORCE_INLINE static void* Malloc(size_t size) { return OnAllocate_({ FMallocLowLevel::Malloc(size), 0 }, size).Data; }
+    FORCE_INLINE static void  Free(void* ptr) { FMallocLowLevel::Free(OnDeallocate_({ ptr, 0 }, 0).Data); }
+    FORCE_INLINE static void* Calloc(size_t nmemb, size_t size) { return OnAllocate_({ FMallocLowLevel::Calloc(nmemb, size), 0 }, nmemb * size).Data; }
+    FORCE_INLINE static void* Realloc(void* ptr, size_t size) { return OnReallocateEnd_({ FMallocLowLevel::Realloc(ptr, size), 0 }, OnReallocateBegin_({ ptr, 0 }, 0), size).Data; }
 
-    FORCE_INLINE static void* AlignedMalloc(size_t size, size_t alignment) { return AllocateBlock(FMallocLowLevel::AlignedMalloc(size, alignment), size, alignment); }
-    FORCE_INLINE static void  AlignedFree(void *ptr) { FMallocLowLevel::AlignedFree(ReleaseBlock(ptr)); }
-    FORCE_INLINE static void* AlignedCalloc(size_t nmemb, size_t size, size_t alignment) { return AllocateBlock(FMallocLowLevel::AlignedCalloc(nmemb, size, alignment), size, alignment); }
-    FORCE_INLINE static void* AlignedRealloc(void *ptr, size_t size, size_t alignment) { return ReallocAllocateBlock(FMallocLowLevel::AlignedRealloc(ReallocReleaseBlock(ptr, 0, alignment), size, alignment), ptr , size, alignment); }
+    FORCE_INLINE static void* AlignedMalloc(size_t size, size_t alignment) { return OnAllocate_({ FMallocLowLevel::AlignedMalloc(size, alignment), 0 }, size, alignment).Data; }
+    FORCE_INLINE static void  AlignedFree(void* ptr) { FMallocLowLevel::AlignedFree(OnDeallocate_({ ptr, 0 }, 0).Data); }
+    FORCE_INLINE static void* AlignedCalloc(size_t nmemb, size_t size, size_t alignment) { return OnAllocate_({ FMallocLowLevel::AlignedCalloc(nmemb, size, alignment), 0 }, nmemb*size, alignment).Data; }
+    FORCE_INLINE static void* AlignedRealloc(void* ptr, size_t size, size_t alignment) { return OnReallocateEnd_({ FMallocLowLevel::AlignedRealloc(ptr, size, alignment), 0 }, OnReallocateBegin_({ ptr, 0 }, 0), size, alignment).Data; }
 
-    FORCE_INLINE static void* MallocForNew(size_t size) { return AllocateBlock<MLP_UserSize>(FMallocLowLevel::MallocForNew(size), size); }
-    FORCE_INLINE static void* ReallocForNew(void* ptr, size_t size, size_t old) { return ReallocAllocateBlock<MLP_UserSize>(FMallocLowLevel::ReallocForNew(ReallocReleaseBlock<MLP_UserSize>(ptr, old), size, old), ptr, size); }
-    FORCE_INLINE static void  FreeForDelete(void* ptr, size_t size) { FMallocLowLevel::FreeForDelete(ReleaseBlock<MLP_UserSize>(ptr, size), size); }
+    FORCE_INLINE static FAllocatorBlock MallocForNew(size_t size) { return OnAllocate_(FMallocLowLevel::MallocForNew(size), 0); }
+    FORCE_INLINE static FAllocatorBlock ReallocForNew(FAllocatorBlock blk, size_t size) { return OnReallocateEnd_(FMallocLowLevel::ReallocForNew(blk, size), OnReallocateBegin_(blk, blk.SizeInBytes), 0); }
+    FORCE_INLINE static void FreeForDelete(FAllocatorBlock blk) { FMallocLowLevel::FreeForDelete(OnDeallocate_(blk, blk.SizeInBytes)); }
 
     FORCE_INLINE static size_t SnapSize(size_t size) NOEXCEPT { // must always return a block size larger or equal than user input
         const size_t snapped = FMallocLowLevel::SnapSize(size);
@@ -395,108 +410,116 @@ public:
     }
 #endif
 #if !USE_PPE_FINAL_RELEASE
+    FORCE_INLINE static void DumpMemoryInfo(FTextWriter& oss) {
+        FMallocLowLevel::DumpMemoryInfo(oss);
+    }
     FORCE_INLINE static void DumpMemoryInfo(FWTextWriter& oss) {
         FMallocLowLevel::DumpMemoryInfo(oss);
     }
 #endif
 
 private:
-    template <EFlags _Flags = MLP_None>
-    static void* AllocateBlock(void* ptr, size_t userSize, size_t alignment = ALLOCATION_BOUNDARY) {
+    static bool RetrieveBlock_(FAllocatorBlock& blk, size_t& userSize, size_t alignment) {
         Assert(Meta::IsPow2(alignment));
-        Assert_NoAssume(ptr || 0 == userSize);
-        if (nullptr == ptr) return nullptr;
+        Assert_NoAssume(blk.Data || 0 == userSize);
 
-        Assert(Meta::IsAlignedPow2(alignment, ptr));
-        const size_t systemSize = SnapSize(userSize);
-        Unused(systemSize);
-        Assert_NoAssume(FMallocLowLevel::RegionSize(ptr) == systemSize);
+        if (nullptr == blk.Data)
+            return false;
 
-        IF_CONSTEXPR(not (_Flags & MLP_UserSize)) {
-            userSize = systemSize;
-        }
+        Assert(Meta::IsAlignedPow2(alignment, blk.Data));
+
+        if (blk.SizeInBytes == 0)
+            userSize = blk.SizeInBytes = RegionSize(blk.Data);
+        else
+            Assert_NoAssume(RegionSize(blk.Data) == blk.SizeInBytes);
+
+        if (userSize == 0)
+            userSize = blk.SizeInBytes;
+
+        Assert_NoAssume(SnapSize(userSize) == blk.SizeInBytes);
+        return true;
+    }
+
+    static FAllocatorBlock OnAllocate_(FAllocatorBlock blk, size_t userSize, size_t alignment = ALLOCATION_BOUNDARY) {
+        if (not RetrieveBlock_(blk, userSize, alignment))
+            return blk;
 
 #   if PPE_MALLOC_DEBUG_PROXY
-        IF_CONSTEXPR(not (_Flags & MLP_Realloc)) {
-            PPE_DEBUG_ALLOCATEEVENT(Malloc, ptr, userSize);
-        }
+        PPE_DEBUG_ALLOCATEEVENT(Malloc, blk.Data, userSize);
 #   endif
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
-        IF_CONSTEXPR(not (_Flags & MLP_Realloc)) {
-            FLeakDetector::Get().Allocate(ptr, userSize);
-        }
+        FLeakDetector::Get().Allocate(blk.Data, userSize);
 #   endif
 #   if PPE_MALLOC_HISTOGRAM_PROXY
-        FMallocHistogram::Get().Allocate(userSize, systemSize);
+        FMallocHistogram::Get().Allocate(userSize, blk.SizeInBytes);
 #   endif
 #   if PPE_MALLOC_UNACCOUNTED_PROXY
-        FMallocUnaccounted::Allocate(userSize, systemSize);
+        FMallocUnaccounted::Allocate(userSize, blk.SizeInBytes);
 #   endif
 #   if PPE_MALLOC_POISON_PROXY
-        IF_CONSTEXPR(not (_Flags & MLP_Realloc)) {
-            FPlatformMemory::Memuninitialized(ptr, systemSize);
-        }
+        FPlatformMemory::Memuninitialized(blk.Data, blk.SizeInBytes);
 #   endif
-        return ptr;
+
+        return blk;
     }
 
-    template <EFlags _Flags = MLP_None>
-    static void* ReleaseBlock(void* ptr, size_t userSize = 0, size_t alignment = ALLOCATION_BOUNDARY) {
-        Assert(Meta::IsPow2(alignment));
-        Assert(Meta::IsAlignedPow2(alignment, ptr));
-        if (nullptr == ptr) return nullptr;
-
-        size_t systemSize;
-        IF_CONSTEXPR(_Flags & MLP_UserSize) {
-            systemSize = SnapSize(userSize);
-            Unused(systemSize);
-            Assert_NoAssume(FMallocLowLevel::RegionSize(ptr) == systemSize);
-        }
-        else {
-            Assert_NoAssume(0 == userSize);
-            userSize = systemSize = FMallocLowLevel::RegionSize(ptr);
-        }
+    static FAllocatorBlock OnDeallocate_(FAllocatorBlock blk, size_t userSize, size_t alignment = ALLOCATION_BOUNDARY) {
+        if (not RetrieveBlock_(blk, userSize, alignment))
+            return blk;
 
 #   if PPE_MALLOC_DEBUG_PROXY
-        PPE_DEBUG_DEALLOCATEEVENT(Malloc, ptr);
+        PPE_DEBUG_DEALLOCATEEVENT(Malloc, blk.Data);
 #   endif
 #   if PPE_MALLOC_POISON_PROXY
-        IF_CONSTEXPR(not (_Flags & MLP_Realloc)) {
-            FPlatformMemory::Memdeadbeef(ptr, systemSize);
-        }
+        FPlatformMemory::Memdeadbeef(blk.Data, blk.SizeInBytes);
 #   endif
 #   if PPE_MALLOC_HISTOGRAM_PROXY
-        FMallocHistogram::Get().Deallocate(userSize, systemSize);
+        FMallocHistogram::Get().Deallocate(userSize, blk.SizeInBytes);
 #   endif
 #   if PPE_MALLOC_UNACCOUNTED_PROXY
-        FMallocUnaccounted::Deallocate(userSize, systemSize);
+        FMallocUnaccounted::Deallocate(userSize, blk.SizeInBytes);
 #   endif
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
-        IF_CONSTEXPR(not (_Flags & MLP_Realloc)) {
-            FLeakDetector::Get().Release(ptr);
-        }
+        FLeakDetector::Get().Release(blk.Data);
 #   endif
-        return ptr;
+
+        return blk;
     }
 
-    template <EFlags _Flags = MLP_None>
-    static void* ReallocAllocateBlock(void* newp, void* oldp, size_t sizeInBytes, size_t alignment = ALLOCATION_BOUNDARY) {
-        Unused(oldp);
+    static FAllocatorBlock OnReallocateBegin_(FAllocatorBlock oldp, size_t oldSize, size_t alignment = ALLOCATION_BOUNDARY) {
+        if (not RetrieveBlock_(oldp, oldSize, alignment))
+            return oldp;
+
+#   if PPE_MALLOC_HISTOGRAM_PROXY
+        FMallocHistogram::Get().Deallocate(oldSize, oldp.SizeInBytes);
+#   endif
+#   if PPE_MALLOC_UNACCOUNTED_PROXY
+        FMallocUnaccounted::Deallocate(oldSize, oldp.SizeInBytes);
+#   endif
+
+        return oldp;
+    }
+
+    static FAllocatorBlock OnReallocateEnd_(FAllocatorBlock newp, FAllocatorBlock oldp, size_t newSize, size_t alignment = ALLOCATION_BOUNDARY) {
+        if (not RetrieveBlock_(newp, newSize, alignment))
+            return oldp;
 
 #   if PPE_MALLOC_DEBUG_PROXY
-        PPE_DEBUG_REALLOCATEEVENT(Malloc, newp, sizeInBytes, oldp);
+        PPE_DEBUG_REALLOCATEEVENT(Malloc, newp.Data, newSize, oldp.Data);
+#   endif
+#   if PPE_MALLOC_HISTOGRAM_PROXY
+        FMallocHistogram::Get().Allocate(newSize, newp.SizeInBytes);
+#   endif
+#   if PPE_MALLOC_UNACCOUNTED_PROXY
+        FMallocUnaccounted::Allocate(newSize, newp.SizeInBytes);
 #   endif
 #   if PPE_MALLOC_LEAKDETECTOR_PROXY
-        FLeakDetector::Get().Realloc(newp, sizeInBytes, oldp);
+        FLeakDetector::Get().Realloc(newp.Data, newSize, oldp.Data);
 #   endif
 
-        return AllocateBlock<_Flags | MLP_Realloc>(newp, sizeInBytes, alignment);
+        return newp;
     }
 
-    template <EFlags _Flags = MLP_None>
-    static void* ReallocReleaseBlock(void* ptr, size_t size = 0, size_t alignment = ALLOCATION_BOUNDARY) {
-        return ReleaseBlock<_Flags | MLP_Realloc>(ptr, size, alignment);
-    }
 };
 #endif //!USE_PPE_MALLOC_PROXY
 //----------------------------------------------------------------------------
@@ -549,33 +572,33 @@ void*   (aligned_realloc)(void *ptr, size_t size, size_t alignment) {
     return FMallocProxy::AlignedRealloc(ptr, size, alignment);
 }
 //----------------------------------------------------------------------------
-PPE_CORE_API NOALIAS RESTRICT PPE_DECLSPEC_ALLOCATOR()
-void*   (malloc_for_new)(size_t size) {
+PPE_CORE_API NOALIAS
+FAllocatorBlock (malloc_for_new)(size_t size) {
     return FMallocProxy::MallocForNew(size);
 }
 //----------------------------------------------------------------------------
-PPE_CORE_API NOALIAS RESTRICT
-void*   (realloc_for_new)(void* ptr, size_t size, size_t old) {
-    return FMallocProxy::ReallocForNew(ptr, size, old);
+PPE_CORE_API NOALIAS
+FAllocatorBlock (realloc_for_new)(FAllocatorBlock blk, size_t size) {
+    return FMallocProxy::ReallocForNew(blk, size);
 }
 //----------------------------------------------------------------------------
 PPE_CORE_API NOALIAS
-void    (free_for_delete)(void* ptr, size_t size) {
-    return FMallocProxy::FreeForDelete(ptr, size);
+void (free_for_delete)(FAllocatorBlock blk) {
+    return FMallocProxy::FreeForDelete(blk);
 }
 //----------------------------------------------------------------------------
 NOALIAS
-void    (malloc_release_cache_memory)() {
+void (malloc_release_cache_memory)() {
     FMallocLowLevel::ReleaseCacheMemory();
 }
 //----------------------------------------------------------------------------
 NOALIAS
-void    (malloc_release_pending_blocks)() {
+void (malloc_release_pending_blocks)() {
     FMallocLowLevel::ReleasePendingBlocks();
 }
 //----------------------------------------------------------------------------
 NOALIAS
-size_t  (malloc_snap_size)(size_t size) NOEXCEPT {
+size_t (malloc_snap_size)(size_t size) NOEXCEPT {
     const size_t snapped = FMallocProxy::SnapSize(size);
     Assert_NoAssume((0 == snapped) || (size != 0));
     return snapped;
@@ -632,9 +655,9 @@ bool FMallocDebug::FetchAllocationHistogram(
     TMemoryView<const FMemoryTracking>* bins ) {
 #if PPE_MALLOC_HISTOGRAM_PROXY
     if (sizeClasses)
-        *sizeClasses = MakeView(FMallocHistogram::BlockSizes);
+        *sizeClasses = MakeConstView(FMallocHistogram::BlockSizes);
     if (bins)
-        *bins = MakeView(FMallocHistogram::Get().Bins);
+        *bins = MakeConstView(FMallocHistogram::Get().Bins);
     return true;
 #else
     Unused(sizeClasses);
@@ -645,6 +668,9 @@ bool FMallocDebug::FetchAllocationHistogram(
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------
 #if !USE_PPE_FINAL_RELEASE
+void FMallocDebug::DumpMemoryInfo(FTextWriter& oss) {
+    FMallocProxy::DumpMemoryInfo(oss);
+}
 void FMallocDebug::DumpMemoryInfo(FWTextWriter& oss) {
     FMallocProxy::DumpMemoryInfo(oss);
 }

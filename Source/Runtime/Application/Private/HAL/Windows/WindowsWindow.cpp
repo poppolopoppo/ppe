@@ -55,7 +55,7 @@ static FWindowsWindow* WindowsWindowFromHWnd_(::HWND hWnd) {
     const size_t classNameSz = size_t(::GetClassNameW(hWnd, className, MAX_PATH));
 
     if (0 == classNameSz) {
-        LOG_LASTERROR(Window, L"GetClassNameW");
+        PPE_LOG_LASTERROR(Window, "GetClassNameW");
         return nullptr;
     }
 
@@ -140,7 +140,7 @@ FWindowsWindow::~FWindowsWindow() {
     ::HWND const hWnd = HandleWin32();
 
     if (hWnd && not ::DestroyWindow(hWnd))
-        LOG_LASTERROR(Window, L"DestroyWindow");
+        PPE_LOG_LASTERROR(Window, "DestroyWindow");
 
     SetNativeHandle(nullptr);
 }
@@ -151,12 +151,12 @@ bool FWindowsWindow::Show() {
     Assert(hWnd);
 
     if (::ShowWindow(hWnd, FCurrentProcess::Get().nShowCmd())) {
-        LOG_LASTERROR(Window, L"ShowWindow");
+        PPE_LOG_LASTERROR(Window, "ShowWindow");
         return false;
     }
 
     if (not ::UpdateWindow(hWnd)) {
-        LOG_LASTERROR(Window, L"UpdateWindow");
+        PPE_LOG_LASTERROR(Window, "UpdateWindow");
         return false;
     }
 
@@ -169,7 +169,7 @@ bool FWindowsWindow::Close() {
         return false;
 
     if (not ::CloseWindow(HandleWin32())) {
-        LOG_LASTERROR(Window, L"CloseWindow");
+        PPE_LOG_LASTERROR(Window, "CloseWindow");
         return false;
     }
 
@@ -191,7 +191,7 @@ bool FWindowsWindow::Center() {
     WindowsScreenSize_(hWnd, &screenW, &screenH);
 
     ::RECT wRect;
-    CLOG_LASTERROR(not ::GetClientRect(hWnd, &wRect), Window, L"GetClientRect");
+    PPE_CLOG_LASTERROR(not ::GetClientRect(hWnd, &wRect), Window, "GetClientRect");
 
     const ::LONG clientW = (wRect.right - wRect.left);
     const ::LONG clientH = (wRect.bottom - wRect.top);
@@ -204,7 +204,7 @@ bool FWindowsWindow::Center() {
         return parent_type::Center();
     }
     else {
-        LOG_LASTERROR(Window, L"SetWindowPos");
+        PPE_LOG_LASTERROR(Window, "SetWindowPos");
         return false;
     }
 }
@@ -217,7 +217,7 @@ bool FWindowsWindow::Maximize() {
         return parent_type::Maximize();
     }
     else {
-        LOG_LASTERROR(Window, L"ShowWindow");
+        PPE_LOG_LASTERROR(Window, "ShowWindow");
         return false;
     }
 }
@@ -230,7 +230,7 @@ bool FWindowsWindow::Minimize() {
         return parent_type::Maximize();
     }
     else {
-        LOG_LASTERROR(Window, L"ShowWindow");
+        PPE_LOG_LASTERROR(Window, "ShowWindow");
         return false;
     }
 }
@@ -248,7 +248,7 @@ bool FWindowsWindow::Move(int x, int y) {
         return parent_type::Move(x, y);
     }
     else {
-        LOG_LASTERROR(Window, L"SetWindowPos");
+        PPE_LOG_LASTERROR(Window, "SetWindowPos");
         return false;
     }
 }
@@ -266,7 +266,7 @@ bool FWindowsWindow::Resize(size_t w, size_t h) {
         return parent_type::Resize(w, h);
     }
     else {
-        LOG_LASTERROR(Window, L"SetWindowPos");
+        PPE_LOG_LASTERROR(Window, "SetWindowPos");
         return false;
     }
 }
@@ -279,7 +279,7 @@ bool FWindowsWindow::SetFocus() {
         return parent_type::SetFocus();
     }
     else {
-        LOG_LASTERROR(Window, L"SetActiveWindow");
+        PPE_LOG_LASTERROR(Window, "SetActiveWindow");
         return false;
     }
 }
@@ -311,7 +311,7 @@ bool FWindowsWindow::SetFullscreen(bool value) {
             return parent_type::SetFullscreen(true);
         }
         else {
-            LOG_LASTERROR(Window, L"SetWindowPos");
+            PPE_LOG_LASTERROR(Window, "SetWindowPos");
         }
 
     }
@@ -330,7 +330,7 @@ bool FWindowsWindow::SetTitle(FWString&& title) {
         return parent_type::SetTitle(std::move(title));
     }
     else {
-        LOG_LASTERROR(Window, L"SetWindowTextW");
+        PPE_LOG_LASTERROR(Window, "SetWindowTextW");
         return false;
     }
 }
@@ -532,7 +532,7 @@ bool FWindowsWindow::WindowProcWin32(::UINT msg, ::WPARAM wParam, ::LPARAM lPara
         break;
     case WM_DESTROY:
         if (Type() == EWindowType::Main) {
-            LOG(Window, Info, L"post quit message from <{0}> window", Title());
+            PPE_LOG(Window, Info, "post quit message from <{0}> window", Title());
             ::PostQuitMessage(0);
         }
         break;

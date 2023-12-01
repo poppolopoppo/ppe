@@ -55,7 +55,7 @@ bool FDynamicLibrary::Attach(const wchar_t* path) {
     if (auto* const hModule = FPlatformProcess::AttachToDynamicLibrary(path)) {
         _handle.Reset(hModule, true, true);
 
-        LOG(DynamicLib, Debug, L"attached to module '{0}'", MakeCStringView(path) );
+        PPE_LOG(DynamicLib, Debug, "attached to module '{0}'", MakeCStringView(path) );
 
         _OnAttachLibrary.Invoke(*this, path);
 
@@ -72,7 +72,7 @@ bool FDynamicLibrary::Load(const wchar_t* path) {
     if (auto* const hModule = FPlatformProcess::OpenDynamicLibrary(path)) {
         _handle.Reset(hModule, true, false);
 
-        LOG(DynamicLib, Debug, L"loaded module '{0}'", MakeCStringView(path) );
+        PPE_LOG(DynamicLib, Debug, "loaded module '{0}'", MakeCStringView(path) );
 
         _OnLoadLibrary.Invoke(*this, path);
 
@@ -91,12 +91,12 @@ void FDynamicLibrary::Unload() {
     _OnUnloadLibrary.Invoke(*this);
 
     if (IsSharedResource()) {
-        LOG(DynamicLib, Debug, L"detaching module '{0}'", FPlatformProcess::DynamicLibraryFilename(hModule));
+        PPE_LOG(DynamicLib, Debug, "detaching module '{0}'", FPlatformProcess::DynamicLibraryFilename(hModule));
 
         FPlatformProcess::DetachFromDynamicLibrary(hModule);
     }
     else {
-        LOG(DynamicLib, Debug, L"unloading module '{0}'", FPlatformProcess::DynamicLibraryFilename(hModule));
+        PPE_LOG(DynamicLib, Debug, "unloading module '{0}'", FPlatformProcess::DynamicLibraryFilename(hModule));
 
         FPlatformProcess::CloseDynamicLibrary(hModule);
     }

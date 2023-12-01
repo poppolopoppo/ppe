@@ -71,19 +71,19 @@ FVulkanResourceManager::~FVulkanResourceManager()
 //----------------------------------------------------------------------------
 bool FVulkanResourceManager::Construct() {
     if (not _memoryManager.Construct()) {
-        LOG(RHI, Error, L"failed to initialize vulkan memory manager");
+        PPE_LOG(RHI, Error, "failed to initialize vulkan memory manager");
         return false;
     }
     if (not _descriptorManager.Construct()) {
-        LOG(RHI, Error, L"failed to initialize vulkan descriptor manager");
+        PPE_LOG(RHI, Error, "failed to initialize vulkan descriptor manager");
         return false;
     }
     if (not CreateEmptyDescriptorSetLayout_(&_emptyDSLayout)) {
-        LOG(RHI, Error, L"failed to create empty descriptor set layout");
+        PPE_LOG(RHI, Error, "failed to create empty descriptor set layout");
         return false;
     }
     if (not CheckHostVisibleMemory_()) {
-        LOG(RHI, Error, L"failed to check host visible memory");
+        PPE_LOG(RHI, Error, "failed to check host visible memory");
         return false;
     }
     return true;
@@ -115,7 +115,7 @@ void FVulkanResourceManager::TearDown() {
     auto tearDownCache = [this](auto& cache) {
         using resource_type = typename Meta::TDecay<decltype(cache)>::value_type;
         cache.Clear_IgnoreLeaks([this](resource_type* pCached) {
-            RHI_TRACE(L"TearDownCache", Meta::type_info<resource_type>.name, pCached->DebugName(), pCached->RefCount());
+            RHI_TRACE("TearDownCache", Meta::type_info<resource_type>.name, pCached->DebugName(), pCached->RefCount());
             Assert_NoAssume(pCached->RefCount() == 1);
             pCached->TearDown_Force(*this);
             return true;
@@ -181,7 +181,7 @@ bool FVulkanResourceManager::CreateEmptyDescriptorSetLayout_(FRawDescriptorSetLa
     if (Likely(it.first))
         return true;
 
-    LOG(RHI, Error, L"failed to create an empty descriptor set layout");
+    PPE_LOG(RHI, Error, "failed to create an empty descriptor set layout");
     return false;
 }
 //----------------------------------------------------------------------------
@@ -224,7 +224,7 @@ bool FVulkanResourceManager::CreatePipelineLayout_(
     const auto it = pool.FindOrAdd(std::move(layout),
         [this ARGS_IF_RHIDEBUG(debugName)](TResourceProxy<FVulkanPipelineLayout>* pLayout, FIndex , bool exist) -> bool {
             if (not exist)
-                LOG_CHECK(RHI, pLayout->Construct(
+                PPE_LOG_CHECK(RHI, pLayout->Construct(
                     _device,
                     ResourceData(_emptyDSLayout, false/* don't add ref for empty layout */).Read()->Layout
                     ARGS_IF_RHIDEBUG(debugName)) );
@@ -277,7 +277,7 @@ bool FVulkanResourceManager::CreateDescriptorSetLayout_(
     if (Likely(!!*pDSLayout))
         return true;
 
-    ONLY_IF_ASSERT(LOG(RHI, Error, L"failed to create descriptor set layout for '{0}'", debugName));
+    ONLY_IF_ASSERT(PPE_LOG(RHI, Error, "failed to create descriptor set layout for '{0}'", debugName));
     return false;
 }
 //----------------------------------------------------------------------------
@@ -306,10 +306,10 @@ bool FVulkanResourceManager::CompileShaders_(_Desc& desc) {
                         continue;
 
                     const auto it = sh.second.Data.find(fmtSPIRV);
-                    LOG_CHECK(RHI, it != sh.second.Data.end());
+                    PPE_LOG_CHECK(RHI, it != sh.second.Data.end());
 
                     PVulkanShaderModule module;
-                    LOG_CHECK(RHI, CompileShaderSPIRV_(&module, it->second));
+                    PPE_LOG_CHECK(RHI, CompileShaderSPIRV_(&module, it->second));
 
                     sh.second.Data.clear();
                     sh.second.Data.insert({ fmtSPIRV, PShaderModule(std::move(module)) });
@@ -346,7 +346,7 @@ bool FVulkanResourceManager::CompileShaders_(_Desc& desc) {
 
             if (fmt & EShaderLangFormat::SPIRV) {
                 PVulkanShaderModule module;
-                LOG_CHECK(RHI, CompileShaderSPIRV_(&module, it->second));
+                PPE_LOG_CHECK(RHI, CompileShaderSPIRV_(&module, it->second));
                 Assert(module);
 
                 sh.second.Data.clear();
@@ -360,7 +360,7 @@ bool FVulkanResourceManager::CompileShaders_(_Desc& desc) {
         isSupported &= found;
     }
 
-    CLOG(not isSupported, RHI, Error, L"unsupported shader format");
+    PPE_CLOG(not isSupported, RHI, Error, "unsupported shader format");
     return isSupported;
 }
 //----------------------------------------------------------------------------
@@ -382,10 +382,10 @@ bool FVulkanResourceManager::CompileShaders_(FComputePipelineDesc& desc) {
                     return false;
 
                 const auto it = desc.Shader.Data.find(fmtSPIRV);
-                LOG_CHECK(RHI, desc.Shader.Data.end() != it);
+                PPE_LOG_CHECK(RHI, desc.Shader.Data.end() != it);
 
                 PVulkanShaderModule module;
-                LOG_CHECK(RHI, CompileShaderSPIRV_(&module, it->second));
+                PPE_LOG_CHECK(RHI, CompileShaderSPIRV_(&module, it->second));
 
                 desc.Shader.Data.clear();
                 desc.Shader.Data.insert({ fmtSPIRV, PShaderModule(std::move(module)) });
@@ -424,7 +424,7 @@ bool FVulkanResourceManager::CompileShaders_(FComputePipelineDesc& desc) {
         }
     }
 
-    LOG(RHI, Error, L"unsupported shader format");
+    PPE_LOG(RHI, Error, "unsupported shader format");
     return false;
 }
 //----------------------------------------------------------------------------
@@ -432,7 +432,7 @@ bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pShaderMod
     Assert(pShaderModule);
     const auto* const shaderData = std::get_if<PShaderBinaryData>(&spirv);
     if (not shaderData || not *shaderData || not (*shaderData)->Data()) {
-        LOG(RHI, Error, L"expected valid binary shader data (SPIRV)");
+        PPE_LOG(RHI, Error, "expected valid binary shader data (SPIRV)");
         return false;
     }
 
@@ -456,7 +456,7 @@ bool FVulkanResourceManager::CompileShaderSPIRV_(PVulkanShaderModule* pShaderMod
         rawSpirv.Fingerprint(),
         rawSpirv.EntryPoint().MakeView() );
 
-    LOG_CHECK(RHI, (*pShaderModule)->Construct(_device ARGS_IF_RHIDEBUG(rawSpirv.DebugName().MakeView())));
+    PPE_LOG_CHECK(RHI, (*pShaderModule)->Construct(_device ARGS_IF_RHIDEBUG(rawSpirv.DebugName().MakeView())));
 
     _shaderCache.LockExclusive()->push_back(*pShaderModule);
 
@@ -469,7 +469,7 @@ template <u32 _Uid, typename _Desc>
 bool FVulkanResourceManager::CreateDevicePipeline_(details::TResourceId<_Uid>* pId, _Desc& desc ARGS_IF_RHIDEBUG(FStringView pipelineType, FConstChar debugName)) {
     if (not CompileShaders_(desc)) {
         ONLY_IF_RHIDEBUG(Unused(pipelineType));
-        RHI_LOG(Error, L"failed to compile shaders for {1} pipeline '{0}'", debugName, pipelineType);
+        RHI_LOG(Error, "failed to compile shaders for {1} pipeline '{0}'", debugName, pipelineType);
         return false;
     }
 
@@ -481,7 +481,7 @@ bool FVulkanResourceManager::CreateDevicePipeline_(details::TResourceId<_Uid>* p
     Assert(pPipeline);
 
     if (Unlikely(not pPipeline->Construct(desc, layoutId ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct {1} pipeline '{0}'", debugName, pipelineType);
+        RHI_LOG(Error, "failed to construct {1} pipeline '{0}'", debugName, pipelineType);
         Verify( ReleaseResource_(ResourcePool_(*pId), pPipeline, pId->Index, 0) );
         *pId = Default;
         return false;
@@ -537,7 +537,7 @@ FRawImageID FVulkanResourceManager::CreateImage(
     FRawMemoryID memoryId;
     TResourceProxy<FVulkanMemoryObject>* pMemory{ nullptr };
     if (not CreateMemory_(&memoryId, &pMemory, mem ARGS_IF_RHIDEBUG(debugName))) {
-        RHI_LOG(Error, L"failed to create memory object for image '{0}'", debugName);
+        RHI_LOG(Error, "failed to create memory object for image '{0}'", debugName);
         return Default;
     }
     Assert_NoAssume(memoryId.Valid());
@@ -547,7 +547,7 @@ FRawImageID FVulkanResourceManager::CreateImage(
     Assert(pImage);
 
     if (Unlikely(not pImage->Construct(*this, desc, memoryId, pMemory->Data(), queues, defaultState ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct image '{0}'", debugName);
+        RHI_LOG(Error, "failed to construct image '{0}'", debugName);
         Verify( ReleaseResource_(ResourcePool_(imageId), pImage, imageId.Index, 0) );
         Verify( ReleaseResource_(ResourcePool_(memoryId), pMemory, memoryId.Index, 0) );
         return Default;
@@ -573,7 +573,7 @@ FRawImageID FVulkanResourceManager::CreateImage(
     Assert(pImage);
 
     if (Unlikely(not pImage->Construct(_device, desc, externalImage, std::move(onRelease), queueFamilyIndices, defaultState ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct image from external resource '{0}'", debugName);
+        RHI_LOG(Error, "failed to construct image from external resource '{0}'", debugName);
         Verify( ReleaseResource_(ResourcePool_(imageId), pImage, imageId.Index, 0) );
         return Default;
     }
@@ -592,7 +592,7 @@ FRawImageID FVulkanResourceManager::CreateImage(
     Assert(pImage);
 
     if (Unlikely(not pImage->Construct(_device, desc, std::move(onRelease) ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct image from vulkan create info '{0}'", debugName);
+        RHI_LOG(Error, "failed to construct image from vulkan create info '{0}'", debugName);
         Verify( ReleaseResource_(ResourcePool_(imageId), pImage, imageId.Index, 0) );
         return Default;
     }
@@ -612,7 +612,7 @@ FRawBufferID FVulkanResourceManager::CreateBuffer(
     FRawMemoryID memoryId;
     TResourceProxy<FVulkanMemoryObject>* pMemory{ nullptr };
     if (not CreateMemory_(&memoryId, &pMemory, mem ARGS_IF_RHIDEBUG(debugName))) {
-        RHI_LOG(Error, L"failed to create memory object for buffer '{0}'", debugName);
+        RHI_LOG(Error, "failed to create memory object for buffer '{0}'", debugName);
         return Default;
     }
     Assert_NoAssume(memoryId.Valid());
@@ -622,7 +622,7 @@ FRawBufferID FVulkanResourceManager::CreateBuffer(
     Assert(pBuffer);
 
     if (Unlikely(not pBuffer->Construct(*this, desc, memoryId, pMemory->Data(), queues ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct buffer '{0}'", debugName);
+        RHI_LOG(Error, "failed to construct buffer '{0}'", debugName);
         Verify( ReleaseResource_(ResourcePool_(bufferId), pBuffer, bufferId.Index, 0) );
         Verify( ReleaseResource_(ResourcePool_(memoryId), pMemory, memoryId.Index, 0) );
         return Default;
@@ -647,7 +647,7 @@ FRawBufferID FVulkanResourceManager::CreateBuffer(
     Assert(pBuffer);
 
     if (Unlikely(not pBuffer->Construct(_device, desc, externalBuffer, std::move(onRelease), queueFamilyIndices ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct buffer '{0}'", debugName);
+        RHI_LOG(Error, "failed to construct buffer '{0}'", debugName);
         Verify( ReleaseResource_(ResourcePool_(bufferId), pBuffer, bufferId.Index, 0) );
         return Default;
     }
@@ -666,7 +666,7 @@ FRawBufferID FVulkanResourceManager::CreateBuffer(
     Assert(pBuffer);
 
     if (Unlikely(not pBuffer->Construct(_device, desc, std::move(onRelease) ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct buffer '{0}'", debugName);
+        RHI_LOG(Error, "failed to construct buffer '{0}'", debugName);
         Verify( ReleaseResource_(ResourcePool_(bufferId), pBuffer, bufferId.Index, 0) );
         return Default;
     }
@@ -688,7 +688,7 @@ FRawSamplerID FVulkanResourceManager::CreateSampler(const FSamplerDesc& desc ARG
         return samplerId;
     }
 
-    RHI_LOG(Error, L"failed to create sampler for '{0}", debugName);
+    RHI_LOG(Error, "failed to create sampler for '{0}", debugName);
     return Default;
 }
 //----------------------------------------------------------------------------
@@ -704,7 +704,7 @@ FRawRenderPassID FVulkanResourceManager::CreateRenderPass(const TMemoryView<cons
         return renderPassId;
     }
 
-    RHI_LOG(Error, L"failed to create render pass for '{0}", debugName);
+    RHI_LOG(Error, "failed to create render pass for '{0}", debugName);
     return Default;
 }
 //----------------------------------------------------------------------------
@@ -727,7 +727,7 @@ FRawFramebufferID FVulkanResourceManager::CreateFramebuffer(
         return framebufferId;
     }
 
-    RHI_LOG(Error, L"failed to create frame buffer for '{0}", debugName);
+    RHI_LOG(Error, "failed to create frame buffer for '{0}", debugName);
     return Default;
 }
 //----------------------------------------------------------------------------
@@ -751,7 +751,7 @@ const FVulkanPipelineResources* FVulkanResourceManager::CreateDescriptorSet(
     }
 
     TResourceProxy<FVulkanDescriptorSetLayout>* const pDSLayout = ResourcePool_(desc.Layout())[desc.Layout().Index];
-    LOG_CHECK(RHI, pDSLayout && pDSLayout->IsCreated() && pDSLayout->InstanceID() == desc.Layout().InstanceID );
+    PPE_LOG_CHECK(RHI, pDSLayout && pDSLayout->IsCreated() && pDSLayout->InstanceID() == desc.Layout().InstanceID );
 
     TResourceProxy<FVulkanPipelineResources> emptyKey{ desc };
     const auto [pPplnResources, exist] =
@@ -767,7 +767,7 @@ const FVulkanPipelineResources* FVulkanResourceManager::CreateDescriptorSet(
         return std::addressof(pPplnResources->Data());
     }
 
-    LOG(RHI, Error, L"failed to create descriptor set layout");
+    PPE_LOG(RHI, Error, "failed to create descriptor set layout");
     return nullptr;
 }
 //----------------------------------------------------------------------------
@@ -783,10 +783,10 @@ bool FVulkanResourceManager::CacheDescriptorSet(FPipelineResources& desc) {
             return true;
     }
 
-    AssertReleaseMessage(L"dynamic offsets are not supported here", desc.DynamicOffsets().empty());
+    AssertReleaseMessage("dynamic offsets are not supported here", desc.DynamicOffsets().empty());
 
     TResourceProxy<FVulkanDescriptorSetLayout>* const pDSLayout = ResourcePool_(desc.Layout())[desc.Layout().Index];
-    LOG_CHECK(RHI, pDSLayout->IsCreated() && pDSLayout->InstanceID() == desc.Layout().InstanceID);
+    PPE_LOG_CHECK(RHI, pDSLayout->IsCreated() && pDSLayout->InstanceID() == desc.Layout().InstanceID);
 
     TResourceProxy<FVulkanPipelineResources> emptyKey{ desc };
     const auto [pResources, exist] =
@@ -799,7 +799,7 @@ bool FVulkanResourceManager::CacheDescriptorSet(FPipelineResources& desc) {
         return true;
     }
 
-    LOG(RHI, Error, L"failed to cache descriptor set layout");
+    PPE_LOG(RHI, Error, "failed to cache descriptor set layout");
     return Default;
 }
 //----------------------------------------------------------------------------
@@ -823,7 +823,7 @@ FRawRTGeometryID FVulkanResourceManager::CreateRayTracingGeometry(
     FRawMemoryID memoryId;
     TResourceProxy<FVulkanMemoryObject>* pMemory{ nullptr };
     if (Unlikely(not CreateMemory_(&memoryId, &pMemory, mem ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to create memory object for raytracing geometry for '{0}'", debugName);
+        RHI_LOG(Error, "failed to create memory object for raytracing geometry for '{0}'", debugName);
         return Default;
     }
     Assert_NoAssume(memoryId.Valid());
@@ -832,7 +832,7 @@ FRawRTGeometryID FVulkanResourceManager::CreateRayTracingGeometry(
     TResourceProxy<FVulkanRTGeometry>* const pGeometry = CreatePooledResource_(&geometryId);
 
     if (Unlikely(not pGeometry->Construct(*this, desc, memoryId, pMemory->Data() ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct raytracing geometry '{0}'", debugName);
+        RHI_LOG(Error, "failed to construct raytracing geometry '{0}'", debugName);
         Verify( ReleaseResource_(ResourcePool_(geometryId), pGeometry, geometryId.Index, 0) );
         Verify( ReleaseResource_(ResourcePool_(memoryId), pMemory, memoryId.Index, 0) );
         return Default;
@@ -853,7 +853,7 @@ FRawRTSceneID FVulkanResourceManager::CreateRayTracingScene(
     FRawMemoryID memoryId;
     TResourceProxy<FVulkanMemoryObject>* pMemory{ nullptr };
     if (Unlikely(not CreateMemory_(&memoryId, &pMemory, mem ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to create memory object for raytracing scene for '{0}'", debugName);
+        RHI_LOG(Error, "failed to create memory object for raytracing scene for '{0}'", debugName);
         return Default;
     }
     Assert_NoAssume(memoryId.Valid());
@@ -862,7 +862,7 @@ FRawRTSceneID FVulkanResourceManager::CreateRayTracingScene(
     TResourceProxy<FVulkanRTScene>* const pScene = CreatePooledResource_(&sceneId);
 
     if (Unlikely(not pScene->Construct(*this, desc, memoryId, pMemory->Data() ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct raytracing scene '{0}'", debugName);
+        RHI_LOG(Error, "failed to construct raytracing scene '{0}'", debugName);
         Verify( ReleaseResource_(ResourcePool_(sceneId), pScene, sceneId.Index, 0) );
         Verify( ReleaseResource_(ResourcePool_(memoryId), pMemory, memoryId.Index, 0) );
         return Default;
@@ -882,7 +882,7 @@ FRawRTShaderTableID FVulkanResourceManager::CreateRayTracingShaderTable(ARG0_IF_
     Assert(pShaderTable);
 
     if (Unlikely(not pShaderTable->Construct(ARG0_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct raytracing shader table '{0}'", debugName);
+        RHI_LOG(Error, "failed to construct raytracing shader table '{0}'", debugName);
         Verify( ReleaseResource_(ResourcePool_(shaderTableId), pShaderTable, shaderTableId.Index, 0) );
         return Default;
     }
@@ -901,7 +901,7 @@ FRawSwapchainID FVulkanResourceManager::CreateSwapchain(
         Assert_NoAssume(oldSwapchain.Valid());
 
         if (Unlikely(not const_cast<FVulkanSwapchain*>(swapchain)->Construct(fg, desc ARGS_IF_RHIDEBUG(debugName)))) {
-            RHI_LOG(Error, L"failed to re-construct old swapchain for '{0}'", debugName);
+            RHI_LOG(Error, "failed to re-construct old swapchain for '{0}'", debugName);
             return Default;
         }
 
@@ -913,7 +913,7 @@ FRawSwapchainID FVulkanResourceManager::CreateSwapchain(
     Assert_NoAssume(pSwapchain);
 
     if (Unlikely(not pSwapchain->Construct(fg, desc ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct swapchain for '{0}'", debugName);
+        RHI_LOG(Error, "failed to construct swapchain for '{0}'", debugName);
         VerifyRelease( ReleaseResource_(ResourcePool_(swapchainId), pSwapchain, swapchainId.Index, 0) );
         return Default;
     }
@@ -929,13 +929,13 @@ void FVulkanResourceManager::RunValidation(u32 maxIteration) {
     const auto garbageCollectIFP = [this](auto* pResource) {
         Assert(pResource);
         if (pResource->IsCreated() and not pResource->Data().AllResourcesAlive(*this)) {
-            RHI_TRACE(L"RunValidation", L"TearDown", Meta::type_info<decltype(*pResource)>.name, pResource->InstanceID(), pResource->RefCount());
+            RHI_TRACE("RunValidation", L"TearDown", Meta::type_info<decltype(*pResource)>.name, pResource->InstanceID(), pResource->RefCount());
             Verify( pResource->RemoveRef(pResource->RefCount()) );
             pResource->TearDown(*this);
             return true; // release the cached item
         }
         else {
-            RHI_TRACE(L"RunValidation", L"KeepAlive", Meta::type_info<decltype(*pResource)>.name, pResource->InstanceID(), pResource->RefCount());
+            RHI_TRACE("RunValidation", L"KeepAlive", Meta::type_info<decltype(*pResource)>.name, pResource->InstanceID(), pResource->RefCount());
         }
         return false; // keep alive
     };
@@ -977,7 +977,7 @@ void FVulkanResourceManager::ReleaseMemory() {
         std::atomic<size_t> gc;
         cache.GarbageCollect(gc, maxIterations, [this](resource_type* pResource) {
             Assert(pResource);
-            RHI_TRACE(L"TrimDownCache", Meta::type_info<resource_type>.name, pResource->DebugName(), pResource->IsCreated(), pResource->RefCount());
+            RHI_TRACE("TrimDownCache", Meta::type_info<resource_type>.name, pResource->DebugName(), pResource->IsCreated(), pResource->RefCount());
             if (pResource->IsCreated() and pResource->RefCount() == 1) {
                 Verify( pResource->RemoveRef(1) );
                 pResource->TearDown(*this);
@@ -994,6 +994,9 @@ void FVulkanResourceManager::ReleaseMemory() {
     trimDownCache(_resources.RenderPassCache, maxIterationsForTrim);
     trimDownCache(_resources.FramebufferCache, maxIterationsForTrim);
     trimDownCache(_resources.SamplerCache, maxIterationsForTrim);
+
+    // finally, release memory in allocator
+    _memoryManager.ReleaseMemory(*this);
 }
 //----------------------------------------------------------------------------
 // CreateStagingBuffer
@@ -1035,7 +1038,7 @@ bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBuff
         ONLY_IF_RHIDEBUG(debugName = "HostUniformBuffer");
         break;
 
-    default: AssertReleaseFailed(L"unsupported buffer usage");
+    default: AssertReleaseFailed("unsupported buffer usage");
     }
 
     FBufferID* const pBufferId = pool->Allocate([this, &desc, memType ARGS_IF_RHIDEBUG(debugName)](FBufferID* pBufferId) {
@@ -1052,7 +1055,7 @@ bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBuff
         return true;
     }
 
-    ONLY_IF_RHIDEBUG(RHI_LOG(Error, L"failed to allocate staging buffer for '{0}'", debugName));
+    ONLY_IF_RHIDEBUG(RHI_LOG(Error, "failed to allocate staging buffer for '{0}'", debugName));
     return false;
 }
 //----------------------------------------------------------------------------
@@ -1093,7 +1096,7 @@ auto FVulkanResourceManager::CreatePooledResource_(details::TResourceId<_Uid>* p
     const FIndex index = pool.Allocate();
 
     TPooledResource_<_Uid>* pResource = pool[index];
-    AssertMessage(L"resource pool overflow", pResource);
+    AssertMessage("resource pool overflow", pResource);
 
     Meta::Construct(pResource, std::forward<_Args>(args)...);
     *pId = details::TResourceId<_Uid>{ index, pResource->InstanceID() };
@@ -1112,7 +1115,7 @@ auto FVulkanResourceManager::CreateCachedResource_(
     auto& pool = ResourcePool_(*pId);
     const TPair<FIndex, bool> it = pool.FindOrAdd(std::move(rkey), [&](TPooledResource_<_Uid>* pResource, FIndex , bool exist) -> bool {
         if (not exist)
-            LOG_CHECK(RHI, pResource->Construct(std::forward<_Args>(args)...));
+            PPE_LOG_CHECK(RHI, pResource->Construct(std::forward<_Args>(args)...));
         pResource->AddRef(exist ? 1 : 2 /* keep in cache */);
         return true;
     });
@@ -1141,7 +1144,7 @@ bool FVulkanResourceManager::CreateMemory_(
     Assert(*pMemory);
 
     if (Unlikely(not (*pMemory)->Construct(desc ARGS_IF_RHIDEBUG(debugName)))) {
-        RHI_LOG(Error, L"failed to construct memory object '{0}'", debugName);
+        RHI_LOG(Error, "failed to construct memory object '{0}'", debugName);
         VerifyRelease( ReleaseResource_(ResourcePool_(*pId), *pMemory, pId->Index, 0) );
         *pMemory =  nullptr;
         return false;
@@ -1233,9 +1236,9 @@ bool FVulkanResourceManager::CheckHostVisibleMemory_() {
     if (_staging.WritePageSize == 0)
         _staging.WritePageSize = _staging.ReadPageSize = transferSize;
 
-    LOG(RHI, Info, L"uniform buffer size: {0}", Fmt::SizeInBytes(_staging.UniformPageSize));
-    LOG(RHI, Info, L"write page size: {0}", Fmt::SizeInBytes(_staging.WritePageSize));
-    LOG(RHI, Info, L"max staging buffer memory: {0}, max available: {1}", Fmt::SizeInBytes(_staging.MaxStagingBufferMemory), Fmt::SizeInBytes(transferHeapSize));
+    PPE_LOG(RHI, Info, "uniform buffer size: {0}", Fmt::SizeInBytes(_staging.UniformPageSize));
+    PPE_LOG(RHI, Info, "write page size: {0}", Fmt::SizeInBytes(_staging.WritePageSize));
+    PPE_LOG(RHI, Info, "max staging buffer memory: {0}, max available: {1}", Fmt::SizeInBytes(_staging.MaxStagingBufferMemory), Fmt::SizeInBytes(transferHeapSize));
 
     return true;
 }

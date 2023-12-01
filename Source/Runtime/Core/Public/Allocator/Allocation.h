@@ -16,6 +16,7 @@
 #include "Allocator/TrackingAllocator.h"
 
 #include "Memory/MemoryDomain.h"
+#include "Memory/MemoryView.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

@@ -50,7 +50,7 @@ FCurrentProcess::FCurrentProcess(
     void* appHandle, int nShowCmd,
     const wchar_t* filename, size_t argc, const wchar_t * const* argv )
 :   _fileName(MakeCStringView(filename))
-,   _args(NewArray<FWString>(argc))
+,   _args(NEW_ARRAY(Process, FWString, argc))
 ,   _exitCode(0)
 ,   _appIcon(0)
 ,   _startDate(FTimestamp::Now())
@@ -90,7 +90,7 @@ FCurrentProcess::FCurrentProcess(
         volatile bool bTurnThisOffWhenDebuggerIsAttached = (!FPlatformDebug::IsDebuggerPresent());
         volatile size_t loopCount = 0;
         while (bTurnThisOffWhenDebuggerIsAttached) {
-            LOG_DIRECT(Process, Warning, L"waiting for debugger to be attached");
+            PPE_LOG(Process, Warning, "waiting for debugger to be attached");
             std::this_thread::sleep_for(std::chrono::milliseconds(500)); // wait for debugger to be attached
             const_cast<size_t&>(loopCount)++;
         }
@@ -99,9 +99,16 @@ FCurrentProcess::FCurrentProcess(
 
 #if !USE_PPE_FINAL_RELEASE
     if (HasArgument(L"-AbortOnAssert")) {
-        const FAssertionHandler abortHandler = [](const wchar_t*, const wchar_t*, unsigned) -> bool { PPE_DEBUG_CRASH(), ::abort(); };
-        SetAssertionHandler(abortHandler);
-        SetAssertionReleaseHandler(abortHandler);
+        SetAssertionHandler([](const char*, const char*, unsigned, bool isEnsure) -> bool {
+            if (isEnsure) // ensures are ignored
+                return false;
+            PPE_DEBUG_CRASH(),
+            ::abort();
+        });
+        SetAssertionReleaseHandler([](const char*, const char*, unsigned) -> bool {
+            PPE_DEBUG_CRASH(),
+            ::abort();
+        });
     }
 #endif
 
@@ -116,7 +123,7 @@ FCurrentProcess::FCurrentProcess(
 }
 //----------------------------------------------------------------------------
 FCurrentProcess::~FCurrentProcess() {
-    LOG(Process, Info, L"exit with code = {0}.", _exitCode.load());
+    PPE_LOG(Process, Info, "exit with code = {0}.", _exitCode.load());
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::LogAllInfos() const {
@@ -127,58 +134,48 @@ void FCurrentProcess::LogAllInfos() const {
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::LogPhysicalMemory() const {
-#if USE_PPE_LOGGER
-    FStringBuilder sb;
-    DumpPhysicalMemory(sb);
-    LOG_DIRECT(Process, Info, ToWString(sb.Written()).MakeView());
-#endif
+    PPE_LOG_DIRECT(Process, Info, [this](FTextWriter& oss) {
+        DumpPhysicalMemory(oss);
+    });
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::LogMemoryStats() const {
-#if USE_PPE_LOGGER
-    FStringBuilder sb;
-    DumpMemoryStats(sb);
-    LOG_DIRECT(Process, Info, ToWString(sb.Written()).MakeView());
-#endif
+    PPE_LOG_DIRECT(Process, Info, [this](FTextWriter& oss) {
+        DumpMemoryStats(oss);
+    });
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::LogProcessInfos() const {
-#if USE_PPE_LOGGER
-    FStringBuilder sb;
-    DumpProcessInfos(sb);
-    LOG_DIRECT(Process, Info, ToWString(sb.Written()).MakeView());
-#endif
+    PPE_LOG_DIRECT(Process, Info, [this](FTextWriter& oss) {
+        DumpProcessInfos(oss);
+    });
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::LogStorageInfos() const {
-#if USE_PPE_LOGGER
-    FStringBuilder sb;
-    DumpStorageInfos(sb);
-    LOG_DIRECT(Process, Info, ToWString(sb.Written()).MakeView());
-#endif
+    PPE_LOG_DIRECT(Process, Info, [this](FTextWriter& oss) {
+        DumpStorageInfos(oss);
+    });
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::DumpPhysicalMemory(FTextWriter& oss) const {
-    {
-        auto mem = FPlatformMemory::Stats();
-        Format(oss, "process memory =") << Eol;
-        Format(oss, "   physical mem   : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
-            Fmt::SizeInBytes(mem.UsedPhysical),
-            Fmt::SizeInBytes(mem.PeakUsedPhysical),
-            Fmt::SizeInBytes(mem.AvailablePhysical),
-            Fmt::Percentage(mem.UsedPhysical, mem.AvailablePhysical)) << Eol;
-        Format(oss, "   virtual mem    : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
-            Fmt::SizeInBytes(mem.UsedVirtual),
-            Fmt::SizeInBytes(mem.PeakUsedVirtual),
-            Fmt::SizeInBytes(mem.AvailableVirtual),
-            Fmt::Percentage(mem.UsedVirtual, mem.AvailableVirtual)) << Eol;
-        auto stk = FPlatformMemory::StackUsage();
-        Format(oss, "   stackLocal mem : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
-            Fmt::SizeInBytes(stk.Committed),
-            Fmt::SizeInBytes(stk.Guard),
-            Fmt::SizeInBytes(stk.Reserved),
-            Fmt::Percentage(stk.Committed + stk.Guard, stk.Reserved)) << Eol;
-    }
+    auto mem = FPlatformMemory::Stats();
+    Format(oss, "process memory =") << Eol;
+    Format(oss, "   physical mem   : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
+        Fmt::SizeInBytes(mem.UsedPhysical),
+        Fmt::SizeInBytes(mem.PeakUsedPhysical),
+        Fmt::SizeInBytes(mem.AvailablePhysical),
+        Fmt::Percentage(mem.UsedPhysical, mem.AvailablePhysical)) << Eol;
+    Format(oss, "   virtual mem    : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
+        Fmt::SizeInBytes(mem.UsedVirtual),
+        Fmt::SizeInBytes(mem.PeakUsedVirtual),
+        Fmt::SizeInBytes(mem.AvailableVirtual),
+        Fmt::Percentage(mem.UsedVirtual, mem.AvailableVirtual)) << Eol;
+    auto stk = FPlatformMemory::StackUsage();
+    Format(oss, "   stackLocal mem : {0:10f3} / {1:10f3} / {2:10f3} : {3}",
+        Fmt::SizeInBytes(stk.Committed),
+        Fmt::SizeInBytes(stk.Guard),
+        Fmt::SizeInBytes(stk.Reserved),
+        Fmt::Percentage(stk.Committed + stk.Guard, stk.Reserved)) << Eol;
 }
 //----------------------------------------------------------------------------
 void FCurrentProcess::DumpMemoryStats(FTextWriter& oss) const {

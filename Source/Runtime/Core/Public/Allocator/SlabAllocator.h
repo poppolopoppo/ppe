@@ -5,14 +5,13 @@
 #include "Allocator/Allocation.h"
 #include "Allocator/SlabHeap.h"
 #include "Memory/PtrRef.h"
+#include "Thread/ThreadSafe_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define SLAB_ALLOCATOR(_DOMAIN) ::PPE::TSlabAllocator< ALLOCATOR(_DOMAIN) >
-//----------------------------------------------------------------------------
-#define ARRAY_SLAB(_DOMAIN, T) ::PPE::TArray<T, SLAB_ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
 #define VECTOR_SLAB(_DOMAIN, T) ::PPE::TVector<T, SLAB_ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
@@ -30,10 +29,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Slab allocator have an handle to a FPoolingSlabHeap
+// Slab allocator has an handle to a TSlabHeap
 //----------------------------------------------------------------------------
 template <typename _Allocator = ALLOCATOR(Unknown) >
-class TSlabAllocator : private FGenericAllocator {
+class TSlabAllocator : private FAllocatorPolicy {
 public:
     using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;
@@ -42,7 +41,7 @@ public:
     using is_always_equal = std::false_type;
 
     using has_maxsize = std::false_type;
-    using has_owns = std::false_type;
+    using has_owns = std::true_type;
     using has_reallocate = std::true_type;
     using has_acquire = std::true_type;
     using has_steal = std::true_type;
@@ -52,7 +51,7 @@ public:
 
     STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
 
-    using heap_type = TPoolingSlabHeap<_Allocator>;
+    using heap_type = TSlabHeap<_Allocator>;
 
     TPtrRef<heap_type> Heap;
 
@@ -65,6 +64,10 @@ public:
 
     size_t SnapSize(size_t s) const NOEXCEPT {
         return heap_type::SnapSize(s);
+    }
+
+    bool Owns(FAllocatorBlock b) const NOEXCEPT {
+        return Heap->AliasesToHeap(b.Data);
     }
 
     FAllocatorBlock Allocate(size_t s) const {
@@ -110,18 +113,9 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-namespace details {
-template <typename T> struct TPoolingSlabAllocator_{};
-template <typename _Allocator> struct TPoolingSlabAllocator_<TPoolingSlabHeap<_Allocator>> {
-    using type = _Allocator;
-};
-}
-template <typename _PoolingSlabAllocator>
-using TPoolingSlabAllocator = TSlabAllocator<typename details::TPoolingSlabAllocator_<_PoolingSlabAllocator>::type>;
-//----------------------------------------------------------------------------
 #if PPE_HAS_CXX17
 template <typename _Allocator>
-TSlabAllocator(TPoolingSlabHeap<_Allocator>&) -> TSlabAllocator< Meta::TDecay<_Allocator> >;
+TSlabAllocator(TSlabHeap<_Allocator>&) -> TSlabAllocator< Meta::TDecay<_Allocator> >;
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

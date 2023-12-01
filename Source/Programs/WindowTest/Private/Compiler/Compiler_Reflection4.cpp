@@ -38,17 +38,17 @@ void main ()
 	ARGS_IF_RHIDEBUG("Compiler_Reflection4_CS"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::GLSL_450);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
 
     const FDescriptorSet* ds = ppln.DescriptorSet("0"_descriptorset);
-    LOG_CHECK(WindowTest, !!ds);
+    PPE_LOG_CHECK(WindowTest, !!ds);
 
-    LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_OutImage"_uniform, EImageSampler::Float2D | EImageSampler_FromPixelFormat(EPixelFormat::RGBA8_UNorm), EShaderAccess::WriteOnly, 0, EShaderStages::Compute));
-    LOG_CHECK(WindowTest, TestStorageBuffer(*ds, "un_SSBO"_uniform, 16_b, 0_b, EShaderAccess::ReadOnly, 1, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_OutImage"_uniform, EImageSampler::Float2D | EImageSampler_FromPixelFormat(EPixelFormat::RGBA8_UNorm), EShaderAccess::WriteOnly, 0, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestStorageBuffer(*ds, "un_SSBO"_uniform, 16_b, 0_b, EShaderAccess::ReadOnly, 1, EShaderStages::Compute));
 
-    LOG_CHECK(WindowTest, ppln.DefaultLocalGroupSize == uint3(16, 8, 1));
+    PPE_LOG_CHECK(WindowTest, ppln.DefaultLocalGroupSize == uint3(16, 8, 1));
 
     return true;
 }

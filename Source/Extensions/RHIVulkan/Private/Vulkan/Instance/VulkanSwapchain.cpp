@@ -85,7 +85,7 @@ NODISCARD static bool CompositeAlpha_(
         }
     }
 
-    LOG(RHI, Error, L"no suitable composite alpha flags found");
+    PPE_LOG(RHI, Error, "no suitable composite alpha flags found");
     return false;
 }
 //----------------------------------------------------------------------------
@@ -185,7 +185,7 @@ NODISCARD static bool ImageUsage_(
         }
     }
     else {
-        LOG(RHI, Error, L"unsupported presented mode, can't choose image usage");
+        PPE_LOG(RHI, Error, "unsupported presented mode, can't choose image usage");
         return false;
     }
 
@@ -199,7 +199,7 @@ NODISCARD static bool ImageUsage_(
         colorFormat,
         &formatProps );
 
-    LOG_CHECK(RHI, Meta::EnumHas(formatProps.optimalTilingFeatures, static_cast<VkFlags>(VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT)));
+    PPE_LOG_CHECK(RHI, Meta::EnumHas(formatProps.optimalTilingFeatures, static_cast<VkFlags>(VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT)));
     Assert(Meta::EnumHas(formatProps.optimalTilingFeatures, static_cast<VkFlags>(VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)));
 
     if (Meta::EnumHas(*pImageUsage, static_cast<VkFlags>(VK_IMAGE_USAGE_TRANSFER_SRC_BIT)) &&
@@ -294,7 +294,7 @@ bool FVulkanSwapchain::Construct(
     const auto& exclusiveData = _data.LockExclusive();
     const FVulkanExternalObject windowSurface{ desc.Surface.Value };
 
-    LOG_CHECK(RHI, not exclusiveData->vkSwapchain || windowSurface.Cast<VkSurfaceKHR>() == exclusiveData->vkSurface);
+    PPE_LOG_CHECK(RHI, not exclusiveData->vkSwapchain || windowSurface.Cast<VkSurfaceKHR>() == exclusiveData->vkSurface);
     exclusiveData->vkSurface = windowSurface.Cast<VkSurfaceKHR>();
 
     VkPhysicalDeviceSurfaceInfo2KHR surfaceInfo{};
@@ -350,7 +350,7 @@ bool FVulkanSwapchain::Construct(
         presentModes.data() ));
 
     exclusiveData->CompositeAlpha = VkCast(desc.CompositeAlpha);
-    LOG_CHECK(RHI, CompositeAlpha_(&exclusiveData->CompositeAlpha, surfaceCaps.surfaceCapabilities));
+    PPE_LOG_CHECK(RHI, CompositeAlpha_(&exclusiveData->CompositeAlpha, surfaceCaps.surfaceCapabilities));
 
     exclusiveData->SurfaceSize = desc.Dimensions;
     SwapchainExtent_(&exclusiveData->SurfaceSize, surfaceCaps.surfaceCapabilities);
@@ -442,13 +442,13 @@ bool FVulkanSwapchain::Construct(
         requiredColorFormats = defaultColorFormats;
     }
 
-    LOG(RHI, Error, L"can't find suitable format for swapchain");
+    PPE_LOG(RHI, Error, "can't find suitable format for swapchain");
     return false;
 }
 //----------------------------------------------------------------------------
 void FVulkanSwapchain::TearDown(FVulkanResourceManager& resources) {
     const auto& exclusiveData = _data.LockExclusive();
-    LOG_CHECKVOID(RHI, not exclusiveData->IsImageAcquired_());
+    PPE_LOG_CHECKVOID(RHI, not exclusiveData->IsImageAcquired_());
 
     const FVulkanDevice& device = resources.Device();
 
@@ -564,7 +564,7 @@ bool FVulkanSwapchain::Acquire(
 //----------------------------------------------------------------------------
 bool FVulkanSwapchain::Present(const FVulkanDevice& device) const {
     const auto exclusiveData = _data.LockExclusive();
-    LOG_CHECK(RHI, exclusiveData->IsImageAcquired_());
+    PPE_LOG_CHECK(RHI, exclusiveData->IsImageAcquired_());
 
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -587,7 +587,7 @@ bool FVulkanSwapchain::Present(const FVulkanDevice& device) const {
     case VK_ERROR_OUT_OF_DATE_KHR:
         // #TODO: recreate swapchain
     default:
-        LOG(RHI, Error, L"present failed: {0}", FVulkanError(err));
+        PPE_LOG(RHI, Error, "present failed: {0}", FVulkanError(err));
         return false;
     }
 }
@@ -653,13 +653,13 @@ bool FVulkanSwapchain::FInternalData_::CreateSwapchain_(FVulkanFrameGraph& fg AR
         }
     }
 
-    LOG_CHECK(RHI, CreateImages_(fg.ResourceManager()));
-    LOG_CHECK(RHI, CreateSemaphores_(device));
-    LOG_CHECK(RHI, CreateFence_(device));
-    LOG_CHECK(RHI, ChoosePresentQueue_(fg));
+    PPE_LOG_CHECK(RHI, CreateImages_(fg.ResourceManager()));
+    PPE_LOG_CHECK(RHI, CreateSemaphores_(device));
+    PPE_LOG_CHECK(RHI, CreateFence_(device));
+    PPE_LOG_CHECK(RHI, ChoosePresentQueue_(fg));
 
 #if USE_PPE_RHIDEBUG
-    LOG(RHI, Info, L"swapchain properties:\n"
+    PPE_LOG(RHI, Info, "swapchain properties:\n"
         "\tName                    : {0}\n"
         "\tColor format            : {1}\n"
         "\tColor space             : {2}\n"
@@ -733,7 +733,7 @@ bool FVulkanSwapchain::FInternalData_::CreateImages_(FVulkanResourceManager& res
             desc, NoFunction
             ARGS_IF_RHIDEBUG(debugName) ));
 
-        LOG_CHECK(RHI, ImageIds[i].Valid());
+        PPE_LOG_CHECK(RHI, ImageIds[i].Valid());
     }
 
     Assert_NoAssume(ImageIds.size() == images.size());
@@ -752,32 +752,38 @@ bool FVulkanSwapchain::FInternalData_::CreateSemaphores_(const FVulkanDevice& de
     VkSemaphoreCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    for (VkSemaphore& semaphore : ImageAvailable) {
-        if (VK_NULL_HANDLE == semaphore) {
-            VK_CHECK(device.vkCreateSemaphore(
-                device.vkDevice(),
-                &info,
-                device.vkAllocator(),
-                &semaphore ));
-            ONLY_IF_RHIDEBUG(device.SetObjectName(
-                semaphore,
-                "ImageAvailable",
-                VK_OBJECT_TYPE_SEMAPHORE ));
-        }
+    forrange(i, 0, ImageAvailable.size()) {
+        VkSemaphore& semaphore = ImageAvailable[i];
+        if (VK_NULL_HANDLE != semaphore)
+            continue;
+
+        VK_CHECK(device.vkCreateSemaphore(
+            device.vkDevice(),
+            &info,
+            device.vkAllocator(),
+            &semaphore));
+
+        ONLY_IF_RHIDEBUG(device.SetObjectName(
+            semaphore,
+            *StringFormat("SwapChain/ImageAvailable#{0}", i),
+            VK_OBJECT_TYPE_SEMAPHORE));
     }
 
-    for (VkSemaphore& semaphore : RenderFinished) {
-        if (VK_NULL_HANDLE == semaphore) {
-            VK_CHECK(device.vkCreateSemaphore(
-                device.vkDevice(),
-                &info,
-                device.vkAllocator(),
-                &semaphore ));
-            ONLY_IF_RHIDEBUG(device.SetObjectName(
-                semaphore,
-                "RenderFinished",
-                VK_OBJECT_TYPE_SEMAPHORE ));
-        }
+    forrange(i, 0, RenderFinished.size()) {
+        VkSemaphore& semaphore = RenderFinished[i];
+        if (VK_NULL_HANDLE != semaphore)
+            continue;
+
+        VK_CHECK(device.vkCreateSemaphore(
+            device.vkDevice(),
+            &info,
+            device.vkAllocator(),
+            &semaphore));
+
+        ONLY_IF_RHIDEBUG(device.SetObjectName(
+            semaphore,
+            *StringFormat("SwapChain/RenderFinished#{0}", i),
+            VK_OBJECT_TYPE_SEMAPHORE));
     }
 
     return true;
@@ -820,7 +826,7 @@ bool FVulkanSwapchain::FInternalData_::ChoosePresentQueue_(const FVulkanFrameGra
         }
     }
 
-    LOG(RHI, Error, L"can't find queue that supports present");
+    PPE_LOG(RHI, Error, "can't find queue that supports present");
     return false;
 }
 //----------------------------------------------------------------------------

@@ -58,14 +58,14 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget"));
-    LOG_CHECK(WindowTest, image.Valid());
+    PPE_LOG_CHECK(WindowTest, image.Valid());
 
     ON_SCOPE_EXIT([&]() {
         fg.ReleaseResources(image);
     });
 
     FGPipelineID ppln = fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Drawing_Draw3"));
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     ON_SCOPE_EXIT([&]() {
         fg.ReleaseResources(ppln);
@@ -81,8 +81,8 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
             imageData.Load(&texel, uint3(ix, iy, 0));
 
             const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
-            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
-            LOG_CHECK(WindowTest, isEqual);
+            PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
+            PPE_LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);
             return isEqual;
         };
@@ -100,12 +100,12 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_Draw3")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Color0, *image, FLinearColor::Transparent(), EAttachmentStoreOp::Store)
         .AddViewport(viewSize));
-    LOG_CHECK(WindowTest, !!renderPass);
+    PPE_LOG_CHECK(WindowTest, !!renderPass);
 
     cmd->Task(renderPass, FDrawVertices{}
         .Draw(3)
@@ -121,10 +121,10 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         .DependsOn(tDraw));
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

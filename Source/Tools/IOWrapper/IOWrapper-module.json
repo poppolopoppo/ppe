@@ -8,6 +8,8 @@
 	"PCH": "Disabled",
 	"Unity": "Disabled",
 	"Defines": [
+		"USE_PPE_ASSERT=0",
+		"USE_PPE_ASSERT_RELEASE=0",
 		"USE_PPE_MEMORYDOMAINS=0",
 		"PPE_OVERRIDE_NEW_OPERATORS=0"
 	],

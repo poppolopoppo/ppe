@@ -13,7 +13,7 @@ namespace PPE {
 // In-situ storage for only 1 allocation, always using full capacity
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
-class TInSituAllocator : private FGenericAllocator {
+class TInSituAllocator : private FAllocatorPolicy {
 public:
     using propagate_on_container_copy_assignment = std::false_type;
     using propagate_on_container_move_assignment = std::false_type;
@@ -133,7 +133,7 @@ public:
 // Uses an in-situ storage like a stack, can't reclaim memory if not FIFO
 //----------------------------------------------------------------------------
 template <size_t _SizeInBytes>
-class TInSituStackAllocator  : private FGenericAllocator {
+class TInSituStackAllocator  : private FAllocatorPolicy {
 public:
     using propagate_on_container_copy_assignment = std::false_type;
     using propagate_on_container_move_assignment = std::false_type;

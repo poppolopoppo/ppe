@@ -34,25 +34,25 @@ static EBuildResult ReportBuildStatus_(const FPipelineContext& ctx, const FWStri
     switch (ctx.Result()) {
     case EBuildResult::Unbuilt:
         Assert_NoAssume(0 == totalNodes);
-        ctx.Log().TraceWarning(L"[{0}] nothing done ({1}).",
+        ctx.Log().TraceWarning("[{0}] nothing done ({1}).",
             action, elapsed);
         return EBuildResult::Unbuilt;
 
     case EBuildResult::UpToDate:
         Assert_NoAssume(totalNodes == numUpToDate);
-        ctx.Log().TraceInfo(L"[{0}] {2} nodes are up-to-date ({1}).",
+        ctx.Log().TraceInfo("[{0}] {2} nodes are up-to-date ({1}).",
             action, elapsed, totalNodes);
         return EBuildResult::UpToDate;
 
     case EBuildResult::Built:
         Assert_NoAssume(totalNodes == numBuilt + numUpToDate);
-        ctx.Log().TraceInfo(L"[{0}] {2} nodes were built, {3} up-to-date ({1}).",
+        ctx.Log().TraceInfo("[{0}] {2} nodes were built, {3} up-to-date ({1}).",
             action, elapsed, numBuilt, numUpToDate);
         return EBuildResult::Built;
 
     case EBuildResult::Failed:
         Assert_NoAssume(numFailed > 0);
-        ctx.Log().TraceError(L"[{0}] {2} nodes failed, {3} built, {4} up-to-date ({1}).",
+        ctx.Log().TraceError("[{0}] {2} nodes failed, {3} built, {4} up-to-date ({1}).",
             action, elapsed, numFailed, numBuilt, numUpToDate);
         return EBuildResult::Failed;
 

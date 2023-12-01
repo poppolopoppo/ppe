@@ -42,6 +42,7 @@ PPE_SCALARVECTOR_DECL(u16);
 PPE_SCALARVECTOR_DECL(u32);
 PPE_SCALARVECTOR_DECL(u64);
 PPE_SCALARVECTOR_DECL(bool);
+PPE_SCALARVECTOR_DECL(size_t);
 PPE_SCALARVECTOR_ALIAS(u32, mask);
 //----------------------------------------------------------------------------
 #undef PPE_SCALARVECTOR_DECL

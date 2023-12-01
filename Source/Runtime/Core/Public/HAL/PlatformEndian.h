@@ -30,22 +30,22 @@ public: // generic helpers
 
     template <typename T>
     static FORCE_INLINE void SwapInPlace(T * p, TCheckOverload<T, u8> * = nullptr) NOEXCEPT {
-        *(u8*)p = PPE_HAL_TARGETALIAS(PlatformEndian)::SwapEndianness(*(const u8*)p);
+        *reinterpret_cast<u8*>(p) = PPE_HAL_TARGETALIAS(PlatformEndian)::SwapEndianness(*reinterpret_cast<const u8*>(p));
     }
 
     template <typename T>
     static FORCE_INLINE void SwapInPlace(T * p, TCheckOverload<T, u16> * = nullptr) NOEXCEPT {
-        *(u16*)p = PPE_HAL_TARGETALIAS(PlatformEndian)::SwapEndianness(*(const u16*)p);
+        *reinterpret_cast<u16*>(p) = PPE_HAL_TARGETALIAS(PlatformEndian)::SwapEndianness(*reinterpret_cast<const u16*>(p));
     }
 
     template <typename T>
     static FORCE_INLINE void SwapInPlace(T * p, TCheckOverload<T, u32> * = nullptr) NOEXCEPT {
-        *(u32*)p = PPE_HAL_TARGETALIAS(PlatformEndian)::SwapEndianness(*(const u32*)p);
+        *reinterpret_cast<u32*>(p) = PPE_HAL_TARGETALIAS(PlatformEndian)::SwapEndianness(*reinterpret_cast<const u32*>(p));
     }
 
     template <typename T>
     static FORCE_INLINE void SwapInPlace(T * p, TCheckOverload<T, u64> * = nullptr) NOEXCEPT {
-        *(u64*)p = PPE_HAL_TARGETALIAS(PlatformEndian)::SwapEndianness(*(const u64*)p);
+        *reinterpret_cast<u64*>(p) = PPE_HAL_TARGETALIAS(PlatformEndian)::SwapEndianness(*reinterpret_cast<const u64*>(p));
     }
 
     template <typename T, size_t _Dim>
@@ -59,19 +59,36 @@ public: // generic helpers
     // current platform's :
 
     template <typename T>
-    static void BigEndianInPlace(T * p) NOEXCEPT {
+    using TEnableIfSwappable = decltype(FPlatformEndian::SwapInPlace(std::declval<T>()))*;
+
+    template <typename T, TEnableIfSwappable<T> = nullptr>
+    static FORCE_INLINE void SwapInPlaceIFP(T p, EEndianness target) NOEXCEPT {
+        if (Unlikely(FPlatformEndian::Endianness != target))
+            SwapInPlace(p);
+    }
+
+    template <typename T, TEnableIfSwappable<T*> = nullptr>
+    static FORCE_INLINE void SwapInPlaceIFP(T* p, size_t num, EEndianness target) NOEXCEPT {
+        if (Unlikely(FPlatformEndian::Endianness != target)) {
+            forrange(it, p, p + num)
+                SwapInPlace(it);
+        }
+    }
+
+    template <typename T, TEnableIfSwappable<T> = nullptr>
+    static void BigEndianInPlace(T p) NOEXCEPT {
         IF_CONSTEXPR(FPlatformEndian::Endianness != EEndianness::BigEndian)
             SwapInPlace(p);
     }
 
-    template <typename T>
-    static void LittleEndianInPlace(T * p) NOEXCEPT {
+    template <typename T, TEnableIfSwappable<T> = nullptr>
+    static void LittleEndianInPlace(T p) NOEXCEPT {
         IF_CONSTEXPR(FPlatformEndian::Endianness != EEndianness::LittleEndian)
             SwapInPlace(p);
     }
 
-    template <typename T>
-    static void NetworkEndianInPlace(T * p) NOEXCEPT {
+    template <typename T, TEnableIfSwappable<T> = nullptr>
+    static void NetworkEndianInPlace(T p) NOEXCEPT {
         IF_CONSTEXPR(FPlatformEndian::Endianness != EEndianness::NetworkEndian)
             SwapInPlace(p);
     }

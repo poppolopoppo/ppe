@@ -6,7 +6,6 @@
 #include "HAL/Windows/GlobalAllocator.h"
 
 #include "IO/ConstChar.h"
-#include "Meta/Singleton.h"
 #include "Thread/ConcurrentHashMap.h"
 #include "Thread/ThreadSafe.h"
 
@@ -19,19 +18,13 @@
 //----------------------------------------------------------------------------
 // Log all file accesses (read & write), can also alias files
 //----------------------------------------------------------------------------
-class PPE_IODETOURING_API FIODetouringFiles : PPE::Meta::TSingleton<FIODetouringFiles> {
-    using singleton_type = PPE::Meta::TSingleton<FIODetouringFiles>;
-    friend class singleton_type;
-    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT; // for shared lib
+class FIODetouringFiles {
 public:
-    using singleton_type::Get;
-    using singleton_type::Destroy;
+    PPE_IODETOURING_API static void Create(const FIODetouringPayload& payload);
+    PPE_IODETOURING_API static void Destroy();
+    NODISCARD PPE_IODETOURING_API static FIODetouringFiles& Get() NOEXCEPT;
 
-    static VOID Create(const FIODetouringPayload& payload) {
-        singleton_type::Create(payload);
-    }
-
-    VOID Dump();
+    PPE_IODETOURING_API VOID Dump();
 
     // filenames
     struct FFileInfo {
@@ -73,10 +66,11 @@ public:
         PPE::TConstCharEqualTo<wchar_t, PPE::ECase::Insensitive>>;
 
     using FFileKey = FCaseInsensitiveConstChar;
+    class FLazyCopyFileKey;
 
-    PFileInfo FindFull(PCWSTR pwzPath);
-    PFileInfo FindPartial(PCWSTR pwzPath);
-    PFileInfo FindPartial(PCSTR pszPath);
+    NODISCARD PPE_IODETOURING_API PFileInfo FindFull(PCWSTR pwzPath);
+    NODISCARD PPE_IODETOURING_API PFileInfo FindPartial(PCWSTR pwzPath);
+    NODISCARD PPE_IODETOURING_API PFileInfo FindPartial(PCSTR pszPath);
 
     // processes
     struct FProcInfo {
@@ -86,11 +80,11 @@ public:
     };
     using PProcInfo = FProcInfo*;
 
-    PProcInfo CreateProc(HANDLE hProc, DWORD nProcId);
-    BOOL Close(HANDLE hProc);
+    NODISCARD PPE_IODETOURING_API PProcInfo CreateProc(HANDLE hProc, DWORD nProcId);
+    NODISCARD PPE_IODETOURING_API BOOL Close(HANDLE hProc);
 
-    BOOL ShouldDetourApplication(PCWSTR pwzPath) const NOEXCEPT;
-    BOOL ShouldDetourApplication(PCSTR pszPath) const NOEXCEPT;
+    NODISCARD PPE_IODETOURING_API BOOL ShouldDetourApplication(PCWSTR pwzPath) const NOEXCEPT;
+    NODISCARD PPE_IODETOURING_API BOOL ShouldDetourApplication(PCSTR pszPath) const NOEXCEPT;
 
     // file handles
     struct FOpenFile {
@@ -99,16 +93,16 @@ public:
         PProcInfo pProc{ nullptr };
     };
 
-    BOOL Forget(HANDLE hHandle);
-    VOID SetExecute(HANDLE hFile);
-    VOID SetRead(HANDLE hFile, DWORD cbData);
-    VOID SetWrite(HANDLE hFile, DWORD cbData);
-    VOID SetStdio(HANDLE hFile);
-    PFileInfo RecallFile(HANDLE hFile) const NOEXCEPT;
-    PProcInfo RecallProc(HANDLE hProc) const NOEXCEPT;
-    BOOL Remember(HANDLE hFile, PFileInfo pInfo);
-    BOOL Remember(HANDLE hProc, PProcInfo pInfo);
-    BOOL Duplicate(HANDLE hDst, HANDLE hSrc);
+    PPE_IODETOURING_API BOOL Forget(HANDLE hHandle);
+    PPE_IODETOURING_API VOID SetExecute(HANDLE hFile);
+    PPE_IODETOURING_API VOID SetRead(HANDLE hFile, DWORD cbData);
+    PPE_IODETOURING_API VOID SetWrite(HANDLE hFile, DWORD cbData);
+    PPE_IODETOURING_API VOID SetStdio(HANDLE hFile);
+    PPE_IODETOURING_API PFileInfo RecallFile(HANDLE hFile) const NOEXCEPT;
+    PPE_IODETOURING_API PProcInfo RecallProc(HANDLE hProc) const NOEXCEPT;
+    PPE_IODETOURING_API BOOL Remember(HANDLE hFile, PFileInfo pInfo);
+    PPE_IODETOURING_API BOOL Remember(HANDLE hProc, PProcInfo pInfo);
+    PPE_IODETOURING_API BOOL Duplicate(HANDLE hDst, HANDLE hSrc);
 
     // environment vars
     struct FEnvVar {
@@ -116,33 +110,34 @@ public:
         DWORD nCount{ 0 };
     };
 
-    VOID UseEnvVar(PCWSTR pwzVarname);
-    VOID UseEnvVar(PCSTR pwzVarname);
+    PPE_IODETOURING_API VOID UseEnvVar(PCWSTR pwzVarname);
+    PPE_IODETOURING_API VOID UseEnvVar(PCSTR pwzVarname);
 
     // path helpers
-    static PWCHAR StringCopy(PWCHAR pwzDst, PCSTR pszSrc) NOEXCEPT;
-    static PCHAR StringCopy(PCHAR pwzDst, PCWSTR pwzSrc) NOEXCEPT;
-    static PWCHAR StringCopy(PWCHAR pwzDst, PCWSTR pwzSrc) NOEXCEPT;
-    static PCHAR StringCopy(PCHAR pszDst, PCSTR pszSrc) NOEXCEPT;
-    static DWORD StringLen(PCWSTR pwzSrc) NOEXCEPT;
-    static VOID EndInSlash(PWCHAR pwzPath) NOEXCEPT;
-    static BOOL PrefixMatch(PCWSTR pwzPath, PCWSTR pwzPrefix) NOEXCEPT;
-    static BOOL SuffixMatch(PCWSTR pwzPath, PCWSTR pwzSuffix) NOEXCEPT;
+    PPE_IODETOURING_API static PWCHAR StringCopy(PWCHAR pwzDst, PCSTR pszSrc) NOEXCEPT;
+    PPE_IODETOURING_API static PCHAR StringCopy(PCHAR pwzDst, PCWSTR pwzSrc) NOEXCEPT;
+    PPE_IODETOURING_API static PWCHAR StringCopy(PWCHAR pwzDst, PCWSTR pwzSrc) NOEXCEPT;
+    PPE_IODETOURING_API static PCHAR StringCopy(PCHAR pszDst, PCSTR pszSrc) NOEXCEPT;
+
+    NODISCARD PPE_IODETOURING_API static DWORD StringLen(PCWSTR pwzSrc) NOEXCEPT;
+    PPE_IODETOURING_API static VOID EndInSlash(PWCHAR pwzPath) NOEXCEPT;
+    NODISCARD PPE_IODETOURING_API static BOOL PrefixMatch(PCWSTR pwzPath, PCWSTR pwzPrefix) NOEXCEPT;
+    NODISCARD PPE_IODETOURING_API static BOOL SuffixMatch(PCWSTR pwzPath, PCWSTR pwzSuffix) NOEXCEPT;
 
     // file access helpers
-    VOID NoteRead(PCSTR psz);
-    VOID NoteRead(PCWSTR pwz);
+    PPE_IODETOURING_API VOID NoteRead(PCSTR psz);
+    PPE_IODETOURING_API VOID NoteRead(PCWSTR pwz);
 
-    VOID NoteWrite(PCSTR psz);
-    VOID NoteWrite(PCWSTR pwz);
+    PPE_IODETOURING_API VOID NoteWrite(PCSTR psz);
+    PPE_IODETOURING_API VOID NoteWrite(PCWSTR pwz);
 
-    VOID NoteExecute(HMODULE hModule);
+    PPE_IODETOURING_API VOID NoteExecute(HMODULE hModule);
 
-    VOID NoteDelete(PCSTR psz);
-    VOID NoteDelete(PCWSTR pwz);
+    PPE_IODETOURING_API VOID NoteDelete(PCSTR psz);
+    PPE_IODETOURING_API VOID NoteDelete(PCWSTR pwz);
 
-    VOID NoteCleanup(PCSTR psz);
-    VOID NoteCleanup(PCWSTR pwz);
+    PPE_IODETOURING_API VOID NoteCleanup(PCSTR psz);
+    PPE_IODETOURING_API VOID NoteCleanup(PCWSTR pwz);
 
     // https://learn.microsoft.com/en-us/dotnet/standard/io/file-path-formats#unc-paths
     STATIC_CONST_INTEGRAL(u32, MaxPath, 32000);

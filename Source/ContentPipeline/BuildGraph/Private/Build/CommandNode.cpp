@@ -117,7 +117,7 @@ EBuildResult FCommandNode::Import(FBuildContext& ctx) {
     FillFileNodeList(&inputFiles, *_input);
 
     if (inputFiles.empty()) {
-        ctx.Log().TraceError(L"can't find any input files for command node '{0}'", Filename());
+        ctx.Log().TraceError("can't find any input files for command node '{0}'", Filename());
         return EBuildResult::Failed;
     }
 
@@ -142,7 +142,7 @@ EBuildResult FCommandNode::Process(FBuildContext& ctx) {
         return EBuildResult::Built;
     }
     else {
-        ctx.Log().TraceError(ToWString(outp.MakeView().Cast<const char>()));
+        ctx.Log().TraceError(outp.MakeView().Cast<const char>());
         return EBuildResult::Failed;
     }
 }
@@ -151,7 +151,7 @@ EBuildResult FCommandNode::Clean(FCleanContext& ctx) {
     const FFilename& filename = Filename();
 
     if (VFS_RemoveFile(filename)) {
-        ctx.Log().TraceInfo(L"deleted command node output file '{0}'", filename);
+        ctx.Log().TraceInfo("deleted command node output file '{0}'", filename);
         return EBuildResult::Built;
     }
     else {

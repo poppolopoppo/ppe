@@ -18,7 +18,7 @@ FPipelineResources::FPipelineResources() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 FPipelineResources::~FPipelineResources() {
-    ONLY_IF_RHIDEBUG( _dynamicData.LockExclusive() );
+    ONLY_IF_RHIDEBUG( Unused(_dynamicData.LockExclusive()) );
 }
 //----------------------------------------------------------------------------
 FPipelineResources::FPipelineResources(const FPipelineResources& other)
@@ -50,7 +50,7 @@ T& FPipelineResources::Resource_(const FUniformID& id) {
         return *exclusiveData->Storage.MakeView().CutStartingAt(it->Offset).Peek<T>();
     }
 
-    LOG(RHI, Error, L"failed to find uniform in pipeline resource with id: {0}", id);
+    PPE_LOG(RHI, Error, "failed to find uniform in pipeline resource with id: {0}", id);
     AssertNotReached();
 }
 //----------------------------------------------------------------------------

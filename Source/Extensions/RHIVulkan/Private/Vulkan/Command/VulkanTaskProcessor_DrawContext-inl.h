@@ -86,7 +86,7 @@ inline bool FVulkanTaskProcessor::FDrawContext::BindPipeline_(u32 mask) {
             _processor.SetScissor_(_logicalRenderPass, Default);
         }
         else {
-            RHI_LOG(Warning, L"failed to create graphics pipeline instance for <{0}>", _gPipelineRef->DebugName());
+            RHI_LOG(Warning, "failed to create graphics pipeline instance for <{0}>", _gPipelineRef->DebugName());
             success = false;
         }
     }
@@ -104,7 +104,7 @@ inline bool FVulkanTaskProcessor::FDrawContext::BindPipeline_(u32 mask) {
             _processor.SetScissor_(_logicalRenderPass, Default);
         }
         else {
-            RHI_LOG(Warning, L"failed to create mesh pipeline instance for <{0}>", _gPipelineRef->DebugName());
+            RHI_LOG(Warning, "failed to create mesh pipeline instance for <{0}>", _gPipelineRef->DebugName());
             success = false;
         }
     }
@@ -127,7 +127,7 @@ inline void FVulkanTaskProcessor::FDrawContext::BindResources(const FDescriptorS
 
     u32 binding;
     FRawDescriptorSetLayoutID dsLayoutId;
-    LOG_CHECKVOID(RHI, _pipelineLayoutRef->DescriptorSetLayout(&binding, &dsLayoutId, id) );
+    PPE_LOG_CHECKVOID(RHI, _pipelineLayoutRef->DescriptorSetLayout(&binding, &dsLayoutId, id) );
 
     _processor.vkCmdBindDescriptorSets(
         _processor._vkCommandBuffer,
@@ -152,7 +152,7 @@ inline void FVulkanTaskProcessor::FDrawContext::PushConstants(const FPushConstan
 
     const auto pplnLayout = _pipelineLayoutRef->Read();
     const auto it = pplnLayout->PushConstants.find(id);
-    LOG_CHECKVOID(RHI, pplnLayout->PushConstants.end() != it);
+    PPE_LOG_CHECKVOID(RHI, pplnLayout->PushConstants.end() != it);
     Assert(static_cast<u32>(it->second.Size) == size);
 
     _processor.vkCmdPushConstants(
@@ -195,7 +195,7 @@ inline void FVulkanTaskProcessor::FDrawContext::BindVertexBuffer(const FVertexBu
         }));
     }
     else {
-        RHI_LOG(Warning, L"invalid vertex buffer binding: [{0}] -> {1} ({2})", id, buffer, _pipelineLayoutRef->DebugName());
+        RHI_LOG(Warning, "invalid vertex buffer binding: [{0}] -> {1} ({2})", id, buffer, _pipelineLayoutRef->DebugName());
     }
 }
 //----------------------------------------------------------------------------
@@ -206,7 +206,7 @@ inline void FVulkanTaskProcessor::FDrawContext::BindIndexBuffer(FRawBufferID buf
         _processor.BindIndexBuffer_(pBuffer->Handle(), checked_cast<VkDeviceSize>(offset), VkCast(fmt));
     }
     else {
-        RHI_LOG(Warning, L"invalid index buffer binding: {0} ({1})", buffer, _pipelineLayoutRef->DebugName());
+        RHI_LOG(Warning, "invalid index buffer binding: {0} ({1})", buffer, _pipelineLayoutRef->DebugName());
     }
 }
 //----------------------------------------------------------------------------
@@ -253,7 +253,7 @@ inline void FVulkanTaskProcessor::FDrawContext::SetMultisample(const FMultisampl
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FDrawContext::SetStencilCompareMask(u32 value) {
-    LOG_CHECKVOID(RHI, BindPipeline_(ALL_BITS));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(ALL_BITS));
 
     _processor.vkCmdSetStencilCompareMask(
         _processor._vkCommandBuffer,
@@ -262,7 +262,7 @@ inline void FVulkanTaskProcessor::FDrawContext::SetStencilCompareMask(u32 value)
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FDrawContext::SetStencilWriteMask(u32 value) {
-    LOG_CHECKVOID(RHI, BindPipeline_(ALL_BITS));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(ALL_BITS));
 
     _processor.vkCmdSetStencilWriteMask(
         _processor._vkCommandBuffer,
@@ -271,7 +271,7 @@ inline void FVulkanTaskProcessor::FDrawContext::SetStencilWriteMask(u32 value) {
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FDrawContext::SetStencilReference(u32 value) {
-    LOG_CHECKVOID(RHI, BindPipeline_(ALL_BITS));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(ALL_BITS));
 
     _processor.vkCmdSetStencilReference(
         _processor._vkCommandBuffer,
@@ -280,7 +280,7 @@ inline void FVulkanTaskProcessor::FDrawContext::SetStencilReference(u32 value) {
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FDrawContext::SetShadingRatePalette(u32 viewportIndex, TMemoryView<const EShadingRatePalette> value) {
-    LOG_CHECKVOID(RHI, BindPipeline_(ALL_BITS));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(ALL_BITS));
 
     STACKLOCAL_POD_ARRAY(VkShadingRatePaletteEntryNV, entries, Max(value.size(), 1_size_t));
     entries[0] = VK_SHADING_RATE_PALETTE_ENTRY_1_INVOCATION_PER_PIXEL_NV;
@@ -301,7 +301,7 @@ inline void FVulkanTaskProcessor::FDrawContext::BindShadingRateImage(FRawImageID
     Assert(value);
 
     const FVulkanImage* const pImage = _processor.Resource_(value);
-    LOG_CHECKVOID(RHI, pImage);
+    PPE_LOG_CHECKVOID(RHI, pImage);
 
     FImageViewDesc desc;
     desc.View = EImageView_2D;
@@ -320,13 +320,13 @@ inline void FVulkanTaskProcessor::FDrawContext::BindShadingRateImage(FRawImageID
 inline void FVulkanTaskProcessor::FDrawContext::DrawVertices(u32 vertexCount, u32 instanceCount, u32 firstVertex, u32 firstInstance) {
     Assert_NoAssume(_gPipelineRef);
 
-    LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
 
     _processor.vkCmdDraw(
         _processor._vkCommandBuffer,
         vertexCount, instanceCount, firstVertex, firstInstance );
 
-    ONLY_IF_RHIDEBUG(_processor.EditStatistics_([=](FFrameStatistics::FRendering& rendering) {
+    ONLY_IF_RHIDEBUG(_processor.EditStatistics_([=, this](FFrameStatistics::FRendering& rendering) {
         rendering.NumDrawCalls++;
         rendering.NumVertexCount += static_cast<u64>(vertexCount) * instanceCount;
         rendering.NumPrimitiveCount += EPrimitiveTopology_PrimitiveCount(
@@ -339,13 +339,13 @@ inline void FVulkanTaskProcessor::FDrawContext::DrawVertices(u32 vertexCount, u3
 inline void FVulkanTaskProcessor::FDrawContext::DrawIndexed(u32 indexCount, u32 instanceCount, u32 firstIndex, i32 vertexOffset, u32 firstInstance) {
     Assert_NoAssume(_gPipelineRef);
 
-    LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
 
     _processor.vkCmdDrawIndexed(
         _processor._vkCommandBuffer,
         indexCount, instanceCount, firstIndex, vertexOffset, firstInstance );
 
-    ONLY_IF_RHIDEBUG(_processor.EditStatistics_([=](FFrameStatistics::FRendering& rendering) {
+    ONLY_IF_RHIDEBUG(_processor.EditStatistics_([=, this](FFrameStatistics::FRendering& rendering) {
         rendering.NumDrawCalls++;
         rendering.NumVertexCount += static_cast<u64>(indexCount) * instanceCount;
         rendering.NumPrimitiveCount += EPrimitiveTopology_PrimitiveCount(
@@ -361,9 +361,9 @@ inline void FVulkanTaskProcessor::FDrawContext::DrawVerticesIndirect(FRawBufferI
     Assert_NoAssume(drawCount <= _processor._maxDrawIndirectCount);
 
     const FVulkanBuffer* const pIndirectBuffer = _processor.Resource_(indirectBuffer);
-    LOG_CHECKVOID(RHI, pIndirectBuffer);
+    PPE_LOG_CHECKVOID(RHI, pIndirectBuffer);
 
-    LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
 
     _processor.vkCmdDrawIndirect(
         _processor._vkCommandBuffer,
@@ -382,9 +382,9 @@ inline void FVulkanTaskProcessor::FDrawContext::DrawIndexedIndirect(FRawBufferID
     Assert_NoAssume(drawCount <= _processor._maxDrawIndirectCount);
 
     const FVulkanBuffer* const pIndirectBuffer = _processor.Resource_(indirectBuffer);
-    LOG_CHECKVOID(RHI, pIndirectBuffer);
+    PPE_LOG_CHECKVOID(RHI, pIndirectBuffer);
 
-    LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
 
     _processor.vkCmdDrawIndexedIndirect(
         _processor._vkCommandBuffer,
@@ -405,12 +405,12 @@ inline void FVulkanTaskProcessor::FDrawContext::DrawVerticesIndirectCount(FRawBu
     Assert_NoAssume(maxDrawCount <= _processor._maxDrawIndirectCount);
 
     const FVulkanBuffer* const pIndirectBuffer = _processor.Resource_(indirectBuffer);
-    LOG_CHECKVOID(RHI, pIndirectBuffer);
+    PPE_LOG_CHECKVOID(RHI, pIndirectBuffer);
 
     const FVulkanBuffer* const pCountBuffer = _processor.Resource_(countBuffer);
-    LOG_CHECKVOID(RHI, pCountBuffer);
+    PPE_LOG_CHECKVOID(RHI, pCountBuffer);
 
-    LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
 
     _processor.vkCmdDrawIndirectCountKHR(
         _processor._vkCommandBuffer,
@@ -433,12 +433,12 @@ inline void FVulkanTaskProcessor::FDrawContext::DrawIndexedIndirectCount(FRawBuf
     Assert_NoAssume(maxDrawCount <= _processor._maxDrawIndirectCount);
 
     const FVulkanBuffer* const pIndirectBuffer = _processor.Resource_(indirectBuffer);
-    LOG_CHECKVOID(RHI, pIndirectBuffer);
+    PPE_LOG_CHECKVOID(RHI, pIndirectBuffer);
 
     const FVulkanBuffer* const pCountBuffer = _processor.Resource_(countBuffer);
-    LOG_CHECKVOID(RHI, pCountBuffer);
+    PPE_LOG_CHECKVOID(RHI, pCountBuffer);
 
-    LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(GRAPHICS_BIT));
 
     _processor.vkCmdDrawIndirectCountKHR(
         _processor._vkCommandBuffer,
@@ -458,7 +458,7 @@ inline void FVulkanTaskProcessor::FDrawContext::DrawMeshes(u32 taskCount, u32 fi
     Assert_NoAssume(_processor._enableMeshShaderNV);
     Assert_NoAssume(taskCount <= _processor._maxDrawMeshTaskCount);
 
-    LOG_CHECKVOID(RHI, BindPipeline_(MESH_BIT));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(MESH_BIT));
 
     _processor.vkCmdDrawMeshTasksNV(
         _processor._vkCommandBuffer,
@@ -476,9 +476,9 @@ inline void FVulkanTaskProcessor::FDrawContext::DrawMeshesIndirect(FRawBufferID 
     Assert_NoAssume(drawCount <= _processor._maxDrawIndirectCount);
 
     const FVulkanBuffer* const pIndirectBuffer = _processor.Resource_(indirectBuffer);
-    LOG_CHECKVOID(RHI, pIndirectBuffer);
+    PPE_LOG_CHECKVOID(RHI, pIndirectBuffer);
 
-    LOG_CHECKVOID(RHI, BindPipeline_(MESH_BIT));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(MESH_BIT));
 
     _processor.vkCmdDrawMeshTasksIndirectNV(
         _processor._vkCommandBuffer,
@@ -500,12 +500,12 @@ inline void FVulkanTaskProcessor::FDrawContext::DrawMeshesIndirectCount(FRawBuff
     Assert_NoAssume(maxDrawCount <= _processor._maxDrawIndirectCount);
 
     const FVulkanBuffer* const pIndirectBuffer = _processor.Resource_(indirectBuffer);
-    LOG_CHECKVOID(RHI, pIndirectBuffer);
+    PPE_LOG_CHECKVOID(RHI, pIndirectBuffer);
 
     const FVulkanBuffer* const pCountBuffer = _processor.Resource_(countBuffer);
-    LOG_CHECKVOID(RHI, pCountBuffer);
+    PPE_LOG_CHECKVOID(RHI, pCountBuffer);
 
-    LOG_CHECKVOID(RHI, BindPipeline_(MESH_BIT));
+    PPE_LOG_CHECKVOID(RHI, BindPipeline_(MESH_BIT));
 
     _processor.vkCmdDrawMeshTasksIndirectCountNV(
         _processor._vkCommandBuffer,

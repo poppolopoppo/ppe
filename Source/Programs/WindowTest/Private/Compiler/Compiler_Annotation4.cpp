@@ -38,22 +38,22 @@ void main ()
 ARGS_IF_RHIDEBUG("Compiler_Annotation4_CS"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::GLSL_450);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
     const EShaderCompilationFlags flags = compiler->CompilationFlags();
     compiler->SetCompilationFlags(flags | EShaderCompilationFlags::ParseAnnotations);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
 
     compiler->SetCompilationFlags(flags);
 
     const FDescriptorSet* ds = ppln.DescriptorSet("0"_descriptorset);
-    LOG_CHECK(WindowTest, !!ds);
+    PPE_LOG_CHECK(WindowTest, !!ds);
 
-    LOG_CHECK(WindowTest, TestBufferUniform(*ds, "UB"_uniform, 64_b, 1, EShaderStages::Compute, 1, UMax));
-    LOG_CHECK(WindowTest, TestStorageBuffer(*ds, "SSB"_uniform, 64_b, 0, EShaderAccess::WriteOnly, 0, EShaderStages::Compute, 1, 0));
+    PPE_LOG_CHECK(WindowTest, TestBufferUniform(*ds, "UB"_uniform, 64_b, 1, EShaderStages::Compute, 1, UMax));
+    PPE_LOG_CHECK(WindowTest, TestStorageBuffer(*ds, "SSB"_uniform, 64_b, 0, EShaderAccess::WriteOnly, 0, EShaderStages::Compute, 1, 0));
 
-    LOG_CHECK(WindowTest, ppln.DefaultLocalGroupSize == uint3(1));
+    PPE_LOG_CHECK(WindowTest, ppln.DefaultLocalGroupSize == uint3(1));
 
     return true;
 }

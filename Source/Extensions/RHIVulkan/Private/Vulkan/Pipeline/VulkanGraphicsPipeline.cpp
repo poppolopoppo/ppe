@@ -30,6 +30,8 @@ FVulkanGraphicsPipeline::~FVulkanGraphicsPipeline() {
 }
 #endif
 //----------------------------------------------------------------------------
+FVulkanGraphicsPipeline::FShaderModule::~FShaderModule() = default;
+//----------------------------------------------------------------------------
 bool FVulkanGraphicsPipeline::Construct(const FGraphicsPipelineDesc& desc, FRawPipelineLayoutID layoutId ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert(layoutId);
 

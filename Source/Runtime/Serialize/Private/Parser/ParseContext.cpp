@@ -147,7 +147,7 @@ RTTI::FAtom FParseContext::CreateAtomCopy(const RTTI::FAtom& atom) {
     return _atomHeap->AllocateCopy(atom.Traits(), atom.Data());
 }
 //----------------------------------------------------------------------------
-SLABHEAP_POOLED(Atom)& FParseContext::Heap_() const {
+SLABHEAP(Atom)& FParseContext::Heap_() const {
     return _atomHeap->Heap();
 }
 //----------------------------------------------------------------------------

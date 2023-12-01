@@ -101,7 +101,7 @@ public:
     NODISCARD bool Compile(
         FPipelineDesc::FShader* outShader,
         FShaderReflection* outReflection,
-        FWStringBuilder* outLog,
+        FStringBuilder* outLog,
         EShaderType shaderType,
         EShaderLangFormat srcShaderFormat,
         EShaderLangFormat dstShaderFormat,

@@ -44,6 +44,8 @@ PPE_VFS_API bool VFS_FileStats(FFileStat* pstat, const FFilename& filename);
 PPE_VFS_API bool VFS_FileCreatedAt(FTimestamp* ptime, const FFilename& filename);
 PPE_VFS_API bool VFS_FileLastModified(FTimestamp* ptime, const FFilename& filename);
 //----------------------------------------------------------------------------
+PPE_VFS_API size_t VFS_EnumerateMountingPoints(const TFunction<void(const FMountingPoint&)>& foreach);
+PPE_VFS_API size_t VFS_EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunction<void(const FDirpath&)>& onDirectory, const TFunction<void(const FFilename&)>& onFile);
 PPE_VFS_API size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach);
 PPE_VFS_API size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach);
 PPE_VFS_API size_t VFS_MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach);

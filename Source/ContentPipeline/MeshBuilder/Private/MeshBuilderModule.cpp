@@ -38,22 +38,18 @@ FMeshBuilderModule::FMeshBuilderModule() NOEXCEPT
 //----------------------------------------------------------------------------
 void FMeshBuilderModule::Start(FModularDomain& domain) {
     IModuleInterface::Start(domain);
-
 }
 //----------------------------------------------------------------------------
 void FMeshBuilderModule::Shutdown(FModularDomain& domain) {
     IModuleInterface::Shutdown(domain);
-
 }
 //----------------------------------------------------------------------------
 void FMeshBuilderModule::DutyCycle(FModularDomain& domain) {
     IModuleInterface::DutyCycle(domain);
-
 }
 //----------------------------------------------------------------------------
 void FMeshBuilderModule::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
     IModuleInterface::ReleaseMemory(domain);
-
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

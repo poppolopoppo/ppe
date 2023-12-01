@@ -7,6 +7,7 @@
 
 #include "Allocator/SlabHeap.h"
 #include "Allocator/SlabAllocator.h"
+#include "Container/SparseArray.h"
 #include "Meta/InPlace.h"
 
 namespace PPE {
@@ -54,7 +55,7 @@ public:
     FVulkanLogicalRenderPass(FVulkanLogicalRenderPass&& rvalue) = default;
     FVulkanLogicalRenderPass& operator =(FVulkanLogicalRenderPass&& ) = delete;
 
-    TMemoryView<IVulkanDrawTask* const> DrawTasks() const { return _drawTasks->MakeConstView(); }
+    auto DrawTasks() const { return _drawTasks->Iterable(); }
 
     const FColorTargets& ColorTargets() const { return _colorTargets; }
     const FDepthStencilTarget& DepthStencilTarget() const { return _depthStencilTarget; }
@@ -89,7 +90,7 @@ public:
     _DrawTask* EmplaceTask(_Args&&... args) {
         _DrawTask* const pTask = new (*_allocator) _DrawTask(*this, std::forward<_Args>(args)...);
         Assert(pTask);
-        _drawTasks->push_back(pTask);
+        _drawTasks->Emplace(pTask);
         return pTask;
     }
 
@@ -112,8 +113,8 @@ private:
     FRawRenderPassID _renderPassId;
     u32 _subpassIndex{ 0 };
 
-    using FAllocator = TPoolingSlabHeap<TSlabAllocator<ALLOCATOR(RHICommand)>>;
-    using FDrawTasks = TVector<IVulkanDrawTask*, TPoolingSlabAllocator<FAllocator>>;
+    using FAllocator = TSlabHeap<TSlabAllocator<ALLOCATOR(RHICommand)>>;
+    using FDrawTasks = TSparseArray<IVulkanDrawTask*, TSlabAllocator<TSlabAllocator<ALLOCATOR(RHICommand)>>>;
 
     Meta::TInPlace<FAllocator> _allocator;
     Meta::TInPlace<FDrawTasks> _drawTasks;

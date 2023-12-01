@@ -42,10 +42,10 @@ public:
     TFuture(const TFuture& ) = delete;
     TFuture& operator =(const TFuture&) = delete;
 
-    bool Available() const { return (Ready == _state); }
+    NODISCARD bool Available() const { return (Ready == _state); }
 
-    T& Result(); // blocking
-    T* ResultIFP(); // non blocking
+    NODISCARD T& Result(); // blocking
+    NODISCARD T* ResultIFP(); // non blocking
 
     void Async(ETaskPriority priority, ITaskContext* context);
 
@@ -74,7 +74,7 @@ PPE_CORE_API void Async(
     ITaskContext* context = nullptr/* uses FGlobalThreadPool by default */);
 //----------------------------------------------------------------------------
 template <typename T>
-PFuture<T> Future(
+NODISCARD PFuture<T> Future(
     TFunction<T()>&& func,
     ETaskPriority priority = ETaskPriority::Normal,
     ITaskContext* context = nullptr/* uses FGlobalThreadPool by default */);
@@ -103,6 +103,12 @@ template <typename _It>
 void ParallelForEachRef(
     _It first, _It last,
     const TFunction<void(typename Meta::TIteratorTraits<_It>::reference)>& foreach_ref,
+    ETaskPriority priority = ETaskPriority::Normal,
+    ITaskContext* context = nullptr/* uses FHighPriorityThreadPool by default */);
+//----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API int ParallelSum(
+    size_t first, size_t last,
+    const TFunction<int(size_t)>& sum,
     ETaskPriority priority = ETaskPriority::Normal,
     ITaskContext* context = nullptr/* uses FHighPriorityThreadPool by default */);
 //----------------------------------------------------------------------------

@@ -9,6 +9,8 @@
 #include "Vulkan/Instance/VulkanFrameGraph.h"
 #include "Vulkan/RayTracing/VulkanRayTracingGeometryInstance.h"
 
+#include "RHI/PixelFormatHelpers.h"
+
 #include "Diagnostic/Logger.h"
 #include "Time/TimedScope.h"
 
@@ -53,8 +55,6 @@ FVulkanCommandBuffer::~FVulkanCommandBuffer() {
         if (pool.Valid())
             pool.TearDown(device);
     }
-
-    exclusive->PerQueue.clear();
 }
 //----------------------------------------------------------------------------
 const FVulkanDevice& FVulkanCommandBuffer::Device() const NOEXCEPT {
@@ -96,15 +96,11 @@ bool FVulkanCommandBuffer::Begin(
 #endif
 
     // create command pool
-    {
-        const u32 index = static_cast<u32>(exclusive->QueueIndex);
-        exclusive->PerQueue.resize(Max(exclusive->PerQueue.size(), index + 1_size_t));
-
-        if (not exclusive->PerQueue[index].Valid() &&
-            not exclusive->PerQueue[index].Construct(Device(), queue ARGS_IF_RHIDEBUG(queue->DebugName))) {
-            RHI_LOG(Error, L"failed to construct command pool for '{0}'", exclusive->DebugName);
-            return false;
-        }
+    if (const u32 index = static_cast<u32>(exclusive->QueueIndex);
+        not exclusive->PerQueue[index].Valid() &&
+        not exclusive->PerQueue[index].Construct(Device(), queue ARGS_IF_RHIDEBUG(queue->DebugName))) {
+        RHI_LOG(Error, "failed to construct command pool for '{0}'", exclusive->DebugName);
+        return false;
     }
 
     exclusive->Batch->OnBegin(desc);
@@ -138,7 +134,7 @@ bool FVulkanCommandBuffer::Execute() {
     RHI_PROFILINGSCOPE("BakeCommandBuffer", &exclusive->Batch->_statistics.Renderer.CpuTime);
 
     if (Unlikely(not BuildCommandBuffers_(*exclusive))) {
-        RHI_LOG(Error, L"failed to build command buffers for '{0}'", exclusive->DebugName);
+        RHI_LOG(Error, "failed to build command buffers for '{0}'", exclusive->DebugName);
         return false;
     }
 
@@ -154,7 +150,7 @@ bool FVulkanCommandBuffer::Execute() {
 #endif
 
     if (Unlikely(not exclusive->Batch->OnBaked(exclusive->RM.ResourceMap))) {
-        RHI_LOG(Error, L"failed to bake command batch for '{0}'", exclusive->DebugName);
+        RHI_LOG(Error, "failed to bake command batch for '{0}'", exclusive->DebugName);
         return false;
     }
 
@@ -235,7 +231,7 @@ bool FVulkanCommandBuffer::BuildCommandBuffers_(FInternalData& data) {
     data.BarrierManager.Commit(device, cmd);
 
     if (not ProcessTasks_(data, cmd)) {
-        RHI_LOG(Error, L"failed to process tasks for '{0}'", Read()->DebugName);
+        RHI_LOG(Error, "failed to process tasks for '{0}'", Read()->DebugName);
         return false;
     }
 
@@ -286,7 +282,7 @@ bool FVulkanCommandBuffer::ProcessTasks_(FInternalData& data, VkCommandBuffer cm
         for (size_t i = 0; i < pending.size();) {
             const PVulkanFrameTask pTask = pending[i];
 
-            if (pTask->VisitorId() == visitorId) {
+            if (pTask->VisitorId == visitorId) {
                 ++i;
                 continue;
             }
@@ -294,7 +290,7 @@ bool FVulkanCommandBuffer::ProcessTasks_(FInternalData& data, VkCommandBuffer cm
             // wait for input
             const bool inputProcessed = not pTask->Inputs().Any(
                 [](PVulkanFrameTask pInput) NOEXCEPT -> bool {
-                    return (pInput->VisitorId() != visitorId);
+                    return (pInput->VisitorId != visitorId);
                 });
             if (not inputProcessed) {
                 ++i;
@@ -302,8 +298,8 @@ bool FVulkanCommandBuffer::ProcessTasks_(FInternalData& data, VkCommandBuffer cm
             }
 
             // process the task
-            pTask->SetVisitorId(visitorId);
-            pTask->SetExecutionOrder(++executionOrder);
+            pTask->VisitorId = visitorId;
+            pTask->ExecutionOrder = ++executionOrder;
 
             processor.Run(*pTask);
 
@@ -338,7 +334,7 @@ FRawImageID FVulkanCommandBuffer::SwapchainImage(FRawSwapchainID swapchainId) {
     Assert_NoAssume(EState::Recording == exclusive->State);
 
     const FVulkanSwapchain* const pSwapchain = AcquireTransient(swapchainId);
-    LOG_CHECK(RHI, pSwapchain);
+    PPE_LOG_CHECK(RHI, pSwapchain);
 
     FRawImageID imageId;
     VerifyRelease(pSwapchain->Acquire(&imageId, *this ARGS_IF_RHIDEBUG(exclusive->DebugQueueSync)));
@@ -430,13 +426,13 @@ PFrameTask FVulkanCommandBuffer::Task(const FSubmitRenderPass& task) {
     Assert_NoAssume(GGraphicsBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FSubmitRenderPass>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
 #if USE_PPE_RHIDEBUG
     // #TODO: add scale to shader timemap
     if (exclusive->ShaderDbg.TimemapStages & EShaderStages::Fragment &&
         exclusive->ShaderDbg.TimemapIndex != Default) {
-        pFrameTask->LogicalPass()->SetShaderDebugIndex(exclusive->ShaderDbg.TimemapIndex);
+        pFrameTask->LogicalPass->SetShaderDebugIndex(exclusive->ShaderDbg.TimemapIndex);
     }
 #endif
 
@@ -451,7 +447,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FDispatchCompute& task) {
     Assert_NoAssume(GComputeBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FDispatchCompute>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
 #if USE_PPE_RHIDEBUG
     if (exclusive->ShaderDbg.TimemapStages & EShaderStages::Compute &&
@@ -472,7 +468,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FDispatchComputeIndirect& task) {
     Assert_NoAssume(GComputeBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FDispatchComputeIndirect>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
 #if USE_PPE_RHIDEBUG
     if (exclusive->ShaderDbg.TimemapStages & EShaderStages::Compute &&
@@ -493,7 +489,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FCopyBuffer& task) {
     Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FCopyBuffer>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 }
@@ -506,7 +502,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FCopyImage& task) {
     Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FCopyImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 }
@@ -519,7 +515,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FCopyBufferToImage& task) {
     Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FCopyBufferToImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 }
@@ -532,7 +528,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FCopyImageToBuffer& task) {
     Assert_NoAssume(GTransferBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FCopyImageToBuffer>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 }
@@ -545,7 +541,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBlitImage& task) {
     Assert_NoAssume(GGraphicsBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FBlitImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 }
@@ -558,7 +554,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FResolveImage& task) {
     Assert_NoAssume(GGraphicsBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FResolveImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 }
@@ -569,7 +565,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FGenerateMipmaps& task) {
     Assert_NoAssume(GGraphicsBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FGenerateMipmaps>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 }
@@ -579,7 +575,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FFillBuffer& task) {
     Assert_NoAssume(EState::Recording == exclusive->State);
 
     TVulkanFrameTask<FFillBuffer>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 }
@@ -590,7 +586,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FClearColorImage& task) {
     Assert_NoAssume(GComputeBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FClearColorImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 }
@@ -601,7 +597,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FClearDepthStencilImage& task) {
     Assert_NoAssume(GComputeBit_ & exclusive->Batch->QueueUsage());
 
     TVulkanFrameTask<FClearDepthStencilImage>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 }
@@ -645,7 +641,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FPresent& task) {
     Assert_NoAssume(EState::Recording == exclusive->State);
 
     TVulkanFrameTask<FPresent>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     exclusive->Batch->_data.LockExclusive()->Swapchains.Push(pFrameTask->Swapchain);
 
@@ -659,7 +655,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FCustomTask& task) {
     Assert_NoAssume(EState::Recording == exclusive->State);
 
     TVulkanFrameTask<FCustomTask>* const pFrameTask = exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 }
@@ -677,7 +673,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FUpdateRayTracingShaderTable& task) 
 
     TVulkanFrameTask<FUpdateRayTracingShaderTable>* const pFrameTask =
         exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
     return pFrameTask;
 
@@ -699,13 +695,13 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
     Assert_NoAssume(GRayTracingBit_ & exclusive->Batch->QueueUsage());
 
     FVulkanRTLocalGeometry* const rtGeometry = ToLocal(task.Geometry);
-    LOG_CHECK(RHI, !!rtGeometry);
+    PPE_LOG_CHECK(RHI, !!rtGeometry);
     Assert_NoAssume(task.Aabbs.size() <= rtGeometry->Aabbs().size());
     Assert_NoAssume(task.Triangles.size() <= rtGeometry->Triangles().size());
 
     TVulkanFrameTask<FBuildRayTracingGeometry>* const pFrameTask =
         exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
     pFrameTask->RTGeometry = rtGeometry;
 
     VkAccelerationStructureMemoryRequirementsInfoNV asInfo{};
@@ -721,7 +717,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
         memReq.memoryRequirements.size,
         EBufferUsage::RayTracing },
         Default ARGS_IF_RHIDEBUG("ScratchBuffer"));
-    LOG_CHECK(RHI, !!buffer);
+    PPE_LOG_CHECK(RHI, !!buffer);
 
     pFrameTask->ScratchBuffer = ToLocal(*buffer);
     ReleaseResource(buffer.Release());
@@ -746,7 +742,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
     // add triangles
     for (const FBuildRayTracingGeometry::FTriangles& src : task.Triangles) {
         const auto ref = Meta::LowerBound(rtGeometry->Triangles().begin(), rtGeometry->Triangles().end(), src.Geometry);
-        LOG_CHECK(RHI, rtGeometry->Triangles().end() != ref);
+        PPE_LOG_CHECK(RHI, rtGeometry->Triangles().end() != ref);
 
         const size_t pos = std::distance(rtGeometry->Triangles().begin(), ref);
 
@@ -766,14 +762,14 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
         dst.geometry.triangles.vertexFormat = VkCast(src.VertexFormat);
 
         if (not src.VertexData.empty()) {
-            const FVulkanLocalBuffer* vb = nullptr;
-            LOG_CHECK(RHI, StagingStore_(*exclusive, &vb, &dst.geometry.triangles.vertexOffset, src.VertexData.data(), src.VertexData.SizeInBytes(), ref->VertexSize));
+            TPtrRef<const FVulkanLocalBuffer> vb;
+            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &vb, &dst.geometry.triangles.vertexOffset, src.VertexData.data(), src.VertexData.SizeInBytes(), ref->VertexSize));
             dst.geometry.triangles.vertexData = vb->Handle();
             //pFrameTask->UsableBuffers.Add(vb); // staging buffer is already immutable
         }
         else {
-            const FVulkanLocalBuffer* vb = ToLocal(src.VertexBuffer);
-            LOG_CHECK(RHI, !!vb);
+            TPtrRef<const FVulkanLocalBuffer> vb = ToLocal(src.VertexBuffer);
+            PPE_LOG_CHECK(RHI, !!vb);
             dst.geometry.triangles.vertexData = vb->Handle();
             dst.geometry.triangles.vertexOffset = src.VertexOffset;
             pFrameTask->UsableBuffers.Add(vb);
@@ -792,14 +788,14 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
         }
 
         if (not src.IndexData.empty()) {
-            const FVulkanLocalBuffer* ib = nullptr;
-            LOG_CHECK(RHI, StagingStore_(*exclusive, &ib, &dst.geometry.triangles.indexOffset, src.IndexData.data(), src.IndexData.SizeInBytes(), ref->IndexSize));
+            TPtrRef<const FVulkanLocalBuffer> ib = nullptr;
+            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &ib, &dst.geometry.triangles.indexOffset, src.IndexData.data(), src.IndexData.SizeInBytes(), ref->IndexSize));
             dst.geometry.triangles.indexData = ib->Handle();
             //pFrameTask->UsableBuffers.Add(ib); // staging buffer is already immutable
         }
         else if (!!src.IndexBuffer) {
-            const FVulkanLocalBuffer* ib = ToLocal(src.IndexBuffer);
-            LOG_CHECK(RHI, !!ib);
+            TPtrRef<const FVulkanLocalBuffer> ib = ToLocal(src.IndexBuffer);
+            PPE_LOG_CHECK(RHI, !!ib);
             dst.geometry.triangles.indexData = ib->Handle();
             dst.geometry.triangles.indexOffset = src.IndexOffset;
             pFrameTask->UsableBuffers.Add(ib);
@@ -807,16 +803,16 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
 
         // transforms
         if (!!src.TransformBuffer) {
-            const FVulkanLocalBuffer* tb = ToLocal(src.TransformBuffer);
-            LOG_CHECK(RHI, !!tb);
+            TPtrRef<const FVulkanLocalBuffer> tb = ToLocal(src.TransformBuffer);
+            PPE_LOG_CHECK(RHI, !!tb);
             dst.geometry.triangles.transformData = tb->Handle();
             dst.geometry.triangles.transformOffset = src.TransformOffset;
             pFrameTask->UsableBuffers.Add(tb);
         }
         else if (src.TransformData.has_value()) {
-            const FVulkanLocalBuffer* tb = nullptr;
+            TPtrRef<const FVulkanLocalBuffer> tb = nullptr;
             const float3x4& transform = src.TransformData.value();
-            LOG_CHECK(RHI, StagingStore_(*exclusive, &tb, &dst.geometry.triangles.transformOffset, &transform, sizeof(transform), 16_b));
+            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &tb, &dst.geometry.triangles.transformOffset, &transform, sizeof(transform), 16_b));
             dst.geometry.triangles.transformData = tb->Handle();
             //pFrameTask->UsableBuffers.Add(tb); // staging buffer is already immutable
         }
@@ -825,7 +821,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
     // add aabbs
     for (const FBuildRayTracingGeometry::FBoundingVolumes& src : task.Aabbs) {
         const auto ref = Meta::LowerBound(rtGeometry->Aabbs().begin(), rtGeometry->Aabbs().end(), src.Geometry);
-        LOG_CHECK(RHI, rtGeometry->Aabbs().end() != ref);
+        PPE_LOG_CHECK(RHI, rtGeometry->Aabbs().end() != ref);
 
         const size_t pos = std::distance(rtGeometry->Aabbs().begin(), ref);
 
@@ -843,14 +839,14 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
         dst.geometry.aabbs.stride = src.AabbStride;
 
         if (not src.AabbData.empty()) {
-            const FVulkanLocalBuffer* ab = nullptr;
-            LOG_CHECK(RHI, StagingStore_(*exclusive, &ab, &dst.geometry.aabbs.offset, src.AabbData.data(), src.AabbData.SizeInBytes(), 8_b));
+            TPtrRef<const FVulkanLocalBuffer> ab = nullptr;
+            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &ab, &dst.geometry.aabbs.offset, src.AabbData.data(), src.AabbData.SizeInBytes(), 8_b));
             dst.geometry.aabbs.aabbData = ab->Handle();
             //pFrameTask->UsableBuffers.Add(ab); // staging buffer is already immutable
         }
         else {
-            const FVulkanLocalBuffer* ab = ToLocal(src.AabbBuffer);
-            LOG_CHECK(RHI, !!ab);
+            TPtrRef<const FVulkanLocalBuffer> ab = ToLocal(src.AabbBuffer);
+            PPE_LOG_CHECK(RHI, !!ab);
             dst.geometry.aabbs.aabbData = ab->Handle();
             dst.geometry.aabbs.offset = src.AabbOffset;
             pFrameTask->UsableBuffers.Add(ab);
@@ -877,12 +873,12 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     Assert_NoAssume(GRayTracingBit_ & exclusive->Batch->QueueUsage());
 
     FVulkanRTLocalScene* const rtScene = ToLocal(task.Scene);
-    LOG_CHECK(RHI, !!rtScene);
+    PPE_LOG_CHECK(RHI, !!rtScene);
     Assert_NoAssume(task.Instances.size() <= rtScene->MaxInstanceCount());
 
     TVulkanFrameTask<FBuildRayTracingScene>* const pBuildTask =
         exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pBuildTask);
+    PPE_LOG_CHECK(RHI, !!pBuildTask);
     pBuildTask->RTScene = rtScene;
 
     VkAccelerationStructureMemoryRequirementsInfoNV asInfo{};
@@ -906,7 +902,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
         checked_cast<size_t>(memReq.memoryRequirements.size),
         EBufferUsage::RayTracing,
     },  mem ARGS_IF_RHIDEBUG("ScratchBuffer") );
-    LOG_CHECK(RHI, !!scratchBuf);
+    PPE_LOG_CHECK(RHI, !!scratchBuf);
 
     pBuildTask->ScratchBuffer = ToLocal(*scratchBuf);
     ReleaseResource(scratchBuf.Release());
@@ -916,13 +912,13 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
         task.Instances.MakeView().SizeInBytes(),
         EBufferUsage::TransferDst | EBufferUsage::RayTracing
     },  mem ARGS_IF_RHIDEBUG("InstanceBuffer") );
-    LOG_CHECK(RHI, !!instanceBuf);
+    PPE_LOG_CHECK(RHI, !!instanceBuf);
 
     pBuildTask->InstanceBuffer = ToLocal(*instanceBuf);
     ReleaseResource(instanceBuf.Release());
 
     FVulkanRayTracingGeometryInstance* pInstances = nullptr;
-    LOG_CHECK(RHI, StagingAlloc_<FVulkanRayTracingGeometryInstance >(
+    PPE_LOG_CHECK(RHI, StagingAlloc_<FVulkanRayTracingGeometryInstance >(
         *exclusive,
         &pBuildTask->InstanceStagingBuffer,
         &pBuildTask->InstanceStagingBufferOffset,
@@ -943,13 +939,14 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
 
     using FInstance = FVulkanBuildRayTracingSceneTask::FInstance;
     pBuildTask->Instances = exclusive->MainAllocator.AllocateT<FInstance>(pBuildTask->NumInstances);
-    pBuildTask->RTGeometries = exclusive->MainAllocator.AllocateT<const FVulkanRTLocalGeometry*>(pBuildTask->NumInstances);
+    pBuildTask->RTGeometries = exclusive->MainAllocator.AllocateT<TPtrRef<const FVulkanRayTracingLocalGeometry>>(pBuildTask->NumInstances);
 
     forrange(i, 0, pBuildTask->NumInstances) {
         const u32 idx = sorted[i];
         const auto& src = task.Instances[i];
+
         FVulkanRayTracingGeometryInstance& dst = pInstances[idx];
-        const FVulkanRayTracingLocalGeometry*& pLocalGeom = pBuildTask->RTGeometries[i];
+        TPtrRef<const FVulkanRayTracingLocalGeometry>& pLocalGeom = pBuildTask->RTGeometries[i];
         Assert_NoAssume(src.InstanceId.Valid());
         Assert_NoAssume(src.GeometryId.Valid());
         Assert_NoAssume((src.CustomId >> 24) == 0);
@@ -993,7 +990,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FTraceRays& task) {
 
     TVulkanFrameTask<FTraceRays>* const pFrameTask =
         exclusive->TaskGraph.AddTask(*this, task);
-    LOG_CHECK(RHI, !!pFrameTask);
+    PPE_LOG_CHECK(RHI, !!pFrameTask);
 
 #if USE_PPE_RHIDEBUG
     if (exclusive->ShaderDbg.TimemapIndex != Default &&
@@ -1196,12 +1193,12 @@ FLogicalPassID FVulkanCommandBuffer::CreateRenderPass(const FRenderPassDesc& des
     const FResourceIndex index{pool.Allocate()};
 
     TResourceProxy<FVulkanLogicalRenderPass>* const pLogicalPass = pool[index];
-    AssertMessage(L"logical render pass pool overflow", pLogicalPass);
+    AssertMessage("logical render pass pool overflow", pLogicalPass);
 
     Meta::Construct(pLogicalPass);
 
     if (Unlikely(not pLogicalPass->Construct(*this, desc))) {
-        RHI_LOG(Error, L"failed to construct logical render pass");
+        RHI_LOG(Error, "failed to construct logical render pass");
         Meta::Destroy(pLogicalPass);
         pool.Deallocate(index);
         return Default;
@@ -1253,7 +1250,7 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
     FRawBufferID ssb;
     size_t ssbTimemapOffset, ssbTimemapSize;
     uint2 ssbDim;
-    LOG_CHECK(RHI, exclusive->Batch->FindShaderTimemapForDebug(
+    PPE_LOG_CHECK(RHI, exclusive->Batch->FindShaderTimemapForDebug(
         &ssb, &ssbTimemapOffset, &ssbTimemapSize, &ssbDim,
         exclusive->ShaderDbg.TimemapIndex) );
 
@@ -1272,7 +1269,7 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
     // pass 1
     {
         const FRawCPipelineID ppln = pplns[0];
-        LOG_CHECK(RHI, _frameGraph->InitPipelineResources(resources.get(), ppln, descriptorSetId0) );
+        PPE_LOG_CHECK(RHI, _frameGraph->InitPipelineResources(resources.get(), ppln, descriptorSetId0) );
 
         resources->BindBuffer(un_Timemap, ssb, ssbTimemapOffset, ssbTimemapSize);
         resources->BindBuffer(un_MaxValues, ssb, ssbMaxValuesOffset, ssbMaxValuesSize);
@@ -1287,7 +1284,7 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
     // pass 2
     {
         const FRawCPipelineID ppln = pplns[1];
-        LOG_CHECK(RHI, _frameGraph->InitPipelineResources(resources.get(), ppln, descriptorSetId0) );
+        PPE_LOG_CHECK(RHI, _frameGraph->InitPipelineResources(resources.get(), ppln, descriptorSetId0) );
 
         resources->BindBuffer(un_Timemap, ssb, ssbTimemapOffset, ssbTimemapSize);
         resources->BindBuffer(un_MaxValues, ssb, ssbMaxValuesOffset, ssbMaxValuesSize);
@@ -1302,7 +1299,7 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
     // pass 3
     {
         const FRawCPipelineID ppln = pplns[2];
-        LOG_CHECK(RHI, _frameGraph->InitPipelineResources(resources.get(), ppln, descriptorSetId0) );
+        PPE_LOG_CHECK(RHI, _frameGraph->InitPipelineResources(resources.get(), ppln, descriptorSetId0) );
 
         resources->BindBuffer(un_Timemap, ssb, ssbTimemapOffset, ssbTimemapSize);
         resources->BindImage(FUniformID{ "un_OutImage" }, dstImage, FImageViewDesc{}.SetType(EImageView_2D).SetArrayLayers(*layer, 1).SetBaseLevel(*level));
@@ -1398,7 +1395,7 @@ _Resource* FVulkanCommandBuffer::ToLocal_(
     }
 
     auto* const pResource = AcquireTransient(id);
-    LOG_CHECK(RHI, pResource);
+    PPE_LOG_CHECK(RHI, pResource);
 
     local = localResources.Pool.Allocate();
     auto* const pData = localResources.Pool[local];
@@ -1408,7 +1405,7 @@ _Resource* FVulkanCommandBuffer::ToLocal_(
         Meta::Destroy(pData);
         localResources.Pool.Deallocate(local);
         ONLY_IF_RHIDEBUG(Unused(debugMessage));
-        RHI_LOG(Error, L"{1}: {0}", debugMessage, _data.Value_Unsafe().DebugName);
+        RHI_LOG(Error, "{1}: {0}", debugMessage, _data.Value_Unsafe().DebugName);
         return nullptr;
     }
 
@@ -1471,7 +1468,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateBufferTask_(FInternalData& data, cons
             FStagingBlock staging;
             size_t blockSize;
             if (not StorePartialData_(data, &staging, &blockSize, region.Data, srcOffset)) {
-                RHI_LOG(Error, L"failed to write partial staging data for '{0}' in '{1}'", task.TaskName, data.DebugName);
+                RHI_LOG(Error, "failed to write partial staging data for '{0}' in '{1}'", task.TaskName, data.DebugName);
                 return nullptr;
             }
 
@@ -1499,7 +1496,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
     Assert(Any(GreaterMask(task.ImageSize, uint3::Zero)));
 
     const FVulkanImage* const pImage = AcquireTransient(task.DstImage);
-    LOG_CHECK(RHI, pImage);
+    PPE_LOG_CHECK(RHI, pImage);
 
     const FImageDesc& desc = pImage->Read()->Desc;
     Assert_NoAssume(task.MipmapLevel < desc.MaxLevel);
@@ -1519,7 +1516,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
     const size_t totalSizeInBytes = (imageSize.z > 1 ? slicePitch * imageSize.z : minSlicePitch);
 
     if (totalSizeInBytes != task.Data.SizeInBytes()) {
-        RHI_LOG(Error, L"invalid data supplied for image '{0}' update in '{1}'", pImage->DebugName(), data.DebugName);
+        RHI_LOG(Error, "invalid data supplied for image '{0}' update in '{1}'", pImage->DebugName(), data.DebugName);
         return nullptr;
     }
 
@@ -1545,7 +1542,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
             FStagingBlock staging;
             size_t blockSize;
             if (not StagingImageStore_(data, &staging, &blockSize, task.Data, srcOffset, slicePitch, totalSizeInBytes)) {
-                RHI_LOG(Error, L"failed to write image slice to staging for '{0}' in '{1}'", task.TaskName, data.DebugName);
+                RHI_LOG(Error, "failed to write image slice to staging for '{0}' in '{1}'", task.TaskName, data.DebugName);
                 return nullptr;
             }
 
@@ -1586,7 +1583,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
                 FStagingBlock staging;
                 size_t blockSize;
                 if (not StagingImageStore_(data, &staging, &blockSize, sliceData, srcOffset, rowPitch * blockDim.y, totalSizeInBytes)) {
-                    RHI_LOG(Error, L"failed to write image row to staging for '{0}' in '{1}'", task.TaskName, data.DebugName);
+                    RHI_LOG(Error, "failed to write image row to staging for '{0}' in '{1}'", task.TaskName, data.DebugName);
                     return nullptr;
                 }
 
@@ -1642,7 +1639,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadBufferTask_(FInternalData& data, const 
         FRawBufferID dstBuffer;
         FVulkanCommandBatch::FStagingDataRange range;
         if (not data.Batch->AddPendingLoad(&dstBuffer, &range, srcOffset, task.SrcSize)) {
-            RHI_LOG(Error, L"failed copy buffer to staging of '{0}' in '{1}'", copy.TaskName, data.DebugName);
+            RHI_LOG(Error, "failed copy buffer to staging of '{0}' in '{1}'", copy.TaskName, data.DebugName);
             return nullptr;
         }
 
@@ -1674,7 +1671,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
     using FOnDataLoadedEvent = FVulkanCommandBatch::FOnImageDataLoadedEvent;
 
     const FVulkanImage* const pImage = AcquireTransient(task.SrcImage);
-    LOG_CHECK(RHI, pImage);
+    PPE_LOG_CHECK(RHI, pImage);
 
     const FImageDesc& desc = pImage->Read()->Desc;
     Assert_NoAssume(task.MipmapLevel < desc.MaxLevel);
@@ -1714,7 +1711,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
             if (not data.Batch->AddPendingLoad(
                 &dstBuffer, &range,
                 srcOffset, totalSizeInBytes, slicePitch)) {
-                RHI_LOG(Error, L"failed copy image row to staging of '{0}' in '{1}'", copy.TaskName, data.DebugName);
+                RHI_LOG(Error, "failed copy image row to staging of '{0}' in '{1}'", copy.TaskName, data.DebugName);
                 return nullptr;
             }
 
@@ -1755,7 +1752,7 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
                 if (not data.Batch->AddPendingLoad(
                     &dstBuffer, &range,
                     srcOffset, totalSizeInBytes, rowPitch * blockDim.y)) {
-                    RHI_LOG(Error, L"failed copy image slice to staging of '{0}' in '{1}'", copy.TaskName, data.DebugName);
+                    RHI_LOG(Error, "failed copy image slice to staging of '{0}' in '{1}'", copy.TaskName, data.DebugName);
                     return nullptr;
                 }
 
@@ -1837,7 +1834,7 @@ bool FVulkanCommandBuffer::StagingImageStore_(
 //----------------------------------------------------------------------------
 template <typename T>
 bool FVulkanCommandBuffer::StagingAlloc_(FInternalData& data,
-                                         const FVulkanLocalBuffer** pBuffer, VkDeviceSize* pOffset, T** pData,
+                                         TPtrRef<const FVulkanLocalBuffer>* pBuffer, VkDeviceSize* pOffset, T** pData,
                                          size_t count) {
     Assert(count > 0);
 
@@ -1848,7 +1845,7 @@ bool FVulkanCommandBuffer::StagingAlloc_(FInternalData& data,
     if (not data.Batch->StageWrite(
         &stagingBlock, &blockSize,
         requiredSize, 1, 16, requiredSize)) {
-        RHI_LOG(Error, L"failed to write to staging alloc in {0}", data.DebugName);
+        RHI_LOG(Error, "failed to write to staging alloc in {0}", data.DebugName);
         return false;
     }
 
@@ -1859,14 +1856,14 @@ bool FVulkanCommandBuffer::StagingAlloc_(FInternalData& data,
 }
 //----------------------------------------------------------------------------
 bool FVulkanCommandBuffer::StagingStore_(FInternalData& data,
-                                         const FVulkanLocalBuffer** pBuffer, VkDeviceSize* pOffset,
+                                         TPtrRef<const FVulkanLocalBuffer>* pBuffer, VkDeviceSize* pOffset,
                                          const void* srcData, size_t dataSize, size_t offsetAlign) {
     FStagingBlock stagingBlock;
     size_t blockSize;
     if (not data.Batch->StageWrite(
         &stagingBlock, &blockSize,
         dataSize, 1, offsetAlign, dataSize)) {
-        RHI_LOG(Error, L"failed to store in staging at {0}", data.DebugName);
+        RHI_LOG(Error, "failed to store in staging at {0}", data.DebugName);
         return false;
     }
 

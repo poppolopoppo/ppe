@@ -80,7 +80,7 @@ void FMetaModule::Start() {
     Assert(not IsStarted());
     Assert(_classes.empty());
 
-    LOG(RTTI, Debug, L"start namespace <{0}> ({1} handles)", _nameCStr, _classCount);
+    PPE_LOG(RTTI, Debug, "start namespace <{0}> ({1} handles)", _nameCStr, _classCount);
 
     _nameToken = FName(_nameCStr);
 
@@ -102,7 +102,7 @@ void FMetaModule::Start() {
         const FMetaEnum* metaEnum = phandle->_enum;
         const FName& metaEnumName = metaEnum->Name();
 
-        LOG(RTTI, Info, L"create meta enum <{0}::{1}> ({2})", _nameCStr, metaEnumName, Fmt::Pointer(phandle));
+        PPE_LOG(RTTI, Info, "create meta enum <{0}::{1}> ({2})", _nameCStr, metaEnumName, Fmt::Pointer(phandle));
 
         Insert_AssertUnique(_enums, metaEnumName, metaEnum);
     }
@@ -121,7 +121,7 @@ void FMetaModule::Start() {
         const FMetaClass* metaClass = phandle->_class;
         const FName& metaClassName = metaClass->Name();
 
-        LOG(RTTI, Info, L"create meta class <{0}::{1}> = #{2} ({3})", _nameCStr, metaClassName, classId, Fmt::Pointer(phandle));
+        PPE_LOG(RTTI, Info, "create meta class <{0}::{1}> = #{2} ({3})", _nameCStr, metaClassName, classId, Fmt::Pointer(phandle));
 
         Insert_AssertUnique(_classes, metaClassName, metaClass);
     }
@@ -133,7 +133,7 @@ void FMetaModule::Start() {
         Assert(phandle->_class);
         Assert(phandle->_class->Module() == this);
 
-        LOG(RTTI, Info, L"register meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
+        PPE_LOG(RTTI, Info, "register meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
 
         phandle->_class->CallOnRegister_IFN();
     }
@@ -155,7 +155,7 @@ void FMetaModule::Shutdown() {
         metaDB->UnregisterModule(this);
     }
 
-    LOG(RTTI, Debug, L"shutdown namespace <{0}> ({1} handles)", _nameCStr, _classCount);
+    PPE_LOG(RTTI, Debug, "shutdown namespace <{0}> ({1} handles)", _nameCStr, _classCount);
 
     _nameToken = FName();
 
@@ -165,7 +165,7 @@ void FMetaModule::Shutdown() {
         Assert(phandle->_class);
         Assert(phandle->_class->Module() == this);
 
-        LOG(RTTI, Info, L"unregister meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
+        PPE_LOG(RTTI, Info, "unregister meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
 
         phandle->_class->OnUnregister();
     }
@@ -178,7 +178,7 @@ void FMetaModule::Shutdown() {
         Assert(phandle->_class);
         Assert(phandle->_class->Module() == this);
 
-        LOG(RTTI, Info, L"destroy meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
+        PPE_LOG(RTTI, Info, "destroy meta class <{0}::{1}> = #{2}", _nameCStr, phandle->_class->Name(), phandle->_class->Id());
 
         phandle->_destroy(phandle->_class);
         phandle->_class = nullptr;
@@ -192,7 +192,7 @@ void FMetaModule::Shutdown() {
         Assert(phandle->_enum);
         Assert(phandle->_enum->Module() == this);
 
-        LOG(RTTI, Info, L"destroy meta class <{0}::{1}>", _nameCStr, phandle->_enum->Name());
+        PPE_LOG(RTTI, Info, "destroy meta class <{0}::{1}>", _nameCStr, phandle->_enum->Name());
 
         phandle->_destroy(phandle->_enum);
         phandle->_enum = nullptr;

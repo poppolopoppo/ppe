@@ -18,6 +18,7 @@
 #   include "HAL/PlatformMemory.h"
 
 #   include "IO/BufferedStream.h"
+#   include "IO/ConstChar.h"
 #   include "IO/FileStream.h"
 #   include "IO/FormatHelpers.h"
 #   include "IO/StreamProvider.h"
@@ -32,7 +33,12 @@
 #   include "Meta/Optional.h"
 #   include "Meta/Singleton.h"
 #   include "Meta/ThreadResource.h"
+#   include "Meta/Utility.h"
 
+#   include "Misc/Function.h"
+
+#   include "Thread/AtomicSet.h"
+#   include "Thread/ThreadSafe.h"
 #   include "Thread/AtomicSpinLock.h"
 #   include "Thread/Task/TaskManager.h"
 #   include "Thread/Task/TaskHelpers.h"
@@ -60,7 +66,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
 namespace {
 //----------------------------------------------------------------------------
 static ELoggerVerbosity GLoggerVerbosity_ = ELoggerVerbosity::All;
-#if !USE_PPE_FINALRELEASE
+#if !USE_PPE_FINAL_RELEASE
 static FLoggerCategory::EFlags GLoggerFlags_ = Default;
 #endif
 //----------------------------------------------------------------------------
@@ -72,127 +78,265 @@ struct FIsInLoggerScope {
 };
 //----------------------------------------------------------------------------
 struct FLoggerTypes {
-    using EVerbosity = ILogger::EVerbosity;
-    using FCategory = ILogger::FCategory;
-    using FSiteInfo = FLogger::FSiteInfo;
+    using EVerbosity = ELoggerVerbosity;
+    using FCategory = FLoggerCategory;
+    using FSiteInfo = FLoggerSiteInfo;
 };
 //----------------------------------------------------------------------------
-class ILowLevelLogger : public FLoggerTypes {
+class ILowLevelLogger : public FLoggerTypes, public ILogger {
 public:
-    virtual ~ILowLevelLogger() = default;
+    virtual void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) = 0;
+    virtual void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) = 0;
+    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) = 0;
+    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) = 0;
+    virtual void Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) = 0;
+    virtual void RecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record) = 0;
 
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) = 0;
-    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) = 0;
-    virtual void RecordArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWFormatArgList& record) = 0;
-    virtual void Flush(bool synchronous) = 0;
-    virtual void OnRelease() { Flush(true); }
-
-    static FTimepoint StartedAt() {
-        ONE_TIME_INITIALIZE(const FTimepoint, GStartedAt, FTimepoint::Now());
-        return GStartedAt;
+    virtual void OnRelease(ILowLevelLogger& newLogger) {
+        Unused(newLogger);
+        Flush(true);
     }
 };
 //----------------------------------------------------------------------------
-static ILowLevelLogger* GLoggerImpl_ = nullptr;
-//----------------------------------------------------------------------------
 // Use a custom allocator for logger to handle contention, fragmentation and get re-entrancy
-class FLogAllocator : public Meta::TStaticSingleton<FLogAllocator> {
-    friend Meta::TStaticSingleton<FLogAllocator>;
-    using singleton_type = Meta::TStaticSingleton<FLogAllocator>;
-
+class FLogAllocator : FLoggerTypes {
 public:
-    using singleton_type::Create;
-    using singleton_type::Destroy;
-    using singleton_type::Get;
-
-    using heap_type = SLABHEAP_POOLED(Logger);
+    using heap_type = SLABHEAP(Logger);
     using allocator_type = SLAB_ALLOCATOR(Logger);
 
     struct CACHELINE_ALIGNED FBucket {
-        std::recursive_mutex Barrier;
+        TPtrRef<FLogAllocator> Owner;
         heap_type Heap;
-        FBucket() = default;
+        FBucket() NOEXCEPT {
+            Heap.SetSlabSize(16_KiB);
+        }
         ~FBucket() {
-            const Meta::FRecursiveLockGuard scopeLock(Barrier);
             Heap.ReleaseAll();
         }
     };
 
     struct FScope : Meta::FNonCopyable {
-        size_t Index;
-        TPtrRef<FBucket> pBucket;
+        TPtrRef<FBucket> Bucket;
 
-        auto& Heap() const { return pBucket->Heap; }
-        operator allocator_type() const NOEXCEPT { return { pBucket->Heap }; }
+        heap_type& Heap() const { return Bucket->Heap; }
+        allocator_type Allocator() const { return { Bucket->Heap }; }
+        operator allocator_type() const NOEXCEPT { return Allocator(); }
 
-        FScope() NOEXCEPT
-        :   FScope(Get())
+        explicit FScope(FLogAllocator& owner) NOEXCEPT
+        :   Bucket(owner.NextFreeBucket_())
         {}
 
-        explicit FScope(size_t index) NOEXCEPT
-        :   Index(index)
-        ,   pBucket(Get().OpenBucket_(Index)) {
-            pBucket->Barrier.lock();
-        }
+        explicit FScope(FBucket& bucket) NOEXCEPT
+        :   Bucket(bucket.Owner->OpenBucket_(bucket))
+        {}
 
-        explicit FScope(FLogAllocator& alloc) NOEXCEPT
-        :   Index(alloc.NextBucketIndex_())
-        ,   pBucket(alloc.OpenBucket_(Index)) {
-            if (Unlikely(not pBucket->Barrier.try_lock()))
-                LookForAFreeBucket_(alloc);
-        }
-
-        ~FScope() {
-            pBucket->Barrier.unlock();
-        }
-
-    private:
-        // slow-path: cycle through all buckets to find a free one
-        NO_INLINE void LookForAFreeBucket_(FLogAllocator& alloc) NOEXCEPT {
-            for (i32 backoff = 0;;) {
-                forrange(i, 0, NumAllocationBuckets) {
-                    Index = alloc.NextBucketIndex_();
-                    pBucket = alloc.OpenBucket_(Index);
-                    if (Likely(pBucket->Barrier.try_lock()))
-                        return; // exit if we got a free bucket
-                }
-
-                FPlatformProcess::SleepForSpinning(backoff);
-            }
+        ~FScope() NOEXCEPT {
+            Bucket->Owner->CloseBucket_(Bucket);
         }
     };
 
+    struct FMessage {
+        TPtrRef<FBucket> Bucket;
+        FLoggerMessage Inner;
+        void* BlockData{ nullptr };
+        u32 BlockSizeInBytes{ 0 };
+        i32 RefCount{ 0 };
+
+        FAllocatorBlock Block() const { return { BlockData, BlockSizeInBytes }; }
+
+        FMessage(FBucket& bucket, FAllocatorBlock block) NOEXCEPT
+        :   FMessage(bucket, block, FLoggerMessage{})
+        {}
+
+        FMessage(FBucket& bucket, FAllocatorBlock block, FLoggerMessage&& msg) NOEXCEPT
+        :   Bucket(bucket)
+        ,   Inner(std::move(msg))
+        ,   BlockData(block.Data)
+        ,   BlockSizeInBytes(checked_cast<u32>(block.SizeInBytes))
+        ,   RefCount(1)
+        {}
+
+        FMessage& Acquire() {
+            Assert_NoAssume(RefCount > 0);
+            ++RefCount;
+            return (*this);
+        }
+        bool Release() {
+            Assert(RefCount > 0);
+            if (--RefCount == 0) {
+                Bucket->Owner->DeallocateMessage(*this);
+                return true;
+            }
+            return false;
+        }
+    };
+
+    FLogAllocator() NOEXCEPT {
+        for (FBucket& bucket : _buckets)
+            bucket.Owner = this;
+    }
+
+    ~FLogAllocator() {
+        Clear_ReleaseMemory();
+    }
+
+    TPtrRef<FMessage> AllocateLog(const FCategory& category, FSiteInfo&& site, const FStringView& text) {
+        TPtrRef<FMessage> msg;
+        {
+            const FScope scopeLock(*this);
+            const FAllocatorBlock block{ scopeLock.Allocator().Allocate(sizeof(FMessage)) };
+            msg = INPLACE_NEW(block.Data, FMessage){ scopeLock.Bucket, block };
+        }
+
+        msg->Inner = {category, std::move(site), text.data(), false};
+        return msg;
+    }
+    TPtrRef<FMessage> AllocateLogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) {
+         const FScope scopeLock(*this);
+
+        MEMORYSTREAM_SLAB(Logger) oss(scopeLock.Allocator());
+        oss.Append(sizeof(FMessage));
+
+        FTextWriter writer(oss);
+        direct(writer);
+        writer << Eos;
+        const FStringView text = oss.MakeView().CutStartingAt(sizeof(FMessage)).Cast<const char>().ShiftBack(/* '\0' */);
+
+        TPtrRef<FMessage> msg{ reinterpret_cast<FMessage*>(oss.data()) };
+        INPLACE_NEW(msg.get(), FMessage){ scopeLock.Bucket, oss.StealDataUnsafe(),
+            FLoggerMessage{category, std::move(site), text.data(), true} };
+        return msg;
+    }
+    TPtrRef<FMessage> AllocateLogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) {
+        const FScope scopeLock(*this);
+
+        MEMORYSTREAM_SLAB(Logger) oss(scopeLock.Allocator());
+        oss.reserve(sizeof(FMessage) + format.size());
+        oss.Append(sizeof(FMessage));
+
+        FTextWriter writer(oss);
+        FormatArgs(writer, format, args);
+        writer << Eos;
+        const FStringView text = oss.MakeView().CutStartingAt(sizeof(FMessage)).Cast<const char>().ShiftBack(/* '\0' */);
+
+        TPtrRef<FMessage> msg{ reinterpret_cast<FMessage*>(oss.data()) };
+        INPLACE_NEW(msg.get(), FMessage){ scopeLock.Bucket, oss.StealDataUnsafe(),
+            {category, std::move(site), text.data(), true} };
+        return msg;
+    }
+    TPtrRef<FMessage> AllocateLogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) {
+        TPtrRef<FMessage> msg;
+        {
+            const size_t objectSize = BlockSize(object); // outside of allocator lock
+            const FScope scopeLock(*this);
+            const FAllocatorBlock block{ scopeLock.Allocator().Allocate(sizeof(FMessage) + objectSize) };
+            msg = INPLACE_NEW(block.Data, FMessage){ scopeLock.Bucket, block };
+        }
+
+        const FAllocatorBlock dataBlock = FAllocatorBlock::From(msg->Block().MakeView().CutStartingAt(sizeof(FMessage)));
+        msg->Inner = {category, std::move(site), text.data(), false,
+            std::get<Opaq::object_view>(*NewBlock(dataBlock, object).Value()) };
+        return msg;
+    }
+    TPtrRef<FMessage> AllocatePrintf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) {
+        MALLOCA_POD(char, buf, 2048);
+        const int len = FPlatformString::Printf(buf.data(), buf.Count, format, args);
+        const FStringView written = buf.MakeView().CutBefore(len + 1/* null char */);
+
+        TPtrRef<FMessage> msg;
+        {
+            const FScope scopeLock(*this);
+            const FAllocatorBlock block{ scopeLock.Allocator().Allocate(sizeof(FMessage) + written.SizeInBytes()) };
+            msg = INPLACE_NEW(block.Data, FMessage){ scopeLock.Bucket, block };
+        }
+
+        const TMemoryView<char> text = msg->Block().MakeView().CutStartingAt(sizeof(FMessage)).Cast<char>();
+        Unused(Copy(text, written));
+        msg->Inner = {category, std::move(site), text.data(), true};
+        return msg;
+    }
+    TPtrRef<FMessage> AllocateRecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record) {
+        const FScope scopeLock(*this);
+
+        MEMORYSTREAM_SLAB(Logger) oss(scopeLock.Allocator());
+        oss.reserve(sizeof(FMessage) + record.size() * 8 * sizeof(char));
+        oss.Append(sizeof(FMessage));
+
+        FTextWriter writer(oss);
+        FormatRecord(writer, record);
+        writer << Eos;
+        const FStringView text = oss.MakeView().CutStartingAt(sizeof(FMessage)).Cast<const char>().ShiftBack(/* '\0' */);
+
+        TPtrRef<FMessage> msg{ reinterpret_cast<FMessage*>(oss.data()) };
+        INPLACE_NEW(msg.get(), FMessage){ scopeLock.Bucket, oss.StealDataUnsafe(),
+            {category, std::move(site), text.data(), true} };
+        return msg;
+    }
+
+    void DeallocateMessage(FMessage& msg) const {
+        if (Likely(msg.BlockData)) {
+            Assert_NoAssume(msg.Bucket->Owner.get() == this);
+            const FScope scopeLock(msg.Bucket);
+            msg.Bucket->Heap.Deallocate(msg.BlockData, msg.BlockSizeInBytes);
+        }
+    }
+
     void TrimCache() {
         forrange(i, 0, NumAllocationBuckets) {
-            if (_buckets[i].Barrier.try_lock()) {
+            if (_freeBuckets.AcquireIFP(i)) {
                 _buckets[i].Heap.TrimMemory();
-                _buckets[i].Barrier.unlock();
+                _freeBuckets.NotifyDeallocate(i);
             }
         }
     }
 
+    void Clear_ReleaseMemory() {
+        // acquire all buckets when destructing:
+        // - checks that no asynchronous task is still consuming the buckets
+        // - checks that no message was leaked
+        i32 backoff = 0;
+        forrange(i, 0, NumAllocationBuckets) {
+            for (;;) {
+                if (_freeBuckets.AcquireIFP(i))
+                    break;
+                FPlatformProcess::SleepForSpinning(backoff);
+            }
+        }
+        // force release all memory
+        for (FBucket& bucket : _buckets) {
+            bucket.Heap.ReleaseAll();
+        }
+        // release free buckets
+        _freeBuckets.ResetMask(MaskAllocationBuckets);
+        details::NotifyAllAtomicBarrier(&_freeBuckets.Data());
+    }
+
 private:
-    STATIC_CONST_INTEGRAL(size_t, NumAllocationBuckets, 8);
-    STATIC_CONST_INTEGRAL(size_t, MaskAllocationBuckets, NumAllocationBuckets - 1);
+    STATIC_CONST_INTEGRAL(u32, NumAllocationBuckets, 8);
+    STATIC_CONST_INTEGRAL(TBitMask<u32>, MaskAllocationBuckets, (1_u32 << NumAllocationBuckets) - 1_u32);
     STATIC_ASSERT(Meta::IsPow2(NumAllocationBuckets));
 
     FBucket _buckets[NumAllocationBuckets];
-    std::atomic<size_t> _revision{ 0 };
+    TAtomicBitMask<u32> _freeBuckets{ MaskAllocationBuckets };
+    u8 _revision{ 0 };
 
-    FLogAllocator() = default;
-
-    FORCE_INLINE FBucket& OpenBucket_(size_t index) {
-        Assert(index < NumAllocationBuckets);
-        return _buckets[index];
+    FORCE_INLINE FBucket& OpenBucket_(FBucket& bucket) {
+        const u32 index = checked_cast<u32>(&bucket - _buckets);
+        _freeBuckets.WaitAcquire(index);
+        return bucket;
     }
-
-    FORCE_INLINE size_t NextBucketIndex_() {
-        return (_revision.fetch_add(1, std::memory_order_relaxed) & MaskAllocationBuckets);
+    FORCE_INLINE void CloseBucket_(FBucket& bucket) {
+        const u32 index = checked_cast<u32>(&bucket - _buckets);
+        _freeBuckets.NotifyDeallocate(index);
+    }
+    FORCE_INLINE FBucket& NextFreeBucket_() {
+        const u32 index = _freeBuckets.WaitAllocateRoll(++_revision % NumAllocationBuckets);
+        return _buckets[index];
     }
 };
 //----------------------------------------------------------------------------
 // Composite for all loggers supplied through public API
-class FUserLogger final : Meta::TStaticSingleton<FUserLogger>, public ILowLevelLogger {
+class FUserLogger final : Meta::TStaticSingleton<FUserLogger>, public ILogger {
     friend Meta::TStaticSingleton<FUserLogger>;
     using singleton_type = Meta::TStaticSingleton<FUserLogger>;
 public:
@@ -200,60 +344,45 @@ public:
     using singleton_type::Destroy;
     using singleton_type::Get;
 
-    void Add(const PLogger& logger) {
-        Assert(logger);
+    ~FUserLogger() override {
+        for (const Meta::TPointerWFlags<ILogger>& logger : _loggers) {
+            AssertRelease_NoAssume(logger.Flag0());
+            tracking_delete(logger.Get());
+        }
 
-        const Meta::FLockGuard scopeLock(_barrier);
-        Assert(not Contains(_loggers, logger));
-        _loggers.emplace_back(logger);
+        _loggers.clear_ReleaseMemory();
     }
 
-    void Remove(const PLogger& logger) {
+    void Add(TPtrRef<ILogger> logger, bool autoDelete) {
         Assert(logger);
 
         const Meta::FLockGuard scopeLock(_barrier);
-        const auto it = std::find(_loggers.begin(), _loggers.end(), logger);
+        Assert(not Contains(_loggers, logger.get()));
+
+        Meta::TPointerWFlags<ILogger> registeredLogger;
+        registeredLogger.Reset(logger, autoDelete, false);
+        _loggers.push_back(std::move(registeredLogger));;
+    }
+
+    void Remove(TPtrRef<ILogger> logger) {
+        Assert(logger);
+
+        const Meta::FLockGuard scopeLock(_barrier);
+        const auto it = std::find(_loggers.begin(), _loggers.end(), logger.get());
+
         Assert(_loggers.end() != it);
         _loggers.erase(it);
     }
 
 public: // ILowLevelLogger
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+    virtual void LogMessage(const FLoggerMessage& msg) override final {
         const FReentrancyProtection_ scopeReentrant;
         if (scopeReentrant.WasLocked)
             return;
 
         const Meta::FLockGuard scopeLock(_barrier);
-        for (const PLogger& logger : _loggers)
-            logger->Log(category, level, site, text);
-    }
-
-    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
-        if (FReentrancyProtection_::GLockTLS) // skip Format() if already locked, but don't acquire the lock here
-            return;
-
-        const FLogAllocator::FScope scopeAlloc; // #TODO : could be a dead lock issue to keep the lock open while dispatching
-
-        MEMORYSTREAM_SLAB(Logger) buf(scopeAlloc);
-
-        FWTextWriter oss(&buf);
-        FormatArgs(oss, format, args);
-
-        Log(category, level, site, buf.MakeView().Cast<const wchar_t>());
-    }
-
-    virtual void RecordArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWFormatArgList& record) override final {
-        if (FReentrancyProtection_::GLockTLS) // skip Format() if already locked, but don't acquire the lock here
-            return;
-
-        const FLogAllocator::FScope scopeAlloc; // #TODO : could be a dead lock issue to keep the lock open while dispatching
-
-        MEMORYSTREAM_SLAB(Logger) buf(scopeAlloc);
-
-        FWTextWriter oss(&buf);
-        FormatRecord(oss, record);
-
-        Log(category, level, site, buf.MakeView().Cast<const wchar_t>());
+        for (const Meta::TPointerWFlags<ILogger>& logger : _loggers)
+            logger->LogMessage(msg);
     }
 
     virtual void Flush(bool synchronous) override final {
@@ -262,7 +391,7 @@ public: // ILowLevelLogger
             return;
 
         const Meta::FLockGuard scopeLock(_barrier);
-        for (const PLogger& logger : _loggers)
+        for (const Meta::TPointerWFlags<ILogger>& logger : _loggers)
             logger->Flush(synchronous);
     }
 
@@ -280,15 +409,15 @@ private:
         }
     };
 
-    FUserLogger() {} // private ctor
+    FUserLogger() = default; // private ctor
 
     std::mutex _barrier;
-    VECTORINSITU(Logger, PLogger, 8) _loggers;
+    VECTORINSITU(Logger, Meta::TPointerWFlags<ILogger>, 8) _loggers;
 };
 THREAD_LOCAL bool FUserLogger::FReentrancyProtection_::GLockTLS{ false };
 //----------------------------------------------------------------------------
 // Asynchronous logger used during the game
-class FBackgroundLogger final : Meta::TStaticSingleton<FBackgroundLogger>, public ILowLevelLogger {
+class FBackgroundLogger final : Meta::TStaticSingleton<FBackgroundLogger>, public ILowLevelLogger, FLogAllocator {
     friend Meta::TStaticSingleton<FBackgroundLogger>;
     using singleton_type = Meta::TStaticSingleton<FBackgroundLogger>;
 public:
@@ -296,76 +425,58 @@ public:
     using singleton_type::Destroy;
     using singleton_type::Get;
 
+    void SetAsynchronous(bool enabled) {
+        _enableAsynchronous = enabled;
+    }
+
 public: // ILowLevelLogger
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
-        if (Unlikely(not ShouldTreatInBackground_(category, level))) {
-            _userLogger->Log(category, level, site, text);
-            return;
-        }
-
-        FDeferredLog_* log = nullptr;
-        { // don't lock both allocator & task manager to avoid dead locking
-            const FLogAllocator::FScope scopeAlloc;
-
-            const size_t sizeInBytes = (sizeof(FDeferredLog_) + text.SizeInBytes());
-            log = INPLACE_NEW(scopeAlloc.Heap().Allocate(sizeInBytes), FDeferredLog_)(scopeAlloc.Heap());
-
-            log->Bucket = checked_cast<u32>(scopeAlloc.Index);
-            log->AllocSizeInBytes = checked_cast<u32>(sizeInBytes);
-        }
-        Assert(log);
-
-        log->LowLevelLogger = _userLogger;
-        log->Category = &category;
-        log->Level = level;
-        log->Site = site;
-        log->TextLength = checked_cast<u32>(text.size());
-        FPlatformMemory::Memcpy(log + 1, text.data(), text.SizeInBytes());
-
-        TaskManager_().Run(MakeFunction<&FDeferredLog_::Log>(log));
+    virtual void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) override final {
+        LogMessageBackground_(AllocateLog(category, std::move(site), text));
+    }
+    virtual void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) override final {
+        LogMessageBackground_(AllocateLogDirect(category, std::move(site), direct));
+    }
+    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) override final {
+        LogMessageBackground_(AllocateLogFmt(category, std::move(site), format, args));
+    }
+    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) override final {
+        LogMessageBackground_(AllocateLogStructured(category, std::move(site), text, std::move(object)));
+    }
+    virtual void Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) override final {
+        LogMessageBackground_(AllocatePrintf(category, std::move(site), format , args));
+    }
+    virtual void RecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record) override final {
+        LogMessageBackground_(AllocateRecordArgs(category, std::move(site), record));
     }
 
-    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
-        if (Likely(ShouldTreatInBackground_(category, level)))
-            PushDeferredLog_(category, level, site, format.size() + args.size() * 4,
-                [&format, &args](FWTextWriter& oss) {
-                    FormatArgs(oss, format, args);
-                });
-        else
-            _userLogger->LogArgs(category, level, site, format, args);
-    }
-
-    virtual void RecordArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWFormatArgList& record) override final {
-        if (Likely(ShouldTreatInBackground_(category, level)))
-            PushDeferredLog_(category, level, site, record.size() * 4,
-                [&record](FWTextWriter& oss) {
-                    FormatRecord(oss, record);
-                });
-        else
-            _userLogger->RecordArgs(category, level, site, record);
+    virtual void LogMessage(const FLoggerMessage& msg) override final {
+        // this path is always synchronous
+        _userLogger->LogMessage(msg);
     }
 
     virtual void Flush(bool synchronous) override final {
-        if (synchronous && not GIsInLogger_) {
+        const bool enableAsynchronous = _enableAsynchronous.load(std::memory_order_relaxed);
+        if ((not enableAsynchronous || synchronous) && not GIsInLogger_) {
             // wait for all potential logs before flushing
             for (u32 loop = 0; loop < 5 && TaskManager_().WaitForAll(500/* 0.5 seconds */); ++loop){}
             _userLogger->Flush(true);
         }
-        else {
-            TaskManager_().RunAndWaitFor([logger{ _userLogger }](ITaskContext&) {
-                logger->Flush(true); // flush synchronously in asynchronous task
+        else if (enableAsynchronous) {
+            TaskManager_().RunAndWaitFor([this](ITaskContext&) {
+                _userLogger->Flush(true); // flush synchronously in asynchronous task
+                // good idea to trim the linear heaps when flushing
+                TrimCache();
             },  ETaskPriority::Low );
         }
-
-        // good idea to trim the linear heaps when flushing
-        FLogAllocator::Get().TrimCache();
     }
 
 private:
-    FUserLogger* const _userLogger;
+    const TPtrRef<FUserLogger> _userLogger;
+    std::atomic_bool _enableAsynchronous{ true };
 
-    FBackgroundLogger()
-        : _userLogger(&FUserLogger::Get())
+    FBackgroundLogger() NOEXCEPT
+    :   FLogAllocator()
+    ,   _userLogger(FUserLogger::Get())
     {}
 
     ~FBackgroundLogger() override {
@@ -376,94 +487,29 @@ private:
         return FBackgroundThreadPool::Get();
     }
 
-    static bool ShouldTreatInBackground_(const FLoggerCategory& category, EVerbosity level) {
+    bool ShouldTreatInBackground_(const FLoggerCategory& category, EVerbosity level) const NOEXCEPT {
+        // background logger can be disabled
+        if (not _enableAsynchronous.load(std::memory_order_relaxed))
+            return false;
+
         // don't treat errors in background, log category flags can also force immediate mode
         return (not (category.Flags & FLoggerCategory::Immediate || level ^ (EVerbosity::Fatal|EVerbosity::Error)) );
     }
 
-    template <typename _Formatter>
-    void PushDeferredLog_(const FCategory& category, EVerbosity level, const FSiteInfo& site, size_t reservedSize, _Formatter&& formatter) {
-        FDeferredLog_* log = nullptr;
-        { // don't lock both allocator & task manager to avoid dead locking
-            const FLogAllocator::FScope scopeAlloc;
-
-            MEMORYSTREAM_SLAB(Logger) buf(scopeAlloc);
-            buf.reserve(ROUND_TO_NEXT_CACHELINE(sizeof(FDeferredLog_) + reservedSize));
-            buf.resize(sizeof(FDeferredLog_)); // reserve space for FDeferredLog entry
-            buf.SeekO(0, ESeekOrigin::End); // seek at the end of the stream
-            {
-                FWTextWriter oss(&buf);
-                formatter(oss);
-                oss << Eos; // null-terminated
-            }
-
-            log = INPLACE_NEW(buf.Pointer(), FDeferredLog_)(scopeAlloc.Heap());
-
-            size_t sizeInBytes = 0;
-            const FAllocatorBlock stolen = buf.StealDataUnsafe(&sizeInBytes);
-            Assert_NoAssume(stolen.Data == static_cast<void*>(log));
-            Verify(log->Acquire(stolen));
-
-            log->TextLength = checked_cast<u32>((sizeInBytes - sizeof(FDeferredLog_)) / sizeof(wchar_t) - 1/* \0 */);
-            log->Bucket = checked_cast<u32>(scopeAlloc.Index);
-            log->AllocSizeInBytes = checked_cast<u32>(stolen.SizeInBytes);
-        }
-        Assert(log);
-
-        log->LowLevelLogger = _userLogger;
-        log->Category = &category;
-        log->Level = level;
-        log->Site = site;
-
-        TaskManager_().Run(MakeFunction<&FDeferredLog_::Log>(log));
+    FORCE_INLINE void LogMessageBackground_(FMessage& msg) const {
+        Assert_NoAssume(msg.RefCount > 0);
+        if (Likely(ShouldTreatInBackground_(msg.Inner.Category, msg.Inner.Level())))
+            return TaskManager_().Run([this, msg{MakePtrRef(msg)}](ITaskContext&) {
+                LogMessageImmediate_(msg);
+            });
+        LogMessageImmediate_(msg);
     }
 
-    class ALIGN(ALLOCATION_BOUNDARY) FDeferredLog_ : public SLAB_ALLOCATOR(Logger), Meta::FNonCopyableNorMovable {
-    public:
-        ILowLevelLogger* LowLevelLogger{ nullptr };
-        const FCategory* Category{ nullptr };
-        FSiteInfo Site{};
-        EVerbosity Level{ EVerbosity::All };
-
-        u32 TextLength{ 0 };
-
-        u32 Bucket{ UMax };
-        u32 AllocSizeInBytes{ 0 };
-
-#   if USE_PPE_ASSERT
-        uintptr_t Canary = PPE_HASH_VALUE_SEED;
-#   endif
-
-        explicit FDeferredLog_(SLABHEAP_POOLED(Logger)& heap) NOEXCEPT
-        :   SLAB_ALLOCATOR(Logger){ heap }
-        {}
-
-        FWStringView Text() const { return { reinterpret_cast<const wchar_t*>(this + 1), TextLength }; }
-
-        void Log(ITaskContext&) {
-            const FIsInLoggerScope reentrantScope;
-            const FSuicideScope_ allocationScope(this);
-            LowLevelLogger->Log(*Category, Level, Site, Text());
-        }
-    };
-    STATIC_ASSERT(std::is_trivially_destructible_v<FDeferredLog_>);
-
-    // used for exception safety :
-    struct FSuicideScope_ : Meta::FNonCopyableNorMovable {
-        FDeferredLog_* const Log{nullptr};
-        explicit FSuicideScope_(FDeferredLog_* log) NOEXCEPT
-        :   Log(log) {
-            Assert(log);
-            Assert_NoAssume(PPE_HASH_VALUE_SEED == Log->Canary);
-            ONLY_IF_ASSERT(Log->Canary = reinterpret_cast<uintptr_t>(this));
-        }
-        ~FSuicideScope_() {
-            const FLogAllocator::FScope scope{ Log->Bucket };
-            Assert_NoAssume(uintptr_t(this) == Log->Canary);
-            ONLY_IF_ASSERT(Log->Canary = 0);
-            scope.Heap().Deallocate(Log, Log->AllocSizeInBytes);
-        }
-    };
+    NO_INLINE void LogMessageImmediate_(FMessage& msg) const {
+        Assert_NoAssume(msg.RefCount > 0);
+        DEFERRED{ msg.Release(); };
+        _userLogger->LogMessage(msg.Inner);
+    }
 };
 //----------------------------------------------------------------------------
 } //!namespace
@@ -472,55 +518,52 @@ private:
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void SetupLoggerImpl_(ILowLevelLogger* pimpl) {
-    ONE_TIME_DEFAULT_INITIALIZE(FAtomicSpinLock, GBarrier);
-
-    const FAtomicSpinLock::FScope scopeLock(GBarrier);
-
-    std::swap(pimpl, GLoggerImpl_);
-
-    if (pimpl)
-        pimpl->OnRelease();
-}
-//----------------------------------------------------------------------------
-class FLogFormat {
+class FLogFmt : FLoggerTypes {
 public:
-    static void Header(FWTextWriter& oss, const ILogger::FCategory& category, ILogger::EVerbosity level, const FLogger::FSiteInfo& site) {
-        const FSeconds elapsed = site.Timepoint.ElapsedSince(ILowLevelLogger::StartedAt());
+    static FTimepoint StartedAt() {
+        ONE_TIME_INITIALIZE(const FTimepoint, GStartedAt, FTimepoint::Now());
+        return GStartedAt;
+    }
+
+    static void Header(FTextWriter& oss, const FCategory& category, const FLogger::FSiteInfo& site) {
+        const FSeconds elapsed = site.LogTime.ElapsedSince(StartedAt());
 #if PPE_DUMP_THREAD_ID
 #   if PPE_DUMP_THREAD_NAME
-        Format(oss, L"[{0:#-10f4}][{1:20}][{3:-9}][{2}] ", elapsed.Value(), FThreadContext::GetThreadName(site.ThreadId), MakeCStringView(category.Name), level);
+        Format(oss, _PPE_LOG_STRING("[{0:#-10f4}][{1:20}][{3:-9}][{2}] ") elapsed.Value(), FThreadContext::GetThreadName(site.ThreadId), category.Name, site.Level());
 #   else // only thread hash :
-        Format(oss, L"[{0:#-10f4}][{1:#5}][{3:-9}][{2}] ", elapsed.Value(), FThreadContext::GetThreadHash(site.ThreadId), MakeCStringView(category.Name), level);
+        Format(oss, _PPE_LOG_STRING("[{0:#-10f4}][{1:#5}][{3:-9}][{2}] "), elapsed.Value(), FThreadContext::GetThreadHash(site.ThreadId), category.Name, site.Level());
 #   endif
 #else
-        Format(oss, L"[{0:#-10f4}][{2:-9}][{1}] ", elapsed.Value(), MakeCStringView(category.Name), level);
+        Format(oss, _PPE_LOG_STRING("[{0:#-10f4}][{2:-9}][{1}] "), elapsed.Value(), category.Name, site.Level());
 #endif
     }
 
-    static void Footer(FWTextWriter& oss, const ILogger::FCategory&, ILogger::EVerbosity level, const FLogger::FSiteInfo& site) {
+    static void Footer(FTextWriter& oss, const FCategory&, const FLogger::FSiteInfo& site) {
 #if PPE_DUMP_SITE_ON_LOG
-        Format(oss, L"\n\tat {0}:{1}\n", site.Filename, site.Line);
+        Format(oss, _PPE_LOG_STRING("\n\tat {0}:{1}\n"), site.Filename, site.Line);
 #elif PPE_DUMP_SITE_ON_ERROR
-        if (Unlikely(level & (ELoggerVerbosity::Error|ELoggerVerbosity::Fatal)))
-            Format(oss, L"\n\tat {0}:{1}", site.Filename, site.Line);
+        if (Unlikely(site.Level() & (ELoggerVerbosity::Error|ELoggerVerbosity::Fatal)))
+            Format(oss, _PPE_LOG_STRING("\n\tat {0}:{1}"), site.SourceFile, site.SourceFile);
         oss << Eol;
 #else
-        Unused(level);
         Unused(site);
         oss << Eol;
 #endif
     }
 
-    static void Print(FWTextWriter& oss, const ILogger::FCategory& category, ILogger::EVerbosity level, const FLogger::FSiteInfo& site, const FWStringView& text) {
-        Header(oss, category, level, site);
+    static void Print(FTextWriter& oss, const FCategory& category, const FLogger::FSiteInfo& site, const FStringView& text, const TPtrRef<const Opaq::object_view>& data) {
+        Header(oss, category, site);
         oss.Write(text);
-        Footer(oss, category, level, site);
+        if (data) {
+            Assert_NoAssume(not data->empty());
+            oss << ' ' << FTextFormat::Compact << data;
+        }
+        Footer(oss, category, site);
     }
 };
 //----------------------------------------------------------------------------
 // Used before & after main when no debugger is attached, ignores everything
-class FDevNullLogger : public ILowLevelLogger {
+class FDevNullLogger final : public ILowLevelLogger {
 public:
     static ILowLevelLogger* Get() {
         ONE_TIME_DEFAULT_INITIALIZE(FDevNullLogger, GInstance);
@@ -528,18 +571,24 @@ public:
     }
 
 public: // ILowLevelLogger
-    virtual void Log(const FCategory&, EVerbosity, const FSiteInfo&, const FWStringView&) override final {}
-    virtual void LogArgs(const FCategory&, EVerbosity, const FSiteInfo&, const FWStringView&, const FWFormatArgList&) override final {}
-    virtual void RecordArgs(const FCategory&, EVerbosity, const FSiteInfo&, const FWFormatArgList&) override final {}
-    virtual void Flush(bool) override final {}
+    virtual void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) override final { Unused(category, site, text); }
+    virtual void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) override final { Unused(category, site, direct); }
+    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) override final { Unused(category, site, format, args); }
+    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) override final { Unused(category, site, text, object); }
+    virtual void Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) override final { Unused(category, site, format, args); }
+    virtual void RecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record) override final { Unused(category, site, record); }
+
+    virtual void LogMessage(const FLoggerMessage& msg) override final { Unused(msg); }
+    virtual void Flush(bool synchronous) override final { Unused(synchronous); }
 };
 //----------------------------------------------------------------------------
 // Used before main when logger is not yet created
-class FAccumulatingLogger final : public ILowLevelLogger, Meta::TStaticSingleton<FAccumulatingLogger> {
+class FAccumulatingLogger final : public ILowLevelLogger, Meta::TStaticSingleton<FAccumulatingLogger>, FLogAllocator {
     friend Meta::TStaticSingleton<FAccumulatingLogger>;
 public:
     using singleton_type = Meta::TStaticSingleton<FAccumulatingLogger>;
     using singleton_type::Get;
+
     static void Create() {
         singleton_type::Create();
     }
@@ -548,190 +597,242 @@ public:
         FAccumulatingLogger::Flush(true);
     }
 
-    void DeferLog(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) {
-        Assert_NoAssume(category.Verbosity ^ level);
-
-        const Meta::FUniqueLock scopeLock(_barrier);
-
-        const TMemoryView<wchar_t> message{
-            static_cast<wchar_t*>(_heap.Allocate(text.SizeInBytes())),
-            text.size()
-        };
-
-        text.CopyTo(message);
-        _logs.Emplace(&category, level, site, message);
+    void AddToHistory(FMessage& msg) {
+        _history.LockExclusive()->Emplace(msg);
     }
 
     void FlushAccumulatedLogs(ILowLevelLogger& other) {
-        const Meta::FUniqueLock scopeLock(_barrier);
+        Assert(this != &other);
 
-        for (const FDeferredLog_& log : _logs)
-            other.Log(*log.pCategory, log.Level, log.Site, log.Message);
+        const auto exclusiveHist = _history.LockExclusive();
+        for (const TPtrRef<FMessage>& msg : *exclusiveHist) {
+            other.LogMessage(msg->Inner);
+        #if 0 // release everything outside of the loop
+            msg->Release();
+        #else
+            Assert_NoAssume(msg->RefCount == 1);
+        #endif
+        }
 
-        _logs.Clear_ReleaseMemory();
-        _heap.ReleaseAll();
+        exclusiveHist->Clear_ReleaseMemory();
+        FLogAllocator::Clear_ReleaseMemory();
     }
 
 public:
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
-        if (category.Verbosity ^ level)
-            DeferLog(category, level, site, text);
+    virtual void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) override final {
+        AddToHistory(AllocateLog(category, std::move(site), text));
+    }
+    virtual void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) override final {
+        AddToHistory(AllocateLogDirect(category, std::move(site), direct));
+    }
+    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) override final {
+        AddToHistory(AllocateLogFmt(category, std::move(site), format, args));
+    }
+    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) override final {
+        AddToHistory(AllocateLogStructured(category, std::move(site), text, std::move(object)));
+    }
+    virtual void Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) override final {
+        AddToHistory(AllocatePrintf(category, std::move(site), format, args));
+    }
+    virtual void RecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record) override final {
+        AddToHistory(AllocateRecordArgs(category, std::move(site), record));
     }
 
-    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
-        if (category.Verbosity ^ level) {
-            wchar_t tmp[16 << 10];
-            FWFixedSizeTextWriter oss(tmp);
-            FormatArgs(oss, format, args);
-            DeferLog(category, level, site, oss.Written());
-        }
+    virtual void LogMessage(const FLoggerMessage& msg) override final {
+        Unused(msg);
+        AssertNotReached(); // should not dispatch messages, only saves them for later
     }
 
-    virtual void RecordArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWFormatArgList& record) override final {
-        if (category.Verbosity ^ level) {
-            wchar_t tmp[16 << 10];
-            FWFixedSizeTextWriter oss(tmp);
-            FormatRecord(oss, record);
-            DeferLog(category, level, site, oss.Written());
-        }
-    }
+    virtual void Flush(bool) override final
+    {}
 
-    virtual void Flush(bool) override final {
-        ILowLevelLogger* const plogger = GLoggerImpl_;
-        if (plogger && this != plogger)
-            FlushAccumulatedLogs(*plogger);
-    }
+    virtual void OnRelease(ILowLevelLogger& newLogger) override final {
+        ILowLevelLogger::OnRelease(newLogger);
 
-    virtual void OnRelease() override final {
-        ILowLevelLogger::OnRelease();
+        if (this != &newLogger)
+            FlushAccumulatedLogs(newLogger);
+
         singleton_type::Destroy(); // /!\ suicide this
     }
 
 private:
-    struct FDeferredLog_ {
-        const FCategory* pCategory;
-        EVerbosity Level;
-        FSiteInfo Site;
-        FWStringView Message;
-    };
-
-    std::mutex _barrier;
-    SLABHEAP(Logger) _heap;
-    SPARSEARRAY_INSITU(Logger, FDeferredLog_) _logs;
+    using history_type = SPARSEARRAY_INSITU(Logger, TPtrRef<FLogAllocator::FMessage>);
+    TThreadSafe<history_type, EThreadBarrier::CriticalSection> _history;
 };
 //----------------------------------------------------------------------------
 // Used before & after main when debugger attached, no dependencies on allocators, always immediate
 #if USE_PPE_PLATFORM_DEBUG
 class FDebuggingLogger final : public ILowLevelLogger {
 public:
-    static ILowLevelLogger* Get() {
+    static TPtrRef<ILowLevelLogger> Get() {
         ONE_TIME_DEFAULT_INITIALIZE(FDebuggingLogger, GInstance);
-        return (&GInstance);
+        return GInstance;
     }
 
 public: // ILowLevelLogger
     using FTransientMemoryStream_ = TMemoryStream<INLINE_ALLOCATOR(Logger, u8, 4096)>;
 
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
-        Assert_NoAssume(category.Verbosity ^ level);
+    virtual void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) override final {
+        Assert_NoAssume(category.Verbosity ^ site.Level());
 
         FTransientMemoryStream_ tmp;
-        FWTextWriter oss(&tmp);
+        FTextWriter oss(&tmp);
 
-        FLogFormat::Header(oss, category, level, site);
+        FLogFmt::Header(oss, category, site);
         oss.Write(text);
-        FLogFormat::Footer(oss, category, level, site);
+        FLogFmt::Footer(oss, category, site);
         oss << Eos;
 
-        FPlatformDebug::OutputDebug(reinterpret_cast<wchar_t*>(tmp.Storage().data()));
+        FPlatformDebug::OutputDebug(tmp.MakeView().Cast<char>().data());
     }
 
-    virtual void LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) override final {
-        Assert_NoAssume(category.Verbosity ^ level);
+    virtual void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) override final {
+        Assert_NoAssume(category.Verbosity ^ site.Level());
 
         FTransientMemoryStream_ tmp;
-        FWTextWriter oss(&tmp);
+        FTextWriter oss(&tmp);
 
-        FLogFormat::Header(oss, category, level, site);
+        FLogFmt::Header(oss, category, site);
+        direct(oss);
+        FLogFmt::Footer(oss, category, site);
+        oss << Eos;
+
+        FPlatformDebug::OutputDebug(tmp.MakeView().Cast<char>().data());
+    }
+
+    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) override final {
+        Assert_NoAssume(category.Verbosity ^ site.Level());
+
+        FTransientMemoryStream_ tmp;
+        FTextWriter oss(&tmp);
+
+        FLogFmt::Header(oss, category, site);
         FormatArgs(oss, format, args);
-        FLogFormat::Footer(oss, category, level, site);
+        FLogFmt::Footer(oss, category, site);
         oss << Eos;
 
-        FPlatformDebug::OutputDebug(reinterpret_cast<wchar_t*>(tmp.Storage().data()));
+        FPlatformDebug::OutputDebug(tmp.MakeView().Cast<char>().data());
     }
 
-    virtual void RecordArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWFormatArgList& record) override final {
-        Assert_NoAssume(category.Verbosity ^ level);
+    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) override final {
+        Assert_NoAssume(category.Verbosity ^ site.Level());
 
         FTransientMemoryStream_ tmp;
-        FWTextWriter oss(&tmp);
+        FTextWriter oss(&tmp);
 
-        FLogFormat::Header(oss, category, level, site);
-        FormatRecord(oss, record);
-        FLogFormat::Footer(oss, category, level, site);
+        FLogFmt::Header(oss, category, site);
+        oss << text << ' ' << FTextFormat::Compact << object;
+        FLogFmt::Footer(oss, category, site);
         oss << Eos;
 
-        FPlatformDebug::OutputDebug(reinterpret_cast<wchar_t*>(tmp.Storage().data()));
+        FPlatformDebug::OutputDebug(tmp.MakeView().Cast<char>().data());
+    }
+
+    virtual void Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) override final {
+        Assert_NoAssume(category.Verbosity ^ site.Level());
+
+        char tmpStringBuf[2048];
+        const int len = FPlatformString::Printf(tmpStringBuf, lengthof(tmpStringBuf), format, args);
+
+        FTransientMemoryStream_ tmp;
+        FTextWriter oss(&tmp);
+
+        FLogFmt::Header(oss, category, site);
+        oss << FStringView(tmpStringBuf, len);
+        FLogFmt::Footer(oss, category, site);
+        oss << Eos;
+
+        FPlatformDebug::OutputDebug(tmp.MakeView().Cast<char>().data());
+    }
+
+    virtual void RecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record) override final {
+        Assert_NoAssume(category.Verbosity ^ site.Level());
+
+        FTransientMemoryStream_ tmp;
+        FTextWriter oss(&tmp);
+
+        FLogFmt::Header(oss, category, site);
+        FormatRecord(oss, record);
+        FLogFmt::Footer(oss, category, site);
+        oss << Eos;
+
+        FPlatformDebug::OutputDebug(tmp.MakeView().Cast<char>().data());
+    }
+
+    virtual void LogMessage(const FLoggerMessage& msg) override final {
+        Assert_NoAssume(msg.Category->Verbosity ^ msg.Level());
+
+        FTransientMemoryStream_ tmp;
+        FTextWriter oss(&tmp);
+
+        FLogFmt::Header(oss, msg.Category, msg.Site);
+        oss << msg.Text();
+        if (msg.Data)
+            oss << ' ' << msg.Data;
+        FLogFmt::Footer(oss, msg.Category, msg.Site);
+        oss << Eos;
+
+        FPlatformDebug::OutputDebug(tmp.MakeView().Cast<char>().data());
     }
 
     virtual void Flush(bool) override final {} // always synchronous => no need to flush
 };
 #endif //!USE_PPE_PLATFORM_DEBUG
 //----------------------------------------------------------------------------
-static ILowLevelLogger* LowLevelLogger_BeforeMain_() {
+struct FLowLevelLogger {
+    static TPtrRef<ILowLevelLogger> BeforeMain() {
 #if USE_PPE_PLATFORM_DEBUG
-    if (FPlatformDebug::IsDebuggerPresent())
-        return FDebuggingLogger::Get();
+        if (FPlatformDebug::IsDebuggerPresent())
+            return FDebuggingLogger::Get();
 #endif
 
-    FAccumulatingLogger::Create();
-    return std::addressof(FAccumulatingLogger::Get());
-}
-//----------------------------------------------------------------------------
-static ILowLevelLogger* LowLevelLogger_AfterMain_() {
-#if USE_PPE_PLATFORM_DEBUG
-    return (FPlatformDebug::IsDebuggerPresent()
-        ? FDebuggingLogger::Get()
-        : FDevNullLogger::Get());
-#else
-    return FDevNullLogger::Get();
-#endif
-}
-//----------------------------------------------------------------------------
-static NO_INLINE void SetupLowLevelLoggerImpl_BeforeMain_() {
-    SetupLoggerImpl_(LowLevelLogger_BeforeMain_());
-}
-//----------------------------------------------------------------------------
-static NO_INLINE void SetupLowLevelLoggerImpl_AfterMain_() {
-    SetupLoggerImpl_(LowLevelLogger_AfterMain_());
-}
-//----------------------------------------------------------------------------
-static ILowLevelLogger& CurrentLogger_() {
-    // fall back for pre-logger start
-    if (Unlikely(nullptr == GLoggerImpl_))
-        SetupLowLevelLoggerImpl_BeforeMain_();
+        FAccumulatingLogger::Create();
+        return std::addressof(FAccumulatingLogger::Get());
+    }
 
-    return (*GLoggerImpl_);
-}
+    static TPtrRef<ILowLevelLogger> AfterMain() {
+#if USE_PPE_PLATFORM_DEBUG
+        if (FPlatformDebug::IsDebuggerPresent())
+            return FDebuggingLogger::Get();
+#endif
+
+        return FDevNullLogger::Get();
+    }
+
+    static TThreadSafe<TPtrRef<ILowLevelLogger>, EThreadBarrier::RWDataRaceCheck>& InternalGet_() {
+        static TThreadSafe<TPtrRef<ILowLevelLogger>, EThreadBarrier::RWDataRaceCheck> GLowerLevelLogger_{ BeforeMain() };
+        return GLowerLevelLogger_;
+    }
+
+    static void Setup(ILowLevelLogger& pimpl) {
+        TPtrRef<ILowLevelLogger> logger{ pimpl };
+        swap(InternalGet_().LockExclusive().Value(), logger);
+        if (logger)
+            logger->OnRelease(pimpl);
+    }
+
+    static ILowLevelLogger& Get() NOEXCEPT {
+        return InternalGet_().LockShared().Value();
+    }
+};
 //----------------------------------------------------------------------------
-static void HandleFatalLogIFN_(FLogger::EVerbosity level) {
-    if (FLogger::EVerbosity::Fatal == level) {
-        CurrentLogger_().Flush(true);
+FORCE_INLINE static void HandleFatalLogIFN_(FLogger::EVerbosity level) {
+    if (Unlikely(FLogger::EVerbosity::Fatal == level)) {
+        FLowLevelLogger::Get().Flush(true);
         AssertNotReached();
     }
 }
 //----------------------------------------------------------------------------
 NODISCARD static bool NotifyLoggerMessage_(
     const FLoggerCategory& category,
-    const ELoggerVerbosity level,
     const FLogger::FSiteInfo& site ) NOEXCEPT {
     Unused(site);
 #if !USE_PPE_FINAL_RELEASE
-    const bool breakOnError = (level == ELoggerVerbosity::Error) && (
+    const bool breakOnError = (site.Level() == ELoggerVerbosity::Error) && (
         (category.Flags & FLoggerCategory::BreakOnError) ||
          (GLoggerFlags_ & FLoggerCategory::BreakOnError) );
 
-    const bool breakOnWarning = (level == ELoggerVerbosity::Warning) && (
+    const bool breakOnWarning = (site.Level() == ELoggerVerbosity::Warning) && (
         (category.Flags & FLoggerCategory::BreakOnWarning) ||
          (GLoggerFlags_ & FLoggerCategory::BreakOnWarning) );
 
@@ -739,9 +840,9 @@ NODISCARD static bool NotifyLoggerMessage_(
 #   if USE_PPE_IGNORELIST
         FIgnoreList::FIgnoreKey ignoreKey;
         ignoreKey << MakeStringView("NotifyLoggerMessage")
-                  << MakeCStringView(category.Name)
-                  << MakeCStringView(site.Filename)
-                  << MakeRawConstView(site.Line);
+                  << category.Name
+                  << site.SourceFile.MakeView()
+                  << MakeRawConstView(site.SourceLine);
         if (FIgnoreList::HitIFP(ignoreKey) == 0)
 #   endif
         {
@@ -749,76 +850,76 @@ NODISCARD static bool NotifyLoggerMessage_(
         }
     }
 #endif
-    return (category.Verbosity ^ level) && (GLoggerVerbosity_ ^ level);
+    return (category.Verbosity ^ site.Level()) && (GLoggerVerbosity_ ^ site.Level());
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FLogger::Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) {
+void FLogger::Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) {
     const FIsInLoggerScope loggerScope;
 
-    if (NotifyLoggerMessage_(category, level, site))
-        CurrentLogger_().Log(category, level, site, text);
+    if (NotifyLoggerMessage_(category, site))
+        FLowLevelLogger::Get().Log(category, std::move(site), text);
 
-    HandleFatalLogIFN_(level);
+    HandleFatalLogIFN_(site.Level());
 }
 //----------------------------------------------------------------------------
-void FLogger::LogArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& format, const FWFormatArgList& args) {
+void FLogger::LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) {
     const FIsInLoggerScope loggerScope;
 
-    if (NotifyLoggerMessage_(category, level, site))
-        CurrentLogger_().LogArgs(category, level, site, format, args);
+    if (NotifyLoggerMessage_(category, site))
+        FLowLevelLogger::Get().LogDirect(category, std::move(site), direct);
 
-    HandleFatalLogIFN_(level);
+    HandleFatalLogIFN_(site.Level());
 }
 //----------------------------------------------------------------------------
-void FLogger::Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FConstWChar& format) {
-    Log(category, level, site, format.MakeView());
-}
-//----------------------------------------------------------------------------
-void FLogger::Printf(const FCategory& category, EVerbosity level, const FSiteInfo& site, const wchar_t* format, ...) {
+void FLogger::LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) {
     const FIsInLoggerScope loggerScope;
 
-    if (NotifyLoggerMessage_(category, level, site)) {
-        MALLOCA_POD(wchar_t, message, 2048);
+    if (NotifyLoggerMessage_(category, site))
+        FLowLevelLogger::Get().LogFmt(category, std::move(site), format, args);
 
-        va_list args;
-        va_start(args, format);
-        const int len = FPlatformString::Printf(message.data(), message.Count, format, args);
-        va_end(args);
-
-        Assert_NoAssume(0 < len);
-        if (len > 0) {
-            CurrentLogger_().Log(category, level, site,
-                message.MakeView().CutBeforeConst(checked_cast<u32>(len)) );
-        }
-    }
-
-    HandleFatalLogIFN_(level);
+    HandleFatalLogIFN_(site.Level());
 }
 //----------------------------------------------------------------------------
-void FLogger::RecordArgs(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWFormatArgList& record) {
+void FLogger::LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) {
     const FIsInLoggerScope loggerScope;
 
-    if (NotifyLoggerMessage_(category, level, site))
-        CurrentLogger_().RecordArgs(category, level, site, record);
+    if (NotifyLoggerMessage_(category, site))
+        FLowLevelLogger::Get().LogStructured(category, std::move(site), text, std::move(object));
 
-    HandleFatalLogIFN_(level);
+    HandleFatalLogIFN_(site.Level());
+}
+//----------------------------------------------------------------------------
+void FLogger::Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) {
+    const FIsInLoggerScope loggerScope;
+
+    if (NotifyLoggerMessage_(category, site))
+        FLowLevelLogger::Get().Printf(category, std::move(site), format, args);
+
+    HandleFatalLogIFN_(site.Level());
+}
+//----------------------------------------------------------------------------
+void FLogger::RecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record) {
+    const FIsInLoggerScope loggerScope;
+
+    if (NotifyLoggerMessage_(category, site))
+        FLowLevelLogger::Get().RecordArgs(category, std::move(site), record);
+
+    HandleFatalLogIFN_(site.Level());
 }
 //----------------------------------------------------------------------------
 void FLogger::Start() {
-    FLogAllocator::Create();
-
     FUserLogger::Create();
 
     // always create the system trace
-    RegisterLogger(FLogger::MakeSystemTrace());
+    RegisterSystemTraceLogger();
 
     // don't create a log file when running with an attached debugger
     if (FCurrentProcess::StartedWithDebugger()) {
-        RegisterLogger(MakeOutputDebug());
+        RegisterOutputDebugLogger();
 
 #if !USE_PPE_FINAL_RELEASE
         // break on warnings/errors when debugger is attached
@@ -831,7 +932,7 @@ void FLogger::Start() {
     else {
         const auto& proc = FCurrentProcess::Get();
 
-        RegisterLogger(MakeStdout());
+        RegisterStdoutLogger();
 
         const FWString logPath = FPlatformFile::JoinPath({
             proc.SavedPath(), L"Log",
@@ -839,43 +940,54 @@ void FLogger::Start() {
 
         VerifyRelease(FPlatformFile::CreateDirectoryRecursively(*logPath, nullptr));
 
+        // output log as json by default, except if -LOGTxt was passed on the command-line
+        bool useStructuredLogging = true;
+        FWStringView extname = L".json";
+        if (FCurrentProcess::Get().HasArgument(L"-LOGTxt")) {
+            useStructuredLogging = false;
+            extname = L".txt";
+        }
+
         const FWString logFile = FPlatformFile::JoinPath({
-            logPath, proc.ExecutableName() + L".log" });
+            logPath, proc.ExecutableName() + extname });
 
-        RegisterLogger(FLogger::MakeRollFile(*logFile));
+        if (useStructuredLogging)
+            RegisterRollJsonLogger(*logFile);
+        else
+            RegisterRollFileLogger(*logFile);
     }
 
-    IF_CONSTEXPR(USE_PPE_MEMORY_DEBUGGING) {
-        SetupLoggerImpl_(&FUserLogger::Get());
-    }
-    else {
-        FBackgroundLogger::Create();
-        SetupLoggerImpl_(&FBackgroundLogger::Get());
-    }
+    FBackgroundLogger::Create();
+    FBackgroundLogger& backgroundLogger = FBackgroundLogger::Get();
+
+    IF_CONSTEXPR(USE_PPE_MEMORY_DEBUGGING)
+        backgroundLogger.SetAsynchronous(false);
+
+    if (FCurrentProcess::Get().HasArgument(L"-LOGAsync"))
+        backgroundLogger.SetAsynchronous(true);
+    if (FCurrentProcess::Get().HasArgument(L"-LOGNoAsync"))
+        backgroundLogger.SetAsynchronous(false);
+
+    FLowLevelLogger::Setup(backgroundLogger);
 }
 //----------------------------------------------------------------------------
 void FLogger::Shutdown() {
-    SetupLowLevelLoggerImpl_AfterMain_();
+    FLowLevelLogger::Setup(FLowLevelLogger::AfterMain());
 
-    IF_CONSTEXPR(not USE_PPE_MEMORY_DEBUGGING) {
-        FBackgroundLogger::Destroy();
-    }
-
+    FBackgroundLogger::Destroy();
     FUserLogger::Destroy();
-
-    FLogAllocator::Destroy();
 }
 //----------------------------------------------------------------------------
 void FLogger::Flush(bool synchronous/* = true */) {
-    CurrentLogger_().Flush(synchronous);
+    FLowLevelLogger::Get().Flush(synchronous);
 }
 //----------------------------------------------------------------------------
-void FLogger::RegisterLogger(const PLogger& logger) {
+void FLogger::RegisterLogger(TPtrRef<ILogger> logger, bool autoDelete) {
     if (logger)
-        FUserLogger::Get().Add(logger);
+        FUserLogger::Get().Add(logger, autoDelete);
 }
 //----------------------------------------------------------------------------
-void FLogger::UnregisterLogger(const PLogger& logger) {
+void FLogger::UnregisterLogger(TPtrRef<ILogger> logger) {
     Assert(logger);
 
     FUserLogger::Get().Remove(logger);
@@ -896,36 +1008,95 @@ namespace {
 #if USE_PPE_PLATFORM_DEBUG
 class FOutputDebugLogger_ final : public ILogger {
 public:
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
-        FWStringBuilder oss(text.size());
-        FLogFormat::Print(oss, category, level, site, text);
-        oss << Eos;
-        FPlatformDebug::OutputDebug(oss.Written().data());
+    virtual void LogMessage(const FLoggerMessage& msg) override final {
+        DEFERRED{ _sb.clear(); };
+
+        FLogFmt::Print(_sb, msg.Category, msg.Site, msg.Text().MakeView(), msg.Data);
+        _sb << Eos;
+
+        FPlatformDebug::OutputDebug(_sb.Written().data());
     }
 
     virtual void Flush(bool) override final {} // always synced
+
+private:
+    FStringBuilder _sb;
 };
 #endif //!USE_PPE_PLATFORM_DEBUG
 //----------------------------------------------------------------------------
-class FStdoutLogger_ final : public ILogger {
+class FFileHandleLogger_ final : public ILogger {
 public:
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
-        FWStringBuilder oss(text.size());
-        FLogFormat::Print(oss, category, level, site, text);
-        oss << Eol << Eos;
-        ::fputws(oss.Written().data(), stdout);
+    explicit FFileHandleLogger_(FPlatformLowLevelIO::FHandle fileHandle, bool autoClose = true)
+    :   _fileWriter(fileHandle)
+    ,   _buffered(&_fileWriter, FPlatformMemory::PageSize)
+    ,   _autoClose(autoClose)
+    {}
+
+    ~FFileHandleLogger_() override {
+        if (_autoClose)
+            Verify(FPlatformLowLevelIO::Close(_fileWriter.Handle()));
+    }
+
+    virtual void LogMessage(const FLoggerMessage& msg) override final {
+        FTextWriter oss(_buffered);
+        FLogFmt::Print(oss, msg.Category, msg.Site, msg.Text().MakeView(), msg.Data);
+        oss << Eol;
     }
 
     virtual void Flush(bool) override final {
-        fflush(stdout);
+        _buffered.Flush();
     }
+
+private:
+    FFileStreamWriter _fileWriter;
+    FBufferedStreamWriter _buffered;
+    const bool _autoClose{ false };
+};
+//----------------------------------------------------------------------------
+class FJsonHandleLogger_ final : public ILogger {
+public:
+    explicit FJsonHandleLogger_ (FPlatformLowLevelIO::FHandle fileHandle, bool autoClose = true)
+    :   _fileWriter(fileHandle)
+    ,   _buffered(&_fileWriter, FPlatformMemory::PageSize)
+    ,   _autoClose(autoClose)
+    {}
+
+    ~FJsonHandleLogger_() override {
+        if (_autoClose)
+            Verify(FPlatformLowLevelIO::Close(_fileWriter.Handle()));
+    }
+
+    virtual void LogMessage(const FLoggerMessage& msg) override final {
+        FTextWriter oss(_buffered);
+        oss << FTextFormat::Compact << Opaq::object_init{
+            {"timestamp", msg.Site.LogTime.Timestamp().Value() },
+            {"tid", bit_cast<u32>(msg.Site.ThreadId)},
+            {"category", msg.Category->Name},
+            {"severity", static_cast<u32>(msg.Level())},
+            {"message", msg.Text().MakeView()},
+            {"data", msg.Data},
+/*            {"site", Opaq::object_init{
+                {"file", msg.Site.SourceFile},
+                {"line", msg.Site.SourceLine}
+            }}*/
+        } << Eol;
+    }
+
+    virtual void Flush(bool) override final {
+        _buffered.Flush();
+    }
+
+private:
+    FFileStreamWriter _fileWriter;
+    FBufferedStreamWriter _buffered;
+    const bool _autoClose{ false };
 };
 //----------------------------------------------------------------------------
 class FConsoleWriterLogger_ final : public ILogger {
     const bool _available;
 public:
     FConsoleWriterLogger_()
-    : _available(FPlatformConsole::Open())
+    :   _available(FPlatformConsole::Open())
     {}
 
     ~FConsoleWriterLogger_() override {
@@ -933,16 +1104,16 @@ public:
     }
 
 public: // ILogger
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+    virtual void LogMessage(const FLoggerMessage& msg) override final {
         if (not _available)
             return;
 
-        FWStringBuilder oss(text.size());
-        FLogFormat::Print(oss, category, level, site, text);
+        DEFERRED{ _sb.clear(); };
+        FLogFmt::Print(_sb, msg.Category, msg.Site, msg.Text().MakeView(), msg.Data);
 
         FPlatformConsole::EAttribute attrs{};
 
-        switch (level) {
+        switch (msg.Level()) {
         case ELoggerVerbosity::Info:
             attrs = FPlatformConsole::WHITE_ON_BLACK;
             break;
@@ -958,6 +1129,9 @@ public: // ILogger
         case ELoggerVerbosity::Error:
             attrs = (FPlatformConsole::FG_RED | FPlatformConsole::BG_BLACK);
             break;
+        case ELoggerVerbosity::Verbose:
+            attrs = (FPlatformConsole::FG_GREEN | FPlatformConsole::BG_BLACK);
+            break;
         case ELoggerVerbosity::Debug:
             attrs = (FPlatformConsole::FG_CYAN | FPlatformConsole::BG_BLACK);
             break;
@@ -969,88 +1143,44 @@ public: // ILogger
             break;
         }
 
-        FPlatformConsole::SyntaxicHighlight(oss.Written(), attrs);
+        FPlatformConsole::SyntaxicHighlight(_sb.Written(), attrs);
     }
 
     virtual void Flush(bool) override final {
         if (_available)
             FPlatformConsole::Flush();
     }
-};
-//----------------------------------------------------------------------------
-class FFileHandleLogger_ final : public ILogger, IStreamWriter {
-public:
-    explicit FFileHandleLogger_(FPlatformLowLevelIO::FHandle hFile)
-    :   _hFile(hFile)
-    ,   _buffered(this) {
-        Assert(FPlatformLowLevelIO::InvalidHandle != _hFile);
-    }
-
-    ~FFileHandleLogger_() override {
-        _buffered.ResetStream();
-        FPlatformLowLevelIO::Close(_hFile);
-    }
-
-public: // ILogger
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
-        FWTextWriter oss(&_buffered);
-        FLogFormat::Print(oss, category, level, site, text);
-    }
-
-    virtual void Flush(bool) override final {
-        _buffered.Flush();
-    }
-
-public: // IStreamWriter, implemented to be low level and without calls to LOG()
-    virtual bool IsSeekableO(ESeekOrigin) const NOEXCEPT override final { return true; }
-
-    virtual std::streamoff TellO() const NOEXCEPT override final { return FPlatformLowLevelIO::Tell(_hFile); }
-    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final {
-        return FPlatformLowLevelIO::Seek(_hFile, offset, origin);
-    }
-
-    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final {
-        return (sizeInBytes == FPlatformLowLevelIO::Write(_hFile, storage, sizeInBytes));
-    }
-    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final {
-        std::streamsize written = checked_cast<std::streamsize>(eltsize * count);
-        written = FPlatformLowLevelIO::Write(_hFile, storage, written);
-        return checked_cast<size_t>(written / eltsize);
-    }
-
-    virtual class IBufferedStreamWriter* ToBufferedO() NOEXCEPT override final { return nullptr; }
 
 private:
-    FPlatformLowLevelIO::FHandle _hFile;
-    FBufferedStreamWriter _buffered;
+    FStringBuilder _sb;
 };
 //----------------------------------------------------------------------------
 #if USE_PPE_PLATFORM_DEBUG
 class FSystemTraceLogger_ final : public ILogger {
 public:
-    virtual void Log(const FCategory& category, EVerbosity level, const FSiteInfo& site, const FWStringView& text) override final {
+    virtual void LogMessage(const FLoggerMessage& msg) override final {
         const FTimestamp date = FTimestamp::Now();
 
-        switch (level) {
+        switch (msg.Level()) {
         case ELoggerVerbosity::Debug:
         case ELoggerVerbosity::Verbose:
-            FPlatformDebug::TraceVerbose(category.Name, date.Value(), site.Filename, site.Line, text.data());
+            FPlatformDebug::TraceVerbose(msg.Site.ThreadId, msg.Category->Name.data(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text());
             break;
 
         case ELoggerVerbosity::Info:
         case ELoggerVerbosity::Profiling:
         case ELoggerVerbosity::Emphasis:
-            FPlatformDebug::TraceInformation(category.Name, date.Value(), site.Filename, site.Line, text.data());
+            FPlatformDebug::TraceInformation(msg.Site.ThreadId, msg.Category->Name.data(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text());
             break;
 
         case ELoggerVerbosity::Warning:
-            FPlatformDebug::TraceWarning(category.Name, date.Value(), site.Filename, site.Line, text.data());
+            FPlatformDebug::TraceWarning(msg.Site.ThreadId, msg.Category->Name.data(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text());
             break;
         case ELoggerVerbosity::Error:
-            FPlatformDebug::TraceError(category.Name, date.Value(), site.Filename, site.Line, text.data());
+            FPlatformDebug::TraceError(msg.Site.ThreadId, msg.Category->Name.data(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text());
             break;
         case ELoggerVerbosity::Fatal:
-            FPlatformDebug::TraceFatal(category.Name, date.Value(), site.Filename, site.Line, text.data());
+            FPlatformDebug::TraceFatal(msg.Site.ThreadId, msg.Category->Name.data(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text());
             break;
 
         default:
@@ -1066,36 +1196,48 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PLogger FLogger::MakeStdout() {
-    return (FPlatformConsole::HasConsole
-        ? PLogger(NEW_REF(Logger, FConsoleWriterLogger_))
-        : PLogger(NEW_REF(Logger, FStdoutLogger_)) );
+void FLogger::RegisterStdoutLogger() {
+    if (FPlatformConsole::HasConsole)
+        RegisterLogger(TRACKING_NEW(Logger, FConsoleWriterLogger_), true);
+    else
+        RegisterLogger(TRACKING_NEW(Logger, FFileHandleLogger_){FPlatformLowLevelIO::Stdout, false}, true);
 }
 //----------------------------------------------------------------------------
-PLogger FLogger::MakeOutputDebug() {
+void FLogger::RegisterOutputDebugLogger() {
 #if USE_PPE_PLATFORM_DEBUG
-    return NEW_REF(Logger, FOutputDebugLogger_);
-#else
-    return PLogger();
+    RegisterLogger(TRACKING_NEW(Logger, FOutputDebugLogger_), true);
 #endif
 }
 //----------------------------------------------------------------------------
-PLogger FLogger::MakeAppendFile(const wchar_t* filename) {
+void FLogger::RegisterAppendFileLogger(FConstWChar filename) {
     FPlatformLowLevelIO::FHandle hFile = FPlatformLowLevelIO::Open(filename,
             EOpenPolicy::Writable,
             EAccessPolicy::Create|EAccessPolicy::Append|EAccessPolicy::Binary|EAccessPolicy::ShareRead);
     AssertRelease(FPlatformLowLevelIO::InvalidHandle != hFile);
-    return NEW_REF(Logger, FFileHandleLogger_, hFile);
+    RegisterLogger(TRACKING_NEW(Logger, FFileHandleLogger_){hFile}, true);
 }
 //----------------------------------------------------------------------------
-PLogger FLogger::MakeRollFile(const wchar_t* filename) {
+void FLogger::RegisterAppendJsonLogger(FConstWChar filename) {
+    FPlatformLowLevelIO::FHandle hFile = FPlatformLowLevelIO::Open(filename,
+            EOpenPolicy::Writable,
+            EAccessPolicy::Create|EAccessPolicy::Append|EAccessPolicy::Binary|EAccessPolicy::ShareRead);
+    AssertRelease(FPlatformLowLevelIO::InvalidHandle != hFile);
+    RegisterLogger(TRACKING_NEW(Logger, FJsonHandleLogger_){hFile}, true);
+}
+//----------------------------------------------------------------------------
+void FLogger::RegisterRollFileLogger(FConstWChar filename) {
     Verify(FPlatformFile::RollFile(filename));
-    return MakeAppendFile(filename);
+    RegisterAppendFileLogger(filename);
 }
 //----------------------------------------------------------------------------
-PLogger FLogger::MakeSystemTrace() {
+void FLogger::RegisterRollJsonLogger(FConstWChar filename) {
+    Verify(FPlatformFile::RollFile(filename));
+    RegisterAppendJsonLogger(filename);
+}
+//----------------------------------------------------------------------------
+void FLogger::RegisterSystemTraceLogger() {
 #if USE_PPE_PLATFORM_DEBUG
-    return NEW_REF(Logger, FSystemTraceLogger_);
+    RegisterLogger(TRACKING_NEW(Logger, FSystemTraceLogger_), true);
 #else
     return PLogger();
 #endif
@@ -1104,6 +1246,23 @@ PLogger FLogger::MakeSystemTrace() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicConstChar<_Char> ELoggerVerbosity_Text_(ELoggerVerbosity level) {
+    switch (level) {
+    case FLogger::EVerbosity::None:      return STRING_LITERAL(_Char, "None").data();
+    case FLogger::EVerbosity::Debug:     return STRING_LITERAL(_Char, "Debug").data();
+    case FLogger::EVerbosity::Verbose:   return STRING_LITERAL(_Char, "Verbose").data();
+    case FLogger::EVerbosity::Info:      return STRING_LITERAL(_Char, "Info").data();
+    case FLogger::EVerbosity::Profiling: return STRING_LITERAL(_Char, "Profiling").data();
+    case FLogger::EVerbosity::Emphasis:  return STRING_LITERAL(_Char, "Emphasis").data();
+    case FLogger::EVerbosity::Warning:   return STRING_LITERAL(_Char, "Warning").data();
+    case FLogger::EVerbosity::Error:     return STRING_LITERAL(_Char, "Error").data();
+    case FLogger::EVerbosity::Fatal:     return STRING_LITERAL(_Char, "Fatal").data();
+    default: break;
+    }
+    AssertNotReached();
+}
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& ELoggerVerbosity_Oss_(TBasicTextWriter<_Char>& oss, ELoggerVerbosity level) {
@@ -1120,6 +1279,14 @@ TBasicTextWriter<_Char>& ELoggerVerbosity_Oss_(TBasicTextWriter<_Char>& oss, ELo
 }
 //----------------------------------------------------------------------------
 } //!namespace
+//----------------------------------------------------------------------------
+FConstChar ToString(FLogger::EVerbosity level) NOEXCEPT {
+    return ELoggerVerbosity_Text_<char>(level);
+}
+//----------------------------------------------------------------------------
+FConstWChar ToWString(FLogger::EVerbosity level) NOEXCEPT {
+    return ELoggerVerbosity_Text_<wchar_t>(level);
+}
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level) {
     return ELoggerVerbosity_Oss_(oss, level);

@@ -378,7 +378,7 @@ const auto* FVulkanResourceManager::ResourceDataIFP(details::TResourceId<_Uid> i
         Assert_NoAssume(tolerant || pResource->InstanceID() == id.InstanceID);
     }
 
-    AssertReleaseMessage_NoAssume(L"out-of-bounds", tolerant);
+    AssertReleaseMessage_NoAssume("out-of-bounds", tolerant);
     return static_cast<result_type>(nullptr);
 }
 //----------------------------------------------------------------------------

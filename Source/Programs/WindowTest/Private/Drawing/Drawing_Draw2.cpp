@@ -53,7 +53,7 @@ void main() {
 ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
 
     FGPipelineID ppln = fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Drawing_Draw2"));
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     ON_SCOPE_EXIT([&]() {
         fg.ReleaseResources(ppln);
@@ -62,7 +62,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_Draw2")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FRawImageID image = cmd->SwapchainImage(*app.RHI().Swapchain());
     const uint2 viewSize = fg.Description(image).Dimensions.xy;
@@ -70,15 +70,15 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Color0, image, FLinearColor::Transparent(), EAttachmentStoreOp::Store)
         .AddViewport(viewSize));
-    LOG_CHECK(WindowTest, !!renderPass);
+    PPE_LOG_CHECK(WindowTest, !!renderPass);
 
     cmd->Task(renderPass, FDrawVertices{}.Draw(3).SetPipeline(*ppln).SetTopology(EPrimitiveTopology::TriangleList));
 
     const PFrameTask tDraw = cmd->Task(FSubmitRenderPass{ renderPass });
     Unused(tDraw);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
     return true;
 }

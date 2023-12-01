@@ -9,7 +9,7 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_NETWORK_API FHttpException : public FNetworkException {
+class FHttpException : public FNetworkException {
 public:
     FHttpException(EHttpStatus status, const char* what)
         : FNetworkException(what)
@@ -18,7 +18,7 @@ public:
     EHttpStatus Status() const { return _status; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    PPE_NETWORK_API virtual FTextWriter& Description(FTextWriter& oss) const override final;
 #endif
 
 private:

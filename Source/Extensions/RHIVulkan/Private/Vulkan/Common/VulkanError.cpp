@@ -26,17 +26,15 @@ FVulkanException::FVulkanException(const char* what, long errorCode)
 :   FRHIException(what)
 ,   _errorCode(errorCode) {
 #if !USE_PPE_FINAL_RELEASE
-    LOG(RHI, Error, L"vulkan exception: {0} failed with {1}", MakeCStringView(what), FVulkanError(_errorCode));
-    FLUSH_LOG();
+    PPE_LOG(RHI, Error, "vulkan exception: {0} failed with {1}", MakeCStringView(what), FVulkanError(_errorCode));
+    PPE_LOG_FLUSH();
 #endif
 }
 //----------------------------------------------------------------------------
-FVulkanException::~FVulkanException() = default;
-//----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FVulkanException::Description(FWTextWriter& oss) const {
+FTextWriter& FVulkanException::Description(FTextWriter& oss) const {
     return oss
-        << MakeCStringView(What()) << L": "
+        << MakeCStringView(What()) << ": "
         << FVulkanError(_errorCode);
 }
 #endif
@@ -110,7 +108,7 @@ NODISCARD static bool VulkanCheckErrors_( VkResult result,
     if (Likely(VK_SUCCESS == result))
         return true;
 
-    LOG(RHI, Error, L"vulkan error: got result {0}\n{1}({2}:1): {3}\n\tin function: {4}",
+    PPE_LOG(RHI, Error, "vulkan error: got result {0}\n{1}({2}:1): {3}\n\tin function: {4}",
         FVulkanError{ result }, file, line, call, func );
 
     return false;

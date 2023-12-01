@@ -105,7 +105,7 @@ void UnitTest_ResourceManager(IFrameGraph& fg) {
     Test_SamplerCache_(fg);
     Test_PipelineResources_(fg);
 
-    LOG(RHI, Info, L"UnitTest_ResourceManager [PASSED]");
+    PPE_LOG(RHI, Info, "UnitTest_ResourceManager [PASSED]");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

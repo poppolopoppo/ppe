@@ -24,6 +24,12 @@ public:
     TBasicMatch() NOEXCEPT;
     ~TBasicMatch();
 
+    TBasicMatch(const TBasicMatch&) = default;
+    TBasicMatch& operator =(const TBasicMatch&) = default;
+
+    TBasicMatch(TBasicMatch&& rvalue) NOEXCEPT;
+    TBasicMatch& operator =(TBasicMatch&& rvalue) NOEXCEPT;
+
     TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FSpan& site) NOEXCEPT;
     TBasicMatch(const symbol_type* symbol, const value_type& value, const FSpan& site) NOEXCEPT;
     TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FLocation& start, const FLocation& stop) NOEXCEPT;

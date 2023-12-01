@@ -38,7 +38,7 @@ bool FVulkanMemoryObject::AllocateBuffer(FVulkanMemoryManager& memory, VkBuffer 
     const auto exclusiveData = _data.LockExclusive();
     Assert_NoAssume(nullptr == exclusiveData->Block.MemoryHandle);
 
-    LOG_CHECK(RHI, memory.AllocateBuffer(&exclusiveData->Block, buffer, exclusiveData->Desc) );
+    PPE_LOG_CHECK(RHI, memory.AllocateBuffer(&exclusiveData->Block, buffer, exclusiveData->Desc) );
     return true;
 }
 //----------------------------------------------------------------------------
@@ -46,7 +46,7 @@ bool FVulkanMemoryObject::AllocateImage(FVulkanMemoryManager& memory, VkImage im
     const auto exclusiveData = _data.LockExclusive();
     Assert_NoAssume(nullptr == exclusiveData->Block.MemoryHandle);
 
-    LOG_CHECK(RHI, memory.AllocateImage(&exclusiveData->Block, image, exclusiveData->Desc) );
+    PPE_LOG_CHECK(RHI, memory.AllocateImage(&exclusiveData->Block, image, exclusiveData->Desc) );
     return true;
 }
 //----------------------------------------------------------------------------
@@ -54,7 +54,7 @@ bool FVulkanMemoryObject::AllocateAccelStruct(FVulkanMemoryManager& memory, VkAc
     const auto exclusiveData = _data.LockExclusive();
     Assert_NoAssume(nullptr == exclusiveData->Block.MemoryHandle);
 
-    LOG_CHECK(RHI, memory.AllocateAccelStruct(&exclusiveData->Block, accelStruct, exclusiveData->Desc) );
+    PPE_LOG_CHECK(RHI, memory.AllocateAccelStruct(&exclusiveData->Block, accelStruct, exclusiveData->Desc) );
     return true;
 }
 //----------------------------------------------------------------------------

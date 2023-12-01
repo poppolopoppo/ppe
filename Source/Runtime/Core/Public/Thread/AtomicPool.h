@@ -27,9 +27,9 @@ class TAtomicPool : Meta::FNonCopyableNorMovable {
     STATIC_ASSERT(_Chunks > 0);
     using mask_type = TAtomicBitMask<_Index>;
 
-    struct CACHELINE_ALIGNED {
+    struct CACHELINE_ALIGNED/* avoid false-sharing of those flags */ {
         mask_type Alloc{ mask_type::AllMask };
-        mask_type Create{ 0 };
+        mask_type Create{ mask_type::EmptyMask };
     }   _sets[_Chunks];
 
     using block_type = std::aligned_storage_t<sizeof(T), _Align>;
@@ -114,7 +114,7 @@ public:
 
                 ONLY_IF_MEMORYDOMAINS( _trackingData.AllocateUser(sizeof(block_type)) );
 
-                if (set.Create.Set(alloc)) {
+                if (set.Create.SetBit(alloc)) {
                     ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(p, sizeof(block_type)));
                     Meta::VariadicFunctor(ctor, p, id);
                 }
@@ -162,7 +162,7 @@ public:
                     continue; // retry if CAS failed
 
                 // then release the block while allocated, if still created
-                if (set.Create.Unset(alloc)) {
+                if (set.Create.UnsetBit(alloc)) {
                     const auto id = ch * mask_type::Capacity + alloc;
                     Meta::VariadicFunctor(dtor, reinterpret_cast<T*>(_storage + id), id);
                     ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(_storage + id, sizeof(block_type)));

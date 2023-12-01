@@ -9,6 +9,8 @@
 
 #include "ApplicationUI_fwd.h"
 
+#include "UI/Imgui.h"
+
 #include "RHIApi.h"
 
 #include "Diagnostic/Logger.h"

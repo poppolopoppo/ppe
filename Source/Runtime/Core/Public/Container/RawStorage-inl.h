@@ -200,7 +200,7 @@ FAllocatorBlock TRawStorage<T, _Allocator>::StealDataUnsafe() NOEXCEPT {
         return b;
     }
     else {
-        return FAllocatorBlock::Null();
+        return Default;
     }
 }
 //----------------------------------------------------------------------------

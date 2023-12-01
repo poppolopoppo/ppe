@@ -196,7 +196,7 @@ static void RTTIPrintType_() {
     const RTTI::PTypeTraits traits = RTTI::MakeTraits<T>();
     const RTTI::FNamedTypeInfos typeInfos = traits->NamedTypeInfos();
     STACKLOCAL_ATOM(defaultValue, traits);
-    LOG(RTTI_UnitTest, Debug, L"Id = {0}, Name = {1}, Flags = {2}, Default = {3}",
+    PPE_LOG(RTTI_UnitTest, Debug, "Id = {0}, Name = {1}, Flags = {2}, Default = {3}",
         typeInfos.Id(),
         typeInfos.Name(),
         typeInfos.Flags(),
@@ -210,10 +210,10 @@ static void RTTIPrintClass_() {
     TRefPtr<T> t(NEW_RTTI(T));
     const RTTI::FMetaClass *metaClass = t->RTTI_Class();
 
-    LOG(RTTI_UnitTest, Debug, L"TMetaClass<{0}> : {1}", metaClass->Name(), metaClass->Flags());
+    PPE_LOG(RTTI_UnitTest, Debug, "TMetaClass<{0}> : {1}", metaClass->Name(), metaClass->Flags());
 
     for (const auto& it : metaClass->AllFunctions()) {
-        LOG(RTTI_UnitTest, Verbose, L"   - FUNC {0} {1}({2}) : <{3}>",
+        PPE_LOG(RTTI_UnitTest, Verbose, "   - FUNC {0} {1}({2}) : <{3}>",
             it->HasReturnValue() ? it->Result()->TypeName() : "void",
             it->Name(),
             Fmt::FWFormator([&it](FWTextWriter& oss) {
@@ -228,7 +228,7 @@ static void RTTIPrintClass_() {
 
     for (const auto& it : metaClass->AllProperties()) {
         const RTTI::FNamedTypeInfos typeInfos = it->Traits()->NamedTypeInfos();
-		LOG(RTTI_UnitTest, Verbose, L"   - PROP {0} : <{1}> -> {2} = {3} [{4}]",
+		PPE_LOG(RTTI_UnitTest, Verbose, "   - PROP {0} : <{1}> -> {2} = {3} [{4}]",
             it->Name(),
             it->Flags(),
             typeInfos.Name(),
@@ -283,13 +283,13 @@ static NO_INLINE void TestRTTI_() {
         const auto defaultValue = metaEnum->DefaultValue();
         Unused(defaultValue);
 
-        LOG(RTTI_UnitTest, Debug, L"Enum<{0}> : {1} = {2} ({3})",
+        PPE_LOG(RTTI_UnitTest, Debug, "Enum<{0}> : {1} = {2} ({3})",
             metaEnum->Name(),
             defaultValue.Name, defaultValue.Ord,
             metaEnum->Flags() );
 
         for (const auto& it : metaEnum->Values()) {
-            LOG(RTTI_UnitTest, Debug, L"  -- '{0}' = {1}", it.Name, it.Ord);
+            PPE_LOG(RTTI_UnitTest, Debug, "  -- '{0}' = {1}", it.Name, it.Ord);
 
             AssertRelease(metaEnum->NameToValue(it.Name).Ord == it.Ord);
             AssertRelease(metaEnum->ValueToName(it.Ord).Name == it.Name);
@@ -300,7 +300,7 @@ static NO_INLINE void TestRTTI_() {
 
         RTTI::FMetaEnum::FExpansion expanded;
         VerifyRelease(RTTI_ETutut::Get()->ExpandValues(atom, &expanded));
-        LOG(RTTI_UnitTest, Debug, L"Expanded enum {0} = {1}", atom, Fmt::Join(expanded.MakeView(), L'|'));
+        PPE_LOG(RTTI_UnitTest, Debug, "Expanded enum {0} = {1}", atom, Fmt::Join(expanded.MakeView(), L'|'));
 
         const RTTI::FMetaEnumValue* v;
 
@@ -313,7 +313,7 @@ static NO_INLINE void TestRTTI_() {
 
         expanded.clear();
         VerifyRelease(RTTI_ETutut::Get()->ExpandValues(atom, &expanded));
-        LOG(RTTI_UnitTest, Debug, L"Expanded enum {0} = {1}", atom, Fmt::Join(expanded.MakeView(), L'|'));
+        PPE_LOG(RTTI_UnitTest, Debug, "Expanded enum {0} = {1}", atom, Fmt::Join(expanded.MakeView(), L'|'));
 
         v = RTTI_ETutut::Get()->ValueToNameIFP(i64(ETutut::Nope));
         AssertRelease(v);
@@ -322,7 +322,7 @@ static NO_INLINE void TestRTTI_() {
         AssertRelease(tutut == ETutut::Nope);
 
         VerifyRelease(RTTI_ETutut::Get()->ExpandValues(atom, &expanded));
-        LOG(RTTI_UnitTest, Debug, L"Expanded enum {0} = {1}", atom, Fmt::Join(expanded.MakeView(), L'|'));
+        PPE_LOG(RTTI_UnitTest, Debug, "Expanded enum {0} = {1}", atom, Fmt::Join(expanded.MakeView(), L'|'));
 
         RTTI::FAtom nameEnum = MakeAtom(&whyNot);
         VerifyRelease(nameEnum.PromoteMove(atom));
@@ -370,7 +370,7 @@ static NO_INLINE void TestRTTI_() {
             const RTTI::FMetaClass* metaClass = toto2->RTTI_Class();
             metaClass->Property(RTTI::FName("Parent1")).CopyFrom(*toto2, MakeAtom(&toto));
 
-            LOG(RTTI_UnitTest, Debug, L"toto2 = {0}", InplaceAtom(toto2));
+            PPE_LOG(RTTI_UnitTest, Debug, "toto2 = {0}", InplaceAtom(toto2));
         }
 
         {
@@ -396,20 +396,20 @@ static NO_INLINE void TestRTTI_() {
                 const auto value = prop.Get(*titi);
                 Unused(value);
 
-                LOG(RTTI_UnitTest, Debug, L"{0} = {1}", prop.Name(), value);
+                PPE_LOG(RTTI_UnitTest, Debug, "{0} = {1}", prop.Name(), value);
             }
             {
                 const auto& func = metaClass->Function(RTTI::FName("OutConstReturn"));
                 STACKLOCAL_ATOM(result, func.Result());
                 FString string;
                 func.Invoke(*titi, result, { RTTI::InplaceAtom(42.0f), RTTI::MakeAtom(&string) });
-                LOG(RTTI_UnitTest, Debug, L"{0} : {1} = {2}", func.Name(), string, result);
+                PPE_LOG(RTTI_UnitTest, Debug, "{0} : {1} = {2}", func.Name(), string, result);
             }
             {
                 const auto& func = metaClass->Function(RTTI::FName("IdDeprecated"));
                 STACKLOCAL_ATOM(result, func.Result());
                 func.Invoke(*titi, result, { RTTI::InplaceAtom(69.0f) });
-                LOG(RTTI_UnitTest, Debug, L"{0}({1}) = {2}", func.Name(), 69.0f, result);
+                PPE_LOG(RTTI_UnitTest, Debug, "{0}({1}) = {2}", func.Name(), 69.0f, result);
             }
 
             transaction2.Unload();
@@ -427,9 +427,9 @@ namespace RTTI {
 void RTTI_UnitTests() {
     const auto& process = FCurrentProcess::Get();
     if (not process.HasArgument(L"-NoUnitTest")) {
-        LOG_DIRECT(RTTI_UnitTest, Debug, L"begin unit tests");
+        PPE_LOG(RTTI_UnitTest, Debug, "begin unit tests");
         TestRTTI_();
-        LOG_DIRECT(RTTI_UnitTest, Debug, L"end unit tests");
+        PPE_LOG(RTTI_UnitTest, Debug, "end unit tests");
     }
 }
 } //!namespace RTTI

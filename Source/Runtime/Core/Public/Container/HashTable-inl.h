@@ -101,15 +101,18 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::assign(const TBasi
         if (_data.StatesAndBuckets)
             clear_ReleaseMemory();
 
-        const size_t blockSizeInBytes = other.allocated_block_().SizeInBytes();
+        const size_t blockSizeInBytes = other.allocator_block_().SizeInBytes;
 
         if (other._data.Size) {
             Assert_NoAssume(nullptr == _data.StatesAndBuckets);
             Assert_NoAssume(blockSizeInBytes == (other.OffsetOfBuckets_() + other._data.NumBuckets()) * sizeof(value_type));
 
+            const FAllocatorBlock alloc = allocator_traits::Allocate(*this, blockSizeInBytes);
+            Assert_NoAssume(alloc.SizeInBytes >= blockSizeInBytes);
+
             _data.Size = other._data.Size;
             _data.CapacityM1 = other._data.CapacityM1;
-            _data.StatesAndBuckets = allocator_traits::Allocate(*this, blockSizeInBytes).Data;
+            _data.StatesAndBuckets = alloc.Data;
 
             Assert_NoAssume(blockSizeInBytes == (OffsetOfBuckets_() + _data.NumBuckets()) * sizeof(value_type));
 
@@ -130,10 +133,9 @@ template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Alloc
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::assign(TBasicHashTable&& rvalue) {
     Assert(&rvalue != this);
 
-    FAllocatorBlock blk = FAllocatorBlock::From(rvalue.allocated_block_());
-    const bool moved = MoveAllocatorBlock(&allocator_traits::Get(*this), allocator_traits::Get(rvalue), blk);
+    const FAllocatorBlock alloc = rvalue.allocator_block_();
 
-    if (moved) {
+    if (MoveAllocatorBlock(&allocator_traits::Get(*this), allocator_traits::Get(rvalue), alloc)) {
         clear_ReleaseMemory();
 
         std::swap(_data, rvalue._data);
@@ -143,7 +145,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::assign(TBasicHashT
             MakeMoveIterator(rvalue.begin()),
             MakeMoveIterator(rvalue.end()));
 
-        rvalue.clear();
+        rvalue.clear_ReleaseMemory();
     }
 }
 //----------------------------------------------------------------------------
@@ -542,7 +544,7 @@ template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Alloc
 void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::clear_ReleaseMemory_(std::true_type) {
     Assert(_data.StatesAndBuckets);
 
-    allocator_traits::Deallocate(*this, FAllocatorBlock::From(allocated_block_()) );
+    allocator_traits::Deallocate(*this, allocator_block_());
 
     _data.Size = 0;
     _data.CapacityM1 = UINT32_MAX; STATIC_ASSERT(std::is_same_v<u32, decltype(_data.CapacityM1)>);

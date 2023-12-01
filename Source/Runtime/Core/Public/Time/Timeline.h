@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Time_fwd.h"
 
 #include "Time/Timepoint.h"
 

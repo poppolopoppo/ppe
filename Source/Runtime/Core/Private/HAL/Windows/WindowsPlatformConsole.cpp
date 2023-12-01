@@ -217,7 +217,7 @@ bool FWindowsPlatformConsole::Open() {
 
     if (0 == win32.Console.RefCount) {
         if (not ::AllocConsole()) {
-            LOG_LASTERROR(HAL, L"FWindowsPlatformConsole::Open");
+            PPE_LOG_LASTERROR(HAL, "FWindowsPlatformConsole::Open");
             return false;
         }
     }
@@ -243,12 +243,12 @@ bool FWindowsPlatformConsole::Open() {
                         | ENABLE_QUICK_EDIT_MODE
                         | ENABLE_INSERT_MODE
                         | ENABLE_EXTENDED_FLAGS */ )) {
-                LOG_LASTERROR(HAL, L"FWindowsPlatformConsole::SetConsoleMode(hConsoleIn)");
+                PPE_LOG_LASTERROR(HAL, "FWindowsPlatformConsole::SetConsoleMode(hConsoleIn)");
                 // non-fatal
             }
         }
         else {
-            LOG_LASTERROR(HAL, L"FWindowsPlatformConsole::GetConsoleMode(hConsoleIn)");
+            PPE_LOG_LASTERROR(HAL, "FWindowsPlatformConsole::GetConsoleMode(hConsoleIn)");
         }
 
         DWORD dwWriteMode = 0;
@@ -256,12 +256,12 @@ bool FWindowsPlatformConsole::Open() {
             if (not ::SetConsoleMode(win32.Console.hConsoleOut, dwWriteMode
                         | ENABLE_QUICK_EDIT_MODE
                         | ENABLE_EXTENDED_FLAGS )) {
-                LOG_LASTERROR(HAL, L"FWindowsPlatformConsole::SetConsoleMode(hConsoleOut)");
+                PPE_LOG_LASTERROR(HAL, "FWindowsPlatformConsole::SetConsoleMode(hConsoleOut)");
                 // non-fatal
             }
         }
         else {
-            LOG_LASTERROR(HAL, L"FWindowsPlatformConsole::GetConsoleMode(hConsoleOut)");
+            PPE_LOG_LASTERROR(HAL, "FWindowsPlatformConsole::GetConsoleMode(hConsoleOut)");
         }
 
         Verify(::SetConsoleCP(CP_UTF8));
@@ -285,7 +285,7 @@ void FWindowsPlatformConsole::Close() {
 
     if (win32.Console.RefCount && 0 == --win32.Console.RefCount) {
         if (not ::FreeConsole()) {
-            LOG_LASTERROR(HAL, L"FWindowsPlatformConsole::Close");
+            PPE_LOG_LASTERROR(HAL, "FWindowsPlatformConsole::Close");
             AssertNotReached();
         }
 
@@ -319,7 +319,7 @@ size_t FWindowsPlatformConsole::Read(const TMemoryView<char>& buffer) {
         ::FlushConsoleInputBuffer(win32.Console.hConsoleIn);
 
         if (not ::ReadConsoleA(win32.Console.hConsoleIn, buffer.data(), checked_cast<::DWORD>(buffer.size()), &read, nullptr)) {
-            LOG_LASTERROR(HAL, L"FWindowsPlatformConsole::ReadA");
+            PPE_LOG_LASTERROR(HAL, "FWindowsPlatformConsole::ReadA");
             AssertNotReached();
         }
     }
@@ -340,7 +340,7 @@ size_t FWindowsPlatformConsole::Read(const TMemoryView<wchar_t>& buffer) {
         ::FlushConsoleInputBuffer(win32.Console.hConsoleIn);
 
         if (not ::ReadConsoleW(win32.Console.hConsoleIn, buffer.data(), checked_cast<::DWORD>(buffer.size()), &read, nullptr)) {
-            LOG_LASTERROR(HAL, L"FWindowsPlatformConsole::ReadW");
+            PPE_LOG_LASTERROR(HAL, "FWindowsPlatformConsole::ReadW");
             AssertNotReached();
         }
     }
@@ -364,7 +364,7 @@ void FWindowsPlatformConsole::Write(const FStringView& text, EAttribute attrs/* 
 
         ::DWORD written = checked_cast<::DWORD>(text.size());
         if (not ::WriteConsoleA(win32.Console.hConsoleOut, text.data(), written, &written, nullptr)) {
-            LOG_LASTERROR(HAL, L"FWindowsPlatformConsole::WriteA");
+            PPE_LOG_LASTERROR(HAL, "FWindowsPlatformConsole::WriteA");
             AssertNotReached();
         }
     }
@@ -386,7 +386,7 @@ void FWindowsPlatformConsole::Write(const FWStringView& text, EAttribute attrs/*
 
         ::DWORD written = checked_cast<::DWORD>(text.size());
         if (not ::WriteConsoleW(win32.Console.hConsoleOut, text.data(), written, &written, nullptr)) {
-            LOG_LASTERROR(HAL, L"FWindowsPlatformConsole::WriteW");
+            PPE_LOG_LASTERROR(HAL, "FWindowsPlatformConsole::WriteW");
             AssertNotReached();
         }
     }

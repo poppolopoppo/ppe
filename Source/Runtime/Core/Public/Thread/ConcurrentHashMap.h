@@ -89,25 +89,34 @@ public:
     }
     template <typename _KeyLike>
     public_type& FindOrAdd(const _KeyLike& key, mapped_type&& rvalue, bool *pAdded = nullptr) {
+        if (pAdded)
+            *pAdded = false;
+
+        return FindOrAdd(key, [&](FEntry* entryAdded) {
+            if (pAdded)
+                *pAdded = true;
+
+            entryAdded->Value.second = std::move(rvalue);
+        });
+    }
+    template <typename _KeyLike, typename _OnAdded, decltype(std::declval<_OnAdded>()(std::declval<FEntry*>()))* = nullptr>
+    public_type& FindOrAdd(const _KeyLike& key, _OnAdded onAdded) {
         const size_t bucket = BucketFromKey_(key);
         const FAtomicMaskLock::FScopeLock scopeLock(_barrier, LockSubset_(bucket));
 
         for (FEntry* pEntry = _buckets[bucket]; pEntry; pEntry = pEntry->NextEntry) {
-            if (static_cast<const equalto_type&>(*this)(pEntry->Value.first, key)) {
-                if (pAdded) *pAdded = false;
+            if (static_cast<const equalto_type&>(*this)(pEntry->Value.first, key))
                 return *reinterpret_cast<public_type*>(&pEntry->Value);
-            }
         }
 
-        FEntry* const pNewEntry = INPLACE_NEW(allocator_traits::AllocateOneT<FEntry>(*this), FEntry);
-        pNewEntry->Value.first = key_type{key};
-        pNewEntry->Value.second = std::move(rvalue);
+        FEntry* const pNewEntry = INPLACE_NEW(allocator_traits::template AllocateOneT<FEntry>(*this), FEntry);
+        pNewEntry->Value.first = key_type{ key };
         pNewEntry->NextEntry = _buckets[bucket];
+
+        onAdded(pNewEntry);
 
         _buckets[bucket] = pNewEntry;
         _size.fetch_add(1);
-
-        if (pAdded) *pAdded = true;
         return *reinterpret_cast<public_type*>(&pNewEntry->Value);
     }
 
@@ -134,7 +143,7 @@ public:
 
     template <typename TFunctor>
     void Foreach(TFunctor each) const {
-        forrange(bucket, 0, _buckets.size()) {
+        for (size_t bucket = 0; bucket < _buckets.size(); ++bucket) {
             const FAtomicMaskLock::FScopeLock scopeLock(_barrier, LockSubset_(bucket));
             for (const FEntry* pEntry = _buckets[bucket]; pEntry; pEntry = pEntry->NextEntry) {
                 each(*reinterpret_cast<const public_type*>(&pEntry->Value));
@@ -146,6 +155,13 @@ public:
         const FAtomicMaskLock::FScopeLock scopeLock(_barrier, FAtomicMaskLock::AllMask);
 
         Clear_AssumeLocked_();
+    }
+
+    void Clear_ForgetMemory() {
+        const FAtomicMaskLock::FScopeLock scopeLock(_barrier, FAtomicMaskLock::AllMask);
+
+        _buckets = {}; // reset reference bucket's memory view
+        _size = 0;
     }
 
     TMemoryView<FEntry*> Clear_ReleaseMemory() {
@@ -168,7 +184,7 @@ private:
     }
     static FAtomicMaskLock::size_type LockSubset_(size_t bucket) NOEXCEPT {
         // 64 locks available on 64 bits, lock slot is determined by hashing the bucket index
-        return (FAtomicMaskLock::size_type(1) << (hash_size_t_constexpr(bucket) % FAtomicMaskLock::NumBuckets));
+        return (static_cast<FAtomicMaskLock::size_type>(1) << (hash_size_t_constexpr(bucket) % FAtomicMaskLock::NumBuckets));
     }
 
     void Clear_AssumeLocked_() {

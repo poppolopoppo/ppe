@@ -13,15 +13,15 @@ namespace RHI {
 //----------------------------------------------------------------------------
 // Device Queue
 //----------------------------------------------------------------------------
-enum class EQueueType : u32 {
+enum class EQueueType : u8 {
     Graphics,           // also supports compute and transfer commands
     AsyncCompute,       // separate compute queue
     AsyncTransfer,      // separate transfer queue
     _Count,
-    Unknown             = ~0u,
+    Unknown             = UINT8_MAX,
 };
 //----------------------------------------------------------------------------
-enum class EQueueUsage : u32 {
+enum class EQueueUsage : u8 {
     Unknown = 0,
     Graphics            = u32(1) << u32(EQueueType::Graphics),
     AsyncCompute        = u32(1) << u32(EQueueType::AsyncCompute),
@@ -33,7 +33,7 @@ ENUM_FLAGS(EQueueUsage);
 //----------------------------------------------------------------------------
 // Device Memory
 //----------------------------------------------------------------------------
-enum class EMemoryType : u32 {
+enum class EMemoryType : u8 {
     Default             = 0, // local in GPU
     HostRead            = 1 << 0,
     HostWrite           = 1 << 1,
@@ -71,19 +71,19 @@ ENUM_FLAGS(EBufferUsage);
 //----------------------------------------------------------------------------
 // Device attachment
 //----------------------------------------------------------------------------
-enum class EAttachmentLoadOp : u32 {
+enum class EAttachmentLoadOp : u8 {
     Invalidate,
     Load,
     Clear,
     Keep,
-    Unknown = ~0u,
+    Unknown = UINT8_MAX,
 };
 //----------------------------------------------------------------------------
-enum class EAttachmentStoreOp : u32 {
+enum class EAttachmentStoreOp : u8 {
     Invalidate,
     Store,
     Keep,
-    Unknown = ~0u,
+    Unknown = UINT8_MAX,
 };
 
 //----------------------------------------------------------------------------
@@ -118,7 +118,7 @@ enum class EShadingRatePalette : u8 {
 //----------------------------------------------------------------------------
 // Pixel Formats
 //----------------------------------------------------------------------------
-enum class EPixelFormat : u32 {
+enum class EPixelFormat : u8 {
     // signed normalized
     RGBA16_SNorm,
     RGBA8_SNorm,
@@ -258,10 +258,10 @@ enum class EPixelFormat : u32 {
     ASTC_sRGB8_A8_12x12,
 
     _Count,
-    Unknown = ~0u,
+    Unknown = UINT8_MAX,
 };
 //----------------------------------------------------------------------------
-enum class EColorSpace : u32 {
+enum class EColorSpace : u8 {
     PASS_THROUGH = 0,
     SRGB_NONLINEAR,
     DISPLAY_P3_NONLINEAR,
@@ -279,7 +279,7 @@ enum class EColorSpace : u32 {
     EXTENDED_SRGB_NONLINEAR,
     DISPLAY_NATIVE_AMD,
 
-    Unknown = ~0u,
+    Unknown = UINT8_MAX,
 };
 //----------------------------------------------------------------------------
 // Device Image
@@ -426,12 +426,22 @@ enum class EImageSampler : u32 {
 ENUM_FLAGS(EImageSampler);
 //----------------------------------------------------------------------------
 CONSTEXPR EImageSampler EImageSampler_FromPixelFormat(EPixelFormat fmt) {
+    Assert_NoAssume(Meta::EnumAnd(static_cast<EImageSampler>(Meta::EnumOrd(fmt)), EImageSampler::_FormatMask) ==
+        static_cast<EImageSampler>(Meta::EnumOrd(fmt)));
     return static_cast<EImageSampler>(Meta::EnumOrd(fmt));
+}
+//----------------------------------------------------------------------------
+CONSTEXPR EImageSampler operator |(EImageSampler sampler, EPixelFormat fmt) {
+    return (sampler | EImageSampler_FromPixelFormat(fmt));
+}
+//----------------------------------------------------------------------------
+CONSTEXPR EPixelFormat EPixelFormat_FromImageSampler(EImageSampler sampler) {
+    return static_cast<EPixelFormat>(Meta::EnumAnd(sampler, EImageSampler::_FormatMask));
 }
 //----------------------------------------------------------------------------
 // Fragment output
 //----------------------------------------------------------------------------
-enum class EFragmentOutput : u32 {
+enum class EFragmentOutput : u8 {
     Unknown                     = static_cast<u32>(EPixelFormat::Unknown),
     Int4                        = static_cast<u32>(EPixelFormat::RGBA32i),
     UInt4                       = static_cast<u32>(EPixelFormat::RGBA32u),

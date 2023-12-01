@@ -215,7 +215,7 @@ void Test_Binpacking() {
 void Test_Pixmap() {
     PPE_DEBUG_NAMEDSCOPE("Test_Pixmap");
 
-    LOG(Test_Pixmap, Emphasis, L"starting pixmap tests ...");
+    PPE_LOG(Test_Pixmap, Emphasis, "starting pixmap tests ...");
 
     const FFilename inputs[] = {
         L"Data:/Textures/Tech/Flower.png",

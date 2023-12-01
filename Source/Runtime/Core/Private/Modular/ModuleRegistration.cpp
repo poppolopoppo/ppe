@@ -53,7 +53,7 @@ void FModuleStaticRegistration::RegisterModule(const FModuleInfo& info) {
     Assert_NoAssume(not info.Name.empty());
     Assert_NoAssume(info.Initializer);
 
-    LOG(Modular, Info, L"register static module <{0}> ({1})", info.Name, info.Phase);
+    PPE_LOG(Modular, Info, "register static module <{0}> ({1})", info.Name, info.Phase);
 
     WRITESCOPELOCK(_rwlock);
 
@@ -64,7 +64,7 @@ void FModuleStaticRegistration::UnregisterModule(const FModuleInfo& info) {
     Assert_NoAssume(not info.Name.empty());
     Assert_NoAssume(info.Initializer);
 
-    LOG(Modular, Info, L"unregister static module <{0}> ({1})", info.Name, info.Phase);
+    PPE_LOG(Modular, Info, "unregister static module <{0}> ({1})", info.Name, info.Phase);
 
     WRITESCOPELOCK(_rwlock);
 
@@ -103,7 +103,7 @@ bool FModuleDynamicRegistration::Load(FModuleInfo* pinfo, const FStringView& nam
     if (not (0 == dynamic.RefCount
             ? dynamic.Library.AttachOrLoad(dynamic.Path)
             : dynamic.Library.IsValid()) ) {
-        LOG(Modular, Error, L"failed to load dynamic module <{0}> from '{1}'",
+        PPE_LOG(Modular, Error, "failed to load dynamic module <{0}> from '{1}'",
             name, MakeCStringView(dynamic.Path) );
         return false;
     }
@@ -112,7 +112,7 @@ bool FModuleDynamicRegistration::Load(FModuleInfo* pinfo, const FStringView& nam
 
     void* const fAnchor = dynamic.Library.FunctionAddr(dynamic.Anchor);
     if (not fAnchor) {
-        LOG(Modular, Error, L"failed to find anchor '{0}' inside module <{1}>",
+        PPE_LOG(Modular, Error, "failed to find anchor '{0}' inside module <{1}>",
             MakeCStringView(dynamic.Anchor), name );
         return false;
     }
@@ -154,7 +154,7 @@ void FModuleDynamicRegistration::RegisterLibrary(
     Assert(anchor);
     Assert(path);
 
-    LOG(Modular, Info, L"register dynamic module <{0}> ({1})", name, MakeCStringView(path));
+    PPE_LOG(Modular, Info, "register dynamic module <{0}> ({1})", name, MakeCStringView(path));
 
     const Meta::FLockGuard scopeLock(_barrier);
     _modules.Emplace_AssertUnique(name, anchor, path);
@@ -163,7 +163,7 @@ void FModuleDynamicRegistration::RegisterLibrary(
 void FModuleDynamicRegistration::UnregisterLibrary(const FStringView& name) {
     Assert_NoAssume(not name.empty());
 
-    LOG(Modular, Info, L"unregister dynamic module <{0}>", name);
+    PPE_LOG(Modular, Info, "unregister dynamic module <{0}>", name);
 
     const Meta::FLockGuard scopeLock(_barrier);
 

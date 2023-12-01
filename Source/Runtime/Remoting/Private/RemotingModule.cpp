@@ -49,32 +49,28 @@ FRemotingModule::~FRemotingModule() {
 }
 //----------------------------------------------------------------------------
 void FRemotingModule::Start(FModularDomain& domain) {
-    IModuleInterface::Start(domain);
-
     using namespace Remoting;
-
-    RTTI_MODULE(Remoting).Start();
-
     auto& services = domain.Services();
 
+    RTTI_MODULE(Remoting).Start();
     services.Get<IRTTIService>().RegisterModule(this, RTTI_MODULE(Remoting));
 
     IRemotingService::MakeDefault(&_remotingService, domain);
     services.Add<IRemotingService>(_remotingService.get());
+
+    IModuleInterface::Start(domain);
 }
 //----------------------------------------------------------------------------
 void FRemotingModule::Shutdown(FModularDomain& domain) {
     IModuleInterface::Shutdown(domain);
 
     using namespace Remoting;
-
     auto& services = domain.Services();
 
     services.Remove<IRemotingService>();
     _remotingService.reset();
 
     services.Get<IRTTIService>().UnregisterModule(this, RTTI_MODULE(Remoting));
-
     RTTI_MODULE(Remoting).Shutdown();
 }
 //----------------------------------------------------------------------------

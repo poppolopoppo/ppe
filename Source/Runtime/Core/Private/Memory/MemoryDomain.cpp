@@ -128,18 +128,24 @@ public:
         _domains.Clear();
     }
 
-    void Register(FMemoryTracking* pTrackingData) {
+    void RegisterData(FMemoryTracking* pTrackingData) {
         Assert(pTrackingData);
 
         const FAtomicSpinLock::FScope scopeLock(_barrier);
 
-        _domains.PushHead(pTrackingData);
+        _domains.PushTail(pTrackingData);
+
+        for (ITrackingDataObserver* pObserver : _observers)
+            pObserver->OnRegisterTrackingData(pTrackingData);
     }
 
-    void Unregister(FMemoryTracking* pTrackingData) {
+    void UnregisterData(FMemoryTracking* pTrackingData) {
         Assert(pTrackingData);
 
         const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        for (ITrackingDataObserver* pObserver : _observers)
+            pObserver->OnUnregisterTrackingData(pTrackingData);
 
         _domains.Erase(pTrackingData);
     }
@@ -153,68 +159,91 @@ public:
             plist.push_back(node);
     }
 
+    void RegisterObserver(ITrackingDataObserver* pObserver) {
+        Assert(pObserver);
+
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        _observers.Push(pObserver);
+
+        // replay all tracking data already registered
+        for (FMemoryTracking* node = _domains.Head(); node; node = node->Node.Next)
+            pObserver->OnRegisterTrackingData(node);
+    }
+
+    void UnregisterObserver(ITrackingDataObserver* pObserver) {
+        Assert(pObserver);
+
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        const auto it = _observers.Find(pObserver);
+        AssertRelease_NoAssume(_observers.end() != it);
+
+        _observers.Erase(it);
+    }
+
 private:
     mutable FAtomicSpinLock _barrier;
     INTRUSIVELIST(&FMemoryTracking::Node) _domains;
+    TFixedSizeStack<ITrackingDataObserver*, 8> _observers;
 };
 #endif //!USE_PPE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS
 void ReportTrackingDatas_(
-    FWTextWriter& oss,
-    const wchar_t *header,
+    FTextWriter& oss,
+    FStringView header,
     const TMemoryView<const FMemoryTracking * const>& datas) {
-    Assert(header);
 
     if (datas.empty())
         return;
 
-    const FWTextWriter::FFormatScope formatScope(oss);
+    const FTextWriter::FFormatScope formatScope(oss);
 
     oss << FTextFormat::Float(FTextFormat::FixedFloat, 2);
 
-    oss << L"  Reporting tracking data :" << Eol;
+    oss << "  Reporting tracking data :" << Eol;
 
     CONSTEXPR size_t width = 194;
-    CONSTEXPR wchar_t fmtTitle[] = L" {0:/-33}";
-    CONSTEXPR wchar_t fmtSnapshot[] = L"| {0:7} {1:8} | {2:9} {3:9} | {4:10} {5:10}   ";
-    CONSTEXPR wchar_t fmtFooter[] = L"|| {0:10} {1:10}   ";
+    CONSTEXPR char fmtTitle[] = " {0:/-33}";
+    CONSTEXPR char fmtSnapshot[] = "| {0:7} {1:8} | {2:9} {3:9} | {4:10} {5:10}   ";
+    CONSTEXPR char fmtFooter[] = "|| {0:10} {1:10}   ";
 
-    const auto hr = Fmt::Repeat(L'-', width);
+    const auto hr = Fmt::Repeat('-', width);
 
     oss << hr << Eol
-        << L"    " << header << L" (" << datas.size() << L" elements)" << Eol
+        << "    " << header << " (" << datas.size() << " elements)" << Eol
         << hr << Eol;
 
-    Format(oss, fmtTitle, L"Tracking domain");
+    Format(oss, fmtTitle, "Tracking domain");
     Format(oss, fmtSnapshot,
-        Fmt::AlignCenter(MakeStringView(L"User")),
-        Fmt::AlignCenter(MakeStringView(L"Max")),
+        Fmt::AlignCenter(MakeStringView("User")),
+        Fmt::AlignCenter(MakeStringView("Max")),
 
-        Fmt::AlignCenter(MakeStringView(L"Stride")),
-        Fmt::AlignCenter(MakeStringView(L"Max")),
+        Fmt::AlignCenter(MakeStringView("Stride")),
+        Fmt::AlignCenter(MakeStringView("Max")),
 
-        Fmt::AlignCenter(MakeStringView(L"Size")),
-        Fmt::AlignCenter(MakeStringView(L"Peak"))
+        Fmt::AlignCenter(MakeStringView("Size")),
+        Fmt::AlignCenter(MakeStringView("Peak"))
         );
     Format(oss, fmtSnapshot,
-        Fmt::AlignCenter(MakeStringView(L"System")),
-        Fmt::AlignCenter(MakeStringView(L"Max")),
+        Fmt::AlignCenter(MakeStringView("System")),
+        Fmt::AlignCenter(MakeStringView("Max")),
 
-        Fmt::AlignCenter(MakeStringView(L"Stride")),
-        Fmt::AlignCenter(MakeStringView(L"Max")),
+        Fmt::AlignCenter(MakeStringView("Stride")),
+        Fmt::AlignCenter(MakeStringView("Max")),
 
-        Fmt::AlignCenter(MakeStringView(L"Size")),
-        Fmt::AlignCenter(MakeStringView(L"Peak"))
+        Fmt::AlignCenter(MakeStringView("Size")),
+        Fmt::AlignCenter(MakeStringView("Peak"))
         );
     Format(oss, fmtFooter,
-        Fmt::AlignCenter(MakeStringView(L"Wasted")),
-        Fmt::AlignCenter(MakeStringView(L"Peak"))
+        Fmt::AlignCenter(MakeStringView("Wasted")),
+        Fmt::AlignCenter(MakeStringView("Peak"))
         );
 
     oss << Eol;
 
-    STACKLOCAL_WTEXTWRITER(tmp, 256);
+    STACKLOCAL_TEXTWRITER(tmp, 256);
 
     for (const FMemoryTracking* data : datas) {
         Assert(data);
@@ -232,7 +261,7 @@ void ReportTrackingDatas_(
         tmp.Reset();
         const FStringView name = MakeCStringView(data->Name());
 
-        Format(tmp, L"{0}{1}", Fmt::Repeat(L' ', data->Level()), name);
+        Format(tmp, "{0}{1}", Fmt::Repeat(' ', data->Level()), name);
         Format(oss, fmtTitle, tmp.Written());
         Format(oss, fmtSnapshot,
             Fmt::CountOfElements(usr.NumAllocs),
@@ -301,9 +330,103 @@ void DumpTrackingDataFullName_(TBasicTextWriter<_Char>& oss, const FMemoryTracki
 }
 #endif //!USE_PPE_MEMORYDOMAINS
 //----------------------------------------------------------------------------
+#if USE_PPE_MEMORYDOMAINS
+struct FReportAllTrackingDataToLogger_ {
+    ~FReportAllTrackingDataToLogger_() {
+        PPE_LOG_FLUSH();
+    }
+    template <typename _Functor>
+    void operator ()(const _Functor& report) const {
+        PPE_LOG_DIRECT(MemoryDomain, Info, [&report](FTextWriter& oss) {
+            report(oss);
+        });
+    }
+};
+template <typename _Char>
+struct TReportAllTrackingDataToStream_ {
+    TPtrRef<TBasicTextWriter<_Char>> Stream;
+
+    template <typename _Functor>
+    void operator ()(const _Functor& report) {
+        report(Stream);
+    }
+};
+template <typename _Char, typename _Functor>
+static void ReportAllTrackingData_(_Functor&& writer, const FTrackingDataRegistry_::FMemoryDomainsList& datas) {
+    writer([&](TBasicTextWriter<_Char>& oss) {
+        FCurrentProcess::Get().DumpPhysicalMemory(oss);
+    });
+    writer([&](TBasicTextWriter<_Char>& oss) {
+        ReportTrackingDatas_(oss, "Memory domains", datas);
+    });
+    writer([&](TBasicTextWriter<_Char>& oss) {
+        ReportTrackingDatas_(oss, "Memory domains", datas.MakeView());
+    });
+    writer([&](TBasicTextWriter<_Char>& oss) {
+        ReportAllocationHistogram(oss);
+    });
+    writer([&](TBasicTextWriter<_Char>& oss) {
+        ReportAllocationFragmentation(oss);
+    });
+}
+template <typename _Char>
+static void ReportCsvTrackingData_(TBasicTextWriter<_Char>& oss, const FTrackingDataRegistry_::FMemoryDomainsList& datas) {
+    oss << STRING_LITERAL(_Char, "sep=;") << Eol; // for Excel
+    oss << STRING_LITERAL(_Char, "Level;Name;Segment;NumAllocs;MinSize;MaxSize;TotalSize;PeakAllocs;PeakSize;AccumulatedAllocs;AccumulatedSize") << Eol;
+
+    for (const FMemoryTracking* data : datas) {
+        oss << data->Level() << Fmt::SemiColon;
+        DumpTrackingDataFullName_(oss, *data);
+
+        const FMemoryTracking::FSnapshot usr = data->User();
+        oss << STRING_LITERAL(_Char, ";USR;")
+            << usr.NumAllocs << Fmt::SemiColon
+            << usr.MinSize << Fmt::SemiColon
+            << usr.MaxSize << Fmt::SemiColon
+            << usr.TotalSize << Fmt::SemiColon
+            << usr.PeakAllocs << Fmt::SemiColon
+            << usr.PeakSize << Fmt::SemiColon
+            << usr.AccumulatedAllocs << Fmt::SemiColon
+            << usr.AccumulatedSize << Eol;
+
+        oss << data->Level() << Fmt::SemiColon;
+        DumpTrackingDataFullName_(oss, *data);
+
+        const FMemoryTracking::FSnapshot sys = data->System();
+        oss << STRING_LITERAL(_Char, ";SYS;")
+            << sys.NumAllocs << Fmt::SemiColon
+            << sys.MinSize << Fmt::SemiColon
+            << sys.MaxSize << Fmt::SemiColon
+            << sys.TotalSize << Fmt::SemiColon
+            << sys.PeakAllocs << Fmt::SemiColon
+            << sys.PeakSize << Fmt::SemiColon
+            << sys.AccumulatedAllocs << Fmt::SemiColon
+            << sys.AccumulatedSize << Eol;
+    }
+}
+#endif //!USE_PPE_MEMORYDOMAINS
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void RegisterTrackingDataObserver(ITrackingDataObserver* pObserver) {
+#if USE_PPE_MEMORYDOMAINS
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+    FTrackingDataRegistry_::Get().RegisterObserver(pObserver);
+#else
+    Unused(pObserver);
+#endif
+}
+//----------------------------------------------------------------------------
+void UnregisterTrackingDataObserver(ITrackingDataObserver* pObserver) {
+#if USE_PPE_MEMORYDOMAINS
+    PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+    FTrackingDataRegistry_::Get().UnregisterObserver(pObserver);
+#else
+    Unused(pObserver);
+#endif
+}
 //----------------------------------------------------------------------------
 bool AllTrackingData(void* user, bool (*each)(void*, TMemoryView<const FMemoryTracking* const>)) NOEXCEPT {
 #if USE_PPE_MEMORYDOMAINS
@@ -321,7 +444,7 @@ bool AllTrackingData(void* user, bool (*each)(void*, TMemoryView<const FMemoryTr
 void RegisterTrackingData(FMemoryTracking *pTrackingData) {
 #if USE_PPE_MEMORYDOMAINS
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-    FTrackingDataRegistry_::Get().Register(pTrackingData);
+    FTrackingDataRegistry_::Get().RegisterData(pTrackingData);
 #else
     Unused(pTrackingData);
 #endif
@@ -330,22 +453,22 @@ void RegisterTrackingData(FMemoryTracking *pTrackingData) {
 void UnregisterTrackingData(FMemoryTracking *pTrackingData) {
 #if USE_PPE_MEMORYDOMAINS
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-    FTrackingDataRegistry_::Get().Unregister(pTrackingData);
+    FTrackingDataRegistry_::Get().UnregisterData(pTrackingData);
 #else
     Unused(pTrackingData);
 #endif
 }
 //----------------------------------------------------------------------------
-void ReportAllocationFragmentation(FWTextWriter& oss) {
+void ReportAllocationFragmentation(FTextWriter& oss) {
 #if USE_PPE_FINAL_RELEASE
     Unused(oss);
 #else
-    oss << L"Reporting allocator memory info:" << Eol;
+    oss << "Reporting allocator memory info:" << Eol;
     FMallocDebug::DumpMemoryInfo(oss);
 #endif
 }
 //----------------------------------------------------------------------------
-void ReportAllocationHistogram(FWTextWriter& oss) {
+void ReportAllocationHistogram(FTextWriter& oss) {
 #if USE_PPE_MEMORYDOMAINS && USE_PPE_LOGGER
     TMemoryView<const u32> sizeClasses;
     TMemoryView<const FMemoryTracking> bins;
@@ -369,10 +492,10 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
 
     const float distributionScale = distribution(maxCount);
 
-    const auto hr = Fmt::Repeat(L'-', 175);
+    const auto hr = Fmt::Repeat('-', 175);
 
     oss << FTextFormat::Float(FTextFormat::FixedFloat, 2)
-        << L"  Report allocations size histogram" << Eol
+        << "  Report allocations size histogram" << Eol
         << hr << Eol;
 
     static i64 GPrevAllocations[MemoryDomainsMaxCount] = { 0 }; // beware this is not thread safe
@@ -388,7 +511,7 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
         const FMemoryTracking::FSnapshot wasted = trackingData.Wasted();
 
         if (0 == user.AccumulatedAllocs) {
-            Format(oss, L" #{0:#3} | {1:9} | {2:9} | {3:9} | {4} |",
+            Format(oss, " #{0:#3} | {1:9} | {2:9} | {3:9} | {4} |",
                 i,
                 Fmt::SizeInBytes(sizeClasses[i]),
                 Fmt::SizeInBytes(checked_cast<u64>(system.AccumulatedSize)),
@@ -397,13 +520,13 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
         }
         else {
             const auto delta = (user.AccumulatedAllocs - GPrevAllocations[i]);
-            Format(oss, L" #{0:#3} | {1:9} | {2:9} | {3:9} | {4} |{5}> {6} +{7}",
+            Format(oss, " #{0:#3} | {1:9} | {2:9} | {3:9} | {4} |{5}> {6} +{7}",
                 i,
                 Fmt::SizeInBytes(sizeClasses[i]),
                 Fmt::SizeInBytes(checked_cast<u64>(system.AccumulatedSize)),
                 Fmt::SizeInBytes(checked_cast<u64>(wasted.AccumulatedSize)),
                 Fmt::Percentage(user.AccumulatedAllocs, totalCount),
-                Fmt::Repeat(delta ? L'=' : L'-', size_t(std::round(Min(width, width * distribution(user.AccumulatedAllocs) / distributionScale)))),
+                Fmt::Repeat(delta ? '=' : '-', size_t(std::round(Min(width, width * distribution(user.AccumulatedAllocs) / distributionScale)))),
                 Fmt::CountOfElements(checked_cast<u64>(user.AccumulatedAllocs)),
                 delta );
         }
@@ -417,7 +540,7 @@ void ReportAllocationHistogram(FWTextWriter& oss) {
 #endif
 }
 //----------------------------------------------------------------------------
-void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
+void ReportAllTrackingData(FTextWriter* optional/* = nullptr */)  {
 #if !USE_PPE_LOGGER
     if (not optional)
         return;
@@ -426,35 +549,10 @@ void ReportAllTrackingData(FWTextWriter* optional/* = nullptr */)  {
     FTrackingDataRegistry_::FMemoryDomainsList datas;
     FetchAllTrackingDataSorted_(&datas);
 
-    FWStringBuilder sb;
-    FWTextWriter& oss = (optional ? *optional : sb);
-
-#if USE_PPE_LOGGER
-    auto flushLogIFN = [optional, &sb]() {
-        if (not optional) {
-            FLogger::Log(LOG_MAKESITE(MemoryDomain, Info), sb.Written());
-            sb.clear();
-        }
-    };
-#else
-    CONSTEXPR auto flushLogIFN = []() CONSTEXPR {};
-#endif
-
-    FCurrentProcess::Get().DumpPhysicalMemory(oss);
-    flushLogIFN();
-
-    ReportTrackingDatas_(oss, L"Memory domains", datas.MakeView());
-    flushLogIFN();
-
-    ReportAllocationHistogram(oss);
-    flushLogIFN();
-
-    ReportAllocationFragmentation(oss);
-    flushLogIFN();
-
-    if (not optional)
-        FLUSH_LOG();
-
+    if (optional)
+        ReportAllTrackingData_<char>(TReportAllTrackingDataToStream_<char>{optional}, datas);
+    else
+        ReportAllTrackingData_<char>(FReportAllTrackingDataToLogger_{}, datas);
 #else
     Unused(optional);
 #endif
@@ -465,48 +563,14 @@ void ReportCsvTrackingData(FTextWriter* optional/* = nullptr */) {
     FTrackingDataRegistry_::FMemoryDomainsList datas;
     FetchAllTrackingDataSorted_(&datas);
 
-    FStringBuilder sb;
-    FTextWriter& oss = (optional ? *optional : sb);
-
-    oss << "sep=;" << Eol; // for Excel
-    oss << "Level;Name;Segment;NumAllocs;MinSize;MaxSize;TotalSize;PeakAllocs;PeakSize;AccumulatedAllocs;AccumulatedSize" << Eol;
-
-    for (const FMemoryTracking* data : datas) {
-        oss << data->Level() << Fmt::SemiColon;
-        DumpTrackingDataFullName_(oss, *data);
-
-        const FMemoryTracking::FSnapshot usr = data->User();
-        oss << ";USR;"
-            << usr.NumAllocs << Fmt::SemiColon
-            << usr.MinSize << Fmt::SemiColon
-            << usr.MaxSize << Fmt::SemiColon
-            << usr.TotalSize << Fmt::SemiColon
-            << usr.PeakAllocs << Fmt::SemiColon
-            << usr.PeakSize << Fmt::SemiColon
-            << usr.AccumulatedAllocs << Fmt::SemiColon
-            << usr.AccumulatedSize << Eol;
-
-        oss << data->Level() << Fmt::SemiColon;
-        DumpTrackingDataFullName_(oss, *data);
-
-        const FMemoryTracking::FSnapshot sys = data->System();
-        oss << ";SYS;"
-            << sys.NumAllocs << Fmt::SemiColon
-            << sys.MinSize << Fmt::SemiColon
-            << sys.MaxSize << Fmt::SemiColon
-            << sys.TotalSize << Fmt::SemiColon
-            << sys.PeakAllocs << Fmt::SemiColon
-            << sys.PeakSize << Fmt::SemiColon
-            << sys.AccumulatedAllocs << Fmt::SemiColon
-            << sys.AccumulatedSize << Eol;
+    if (optional) {
+        ReportCsvTrackingData_(*optional, datas);
     }
-
-#   if USE_PPE_LOGGER
-    if (not optional) {
-        FLogger::Log(LOG_MAKESITE(MemoryDomain, Info), ToWString(sb.Written()) );
+    else {
+        PPE_LOG_DIRECT(MemoryDomain, Info, [&](FTextWriter& oss) {
+            ReportCsvTrackingData_(oss, datas);
+        });
     }
-#   endif
-
 #else
     Unused(optional);
 #endif

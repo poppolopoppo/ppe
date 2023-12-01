@@ -11,74 +11,38 @@ namespace PPE {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
-struct TFormatTraits_ {};
-//----------------------------------------------------------------------------
-template <>
-struct TFormatTraits_<char> {
-    enum EFlags : char {
-        null        = '\0',
-        lbrace      = '{',
-        rbrace      = '}',
-        colon       = ':',
-        multiply    = '*',
-        zero        = '0',
-        fmt_alpha   = 'a',
-        fmt_ALPHA   = 'A',
-        fmt_bin     = 'b',
-        fmt_BIN     = 'B',
-        fmt_dec     = 'd',
-        fmt_DEC     = 'D',
-        fmt_hex     = 'x',
-        fmt_HEX     = 'X',
-        fmt_oct     = 'o',
-        fmt_OCT     = 'O',
-        fmt_fixed   = 'f',
-        fmt_FIXED   = 'F',
-        fmt_scient  = 's',
-        fmt_SCIENT  = 'S',
-        fmt_UPPER   = 'U',
-        fmt_lower   = 'l',
-        fmt_Capital = 'C',
-        fmt_minus   = '-',
-        fmt_sharp   = '#',
-        fmt_center  = '@',
-        fmt_truncR  = '/',
-        fmt_truncL  = '\\',
-    };
-};
-//----------------------------------------------------------------------------
-template <>
-struct TFormatTraits_<wchar_t> {
-    enum EFlags : wchar_t {
-        null        = L'\0',
-        lbrace      = L'{',
-        rbrace      = L'}',
-        colon       = L':',
-        multiply    = L'*',
-        zero        = L'0',
-        fmt_alpha   = L'a',
-        fmt_ALPHA   = L'A',
-        fmt_bin     = L'b',
-        fmt_BIN     = L'B',
-        fmt_dec     = L'd',
-        fmt_DEC     = L'D',
-        fmt_hex     = L'x',
-        fmt_HEX     = L'X',
-        fmt_oct     = L'o',
-        fmt_OCT     = L'O',
-        fmt_fixed   = L'f',
-        fmt_FIXED   = L'F',
-        fmt_scient  = L's',
-        fmt_SCIENT  = L'S',
-        fmt_UPPER   = L'U',
-        fmt_lower   = L'l',
-        fmt_Capital = L'C',
-        fmt_point   = L'.',
-        fmt_minus   = L'-',
-        fmt_sharp   = L'#',
-        fmt_center  = L'@',
-        fmt_truncR  = L'/',
-        fmt_truncL  = L'\\',
+struct TFormatTraits_ {
+    enum EFlags : _Char {
+        null =              STRING_LITERAL(_Char, '\0'),
+        lbrace =            STRING_LITERAL(_Char, '{'),
+        rbrace =            STRING_LITERAL(_Char, '}'),
+        colon =             STRING_LITERAL(_Char, ':'),
+        multiply =          STRING_LITERAL(_Char, '*'),
+        zero =              STRING_LITERAL(_Char, '0'),
+        fmt_alpha =         STRING_LITERAL(_Char, 'a'),
+        fmt_ALPHA =         STRING_LITERAL(_Char, 'A'),
+        fmt_bin =           STRING_LITERAL(_Char, 'b'),
+        fmt_BIN =           STRING_LITERAL(_Char, 'B'),
+        fmt_dec =           STRING_LITERAL(_Char, 'd'),
+        fmt_DEC =           STRING_LITERAL(_Char, 'D'),
+        fmt_hex =           STRING_LITERAL(_Char, 'x'),
+        fmt_HEX =           STRING_LITERAL(_Char, 'X'),
+        fmt_oct =           STRING_LITERAL(_Char, 'o'),
+        fmt_OCT =           STRING_LITERAL(_Char, 'O'),
+        fmt_fixed =         STRING_LITERAL(_Char, 'f'),
+        fmt_FIXED =         STRING_LITERAL(_Char, 'F'),
+        fmt_scient =        STRING_LITERAL(_Char, 's'),
+        fmt_SCIENT =        STRING_LITERAL(_Char, 'S'),
+        fmt_UPPER =         STRING_LITERAL(_Char, 'U'),
+        fmt_lower =         STRING_LITERAL(_Char, 'l'),
+        fmt_Capital =       STRING_LITERAL(_Char, 'C'),
+        fmt_minus =         STRING_LITERAL(_Char, '-'),
+        fmt_compact =       STRING_LITERAL(_Char, '_'),
+        fmt_NONCOMPACT =    STRING_LITERAL(_Char, '^'),
+        fmt_zeropad =       STRING_LITERAL(_Char, '#'),
+        fmt_center =        STRING_LITERAL(_Char, '@'),
+        fmt_truncR =        STRING_LITERAL(_Char, '/'),
+        fmt_truncL =        STRING_LITERAL(_Char, '\\'),
     };
 };
 //----------------------------------------------------------------------------
@@ -116,20 +80,26 @@ TBasicTextWriter<_Char>& operator <<(
     return oss;
 }
 //----------------------------------------------------------------------------
+enum class EFormatParserResult_ : int {
+    InvalidFormat = -1,
+    Complete = 0,
+    Continue,
+    PrintArg,
+};
+//----------------------------------------------------------------------------
 template <typename _Char>
-NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Char> *outp, size_t *index, TBasicFormatProps_<_Char>& props) {
+NO_INLINE static EFormatParserResult_ FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Char> *outp, size_t *index, TBasicFormatProps_<_Char>& props) {
     typedef typename TFormatTraits_<_Char>::EFlags format_traits;
 
     if (format.empty())
-        return false;
+        return EFormatParserResult_::Complete;
 
     *outp = format.CutBefore(format.begin());
-    *index = size_t(-1);
 
     props.Repeat = 1;
 
     do {
-        if (format_traits::lbrace != format.front() || not IsDigit(format[1]) ) {
+        if (format_traits::lbrace != format.front()) {
             *outp = outp->GrowBack();
             format = format.ShiftFront();
         }
@@ -140,12 +110,14 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
             format = format.ShiftFront(); // eat '{'
 
             intptr_t parsedIndex = 0;
-            {
-                const TBasicStringView<_Char> digits = EatDigits(format);
-                Assert(digits.data() + digits.size() == format.data());
+            if (const TBasicStringView<_Char> digits = EatDigits(format); not digits.empty()) {
+                Assert_NoAssume(digits.data() + digits.size() == format.data());
 
                 if (not Atoi(&parsedIndex, digits, 10))
                     AssertNotReached();
+            }
+            else { // implicit position increments the index for every occurrence of '{}'
+                parsedIndex = checked_cast<intptr_t>(*index + 1);
             }
 
             if (format_traits::colon == format.front()){
@@ -209,7 +181,13 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                         format = format.ShiftFront();
                         continue;
 
-                    case format_traits::fmt_sharp:
+                    case format_traits::fmt_compact:
+                    case format_traits::fmt_NONCOMPACT:
+                        props.Format.SetMisc(FTextFormat::Compact, format.front() == format_traits::fmt_compact);
+                        format = format.ShiftFront();
+                        continue;
+
+                    case format_traits::fmt_zeropad:
                         props.FillChar = format_traits::zero;
                         format = format.ShiftFront();
                         continue;
@@ -254,16 +232,16 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                     else if (IsDigit(format.front())) {
                         expect_width = true;
                     }
-
-                    if (not IsDigit(format.front())) {
-                        AssertRelease(not (expect_fixed||expect_repeat||expect_width)); // invalid format : expected a number !
+                    else {
+                        if (expect_fixed || expect_repeat || expect_width)
+                            return EFormatParserResult_::InvalidFormat; // invalid format : expected a number !
                         break;
                     }
 
                     intptr_t parsedScalar = 0;
                     {
                         const TBasicStringView<_Char> digits = EatDigits(format);
-                        Assert(digits.data() + digits.size() == format.data());
+                        Assert_NoAssume(digits.data() + digits.size() == format.data());
 
                         if (not Atoi(&parsedScalar, digits, 10))
                             AssertNotReached();
@@ -281,7 +259,8 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                         props.Format.SetPadding(padding);
                     }
                     else {
-                        AssertNotReached();
+                        Assert_NoAssume(false);
+                        return EFormatParserResult_::InvalidFormat;
                     }
                 }
                 while (format.size());
@@ -292,22 +271,26 @@ NO_INLINE static bool FormatParser_(TBasicStringView<_Char>& format, TBasicStrin
                 format = format.ShiftFront();
                 *index = checked_cast<size_t>(parsedIndex);
 
-                return true;
+                return EFormatParserResult_::PrintArg;
             }
             else
             {
                 // bad string format, missing '}'
                 // but handled :
-
+                AssertMessage_NoAssume("invalid user format string", false);
+#if 0
+                return EFormatParserResult_::InvalidFormat; // error
+#else
                 *outp = formatBeforeParse;
-                return true;
+                break; // handled: print raw format string instead of expanding it
+#endif
             }
         }
     }
     while (format.size());
 
     Assert(not outp->empty());
-    return true;
+    return EFormatParserResult_::Continue;
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -318,12 +301,14 @@ NO_INLINE static void FormatArgsImpl_(
     Assert(format.data());
 
 #if USE_PPE_ASSERT
-    const EValidateFormat formatValidation = ValidateFormatString(format.data(), format.size(), args.size());
-    AssertMessage_NoAssume(L"invalid format string", EValidateFormat::InvalidFormatString != formatValidation);
-    AssertMessage_NoAssume(L"out-of-bounds argument index", EValidateFormat::ArgumentOutOfBounds != formatValidation);
-    AssertMessage_NoAssume(L"invalid format manipulator", EValidateFormat::InvalidFormatManip != formatValidation);
-    AssertMessage_NoAssume(L"unused arguments", EValidateFormat::UnusedArguments != formatValidation);
-    AssertMessage_NoAssume(L"too many arguments (>10)", EValidateFormat::TooManyArguments != formatValidation);
+    {
+        const EValidateFormat formatValidation = ValidateFormatString(format.data(), format.size(), args.size());
+        AssertMessage_NoAssume("invalid format string", EValidateFormat::InvalidFormatString != formatValidation);
+        AssertMessage_NoAssume("out-of-bounds argument index", EValidateFormat::ArgumentOutOfBounds != formatValidation);
+        AssertMessage_NoAssume("invalid format manipulator", EValidateFormat::InvalidFormatManip != formatValidation);
+        AssertMessage_NoAssume("unused arguments", EValidateFormat::UnusedArguments != formatValidation);
+        AssertMessage_NoAssume("too many arguments (>10)", EValidateFormat::TooManyArguments != formatValidation);
+    }
 #endif
 
     TBasicFormatProps_<_Char> props;
@@ -335,16 +320,25 @@ NO_INLINE static void FormatArgsImpl_(
     const TBasicFormatProps_<_Char> original = props;
 
     size_t index = size_t(-1);
-    while (FormatParser_(formatIt, &outp, &index, props)) {
+    for (;;) {
+        const EFormatParserResult_ result = FormatParser_(formatIt, &outp, &index, props);
+        AssertRelease(result != EFormatParserResult_::InvalidFormat);
+        if (result == EFormatParserResult_::Complete ||
+            result == EFormatParserResult_::InvalidFormat)
+            break;
+
         if (outp.size())
             oss.Put(outp);
 
-        if (INDEX_NONE != index) {
+        if (result == EFormatParserResult_::PrintArg) {
             Assert(props.Repeat);
-            AssertRelease(index < args.size()); // detects invalid user input
+            AssertReleaseMessage("format argument index is out-of-bounds", index < args.size()); // detects invalid user input
 
             for (size_t n = 0; n < props.Repeat; ++n)
                 oss << props << args[index];
+        }
+        else {
+            Assert_NoAssume(result == EFormatParserResult_::Continue);
         }
 
         props = original;

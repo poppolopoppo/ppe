@@ -38,7 +38,7 @@ void main ()
 ARGS_IF_RHIDEBUG("Compute_DynamicOffset1_CS"));
 
     TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Compute_DynamicOffset1")) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     const FDeviceProperties properties = fg.DeviceProperties();
 
@@ -65,10 +65,10 @@ ARGS_IF_RHIDEBUG("Compute_DynamicOffset1_CS"));
             EBufferUsage::Transfer },
         Default ARGS_IF_RHIDEBUG("SharedBuffer")
     ));
-    LOG_CHECK(WindowTest, !!buffer);
+    PPE_LOG_CHECK(WindowTest, !!buffer);
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
 
     bool callbackWasCalled = false;
     bool dataIsCorrect = false;
@@ -101,7 +101,7 @@ ARGS_IF_RHIDEBUG("Compute_DynamicOffset1_CS"));
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Compute_DynamicOffset1")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->SetBufferBase(FUniformID{ "UB" }, 0_b);
     resources->SetBufferBase(FUniformID{ "SSB" }, baseOffset);
@@ -112,30 +112,30 @@ ARGS_IF_RHIDEBUG("Compute_DynamicOffset1_CS"));
     PFrameTask tWrite = cmd->Task(FUpdateBuffer{}
         .SetBuffer(buffer)
         .AddData(MakeView(srcData), ubOffset));
-    LOG_CHECK(WindowTest, !!tWrite);
+    PPE_LOG_CHECK(WindowTest, !!tWrite);
 
     PFrameTask tDispatch = cmd->Task(FDispatchCompute{}
         .SetPipeline(ppln)
         .AddResources(FDescriptorSetID{ "0" }, resources)
         .Dispatch({1, 1})
         .DependsOn(tWrite));
-    LOG_CHECK(WindowTest, !!tDispatch);
+    PPE_LOG_CHECK(WindowTest, !!tDispatch);
 
     PFrameTask tRead = cmd->Task(FReadBuffer{}
         .SetBuffer(buffer, sbOffset, dstSize)
         .SetCallback(onLoaded)
         .DependsOn(tDispatch));
-    LOG_CHECK(WindowTest, !!tRead);
+    PPE_LOG_CHECK(WindowTest, !!tRead);
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
 
-    LOG_CHECK(WindowTest, not callbackWasCalled);
+    PPE_LOG_CHECK(WindowTest, not callbackWasCalled);
 
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, callbackWasCalled);
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, callbackWasCalled);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

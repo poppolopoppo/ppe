@@ -2,6 +2,7 @@
 
 #include "Core_fwd.h"
 
+#include "Allocator/AllocatorBlock.h"
 #include "Allocator/Malloc.h"
 #include "Memory/MemoryDomain.h"
 
@@ -9,7 +10,10 @@
 #define TRACKING_ALIGNED_MALLOC(_DOMAIN, _SIZE, _ALIGN) ::PPE::tracking_aligned_malloc<MEMORYDOMAIN_TAG(_DOMAIN)>((_SIZE), (_ALIGN))
 #define TRACKING_CALLOC(_DOMAIN, _NMEMB, _SIZE) ::PPE::tracking_calloc<MEMORYDOMAIN_TAG(_DOMAIN)>((_NMEMB), (_SIZE))
 #define TRACKING_REALLOC(_DOMAIN, _PTR, _SIZE) ::PPE::tracking_realloc<MEMORYDOMAIN_TAG(_DOMAIN)>((_PTR), (_SIZE))
+#define TRACKING_MALLOC_FOR_NEW(_DOMAIN, _SIZE) ::PPE::tracking_malloc_for_new<MEMORYDOMAIN_TAG(_DOMAIN)>(_SIZE)
+#define TRACKING_REALLOC_FOR_NEW(_DOMAIN, _BLK, _SIZE) ::PPE::tracking_realloc_for_new<MEMORYDOMAIN_TAG(_DOMAIN)>(_BLK, _SIZE)
 #define TRACKING_FREE(_DOMAIN, _PTR) ::PPE::tracking_free(_PTR)
+#define TRACKING_FREE_FOR_DELETE(_DOMAIN, _BLK) ::PPE::tracking_free_for_delete(_BLK)
 
 #define TRACKING_NEW(_DOMAIN, ...) INPLACE_NEW(::PPE::tracking_new<MEMORYDOMAIN_TAG(_DOMAIN) COMMA __VA_ARGS__>(), __VA_ARGS__)
 #define TRACKING_DELETE(_DOMAIN, _PTR) ::PPE::tracking_delete(_PTR)
@@ -27,11 +31,11 @@ NODISCARD PPE_CORE_API void* (tracking_calloc)(FMemoryTracking& trackingData, si
 //----------------------------------------------------------------------------
 NODISCARD PPE_CORE_API void* (tracking_realloc)(FMemoryTracking& trackingData, void *ptr, size_t size);
 //----------------------------------------------------------------------------
-NODISCARD PPE_CORE_API void* (tracking_malloc_for_new)(FMemoryTracking& trackingData, size_t size);
+NODISCARD PPE_CORE_API FAllocatorBlock (tracking_malloc_for_new)(FMemoryTracking& trackingData, size_t size);
 //----------------------------------------------------------------------------
-NODISCARD PPE_CORE_API void* (tracking_realloc_for_new)(FMemoryTracking& trackingData, void* ptr, size_t size, size_t old);
+NODISCARD PPE_CORE_API FAllocatorBlock (tracking_realloc_for_new)(FMemoryTracking& trackingData, FAllocatorBlock blk, size_t size);
 //----------------------------------------------------------------------------
-PPE_CORE_API void  (tracking_free_for_delete)(void* ptr, size_t size) NOEXCEPT;
+PPE_CORE_API void (tracking_free_for_delete)(FAllocatorBlock blk) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -65,7 +69,7 @@ NODISCARD void* tracking_malloc(size_t size) {
 }
 //----------------------------------------------------------------------------
 template <typename _MemoryDomain>
-NODISCARD void* tracking_malloc_for_new(size_t size) {
+NODISCARD FAllocatorBlock tracking_malloc_for_new(size_t size) {
 #if USE_PPE_MEMORYDOMAINS
     return (tracking_malloc_for_new)(_MemoryDomain::TrackingData(), size);
 #else
@@ -104,11 +108,11 @@ NODISCARD void* tracking_realloc(void *ptr, size_t size) {
 }
 //----------------------------------------------------------------------------
 template <typename _MemoryDomain>
-NODISCARD void* tracking_realloc_for_new(void* ptr, size_t size, size_t old) {
+NODISCARD FAllocatorBlock tracking_realloc_for_new(FAllocatorBlock blk, size_t size) {
 #if USE_PPE_MEMORYDOMAINS
-    return (tracking_realloc_for_new)(_MemoryDomain::TrackingData(), ptr, size, old);
+    return (tracking_realloc_for_new)(_MemoryDomain::TrackingData(), blk, size);
 #else
-    return (PPE::realloc_for_new)(ptr, size, old);
+    return (PPE::realloc_for_new)(blk, size);
 #endif
 }
 //----------------------------------------------------------------------------
@@ -116,26 +120,14 @@ NODISCARD void* tracking_realloc_for_new(void* ptr, size_t size, size_t old) {
 //----------------------------------------------------------------------------
 template <typename _MemoryDomain, typename T>
 NODISCARD void* tracking_new() {
-    IF_CONSTEXPR(std::has_virtual_destructor_v<T>) {
-        // can't rely on sizeof(T) in tracking_delete() with virtual classes
-        return tracking_malloc<_MemoryDomain>(sizeof(T));
-    }
-    else {
-        return tracking_malloc_for_new<_MemoryDomain>(sizeof(T));
-    }
+    return tracking_malloc<_MemoryDomain>(sizeof(T));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void tracking_delete(T* ptr) NOEXCEPT {
     Assert(ptr);
     Meta::Destroy(ptr);
-    IF_CONSTEXPR(std::has_virtual_destructor_v<T>) {
-        // can't rely on sizeof(T) with virtual classes
-        tracking_free(ptr);
-    }
-    else {
-        tracking_free_for_delete(ptr, sizeof(T));
-    }
+    tracking_free(ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>

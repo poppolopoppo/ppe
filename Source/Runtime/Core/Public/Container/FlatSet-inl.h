@@ -183,7 +183,7 @@ void TFlatSet<_Key, _EqualTo, _Less, _Vector>::Insert_AssertUnique(const _Key& k
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 bool TFlatSet<_Key, _EqualTo, _Less, _Vector>::Erase(const _Key& key) {
     const const_iterator it = find(key);
-    if (end() == it)
+    if (cend() == it)
         return false;
     Erase(it);
     return true;
@@ -197,7 +197,7 @@ void TFlatSet<_Key, _EqualTo, _Less, _Vector>::Erase(const const_iterator& it) {
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 void TFlatSet<_Key, _EqualTo, _Less, _Vector>::Remove_AssertExists(const _Key& key) {
     const const_iterator it = find(key);
-    Assert(end() != it);
+    Assert(cend() != it);
     Erase(it);
 }
 //----------------------------------------------------------------------------

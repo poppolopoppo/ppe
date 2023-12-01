@@ -707,7 +707,7 @@ auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Alloca
         }
     }
 
-    AssertReleaseFailed(L"Out-of-memory: can't allocate a new chunk and all buckets are empty");
+    AssertReleaseFailed("Out-of-memory: can't allocate a new chunk and all buckets are empty");
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>

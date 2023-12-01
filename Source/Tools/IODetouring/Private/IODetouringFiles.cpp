@@ -8,16 +8,18 @@
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+static POD_STORAGE(FIODetouringFiles) GIODetouringFilesStorage_;
+//----------------------------------------------------------------------------
 // Log all file accesses (read & write), can also alias files
 //----------------------------------------------------------------------------
 FIODetouringFiles::FIODetouringFiles(const FIODetouringPayload& payload)
-: _files(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<files_type::FEntry*>(4049))
-, _procs(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<procs_type::FEntry*>(4049))
-, _opens(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<opens_type::FEntry*>(4049))
-, _envs(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<envs_type::FEntry*>(319))
-, _pwzStdin(payload.wzStdin)
-, _pwzStdout(payload.wzStdout)
-, _pwzStderr(payload.wzStderr)
+:   _files(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<files_type::FEntry*>(4049))
+,   _procs(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<procs_type::FEntry*>(4049))
+,   _opens(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<opens_type::FEntry*>(4049))
+,   _envs(PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::AllocateT<envs_type::FEntry*>(319))
+,   _pwzStdin(payload.wzStdin)
+,   _pwzStdout(payload.wzStdout)
+,   _pwzStderr(payload.wzStderr)
 {
     InitSystemPaths_(payload);
 }
@@ -31,6 +33,19 @@ FIODetouringFiles::~FIODetouringFiles() {
     PPE::TStaticAllocator<PPE::FWin32GlobalAllocatorPtr>::DeallocateT(_envs.Clear_ReleaseMemory());
 
     PPE::Unused(exclusiveHeap);
+}
+
+//----------------------------------------------------------------------------
+void FIODetouringFiles::Create(const FIODetouringPayload& payload) {
+    new (static_cast<void*>(&GIODetouringFilesStorage_)) FIODetouringFiles(payload);
+}
+//----------------------------------------------------------------------------
+FIODetouringFiles& FIODetouringFiles::Get() NOEXCEPT {
+    return (*reinterpret_cast<FIODetouringFiles*>(&GIODetouringFilesStorage_));
+}
+//----------------------------------------------------------------------------
+void FIODetouringFiles::Destroy() {
+    reinterpret_cast<FIODetouringFiles*>(&GIODetouringFilesStorage_)->~FIODetouringFiles();
 }
 //----------------------------------------------------------------------------
 VOID FIODetouringFiles::Dump() {
@@ -61,24 +76,45 @@ VOID FIODetouringFiles::Dump() {
 //----------------------------------------------------------------------------
 // Filenames:
 //----------------------------------------------------------------------------
+class FIODetouringFiles::FLazyCopyFileKey {
+public:
+    FLazyCopyFileKey(FIODetouringFiles& owner, PCWSTR pwzPath)
+        : _owner(owner), _transient(pwzPath)
+    {}
+
+    operator FFileKey() const {
+        return AllocateKeyCopy();
+    }
+
+    FFileKey AllocateKeyCopy() const {
+        const auto exclusiveHeap = _owner._heap.LockExclusive();
+        // copy the key once we sure we need to add it
+        return FFileKey{
+            _owner.AllocString_(exclusiveHeap, _transient.Value()),
+            _transient.Hash() };
+    }
+
+    friend bool operator==(const FFileKey& lhs, const FLazyCopyFileKey& rhs) {
+        return (lhs == rhs._transient);
+    }
+    friend bool operator <(const FFileKey& lhs, const FLazyCopyFileKey& rhs) {
+        return (lhs < rhs._transient);
+    }
+
+private:
+    FIODetouringFiles& _owner;
+    FFileKey _transient;
+};
+//----------------------------------------------------------------------------
 auto FIODetouringFiles::FindFull(PCWSTR pwzPath) -> PFileInfo {
-    const FFileKey key{pwzPath};
-    const auto exclusiveHeap = _heap.LockExclusive();
+    const FLazyCopyFileKey key{*this, pwzPath};
 
     bool bAdded = false;
     auto& it = _files.FindOrAdd(key, &bAdded);
 
     if (bAdded) {
-
-        if (it.first.Value().c_str() == pwzPath/* some other thread could have already allocated content */) {
-            // copy the key once we sure we need to add it
-            const_cast<FFileKey&>(it.first) = FFileKey{
-                AllocString_(exclusiveHeap, pwzPath),
-                it.first.Hash()};
-
-            // init basic file info properties with path
-            InitFileInfo_(it.second, it.first);
-        }
+        // init basic file info properties with path
+        InitFileInfo_(it.second, it.first);
     }
 
     return &it.second;
@@ -532,11 +568,11 @@ BOOL FIODetouringFiles::PrefixMatch(PCWSTR pwzPath, PCWSTR pwzPrefix) NOEXCEPT {
 //----------------------------------------------------------------------------
 BOOL FIODetouringFiles::SuffixMatch(PCWSTR pwzPath, PCWSTR pwzSuffix) NOEXCEPT {
     // Move both pointers to the end of the strings.
-    PCWSTR pwzFileBeg = pwzPath;
+    const PCWSTR pwzFileBeg = pwzPath;
     while (*pwzPath)
         pwzPath++;
 
-    PCWSTR pwzSuffixBeg = pwzSuffix;
+    const PCWSTR pwzSuffixBeg = pwzSuffix;
     while (*pwzSuffix)
         pwzSuffix++;
 
@@ -564,7 +600,7 @@ PPE::FConstWChar FIODetouringFiles::AllocString_(const heap_type::FExclusiveLock
     PWSTR const pwzCopy = (PWSTR)heap->Allocate((len+1/* zero char */) * sizeof(wchar_t));
     StringCopy(pwzCopy, pwzPath);
 
-    return PPE::FConstWChar(pwzCopy);
+    return { pwzCopy };
 }
 //----------------------------------------------------------------------------
 PPE::FConstChar FIODetouringFiles::AllocString_(const heap_type::FExclusiveLock& heap, PCSTR pszPath) {
@@ -574,11 +610,7 @@ PPE::FConstChar FIODetouringFiles::AllocString_(const heap_type::FExclusiveLock&
     PSTR const pszCopy = (PSTR)heap->Allocate((len+1/* zero char */) * sizeof(char));
     StringCopy(pszCopy, pszPath);
 
-    return PPE::FConstChar(pszCopy);
-}
-//----------------------------------------------------------------------------
-void* FIODetouringFiles::class_singleton_storage() NOEXCEPT {
-    return singleton_type::make_singleton_storage(); // for shared lib
+    return { pszCopy };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

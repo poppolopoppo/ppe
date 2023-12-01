@@ -6,14 +6,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, typename U>
-CONSTEXPR Meta::TEnableIf<std::is_floating_point_v<T>, T> BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT {
+template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T>&& std::is_arithmetic_v<U>>* >
+CONSTEXPR auto BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT {
     return static_cast<T>(v0*f0 + v1*f1 + v2*f2);
 }
-//----------------------------------------------------------------------------
-//inline CONSTEXPR bool BarycentricLerp(bool v0, bool v1, bool v2, float f0, float f1, float f2) NOEXCEPT {
-//    return (((v0?1:0)*f0 + (v1?1:0)*f1 + (v2?1:0)*f2) >= 0.5f);
-//}
 //----------------------------------------------------------------------------
 inline float Hypot(float a, float b) NOEXCEPT {
     return Sqrt(a * a + b * b);
@@ -95,10 +91,10 @@ inline double Rcp(double d) {
     return (1. / d);
 }
 //----------------------------------------------------------------------------
-template <typename T, typename U, class>
-CONSTEXPR T SLerp(T v0, Meta::TDontDeduce<T> v1, U f) NOEXCEPT {
+template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T>&& std::is_arithmetic_v<U>>* >
+CONSTEXPR auto SLerp(T v0, Meta::TDontDeduce<T> v1, U f) NOEXCEPT {
     Assert(f >= U(0) && f <= U(1));
-    return (f < T(0.5))
+    return (f < U(0.5))
         ? (v1 - v0) * f + v0
         : (v0 - v1) * (1 - f) + v1;
 }
@@ -108,25 +104,39 @@ CONSTEXPR T Sqr(T x) NOEXCEPT {
     return x * x;
 }
 //----------------------------------------------------------------------------
-template <typename T, class>
+template <typename T, Meta::TEnableIf<std::is_arithmetic_v<T>>* >
 CONSTEXPR T Step(T y, Meta::TDontDeduce<T> x) NOEXCEPT {
     return (x >= y) ? T(1) : T(0);
 }
 //----------------------------------------------------------------------------
-template <typename T, typename U, class>
-CONSTEXPR T SMin(T a, Meta::TDontDeduce<T> b, U k) NOEXCEPT {
+CONSTEXPR float SStep(float x) NOEXCEPT {
+    Assert_NoAssume(Saturate(x) == x);
+    const float ix = (1 - x);
+    x = x * x;
+    return x / (x + ix * ix); ;
+}
+//----------------------------------------------------------------------------
+CONSTEXPR double SStep(double x) NOEXCEPT {
+    Assert_NoAssume(Saturate(x) == x);
+    const double ix = (1 - x);
+    x = x * x;
+    return x / (x + ix * ix); ;
+}
+//----------------------------------------------------------------------------
+template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T>&& std::is_arithmetic_v<U>>* >
+CONSTEXPR auto SMin(T a, Meta::TDontDeduce<T> b, U k) NOEXCEPT {
     // Polynomial smooth minimum by iq
     U h = Saturate(U(0.5) + U(0.5)*(a - b) / k);
     return T(Lerp(a, b, h) - k*h*(U(1.0) - h));
 }
 //----------------------------------------------------------------------------
-template <typename T, typename U, class>
+template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* >
 CONSTEXPR auto Smoothstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT {
     auto ff = Saturate((f - vmin) / (vmax - vmin));
     return ff*ff*(3 - 2 * ff);
 }
 //----------------------------------------------------------------------------
-template <typename T, typename U, class>
+template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T>&& std::is_arithmetic_v<U>>* >
 CONSTEXPR auto Smootherstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT {
     f = Saturate((f - vmin) / (vmax - vmin));
     return f*f*f*(f*(f*6 - 15) + 10);

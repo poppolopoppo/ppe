@@ -29,7 +29,7 @@ auto FLinuxPlatformCrash::WriteMiniDump(
     Unused(exception_ptrs);
     Unused(suspendThreads);
 
-    // #TODO 
+    // #TODO
     // http://www.scribd.com/doc/3726406/Crash-N-Burn-Writing-Linux-application-fault-handlers
     AssertNotImplemented();
     return EResult::NotAvailable;
@@ -37,7 +37,7 @@ auto FLinuxPlatformCrash::WriteMiniDump(
 //----------------------------------------------------------------------------
 void FLinuxPlatformCrash::SetExceptionHandlers() {
     // http://www.scribd.com/doc/3726406/Crash-N-Burn-Writing-Linux-application-fault-handlers
-    LOG_DIRECT(HAL, Warning, L"SetExceptionHandlers() is not implemented on linux");
+    PPE_LOG_DIRECT(HAL, Warning, "SetExceptionHandlers() is not implemented on linux");
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformCrash::AbortProgramWithDump() {

@@ -20,12 +20,12 @@ FClassNotFound::FClassNotFound(const RTTI::FName& name)
 {}
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FClassNotFound::Description(FWTextWriter& oss) const {
+FTextWriter& FClassNotFound::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What())
-        << L": while looking for <"
+        << ": while looking for <"
         << _name
-        << L"> !";
+        << "> !";
 }
 #endif
 //----------------------------------------------------------------------------
@@ -35,12 +35,12 @@ FObjectNotFound::FObjectNotFound(const RTTI::FPathName& path)
 {}
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FObjectNotFound::Description(FWTextWriter& oss) const {
+FTextWriter& FObjectNotFound::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What())
-        << L": while looking for '"
+        << ": while looking for '"
         << _path
-        << L"' !";
+        << "' !";
 }
 #endif
 //----------------------------------------------------------------------------
@@ -51,21 +51,20 @@ FUnexpectedObjectClass::FUnexpectedObjectClass(const RTTI::FMetaClass* expected,
 {}
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FUnexpectedObjectClass::Description(FWTextWriter& oss) const {
+FTextWriter& FUnexpectedObjectClass::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What())
-        << L": got <"
+        << ": got <"
         << _found->Name()
-        << L"> instead of <"
+        << "> instead of <"
         << _expected->Name()
-        << L"> !";
+        << "> !";
 }
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTransactionLinker::FTransactionLinker()
-{}
+FTransactionLinker::FTransactionLinker() = default;
 //----------------------------------------------------------------------------
 FTransactionLinker::FTransactionLinker(FTransactionLinker&& rvalue) NOEXCEPT {
     operator =(std::move(rvalue));

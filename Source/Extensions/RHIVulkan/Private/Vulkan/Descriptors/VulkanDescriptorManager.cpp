@@ -23,7 +23,7 @@ bool FVulkanDescriptorManager::Construct() {
     const auto exclusivePools = _descriptorPools.LockExclusive();
     Assert_NoAssume(exclusivePools->empty());
 
-    LOG_CHECK(RHI, !!CreateDescriptorPool_(exclusivePools.Value()) );
+    PPE_LOG_CHECK(RHI, !!CreateDescriptorPool_(exclusivePools.Value()) );
 
     return true;
 }
@@ -69,7 +69,7 @@ bool FVulkanDescriptorManager::AllocateDescriptorSet(FVulkanDescriptorSet* pDesc
     }
 
     info.descriptorPool = CreateDescriptorPool_(*exclusivePools);
-    LOG_CHECK(RHI, info.descriptorPool );
+    PPE_LOG_CHECK(RHI, info.descriptorPool );
 
     VK_CHECK( _device.vkAllocateDescriptorSets(_device.vkDevice(), &info, &pDescriptors->First) );
 
@@ -123,7 +123,7 @@ void FVulkanDescriptorManager::DeallocateDescriptorSets(TMemoryView<const FVulka
 }
 //----------------------------------------------------------------------------
 VkDescriptorPool FVulkanDescriptorManager::CreateDescriptorPool_(FDescriptorPools& pools) {
-    LOG_CHECK(RHI, pools.size() < pools.capacity());
+    PPE_LOG_CHECK(RHI, pools.size() < pools.capacity());
 
     TFixedSizeStack<VkDescriptorPoolSize, 16> poolSizes;
 

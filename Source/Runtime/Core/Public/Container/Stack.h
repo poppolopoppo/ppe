@@ -3,7 +3,6 @@
 #include "Core.h"
 
 #include "Container/Hash.h"
-#include "Container/HashHelpers.h"
 #include "Memory/MemoryView.h"
 #include "Meta/AlignedStorage.h"
 
@@ -188,6 +187,10 @@ public:
         return hash_range(stack.begin(), stack.end());
     }
 
+    friend void swap(TStack& lhs, TStack& rhs) NOEXCEPT {
+        lhs.Swap(rhs);
+    }
+
 protected:
     size_type _size;
     size_type _capacity;
@@ -317,11 +320,6 @@ void TStack<T, _IsPod>::Swap(TStack& other) {
     std::swap(_storage, other._storage);
 }
 //----------------------------------------------------------------------------
-template <typename T, bool _IsPod>
-void swap(TStack<T, _IsPod>& lhs, TStack<T, _IsPod>& rhs) NOEXCEPT {
-    lhs.Swap(rhs);
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, size_t _Capacity, size_t _Alignment = std::alignment_of<T>::value >
@@ -442,6 +440,16 @@ bool Remove_ReturnIfExists(TStack<T, _IsPod>& s, const T& elt) {
         return true;
     }
     return false;
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+NODISCARD size_t SizeOf(const TStack<T, _IsPod>& s) NOEXCEPT {
+    return s.size();
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
+void Resize_DiscardData(TStack<T, _IsPod>& s, size_t size) {
+    s.Resize(size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

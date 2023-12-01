@@ -33,7 +33,7 @@ TRefPtr<T> FWeakRefCountable::NewRefImpl(void* p, deleter_func deleter, _Args&&.
 //----------------------------------------------------------------------------
 // provide a custom allocator, deleter will be exported in the counter
 template <typename T, typename _Allocator, typename... _Args>
-TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args) {
+NODISCARD TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args) {
     using deleter_func = typename FWeakRefCountable::deleter_func;
     return FWeakRefCountable::NewRefImpl<T>(
         TStaticAllocator<_Allocator>::template AllocateOneT<T>(),
@@ -43,18 +43,18 @@ TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args) {
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS
 template <typename T, typename... _Args>
-TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args) {
+NODISCARD TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args) {
     return FWeakRefCountable::NewRefImpl<T>(
         tracking_malloc(trackingData, sizeof(T)),
-        [](void* ptr) NOEXCEPT{ tracking_free_for_delete(ptr, sizeof(T)); },
+        [](void* ptr) NOEXCEPT{ tracking_free(ptr); },
         std::forward<_Args>(args)... );
 }
 #else
 template <typename T, typename... _Args>
-TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args) {
+NODISCARD TRefPtr< TEnableIfWeakRefCountable<T> > NewRef(_Args&&... args) {
     return FWeakRefCountable::NewRefImpl<T>(
-        PPE::malloc_for_new(sizeof(T)),
-        [](void* ptr) NOEXCEPT{ free_for_delete(ptr, sizeof(T)); },
+        PPE::malloc(sizeof(T)),
+        [](void* ptr) NOEXCEPT{ PPE::free(ptr); },
         std::forward<_Args>(args)... );
 }
 #endif
@@ -94,7 +94,7 @@ void RemoveRefIFP(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool RemoveRefIFP_KeepAlive_ReturnIfReachZero(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT {
+NODISCARD bool RemoveRefIFP_KeepAlive_ReturnIfReachZero(TEnableIfWeakRefCountable<T>* ptr) NOEXCEPT {
     Assert(ptr);
     if (Likely(ptr->_cnt)) {
         Assert_NoAssume(ptr->_cnt->WeakRefCount() > 0); // counter must be already *locked* !
@@ -121,7 +121,7 @@ inline void FWeakRefCountable::DecSafeRefCount() const NOEXCEPT {
 #endif //!WITH_PPE_SAFEPTR
 //----------------------------------------------------------------------------
 template <typename T>
-NO_INLINE TEnableIfWeakRefCountable<T, void> OnStrongRefCountReachZero(T* ptr) NOEXCEPT {
+NODISCARD NO_INLINE TEnableIfWeakRefCountable<T, void> OnStrongRefCountReachZero(T* ptr) NOEXCEPT {
     Assert(ptr);
     Assert_NoAssume(0 == ptr->RefCount());
 #if USE_PPE_SAFEPTR

@@ -51,6 +51,7 @@ public:
                 reinterpret_cast<_Impl*>(_data.Get())->ReleaseWriter();
         }
         auto& Value() const { return _data->_value; }
+        auto* Get() const { return std::addressof(Value()); }
         auto& operator *() const NOEXCEPT { return Meta::DerefPtr(_data->_value); }
         auto* operator ->() const NOEXCEPT { return std::addressof(operator*()); }
     };
@@ -66,11 +67,11 @@ public:
     TThreadSafeCRTP_(TThreadSafeCRTP_&& ) = default;
     TThreadSafeCRTP_& operator =(TThreadSafeCRTP_&& ) = delete;
 
-    FSharedLock LockShared() const { return FSharedLock(*this); }
-    FExclusiveLock LockExclusive() { return FExclusiveLock(*this); }
+    NODISCARD FSharedLock LockShared() const { return FSharedLock(*this); }
+    NODISCARD FExclusiveLock LockExclusive() { return FExclusiveLock(*this); }
 
-    T& Value_Unsafe() { return _value; }
-    const T& Value_Unsafe() const { return _value; }
+    NODISCARD T& Value_Unsafe() { return _value; }
+    NODISCARD const T& Value_Unsafe() const { return _value; }
 
 private:
     T _value;
@@ -278,7 +279,7 @@ public:
 // Helper
 //----------------------------------------------------------------------------
 template <EThreadBarrier _Barrier, typename T>
-TThreadSafe<T, _Barrier> MakeThreadSafe(T&& rvalue) NOEXCEPT {
+NODISCARD TThreadSafe<T, _Barrier> MakeThreadSafe(T&& rvalue) NOEXCEPT {
     return TThreadSafe<T, _Barrier>( std::forward<T>(rvalue) );
 }
 //----------------------------------------------------------------------------

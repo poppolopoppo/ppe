@@ -96,20 +96,20 @@ void main()
 ARGS_IF_RHIDEBUG("Compiler_MeshShader1_MS"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::VKSL_110);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_110));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_110));
 
-    LOG_CHECK(WindowTest, ppln.Topology == EPrimitiveTopology::TriangleList);
+    PPE_LOG_CHECK(WindowTest, ppln.Topology == EPrimitiveTopology::TriangleList);
 
-    LOG_CHECK(WindowTest, ppln.MaxIndices == 32*3);
-    LOG_CHECK(WindowTest, ppln.MaxVertices == 81);
+    PPE_LOG_CHECK(WindowTest, ppln.MaxIndices == 32*3);
+    PPE_LOG_CHECK(WindowTest, ppln.MaxVertices == 81);
 
-    LOG_CHECK(WindowTest, ppln.DefaultTaskGroupSize == uint3{ 32,1,1 });
-    LOG_CHECK(WindowTest, ppln.DefaultMeshGroupSize == uint3::One);
+    PPE_LOG_CHECK(WindowTest, ppln.DefaultTaskGroupSize == uint3{ 32,1,1 });
+    PPE_LOG_CHECK(WindowTest, ppln.DefaultMeshGroupSize == uint3::One);
 
-    LOG_CHECK(WindowTest, ppln.MeshSizeSpecialization == uint3{ 0,UMax,UMax });
-    LOG_CHECK(WindowTest, ppln.TaskSizeSpecialization == uint3{ ~0u });
+    PPE_LOG_CHECK(WindowTest, ppln.MeshSizeSpecialization == uint3{ 0,UMax,UMax });
+    PPE_LOG_CHECK(WindowTest, ppln.TaskSizeSpecialization == uint3{ ~0u });
 
     return true;
 }

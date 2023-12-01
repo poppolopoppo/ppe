@@ -98,13 +98,13 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& s, FTextFormat::EF
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& s, FTextFormat::EMisc v) {
-    s.Format().SetMisc(s.Format().Misc() + v);
+    s.Format().SetMisc(v, true);
     return s;
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator >>(TBasicTextWriter<_Char>& s, FTextFormat::EMisc v) {
-    s.Format().SetMisc(s.Format().Misc() - v);
+    s.Format().SetMisc(v, false);
     return s;
 }
 //----------------------------------------------------------------------------

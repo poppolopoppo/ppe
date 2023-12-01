@@ -179,7 +179,7 @@ void CompressMemory(IBufferedStreamWriter* dst, const TMemoryView<const u8>& src
         }
     }
 
-    LOG(Benchmark, Info, L"LZJB compression ratio : {0} -> {1} = {2:f2}%",
+    PPE_LOG(Benchmark, Info, "LZJB compression ratio : {0} -> {1} = {2:f2}%",
         Fmt::FSizeInBytes(src.SizeInBytes()), Fmt::FSizeInBytes(dst->TellO()), dst->TellO()*100.0f/src.SizeInBytes() );
 }
 //----------------------------------------------------------------------------

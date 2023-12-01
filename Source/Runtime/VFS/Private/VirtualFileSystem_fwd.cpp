@@ -39,6 +39,14 @@ bool VFS_FileExists(const FFilename& filename, EExistPolicy policy/* = ExistPoli
     return VFS().FileExists(filename, policy);
 }
 //----------------------------------------------------------------------------
+size_t VFS_EnumerateMountingPoints(const TFunction<void(const FMountingPoint&)>& foreach) {
+    return VFS().EnumerateMountingPoints(foreach);
+}
+//----------------------------------------------------------------------------
+size_t VFS_EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunction<void(const FDirpath&)>& onDirectory, const TFunction<void(const FFilename&)>& onFile) {
+    return VFS().EnumerateDir(dirpath, recursive, onDirectory, onFile);
+}
+//----------------------------------------------------------------------------
 size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
     return VFS().EnumerateFiles(dirpath, recursive, foreach);
 }

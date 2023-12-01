@@ -17,7 +17,7 @@ namespace Lexer {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FLexerException : public PPE::Serialize::FSerializeException {
+class FLexerException : public PPE::Serialize::FSerializeException {
 public:
     typedef PPE::Serialize::FSerializeException parent_type;
 
@@ -27,13 +27,11 @@ public:
         ,   _site(_match.Site())
     {}
 
-    virtual ~FLexerException() = default;
-
     const Lexer::FMatch& Match() const { return _match; }
     Lexer::FSpan Site() const { return _site; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    PPE_SERIALIZE_API virtual FTextWriter& Description(FTextWriter& oss) const override final;
 #endif
 
 private:

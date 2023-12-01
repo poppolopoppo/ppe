@@ -95,20 +95,20 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
 
     TAutoResource<FImageID> image1{ fg, fg.CreateImage(imageDesc,
         Default ARGS_IF_RHIDEBUG("RenderTarget-1")) };
-    LOG_CHECK(WindowTest, image1.Valid());
+    PPE_LOG_CHECK(WindowTest, image1.Valid());
 
     TAutoResource<FImageID> image2{ fg, fg.CreateImage(imageDesc,
         Default ARGS_IF_RHIDEBUG("RenderTarget-2")) };
-    LOG_CHECK(WindowTest, image1.Valid());
+    PPE_LOG_CHECK(WindowTest, image1.Valid());
 
     TAutoResource<FGPipelineID> gppln{ fg, fg.CreatePipeline(gdesc ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_G")) };
-    LOG_CHECK(WindowTest, gppln.Valid());
+    PPE_LOG_CHECK(WindowTest, gppln.Valid());
 
     TAutoResource<FCPipelineID> cppln{ fg, fg.CreatePipeline(cdesc ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_C")) };
-    LOG_CHECK(WindowTest, cppln.Valid());
+    PPE_LOG_CHECK(WindowTest, cppln.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), cppln, FDescriptorSetID{ "0" }));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), cppln, FDescriptorSetID{ "0" }));
 
     bool dataIsCorrect = false;
     const auto onLoaded = [&dataIsCorrect](const FImageView& imageData) {
@@ -120,8 +120,8 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
             imageData.Load(&texel, uint3(ix, iy, 0));
 
             const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
-            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
-            LOG_CHECK(WindowTest, isEqual);
+            PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
+            PPE_LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);
             return isEqual;
         };
@@ -141,13 +141,13 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
     FCommandBufferBatch cmd1{ fg.Begin(FCommandBufferDesc{ EQueueType::Graphics }
         .SetName("Graphics-1")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd1);
+    PPE_LOG_CHECK(WindowTest, !!cmd1);
 
     FCommandBufferBatch cmd2{ fg.Begin(FCommandBufferDesc{ EQueueType::AsyncCompute }
         .SetName("Compute-1")
         .SetDebugFlags(EDebugFlags::Default),
         { cmd1 }) };
-    LOG_CHECK(WindowTest, !!cmd2);
+    PPE_LOG_CHECK(WindowTest, !!cmd2);
 
     // frame 1
     {
@@ -156,7 +156,7 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
             FLogicalPassID renderPass = cmd1->CreateRenderPass(FRenderPassDesc{ viewSize }
                 .AddTarget(ERenderTargetID::Color0, image1, FLinearColor::White(), EAttachmentStoreOp::Store)
                 .AddViewport(viewSize));
-            LOG_CHECK(WindowTest, !!renderPass);
+            PPE_LOG_CHECK(WindowTest, !!renderPass);
 
             cmd1->Task(renderPass, FDrawVertices{}
                 .Draw(3)
@@ -166,7 +166,7 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
             PFrameTask tDraw = cmd1->Task(FSubmitRenderPass{ renderPass });
             Unused(tDraw);
 
-            LOG_CHECK(WindowTest, fg.Execute(cmd1));
+            PPE_LOG_CHECK(WindowTest, fg.Execute(cmd1));
         }
         // compute queue
         {
@@ -183,22 +183,22 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
                 .DependsOn(tComp));
             Unused(tRead);
 
-            LOG_CHECK(WindowTest, fg.Execute(cmd2));
+            PPE_LOG_CHECK(WindowTest, fg.Execute(cmd2));
         }
 
-        LOG_CHECK(WindowTest, fg.Flush());
+        PPE_LOG_CHECK(WindowTest, fg.Flush());
     }
 
     FCommandBufferBatch cmd3{ fg.Begin(FCommandBufferDesc{ EQueueType::Graphics }
         .SetName("Graphics-2")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd3);
+    PPE_LOG_CHECK(WindowTest, !!cmd3);
 
     FCommandBufferBatch cmd4{ fg.Begin(FCommandBufferDesc{ EQueueType::AsyncCompute }
         .SetName("Compute-2")
         .SetDebugFlags(EDebugFlags::Default),
         { cmd3 }) };
-    LOG_CHECK(WindowTest, !!cmd4);
+    PPE_LOG_CHECK(WindowTest, !!cmd4);
 
     // frame 2
     {
@@ -207,7 +207,7 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
             FLogicalPassID renderPass = cmd3->CreateRenderPass(FRenderPassDesc{ viewSize }
                 .AddTarget(ERenderTargetID::Color0, image2, FLinearColor::White(), EAttachmentStoreOp::Store)
                 .AddViewport(viewSize));
-            LOG_CHECK(WindowTest, !!renderPass);
+            PPE_LOG_CHECK(WindowTest, !!renderPass);
 
             cmd3->Task(renderPass, FDrawVertices{}
                 .Draw(3)
@@ -217,7 +217,7 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
             PFrameTask tDraw = cmd3->Task(FSubmitRenderPass{ renderPass });
             Unused(tDraw);
 
-            LOG_CHECK(WindowTest, fg.Execute(cmd3));
+            PPE_LOG_CHECK(WindowTest, fg.Execute(cmd3));
         }
         // compute queue
         {
@@ -234,23 +234,23 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
                 .DependsOn(tComp));
             Unused(tRead);
 
-            LOG_CHECK(WindowTest, fg.Execute(cmd4));
+            PPE_LOG_CHECK(WindowTest, fg.Execute(cmd4));
         }
 
-        LOG_CHECK(WindowTest, fg.Flush());
+        PPE_LOG_CHECK(WindowTest, fg.Flush());
     }
 
     FCommandBufferBatch cmd5{ fg.Begin(FCommandBufferDesc{ EQueueType::Graphics }
         .SetName("Graphics-3")
         .SetDebugFlags(EDebugFlags::Default),
         { cmd2 }) };
-    LOG_CHECK(WindowTest, !!cmd5);
+    PPE_LOG_CHECK(WindowTest, !!cmd5);
 
     FCommandBufferBatch cmd6{ fg.Begin(FCommandBufferDesc{ EQueueType::AsyncCompute }
         .SetName("Compute-3")
         .SetDebugFlags(EDebugFlags::Default),
         { cmd5 }) };
-    LOG_CHECK(WindowTest, !!cmd6);
+    PPE_LOG_CHECK(WindowTest, !!cmd6);
 
     // frame 3
     {
@@ -259,7 +259,7 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
             FLogicalPassID renderPass = cmd5->CreateRenderPass(FRenderPassDesc{ viewSize }
                 .AddTarget(ERenderTargetID::Color0, image1, FLinearColor::White(), EAttachmentStoreOp::Store)
                 .AddViewport(viewSize));
-            LOG_CHECK(WindowTest, !!renderPass);
+            PPE_LOG_CHECK(WindowTest, !!renderPass);
 
             cmd5->Task(renderPass, FDrawVertices{}
                 .Draw(3)
@@ -269,7 +269,7 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
             PFrameTask tDraw = cmd5->Task(FSubmitRenderPass{ renderPass });
             Unused(tDraw);
 
-            LOG_CHECK(WindowTest, fg.Execute(cmd5));
+            PPE_LOG_CHECK(WindowTest, fg.Execute(cmd5));
         }
         // compute queue
         {
@@ -286,15 +286,15 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute2_CS"));
                 .DependsOn(tComp));
             Unused(tRead);
 
-            LOG_CHECK(WindowTest, fg.Execute(cmd6));
+            PPE_LOG_CHECK(WindowTest, fg.Execute(cmd6));
         }
 
-        LOG_CHECK(WindowTest, fg.Flush());
+        PPE_LOG_CHECK(WindowTest, fg.Flush());
     }
 
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

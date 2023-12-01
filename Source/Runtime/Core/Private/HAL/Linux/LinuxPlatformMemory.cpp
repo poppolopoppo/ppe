@@ -28,7 +28,7 @@ static FILE* ProcFS_Open_(const char* fname) {
     if (FILE* f = ::fopen(fname, "r"))
         return f;
 
-    LOG(HAL, Error, L"fopen({0}) failed with errno: {1}", MakeCStringView(fname), FErrno{});
+    PPE_LOG(HAL, Error, "fopen({0}) failed with errno: {1}", MakeCStringView(fname), FErrno{});
     return nullptr;
 }
 //----------------------------------------------------------------------------
@@ -67,7 +67,7 @@ static FLinuxPlatformMemory::FConstants FetchConstants_() {
         cst.TotalPhysical = 0;
         cst.TotalVirtual = 0;
 
-        LOG(HAL, Error, L"sysinfo() failed with errno: {0}", FErrno{});
+        PPE_LOG(HAL, Error, "sysinfo() failed with errno: {0}", FErrno{});
     }
 
     ::rlimit addressSpace;
@@ -77,7 +77,7 @@ static FLinuxPlatformMemory::FConstants FetchConstants_() {
     else {
         cst.AddressLimit = 0;
 
-        LOG(HAL, Error, L"getrlimit() failed with errno: {0}", FErrno{});
+        PPE_LOG(HAL, Error, "getrlimit() failed with errno: {0}", FErrno{});
     }
 
     cst.CacheLineSize = ::sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
@@ -122,7 +122,7 @@ static void* VMPageAlloc_(size_t sizeInBytes, bool commit) {
         return ptr;
     }
     else {
-        LOG(HAL, Error, L"mmap() failed with errno: {0}", FErrno{});
+        PPE_LOG(HAL, Error, "mmap() failed with errno: {0}", FErrno{});
         return nullptr;
     }
 }
@@ -135,7 +135,7 @@ static bool VMPageProtect_(void* ptr, size_t sizeInBytes, bool read, bool write)
         return true;
     }
     else {
-        LOG(HAL, Error, L"mprotect() failed with errno: {0}", FErrno{});
+        PPE_LOG(HAL, Error, "mprotect() failed with errno: {0}", FErrno{});
         return false;
     }
 }
@@ -143,7 +143,7 @@ static bool VMPageProtect_(void* ptr, size_t sizeInBytes, bool read, bool write)
 static void VMPageFree_(void* ptr, size_t sizeInBytes, bool release) {
     if (release) {
         if (::munmap(ptr, sizeInBytes) != 0)
-            LOG(HAL, Fatal, L"::munmap() failed with errno: {0}", FErrno{});
+            PPE_LOG(HAL, Fatal, "::munmap() failed with errno: {0}", FErrno{});
     }
     else {
         Verify(VMPageProtect_(ptr, sizeInBytes, false, false));
@@ -239,7 +239,7 @@ auto FLinuxPlatformMemory::StackUsage() -> FStackUsage {
     }
     else {
         stk.Reserved = 0;
-        LOG(HAL, Error, L"getrusage() failed with errno: {0}", FErrno{});
+        PPE_LOG(HAL, Error, "getrusage() failed with errno: {0}", FErrno{});
     }
 
     ::pthread_attr_t threadAttr;
@@ -252,7 +252,7 @@ auto FLinuxPlatformMemory::StackUsage() -> FStackUsage {
             stk.BaseAddr = nullptr;
             stk.Committed = 0;
 
-            LOG(HAL, Error, L"pthread_get_stack() failed with errno: {0}", FErrno{});
+            PPE_LOG(HAL, Error, "pthread_get_stack() failed with errno: {0}", FErrno{});
         }
 
         size_t guardSize;
@@ -262,7 +262,7 @@ auto FLinuxPlatformMemory::StackUsage() -> FStackUsage {
         else {
             stk.Guard = 0;
 
-            LOG(HAL, Error, L"pthread_getguardsize() failed with errno: {0}", FErrno{});
+            PPE_LOG(HAL, Error, "pthread_getguardsize() failed with errno: {0}", FErrno{});
         }
     }
     else {
@@ -270,7 +270,7 @@ auto FLinuxPlatformMemory::StackUsage() -> FStackUsage {
         stk.Guard = 0;
         stk.BaseAddr = nullptr;
 
-        LOG(HAL, Error, L"pthread_getattr_np() failed with errno: {0}", FErrno{});
+        PPE_LOG(HAL, Error, "pthread_getattr_np() failed with errno: {0}", FErrno{});
     }
 
     return stk;

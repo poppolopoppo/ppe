@@ -42,12 +42,12 @@ static void Test_ProcessCapture_(const FWString& executable, const FWString& par
     Unused(errA);
     Unused(outA);
 
-    LOG_DIRECT(Test_Process, Info, ToWString(outA));
+    PPE_LOG_DIRECT(Test_Process, Info, [&](FTextWriter& oss) { oss << outA; });
 
     if (not errA.empty())
-        LOG_DIRECT(Test_Process, Error, ToWString(errA));
+        PPE_LOG_DIRECT(Test_Process, Info, [&](FTextWriter& oss) { oss << errA; });
 
-    FLUSH_LOG();
+    PPE_LOG_FLUSH();
 
     AssertRelease(0 == exitCode);
 }
@@ -65,8 +65,8 @@ static void Test_ProcessLog_(const FWString& executable, const FWString& params)
 
     Unused(logA);
 
-    LOG_DIRECT(Test_Process, Info, ToWString(logA));
-    FLUSH_LOG();
+    PPE_LOG_DIRECT(Test_Process, Info, [&](FTextWriter& oss) { oss << logA; });
+    PPE_LOG_FLUSH();
 
     AssertRelease(0 == exitCode);
 }

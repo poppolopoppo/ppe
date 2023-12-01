@@ -117,9 +117,10 @@ void TBaseTypeTraits<T, _Parent>::ConstructSwap(void* data, void* other) const N
     Assert(data);
     Assert(other);
 
+    Meta::Construct(static_cast<pointer>(data), Meta::ForceInit);
+
     using std::swap;
 
-    Meta::Construct(static_cast<pointer>(data), Meta::ForceInit);
     swap(*static_cast<pointer>(data), *static_cast<pointer>(other));
 }
 //----------------------------------------------------------------------------

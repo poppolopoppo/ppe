@@ -9,7 +9,7 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EBlendFactor : u32 {
+enum class EBlendFactor : u8 {
     // src - from shader
     // dst - from render target
     // result = srcColor * srcBlend [blendOp] dstColor * dstBlend;
@@ -34,9 +34,9 @@ enum class EBlendFactor : u32 {
     Src1Alpha,           //
     OneMinusSrc1Alpha,   //
 
-    Unknown	= ~0u,
+    Unknown	= UINT8_MAX,
 };
-CONSTEXPR bool HasDualSrcBlendFactor(EBlendFactor value) NOEXCEPT {
+CONSTEXPR bool EBlendFactor_HasDualSrcBlendFactor(EBlendFactor value) NOEXCEPT {
     switch (value) {
     case EBlendFactor::Src1Color:
     case EBlendFactor::OneMinusSrc1Color:
@@ -50,7 +50,7 @@ CONSTEXPR bool HasDualSrcBlendFactor(EBlendFactor value) NOEXCEPT {
     return false;
 }
 //----------------------------------------------------------------------------
-enum class EBlendOp : u32 {
+enum class EBlendOp : u8 {
     // src - from shader
     // dst - from render target
     // result = srcColor * srcBlend [blendOp] dstColor * dstBlend;
@@ -59,10 +59,10 @@ enum class EBlendOp : u32 {
     RevSub,             // D-S
     Min,                // min(S,D)
     Max,                // max(S,D)
-    Unknown	= ~0u,
+    Unknown	= UINT8_MAX,
 };
 //----------------------------------------------------------------------------
-enum class ELogicOp : u32 {
+enum class ELogicOp : u8 {
     None,               // disabled
     Clear,              // 0
     Set,                // 1
@@ -80,7 +80,7 @@ enum class ELogicOp : u32 {
     AndInverted,        // ~S & D
     OrReverse,          // S | ~D
     OrInverted,         // ~S | D
-    Unknown	= ~0u,
+    Unknown	= UINT8_MAX,
 };
 //----------------------------------------------------------------------------
 enum class EColorMask : u8 {
@@ -88,11 +88,16 @@ enum class EColorMask : u8 {
     G                   = 1<<1,
     B                   = 1<<2,
     A                   = 1<<3,
+    RA                  = R|A,
+    RGB                 = R|G|B,
     RGBA                = R|G|B|A,
     All                 = RGBA,
     Unknown             = All,
 };
 ENUM_FLAGS(EColorMask);
+CONSTEXPR u32 EColorMask_NumChannels(EColorMask mask) {
+    return FPlatformMaths::popcnt_constexpr(u32(mask));
+}
 //----------------------------------------------------------------------------
 enum class ECompareOp : u8 {
     Never,              // false
@@ -118,14 +123,14 @@ enum class EStencilOp : u8 {
     Unknown = u8(~0),
 };
 //----------------------------------------------------------------------------
-enum class EPolygonMode : u32 {
+enum class EPolygonMode : u8 {
     Point,
     Line,
     Fill,
-    Unknown	= ~0u,
+    Unknown	= UINT8_MAX,
 };
 //----------------------------------------------------------------------------
-enum class EPrimitiveTopology : u32 {
+enum class EPrimitiveTopology : u8 {
     Point,
 
     LineList,
@@ -142,7 +147,7 @@ enum class EPrimitiveTopology : u32 {
     Patch,
 
     _Count,
-    Unknown = ~0u,
+    Unknown = UINT8_MAX,
 };
 //----------------------------------------------------------------------------
 enum class ECullMode : u8

@@ -2,6 +2,8 @@
 
 #include "Core.h"
 
+#include "IO/FileSystem_fwd.h"
+
 #include "IO/Dirname.h"
 #include "IO/FileSystemProperties.h"
 
@@ -15,16 +17,12 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FFilename;
-class FFileSystemNode;
-class FMountingPoint;
-//----------------------------------------------------------------------------
 class PPE_CORE_API FDirpath {
 public:
     enum : size_t { MaxDepth = 16 };
 
-    CONSTEXPR FDirpath() NOEXCEPT : _path(nullptr) {}
-    CONSTEXPR explicit FDirpath(const FFileSystemNode* path) NOEXCEPT : _path(path) {}
+    CONSTEXPR FDirpath() = default;
+    CONSTEXPR explicit FDirpath(PFileSystemNode path) NOEXCEPT : _path(path) {}
 
     FDirpath(const FDirpath& other) = default;
     FDirpath& operator =(const FDirpath& other) = default;
@@ -51,70 +49,72 @@ public:
     template <size_t _Dim>
     FDirpath& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
 
-    size_t Depth() const;
-    PPE::FMountingPoint MountingPoint() const;
-    PPE::FDirname LastDirname() const;
+    NODISCARD size_t Depth() const;
+    NODISCARD FMountingPoint MountingPoint() const;
+    NODISCARD FDirname LastDirname() const;
 
-    size_t ExpandPath(PPE::FMountingPoint& mountingPoint, const TMemoryView<FDirname>& dirnames) const; // returns dirnames size
+    NODISCARD size_t ExpandPath(FMountingPoint& mountingPoint, const TMemoryView<FDirname>& dirnames) const; // returns dirnames size
 
     void AssignTokens(const TMemoryView<const FFileSystemToken>& tokens);
-    void ExpandTokens(const TMemoryView<FFileSystemToken>& tokens) const;
+    NODISCARD TMemoryView<const FFileSystemToken> ExpandTokens() const;
 
-    bool empty() const { return nullptr == _path; }
+    NODISCARD bool empty() const { return nullptr == _path; }
 
-    bool HasMountingPoint() const;
+    NODISCARD bool HasMountingPoint() const;
 
-    bool IsAbsolute() const { return HasMountingPoint(); }
-    bool IsRelative() const { return (not HasMountingPoint()); }
+    NODISCARD bool IsAbsolute() const { return HasMountingPoint(); }
+    NODISCARD bool IsRelative() const { return (not HasMountingPoint()); }
 
-    bool IsSubdirectory(const FDirpath& other) const;
+    NODISCARD bool IsSubdirectory(const FDirpath& other) const;
 
     void Concat(const FDirname& append);
     void Concat(const TMemoryView<const FDirname>& path);
     void Concat(const FileSystem::char_type *cstr);
     void Concat(const TMemoryView<const FileSystem::char_type>& strview);
 
-    FString ToString() const;
-    FWString ToWString() const;
+    NODISCARD FString ToString() const;
+    NODISCARD FWString ToWString() const;
 
-    FStringView ToCStr(const TMemoryView<char>& dst) const;
-    FWStringView ToWCStr(const TMemoryView<wchar_t>& dst) const;
+    NODISCARD FStringView ToCStr(const TMemoryView<char>& dst) const;
+    NODISCARD FWStringView ToWCStr(const TMemoryView<wchar_t>& dst) const;
 
     void Swap(FDirpath& other);
 
-    bool Equals(const FDirpath& other) const { return _path == other._path; }
-    bool Less(const FDirpath& other) const;
+    NODISCARD bool Equals(const FDirpath& other) const { return _path == other._path; }
+    NODISCARD bool Less(const FDirpath& other) const;
 
-    size_t HashValue() const;
+    NODISCARD size_t HashValue() const;
 
-    const FFileSystemNode* PathNode() const { return _path; }
+    NODISCARD PFileSystemNode PathNode() const { return _path; }
 
-    static bool Absolute(FDirpath* absolute, const FDirpath& origin, const FDirpath& relative);
-    static bool Normalize(FDirpath* normalized, const FDirpath& path);
-    static bool Relative(FDirpath* relative, const FDirpath& origin, const FDirpath& other);
+    NODISCARD static bool Absolute(FDirpath* absolute, const FDirpath& origin, const FDirpath& relative);
+    NODISCARD static bool Normalize(FDirpath* normalized, const FDirpath& path);
+    NODISCARD static bool Relative(FDirpath* relative, const FDirpath& origin, const FDirpath& other);
+
+    NODISCARD static FDirpath FromTokens(const TMemoryView<const FFileSystemToken>& tokens);
 
     PPE_CORE_API friend FDirpath operator /(const FDirpath& lhs, const FDirname& rhs);
     PPE_CORE_API friend FFilename operator /(const FDirpath& lhs, const class FBasename& basename);
 
 private:
-    const FFileSystemNode* _path;
+    PFileSystemNode _path;
 };
 //----------------------------------------------------------------------------
 PPE_ASSUME_TYPE_AS_POD(FDirpath)
 //----------------------------------------------------------------------------
-inline bool operator ==(const FDirpath& lhs, const FDirpath& rhs) {
+NODISCARD inline bool operator ==(const FDirpath& lhs, const FDirpath& rhs) {
     return lhs.Equals(rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator !=(const FDirpath& lhs, const FDirpath& rhs) {
+NODISCARD inline bool operator !=(const FDirpath& lhs, const FDirpath& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator <(const FDirpath& lhs, const FDirpath& rhs) {
+NODISCARD inline bool operator <(const FDirpath& lhs, const FDirpath& rhs) {
     return lhs.Less(rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator >=(const FDirpath& lhs, const FDirpath& rhs) {
+NODISCARD inline bool operator >=(const FDirpath& lhs, const FDirpath& rhs) {
     return !operator <(lhs, rhs);
 }
 //----------------------------------------------------------------------------
@@ -122,7 +122,7 @@ inline void swap(FDirpath& lhs, FDirpath& rhs) NOEXCEPT {
     lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
-inline hash_t hash_value(const FDirpath& dirpath) NOEXCEPT {
+NODISCARD inline hash_t hash_value(const FDirpath& dirpath) NOEXCEPT {
     return dirpath.HashValue();
 }
 //----------------------------------------------------------------------------
@@ -131,8 +131,8 @@ inline hash_t hash_value(const FDirpath& dirpath) NOEXCEPT {
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FDirpath& dirpath);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FDirpath& dirpath);
 //----------------------------------------------------------------------------
-PPE_CORE_API bool operator >>(const FStringConversion& iss, FDirpath* dirpath);
-PPE_CORE_API bool operator >>(const FWStringConversion& iss, FDirpath* dirpath);
+NODISCARD PPE_CORE_API bool operator >>(const FStringConversion& iss, FDirpath* dirpath);
+NODISCARD PPE_CORE_API bool operator >>(const FWStringConversion& iss, FDirpath* dirpath);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

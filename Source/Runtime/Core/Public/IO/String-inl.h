@@ -30,6 +30,7 @@ template <typename _Char>
 void TBasicString<_Char>::assign(TBasicString&& rvalue) {
     clear_ReleaseMemory();
 
+#if 0
     if (rvalue.is_large_()) {
         size_t len;
         FAllocatorBlock b = rvalue.StealDataUnsafe(&len);
@@ -40,6 +41,16 @@ void TBasicString<_Char>::assign(TBasicString&& rvalue) {
         assign(rvalue.MakeView());
         rvalue._large = { 0, 0, 0, nullptr };
     }
+#else
+    if (rvalue.is_large_()) {
+        // don't have to deal with allocator here: it's the same for *ALL* strings
+        _large = rvalue._large;
+    }
+    else {
+        _small = rvalue._small;
+    }
+    rvalue._large = { 0, 0, 0, nullptr };
+#endif
 
     Assert_NoAssume(CheckInvariants());
 }
@@ -330,7 +341,7 @@ void TBasicString<_Char>::assign(TBasicStringBuilder<_Char>&& sb) {
     }
 
     const stringview_type written = sb.Written();
-    Assert_NoAssume(written.back() == _Char(0));
+    AssertRelease_NoAssume(written.back() == _Char(0));
 
 #if USE_PPE_BASICSTRING_SBO
     if (written.size() <= FSmallString_::GCapacity) {
@@ -396,7 +407,7 @@ FAllocatorBlock TBasicString<_Char>::StealDataUnsafe(size_t* sz) NOEXCEPT {
         if (sz)
             *sz = 0;
 
-        return FAllocatorBlock::Null();
+        return Default;
     }
 }
 //----------------------------------------------------------------------------

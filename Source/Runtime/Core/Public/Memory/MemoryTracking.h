@@ -4,8 +4,18 @@
 
 #include "Container/IntrusiveList.h"
 #include "IO/TextWriter_fwd.h"
+#include "Memory/MemoryDomain_fwd.h"
 #include "Meta/PointerWFlags.h"
 #include "Meta/TypeTraits.h"
+
+#if USE_PPE_MEMORYDOMAINS
+#   define MEMORYDOMAIN_THREAD_SCOPE(_DOMAIN) \
+        const ::PPE::FMemoryTracking::FThreadScope ANONYMIZE(memoryTrackingThreadScope){ \
+            MEMORYDOMAIN_TRACKING_DATA(_DOMAIN) \
+        }
+#else
+#   define MEMORYDOMAIN_THREAD_SCOPE(_DOMAIN) NOOP()
+#endif
 
 namespace PPE {
 template <typename T>
@@ -24,9 +34,9 @@ public:
         i64 TotalSize;
         i64 PeakAllocs;
         i64 PeakSize;
+        i64 SmallAllocs;
         i64 AccumulatedAllocs;
         i64 AccumulatedSize;
-        i64 SmallAllocs;
     };
 
     struct PPE_CORE_API FCounters {
@@ -36,9 +46,9 @@ public:
         counter_t TotalSize{ 0 };
         counter_t PeakAllocs{ 0 };
         counter_t PeakSize{ 0 };
+        counter_t SmallAllocs{ 0 };
         counter_t AccumulatedAllocs{ 0 };
         std::atomic<u64> AccumulatedSize{ 0 };
-        counter_t SmallAllocs{ 0 };
 
         FCounters() = default;
 
@@ -66,6 +76,7 @@ public:
     FSnapshot Wasted() const { return _system.Difference(_user); }
 
     bool empty() const { return (0 == _user.NumAllocs.load(std::memory_order_relaxed)); }
+    bool WasEverUsed() const { return (0 < _system.PeakAllocs.load(std::memory_order_relaxed)); }
 
     bool IsChildOf(const FMemoryTracking& other) const;
 
@@ -105,6 +116,7 @@ public:
 
     static FMemoryTracking* ThreadTrackingData() NOEXCEPT;
     static FMemoryTracking* SetThreadTrackingData(FMemoryTracking* trackingData) NOEXCEPT;
+    static FMemoryTracking& ThreadTrackingDataOr(FMemoryTracking& fallback) NOEXCEPT;
 
     struct FThreadScope : Meta::FNonCopyableNorMovable {
         FMemoryTracking& CurrentTrackingData;

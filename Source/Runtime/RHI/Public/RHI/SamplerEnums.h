@@ -7,17 +7,17 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EAddressMode : u32 {
+enum class EAddressMode : u8 {
     Repeat,
     MirrorRepeat,
     ClampToEdge,
     ClampToBorder,
     MirrorClampToEdge,
 
-    Unknown	= ~0u,
+    Unknown	= UINT8_MAX,
 };
 //----------------------------------------------------------------------------
-enum class EBorderColor : u32 {
+enum class EBorderColor : u8 {
     FloatTransparentBlack,
     FloatOpaqueBlack,
     FloatOpaqueWhite,
@@ -26,22 +26,22 @@ enum class EBorderColor : u32 {
     IntOpaqueBlack,
     IntOpaqueWhite,
 
-    Unknown	= ~0u,
+    Unknown	= UINT8_MAX,
 };
 //----------------------------------------------------------------------------
-enum class EMipmapFilter : u32 {
+enum class EMipmapFilter : u8 {
     Nearest,
     Linear,
 
-    Unknown	= ~0u,
+    Unknown	= UINT8_MAX,
 };
 //----------------------------------------------------------------------------
-enum class ETextureFilter : u32 {
+enum class ETextureFilter : u8 {
     Nearest,
     Linear,
     Cubic,
 
-    Unknown	= ~0u,
+    Unknown	= UINT8_MAX,
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

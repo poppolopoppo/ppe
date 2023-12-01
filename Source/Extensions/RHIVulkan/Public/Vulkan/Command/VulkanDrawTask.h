@@ -17,40 +17,29 @@ protected:
     using FProcessFunc = void (*)(void* visitor, void* data);
 
     template <typename _Task>
-    IVulkanDrawTask(const _Task& desc, FProcessFunc pass1, FProcessFunc pass2) NOEXCEPT
-    :   _pass1(pass1), _pass2(pass2)
-    ARGS_IF_RHIDEBUG(_taskName(desc.Name), _debugColor(desc.DebugColor)) {
-        Unused(desc);
-    }
+    IVulkanDrawTask(
+        FVulkanCommandBuffer& cmd,
+        const _Task& desc, FProcessFunc pass1, FProcessFunc pass2) NOEXCEPT;
+
+    FProcessFunc Pass1{ nullptr };
+    FProcessFunc Pass2{ nullptr };
 
 public:
+#if USE_PPE_RHIDEBUG
+    FConstChar TaskName;
+    FColor DebugColor;
+    EShaderDebugIndex DebugModeIndex{ Default };
+#endif
+
     void Process1(void* visitor) {
-        Assert(_pass1);
-        _pass1(visitor, this);
+        Assert(Pass1);
+        Pass1(visitor, this);
     }
 
     void Process2(void* visitor) {
-        Assert(_pass2);
-        _pass2(visitor, this);
+        Assert(Pass2);
+        Pass2(visitor, this);
     }
-
-#if USE_PPE_RHIDEBUG
-    const FTaskName& TaskName() const { return _taskName; }
-    const FLinearColor& DebugColor() const { return _debugColor; }
-
-    EShaderDebugIndex DebugModeIndex() const { return _debugModeIndex; }
-    void SetDebugModeIndex(EShaderDebugIndex id) { _debugModeIndex = id; }
-#endif
-
-private:
-    FProcessFunc _pass1{ nullptr };
-    FProcessFunc _pass2{ nullptr };
-
-#if USE_PPE_RHIDEBUG
-    FTaskName _taskName;
-    FLinearColor _debugColor{ FLinearColor::PaperWhite };
-    EShaderDebugIndex _debugModeIndex{ Default };
-#endif
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -68,41 +57,35 @@ protected:
         const _Task& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 
 public:
-    using FVertexBuffers = TStaticArray<const FVulkanLocalBuffer*, MaxVertexBuffers>;
-    using FVertexOffsets = TStaticArray<VkDeviceSize, MaxVertexBuffers>;
-    using FVertexStrides = TStaticArray<u32, MaxVertexBuffers>;
+    using FBufferBinding = TPair<FVertexBufferID, FVertexBufferBinding>;
+    using FColorBuffer = TPair<const ERenderTargetID, FColorBufferState>;
+    using FResource = FVulkanPipelineResourceSet::FResource;
+    using FVertexInput = TPair<const FVertexID, FVertexInput>;
 
     const TPtrRef<const FVulkanGraphicsPipeline> Pipeline;
-    FPushConstantDatas PushConstants;
-
-    FVertexInputState VertexInput;
-
-    FColorBuffers ColorBuffers;
-    FDrawDynamicStates DynamicStates;
-
+    const FDrawDynamicStates DynamicStates;
     const EPrimitiveTopology Topology;
     const bool EnablePrimitiveRestart;
 
+    TMemoryView<u32> DynamicOffsets;
+    TMemoryView<const FResource> Resources;
+
+    TMemoryView<const FColorBuffer> ColorBuffers;
+    TMemoryView<const FPushConstantData> PushConstants;
+    TMemoryView<const FRectangleU> Scissors;
+
+    TMemoryView<const FBufferBinding> BufferBindings;
+    TMemoryView<const FVertexInput> VertexInputs;
+
+    TMemoryView<const TPtrRef<const FVulkanLocalBuffer>> VertexBuffers;
+    TMemoryView<const VkDeviceSize> VertexOffsets;
+    TMemoryView<const u32> VertexStrides;
+
     mutable FVulkanDescriptorSets DescriptorSets;
 
-    bool Valid() const { return (!!Pipeline); }
-
-    const FVulkanPipelineResourceSet& Resources() const { return _resources; }
-    const TMemoryView<const FRectangleU>& Scissors() const { return _scissors; }
-
-    TMemoryView<const FVulkanLocalBuffer* const> VertexBuffers() const { return _vertexBuffers.MakeConstView().CutBeforeConst(_vertexBufferCount); }
-    TMemoryView<const VkDeviceSize> VertexOffsets() const { return _vertexOffsets.MakeConstView().CutBeforeConst(_vertexBufferCount); }
-    TMemoryView<const u32> VertexStrides() const { return _vertexStrides.MakeConstView().CutBeforeConst(_vertexBufferCount); }
-
-private:
-    FVulkanPipelineResourceSet _resources;
-
-    FVertexBuffers _vertexBuffers;
-    FVertexOffsets _vertexOffsets;
-    FVertexStrides _vertexStrides;
-    u32 _vertexBufferCount{ 0 };
-
-    TMemoryView<const FRectangleU> _scissors;
+    bool Valid() const NOEXCEPT {
+        return (!!Pipeline);
+    }
 };
 } //!details
 //----------------------------------------------------------------------------
@@ -111,7 +94,7 @@ private:
 template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawVertices> final : public details::FVulkanBaseDrawVerticesTask {
 public:
-    const FDrawVertices::FDrawCommands Commands;
+    const TMemoryView<const FDrawVertices::FDrawCommand> Commands;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawVertices& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
@@ -123,9 +106,9 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawIndexed> final : public details::FVulkanBaseDrawVerticesTask {
 public:
-    const FDrawIndexed::FDrawCommands Commands;
+    const TMemoryView<const FDrawIndexed::FDrawCommand> Commands;
 
-    const FVulkanLocalBuffer* const IndexBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> IndexBuffer;
     const u32 IndexBufferOffset;
     const EIndexFormat IndexFormat;
 
@@ -139,9 +122,9 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawVerticesIndirect> final : public details::FVulkanBaseDrawVerticesTask {
 public:
-    const FDrawVerticesIndirect::FDrawCommands Commands;
+    const TMemoryView<const FDrawVerticesIndirect::FDrawCommand> Commands;
 
-    const FVulkanLocalBuffer* const IndirectBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> IndirectBuffer;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawVerticesIndirect& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
@@ -153,11 +136,11 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawIndexedIndirect> final : public details::FVulkanBaseDrawVerticesTask {
 public:
-    const FDrawIndexedIndirect::FDrawCommands Commands;
+    const TMemoryView<const FDrawIndexedIndirect::FDrawCommand> Commands;
 
-    const FVulkanLocalBuffer* const IndirectBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> IndirectBuffer;
 
-    const FVulkanLocalBuffer* const IndexBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> IndexBuffer;
     const u32 IndexBufferOffset;
     const EIndexFormat IndexFormat;
 
@@ -170,11 +153,11 @@ public:
 //----------------------------------------------------------------------------
 template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawVerticesIndirectCount> final : public details::FVulkanBaseDrawVerticesTask {
-    public:
-    const FDrawVerticesIndirectCount::FDrawCommands Commands;
+public:
+    const TMemoryView<const FDrawVerticesIndirectCount::FDrawCommand> Commands;
 
-    const FVulkanLocalBuffer* const IndirectBuffer;
-    const FVulkanLocalBuffer* const CountBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> IndirectBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> CountBuffer;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawVerticesIndirectCount& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
@@ -185,13 +168,13 @@ class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawVerticesIndirectCount> final : publ
 //----------------------------------------------------------------------------
 template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawIndexedIndirectCount> final : public details::FVulkanBaseDrawVerticesTask {
-    public:
-    const FDrawIndexedIndirectCount::FDrawCommands Commands;
+public:
+    const TMemoryView<const FDrawIndexedIndirectCount::FDrawCommand> Commands;
 
-    const FVulkanLocalBuffer* const IndirectBuffer;
-    const FVulkanLocalBuffer* const CountBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> IndirectBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> CountBuffer;
 
-    const FVulkanLocalBuffer* const IndexBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> IndexBuffer;
     const u32 IndexBufferOffset;
     const EIndexFormat IndexFormat;
 
@@ -217,22 +200,22 @@ protected:
         const _Task& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 
 public:
-    const TPtrRef<const FVulkanMeshPipeline> Pipeline;
-    FPushConstantDatas PushConstants;
+    using FColorBuffer = TPair<const ERenderTargetID, FColorBufferState>;
+    using FResource = FVulkanPipelineResourceSet::FResource;
 
-    FColorBuffers ColorBuffers;
+    const TPtrRef<const FVulkanMeshPipeline> Pipeline;
     FDrawDynamicStates DynamicStates;
+
+    TMemoryView<u32> DynamicOffsets;
+    TMemoryView<const FResource> Resources;
+
+    TMemoryView<const FColorBuffer> ColorBuffers;
+    TMemoryView<const FPushConstantData> PushConstants;
+    TMemoryView<const FRectangleU> Scissors;
 
     mutable FVulkanDescriptorSets DescriptorSets;
 
     bool Valid() const { return (!!Pipeline); }
-
-    const FVulkanPipelineResourceSet& Resources() const { return _resources; }
-    const TMemoryView<const FRectangleU>& Scissors() const { return _scissors; }
-
-private:
-    FVulkanPipelineResourceSet _resources;
-    TMemoryView<const FRectangleU> _scissors;
 };
 } //!details
 //----------------------------------------------------------------------------
@@ -241,7 +224,7 @@ private:
 template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawMeshes> final : public details::FVulkanBaseDrawMeshesTask {
 public:
-    const FDrawMeshes::FDrawCommands Commands;
+    const TMemoryView<const FDrawMeshes::FDrawCommand> Commands;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawMeshes& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
@@ -253,9 +236,9 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawMeshesIndirect> final : public details::FVulkanBaseDrawMeshesTask {
 public:
-    const FDrawMeshesIndirect::FDrawCommands Commands;
+    const TMemoryView<const FDrawMeshesIndirect::FDrawCommand> Commands;
 
-    const FVulkanLocalBuffer* const IndirectBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> IndirectBuffer;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawMeshesIndirect& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
@@ -266,11 +249,11 @@ public:
 //----------------------------------------------------------------------------
 template <>
 class PPE_RHIVULKAN_API TVulkanDrawTask<FDrawMeshesIndirectCount> final : public details::FVulkanBaseDrawMeshesTask {
-    public:
-    const FDrawMeshesIndirectCount::FDrawCommands Commands;
+public:
+    const TMemoryView<const FDrawMeshesIndirectCount::FDrawCommand> Commands;
 
-    const FVulkanLocalBuffer* const IndirectBuffer;
-    const FVulkanLocalBuffer* const CountBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> IndirectBuffer;
+    const TPtrRef<const FVulkanLocalBuffer> CountBuffer;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FDrawMeshesIndirectCount& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
@@ -288,14 +271,14 @@ class PPE_RHIVULKAN_API TVulkanDrawTask<FCustomDraw> final : public IVulkanDrawT
 public:
     using FCallback = FCustomDraw::FCallback;
 
-    using FImages = TMemoryView<const TPair<const FVulkanLocalImage*, EResourceState>>;
-    using FBuffers = TMemoryView<const TPair<const FVulkanLocalBuffer*, EResourceState>>;
+    using FImage = TPair<TPtrRef<const FVulkanLocalImage>, EResourceState>;
+    using FBuffer = TPair<TPtrRef<const FVulkanLocalBuffer>, EResourceState>;
 
     const FCallback Callback;
     void* const UserParam;
 
-    const FImages Images;
-    const FBuffers Buffers;
+    const TMemoryView<const FImage> Images;
+    const TMemoryView<const FBuffer> Buffers;
 
     TVulkanDrawTask(FVulkanLogicalRenderPass& renderPass, FVulkanCommandBuffer& cmd,
         const FCustomDraw& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;

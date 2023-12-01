@@ -51,8 +51,7 @@ NODISCARD static bool NormalizePath_(size_t* plength, const TMemoryView<FDirname
 }
 //----------------------------------------------------------------------------
 NODISCARD static const FFileSystemNode *ParseDirpath_(const FileSystem::FStringView& str) {
-    if (str.empty())
-        return nullptr;
+    Assert(not str.empty());
 
     STACKLOCAL_ASSUMEPOD_STACK(FFileSystemToken, path, FDirpath::MaxDepth);
 
@@ -91,6 +90,12 @@ NODISCARD static const FFileSystemNode *DirpathNode_(const FMountingPoint& mount
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FDirpath FDirpath::FromTokens(const TMemoryView<const FFileSystemToken>& tokens) {
+    FDirpath result;
+    result._path = FFileSystemTrie::Get().GetOrCreate(tokens);
+    return result;
+}
+//----------------------------------------------------------------------------
 FDirpath::FDirpath(const FMountingPoint& mountingPoint, const TMemoryView<const FDirname>& path) {
     _path = DirpathNode_(mountingPoint, path);
 }
@@ -112,12 +117,15 @@ FDirpath& FDirpath::operator =(const FileSystem::FString& str) {
 }
 //----------------------------------------------------------------------------
 FDirpath::FDirpath(const FileSystem::FStringView& content) {
-    _path = ParseDirpath_(content);
+    if (Likely(not content.empty()))
+        _path = ParseDirpath_(content);
 }
 //----------------------------------------------------------------------------
 FDirpath& FDirpath::operator =(const FileSystem::FStringView& content) {
-    _path = ParseDirpath_(content);
-    return *this;
+    if (Likely(not content.empty()))
+        _path = ParseDirpath_(content);
+
+    return (*this);
 }
 //----------------------------------------------------------------------------
 FDirpath::FDirpath(std::initializer_list<const FileSystem::char_type *> path)  {
@@ -138,60 +146,47 @@ size_t FDirpath::Depth() const {
 //----------------------------------------------------------------------------
 FMountingPoint FDirpath::MountingPoint() const {
     if (nullptr == _path)
-        return FMountingPoint();
+        return Default;
 
-    const FFileSystemNode& root = FFileSystemTrie::Get().FirstNode(*_path);
-    Assert(not root.Token().empty());
+    if (not EndsWith(_path->MakeView().front(), L":"))
+        return Default;
 
-    if (L':' != root.Token().MakeView().back())
-        return FMountingPoint();
-
-    return FMountingPoint(root.Token());
+    return { _path->MakeView().front() };
 }
 //----------------------------------------------------------------------------
 FDirname FDirpath::LastDirname() const {
     if (nullptr == _path)
-        return FDirname();
+        return Default;
 
-    const FFileSystemToken& token = _path->Token();
-    if (L':' == token.MakeView().back())
-        return FDirname();
+    if (EndsWith(_path->MakeView().back(), L":"))
+        return Default;
 
-    return FDirname(token);
+    return { _path->MakeView().back() };
 }
 //----------------------------------------------------------------------------
 size_t FDirpath::ExpandPath(FMountingPoint& mountingPoint, const TMemoryView<FDirname>& dirnames) const {
     if (nullptr == _path)
         return 0;
 
-    STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, tokens, _path->Depth());
-    const size_t k = FFileSystemTrie::Get().Expand(tokens, _path);
-    if (0 == k)
-        return 0;
-    Assert(_path->Depth() == k);
+    FFileSystemTrie::FPath path = _path->MakeView();
+    if (_path->HasMountingPoint()) {
+        mountingPoint = path.front();
+        path = path.ShiftFront();
+    }
 
-    size_t beg = 0;
-    if (L':' == tokens.front().MakeView().back())
-        mountingPoint = tokens[beg++];
-
-    for (size_t i = 0; beg + i < k; ++i)
-        dirnames[i] = tokens[beg + i];
-
-    return (k -  beg);
+    path.CopyTo(dirnames.CutBefore(path.size()));
+    return path.size();
 }
 //----------------------------------------------------------------------------
 void FDirpath::AssignTokens(const TMemoryView<const FFileSystemToken>& tokens) {
     _path = FFileSystemTrie::Get().GetOrCreate(tokens);
 }
 //----------------------------------------------------------------------------
-void FDirpath::ExpandTokens(const TMemoryView<FFileSystemToken>& tokens) const {
-    if (_path) {
-        Assert(tokens.size() == _path->Depth());
-        Verify( FFileSystemTrie::Get().Expand(tokens, _path) );
-    }
-    else {
-        Assert(tokens.empty());
-    }
+TMemoryView<const FFileSystemToken> FDirpath::ExpandTokens() const {
+    if (Likely(!!_path))
+        return _path->MakeView();
+
+    return Default;
 }
 //----------------------------------------------------------------------------
 bool FDirpath::HasMountingPoint() const {
@@ -265,33 +260,10 @@ void FDirpath::Swap(FDirpath& other) {
 bool FDirpath::Less(const FDirpath& other) const {
     if (_path == other._path || nullptr == other._path)
         return false;
-    else if (nullptr == _path)
+    if (nullptr == _path)
         return true;
-#if 1 // fast method using sort values computed on insertion in trie :
-    else
-        return (_path->SortValue() < other._path->SortValue());
 
-#else // slow method expanding the path :
-    const auto& fsp = FFileSystemTrie::Get();
-
-    STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, p0, _path->Depth() );
-    const size_t k0 = fsp.Expand(p0, _path);
-    Assert(_path->Depth() == k0 );
-
-    STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, p1, other._path->Depth() );
-    const size_t k1 = fsp.Expand(p1, other._path);
-    Assert(other._path->Depth() == k1 );
-
-    const size_t k = (k0 < k1) ? k0 : k1;
-    for (size_t i = 0; i < k; ++i) {
-        if (p0[i] < p1[i])
-            return true;
-        else if (p0[i] != p1[i])
-            return false;
-    }
-
-    return (k0 < k1); // both equals, shortest wins
-#endif
+    return _path->Less(*other._path);
 }
 //----------------------------------------------------------------------------
 size_t FDirpath::HashValue() const {
@@ -397,12 +369,12 @@ bool FDirpath::Relative(FDirpath* relative, const FDirpath& origin, const FDirpa
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FDirpath operator /(const FDirpath& lhs, const FDirname& rhs) {
-    return FDirpath(lhs, rhs);
+NODISCARD FDirpath operator /(const FDirpath& lhs, const FDirname& rhs) {
+    return { lhs, rhs };
 }
 //----------------------------------------------------------------------------
-FFilename operator /(const FDirpath& lhs, const FBasename& basename) {
-    return FFilename(lhs, basename);;
+NODISCARD FFilename operator /(const FDirpath& lhs, const FBasename& basename) {
+    return { lhs, basename };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -438,9 +410,13 @@ bool operator >>(const FStringConversion& iss, FDirpath* dirpath) {
 }
 //----------------------------------------------------------------------------
 PPE_CORE_API bool operator >>(const FWStringConversion& iss, FDirpath* dirpath) {
-    const auto* const fsNode = ParseDirpath_(iss.Input);
-    *dirpath = FDirpath{ fsNode };
-    return (!!fsNode || iss.empty());
+    if (Likely(not iss.Input.empty())) {
+        const auto* const fsNode = ParseDirpath_(iss.Input);
+        *dirpath = FDirpath{ fsNode };
+        return (!!fsNode || iss.empty());
+    }
+    *dirpath = FDirpath();
+    return true;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

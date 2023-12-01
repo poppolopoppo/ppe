@@ -1,6 +1,7 @@
 ﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 #include "Allocator/Mallocator.h"
+#include "Allocator/MallocBinned2.h"
 #include "Allocator/SlabHeap.h"
 #include "Allocator/StlAllocator.h"
 #include "Container/CompressedRadixTrie.h"
@@ -137,17 +138,16 @@ static NO_INLINE void Test_Allocator_Trashing_(const FWStringView& category, con
     BENCHMARK_SCOPE(category, name);
 
     using allocator_traits = TAllocatorTraits<_Alloc>;
-    STACKLOCAL_POD_ARRAY(void*, blockAddrs, blockSizes.size());
+    STACKLOCAL_POD_ARRAY(FAllocatorBlock, blockAddrs, blockSizes.size());
 
     forrange(loop, 0, GLoopCount_) {
         forrange(i, 0, blockSizes.size()) {
             const size_t sz = blockSizes[i];
-            FAllocatorBlock blk = allocator_traits::Allocate(allocator, sz);
-            blockAddrs[i] = blk.Data;
+            blockAddrs[i] = allocator_traits::Allocate(allocator, sz);
         }
 
         forrange(i, 0, blockSizes.size())
-            allocator_traits::Deallocate(allocator, FAllocatorBlock{ blockAddrs[i], blockSizes[i] });
+            allocator_traits::Deallocate(allocator, blockAddrs[i]);
     }
 }
 //----------------------------------------------------------------------------
@@ -240,7 +240,7 @@ static NO_INLINE void Test_Allocator_(
     const TMemoryView<const size_t>& largeBlocks,
     const TMemoryView<const size_t>& mixedBlocks ) {
     STATIC_ASSERT(is_allocator_v<_Alloc>);
-    LOG(Test_Allocators, Emphasis, L"benchmarking <{0}>", name);
+    PPE_LOG(Test_Allocators, Emphasis, "benchmarking <{0}>", name);
 
     BENCHMARK_SCOPE(name, L"Global");
     {
@@ -288,7 +288,7 @@ static NO_INLINE void Test_Allocator_(
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_CompressedRadixTrie_() {
-    LOG(Test_Allocators, Emphasis, L"testing FCompressedRadixTrie");
+    PPE_LOG(Test_Allocators, Emphasis, "testing FCompressedRadixTrie");
 
     ONLY_IF_MEMORYDOMAINS(FMemoryTracking dummyTracking("dummy", &MEMORYDOMAIN_TRACKING_DATA(ReservedMemory)));
     FReadWriteCompressedRadixTrie radixTrie{
@@ -395,7 +395,7 @@ static NO_INLINE void Test_BitTree_Impl_(FWStringView name, TMemoryView<const u3
     MALLOCA_POD(u32, tmpIds, sizes.Max());
 
     for (u32 capacity : sizes) {
-        LOG(Test_Allocators, Emphasis, L"testing {0} with size {1}", name, capacity);
+        PPE_LOG(Test_Allocators, Emphasis, "testing {0} with size {1}", name, capacity);
 
         tree.SetupMemoryRequirements(capacity);
         Assert_NoAssume(tree.DesiredSize == capacity);
@@ -498,7 +498,7 @@ struct FDummyForPool_ {
 };
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* context) {
-    LOG(Test_Allocators, Emphasis, L"testing TAtomicPool<>");
+    PPE_LOG(Test_Allocators, Emphasis, "testing TAtomicPool<>");
 
     BENCHMARK_SCOPE(L"Pool", L"TAtomicPool<>");
 
@@ -558,7 +558,7 @@ static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* con
 template <typename _MemoryPool>
 static NO_INLINE void Test_MemoryPool_Impl_(FWStringView name, ETaskPriority priority, ITaskContext* context) {
     Unused(name);
-    LOG(Test_Allocators, Emphasis, L"testing {0}", name);
+    PPE_LOG(Test_Allocators, Emphasis, "testing {0}", name);
 
     BENCHMARK_SCOPE(L"Pool", name);
 
@@ -631,7 +631,7 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
     TMemoryView<const FDummyForPool_> shuf,
     ETaskPriority priority, ITaskContext* context) {
     Unused(name);
-    LOG(Test_Allocators, Emphasis, L"testing {0}", name);
+    PPE_LOG(Test_Allocators, Emphasis, "testing {0}", name);
 
 #if USE_PPE_DEBUG
     constexpr int numLoops = 100;
@@ -845,18 +845,18 @@ NO_INLINE void Test_SlabHeap_() {
     heap.DiscardAll();
 }
 //----------------------------------------------------------------------------
-NO_INLINE void Test_SlabHeapPooled_() {
+NO_INLINE void Test_SlabHeapRecursive_() {
     const hash_t seed0 = hash_value("canary0");
     const hash_t seed1 = hash_value("canary1");
     const hash_t seed2 = hash_value("canary2");
     const hash_t seed3 = hash_value("canary3");
 
-    SLABHEAP_POOLED(Container) heap;
+    SLABHEAP(Container) heap;
     heap.SetSlabSize(16_KiB);
     auto mainAllocator = TSlabAllocator{ heap };
 
     forrange(i, 0, 100) {
-        TPoolingSlabHeap subHeap{ mainAllocator };
+        TSlabHeap subHeap{ mainAllocator };
         subHeap.SetSlabSize(4_KiB);
 
         auto subAllocator = TSlabAllocator{ subHeap };
@@ -889,6 +889,41 @@ NO_INLINE void Test_SlabHeapPooled_() {
     }
 }
 //----------------------------------------------------------------------------
+NO_INLINE void Test_SlabHeapStress_() {
+    SLABHEAP(Container) heap;
+    const TSlabAllocator allocator{ heap };
+
+    const size_t maxBlockSize = (heap.SlabSize() * 3);
+    STACKLOCAL_POD_STACK(FAllocatorBlock, liveBlocks, 100);
+
+    FRandomGenerator rng(42);
+
+    forrange(i, 0, 5000) {
+        const FAllocatorBlock block = allocator.Allocate(
+            rng.Next(ALLOCATION_BOUNDARY, maxBlockSize));
+        AssertRelease(block);
+
+        FPlatformMemory::Memset(block.Data, 0xAB_u8, block.SizeInBytes);
+
+        if (liveBlocks.full()) {
+            const size_t removeIndex = rng.Next(liveBlocks.size());
+            const FAllocatorBlock removeBlock = liveBlocks[removeIndex];
+
+            AssertRelease(block);
+            FPlatformMemory::Memset(block.Data, 0xDE_u8, block.SizeInBytes);
+
+            allocator.Deallocate(removeBlock);
+            liveBlocks[removeIndex] = block;
+        }
+        else {
+            liveBlocks.Push(block);
+        }
+    }
+
+    for (FAllocatorBlock& b : liveBlocks)
+        allocator.Deallocate(b);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -900,11 +935,12 @@ void Test_Allocators() {
     Test_BitTrees_();
     Test_Pools_();
     Test_SlabHeap_();
-    Test_SlabHeapPooled_();
+    Test_SlabHeapRecursive_();
+    Test_SlabHeapStress_();
 
     ReleaseMemoryInModules();
 
-    LOG(Test_Allocators, Emphasis, L"starting allocator tests ...");
+    PPE_LOG(Test_Allocators, Emphasis, "starting allocator tests ...");
 
     constexpr size_t BlockSizeMin = 16;
     constexpr size_t BlockSizeMid = 32768;
@@ -955,13 +991,13 @@ void Test_Allocators() {
     Unused(mixedBlocksSizeInBytes);
     Unused(largeBlocksSizeInBytes);
 
-    LOG(Test_Allocators, Info, L"Small blocks data set = {0} blocks / {1}", smallBlocks.size(), Fmt::SizeInBytes(smallBlocksSizeInBytes) );
-    LOG(Test_Allocators, Info, L"Large blocks data set = {0} blocks / {1}", largeBlocks.size(), Fmt::SizeInBytes(largeBlocksSizeInBytes) );
-    LOG(Test_Allocators, Info, L"Mixed blocks data set = {0} blocks / {1}", mixedBlocks.size(), Fmt::SizeInBytes(mixedBlocksSizeInBytes) );
+    PPE_LOG(Test_Allocators, Info, "Small blocks data set = {0} blocks / {1}", smallBlocks.size(), Fmt::SizeInBytes(smallBlocksSizeInBytes) );
+    PPE_LOG(Test_Allocators, Info, "Large blocks data set = {0} blocks / {1}", largeBlocks.size(), Fmt::SizeInBytes(largeBlocksSizeInBytes) );
+    PPE_LOG(Test_Allocators, Info, "Mixed blocks data set = {0} blocks / {1}", mixedBlocks.size(), Fmt::SizeInBytes(mixedBlocksSizeInBytes) );
 
     ReleaseMemoryInModules();
 
-    Test_Allocator_(L"FMallocator", FMallocator{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
+    Test_Allocator_(L"FMallocatorBinned2", FMallocatorBinned2{}, smallBlocks.MakeConstView(), largeBlocks.MakeConstView(), mixedBlocks.MakeConstView());
 
     ReleaseMemoryInModules();
 

@@ -396,7 +396,7 @@ void FRTTIAtomRandomizer_::Randomize(RTTI::FMetaObject* pobject, const RTTI::FMe
 static void print_atom(const RTTI::FAtom& atom) {
 #if USE_PPE_LOGGER
     const RTTI::FNamedTypeInfos typeInfo = atom.NamedTypeInfos();
-    LOG(Test_RTTI, Info, L"{0}[0x{1:#8x}] : {2} = {3} (flags: {4}, default:{5:a})",
+    PPE_LOG(Test_RTTI, Info, "{0}[0x{1:#8x}] : {2} = {3} (flags: {4}, default:{5:a})",
         typeInfo.Name(),
         typeInfo.Id(),
         atom.HashValue(),
@@ -471,15 +471,15 @@ static NO_INLINE void Test_Any_() {
     RTTI::FAny any;
     any.Assign(42);
     RTTI::FAny anyInt = RTTI::MakeAny(42);
-    LOG(Test_RTTI, Debug, L"anyInt: {0} -> {1}", anyInt, RTTI::CastChecked<int>(anyInt));
+    PPE_LOG(Test_RTTI, Debug, "anyInt: {0} -> {1}", anyInt, RTTI::CastChecked<int>(anyInt));
     RTTI::FAny anyAny = RTTI::MakeAny(42.);
-    LOG(Test_RTTI, Debug, L"anyAny: {0} -> {1}", anyAny, RTTI::CastChecked<double>(anyAny));
+    PPE_LOG(Test_RTTI, Debug, "anyAny: {0} -> {1}", anyAny, RTTI::CastChecked<double>(anyAny));
     Assert(anyAny != anyInt);
     anyAny = anyInt;
-    LOG(Test_RTTI, Debug, L"anyAny: {0} -> {1}", anyAny, RTTI::CastChecked<int>(anyAny));
+    PPE_LOG(Test_RTTI, Debug, "anyAny: {0} -> {1}", anyAny, RTTI::CastChecked<int>(anyAny));
     Assert(anyInt == anyAny);
     anyAny = RTTI::MakeAny(FString("toto"));
-    LOG(Test_RTTI, Debug, L"anyAny: {0} -> {1}", anyAny, RTTI::CastChecked<FString>(anyAny));
+    PPE_LOG(Test_RTTI, Debug, "anyAny: {0} -> {1}", anyAny, RTTI::CastChecked<FString>(anyAny));
     Assert(anyAny != anyInt);
     Assert(nullptr == RTTI::Cast<double>(anyAny));
 
@@ -501,7 +501,7 @@ static NO_INLINE void Test_Any_() {
     Assert(dico2);
     anyAny.Assign(toto);
     RTTI::FAtom dico2_anyAny = dico2->Find(datom2.Data(), anyAny);
-    LOG(Test_RTTI, Debug, L"dico2_anyAny: {0}", dico2_anyAny.TypedConstData<float3>());
+    PPE_LOG(Test_RTTI, Debug, "dico2_anyAny: {0}", dico2_anyAny.TypedConstData<float3>());
     AssertRelease(RTTI::MakeAny(float3(1, 2, 3)).InnerAtom().Equals(dico2_anyAny));
     //AssertRelease(dico2_anyAny.Equals(RTTI::MakeAny(float3(1, 2, 3)))); #TODO
 
@@ -731,7 +731,7 @@ RTTI_CLASS_END()
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_InteractiveConsole_() {
 #if !USE_PPE_PROFILING
-    FLUSH_LOG();
+    PPE_LOG_FLUSH();
 
     FPlatformConsole::Open();
 
@@ -982,7 +982,7 @@ static NO_INLINE void Test_Serialize_() {
 }
 //----------------------------------------------------------------------------
 static bool EvalExpr_(Parser::FParseContext* context, const FStringView& input) {
-    LOG(Test_RTTI, Info, L"EvalExpr('{0}') :", input);
+    PPE_LOG(Test_RTTI, Info, "EvalExpr('{0}') :", input);
     try
     {
         FMemoryViewReader reader(input.RawView());
@@ -997,23 +997,23 @@ static bool EvalExpr_(Parser::FParseContext* context, const FStringView& input) 
         const RTTI::FAtom result = expr->Eval(context);
 
         Unused(result);
-        LOG(Test_RTTI, Info, L" -> {0} : {1}", result, result.NamedTypeInfos());
+        PPE_LOG(Test_RTTI, Info, " -> {0} : {1}", result, result.NamedTypeInfos());
 
         return true;
     }
     catch (const Parser::FParserException& e) {
         Unused(e);
         if (e.Item())
-            LOG(Test_RTTI, Error, L" !! Parser error : <{0}> {1}, {2}.", e.Item()->ToString(), MakeCStringView(e.What()), e.Site());
+            PPE_LOG(Test_RTTI, Error, " !! Parser error : <{0}> {1}, {2}.", e.Item()->ToString(), MakeCStringView(e.What()), e.Site());
         else
-            LOG(Test_RTTI, Error, L" !! Parser error : {0}, {1}.", MakeCStringView(e.What()), e.Site());
+            PPE_LOG(Test_RTTI, Error, " !! Parser error : {0}, {1}.", MakeCStringView(e.What()), e.Site());
     }
     catch (const Lexer::FLexerException& e) {
         Unused(e);
-        LOG(Test_RTTI, Error, L" ?? Lexer error : <{0}>: {1}, {2}.", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site());
+        PPE_LOG(Test_RTTI, Error, " ?? Lexer error : <{0}>: {1}, {2}.", e.Match().Symbol()->CStr(), MakeCStringView(e.What()), e.Match().Site());
     }
 
-    FLUSH_LOG();
+    PPE_LOG_FLUSH();
     return false;
 }
 //----------------------------------------------------------------------------
@@ -1062,7 +1062,7 @@ static void Test_Grammar_() {
 void Test_RTTI() {
     PPE_DEBUG_NAMEDSCOPE("Test_RTTI");
 
-    LOG(Test_RTTI, Emphasis, L"starting rtti tests ...");
+    PPE_LOG(Test_RTTI, Emphasis, "starting rtti tests ...");
 
     RTTI_MODULE(RTTI_UnitTest).Start();
 

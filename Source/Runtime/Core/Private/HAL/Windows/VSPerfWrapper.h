@@ -123,18 +123,18 @@ inline FVSPerfWrapper::FVSPerfWrapper() {
         Verify((api.NameProfileA = (FNameProfileA)_dll.FunctionAddr("NameProfileA")) != nullptr);
         Verify((api.NameProfileW = (FNameProfileW)_dll.FunctionAddr("NameProfileW")) != nullptr);
 
-        LOG(HAL, Info, L"successfully loaded VSPerf dll from '{0}'", _dll.ModuleName());
+        PPE_LOG(HAL, Info, "successfully loaded VSPerf dll from '{0}'", _dll.ModuleName());
     }
     else {
         API = GDummyAPI;
 
-        LOG(HAL, Warning, L"failed to load VSPerf dll, fallbacking to dummies !");
+        PPE_LOG(HAL, Warning, "failed to load VSPerf dll, fallbacking to dummies !");
     }
 }
 //----------------------------------------------------------------------------
 inline FVSPerfWrapper::~FVSPerfWrapper() {
     if (_dll) {
-        LOG(HAL, Info, L"unloading VSPerf dll");
+        PPE_LOG(HAL, Info, "unloading VSPerf dll");
 
         API = GDummyAPI;
         _dll.Unload();

@@ -39,7 +39,7 @@ FEvalExpr::~FEvalExpr() = default;
 void FEvalExpr::Execute(FParseContext *context) const {
     const RTTI::FAtom result = _expr->Eval(context);
     if (result) {
-        LOG(Parser, Info, L"<{0}> : #{2} = {1}", result.NamedTypeInfos(), result.ToString(), result.HashValue());
+        PPE_LOG(Parser, Info, "<{0}> : #{2} = {1}", result.NamedTypeInfos(), result.ToString(), result.HashValue());
         // TODO : any side effect ?
     }
 }

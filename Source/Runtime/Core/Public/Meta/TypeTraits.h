@@ -7,8 +7,8 @@
 #include <type_traits>
 
 #if USE_PPE_MEMORY_DEBUGGING
-#   define USE_PPE_MEMORY_CHECK_INITIALIZATION  (1) // %_NOCOMMIT%
-#   define USE_PPE_MEMORY_CHECK_NECROPHILIA     (1) // %_NOCOMMIT%
+#   define USE_PPE_MEMORY_CHECK_INITIALIZATION  (!USE_PPE_SANITIZER) // %_NOCOMMIT%
+#   define USE_PPE_MEMORY_CHECK_NECROPHILIA     (!USE_PPE_SANITIZER) // %_NOCOMMIT%
 #else
 #   define USE_PPE_MEMORY_CHECK_INITIALIZATION  (USE_PPE_ASSERT) // %_NOCOMMIT%
 #   define USE_PPE_MEMORY_CHECK_NECROPHILIA     (USE_PPE_ASSERT) // %_NOCOMMIT%
@@ -302,6 +302,43 @@ CONSTEXPR T MakeNoInit() NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+#ifdef __clang__
+#   pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
+#endif
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE void PoisonMemory(T* p, u8 pattern) {
+#if USE_PPE_MEMORY_CHECK_INITIALIZATION || USE_PPE_MEMORY_CHECK_NECROPHILIA
+    ::memset(p, pattern, sizeof(T)); // uninitialized field detection
+#else
+    (void)(p, pattern);
+#endif
+}
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE void PoisonConstruct(T* p) {
+#if USE_PPE_MEMORY_CHECK_INITIALIZATION
+    PoisonMemory(p, 0xCC);
+#else
+    (void)(p);
+#endif
+}
+//----------------------------------------------------------------------------
+template <typename T>
+FORCE_INLINE void PoisonDestroy(T* p) {
+#if USE_PPE_MEMORY_CHECK_INITIALIZATION
+    PoisonMemory(p, 0xDD);
+#else
+    (void)(p);
+#endif
+}
+//----------------------------------------------------------------------------
+#ifdef __clang__
+#   pragma clang diagnostic pop
+#endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 namespace details {
 template <typename T>
 FORCE_INLINE void Construct_(T* p, FNoInit, std::false_type) { INPLACE_NEW(p, T){}; }
@@ -323,9 +360,7 @@ FORCE_INLINE void Construct_(T* p, FForceInit init, std::true_type) { INPLACE_NE
 template <typename T>
 void Construct(T* p, FForceInit init) {
     Assume(p);
-#if USE_PPE_MEMORY_DEBUGGING
-    ::memset(p, 0xCC, sizeof(T)); // uninitialized field detection
-#endif
+    PoisonConstruct(p);
     details::Construct_(p, init, typename has_forceinit_constructor<T>::type{});
 }
 //----------------------------------------------------------------------------
@@ -334,36 +369,28 @@ void Construct(T* p) {
     Assume(p);
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);
-#if USE_PPE_MEMORY_CHECK_INITIALIZATION
-    ::memset(p, 0xCC, sizeof(T)); // uninitialized field detection
-#endif
+    PoisonConstruct(p);
     INPLACE_NEW(p, T)();
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void Construct(T* p, T&& rvalue) {
     Assume(p);
-#if USE_PPE_MEMORY_CHECK_INITIALIZATION
-    ::memset(p, 0xCC, sizeof(T)); // uninitialized field detection
-#endif
+    PoisonConstruct(p);
     INPLACE_NEW(p, T)(std::forward<T>(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 void Construct(T* p, const T& other) {
     Assume(p);
-#if USE_PPE_MEMORY_CHECK_INITIALIZATION
-    ::memset(p, 0xCC, sizeof(T)); // uninitialized field detection
-#endif
+    PoisonConstruct(p);
     INPLACE_NEW(p, T)(other);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
 void Construct(T* p, _Args&&... args) {
     Assume(p);
-#if USE_PPE_MEMORY_CHECK_INITIALIZATION
-    ::memset(p, 0xCC, sizeof(T)); // uninitialized field detection
-#endif
+    PoisonConstruct(p);
     INPLACE_NEW(p, T){ std::forward<_Args>(args)... };
 }
 //----------------------------------------------------------------------------
@@ -373,9 +400,7 @@ Meta::TEnableIf<not std::is_const_v<T>> Destroy(T* p) NOEXCEPT {
     typedef char type_must_be_complete[sizeof(T) ? 1 : -1];
     (void) sizeof(type_must_be_complete);
     p->~T();
-#if USE_PPE_MEMORY_CHECK_NECROPHILIA
-    ::memset(p, 0xDD, sizeof(T)); // necrophilia detection
-#endif
+    PoisonDestroy(p);
 }
 //----------------------------------------------------------------------------
 template <typename T = void>
@@ -434,11 +459,11 @@ struct FDefaultValue final {
     template <typename T, class = TEnableIf<has_default_constructor<T>::value> >
     CONSTEXPR operator T () const { return DefaultValue<T>(); }
     template <typename T>
-    CONSTEXPR friend bool operator ==(T lhs, FDefaultValue rhs) { return (T(rhs) == lhs); }
+    CONSTEXPR friend bool operator ==(T lhs, FDefaultValue ) { return (DefaultValue<T>() == lhs); }
     template <typename T>
     CONSTEXPR friend bool operator !=(T lhs, FDefaultValue rhs) { return (not operator ==(lhs, rhs)); }
     template <typename T>
-    CONSTEXPR friend bool operator ==(FDefaultValue lhs, T rhs) { return (T(lhs) == rhs); }
+    CONSTEXPR friend bool operator ==(FDefaultValue , T rhs) { return (DefaultValue<T>() == rhs); }
     template <typename T>
     CONSTEXPR friend bool operator !=(FDefaultValue lhs, T rhs) { return (not operator ==(lhs, rhs)); }
 };
@@ -448,11 +473,11 @@ struct FZeroValue final {
     template <typename T>
     CONSTEXPR operator T () const { return static_cast<T>(0); }
     template <typename T>
-    CONSTEXPR friend bool operator ==(T lhs, FZeroValue rhs) { return (T(rhs) == lhs); }
+    CONSTEXPR friend bool operator ==(T lhs, FZeroValue ) { return (static_cast<T>(0) == lhs); }
     template <typename T>
     CONSTEXPR friend bool operator !=(T lhs, FZeroValue rhs) { return (not operator ==(lhs, rhs)); }
     template <typename T>
-    CONSTEXPR friend bool operator ==(FZeroValue lhs, T rhs) { return (T(lhs) == rhs); }
+    CONSTEXPR friend bool operator ==(FZeroValue , T rhs) { return (static_cast<T>(0) == rhs); }
     template <typename T>
     CONSTEXPR friend bool operator !=(FZeroValue lhs, T rhs) { return (not operator ==(lhs, rhs)); }
 };

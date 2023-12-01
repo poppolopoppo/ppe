@@ -11,7 +11,7 @@ bool Debugger_ShaderDebugger1_(FWindowTestApp& app) {
 
     if (not EnableShaderDebugging) {
         Unused(app);
-        LOG(WindowTest, Warning, L"Debugger_ShaderDebugger1_: skipped due to lack of debugger support (USE_PPE_RHIDEBUG={0})", USE_PPE_RHIDEBUG);
+        PPE_LOG(WindowTest, Warning, "Debugger_ShaderDebugger1_: skipped due to lack of debugger support (USE_PPE_RHIDEBUG={0})", USE_PPE_RHIDEBUG);
         return true;
     }
 
@@ -45,13 +45,13 @@ ARGS_IF_RHIDEBUG("Debugger_ShaderDebugger1_CS"));
         .SetFormat(EPixelFormat::R32f)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("Output")) };
-    LOG_CHECK(WindowTest, imageDst.Valid());
+    PPE_LOG_CHECK(WindowTest, imageDst.Valid());
 
     TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Debugger_ShaderDebugger1")) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
 
     bool dataIsCorrect = false;
     bool shaderOutputIsCorrect = false;
@@ -75,8 +75,8 @@ no source
 13. value	= fract( float(index) / size );
 
 //> imageStore(): void
-//  gl_GlobalInvocationID: uint3 {8, 8, 0}
 //  value: float {0.531250}
+//  gl_GlobalInvocationID: uint3 {8, 8, 0}
 14. 	imageStore( un_OutImage, ivec2(gl_GlobalInvocationID.xy), vec4(value) );
 
 )#" };
@@ -89,7 +89,7 @@ no source
         shaderOutputIsCorrect &= (output.size() == 1);
         shaderOutputIsCorrect &= (output.size() == 1 ? output[0] == ref : false);
 
-        LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
+        PPE_LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
     };
 
     fg.SetShaderDebugCallback(onShaderTraceReady);
@@ -98,13 +98,13 @@ no source
         FRgba32f texel;
         imageData.Load(&texel, uint3(debugCoord, 0));
         dataIsCorrect = (texel.x == 0.53125f);
-        LOG_CHECKVOID(WindowTest, dataIsCorrect);
+        PPE_LOG_CHECKVOID(WindowTest, dataIsCorrect);
     };
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Debugger_ShaderDebugger1")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->BindImage(FUniformID{ "un_OutImage" }, imageDst);
 
@@ -121,11 +121,11 @@ no source
         .DependsOn(tComp));
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, shaderOutputIsCorrect);
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, shaderOutputIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 #endif
 
     return true;

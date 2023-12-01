@@ -8,7 +8,7 @@
 #   define USE_PPE_VIRTUALALLOC_DETOUR 0
 #endif
 
-#if USE_PPE_VIRTUALALLOC_DETOUR && not (defined(PLATFORM_WINDOWS) && defined(ARCH_X64))
+#if (USE_PPE_VIRTUALALLOC_DETOUR && not (defined(PLATFORM_WINDOWS) && defined(ARCH_X64))) || 1 //%_NOCOMMIT% #TODO: virtual memory detouring overhead is too high atm: should avoid parsing whole virtual address space...
 #   undef USE_PPE_VIRTUALALLOC_DETOUR
 #   define USE_PPE_VIRTUALALLOC_DETOUR 0
 #endif
@@ -92,13 +92,13 @@ struct FWinAPIDetour_ {
 
         const ::HMODULE hLibrary = ::LoadLibraryW(libraryName);
         if (NULL == hLibrary) {
-            LOG_LASTERROR(HAL, L"LoadLibraryW");
+            PPE_LOG_LASTERROR(HAL, "LoadLibraryW");
             return false;
         }
 
         const ::FARPROC originalFunc = ::GetProcAddress(hLibrary, functionName);
         if (NULL == originalFunc) {
-            LOG_LASTERROR(HAL, L"GetProcAddress");
+            PPE_LOG_LASTERROR(HAL, "GetProcAddress");
             return false;
         }
 
@@ -125,13 +125,13 @@ struct FWinAPIDetour_ {
 
         // backup original instructions
         ::DWORD oldProtect;
-        LOG_CHECK(HAL, ::VirtualProtect(OriginalFunc, TrampolineSize, PAGE_EXECUTE_READWRITE, &oldProtect));
+        PPE_LOG_CHECK(HAL, ::VirtualProtect(OriginalFunc, TrampolineSize, PAGE_EXECUTE_READWRITE, &oldProtect));
 
         // we need to use JMP rel32 even on x64 to fit in 5 bytes, so the offset between the trampoline
         // and the original function must fit inside a 32 bits integer: so we try to allocate the page
         // for the trampoline near the original function
         TrampolineAddress = FWindowsPlatformMisc::AllocateExecutablePageNearAddress(OriginalFunc);
-        LOG_CHECK(HAL, !!TrampolineAddress);
+        PPE_LOG_CHECK(HAL, !!TrampolineAddress);
 
         // the trampoline consists of the stolen bytes from the target function, following by a jump back
         // to the target function + 5 bytes, in order to continue the execution of that function. This continues like
@@ -153,7 +153,7 @@ struct FWinAPIDetour_ {
             return;
 
         // same code for both x86 and x64
-        LOG(HAL, Info, L"destroy detour hook on WinAPI function {0}()",
+        PPE_LOG(HAL, Info, "destroy detour hook on WinAPI function {0}()",
             MakeCStringView(FunctionName));
 
         // release virtual memory used by trampoline
@@ -161,7 +161,7 @@ struct FWinAPIDetour_ {
         TrampolineAddress = nullptr;
 
         // restore function prologue backup
-        LOG_CHECKVOID(HAL, ::WriteProcessMemory(
+        PPE_LOG_CHECKVOID(HAL, ::WriteProcessMemory(
             ::GetCurrentProcess(),
             (::LPVOID)OriginalFunc,
             PrologueBackup,
@@ -238,12 +238,12 @@ struct TAutoWinAPIDetour_ {
             status = ::MH_QueueEnableHook(Target);
 
             if (::MH_OK == status)
-                LOG(VirtualAllocDetour, Info, L"MH_CreateHookApiEx: hooked function {0} in module {1}", MakeCStringView(functionName), MakeCStringView(moduleName));
+                PPE_LOG(VirtualAllocDetour, Info, "MH_CreateHookApiEx: hooked function {0} in module {1}", MakeCStringView(functionName), MakeCStringView(moduleName));
             else
-                LOG(VirtualAllocDetour, Error, L"MH_QueueEnableHook({0}): {1}", Fmt::Pointer(Target), FMinHookStatus_{ status });
+                PPE_LOG(VirtualAllocDetour, Error, "MH_QueueEnableHook({0}): {1}", Fmt::Pointer(Target), FMinHookStatus_{ status });
         }
         else {
-            LOG(VirtualAllocDetour, Error, L"MH_CreateHookApiEx({0}, {1}): {2}", MakeCStringView(moduleName), MakeCStringView(functionName), FMinHookStatus_{ status });
+            PPE_LOG(VirtualAllocDetour, Error, "MH_CreateHookApiEx({0}, {1}): {2}", MakeCStringView(moduleName), MakeCStringView(functionName), FMinHookStatus_{ status });
         }
     }
 
@@ -251,7 +251,7 @@ struct TAutoWinAPIDetour_ {
         if (Target) {
             const ::MH_STATUS status = ::MH_RemoveHook(Target);
             if (::MH_OK != status)
-                LOG(VirtualAllocDetour, Error, L"MH_RemoveHook({0}): {1}", Fmt::Pointer(Target), FMinHookStatus_{ status });
+                PPE_LOG(VirtualAllocDetour, Error, "MH_RemoveHook({0}): {1}", Fmt::Pointer(Target), FMinHookStatus_{ status });
         }
     }
 
@@ -308,7 +308,7 @@ public: // TSingleton<>
     static void Create() {
         const ::MH_STATUS status = ::MH_Initialize();
         if (::MH_OK != status)
-            LOG(VirtualAllocDetour, Error, L"MH_Initialize: {0}", FMinHookStatus_{ status });
+            PPE_LOG(VirtualAllocDetour, Error, "MH_Initialize: {0}", FMinHookStatus_{ status });
 
         singleton_type::Create();
     }
@@ -318,7 +318,7 @@ public: // TSingleton<>
 
         const ::MH_STATUS status = ::MH_Uninitialize();
         if (::MH_OK != status)
-            LOG(VirtualAllocDetour, Error, L"MH_Uninitialize: {0}", FMinHookStatus_{ status });
+            PPE_LOG(VirtualAllocDetour, Error, "MH_Uninitialize: {0}", FMinHookStatus_{ status });
     }
 
     bool Valid() const NOEXCEPT {
@@ -337,7 +337,7 @@ private:
 
         const ::MH_STATUS status = ::MH_ApplyQueued();
         if (::MH_OK != status)
-            LOG(VirtualAllocDetour, Error, L"MH_ApplyQueued: {0}", FMinHookStatus_{ status });
+            PPE_LOG(VirtualAllocDetour, Error, "MH_ApplyQueued: {0}", FMinHookStatus_{ status });
     }
 
     static FMemoryTracking& TrackingData() NOEXCEPT {
@@ -509,7 +509,7 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool FVirtualAllocDetour::StartHooks() {
-    LOG(VirtualAllocDetour, Info, L"hooking windows virtual memory for diagnostic");
+    PPE_LOG(VirtualAllocDetour, Info, "hooking windows virtual memory for diagnostic");
 
     Assert_NoAssume(FWindowsPlatformMisc::Is64bitOperatingSystem());
     FVirtualAllocDetourImpl_::Create();
@@ -517,7 +517,7 @@ bool FVirtualAllocDetour::StartHooks() {
 }
 //----------------------------------------------------------------------------
 void FVirtualAllocDetour::ShutdownHooks() {
-    LOG(VirtualAllocDetour, Info, L"removing hooks on windows virtual memory");
+    PPE_LOG(VirtualAllocDetour, Info, "removing hooks on windows virtual memory");
 
     FVirtualAllocDetourImpl_::Destroy();
 }

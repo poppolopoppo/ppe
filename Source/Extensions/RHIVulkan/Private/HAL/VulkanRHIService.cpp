@@ -64,8 +64,8 @@ bool FVulkanRHIService::Construct(
 
     using namespace RHI;
 
-    RHI_LOG(Info, L"creating vulkan RHI service");
-    RHI_LOG(Verbose, L"creating vulkan instance for rhi service");
+    RHI_LOG(Info, "creating vulkan RHI service");
+    RHI_LOG(Verbose, "creating vulkan instance for rhi service");
 
     _elapsedTime = 0;
 
@@ -103,7 +103,7 @@ bool FVulkanRHIService::Construct(
             optionalInstanceExtensions,
         requiredDeviceExtensions,
             optionalDeviceExtensions )) {
-        RHI_LOG(Error, L"failed to create vulkan instance, abort!");
+        RHI_LOG(Error, "failed to create vulkan instance, abort!");
         return false;
     }
 
@@ -114,24 +114,24 @@ bool FVulkanRHIService::Construct(
     });
 
     if (pOptionalWindow) {
-        RHI_LOG(Verbose, L"creating vulkan back-buffer surface for given window");
+        RHI_LOG(Verbose, "creating vulkan back-buffer surface for given window");
 
         AssertRelease(pOptionalWindow->Hwnd);
         if (not _instance.CreateSurface(&_backBuffer, pOptionalWindow->Hwnd)) {
-            RHI_LOG(Error, L"failed to create vulkan window surface, abort!");
+            RHI_LOG(Error, "failed to create vulkan window surface, abort!");
             return false;
         }
 
         Assert(_backBuffer);
     }
 
-    RHI_LOG(Verbose, L"creating vulkan device for service");
+    RHI_LOG(Verbose, "creating vulkan device for service");
 
     const FVulkanInstance::FPhysicalDeviceInfo* const pPhysicalDevice =
         (deviceInfo.DeviceName.empty()
             ? _instance.PickHighPerformanceDevice()
             : _instance.PickPhysicalDeviceByName(deviceInfo.DeviceName) );
-    LOG_CHECK(RHI, !!pPhysicalDevice);
+    PPE_LOG_CHECK(RHI, !!pPhysicalDevice);
 
     const TMemoryView<const FVulkanInstance::FQueueCreateInfo> deviceQueues =
         _instance.RecommendedDeviceQueues(version);
@@ -145,25 +145,25 @@ bool FVulkanRHIService::Construct(
         requiredDeviceExtensions,
         optionalDeviceExtensions,
         pPhysicalDevice, deviceQueues )) {
-        RHI_LOG(Error, L"failed to create vulkan device, abort!");
+        RHI_LOG(Error, "failed to create vulkan device, abort!");
         return false;
     }
 
-    RHI_LOG(Verbose, L"creating vulkan frame graph for service");
+    RHI_LOG(Verbose, "creating vulkan frame graph for service");
 
     _frameGraph = NEW_REF(RHIVulkan, FVulkanFrameGraph, _deviceInfo);
     if (not _frameGraph->Construct()) {
-        RHI_LOG(Error, L"failed to create vulkan framegraph, abort!");
+        RHI_LOG(Error, "failed to create vulkan framegraph, abort!");
         RemoveRef_AssertReachZero(_frameGraph);
         return false;
     }
 
     if (_backBuffer) {
         Assert(pOptionalWindow);
-        RHI_LOG(Verbose, L"creating vulkan swapchain for service");
+        RHI_LOG(Verbose, "creating vulkan swapchain for service");
 
         if (not CreateBackBufferSwapchain_(deviceInfo.Features, Default, *pOptionalWindow)) {
-            RHI_LOG(Error, L"failed to create vulkan swapchain, abort!");
+            RHI_LOG(Error, "failed to create vulkan swapchain, abort!");
             return false;
         }
     }
@@ -212,37 +212,39 @@ void FVulkanRHIService::TearDown() {
 
     using namespace RHI;
 
-    RHI_LOG(Info, L"destroying vulkan RHI service");
+    RHI_LOG(Info, "destroying vulkan RHI service");
+
+    _frameGraph->WaitIdle(IFrameGraph::MaxTimeout);
 
     if (_swapchain.Valid()) {
         AssertRelease(_frameGraph);
-        RHI_LOG(Verbose, L"destroying vulkan swapchain for rhi service");
+        RHI_LOG(Verbose, "destroying vulkan swapchain for rhi service");
 
         if (not _frameGraph->ReleaseResource(_swapchain))
-            RHI_LOG(Error, L"failed to destroy vulkan swapchain for rhi service");
+            RHI_LOG(Error, "failed to destroy vulkan swapchain for rhi service");
     }
 
     if (_frameGraph) {
-        RHI_LOG(Verbose, L"destroying vulkan frame graph for rhi service");
+        RHI_LOG(Verbose, "destroying vulkan frame graph for rhi service");
 
         _frameGraph->TearDown();
         RemoveRef_AssertReachZero(_frameGraph);
     }
 
     if (_deviceInfo.vkDevice) {
-        RHI_LOG(Verbose, L"destroying vulkan device for rhi service");
+        RHI_LOG(Verbose, "destroying vulkan device for rhi service");
 
         _instance.DestroyDevice(&_deviceInfo);
     }
 
     if (_backBuffer) {
-        RHI_LOG(Verbose, L"destroying vulkan back-buffer for rhi service");
+        RHI_LOG(Verbose, "destroying vulkan back-buffer for rhi service");
 
         _instance.DestroySurface(_backBuffer);
         _backBuffer = VK_NULL_HANDLE;
     }
 
-    RHI_LOG(Verbose, L"destroying vulkan instance for rhi service");
+    RHI_LOG(Verbose, "destroying vulkan instance for rhi service");
 
     _instance.TearDown();
     _features = Zero;
@@ -281,8 +283,8 @@ void FVulkanRHIService::EndFrame() {
 
     _OnRenderFrame.Invoke(*this, _dt);
 
-    LOG_CHECKVOID(RHI, _frameGraph->Flush(EQueueUsage::All));
-    LOG_CHECKVOID(RHI, _frameGraph->WaitIdle(IFrameGraph::MaxTimeout));
+    PPE_LOG_CHECKVOID(RHI, _frameGraph->Flush(EQueueUsage::All));
+    PPE_LOG_CHECKVOID(RHI, _frameGraph->WaitIdle(IFrameGraph::MaxTimeout));
 }
 //----------------------------------------------------------------------------
 void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {
@@ -294,12 +296,12 @@ void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {
     if (surfaceInfo.Dimensions == uint2::Zero)
         return;
 
-    RHI_LOG(Info, L"resizing window to ({0}, {1}) in vulkan service", surfaceInfo.Dimensions.x, surfaceInfo.Dimensions.y);
+    RHI_LOG(Info, "resizing window to ({0}, {1}) in vulkan service", surfaceInfo.Dimensions.x, surfaceInfo.Dimensions.y);
 
     _frameGraph->WaitIdle(IFrameGraph::MaxTimeout);
 
     if (not CreateBackBufferSwapchain_(_features, _swapchain.Release(), surfaceInfo))
-        AssertReleaseMessage(L"failed to resize swapchain", !!_swapchain);
+        AssertReleaseMessage("failed to resize swapchain", !!_swapchain);
 
     _OnWindowResized.Invoke(*this, surfaceInfo);
 }
@@ -308,7 +310,7 @@ void FVulkanRHIService::DeviceLost() {
     using namespace RHI;
 
     if (_frameGraph) {
-        RHI_LOG(Warning, L"device lost!");
+        RHI_LOG(Warning, "device lost!");
 
         // #TODO: try to recreate the device
         _OnDeviceLost.Invoke(*this);
@@ -319,7 +321,7 @@ void FVulkanRHIService::ReleaseMemory() NOEXCEPT {
     Assert_NoAssume(_instance.Valid());
 
     using namespace RHI;
-    RHI_LOG(Info, L"releasing memory in vulkan service");
+    RHI_LOG(Info, "releasing memory in vulkan service");
 
     if (_frameGraph)
         _frameGraph->ReleaseMemory();
@@ -343,7 +345,7 @@ bool FVulkanRHIService::CreateBackBufferSwapchain_(
 
     _swapchain = _frameGraph->CreateSwapchain(swapchainDesc, oldSwapchain ARGS_IF_RHIDEBUG("BackBuffer"));
     if (Unlikely(not _swapchain)) {
-        RHI_LOG(Error, L"failed to create vulkan swapchain, abort!");
+        RHI_LOG(Error, "failed to create vulkan swapchain, abort!");
         return false;
     }
 

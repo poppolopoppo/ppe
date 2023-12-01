@@ -63,7 +63,7 @@ void FVulkanLocalBuffer::AddPendingState(const FBufferState& bufferState) const 
 
     FBufferAccess pending;
     pending.Range = bufferState.Range;
-    pending.Index = bufferState.Task->ExecutionOrder();
+    pending.Index = bufferState.Task->ExecutionOrder;
     pending.Stages = EResourceState_ToPipelineStages(bufferState.State);
     pending.Access = EResourceState_ToAccess(bufferState.State);
     pending.IsReadable = EResourceState_IsReadable(bufferState.State);

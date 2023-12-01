@@ -6,6 +6,7 @@
 #include "Thread/Task/CompletionPort.h"
 #include "Thread/Task/TaskManagerImpl.h"
 
+#include "Allocator/InitSegAllocator.h"
 #include "Diagnostic/Logger.h"
 #include "IO/Format.h"
 #include "IO/TextWriter.h"
@@ -69,7 +70,7 @@ THREAD_LOCAL FWorkerContext_* FWorkerContext_::_gInstanceTLS = nullptr;
 //----------------------------------------------------------------------------
 FWorkerContext_::FWorkerContext_(FTaskManagerImpl* pimpl, size_t workerIndex)
 :   _pimpl(*pimpl)
-,   _fibers(pimpl->Fibers())
+,   _fibers(FGlobalFiberPool::Get())
 ,   _workerIndex(workerIndex)
 ,   _fiberToRelease(nullptr) {
     Assert(pimpl);
@@ -93,6 +94,12 @@ FWorkerContext_::~FWorkerContext_() {
 //----------------------------------------------------------------------------
 bool FWorkerContext_::SetPostTaskDelegate(FTaskFunc&& postWork) {
     Assert_NoAssume(postWork);
+#if USE_PPE_MEMORY_DEBUGGING
+    // disable fiber work stealing when debugging
+    Unused(postWork);
+    return false;
+
+#else
     if (_postWork.Valid())
         return false;
 
@@ -102,6 +109,7 @@ bool FWorkerContext_::SetPostTaskDelegate(FTaskFunc&& postWork) {
 
     _postWork = std::move(postWork);
     return true;
+#endif
 }
 //----------------------------------------------------------------------------
 FTaskManagerImpl& FWorkerContext_::Consume(FTaskScheduler::FTaskQueued* task) {
@@ -152,10 +160,8 @@ void FWorkerContext_::ExitWorkerTask(ITaskContext&) {
     Assert(nullptr == worker._fiberToRelease);
     worker._fiberToRelease = self; // released in worker context destructor ^^^
 
-    FFiber currentThread(FFiber::ThreadFiber());
-    currentThread.Resume();
-
-    AssertNotReached(); // final state of the fiber, this should never be executed !
+    // revert to original thread fiber: should jump to WorkerThreadLaunchpad_(), just after StartThread() call
+    FGlobalFiberPool::Get().ShutdownThread();
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -163,6 +169,40 @@ void FWorkerContext_::ExitWorkerTask(ITaskContext&) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+// !! it's important to keep this function *STATIC* !!
+// the scheduler is only accessed through worker context since the fibers
+// can be stolen between each task manager, but FWorkerContext_ belongs to
+// threads.
+static void WorkerFiberCallback_() {
+    Assert_NoAssume(FFiber::IsInFiber());
+    Assert_NoAssume(FFiber::RunningFiber() != FFiber::ThreadFiber());
+
+    for (;;) {
+        // need to destroy the task handle asap
+        {
+            FTaskScheduler::FTaskQueued task;
+            {
+                // after Invoke() we could be in another thread,
+                // this is why this is a static function and why
+                // ctx is protected inside this scope.
+
+                ITaskContext& ctx = FWorkerContext_::Consume(&task);
+                Assert(task.Pending.Valid());
+                task.Pending.Invoke(ctx);
+            }
+
+            // Decrement the counter and resume waiting tasks if any.
+            // Won't steal the thread from this fiber, so the loop can safely finish
+            if (task.Port)
+                task.Port.Release()/* release safe ptr before port */->OnJobComplete();
+        }
+
+        // this loop is attached to a fiber, *NOT A THREAD*
+        // so we need to ask for the current worker here
+        FWorkerContext_::PostWork();
+    }
+}
 //----------------------------------------------------------------------------
 static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, u64 affinityMask) {
     Assert(pmanager);
@@ -191,7 +231,7 @@ static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, u
         // switch to a fiber from the pool,
         // and resume when original thread when task manager is destroyed
         const FFiber::FThreadScope fiberScope;
-        pmanager->Pimpl()->Fibers().StartThread();
+        FGlobalFiberPool::Get().StartThread();
     }
 }
 //----------------------------------------------------------------------------
@@ -207,7 +247,7 @@ public:
     bool ActuallyReady{ false };
 
     explicit FWaitForTask_(FTaskFunc&& rtask) NOEXCEPT
-    :   Task(std::move(rtask))
+        : Task(std::move(rtask))
     {}
 
     NO_INLINE void Run(ITaskContext& ctx) {
@@ -217,7 +257,10 @@ public:
             Assert_NoAssume(not ActuallyReady);
             ActuallyReady = true;
         }
-        OnFinished.notify_all();
+#if USE_PPE_SAFEPTR
+        RemoveSafeRef(this);
+#endif
+        OnFinished.notify_one();
     }
 
     static void DoNothing(ITaskContext&) { NOOP(); }
@@ -240,14 +283,23 @@ public:
     static void Wait(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority) {
         Assert_NoAssume(not FFiber::IsInFiber());
 
-        FWaitForTask_ waitFor{ std::move(rtask) };
-
-        const FTaskFunc broadcast = FTaskFunc::Bind<&FWaitForTask_::Run>(MakePtrRef(waitFor));
-        Assert_NoAssume(broadcast.FitInSitu());
+        FWaitForTask_ waitFor(std::move(rtask));
 
         Meta::FUniqueLock scopeLock(waitFor.Barrier);
 
-        pimpl.Scheduler().Produce(priority, broadcast, nullptr);
+#if USE_PPE_SAFEPTR
+        const TPtrRef<FWaitForTask_> waitForRef = MakePtrRef(waitFor);
+        AddSafeRef(waitForRef);
+        pimpl.Scheduler().Produce(priority,
+            [waitForRef](ITaskContext& ctx) {
+                waitForRef->Run(ctx);
+            },
+            nullptr);
+#else
+        pimpl.Scheduler().Produce(priority,
+            FTaskFunc::Bind<&FWaitForTask_::Run>(&waitFor),
+            nullptr);
+#endif
 
         waitFor.OnFinished.wait(scopeLock, [&waitFor]() NOEXCEPT -> bool {
             return waitFor.ActuallyReady;
@@ -258,16 +310,19 @@ public:
         Assert_NoAssume(not FFiber::IsInFiber());
 
         // use an allocation since the task can outlive this function
-        PWaitForTask_ pWaitFor{ NEW_REF(Task, FWaitForTask_, std::move(rtask)) };
+        const PWaitForTask_ pWaitFor{ NEW_REF(Task, FWaitForTask_, std::move(rtask)) };
 
         Meta::FUniqueLock scopeLock(pWaitFor->Barrier);
+
+#if USE_PPE_SAFEPTR
+        AddSafeRef(pWaitFor.get());
+#endif
+
         pimpl.Scheduler().Produce(priority, FTaskFunc::Bind<&FWaitForTask_::Run>(pWaitFor/* copy TRefPtr<> */), nullptr);
 
-        pWaitFor->OnFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS), [&pWaitFor]() NOEXCEPT -> bool {
+        return pWaitFor->OnFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS), [&pWaitFor]() NOEXCEPT -> bool {
             return pWaitFor->ActuallyReady;
         });
-
-        return pWaitFor->ActuallyReady;
     }
 };
 //----------------------------------------------------------------------------
@@ -277,7 +332,6 @@ public:
 //----------------------------------------------------------------------------
 FTaskManagerImpl::FTaskManagerImpl(FTaskManager& manager)
 :   _scheduler(manager.WorkerCount())
-,   _fibers(MakeFunction<&FTaskManagerImpl::WorkerLoop_>())
 ,   _manager(manager)
 ,   _sync(_manager.WorkerCount() + 1/* main thread */) {
     _threads.reserve(_manager.WorkerCount());
@@ -318,8 +372,6 @@ void FTaskManagerImpl::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::Consume(size_t workerIndex, FTaskQueued* task) {
-    Assert(task);
-
     _scheduler.Consume(workerIndex, task);
 }
 //----------------------------------------------------------------------------
@@ -330,9 +382,9 @@ void FTaskManagerImpl::DumpStats() {
         return;
 
     size_t reserved, used;
-    _fibers.UsageStats(&reserved, &used);
+    FGlobalFiberPool::Get().UsageStats(&reserved, &used);
 
-    LOG(Task, Debug, L"task manager <{0}> is using {1} fibers / {2} reserved with {3} worker threads ({4}   reserved for stack)",
+    PPE_LOG(Task, Debug, "task manager <{0}> is using {1} fibers / {2} reserved with {3} worker threads ({4}   reserved for stack)",
         _manager.Name(),
         Fmt::CountOfElements(used),
         Fmt::CountOfElements(reserved),
@@ -423,40 +475,6 @@ FCompletionPort* FTaskManagerImpl::StartPortIFN_(FCompletionPort* phandle, size_
         phandle->Start(n);
 
     return phandle;
-}
-//----------------------------------------------------------------------------
-// !! it's important to keep this function *STATIC* !!
-// the scheduler is only accessed through worker context since the fibers
-// can be stolen between each task manager, but FWorkerContext_ belongs to
-// threads.
-void FTaskManagerImpl::WorkerLoop_() {
-    Assert(FFiber::IsInFiber());
-    Assert(FFiber::RunningFiber() != FFiber::ThreadFiber());
-
-    for (;;) {
-        // need to destroy the task handle asap
-        {
-            FTaskScheduler::FTaskQueued task;
-            {
-                // after Invoke() we could be in another thread,
-                // this is why this is a static function and why
-                // ctx is protected inside this scope.
-
-                ITaskContext& ctx = FWorkerContext_::Consume(&task);
-                Assert(task.Pending.Valid());
-                task.Pending.Invoke(ctx);
-            }
-
-            // Decrement the counter and resume waiting tasks if any.
-            // Won't steal the thread from this fiber, so the loop can safely finish
-            if (task.Port)
-                task.Port.Release()/* release safe ptr before port */->OnJobComplete();
-        }
-
-        // this loop is thigh to a fiber, *NOT A THREAD*
-        // so we need to ask for the current worker here
-        FWorkerContext_::PostWork();
-    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -557,7 +575,7 @@ void FTaskManager::Start() {
 void FTaskManager::Start(const TMemoryView<const u64>& threadAffinities) {
     Assert(not _pimpl);
 
-    LOG(Task, Info, L"start manager <{0}> with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
+    PPE_LOG(Task, Info, "start manager <{0}> with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
 
     _pimpl.create(*this);
     _pimpl->Start(threadAffinities);
@@ -568,7 +586,7 @@ void FTaskManager::Start(const TMemoryView<const u64>& threadAffinities) {
 void FTaskManager::Shutdown() {
     Assert(_pimpl);
 
-    LOG(Task, Info, L"shutdown manager <#{0}> with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
+    PPE_LOG(Task, Info, "shutdown manager <#{0}> with {1} workers and tag <{2}> ...", _name, _workerCount, _threadTag);
 
     _context.reset();
 
@@ -732,18 +750,18 @@ void FTaskManager::ReleaseMemory() {
     if (not _pimpl)
         return;
 
+    FTaskFiberPool& fibers = FGlobalFiberPool::Get();
+
 #if USE_PPE_LOGGER
     size_t reserved, used;
-    _pimpl->Fibers().UsageStats(&reserved, &used);
+    fibers.UsageStats(&reserved, &used);
 
-    LOG(Task, Debug, L"before release memory in task manager <{0}>, using {1} fibers / {2} reserved ({3} reserved for stack)",
+    PPE_LOG(Task, Debug, "before release memory in task manager <{0}>, using {1} fibers / {2} reserved ({3} reserved for stack)",
         Name(),
         Fmt::CountOfElements(used),
         Fmt::CountOfElements(reserved),
         Fmt::SizeInBytes(reserved * FTaskFiberPool::ReservedStackSize()));
 #endif
-
-    _pimpl->Fibers().ReleaseMemory(); // get most memory at the top
 
     BroadcastAndWaitFor(
         [](ITaskContext&) {
@@ -752,28 +770,26 @@ void FTaskManager::ReleaseMemory() {
             worker.Fibers().ReleaseMemory();
             // defragment malloc TLS caches
             malloc_release_cache_memory();
-            // defragment fiber pool by releasing current fiber and getting new ones (hopefully from first chunk)
-            FTaskFunc func([](ITaskContext&) {
-                FTaskFiberPool::CurrentHandleRef()->YieldFiber(nullptr, true);
-            });
-            Assert_NoAssume(func.FitInSitu());
-            if (not worker.SetPostTaskDelegate(std::move(func)))
-                AssertNotReached();
         },
         ETaskPriority::High/* highest priority, to avoid block waiting for all the jobs queued before */);
 
-    _pimpl->Fibers().ReleaseMemory(); // release defragmented blocks
+    fibers.ReleaseMemory(); // release defragmented blocks
     _pimpl->Scheduler().ReleaseMemory(); // release worker queues IFP
 
 #if USE_PPE_LOGGER
-    _pimpl->Fibers().UsageStats(&reserved, &used);
+    fibers.UsageStats(&reserved, &used);
 
-    LOG(Task, Debug, L"after release memory in task manager <{0}>, using {1} fibers / {2} reserved ({3} reserved for stack)",
+    PPE_LOG(Task, Debug, "after release memory in task manager <{0}>, using {1} fibers / {2} reserved ({3} reserved for stack)",
         Name(),
         Fmt::CountOfElements(used),
         Fmt::CountOfElements(reserved),
         Fmt::SizeInBytes(reserved * FTaskFiberPool::ReservedStackSize()));
 #endif
+}
+//----------------------------------------------------------------------------
+// fibers are shared amongst all task managers
+auto FTaskManager::WorkerCallbackForFiber() -> FFiberCallback {
+    return &WorkerFiberCallback_;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -788,7 +804,7 @@ ITaskContext& ITaskContext::Get() NOEXCEPT {
 //----------------------------------------------------------------------------
 FTaskFunc FInterruptedTask::ResumeTask(const FInterruptedTask& task) {
     return [resume{ static_cast<FTaskFiberPool::FHandleRef>(task.Fiber()) }](ITaskContext&) {
-        FTaskFiberPool::CurrentHandleRef()->YieldFiber(resume, true/* release current fiber */);
+        FTaskFiberPool::YieldCurrentFiber(resume, true/* release current fiber */);
     };
 }
 //----------------------------------------------------------------------------
@@ -813,13 +829,13 @@ void FInterruptedTask::Resume(const TMemoryView<FInterruptedTask>& tasks) {
         FTaskFunc func{ ResumeTask(task) };
         Assert_NoAssume(func.FitInSitu());
 
-        // it's faster when using PostTaskDelegate versus spawning a new fiber,
-        // but there's only one task that can benefit from this : we can't stole
+        // it's faster to use PostTaskDelegate versus spawning a new fiber,
+        // but there's only one task that can benefit from this : we can't steal
         // the current fiber more than once.
         // also we can't use PostTaskDelegate when the stalled fiber belongs to
         // another task manager.
 
-        if ((postTaskAvailable & (task.Context() == workerCtx)) == false ||
+        if ((not postTaskAvailable) || (task.Context() != workerCtx) ||
             (postTaskAvailable = workerIFP->SetPostTaskDelegate(std::move(func))) == false ) {
             Assert_NoAssume(func);
 

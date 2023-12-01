@@ -71,7 +71,7 @@ void FVulkanLocalDebugger::AddTask(PVulkanFrameTask task) {
     if (not (_flags & EDebugFlags::LogTasks))
         return;
 
-    const size_t idx = static_cast<const size_t>(task->ExecutionOrder());
+    const size_t idx = static_cast<const size_t>(task->ExecutionOrder);
     _tasks.resize(idx+1);
 
     Assert(nullptr == _tasks[idx].Task);
@@ -133,7 +133,7 @@ void FVulkanLocalDebugger::AddUsage(const FVulkanBuffer* buffer, const FVulkanLo
     Assert(buffer);
     Assert(state.Task);
 
-    const size_t idx = static_cast<const size_t>(state.Task->ExecutionOrder());
+    const size_t idx = static_cast<const size_t>(state.Task->ExecutionOrder);
     if (idx >= _tasks.size() || nullptr == _tasks[idx].Task) {
         Assert(!"task doesn't exists!");
         return;
@@ -149,7 +149,7 @@ void FVulkanLocalDebugger::AddUsage(const FVulkanImage* image, const FVulkanLoca
     Assert(image);
     Assert(state.Task);
 
-    const size_t idx = static_cast<const size_t>(state.Task->ExecutionOrder());
+    const size_t idx = static_cast<const size_t>(state.Task->ExecutionOrder);
     if (idx >= _tasks.size() || nullptr == _tasks[idx].Task) {
         Assert(!"task doesn't exists!");
         return;
@@ -165,7 +165,7 @@ void FVulkanLocalDebugger::AddUsage(const FVulkanRayTracingGeometry* rtGeometry,
     Assert(rtGeometry);
     Assert(state.Task);
 
-    const size_t idx = static_cast<const size_t>(state.Task->ExecutionOrder());
+    const size_t idx = static_cast<const size_t>(state.Task->ExecutionOrder);
     if (idx >= _tasks.size() || nullptr == _tasks[idx].Task) {
         Assert(!"task doesn't exists!");
         return;
@@ -181,7 +181,7 @@ void FVulkanLocalDebugger::AddUsage(const FVulkanRayTracingScene* rtScene, const
     Assert(rtScene);
     Assert(state.Task);
 
-    const size_t idx = static_cast<const size_t>(state.Task->ExecutionOrder());
+    const size_t idx = static_cast<const size_t>(state.Task->ExecutionOrder);
     if (idx >= _tasks.size() || nullptr == _tasks[idx].Task) {
         Assert(!"task doesn't exist!");
         return;
@@ -212,7 +212,7 @@ FString FVulkanLocalDebugger::TaskName_(EVulkanExecutionOrder idx) const {
 //----------------------------------------------------------------------------
 FString FVulkanLocalDebugger::TaskName_(const PVulkanFrameTask& task) const {
     Assert(task);
-    return StringFormat("{0} (#{1})", task->TaskName(), static_cast<u32>(task->ExecutionOrder()));
+    return StringFormat("{0} (#{1})", task->TaskName, static_cast<u32>(task->ExecutionOrder));
 }
 //----------------------------------------------------------------------------
 FStringView FVulkanLocalDebugger::QueueName_(const FVulkanDevice& device, u32 queueFamilyIndex) const {

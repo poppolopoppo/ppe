@@ -220,9 +220,6 @@ inline void FVulkanMemoryManager::FVulkanMemoryAllocator::DefragmentMemory(FVulk
     // #TODO: defragment CPU and GPU memory:
     // https://gpuopen-librariesandsdks.github.io/VulkanMemoryAllocator/html/defragmentation.html
 
-    AssertNotImplemented();
-
-    //
     // const auto exclusiveAllocator = _allocator.LockExclusive();
     //
     // VmaDefragmentationInfo2 info{};
@@ -282,7 +279,7 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateImage(FBlock* 
             image, &info, &allocation, nullptr ));
     }
 
-    RHI_TRACE(L"AllocateImage",
+    RHI_TRACE("AllocateImage",
         info.flags,
         info.usage,
         info.requiredFlags,
@@ -342,7 +339,7 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateBuffer(FBlock*
             buffer, &info, &allocation, nullptr ));
     }
 
-    RHI_TRACE(L"AllocateBuffer",
+    RHI_TRACE("AllocateBuffer",
         info.flags,
         info.usage,
         info.requiredFlags,
@@ -397,7 +394,7 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FB
     VmaAllocationInfo allocInfo{};
     vmaGetAllocationInfo(exclusiveAllocator.Value(), allocation, &allocInfo);
 
-    RHI_TRACE(L"AllocateAccelStruct",
+    RHI_TRACE("AllocateAccelStruct",
         vmaInfo.flags,
         vmaInfo.usage,
         vmaInfo.requiredFlags,

@@ -55,6 +55,9 @@
             - http://themaister.net/blog/2017/08/15/render-graphs-and-vulkan-a-deep-dive/
             - <3<3<3 vulkan abstraction layer that represent frame as a task graph: https://github.com/azhirnov/FrameGraph
 
+- [x] A perceptual color space for image processing
+    - https://bottosson.github.io/posts/oklab/
+
 - [ ] Volumetric clouds
     - https://gist.github.com/pxv8270/e3904c49cbd8ff52cb53d95ceda3980e
     - https://github.com/AmanSachan1/Meteoros
@@ -234,8 +237,8 @@
     - the key to the cache is using fingperprint of all direct input of the action
     - if the key hits a cache entry, we retrieve all indirect inputs and compare again fingerprints
     - finally if everything matches, we have a cache-hit
-- [ ] Distribute ~~build actions~~ buildable jobs
-    - [ ] implement a protocol for available worker discovery
+- [x] Distribute ~~build actions~~ buildable jobs
+    - [x] implement a protocol for available worker discovery
         - [ ] Cluster membership and failure detection
             - https://www.youtube.com/watch?v=Wt-iEuwMPVc
         - [ ] JCluster
@@ -252,8 +255,8 @@
         - [ ] Failure detection
             - https://manuel.bernhardt.io/2017/07/26/a-new-adaptive-accrual-failure-detector-for-akka/
             - https://www.researchgate.net/publication/29682135_The_ph_accrual_failure_detector
-    - [ ] create a [webdav server](https://gist.github.com/staaldraad/d835126cd46969330a8fdadba62b9b69) on host to share input files with workers
-    - [ ] monitor available ressources on worker machines to opt-out when already busy
+    - [x] create a [webdav server](https://gist.github.com/staaldraad/d835126cd46969330a8fdadba62b9b69) on host to share input files with workers
+    - [x] monitor available ressources on worker machines to opt-out when already busy
     - [x] use [Minhook](https://github.com/NaniteFactory/gominhook) on Windows to hook all IO Win32 functions
         - MinHook does not support payload injection in another process :'(
             - actually [it coult work with `CreateRemoteThread`](https://stackoverflow.com/a/46940325)
@@ -262,4 +265,4 @@
             - https://github.com/microsoft/Detours/wiki/SampleTracebld
             - https://github.com/microsoft/Detours/blob/main/samples/tracebld/trcbld.cpp
             - https://github.com/microsoft/Detours/blob/main/samples/withdll/withdll.cpp
-    - [ ] on workers, wrap all file accesses to remote webdav server
+    - [x] on workers, wrap all file accesses to remote webdav server

@@ -35,7 +35,7 @@ EXTERN_LOG_CATEGORY(, WindowTest)
 struct FExpectAssertInScope : Meta::FNonCopyable {
     FExpectAssertInScope() NOEXCEPT
     :   AssertHandler(SetAssertionHandler(&OnAssert))
-    ,   AssertReleaseHandler(SetAssertionReleaseHandler(&OnAssert)) {
+    ,   AssertReleaseHandler(SetAssertionReleaseHandler(&OnAssertRelease)) {
         NumAssertsTLS_() = 0;
     }
 
@@ -45,22 +45,29 @@ struct FExpectAssertInScope : Meta::FNonCopyable {
         Assert_NoAssume(NumAsserts() > 0);
     }
 
-    u32 NumAsserts() const {
+    NODISCARD u32 NumAsserts() const {
         return NumAssertsTLS_();
     }
 
 private:
     FAssertionHandler AssertHandler;
-    FAssertionHandler AssertReleaseHandler;
+    FReleaseAssertionHandler AssertReleaseHandler;
 
     static u32& NumAssertsTLS_() {
         static THREAD_LOCAL u32 GNumAssertsTLS{ 0 };
         return GNumAssertsTLS;
     }
 
-    static bool OnAssert(const wchar_t* msg, const wchar_t* file, unsigned line) {
+    static bool OnAssert(const wchar_t* msg, const wchar_t* file, unsigned line, bool isEnsure) {
         Unused(msg, file, line);
-        LOG(WindowTest, Info, L"Expected assert: '{0}' in {1}:{2}", MakeCStringView(msg), MakeCStringView(file), line);
+        PPE_LOG(WindowTest, Info, "Expected {3} failed: '{0}' in {1}:{2}", MakeCStringView(msg), MakeCStringView(file), line,
+            isEnsure ? MakeStringView(L"ensure") : MakeStringView(L"assert"));
+        ++NumAssertsTLS_();
+        return false; // no failure
+    }
+    static bool OnAssertRelease(const wchar_t* msg, const wchar_t* file, unsigned line) {
+        Unused(msg, file, line);
+        PPE_LOG(WindowTest, Info, "Expected release assert failed: '{0}' in {1}:{2}", MakeCStringView(msg), MakeCStringView(file), line);
         ++NumAssertsTLS_();
         return false; // no failure
     }

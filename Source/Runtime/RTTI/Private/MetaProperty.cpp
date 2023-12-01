@@ -76,7 +76,7 @@ FAtom FMetaProperty::ResetToDefaultValue(FMetaObject& obj) const NOEXCEPT {
 void FMetaProperty::CheckProperty_(const FMetaObject& obj, bool write) const {
 
     if (write && IsReadOnly()) {
-        LOG(RTTI, Error, L"writing to readonly property \"{0}::{1}\" on \"{2}\" ({3})",
+        PPE_LOG(RTTI, Error, "writing to readonly property \"{0}::{1}\" on \"{2}\" ({3})",
             obj.RTTI_Class()->Name(),
             _name,
             obj.RTTI_Name(),
@@ -85,7 +85,7 @@ void FMetaProperty::CheckProperty_(const FMetaObject& obj, bool write) const {
     }
 
     if (IsDeprecated()) {
-        LOG(RTTI, Warning, L"using deprecated property \"{0}::{1}\" on \"{2}\" ({3})",
+        PPE_LOG(RTTI, Warning, "using deprecated property \"{0}::{1}\" on \"{2}\" ({3})",
             obj.RTTI_Class()->Name(),
             _name,
             obj.RTTI_Name(),
@@ -93,7 +93,7 @@ void FMetaProperty::CheckProperty_(const FMetaObject& obj, bool write) const {
     }
 
     if (write && obj.RTTI_IsFrozen()) {
-        LOG(RTTI, Error, L"can't modify property \"{0}::{1}\" on frozen \"{2}\" ({3})",
+        PPE_LOG(RTTI, Error, "can't modify property \"{0}::{1}\" on frozen \"{2}\" ({3})",
             obj.RTTI_Class()->Name(),
             _name,
             obj.RTTI_Name(),

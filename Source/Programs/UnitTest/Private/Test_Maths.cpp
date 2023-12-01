@@ -366,7 +366,7 @@ static NO_INLINE void Test_Range_() {
 void Test_Maths() {
     PPE_DEBUG_NAMEDSCOPE("Test_Maths");
 
-    LOG(Test_Maths, Emphasis, L"starting maths tests ...");
+    PPE_LOG(Test_Maths, Emphasis, "starting maths tests ...");
 
     Test_Iterable_();
     Test_Vector_();

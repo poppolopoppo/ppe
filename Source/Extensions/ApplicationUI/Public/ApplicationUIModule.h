@@ -33,7 +33,7 @@ private:
     void OnApplicationStart_(Application::FApplicationBase& app, FModularServices& services) NOEXCEPT;
     void OnApplicationShutdown_(Application::FApplicationBase& app, FModularServices& services) NOEXCEPT;
 
-    TUniquePtr<Application::FImguiService> _ui;
+    TUniquePtr<Application::FImGuiService> _ui;
     FEventHandle _onApplicationStart;
     FEventHandle _onApplicationShutdown;
 };

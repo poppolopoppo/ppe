@@ -48,7 +48,7 @@ u64 FXorShift128Plus::NextU64() {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FXorShift1024Star::Reset(u64 seed) {
-    FXorShift64Star rng;
+    FXorShift128Plus rng;
     rng.Reset(seed);
     N = (rng.NextU64() & 15);
     for (u64& s : States)
@@ -74,8 +74,8 @@ u64 MakeSeed(u64 salt/* = 0 */) {
     }   seed{
         {
             salt,
-            FPlatformMisc::CPUInfo().Ordinal(),
-            FPlatformTime::NetworkTime(),
+            hash_value(FPlatformMisc::CPUInfo().Ordinal()),
+            hash_value(FPlatformTime::NetworkTime()),
             hash_value(FCoreModule::StaticInfo.BuildVersion.Timestamp.Value()),
         },
         GProcessGUID,
@@ -90,17 +90,12 @@ void FAtomicXorShift64Star::Reset(u64 seed) {
 }
 //----------------------------------------------------------------------------
 u64 FAtomicXorShift64Star::NextU64() {
-    for (;;) {
-        u64 x = X;
-        u64 y = x;
-        y ^= y >> 12; // a
-        y ^= y << 25; // b
-        y ^= y >> 27; // c
-        y *= 2685821657736338717LL;
+    for (u64 seed = X;;) {
+        FXorShift64Star rng{ seed };
+        const u64 result = rng.NextU64();
 
-        // like FXorShift64Star, but uses lock less atomic
-        if (X.compare_exchange_strong(x, y))
-            return y;
+        if (X.compare_exchange_weak(seed, rng.X))
+            return result;
     }
 }
 //----------------------------------------------------------------------------

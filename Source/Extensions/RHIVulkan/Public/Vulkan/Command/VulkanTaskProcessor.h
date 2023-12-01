@@ -107,8 +107,8 @@ private:
     void BeginSubpass_(const TVulkanFrameTask<FSubmitRenderPass>& task);
     NODISCARD bool CreateRenderPass_(TMemoryView<FVulkanLogicalRenderPass* const> passes ARGS_IF_RHIDEBUG(FConstChar debugName));
 
-    void ExtractDescriptorSets_(FVulkanDescriptorSets* pDescriptorSets, const FVulkanPipelineLayout& layout, const FVulkanPipelineResourceSet& resourceSet);
-    void BindPipelineResources_(const FVulkanPipelineLayout& layout, const FVulkanPipelineResourceSet& resourceSet, VkPipelineBindPoint bindPoint ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex));
+    void ExtractDescriptorSets_(FVulkanDescriptorSets* pDescriptorSets, const FVulkanPipelineLayout& layout, TMemoryView<u32> dynamicOffsets, TMemoryView<const FVulkanPipelineResourceSet::FResource> resources);
+    void BindPipelineResources_(const FVulkanPipelineLayout& layout, TMemoryView<u32> dynamicOffsets, TMemoryView<const FVulkanPipelineResourceSet::FResource> resources, VkPipelineBindPoint bindPoint ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex));
     NODISCARD bool BindPipeline_(FVulkanPipelineLayout const** pPplnLayout, const FVulkanLogicalRenderPass& rp, const details::FVulkanBaseDrawVerticesTask& task);
     NODISCARD bool BindPipeline_(FVulkanPipelineLayout const** pPplnLayout, const FVulkanLogicalRenderPass& rp, const details::FVulkanBaseDrawMeshesTask& task);
     NODISCARD bool BindPipeline_(FVulkanPipelineLayout const** pPplnLayout, const FVulkanComputePipeline& compute, const Meta::TOptional<uint3>& localSize, VkPipelineCreateFlags flags ARGS_IF_RHIDEBUG(EShaderDebugIndex debugModeIndex));
@@ -140,7 +140,9 @@ private:
     template <typename _Functor>
     void EditStatistics_(_Functor&& rendering) const;
 
+    void CmdDebugMarker_(FConstChar text, const FColor& color) const;
     void CmdDebugMarker_(FConstChar text, const FLinearColor& color) const;
+    void CmdPushDebugGroup_(FConstChar text, const FColor& color) const;
     void CmdPushDebugGroup_(FConstChar text, const FLinearColor& color) const;
     void CmdPopDebugGroup_() const;
 #endif

@@ -42,6 +42,21 @@ void ParallelFor(
         foreach, priority, context );
 }
 //----------------------------------------------------------------------------
+int ParallelSum(
+    size_t first, size_t last,
+    const TFunction<int(size_t)>& sum,
+    ETaskPriority priority /* = ETaskPriority::Normal */,
+    ITaskContext* context /* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    std::atomic<int> total{ 0 };
+    ParallelForEachValue(
+        MakeCountingIterator(first),
+        MakeCountingIterator(last),
+        [&sum, &total](size_t index) -> void {
+            total += sum(index);
+        }, priority, context );
+    return total;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

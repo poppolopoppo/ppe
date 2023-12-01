@@ -35,39 +35,39 @@ ARGS_IF_RHIDEBUG("Compiler_Optimization1_CS"));
     FComputePipelineDesc ppln2{ ppln1 };
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::GLSL_450);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
     const EShaderCompilationFlags flags = compiler->CompilationFlags();
     compiler->SetCompilationFlags(EShaderCompilationFlags::Unknown);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln1, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln1, EShaderLangFormat::SPIRV_100));
 
     compiler->SetCompilationFlags(
         EShaderCompilationFlags::Optimize +
         EShaderCompilationFlags::OptimizeSize +
         EShaderCompilationFlags::StrongOptimization );
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln2, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln2, EShaderLangFormat::SPIRV_100));
 
     compiler->SetCompilationFlags(flags);
 
     const FShaderDataVariant* const it1 = ppln1.Shader.Find(EShaderLangFormat::SPIRV_100);
-    LOG_CHECK(WindowTest, !!it1);
+    PPE_LOG_CHECK(WindowTest, !!it1);
 
     const FShaderDataVariant* const it2 = ppln2.Shader.Find(EShaderLangFormat::SPIRV_100);
-    LOG_CHECK(WindowTest, !!it2);
+    PPE_LOG_CHECK(WindowTest, !!it2);
 
     const PShaderBinaryData* const pBinary1 = std::get_if<PShaderBinaryData>(it1);
-    LOG_CHECK(WindowTest, !!pBinary1 && pBinary1->valid());
+    PPE_LOG_CHECK(WindowTest, !!pBinary1 && pBinary1->valid());
 
     const PShaderBinaryData* const pBinary2 = std::get_if<PShaderBinaryData>(it2);
-    LOG_CHECK(WindowTest, !!pBinary2 && pBinary2->valid());
+    PPE_LOG_CHECK(WindowTest, !!pBinary2 && pBinary2->valid());
 
     const IShaderData<FRawData>& shaderData1 = (*pBinary1->get());
     const IShaderData<FRawData>& shaderData2 = (*pBinary2->get());
 
-    LOG_CHECK(WindowTest, shaderData1.EntryPoint() == shaderData2.EntryPoint());
-    LOG_CHECK(WindowTest, shaderData1.Data()->SizeInBytes() > shaderData2.Data()->SizeInBytes());
+    PPE_LOG_CHECK(WindowTest, shaderData1.EntryPoint() == shaderData2.EntryPoint());
+    PPE_LOG_CHECK(WindowTest, shaderData1.Data()->SizeInBytes() > shaderData2.Data()->SizeInBytes());
 
     return true;
 }

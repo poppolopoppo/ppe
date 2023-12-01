@@ -2,14 +2,20 @@
 
 #include "Core.h"
 
+#include "Allocator/TrackingMalloc.h"
 #include "Memory/MemoryView.h"
 #include "Meta/Delete.h"
+
+#define NEW_ARRAY(_DOMAIN, T, _COUNT) \
+    ::PPE::NewArray<MEMORYDOMAIN_TAG(_DOMAIN), T>(_COUNT)
+#define INDIRECT_ARRAY(_DOMAIN, T, _COUNT) \
+    ::PPE::TIndirectArray<MEMORYDOMAIN_TAG(_DOMAIN), T, _COUNT>
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, typename _Deleter = checked_deleter<T> >
+template <typename T, typename _Deleter>
 class TUniqueView : public TMemoryView<T>, private _Deleter {
 public:
     typedef TMemoryView<T> base_type;
@@ -26,6 +32,7 @@ public:
     using typename base_type::iterator;
     using typename base_type::iterator_category;
 
+    using base_type::data;
     using base_type::empty;
     using base_type::size;
     using base_type::operator [];
@@ -42,7 +49,7 @@ public:
     TUniqueView(const TUniqueView& other) = delete;
     TUniqueView& operator =(const TUniqueView& other) = delete;
 
-    operator void* () const { return base_type::data(); }
+    operator void* () const { return data(); }
 
     void Reset(TUniqueView&& rvalue);
 };
@@ -61,8 +68,8 @@ TUniqueView<T, _Deleter>::TUniqueView(pointer storage, size_type capacity)
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
 TUniqueView<T, _Deleter>::~TUniqueView() {
-    if (base_type::data())
-        _Deleter::operator ()(base_type::data());
+    if (T* const storage = data(); !!storage)
+        _Deleter::operator ()(storage, size());
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
@@ -77,8 +84,8 @@ auto TUniqueView<T, _Deleter>::operator =(TUniqueView&& rvalue) NOEXCEPT -> TUni
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
 void TUniqueView<T, _Deleter>::Reset(TUniqueView&&  rvalue) {
-    if (base_type::data())
-        _Deleter::operator ()(base_type::data());
+    if (T* const storage = data(); !!storage)
+        _Deleter::operator ()(storage, size());
 
     base_type::operator =(std::move(rvalue));
 }
@@ -86,14 +93,41 @@ void TUniqueView<T, _Deleter>::Reset(TUniqueView&&  rvalue) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-using TUniqueArray = TUniqueView<T, checked_deleter<T[]> >;
+struct TUniqueArrayDeleter {
+    void operator ()(T* arr, size_t count) const {
+        Meta::Destroy(MakeView(arr, arr + count));
+        tracking_free(arr);
+    }
+};
 //----------------------------------------------------------------------------
 template <typename T>
-inline TUniqueArray<T> NewArray(size_t count) {
-    return (count
-        ? TUniqueArray<T>{ new (std::nothrow) T[count], count }
-        : TUniqueArray<T>{ nullptr, 0 } );
+using TUniqueArray = TUniqueView<T, TUniqueArrayDeleter<T> >;
+//----------------------------------------------------------------------------
+template <typename _MemoryDomain, typename T, typename... _Args>
+inline TUniqueArray<T> NewArray(size_t count, _Args&& ...args) {
+    TUniqueArray<T> result;
+    if (Likely(count > 0)) {
+        T* const arr = static_cast<T*>(tracking_malloc<_MemoryDomain>(sizeof(T) * count));
+        Meta::Construct(MakeView(arr, arr + count), std::forward<_Args>(args)...);
+        return { arr, count };
+    }
+    return result;
 }
+//----------------------------------------------------------------------------
+template <typename _MemoryDomain, typename T, size_t _Dimension>
+class TIndirectArray : public TUniqueArray<T> {
+public:
+    using base_type = TUniqueArray<T>;
+    using base_type::operator [];
+
+    TIndirectArray()
+    :   base_type(NewArray<_MemoryDomain, T>(_Dimension))
+    {}
+
+    explicit TIndirectArray(const T& broadcast)
+    :   base_type(NewArray<_MemoryDomain, T>(_Dimension, broadcast))
+    {}
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

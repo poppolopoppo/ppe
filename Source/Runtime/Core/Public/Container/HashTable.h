@@ -202,6 +202,10 @@ public:
         std::swap(_bucket, other._bucket);
     }
 
+    friend void swap(THashTableIterator_& lhs, THashTableIterator_<T>& rhs) NOEXCEPT {
+        lhs.Swap(rhs);
+    }
+
     bool AliasesToContainer(const TMemoryView<const state_t>& states) const {
         return states.AliasesToContainer(*_state);
     }
@@ -237,11 +241,6 @@ private:
     TCheckedArrayIterator<T> _bucket;
 };
 } //!details
-//----------------------------------------------------------------------------
-template <typename T>
-inline void swap(details::THashTableIterator_<T>& lhs, details::THashTableIterator_<T>& rhs) NOEXCEPT {
-    lhs.Swap(rhs);
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -316,14 +315,14 @@ public:
         if (_data.StatesAndBuckets)
             clear_ReleaseMemory();
 
-        const TMemoryView<value_type> b = rvalue.allocated_block_();
-        Verify(TAllocatorTraits<_OtherAllocator>::StealAndAcquire(
+        const FAllocatorBlock alloc = rvalue.allocator_block_();
+        VerifyRelease(TAllocatorTraits<_OtherAllocator>::StealAndAcquire(
             &allocator_traits::Get(*this),
             TAllocatorTraits<_OtherAllocator>::Get(rvalue),
-            FAllocatorBlock::From(b) ));
+            alloc ));
 
         std::swap(_data, rvalue._data);
-        Assert_NoAssume(allocated_block_() == b);
+        Assert_NoAssume(allocator_block_() == alloc);
         Assert_NoAssume(nullptr == rvalue._data.StatesAndBuckets);
 
         return (*this);
@@ -536,10 +535,9 @@ private:
     allocator_type& allocator_() { return static_cast<allocator_type&>(*this); }
     const allocator_type& allocator_() const { return static_cast<const allocator_type&>(*this); }
 
-    TMemoryView<value_type> allocated_block_() const {
-        return TMemoryView<value_type>(
-            static_cast<value_type*>(_data.StatesAndBuckets),
-            OffsetOfBuckets_() + _data.NumBuckets() );
+    FAllocatorBlock allocator_block_() const {
+        // we don't store the actual size of the block returned by the allocator :')
+        return { _data.StatesAndBuckets, (OffsetOfBuckets_() + _data.NumBuckets()) * sizeof(value_type) };
     }
 
     void allocator_copy_(const allocator_type& other, std::true_type);

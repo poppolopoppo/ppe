@@ -49,7 +49,7 @@ TBasicTextWriter<_Char>& ExpandRHIFeature_(TBasicTextWriter<_Char>& oss, ERHIFea
         case ERHIFeature::VSync: oss << sep << STRING_LITERAL(_Char, "VSync"); break;
         case ERHIFeature::Debugging: oss << sep << STRING_LITERAL(_Char, "Debugging"); break;
         case ERHIFeature::Profiling: oss << sep << STRING_LITERAL(_Char, "Profiling"); break;
-        default: AssertReleaseMessage(L"unsupported ERHIFeature flag", features == ERHIFeature::All);
+        default: AssertReleaseMessage("unsupported ERHIFeature flag", features == ERHIFeature::All);
         }
     }
 

@@ -29,7 +29,7 @@ public:
 
 #if USE_PPE_RHIDEBUG
     ~FCommandBufferBatch() {
-        AssertMessage(L"command buffer was not executed", not _buffer);
+        AssertMessage("command buffer was not executed", not _buffer);
     }
 #endif
 

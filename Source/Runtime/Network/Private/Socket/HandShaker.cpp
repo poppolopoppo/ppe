@@ -67,12 +67,12 @@ void FHandShaker::StartupTask_(ITaskContext& ctx) {
     Assert_NoAssume(not _listener.IsConnected());
 
     if (_listener.Connect()) {
-        LOG(Network, Verbose, L"HandShaker: <{0}> started polling from {1}", _workers.Name(), _listener.Listening());
+        PPE_LOG(Network, Verbose, "HandShaker: <{0}> started polling from {1}", _workers.Name(), _listener.Listening());
 
         PollingTask_(ctx);
     }
     else {
-        LOG(Network, Error, L"HandShaker: <{0}> failed to connect listener {1}, stopping hand shaker", _workers.Name(), _listener.Listening());
+        PPE_LOG(Network, Error, "HandShaker: <{0}> failed to connect listener {1}, stopping hand shaker", _workers.Name(), _listener.Listening());
     }
 }
 //----------------------------------------------------------------------------
@@ -85,7 +85,7 @@ void FHandShaker::PollingTask_(ITaskContext& ctx) {
         if (_listener.Accept(socket, _acceptTimeout)) {
             Assert(socket.IsConnected());
 
-            LOG(Network, Verbose, L"HandShaker: <{0}> accepted a new connection {1}", _workers.Name(), socket.Remote());
+            PPE_LOG(Network, Verbose, "HandShaker: <{0}> accepted a new connection {1}", _workers.Name(), socket.Remote());
 
             socket.SetTimeout(_acceptTimeout);
 
@@ -99,7 +99,7 @@ void FHandShaker::PollingTask_(ITaskContext& ctx) {
         if (_listener.IsConnected())
             _listener.Disconnect();
 
-        LOG(Network, Verbose, L"HandShaker: <{0}> stopped polling from {1}", _workers.Name(), _listener.Listening());
+        PPE_LOG(Network, Verbose, "HandShaker: <{0}> stopped polling from {1}", _workers.Name(), _listener.Listening());
     }
 }
 //----------------------------------------------------------------------------

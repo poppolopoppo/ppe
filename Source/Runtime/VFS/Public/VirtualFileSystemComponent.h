@@ -59,6 +59,7 @@ public:
     virtual bool FileExists(const FFilename& filename, EExistPolicy policy) = 0;
     virtual bool FileStats(FFileStat* pstat, const FFilename& filename) = 0;
 
+    virtual size_t EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunction<void(const FDirpath&)>& onDirectory, const TFunction<void(const FFilename&)>& onFile) = 0;
     virtual size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) = 0;
     virtual size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) = 0;
     virtual size_t MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) = 0;

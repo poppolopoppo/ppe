@@ -22,7 +22,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FJsonException : public PPE::Serialize::FSerializeException {
+class FJsonException : public PPE::Serialize::FSerializeException {
 public:
     typedef FSerializeException parent_type;
 
@@ -32,12 +32,10 @@ public:
     FJsonException(const char *what, const Lexer::FLocation& site)
         : parent_type(what), _site(site) {}
 
-    virtual ~FJsonException() = default;
-
     const Lexer::FLocation& Site() const { return _site; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    PPE_SERIALIZE_API virtual FTextWriter& Description(FTextWriter& oss) const override final;
 #endif
 
 private:
@@ -50,7 +48,7 @@ class PPE_SERIALIZE_API FJson {
 public:
     struct FValue;
 
-    using FSlabHeap = SLABHEAP_POOLED(Json);
+    using FSlabHeap = SLABHEAP(Json);
     using FTextHeap = TTextHeap<false, ALLOCATOR(Json)>;
 
     struct FAllocator {

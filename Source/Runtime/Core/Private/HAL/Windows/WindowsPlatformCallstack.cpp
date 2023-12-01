@@ -123,13 +123,13 @@ static bool LoadModule_(const FDbghelpWrapper::FLocked& dbghelp,
 
     const FLastError lastError;
     if ((succeed == baseAddr) | (lastError.Code == ERROR_SUCCESS)) {
-        CLOG(lastError.Code != ERROR_SUCCESS, HAL, Debug, L"loaded debug symbols for \"{0}\"",
+        PPE_CLOG(lastError.Code != ERROR_SUCCESS, HAL, Debug, "loaded debug symbols for \"{0}\"",
             MakeCStringView(imageName) );
 
         return true;
     }
     else {
-        LOG(HAL, Warning, L"failed to debug symbols for \"{0}\" ({1})",
+        PPE_LOG(HAL, Warning, "failed to debug symbols for \"{0}\" ({1})",
             MakeCStringView(imageName), lastError );
 
         return false;
@@ -218,7 +218,7 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
     ::BOOL succeed = dbghelp->SymInitializeW(process, symbol_path, FALSE);
     Unused(succeed);
 
-    LOG(HAL, Info, L"path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
+    PPE_LOG(HAL, Info, "path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -230,10 +230,10 @@ void FWindowsPlatformCallstack::InitializeSymbolInfos() {
         const FDbghelpWrapper::FLocked dbghelp;
         if (dbghelp.Available()) {
             InitializeSymbols_(dbghelp);
-            LOG(HAL, Debug, L"initialized symbols debug info");
+            PPE_LOG(HAL, Debug, "initialized symbols debug info");
         }
         else {
-            LOG(HAL, Warning, L"can't initialize symbols debug info without dbghelp.dll");
+            PPE_LOG(HAL, Warning, "can't initialize symbols debug info without dbghelp.dll");
         }
 
         GWindowsPlatformSymbolsInitialized = true;

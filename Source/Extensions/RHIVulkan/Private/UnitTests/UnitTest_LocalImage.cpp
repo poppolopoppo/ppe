@@ -257,7 +257,7 @@ void UnitTest_LocalImage() {
     Test_LocalImage1_();
     Test_LocalImage2_();
 
-    LOG(RHI, Info, L"UnitTest_LocalImage [PASSED]");
+    PPE_LOG(RHI, Info, "UnitTest_LocalImage [PASSED]");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

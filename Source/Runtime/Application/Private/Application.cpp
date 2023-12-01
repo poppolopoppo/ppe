@@ -46,11 +46,11 @@ static void ExceptionTrap_(const FWStringView& step, _Functor&& func) {
 #if USE_APPLICATION_EXCEPTION_TRAP
     PPE_CATCH(const FException& e)
     PPE_CATCH_BLOCK({
-        LOG(Application, Fatal, L"FException caught while {0} : {1}", step, e);
+        PPE_LOG(Application, Fatal, "FException caught while {0} : {1}", step, e);
     })
     PPE_CATCH(const std::exception& e)
     PPE_CATCH_BLOCK({
-        LOG(Application, Fatal, L"std::exception caught while {0} : {1}", step, MakeCStringView(e.what()));
+        PPE_LOG(Application, Fatal, "std::exception caught while {0} : {1}", step, MakeCStringView(e.what()));
     })
 #endif
 }
@@ -85,7 +85,7 @@ int LaunchApplication(FApplicationBase* app) {
         PPE_CATCH(const std::exception& e)
         PPE_CATCH_BLOCK({
             Unused(e);
-            LOG(Application, Fatal, L"exception caught while starting : {0}", MakeCStringView(e.what()));
+            PPE_LOG(Application, Fatal, "exception caught while starting : {0}", MakeCStringView(e.what()));
             FCurrentProcess::Get().SetExitCode(3);
         })
 #endif
@@ -100,7 +100,7 @@ int LaunchApplication(FApplicationBase* app) {
         PPE_CATCH(const std::exception& e)
         PPE_CATCH_BLOCK({
             Unused(e);
-            LOG(Application, Fatal, L"exception caught while shutting down : {0}", MakeCStringView(e.what()));
+            PPE_LOG(Application, Fatal, "exception caught while shutting down : {0}", MakeCStringView(e.what()));
             FCurrentProcess::Get().SetExitCode(3);
         })
 #endif

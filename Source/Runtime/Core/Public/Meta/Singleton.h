@@ -65,12 +65,12 @@ public:
     TSingleton& operator =(TSingleton&& ) = delete;
 
 #if USE_PPE_ASSERT
-    static bool HasInstance() NOEXCEPT {
+    NODISCARD static bool HasInstance() NOEXCEPT {
         return SRef_().HasInstance;
     }
 #endif
 
-    static T& Get() NOEXCEPT {
+    NODISCARD static T& Get() NOEXCEPT {
         auto& storage = SRef_();
         Assert_NoAssume(storage.HasInstance);
         return (*storage.Get());
@@ -111,7 +111,7 @@ public:
     using parent_type::HasInstance;
 #endif
 
-    static T& Get() NOEXCEPT {
+    NODISCARD static T& Get() NOEXCEPT {
         return (*parent_type::Get());
     }
 

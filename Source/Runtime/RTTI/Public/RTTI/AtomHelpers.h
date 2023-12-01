@@ -36,7 +36,7 @@ public:
     operator FAtom() const { return MakeAtom(); }
 
 private:
-    Meta::TPointerWFlags<void> _data;
+    Meta::FPointerWFlags _data;
     PTypeTraits _traits;
 };
 //----------------------------------------------------------------------------

@@ -27,7 +27,7 @@ void IRemotingEndpoint::EndpointProcess(const FRemotingContext& ctx) {
     Assert(ctx.pResponse);
 
     const FString& prefix = this->EndpointPrefix();
-    LOG(Remoting, Debug, L"Call endpoint <{0}> for '{1}'", prefix, ctx.Request.Uri());
+    PPE_LOG(Remoting, Debug, "Call endpoint <{0}> for '{1}'", prefix, ctx.Request.Uri());
 
     Assert_NoAssume(StartsWithI(ctx.Request.Uri().Path(), prefix));
     FStringView relativePath = ctx.Request.Uri().Path().CutStartingAt(prefix.length());
@@ -56,11 +56,11 @@ bool IRemotingEndpoint::EndpointDispatchIFP(
 
         Assert(not part.empty());
         if (Unlikely(part.StartsWith('{'))) {
-            AssertMessage(L"unbalanced path parameter", part.EndsWith('}'));
+            AssertMessage("unbalanced path parameter", part.EndsWith('}'));
 
             FStringView prmName = part.ShiftFront().ShiftBack();
             if (prmName.EndsWith('*')) {
-                AssertMessage(L"globbing path parameter must be at the end of the path", &operation.Path.back() == &part);
+                AssertMessage("globbing path parameter must be at the end of the path", &operation.Path.back() == &part);
 
                 FString decoded;
                 if (Network::FUri::Decode(decoded, relativePath)) {
@@ -145,13 +145,13 @@ bool IRemotingEndpoint::EndpointDispatchIFP(
         }
 
         if (prm.Required) {
-            LOG(Remoting, Error, L"operation <{1}>: missing required param '{0}'",
+            PPE_LOG(Remoting, Error, "operation <{1}>: missing required param '{0}'",
                 prm.Name, Fmt::Join(operation.Path.MakeView(), Network::FUri::PathSeparator) );
             ctx.BadRequest("missing argument");
             return false;
         }
 
-        LOG(Remoting, Warning, L"operation <{1}>: missing optional param '{0}'",
+        PPE_LOG(Remoting, Warning, "operation <{1}>: missing optional param '{0}'",
             prm.Name, Fmt::Join(operation.Path.MakeView(), Network::FUri::PathSeparator) );
     }
 
@@ -159,7 +159,7 @@ bool IRemotingEndpoint::EndpointDispatchIFP(
         return true;
 
 
-    LOG(Remoting, Error, L"operation <{0}>: execution failed",
+    PPE_LOG(Remoting, Error, "operation <{0}>: execution failed",
         Fmt::Join(operation.Path.MakeView(), Network::FUri::PathSeparator) );
     return false;
 }

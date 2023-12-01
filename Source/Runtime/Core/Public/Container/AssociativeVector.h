@@ -108,6 +108,9 @@ public:
     const_iterator begin() const { return _vector.begin(); }
     const_iterator end() const { return _vector.end(); }
 
+    const_iterator cbegin() const { return _vector.begin(); }
+    const_iterator cend() const { return _vector.end(); }
+
     reverse_iterator rbegin() { return _vector.rbegin(); }
     reverse_iterator rend() { return _vector.rend(); }
 
@@ -248,6 +251,16 @@ private:
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 hash_t hash_value(const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) NOEXCEPT {
     return associativeVector.HashValue();
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+NODISCARD size_t SizeOf(const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& v) NOEXCEPT {
+    return v.size();
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+void Resize_DiscardData(TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& v, size_t size) {
+    Resize_DiscardData(v.Vector(), size);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>

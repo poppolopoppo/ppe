@@ -12,6 +12,7 @@
 		"lz4.git/lib/lz4opt.h"
 	],
 	"SourceFiles": [
+		"Private/lz4-external.cpp",
 		"lz4.git/lib/lz4.c",
 		"lz4.git/lib/lz4hc.c"
 	],

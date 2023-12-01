@@ -25,25 +25,21 @@ public:
 class PPE_SERIALIZE_API FMarkupSerializer : public ISerializer {
 public:
     FMarkupSerializer(bool minify = true);
-    virtual ~FMarkupSerializer();
-
-    bool Minify() const { return _minify; }
-    void SetMinify(bool value) { _minify = value; }
+    virtual ~FMarkupSerializer() override;
 
 public:
     virtual void Deserialize(
         const FWStringView& fragment,
         IStreamReader& input,
-        RTTI::FMetaTransaction* loaded) const override final;
+        RTTI::FMetaTransaction* loaded) const final;
 
     virtual void Serialize(
         const FWStringView& fragment,
         const RTTI::FMetaTransaction& saved,
-        IStreamWriter* output) const override final;
+        IStreamWriter* output) const final;
 
 private:
     FString _header;
-    bool _minify;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

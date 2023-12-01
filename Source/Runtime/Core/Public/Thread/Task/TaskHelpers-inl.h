@@ -48,7 +48,7 @@ void TFuture<T>::Async(ETaskPriority priority, ITaskContext* context) {
         _value = _func();
         RemoveSafeRef(this);
         _state = Ready; // set Ready *AFTER* releasing TSafePtr<>
-        details::WakeAtomicBarrier(&_state);
+        details::NotifyAllAtomicBarrier(&_state);
     },  priority, context );
 }
 //----------------------------------------------------------------------------
@@ -95,7 +95,9 @@ static void ParallelForEach_(
         const TFunction<void(_Value)>& foreach;
         _It first, last;
         void Task(ITaskContext&, u32 off, u32 num) const {
-            for(_It it = first + off, cend = it + num; it != cend; ++it) {
+            const _It cend = first + (off + num);
+            Assert_NoAssume(last >= cend);
+            for(_It it = first + off; it != cend; ++it) {
                 IF_CONSTEXPR(std::is_same_v<_Value, _It>)
                     foreach(it);
                 else

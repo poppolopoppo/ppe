@@ -5,7 +5,6 @@
 #include "Modular/ModuleInterface.h"
 
 #include "Diagnostic/Logger_fwd.h"
-#include "Memory/UniquePtr.h"
 
 namespace PPE {
 namespace RTTI {

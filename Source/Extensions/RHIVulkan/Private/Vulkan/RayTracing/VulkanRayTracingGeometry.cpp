@@ -142,7 +142,7 @@ bool FVulkanRayTracingGeometry::Construct(
         &create, device.vkAllocator(),
         &exclusiveData->BottomLevelAS ) );
 
-    LOG_CHECK(RHI, memoryObj.AllocateAccelStruct(
+    PPE_LOG_CHECK(RHI, memoryObj.AllocateAccelStruct(
         resources.MemoryManager(),
         exclusiveData->BottomLevelAS ) );
 

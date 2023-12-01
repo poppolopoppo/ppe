@@ -185,9 +185,12 @@ public: // interface
     // Debugging
 #if USE_PPE_RHIDEBUG
     virtual void LogFrame() const = 0;
+
     NODISCARD virtual bool DumpFrame(FStringBuilder* log) const = 0;
     NODISCARD virtual bool DumpGraph(FStringBuilder* log) const = 0;
-    virtual bool DumpStatistics(FFrameStatistics* pStats) const = 0;
+    NODISCARD virtual bool DumpMemory(FStringBuilder* log) const = 0;
+
+    virtual bool Statistics(FFrameStatistics* pStats) const = 0;
 #endif
 
 public: // helpers

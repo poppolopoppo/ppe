@@ -4,6 +4,7 @@
 
 #include "IO/StreamPolicies.h"
 #include "IO/String_fwd.h"
+#include "Meta/Enum.h"
 #include "Misc/Function_fwd.h"
 #include "Time/Timestamp.h"
 
@@ -14,17 +15,28 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FGenericPlatformFileStat {
-    u16 UID;
-    u16 GID;
+    enum EMode : u16 {
+        Unknown = 0,
 
-    u16 Link;
-    u16 Mode;
+        Directory   = 1 << 0,
+        RegularFile = 1 << 1,
+        Device      = 1 << 2,
+        Read        = 1 << 3,
+        Write       = 1 << 4,
+        Execute     = 1 << 5,
+    };
+    ENUM_FLAGS_FRIEND(EMode);
 
     u64 SizeInBytes;
 
     FTimestamp CreatedAt;
     FTimestamp LastAccess;
     FTimestamp LastModified;
+
+    u16 UID;
+    u16 GID;
+
+    EMode Mode;
 };
 //----------------------------------------------------------------------------
 struct PPE_CORE_API FGenericPlatformFile {

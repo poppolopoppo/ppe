@@ -232,6 +232,8 @@ static void Test_VFSFrontend_() {
 //  * ReadWritable :
 //      UStreamReadWriter OpenReadWritable(const FFilename& filename, EAccessPolicy policy) = 0;
 //
+// NOTE: should test with all VFS components
+//
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------

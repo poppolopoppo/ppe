@@ -43,17 +43,18 @@ public:
     typedef size_t size_type;
     typedef ptrdiff_t difference_type;
 
-    typedef typename std::forward_iterator_tag iterator_category;
+    typedef typename std::random_access_iterator_tag iterator_category;
 
     class FIterator {
-        CONSTEXPR FIterator(const TRingBuffer& owner, size_type pos) : RingBuffer(&owner), Pos(pos) {}
+        friend class TRingBuffer;
+        CONSTEXPR FIterator(const TRingBuffer& owner, size_type pos) : RingBuffer(owner), Pos(pos) {}
     public:
         using value_type = value_type;
         using pointer = pointer;
-        using reference = reference;
+        using reference = const_reference;
         using iterator_category = iterator_category;
 
-        const TRingBuffer* RingBuffer{ nullptr };
+        TPtrRef<const TRingBuffer> RingBuffer;
         size_t Pos{ INDEX_NONE };
 
         FIterator() = default;
@@ -62,15 +63,34 @@ public:
         FIterator(FIterator&& ) = default;
         FIterator& operator =(FIterator&& ) = default;
 
-        FIterator& operator++() /* prefix */ { Pos = (++Pos % RingBuffer->_capacity); return (*this); }
-        FIterator operator++(int) /* postfix */ {
-            FIterator tmp(*this);
-            ++(*this);
-            return tmp;
+        CONSTEXPR FIterator& Advance(difference_type n) {
+            Pos = checked_cast<size_t>((static_cast<difference_type>(Pos) + n) % RingBuffer->_capacity);
+            return *this;
         }
+
+        CONSTEXPR FIterator& operator++() /* prefix */ { return Advance(+1); }
+        CONSTEXPR FIterator& operator--() /* prefix */ { return Advance(-1); }
+
+        FIterator operator++(int) /* postfix */ { return FIterator(*this).Advance(+1); }
+        FIterator operator--(int) /* postfix */ { return FIterator(*this).Advance(-1); }
+
+        CONSTEXPR FIterator& operator+=(difference_type n) { return Advance(+n); }
+        CONSTEXPR FIterator& operator-=(difference_type n) { return Advance(-n); }
+
+        CONSTEXPR FIterator operator+(difference_type n) const { return FIterator(*this).Advance(+n); }
+        CONSTEXPR FIterator operator-(difference_type n) const { return FIterator(*this).Advance(-n); }
 
         CONSTEXPR pointer operator->() const { return std::addressof(RingBuffer->at(Pos)); }
         CONSTEXPR reference operator*() const { return RingBuffer->at(Pos); }
+
+        CONSTEXPR reference operator[](difference_type n) const { return (*FIterator(*this).Advance(n)); }
+
+        CONSTEXPR difference_type operator-(const FIterator& other) const {
+            auto d = checked_cast<difference_type>(Pos - other.Pos);
+            if (d < 0) d += RingBuffer->_capacity;
+            Assert_NoAssume(checked_cast<size_t>(d) < RingBuffer->_capacity);
+            return d;
+        }
 
         CONSTEXPR bool operator ==(const FIterator& other) const { Assert(RingBuffer == other.RingBuffer);  return (Pos == other.Pos); }
         CONSTEXPR bool operator !=(const FIterator& other) const { return (not operator ==(other)); }
@@ -131,6 +151,10 @@ public:
 
     void Swap(TRingBuffer& other);
 
+    friend void swap(TRingBuffer& lhs, TRingBuffer& rhs) NOEXCEPT {
+        lhs.Swap(rhs);
+    }
+
 private:
     size_type _begin{ 0 };
     size_type _size{ 0 };
@@ -171,7 +195,7 @@ CONSTEXPR bool TRingBuffer<T, _IsPod>::push_back_OverflowIFN(pointer overflowIFN
     const bool overflow = (_size == _capacity);
     if (overflow) {
         Assert(0 < _size);
-        Verify(pop_front(overflowIFN));
+        pop_front_AssumeNotEmpty(overflowIFN);
     }
 
     push_back(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
@@ -205,7 +229,7 @@ CONSTEXPR bool TRingBuffer<T, _IsPod>::push_front_OverflowIFN(pointer overflowIF
     const bool overflow = (_size == _capacity);
     if (overflow) {
         Assert(0 < _size);
-        pop_back(overflowIFN);
+        pop_back_AssumeNotEmpty(overflowIFN);
     }
 
     push_front(std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
@@ -277,11 +301,6 @@ void TRingBuffer<T, _IsPod>::Swap(TRingBuffer& other) {
     std::swap(_size,    other._size);
     std::swap(_capacity,other._capacity);
     std::swap(_storage, other._storage);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-void swap(TRingBuffer<T>& lhs, TRingBuffer<T>& rhs) NOEXCEPT {
-    lhs.Swap(rhs);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

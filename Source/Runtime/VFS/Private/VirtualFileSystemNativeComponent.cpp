@@ -13,6 +13,7 @@
 #include "IO/FileSystemTrie.h"
 #include "IO/FileStream.h"
 #include "IO/FileSystem.h"
+#include "IO/FormatHelpers.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
 #include "Memory/MemoryProvider.h"
@@ -41,12 +42,9 @@ static void Unalias_(
     Assert(aliased.PathNode()->Depth() >= alias.PathNode()->Depth());
     const size_t length = aliased.PathNode()->Depth() - alias.PathNode()->Depth();
     if (length > 0) {
-        STACKLOCAL_ASSUMEPOD_ARRAY(FFileSystemToken, subpath, length);
-        const size_t k = FFileSystemTrie::Get().Expand(subpath, alias.PathNode(), aliased.PathNode());
-
-        forrange(i, 0, k - 1)
-            oss << subpath[i] << FileSystem::char_type(FileSystem::Separator);
-        oss << subpath[k - 1];
+        auto sep = Fmt::NotFirstTime(FileSystem::char_type(FileSystem::Separator));
+        for (const FFileSystemToken& it : aliased.PathNode()->MakeView().LastNElements(length))
+            oss << sep << it;
     }
 }
 //----------------------------------------------------------------------------
@@ -76,26 +74,31 @@ static void Unalias_(
     Unalias_(oss, aliased, alias, target);
     oss << Eos;
 }
-
 //----------------------------------------------------------------------------
 template <typename _Predicate>
 static size_t EnumerateFilesNonRec_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
-    const TFunction<void(const FFilename&)>& foreach,
+    const TFunction<void(const FDirpath&)>& onDirectory,
+    const TFunction<void(const FFilename&)>& onFile,
     _Predicate&& pred ) {
     size_t total = 0;
 
     FileSystem::char_type nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     Unalias_(nativeDirpath, aliased, alias, target);
 
-    FPlatformFile::EnumerateFiles(nativeDirpath, false,
+    FPlatformFile::EnumerateDir(nativeDirpath,
         [&](const FWStringView& file) {
             if (pred(file)) {
-                total++;
-                const FBasename basename(file);
-                foreach(FFilename(aliased, basename));
+                ++total;
+
+                if (onFile.Valid())
+                    onFile(FFilename(aliased, FBasename(file)));
             }
+        },
+        [&](const FWStringView& dirname) {
+            if (onDirectory.Valid())
+                onDirectory(FDirpath(aliased, FDirname(dirname)));
         });
 
     return total;
@@ -105,54 +108,54 @@ template <typename _Predicate>
 static size_t EnumerateFilesRec_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
-    const TFunction<void(const FFilename&)>& foreach,
+    const TFunction<void(const FDirpath&)>& onDirectory,
+    const TFunction<void(const FFilename&)>& onFile,
     _Predicate&& pred ) {
-    struct FContext_ {
-        size_t Total = 0;
-        FDirpath Dirpath;
-        VECTORINSITU(FileSystem, FDirpath, 16) SubDirectories;
-    }   ctx;
+    size_t total = 0;
+    VECTORINSITU(FileSystem, FDirpath, 16) subDirectories;
 
-    ctx.SubDirectories.push_back(aliased);
-
-    const TFunction<void(const FWStringView&)> onFile = [&ctx, &pred, &foreach](const FWStringView& file) {
-        if (pred(file)) {
-            ctx.Total++;
-            const FBasename basename(file);
-            foreach(FFilename(ctx.Dirpath, basename));
-        }
-    };
-
-    const TFunction<void(const FWStringView&)> onSubDir = [&ctx](const FWStringView& subdir) {
-        const FDirname dirname(subdir);
-        ctx.SubDirectories.emplace_back(ctx.Dirpath, dirname);
-    };
+    subDirectories.push_back(aliased);
 
     FileSystem::char_type nativeDirpath[NATIVE_ENTITYNAME_MAXSIZE];
     do {
-        ctx.Dirpath = std::move(ctx.SubDirectories.back());
-        ctx.SubDirectories.pop_back();
+        const FDirpath dirpath = std::move(subDirectories.back());
+        subDirectories.pop_back();
 
-        Unalias_(nativeDirpath, ctx.Dirpath, alias, target);
+        Unalias_(nativeDirpath, dirpath, alias, target);
 
-        FPlatformFile::EnumerateDir(nativeDirpath, onFile, onSubDir);
+        FPlatformFile::EnumerateDir(nativeDirpath,
+            [&](const FWStringView& file) {
+                if (pred(file)) {
+                    ++total;
 
-    } while (not ctx.SubDirectories.empty());
+                    if (onFile.Valid())
+                        onFile(FFilename(dirpath, FBasename(file)));
+                }
+            },
+            [&](const FWStringView& subdir) {
+                subDirectories.emplace_back(dirpath, FDirname(subdir));
 
-    return ctx.Total;
+                if (onDirectory.Valid())
+                    onDirectory.Invoke(subDirectories.back());
+            });
+
+    } while (not subDirectories.empty());
+
+    return total;
 }
 //----------------------------------------------------------------------------
 template <typename _Predicate>
-static size_t EnumerateFiles_(
+static size_t EnumerateDir_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
-    const TFunction<void(const FFilename&)>& foreach,
+    const TFunction<void(const FDirpath&)>& onDirectory,
+    const TFunction<void(const FFilename&)>& onFile,
     bool recursive,
     _Predicate&& pred
 ) {
     return (recursive
-        ? EnumerateFilesRec_(aliased, alias, target, foreach, pred)
-        : EnumerateFilesNonRec_(aliased, alias, target, foreach, pred) );
+        ? EnumerateFilesRec_(aliased, alias, target, onDirectory, onFile, pred)
+        : EnumerateFilesNonRec_(aliased, alias, target, onDirectory, onFile, pred) );
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -225,13 +228,24 @@ bool FVirtualFileSystemNativeComponent::FileStats(FFileStat* pstat, const FFilen
     return FPlatformFile::Stat(pstat, nativeFilename);
 }
 //----------------------------------------------------------------------------
+size_t FVirtualFileSystemNativeComponent::EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunction<void(const FDirpath&)>& onDirectory, const TFunction<void(const FFilename&)>& onFile) {
+    Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
+
+    const size_t n = EnumerateDir_(dirpath, _alias, _target, onDirectory, onFile, recursive, [](const FWStringView&) {
+        return true;
+    });
+    PPE_LOG(VFS, Debug, "enumerated {0} files in native directory '{1}' (recursive={2:A})", n, dirpath, recursive);
+
+    return n;
+}
+//----------------------------------------------------------------------------
 size_t FVirtualFileSystemNativeComponent::EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
     Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
 
-    const size_t n = EnumerateFiles_(dirpath, _alias, _target, foreach, recursive, [](const FWStringView&) {
+    const size_t n = EnumerateDir_(dirpath, _alias, _target, NoFunction, foreach, recursive, [](const FWStringView&) {
         return true;
     });
-    LOG(VFS, Debug, L"enumerated {0} files in native directory '{1}' (recursive={2:A})", n, dirpath, recursive);
+    PPE_LOG(VFS, Debug, "enumerated {0} files in native directory '{1}' (recursive={2:A})", n, dirpath, recursive);
 
     return n;
 }
@@ -240,10 +254,10 @@ size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, con
     Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
     Assert_NoAssume(not pattern.empty());
 
-    const size_t n = EnumerateFiles_(dirpath, _alias, _target, foreach, recursive, [&pattern](const FWStringView& fname) {
+    const size_t n = EnumerateDir_(dirpath, _alias, _target, NoFunction, foreach, recursive, [&pattern](const FWStringView& fname) {
         return WildMatchI(pattern, fname);
     });
-    LOG(VFS, Debug, L"globbed {0} files with pattern '{1}' in native directory '{2}' (recursive={3:A})", n, pattern, dirpath, recursive);
+    PPE_LOG(VFS, Debug, "globbed {0} files with pattern '{1}' in native directory '{2}' (recursive={3:A})", n, pattern, dirpath, recursive);
 
     return n;
 }
@@ -251,10 +265,10 @@ size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, con
 size_t FVirtualFileSystemNativeComponent::MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
     Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
 
-    const size_t n = EnumerateFiles_(dirpath, _alias, _target, foreach, recursive, [&re](const FWStringView& fname) {
+    const size_t n = EnumerateDir_(dirpath, _alias, _target, NoFunction, foreach, recursive, [&re](const FWStringView& fname) {
         return re.Match(fname);
     });
-    LOG(VFS, Debug, L"matched {0} files with regex in native directory '{1}' (recursive={2:A})", n, dirpath, recursive);
+    PPE_LOG(VFS, Debug, "matched {0} files with regex in native directory '{1}' (recursive={2:A})", n, dirpath, recursive);
 
     return n;
 }
@@ -268,11 +282,11 @@ UStreamReader FVirtualFileSystemNativeComponent::OpenReadable(const FFilename& f
     UStreamReader result;
     FFileStreamReader tmp = FFileStream::OpenRead(nativeFilename, policy);
     if (tmp.Good()) {
-        LOG(VFS, Debug, L"open native readable '{0}' : {1}", filename, policy);
+        PPE_LOG(VFS, Debug, "open native readable '{0}' : {1}", filename, policy);
         result.create<FFileStreamReader>(std::move(tmp));
     }
     else {
-        LOG(VFS, Error, L"failed to open native readable '{0}' : {1}", filename, policy);
+        PPE_LOG(VFS, Error, "failed to open native readable '{0}' : {1}", filename, policy);
     }
 
     return result;
@@ -288,12 +302,12 @@ bool FVirtualFileSystemNativeComponent::CreateDirectory(const FDirpath& dirpath)
 
     bool existed = false;
     if (FPlatformFile::CreateDirectoryRecursively(nativeDirpath.data(), &existed)) {
-        CLOG(not existed, VFS, Debug, L"created native directory '{0}'", dirpath);
-        CLOG(existed, VFS, Debug, L"native directory '{0}' already existed", dirpath);
+        PPE_CLOG(not existed, VFS, Debug, "created native directory '{0}'", dirpath);
+        PPE_CLOG(existed, VFS, Debug, "native directory '{0}' already existed", dirpath);
         return true;
     }
 
-    LOG(VFS, Error, L"failed to create native directory '{0}' ({1})",
+    PPE_LOG(VFS, Error, "failed to create native directory '{0}' ({1})",
         dirpath, MakeCStringView(buffer));
     return false;
 }
@@ -308,11 +322,11 @@ bool FVirtualFileSystemNativeComponent::MoveFile(const FFilename& src, const FFi
     Unalias_(nativeDst, dst, _alias, _target);
 
     if (FPlatformFile::MoveFile(nativeSrc, nativeDst)) {
-        LOG(VFS, Debug, L"move native file '{0}' -> '{1}'", src, dst);
+        PPE_LOG(VFS, Debug, "move native file '{0}' -> '{1}'", src, dst);
         return true;
     }
 
-    LOG(VFS, Error, L"failed to move native file '{0}' -> '{1}'", src, dst);
+    PPE_LOG(VFS, Error, "failed to move native file '{0}' -> '{1}'", src, dst);
     return false;
 }
 //----------------------------------------------------------------------------
@@ -323,11 +337,11 @@ bool FVirtualFileSystemNativeComponent::RemoveDirectory(const FDirpath& dirpath,
     Unalias_(nativeDirpath, dirpath, _alias, _target);
 
     if (FPlatformFile::RemoveDirectory(nativeDirpath, force)) {
-        LOG(VFS, Debug, L"remove native directory '{0}' (force={1:A})", dirpath, force);
+        PPE_LOG(VFS, Debug, "remove native directory '{0}' (force={1:A})", dirpath, force);
         return true;
     }
 
-    LOG(VFS, Error, L"failed remove native directory '{0}' (force={1:A})", dirpath, force);
+    PPE_LOG(VFS, Error, "failed remove native directory '{0}' (force={1:A})", dirpath, force);
     return false;
 }
 //----------------------------------------------------------------------------
@@ -338,10 +352,10 @@ bool FVirtualFileSystemNativeComponent::RemoveFile(const FFilename& filename) {
     Unalias_(nativeFilename, filename, _alias, _target);
 
     if (FPlatformFile::RemoveFile(nativeFilename)) {
-        LOG(VFS, Debug, L"remove native file '{0}'", filename);
+        PPE_LOG(VFS, Debug, "remove native file '{0}'", filename);
         return true;
     }
-    LOG(VFS, Error, L"failed to remove native file '{0}'", filename);
+    PPE_LOG(VFS, Error, "failed to remove native file '{0}'", filename);
     return false;
 }
 //----------------------------------------------------------------------------
@@ -360,18 +374,18 @@ UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& f
 
     if (policy ^ EAccessPolicy::Roll) {
         if (not FPlatformFile::RollFile(nativeFilename)) {
-            LOG(VFS, Error, L"failed to roll native file '{0}' : {1}", filename, nativeFilename);
+            PPE_LOG(VFS, Error, "failed to roll native file '{0}' : {1}", filename, nativeFilename);
             return result;
         }
     }
 
     FFileStreamWriter tmp = FFileStream::OpenWrite(nativeFilename, policy);
     if (tmp.Good()) {
-        LOG(VFS, Debug, L"open native writable '{0}' : {1}", filename, policy);
+        PPE_LOG(VFS, Debug, "open native writable '{0}' : {1}", filename, policy);
         result.create<FFileStreamWriter>(std::move(tmp));
     }
     else {
-        LOG(VFS, Error, L"failed to open native writable '{0}' : {1}", filename, policy);
+        PPE_LOG(VFS, Error, "failed to open native writable '{0}' : {1}", filename, policy);
     }
 
     return result;
@@ -392,11 +406,11 @@ UStreamReadWriter FVirtualFileSystemNativeComponent::OpenReadWritable(const FFil
 
     FFileStreamReadWriter tmp = FFileStream::OpenReadWrite(nativeFilename, policy);
     if (tmp.Good()) {
-        LOG(VFS, Debug, L"open native read/writable '{0}' : {1}", filename, policy);
+        PPE_LOG(VFS, Debug, "open native read/writable '{0}' : {1}", filename, policy);
         result.create<FFileStreamReadWriter>(std::move(tmp));
     }
     else {
-        LOG(VFS, Error, L"failed to open native read/writable '{0}' : {1}", filename, policy);
+        PPE_LOG(VFS, Error, "failed to open native read/writable '{0}' : {1}", filename, policy);
     }
 
     return result;

@@ -6,6 +6,7 @@
 #include "Allocator/PageAllocator.h"
 #include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
+#include "Meta/Utility.h"
 #include "Thread/CriticalSection.h"
 
 namespace PPE {
@@ -49,8 +50,12 @@ struct FBitmapPagePool_ : FPageAllocator {
 
     ~FBitmapPagePool_() {
         const FCriticalScope scopeLock(&Barrier);
-        while (UsedChunks)
-            ReleaseUnusedChunk_(UsedChunks, nullptr);
+        while (UsedChunks) {
+            FChunk* const nextChunk = UsedChunks->NextChunk;
+            RemoveUnusedChunk_(UsedChunks, nullptr);
+            ReleaseChunk_ReturnNext_(UsedChunks);
+            UsedChunks = nextChunk;
+        }
     }
 
     FBitmapBasicPage* Allocate() {
@@ -90,6 +95,14 @@ struct FBitmapPagePool_ : FPageAllocator {
 
     void Deallocate(FBitmapBasicPage* p) {
         Assert(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, p));
+
+        // release chunk memory outside of the lock
+        FChunk* chunkToRelease = nullptr;
+        DEFERRED {
+            if (chunkToRelease != nullptr)
+                ReleaseChunk_ReturnNext_(chunkToRelease);
+        };
+
         const FCriticalScope scopeLock(&Barrier);
 
         Assert_NoAssume(uintptr_t(-1) == p->Pages);
@@ -108,19 +121,33 @@ struct FBitmapPagePool_ : FPageAllocator {
         *(void**)p = ch->FreePages;
         ch->FreePages = (void**)p;
 
-        if (Unlikely(--ch->NumUsedPages == 0 && NumFreePages > NumBlocksPerChunk))
-            ReleaseUnusedChunk_(ch);
+        if (Unlikely(--ch->NumUsedPages == 0 && NumFreePages > NumBlocksPerChunk)) {
+            RemoveUnusedChunk_(ch);
+            chunkToRelease = ch;
+        }
     }
 
     void ReleaseCacheMemory() {
+        // release chunk memory outside of the lock
+        FChunk* chunksToRelease = nullptr;
+        DEFERRED{
+            while (chunksToRelease != nullptr)
+                chunksToRelease = ReleaseChunk_ReturnNext_(chunksToRelease);
+        };
+
         const FCriticalScope scopeLock(&Barrier);
 
         for (FChunk* prv = nullptr, *ch = UsedChunks; ch; ) {
             FChunk* const nxt = ch->NextChunk;
-            if (0 == ch->NumUsedPages) // release any unused chunk
-                ReleaseUnusedChunk_(ch, prv);
-            else
+            if (0 == ch->NumUsedPages) {
+                // release any unused chunk
+                RemoveUnusedChunk_(ch, prv);
+                ch->NextChunk = chunksToRelease;
+                chunksToRelease = ch;
+            }
+            else {
                 prv = ch;
+            }
             ch = nxt;
         }
     }
@@ -146,11 +173,9 @@ private:
         return result;
     }
 
-    void ReleaseUnusedChunk_(FChunk* unused, FChunk* prev) {
+    void RemoveUnusedChunk_(FChunk* unused, FChunk* prev) {
         Assert(0 == unused->NumUsedPages);
         Assert(NumFreePages >= NumBlocksPerChunk);
-
-        ONLY_IF_MEMORYDOMAINS(TrackingData().DeallocateSystem(ChunkSize));
 
         NumFreePages -= NumBlocksPerChunk;
 
@@ -162,23 +187,30 @@ private:
             Assert(UsedChunks == unused);
             UsedChunks = unused->NextChunk;
         }
-
-        Meta::Destroy(unused);
-        allocator_traits::Deallocate(*this, FAllocatorBlock{ unused, ChunkSize });
     }
 
-    NO_INLINE void ReleaseUnusedChunk_(FChunk* unused) {
+    NO_INLINE void RemoveUnusedChunk_(FChunk* unused) {
         Assert(unused);
 
         // need to look for chunk predecessor
         for (FChunk* prv = nullptr, *ch = UsedChunks; ch; prv = ch, ch = ch->NextChunk) {
             if (ch == unused) {
-                ReleaseUnusedChunk_(unused, prv);
+                RemoveUnusedChunk_(unused, prv);
                 return;
             }
         }
 
         AssertNotReached(); // this chunk doesn't belong to this pool!?
+    }
+
+    FChunk* ReleaseChunk_ReturnNext_(FChunk* chunkToRelease) {
+        ONLY_IF_MEMORYDOMAINS(TrackingData().DeallocateSystem(ChunkSize));
+        FChunk* const nextChunk = chunkToRelease->NextChunk;
+
+        Meta::Destroy(chunkToRelease);
+        allocator_traits::Deallocate(*this, FAllocatorBlock{ chunkToRelease, ChunkSize });
+
+        return nextChunk;
     }
 };
 //----------------------------------------------------------------------------

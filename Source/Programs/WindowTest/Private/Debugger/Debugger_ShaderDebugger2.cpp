@@ -11,7 +11,7 @@ bool Debugger_ShaderDebugger2_(FWindowTestApp& app) {
 
     if (not EnableShaderDebugging) {
         Unused(app);
-        LOG(WindowTest, Warning, L"Debugger_ShaderDebugger2_: skipped due to lack of debugger support (USE_PPE_RHIDEBUG={0})", USE_PPE_RHIDEBUG);
+        PPE_LOG(WindowTest, Warning, "Debugger_ShaderDebugger2_: skipped due to lack of debugger support (USE_PPE_RHIDEBUG={0})", USE_PPE_RHIDEBUG);
         return true;
     }
 
@@ -76,10 +76,10 @@ ARGS_IF_RHIDEBUG("Debugger_ShaderDebugger2_PS"));
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget")) };
-    LOG_CHECK(WindowTest, image.Valid());
+    PPE_LOG_CHECK(WindowTest, image.Valid());
 
     TAutoResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Debugger_ShaderDebugger2")) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     bool dataIsCorrect = false;
     bool shaderOutputIsCorrect = false;
@@ -121,7 +121,7 @@ no source
             shaderOutputIsCorrect &= (output.size() == 2 and (
                 (output[0] == ref0 and output[1] == ref1) or
                 (output[1] == ref0 and output[0] == ref1) ));
-            LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
+            PPE_LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
         }
         else if (shaderName == "Debugger_ShaderDebugger2_PS") {
             const FStringView ref2 = R"#(//> gl_FragCoord: float4 {400.500000, 300.500000, 0.000000, 1.000000}
@@ -140,11 +140,11 @@ no source
 )#";
 
             shaderOutputIsCorrect &= (output.size() == 1 and output[0] == ref2);
-            LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
+            PPE_LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
         }
         else {
             shaderOutputIsCorrect = false;
-            LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
+            PPE_LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
         }
     };
 
@@ -159,8 +159,8 @@ no source
             imageData.Load(&texel, uint3(ix, iy, 0));
 
             const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
-            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
-            LOG_CHECK(WindowTest, isEqual);
+            PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
+            PPE_LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);
             return isEqual;
         };
@@ -180,12 +180,12 @@ no source
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Debugger_ShaderDebugger2")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Color0, image, FLinearColor(Zero), EAttachmentStoreOp::Store)
         .AddViewport(viewSize));
-    LOG_CHECK(WindowTest, !!renderPass);
+    PPE_LOG_CHECK(WindowTest, !!renderPass);
 
     cmd->Task(renderPass, FDrawVertices{}
         .Draw(3)
@@ -201,11 +201,11 @@ no source
         .DependsOn(tDraw));
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, shaderOutputIsCorrect);
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, shaderOutputIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 #endif
 
     return true;

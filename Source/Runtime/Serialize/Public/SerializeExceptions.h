@@ -9,7 +9,7 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FSerializeException : public FException {
+class FSerializeException : public FException {
 public:
     FSerializeException(const char* what) : FException(what) {}
 };

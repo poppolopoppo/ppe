@@ -42,7 +42,11 @@ struct FBlockTracking_ {
 
     bool CheckCanary() const { return (MakeCanary() == Canary); }
 
-    static CONSTEXPR CONSTF size_t SystemSize(size_t userSize) {
+    static CONSTEXPR CONSTF size_t UserSizeFromSystem(size_t systemSize) {
+        Assert(systemSize > sizeof(FBlockTracking_));
+        return systemSize - sizeof(FBlockTracking_);
+    }
+    static CONSTEXPR CONSTF size_t SystemSizeFromUser(size_t userSize) {
         return userSize + sizeof(FBlockTracking_);
     }
 
@@ -79,23 +83,33 @@ STATIC_ASSERT(sizeof(FBlockTracking_) == ALLOCATION_BOUNDARY);
 //----------------------------------------------------------------------------
 void* (tracking_malloc)(FMemoryTracking& trackingData, size_t size) {
 #if USE_PPE_TRACKINGMALLOC
-    return tracking_malloc_for_new(trackingData, size);
+    if (0 == size)
+        return nullptr;
+
+    const FMemoryTracking::FThreadScope threadTracking{ trackingData };
+
+    void* const pblock = PPE::malloc(FBlockTracking_::SystemSizeFromUser(size));
+
+    return FBlockTracking_::MakeAlloc(trackingData, pblock, size);
 #else
     Unused(trackingData);
     return PPE::malloc(size);
 #endif
 }
 //----------------------------------------------------------------------------
-void* (tracking_malloc_for_new)(FMemoryTracking& trackingData, size_t size) {
+FAllocatorBlock (tracking_malloc_for_new)(FMemoryTracking& trackingData, size_t size) {
 #if USE_PPE_TRACKINGMALLOC
     if (0 == size)
-        return nullptr;
+        return Default;
 
     const FMemoryTracking::FThreadScope threadTracking{ trackingData };
 
-    void* const ptr = PPE::malloc_for_new(FBlockTracking_::SystemSize(size));
+    FAllocatorBlock blk = PPE::malloc_for_new(FBlockTracking_::SystemSizeFromUser(size));
 
-    return FBlockTracking_::MakeAlloc(trackingData, ptr, size);
+    blk.Data = FBlockTracking_::MakeAlloc(trackingData, blk.Data, size);
+    blk.SizeInBytes = FBlockTracking_::UserSizeFromSystem(blk.SizeInBytes);
+
+    return blk;
 #else
     Unused(trackingData);
     return PPE::malloc_for_new(size);
@@ -107,74 +121,89 @@ void  (tracking_free)(void *ptr) NOEXCEPT {
     if (nullptr == ptr)
         return;
 
-    FBlockTracking_* const pblock = FBlockTracking_::BlockFromPtr(ptr);
-    return tracking_free_for_delete(ptr, pblock->UserSize);
+    FBlockTracking_* const pblock = FBlockTracking_::ReleaseAlloc(ptr);
+
+    const FMemoryTracking::FThreadScope threadTracking{ *pblock->TrackingData };
+
+    PPE::free(pblock);
 #else
     PPE::free(ptr);
 #endif
 }
 //----------------------------------------------------------------------------
-void  (tracking_free_for_delete)(void* ptr, size_t size) NOEXCEPT {
+void  (tracking_free_for_delete)(FAllocatorBlock blk) NOEXCEPT {
 #if USE_PPE_TRACKINGMALLOC
-    if (nullptr == ptr) {
-        Assert_NoAssume(0 == size);
+    if (!blk) {
+        Assert_NoAssume(0 == blk.SizeInBytes);
         return;
     }
 
-    FBlockTracking_* const pblock = FBlockTracking_::ReleaseAlloc(ptr);
-    Assert_NoAssume(size == pblock->UserSize);
+    FBlockTracking_* const pblock = FBlockTracking_::ReleaseAlloc(blk.Data);
+    Assert_NoAssume(blk.SizeInBytes >= pblock->UserSize);
 
     const FMemoryTracking::FThreadScope threadTracking{ *pblock->TrackingData };
 
-    PPE::free_for_delete(pblock, FBlockTracking_::SystemSize(size));
+    PPE::free_for_delete(FAllocatorBlock(pblock, FBlockTracking_::SystemSizeFromUser(blk.SizeInBytes)));
 #else
-    PPE::free_for_delete(ptr, size);
+    PPE::free_for_delete(blk);
 #endif
 }
 //----------------------------------------------------------------------------
 void* (tracking_calloc)(FMemoryTracking& trackingData, size_t nmemb, size_t size) {
-    void* ptr = tracking_malloc(trackingData, nmemb * size);
+    void* const ptr = tracking_malloc(trackingData, nmemb * size);
+
     FPlatformMemory::Memzero(ptr, nmemb * size);
+
     return ptr;
 }
 //----------------------------------------------------------------------------
 void* (tracking_realloc)(FMemoryTracking& trackingData, void* ptr, size_t size) {
 #if USE_PPE_TRACKINGMALLOC
-    if (nullptr != ptr) {
-        FBlockTracking_* const pblock = FBlockTracking_::BlockFromPtr(ptr);
-        return tracking_realloc_for_new(trackingData, ptr, size, pblock->UserSize);
+    const FMemoryTracking::FThreadScope threadTracking{ trackingData };
+
+    FBlockTracking_* pblock = nullptr;
+    if (!!ptr) {
+        pblock = FBlockTracking_::ReleaseAlloc(ptr);
+        Assert_NoAssume(&trackingData == pblock->TrackingData);
     }
-    else {
-        return tracking_realloc_for_new(trackingData, ptr, size, 0);
-    }
+
+    void* const nblock = PPE::realloc(pblock, FBlockTracking_::SystemSizeFromUser(size));
+    if (Likely(!!nblock))
+        return FBlockTracking_::MakeAlloc(trackingData, nblock, size);
+
+    Assert_NoAssume(size == 0);
+    return nullptr;
 #else
     Unused(trackingData);
     return PPE::realloc(ptr, size);
 #endif
 }
 //----------------------------------------------------------------------------
-void* (tracking_realloc_for_new)(FMemoryTracking& trackingData, void* ptr, size_t size, size_t old) {
+FAllocatorBlock (tracking_realloc_for_new)(FMemoryTracking& trackingData, FAllocatorBlock blk, size_t size) {
 #if USE_PPE_TRACKINGMALLOC
     const FMemoryTracking::FThreadScope threadTracking{ trackingData };
 
     FBlockTracking_* pblock = nullptr;
-    if (nullptr != ptr) {
-        Assert_NoAssume(old > 0);
-        pblock = FBlockTracking_::ReleaseAlloc(ptr);
+    if (!!blk) {
+        Assert_NoAssume(blk.SizeInBytes > 0);
+        pblock = FBlockTracking_::ReleaseAlloc(blk.Data);
         Assert_NoAssume(&trackingData == pblock->TrackingData);
-        Assert_NoAssume(pblock->UserSize == old);
+        Assert_NoAssume(pblock->UserSize == blk.SizeInBytes);
     }
 
-    void* const newp = PPE::realloc_for_new(pblock, FBlockTracking_::SystemSize(size), FBlockTracking_::SystemSize(old));
+    FAllocatorBlock nblk = PPE::realloc_for_new(FAllocatorBlock(pblock, FBlockTracking_::SystemSizeFromUser(blk.SizeInBytes)), FBlockTracking_::SystemSizeFromUser(size));
 
-    if (newp)
-        return FBlockTracking_::MakeAlloc(trackingData, newp, size);
+    if (Likely(!!nblk)) {
+        nblk.Data = FBlockTracking_::MakeAlloc(trackingData, nblk.Data, size);
+        nblk.SizeInBytes = FBlockTracking_::UserSizeFromSystem(nblk.SizeInBytes);
+        return nblk;
+    }
 
     Assert_NoAssume(size == 0);
-    return nullptr;
+    return Default;
 #else
     Unused(trackingData);
-    return PPE::realloc_for_new(ptr, size, old);
+    return PPE::realloc_for_new(blk, size);
 #endif
 }
 //----------------------------------------------------------------------------

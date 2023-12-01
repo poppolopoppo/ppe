@@ -152,7 +152,7 @@ using i64   = std::int64_t;
 #else
 #   error "unsupported compiler"
 #endif
-#if !defined(_DEBUG) || defined(NDEBUG) || (defined(USE_PPE_FASTDEBUG) && USE_PPE_FASTDEBUG)
+#if (!defined(_DEBUG) || defined(NDEBUG) || USE_PPE_FASTDEBUG) && !(USE_PPE_MEMORY_DEBUGGING || USE_PPE_SANITIZER)
 #   if defined(_MSC_VER)
 #       define FORCE_INLINE __forceinline
 #   elif defined(__clang__) || defined(__gcc__)

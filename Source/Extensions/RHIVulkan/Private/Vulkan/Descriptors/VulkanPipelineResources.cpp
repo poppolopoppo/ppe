@@ -7,8 +7,11 @@
 
 #include "RHI/EnumToString.h"
 
+#include "Allocator/Alloca.h"
+#include "Allocator/AllocatorHelpers.h"
 #include "Allocator/SlabAllocator.h"
 #include "Diagnostic/Logger.h"
+#include "RHI/PixelFormatHelpers.h"
 
 namespace PPE {
 namespace RHI {
@@ -16,13 +19,13 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FVulkanPipelineResources::FUpdateDescriptors {
-    SLAB_ALLOCATOR(RHIDescriptor) Allocator;
+    FAllocaAllocator Allocator;
     TMemoryView<VkWriteDescriptorSet> DescriptorWrites;
     u32 DescriptorWriteCount{ 0 };
 
     template <typename T>
     TMemoryView<T> AllocateT(size_t n) NOEXCEPT {
-        return TAllocatorTraits<Meta::TDecay<decltype(Allocator)>>::template AllocateT<T>(Allocator, n);
+        return TAllocatorTraits<FAllocaAllocator>::AllocateT<T>(Allocator, n);
     }
 
     VkWriteDescriptorSet& NextDescriptorWrite() NOEXCEPT {
@@ -73,7 +76,7 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
     wds.dstSet = data.DescriptorSet.First;
     wds.pBufferInfo = infos.data();
 
-    RHI_TRACE(L"UpdateDescriptors_Buffer", id, Fmt::Struct(wds));
+    RHI_TRACE("UpdateDescriptors_Buffer", id, Fmt::Struct(wds));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -112,7 +115,7 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
     wds.dstSet = data.DescriptorSet.First;
     wds.pTexelBufferView = infos.data();
 
-    RHI_TRACE(L"UpdateDescriptors_TexelBuffer", id, Fmt::Struct(wds));
+    RHI_TRACE("UpdateDescriptors_TexelBuffer", id, Fmt::Struct(wds));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -155,7 +158,7 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
     wds.dstSet = data.DescriptorSet.First;
     wds.pImageInfo = infos.data();
 
-    RHI_TRACE(L"UpdateDescriptors_Image", id, Fmt::Struct(wds));
+    RHI_TRACE("UpdateDescriptors_Image", id, Fmt::Struct(wds));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -195,7 +198,7 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
     wds.dstSet = data.DescriptorSet.First;
     wds.pImageInfo = infos.data();
 
-    RHI_TRACE(L"UpdateDescriptors_Texture", id, Fmt::Struct(wds));
+    RHI_TRACE("UpdateDescriptors_Texture", id, Fmt::Struct(wds));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -225,7 +228,7 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
     wds.dstSet = data.DescriptorSet.First;
     wds.pImageInfo = infos.data();
 
-    RHI_TRACE(L"UpdateDescriptors_Sampler", id, Fmt::Struct(wds));
+    RHI_TRACE("UpdateDescriptors_Sampler", id, Fmt::Struct(wds));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -259,7 +262,7 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
     wds.dstBinding = value.Index.VKBinding();
     wds.dstSet = data.DescriptorSet.First;
 
-    RHI_TRACE(L"UpdateDescriptors_RayTracingScene", id, Fmt::Struct(wds));
+    RHI_TRACE("UpdateDescriptors_RayTracingScene", id, Fmt::Struct(wds));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -321,7 +324,7 @@ bool FVulkanPipelineResources::Construct(FVulkanResourceManager& manager) {
     Assert_NoAssume(VK_NULL_HANDLE == exclusiveRes->DescriptorSet.First);
 
     const FVulkanDescriptorSetLayout* const pDsLayout = manager.ResourceDataIFP(exclusiveRes->LayoutId, true);
-    LOG_CHECK(RHI, !!pDsLayout );
+    PPE_LOG_CHECK(RHI, !!pDsLayout );
 
     const FVulkanDevice& device = manager.Device();
 
@@ -338,14 +341,13 @@ bool FVulkanPipelineResources::Construct(FVulkanResourceManager& manager) {
     }
 #endif
 
-    LOG_CHECK(RHI, pDsLayout->AllocateDescriptorSet(
+    PPE_LOG_CHECK(RHI, pDsLayout->AllocateDescriptorSet(
         &exclusiveRes->DescriptorSet, manager ));
 
-    SLABHEAP_POOLED(RHIDescriptor) heap;
-    heap.SetSlabSize(16_KiB);
+    FAllocaHeap& heap = AllocaHeap();
 
     FUpdateDescriptors update{
-        heap,
+        TSlabAllocator{ heap },
         heap.AllocateT<VkWriteDescriptorSet>(pDsLayout->Read()->MaxIndex + 1),
         0 };
 
@@ -437,7 +439,7 @@ void FVulkanPipelineResources::ValidateEmptyUniform_(const FInternalResources& d
     Unused(id);
     Unused(idx);
     if (not data.AllowEmptyResources)
-        RHI_LOG(Error, L"uniform '{0}' [{1}] contains invalid resource(s)!", id.MakeView(), idx);
+        RHI_LOG(Error, "uniform '{0}' [{1}] contains invalid resource(s)!", id.MakeView(), idx);
 }
 #endif
 //----------------------------------------------------------------------------
@@ -448,7 +450,7 @@ void FVulkanPipelineResources::CheckBufferUsage(const FVulkanBuffer& buffer, ERe
     switch (Meta::EnumAnd(state, EResourceState::_AccessMask)) {
     case EResourceState::_Access_ShaderStorage: AssertRelease(usage & EBufferUsage::Storage); break;
     case EResourceState::_Access_Uniform: AssertRelease(usage & EBufferUsage::Uniform); break;
-    default: AssertReleaseFailed(L"unknown resource state");
+    default: AssertReleaseFailed("unknown resource state");
     }
 #else
     Unused(buffer);
@@ -463,7 +465,7 @@ void FVulkanPipelineResources::CheckTexelBufferUsage(const FVulkanBuffer& buffer
     switch (Meta::EnumAnd(state, EResourceState::_AccessMask)) {
     case EResourceState::_Access_ShaderStorage: AssertRelease((usage & EBufferUsage::StorageTexel) || (usage & EBufferUsage::StorageTexelAtomic)); break;
     case EResourceState::_Access_Uniform: AssertRelease(usage & EBufferUsage::UniformTexel); break;
-    default: AssertReleaseFailed(L"unknown resource state");
+    default: AssertReleaseFailed("unknown resource state");
     }
 #else
     Unused(buffer);
@@ -478,7 +480,7 @@ void FVulkanPipelineResources::CheckImageUsage(const FVulkanImage& image, EResou
     switch (Meta::EnumAnd(state, EResourceState::_AccessMask)) {
     case EResourceState::_Access_ShaderStorage: AssertRelease((usage & EImageUsage::Storage) || (usage & EImageUsage::StorageAtomic)); break;
     case EResourceState::_Access_ShaderSample: AssertRelease(usage & EImageUsage::Sampled); break;
-    default: AssertReleaseFailed(L"unknown resource state");
+    default: AssertReleaseFailed("unknown resource state");
     }
 #else
     Unused(image);
@@ -493,9 +495,9 @@ void FVulkanPipelineResources::CheckImageType(const FUniformID& id, u32 index, c
 
     if (fmt != Default && fmt != desc.Format) {
         RHI_LOG(Error,
-            L"Incompatible image formats in uniform {0}[{1}]:\n"
-            L"  in shader: {2}\n"
-            L"  in image : {3}, name: {4}\n",
+            "Incompatible image formats in uniform {0}[{1}]:\n"
+            "  in shader: {2}\n"
+            "  in image : {3}, name: {4}\n",
             id.MakeView(), index,
             fmt, desc.Format,
             img.DebugName());
@@ -557,14 +559,14 @@ void FVulkanPipelineResources::CheckTextureType(const FUniformID& id, u32 index,
         imageType |= EImageSampler::_Float;
     }
     else {
-        AssertReleaseFailed(L"unknown pixel value type");
+        AssertReleaseFailed("unknown pixel value type");
     }
 
     if (imageType != shaderType) {
         RHI_LOG(Error,
-            L"Incompatible image formats in uniform {0}[{1}]:\n"
-            L"  in shader: {2}\n"
-            L"  in image : {3}, name: {4}\n",
+            "Incompatible image formats in uniform {0}[{1}]:\n"
+            "  in shader: {2}\n"
+            "  in image : {3}, name: {4}\n",
             id.MakeView(), index,
             shaderType, imageType,
             img.DebugName());

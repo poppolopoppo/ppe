@@ -54,7 +54,7 @@ using FAllocaFallback_ = TStaticAllocator<ALLOCATOR(Alloca)>;
 u32 AllocaDepth() {
 #if USE_PPE_ALLOCA_SLABHEAP
     // used for detecting live alloca TLS blocks in debug
-    return static_cast<u32>(FAllocaSlabHeapTLS_::Get().HasLiveBlocks());
+    return static_cast<u32>(FAllocaSlabHeapTLS_::Get().HasLiveBlocks_ForDebugOnly());
 #else
     return 0;
 #endif
@@ -97,7 +97,7 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
         Assert_NoAssume(heap.AliasesToHeap(ptr));
 
         if (newSize <= FAllocaSlabHeapTLS_::MaxBlockSize) {
-            result = heap.Reallocate_AssumeLast(ptr, newSize, oldSize);
+            result = heap.Reallocate(ptr, newSize, oldSize);
         }
         else {
             result = FAllocaFallback_::Allocate(newSize).Data;
@@ -105,7 +105,7 @@ void* RelocateAlloca(void* ptr, size_t newSize, size_t oldSize, bool keepData) {
             if (keepData)
                 FPlatformMemory::Memcpy(result, ptr, Min(oldSize, newSize));
 
-            heap.Deallocate_AssumeLast(ptr, oldSize);
+            heap.Deallocate(ptr, oldSize);
         }
     }
     else
@@ -136,8 +136,9 @@ void FreeAlloca(void* ptr, size_t size) {
     Assert(size);
 
 #if USE_PPE_ALLOCA_SLABHEAP
-    if (size <= FAllocaSlabHeapTLS_::MaxBlockSize)
-        FAllocaSlabHeapTLS_::Get().Deallocate_AssumeLast(ptr, size);
+    if (size <= FAllocaSlabHeapTLS_::MaxBlockSize) {
+        FAllocaSlabHeapTLS_::Get().Deallocate(ptr, size);
+    }
     else
 #endif
     {
@@ -158,9 +159,8 @@ size_t AllocaSnapSize(size_t size) {
         return FAllocaFallback_::SnapSize(size);
 }
 //----------------------------------------------------------------------------
-TThreadSafe<TPtrRef<FAllocaHeap>, EThreadBarrier::ThreadLocal> AllocaHeap() {
-    return MakeThreadSafe<EThreadBarrier::ThreadLocal>(
-        MakePtrRef(static_cast<FAllocaHeap&>(FAllocaSlabHeapTLS_::Get())) );
+FAllocaHeap& AllocaHeap() {
+    return FAllocaSlabHeapTLS_::Get();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

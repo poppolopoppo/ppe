@@ -142,24 +142,24 @@ ARGS_IF_RHIDEBUG("Impl_Scene1_Ppln2_PS"));
     TAutoResource<FBufferID> constBuf1{ fg, fg.CreateBuffer(FBufferDesc{ cbufAlignedSize      , EBufferUsage::Uniform | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("ConstBuf1")) };
     TAutoResource<FBufferID> constBuf2{ fg, fg.CreateBuffer(FBufferDesc{ cbufAlignedSize * 2  , EBufferUsage::Uniform | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("ConstBuf2")) };
     TAutoResource<FBufferID> constBuf3{ fg, fg.CreateBuffer(FBufferDesc{ cbufAlignedSize      , EBufferUsage::Uniform | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("ConstBuf3")) };
-    LOG_CHECK(WindowTest, constBuf1 && constBuf2 && constBuf3);
+    PPE_LOG_CHECK(WindowTest, constBuf1 && constBuf2 && constBuf3);
 
     TAutoResource<FBufferID> vertexBuf1{ fg, fg.CreateBuffer(FBufferDesc{ sizeof(FVertex1) * 3*1000, EBufferUsage::Vertex | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("VertexBuf1")) };
     TAutoResource<FBufferID> vertexBuf2{ fg, fg.CreateBuffer(FBufferDesc{ sizeof(FVertex1) * 3*2000, EBufferUsage::Vertex | EBufferUsage::TransferDst }, Default ARGS_IF_RHIDEBUG("VertexBuf2")) };
-    LOG_CHECK(WindowTest, vertexBuf1 && vertexBuf2);
+    PPE_LOG_CHECK(WindowTest, vertexBuf1 && vertexBuf2);
 
     TAutoResource<FImageID> texture1{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension({ 512, 512 })
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
         Default ARGS_IF_RHIDEBUG("Texture1")) };
-    LOG_CHECK(WindowTest, !!texture1);
+    PPE_LOG_CHECK(WindowTest, !!texture1);
     TAutoResource<FImageID> texture2{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension({ 256, 512 })
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
         Default ARGS_IF_RHIDEBUG("Texture2")) };
-    LOG_CHECK(WindowTest, !!texture2);
+    PPE_LOG_CHECK(WindowTest, !!texture2);
     TAutoResource<FSamplerID> sampler1{ fg, fg.CreateSampler(Default ARGS_IF_RHIDEBUG("Sampler1")) };
 
     const FVertexInputState vertexInput = FVertexInputState{}
@@ -169,52 +169,52 @@ ARGS_IF_RHIDEBUG("Impl_Scene1_Ppln2_PS"));
 
 
     TAutoResource<FGPipelineID> pipeline1{ fg, fg.CreatePipeline(pplnDesc1 ARGS_IF_RHIDEBUG("Impl_Scene1_Pipeline1")) };
-    LOG_CHECK(WindowTest, !!pipeline1);
+    PPE_LOG_CHECK(WindowTest, !!pipeline1);
     TAutoResource<FGPipelineID> pipeline2{ fg, fg.CreatePipeline(pplnDesc2 ARGS_IF_RHIDEBUG("Impl_Scene1_Pipeline2")) };
-    LOG_CHECK(WindowTest, !!pipeline2);
+    PPE_LOG_CHECK(WindowTest, !!pipeline2);
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), pipeline1, FDescriptorSetID{ "0" }));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), pipeline1, FDescriptorSetID{ "0" }));
 
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Impl_Scene1")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     TAutoResource<FImageID> colorTarget{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("ColorTarget")) };
-    LOG_CHECK(WindowTest, colorTarget.Valid());
+    PPE_LOG_CHECK(WindowTest, colorTarget.Valid());
 
     TAutoResource<FImageID> depthTarget{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::Depth32f)
         .SetUsage(EImageUsage::DepthStencilAttachment),
         Default ARGS_IF_RHIDEBUG("DepthTarget")) };
-    LOG_CHECK(WindowTest, depthTarget.Valid());
+    PPE_LOG_CHECK(WindowTest, depthTarget.Valid());
 
 
     FLogicalPassID depthPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Depth, depthTarget, FDepthStencilValue{}, EAttachmentStoreOp::Store)
         .SetDepthTestEnabled(true).SetDepthWriteEnabled(true));
-    LOG_CHECK(WindowTest, !!depthPass);
+    PPE_LOG_CHECK(WindowTest, !!depthPass);
     FLogicalPassID opaquePass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Color0, colorTarget, EAttachmentLoadOp::Load, EAttachmentStoreOp::Store)
         .AddTarget(ERenderTargetID::Depth, depthTarget, EAttachmentLoadOp::Load, EAttachmentStoreOp::Store)
         .SetDepthTestEnabled(true).SetDepthWriteEnabled(false));
-    LOG_CHECK(WindowTest, !!opaquePass);
+    PPE_LOG_CHECK(WindowTest, !!opaquePass);
     FLogicalPassID transparentPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Color0, colorTarget, EAttachmentLoadOp::Keep, EAttachmentStoreOp::Store)
         .AddTarget(ERenderTargetID::Depth, depthTarget, EAttachmentLoadOp::Keep, EAttachmentStoreOp::Keep)
         .AddColorBuffer(ERenderTargetID::Color0, EBlendFactor::SrcAlpha, EBlendFactor::OneMinusSrcAlpha, EBlendOp::Add)
         .SetDepthTestEnabled(true).SetDepthWriteEnabled(false));
-    LOG_CHECK(WindowTest, !!transparentPass);
-    LOG_CHECK(WindowTest, depthPass != opaquePass);
-    LOG_CHECK(WindowTest, opaquePass != transparentPass);
-    LOG_CHECK(WindowTest, transparentPass != depthPass);
+    PPE_LOG_CHECK(WindowTest, !!transparentPass);
+    PPE_LOG_CHECK(WindowTest, depthPass != opaquePass);
+    PPE_LOG_CHECK(WindowTest, opaquePass != transparentPass);
+    PPE_LOG_CHECK(WindowTest, transparentPass != depthPass);
 
 
     {
@@ -347,11 +347,11 @@ ARGS_IF_RHIDEBUG("Impl_Scene1_Ppln2_PS"));
 
         // Present
         PFrameTask present = cmd->Task(FPresent{ app.RHI().Swapchain().Get(), colorTarget });
-        LOG_CHECK(WindowTest, !!present);
+        PPE_LOG_CHECK(WindowTest, !!present);
     }
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
     return true;
 }

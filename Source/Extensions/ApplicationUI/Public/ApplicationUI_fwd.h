@@ -9,6 +9,7 @@
 #endif
 
 struct ImGuiContext;
+struct ImPlotContext;
 
 namespace PPE {
 class FApplicationUIModule;
@@ -16,8 +17,9 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using PImguiContext = ImGuiContext*;
-class FImguiService;
+using PImGuiContext = ImGuiContext*;
+using PImPlotContext = ImPlotContext*;
+class FImGuiService;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

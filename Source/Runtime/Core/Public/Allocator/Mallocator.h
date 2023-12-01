@@ -11,7 +11,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 // FMallocator is wrapping global malloc/realloc/free()
 //----------------------------------------------------------------------------
-class PPE_CORE_API FMallocator : private FGenericAllocator {
+class PPE_CORE_API FMallocator : private FAllocatorPolicy {
 public:
     using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;
@@ -34,15 +34,15 @@ public:
     }
 
     FAllocatorBlock Allocate(size_t s) const {
-        return FAllocatorBlock{ PPE::malloc_for_new(s), s };
+        return FAllocatorBlock(PPE::malloc(s), s);
     }
 
     void Deallocate(FAllocatorBlock b) const {
-        PPE::free_for_delete(b.Data, b.SizeInBytes);
+        PPE::free(b.Data);
     }
 
     void Reallocate(FAllocatorBlock& b, size_t s) const {
-        b.Data = PPE::realloc_for_new(b.Data, s, b.SizeInBytes);
+        b.Data = PPE::realloc(b.Data, s);
         b.SizeInBytes = s;
     }
 
@@ -85,27 +85,28 @@ public:
 
     FAllocatorBlock Allocate(size_t s) const {
         STATIC_ASSERT(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, Alignment));
-        void* result;
         IF_CONSTEXPR(Meta::need_alignment_v<_Alignment>)
-            result = PPE::aligned_malloc(s, Alignment);
-        else
-            result = PPE::malloc_for_new(s);
-        return FAllocatorBlock{ result, s };
+            return FAllocatorBlock(PPE::aligned_malloc(s, Alignment), s);
+        else {
+            return FMallocator::Allocate(s);
+        }
     }
 
     void Deallocate(FAllocatorBlock b) const {
         IF_CONSTEXPR(Meta::need_alignment_v<_Alignment>)
             PPE::aligned_free(b.Data);
         else
-            PPE::free_for_delete(b.Data, b.SizeInBytes);
+            FMallocator::Deallocate(b);
     }
 
     void Reallocate(FAllocatorBlock& b, size_t s) const {
-        IF_CONSTEXPR(Meta::need_alignment_v<_Alignment>)
+        IF_CONSTEXPR(Meta::need_alignment_v<_Alignment>) {
             b.Data = PPE::aligned_realloc(b.Data, s, _Alignment);
-        else
-            b.Data = PPE::realloc_for_new(b.Data, s, b.SizeInBytes);
-        b.SizeInBytes = s;
+            b.SizeInBytes = s;
+        }
+        else {
+            FMallocator::Reallocate(b, s);
+        }
     }
 
     using FMallocator::Acquire;

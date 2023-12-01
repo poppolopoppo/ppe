@@ -184,8 +184,8 @@ void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes,
     if (not Meta::IsAlignedPow2(alignment, p)) {
 
         // Fill "bubbles" (reserve unaligned regions) at the beginning of virtual address space, otherwise there will be always falling back to the slow method
-        if ((uintptr_t)p < 16 * 1024 * 1024)
-            ::VirtualAlloc(p, alignment - ((uintptr_t)p & (alignment - 1)), MEM_RESERVE, PAGE_NOACCESS);
+        if (bit_cast<uintptr_t>(p) < 16 * 1024 * 1024)
+            ::VirtualAlloc(p, alignment - (bit_cast<uintptr_t>(p) & (alignment - 1)), MEM_RESERVE, PAGE_NOACCESS);
 
         do {
             p = ::VirtualAlloc(NULL, sizeInBytes + alignment - FPlatformMemory::AllocationGranularity, MEM_RESERVE, PAGE_NOACCESS);
@@ -195,7 +195,7 @@ void* FWindowsPlatformMemory::VirtualAlloc(size_t alignment, size_t sizeInBytes,
             ::VirtualFree(p, 0, MEM_RELEASE);// Unfortunately, WinAPI doesn't support release a part of allocated region, so release a whole region
 
             p = ::VirtualAlloc(
-                (void*)(((uintptr_t)p + (alignment - 1)) & ~(alignment - 1)),
+                (void*)((bit_cast<uintptr_t>(p) + (alignment - 1)) & ~(alignment - 1)),
                 sizeInBytes, flAllocationType, flProtect );
 
         } while (nullptr == p);

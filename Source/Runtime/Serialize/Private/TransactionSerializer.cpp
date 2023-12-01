@@ -88,7 +88,7 @@ void FTransactionSerializer::BuildTransaction(FSources& sources) {
     if (sources.empty())
         return;
 
-    LOG(Serialize, Emphasis, L"building transaction '{0}' with namespace <{1}> from {2} sources ...",
+    PPE_LOG(Serialize, Emphasis, "building transaction '{0}' with namespace <{1}> from {2} sources ...",
         _id, _namespace, sources.size() );
 
     _transaction = NEW_REF(MetaSerialize, RTTI::FMetaTransaction, _namespace);
@@ -133,7 +133,7 @@ void FTransactionSerializer::SaveTransaction() {
         FFilename fnameZ{ saver.Filename() };
         fnameZ.ReplaceExtension(FFSConstNames::Z());
 
-        LOG(Serialize, Emphasis, L"saving compressed transaction '{0}' with namespace <{1}> in '{2}' ...",
+        PPE_LOG(Serialize, Emphasis, "saving compressed transaction '{0}' with namespace <{1}> in '{2}' ...",
             _id, _namespace, fnameZ);
 
         MEMORYSTREAM(Transient) raw;
@@ -149,7 +149,7 @@ void FTransactionSerializer::SaveTransaction() {
         });
     }
     else {
-        LOG(Serialize, Emphasis, L"saving transaction '{0}' with namespace <{1}> in '{2}' ...",
+        PPE_LOG(Serialize, Emphasis, "saving transaction '{0}' with namespace <{1}> in '{2}' ...",
             _id, _namespace, saver.Filename());
 
         const auto writer{ VFS_OpenBinaryWritable(saver.Filename(), EAccessPolicy::Truncate) };
@@ -169,7 +169,7 @@ void FTransactionSerializer::LoadTransaction() {
         FFilename fnameZ{ linker.Filename() };
         fnameZ.ReplaceExtension(FFSConstNames::Z());
 
-        LOG(Serialize, Emphasis, L"loading compressed transaction '{0}' with namespace <{1}> from '{2}' ...",
+        PPE_LOG(Serialize, Emphasis, "loading compressed transaction '{0}' with namespace <{1}> from '{2}' ...",
             _id, _namespace, fnameZ);
 
         RAWSTORAGE(Transient, u8) compressed;
@@ -188,7 +188,7 @@ void FTransactionSerializer::LoadTransaction() {
         serializer->Deserialize(raw, &linker);
     }
     else {
-        LOG(Serialize, Emphasis, L"loading transaction '{0}' with namespace <{1}> from '{2}' ...",
+        PPE_LOG(Serialize, Emphasis, "loading transaction '{0}' with namespace <{1}> from '{2}' ...",
             _id, _namespace, linker.Filename());
 
         const auto reader{ VFS_OpenBinaryReadable(linker.Filename()) };
@@ -208,7 +208,7 @@ void FTransactionSerializer::UnloadTransaction() {
     Assert(_transaction);
     AssertRelease_NoAssume(_transaction->IsLoaded());
 
-    LOG(Serialize, Emphasis, L"unloading transaction '{0}' with namespace <{1}> ...",
+    PPE_LOG(Serialize, Emphasis, "unloading transaction '{0}' with namespace <{1}> ...",
         _id, _namespace);
 
     _transaction->Unload();
@@ -220,7 +220,7 @@ void FTransactionSerializer::MountToDB() {
     Assert(_transaction);
     AssertRelease_NoAssume(_transaction->IsLoaded());
 
-    LOG(Serialize, Emphasis, L"mounting transaction '{0}' with namespace <{1}> ...",
+    PPE_LOG(Serialize, Emphasis, "mounting transaction '{0}' with namespace <{1}> ...",
         _id, _namespace);
 
     _transaction->Mount();
@@ -230,7 +230,7 @@ void FTransactionSerializer::UnmountFromDB() {
     Assert(_transaction);
     AssertRelease_NoAssume(_transaction->IsMounted());
 
-    LOG(Serialize, Emphasis, L"unmounting transaction '{0}' with namespace <{1}> ...",
+    PPE_LOG(Serialize, Emphasis, "unmounting transaction '{0}' with namespace <{1}> ...",
         _id, _namespace);
 
     _transaction->Unmount();
@@ -345,7 +345,7 @@ void FDirectoryTransaction::FetchSources(FSources& sources) {
         else
             VFS_MatchFiles(path, re, true, each_source);
 
-        LOG(Serialize, Debug, L"found {0} source files for transaction '{1}' in '{2}{3}{4}'...",
+        PPE_LOG(Serialize, Debug, "found {0} source files for transaction '{1}' in '{2}{3}{4}'...",
             sources.size() - n, Id(), path, FileSystem::NormalizedSeparator, _inputPattern );
     }
 }

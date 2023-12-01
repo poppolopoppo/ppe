@@ -69,8 +69,7 @@ public: // must be defined for every platform
     static void RevertCurrentFiberToThread(FFiber threadFiber) = delete;
 
     static FFiber CreateFiber(
-        size_t stackCommitSize,
-        size_t stackReservedSize,
+        size_t stackSize,
         FEntryPoint entryPoint,
         void* fiberData ) = delete;
 
@@ -79,6 +78,8 @@ public: // must be defined for every platform
 
     static void SwitchToFiber(FFiber fiber) = delete;
     static void DestroyFiber(FFiber fiber) = delete;
+
+    static void FiberStackRegion(FFiber fiber, const void** pStackBottom, size_t* pStackSize) = delete;
 
     //------------------------------------------------------------------------
     // critical section

@@ -9,12 +9,14 @@
 #include <stdio.h>
 #include <strsafe.h>
 
+#include "Meta/Utility.h"
+
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static BOOL IsInherited_(HANDLE hHandle) {
+NODISCARD static BOOL IsInherited_(HANDLE hHandle) {
     DWORD dwFlags{ 0 };
     if (GetHandleInformation(hHandle, &dwFlags)) {
         return ((dwFlags & HANDLE_FLAG_INHERIT) == HANDLE_FLAG_INHERIT);
@@ -51,12 +53,13 @@ static void SaveStdHandleName_(HANDLE hFile, PWCHAR pwzBuffer, BOOL* bAppend) {
     }
 }
 //----------------------------------------------------------------------------
+static POD_STORAGE(FIODetouringTblog) GIODetouringBlogStorage_;
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FIODetouringTblog::FIODetouringTblog()
-{
+FIODetouringTblog::FIODetouringTblog() {
     InitializeCriticalSection(&_csPipe);
     InitializeCriticalSection(&_csChildPayload);
 
@@ -79,8 +82,16 @@ FIODetouringTblog::~FIODetouringTblog() {
     DeleteCriticalSection(&_csChildPayload);
 }
 //----------------------------------------------------------------------------
-void* FIODetouringTblog::class_singleton_storage() NOEXCEPT {
-    return singleton_type::make_singleton_storage(); // for shared lib
+void FIODetouringTblog::Create() {
+    new (static_cast<void*>(&GIODetouringBlogStorage_)) FIODetouringTblog;
+}
+//----------------------------------------------------------------------------
+FIODetouringTblog& FIODetouringTblog::Get() NOEXCEPT {
+    return (*reinterpret_cast<FIODetouringTblog*>(&GIODetouringBlogStorage_));
+}
+//----------------------------------------------------------------------------
+void FIODetouringTblog::Destroy() {
+    reinterpret_cast<FIODetouringTblog*>(&GIODetouringBlogStorage_)->~FIODetouringTblog();
 }
 //----------------------------------------------------------------------------
 void FIODetouringTblog::CopyPayload(PPayload pPayload) {
@@ -95,6 +106,7 @@ void FIODetouringTblog::CopyPayload(PPayload pPayload) {
 //----------------------------------------------------------------------------
 BOOL FIODetouringTblog::ChildPayload(HANDLE hProcess, DWORD nProcessId, PCHAR pszId, HANDLE hStdin, HANDLE hStdout, HANDLE hStderr) {
     EnterCriticalSection(&_csChildPayload);
+    DEFERRED { LeaveCriticalSection(&_csChildPayload); };
 
     FIODetouringFiles& files = FIODetouringFiles::Get();
     FIODetouringFiles::PProcInfo const pProc = files.CreateProc(hProcess, nProcessId);
@@ -121,13 +133,14 @@ BOOL FIODetouringTblog::ChildPayload(HANDLE hProcess, DWORD nProcessId, PCHAR ps
     else
         _childPayload.nPayloadOptions -= EOptions::AppendStderr;
 
-    DetourCopyPayloadToProcess(hProcess, GIODetouringGuid, &_childPayload, sizeof(_childPayload));
+    if (not ::DetourCopyPayloadToProcess(hProcess, GIODetouringGuid, &_childPayload, sizeof(_childPayload))) {
+        IODETOURING_DEBUGPRINTF("failed to copy payload to child process %d\n", GetProcessId(hProcess));
+        return FALSE;
+    }
 
     for (DWORD i = 0; i < _childPayload.nGeneology; i++)
         pszId = SafePrintf(pszId, 16, "%d.", _childPayload.rGeneology[i]);
     *pszId = '\0';
-
-    LeaveCriticalSection(&_csChildPayload);
     return TRUE;
 }
 //----------------------------------------------------------------------------
@@ -137,6 +150,7 @@ VOID FIODetouringTblog::PrintV(PCSTR pszMsgf, va_list args) {
     }
 
     EnterCriticalSection(&_csPipe);
+    DEFERRED { LeaveCriticalSection(&_csPipe); };
 
     DWORD cbWritten = 0;
 
@@ -156,8 +170,6 @@ VOID FIODetouringTblog::PrintV(PCSTR pszMsgf, va_list args) {
             IODETOURING_REAL(ExitProcess, 9991);
         }
     }
-
-    LeaveCriticalSection(&_csPipe);
 }
 //----------------------------------------------------------------------------
 VOID FIODetouringTblog::Printf(PCSTR pszMsgf, ...) {
@@ -173,6 +185,7 @@ VOID FIODetouringTblog::Printf(PCSTR pszMsgf, ...) {
 //----------------------------------------------------------------------------
 BOOL FIODetouringTblog::Open() {
     EnterCriticalSection(&_csPipe);
+    DEFERRED { LeaveCriticalSection(&_csPipe); };
 
     WCHAR wzPipe[MAX_PATH] = TEXT("");
     StringCchPrintfW(wzPipe, ARRAYSIZE(wzPipe), L"\\\\.\\pipe\\%ls-%ls.%d",
@@ -185,13 +198,10 @@ BOOL FIODetouringTblog::Open() {
         if (_hPipe != INVALID_HANDLE_VALUE) {
             DWORD dwMode = PIPE_READMODE_MESSAGE;
             if (SetNamedPipeHandleState(_hPipe, &dwMode, NULL, NULL)) {
-                LeaveCriticalSection(&_csPipe);
                 return TRUE;
             }
         }
     }
-
-    LeaveCriticalSection(&_csPipe);
 
     // Couldn't open pipe.
     PPE_DEBUG_BREAK();
@@ -201,6 +211,7 @@ BOOL FIODetouringTblog::Open() {
 //----------------------------------------------------------------------------
 VOID FIODetouringTblog::Close() {
     EnterCriticalSection(&_csPipe);
+    DEFERRED { LeaveCriticalSection(&_csPipe); };
 
     if (_hPipe != INVALID_HANDLE_VALUE) {
         DWORD cbWritten = 0;
@@ -213,8 +224,6 @@ VOID FIODetouringTblog::Close() {
 
         _hPipe = INVALID_HANDLE_VALUE;
     }
-
-    LeaveCriticalSection(&_csPipe);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -224,15 +233,16 @@ VOID FIODetouringTblog::Close() {
 //----------------------------------------------------------------------------
 static PCHAR do_base(PCHAR pszOut, UINT64 nValue, UINT nBase, PCSTR pszDigits) {
     CHAR szTmp[96];
-    int nDigit = sizeof(szTmp)-2;
+    CONSTEXPR int nCapacity =  sizeof(szTmp) - 2;
+    int nDigit = nCapacity;
     for (; nDigit >= 0; nDigit--) {
         szTmp[nDigit] = pszDigits[nValue % nBase];
         nValue /= nBase;
     }
-    for (nDigit = 0; nDigit < sizeof(szTmp) - 2 && szTmp[nDigit] == '0'; nDigit++) {
+    for (nDigit = 0; nDigit < nCapacity && szTmp[nDigit] == '0'; nDigit++) {
         // skip leading zeros.
     }
-    for (; nDigit < sizeof(szTmp) - 1; nDigit++) {
+    for (; nDigit < nCapacity + 1; nDigit++) {
         *pszOut++ = szTmp[nDigit];
     }
     *pszOut = '\0';
@@ -560,6 +570,8 @@ VOID VSafePrintf(PCSTR pszMsg, va_list args, PCHAR pszBuffer, LONG cbBuffer) {
                     pszOut = do_str(pszOut, pszEnd, szTemp);
                 }
                 else {
+                    (void)(fDigit); // #TODO: support floating point values?
+
                     pszMsg++;
                     while (pszArg < pszMsg && pszOut < pszEnd) {
                         *pszOut++ = *pszArg++;
@@ -575,7 +587,7 @@ VOID VSafePrintf(PCSTR pszMsg, va_list args, PCHAR pszBuffer, LONG cbBuffer) {
         *pszOut = '\0';
         pszBuffer[cbBuffer - 1] = '\0';
     } __except(EXCEPTION_EXECUTE_HANDLER) {
-        PCHAR pszOut = pszBuffer;
+        pszOut = pszBuffer;
         *pszOut = '\0';
         pszOut = do_str(pszOut, pszEnd, "-exception:");
         pszOut = do_base(pszOut, (UINT64)GetExceptionCode(), 10, "0123456789");

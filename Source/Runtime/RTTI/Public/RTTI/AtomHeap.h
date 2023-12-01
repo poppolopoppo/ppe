@@ -25,7 +25,7 @@ public:
     FAtomHeap(const FAtomHeap&) = delete;
     FAtomHeap& operator =(const FAtomHeap&) = delete;
 
-    SLABHEAP_POOLED(Atom)& Heap() { return _heap; }
+    SLABHEAP(Atom)& Heap() { return _heap; }
 
     FAtom Allocate(ENativeType type) {
         return Allocate(MakeTraits(type));
@@ -68,7 +68,7 @@ private:
         FPendingDestroy_* pNext;
     };
 
-    SLABHEAP_POOLED(Atom) _heap;
+    SLABHEAP(Atom) _heap;
     FPendingDestroy_* _destructibles{ nullptr };
 
     FAtom MakeAtomUinitialized_(const PTypeTraits& traits);

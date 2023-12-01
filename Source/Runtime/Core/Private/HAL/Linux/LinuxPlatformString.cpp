@@ -389,7 +389,7 @@ size_t FLinuxPlatformString::CHAR_to_WCHAR(ECodePage codePage, wchar_t* dst, siz
     size_t od = 0;
     for (size_t os = 0; os != length && od < capacity; ++od) {
         const int written = ::mbtowc(dst + od, cstr + os, length - os);
-        CLOG(-1 == written, HAL, Fatal, L"mbtowc failed with errno: {0}\n{1}", FErrno{}, Fmt::HexDump(cstr + os, length - os));
+        PPE_CLOG(-1 == written, HAL, Fatal, "mbtowc failed with errno: {0}\n{1}", FErrno{}, Fmt::HexDump(cstr + os, length - os));
         os += checked_cast<size_t>(written);
     }
 
@@ -417,7 +417,7 @@ size_t FLinuxPlatformString::WCHAR_to_CHAR(ECodePage codePage, char* dst, size_t
     size_t od = 0;
     for (size_t os = 0; os != length && od < capacity; ++os) {
         const int written = ::wctomb(dst + od, wcstr[os]);
-        CLOG(-1 == written, HAL, Fatal, L"wctomb failed with errno: {0}\n{1}", FErrno{}, Fmt::HexDump(wcstr + os, length - os));
+        PPE_CLOG(-1 == written, HAL, Fatal, "wctomb failed with errno: {0}\n{1}", FErrno{}, Fmt::HexDump(wcstr + os, length - os));
         od += checked_cast<size_t>(written);
     }
 

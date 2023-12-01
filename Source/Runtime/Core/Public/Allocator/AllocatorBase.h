@@ -2,49 +2,19 @@
 
 #include "Core_fwd.h"
 
+#include "Allocator/AllocatorBlock.h"
 #include "HAL/PlatformMemory.h"
 #include "Memory/MemoryDomain.h"
-#include "Memory/MemoryView.h"
 #include "Meta/TypeTraits.h"
+#include "Thread/ThreadSafe_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct NODISCARD FAllocatorBlock {
-    void* Data{ nullptr };
-    size_t SizeInBytes{ 0 };
-
-    FAllocatorBlock() = default;
-    CONSTEXPR FAllocatorBlock(void* data, size_t sizeInBytes) NOEXCEPT
-    :   Data(data)
-    ,   SizeInBytes(sizeInBytes)
-    {}
-
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!Data); }
-    CONSTEXPR FRawMemory MakeView() const { return { static_cast<u8*>(Data), SizeInBytes }; }
-
-    CONSTEXPR FAllocatorBlock Reset() {
-        const FAllocatorBlock cpy{ *this };
-        *this = Null();
-        return cpy;
-    }
-
-    static CONSTEXPR FAllocatorBlock Null() NOEXCEPT {
-        return { nullptr, 0 };
-    }
-
-    template <typename T>
-    static CONSTEXPR FAllocatorBlock From(TMemoryView<T> v) NOEXCEPT {
-        return { v.data(), v.SizeInBytes() };
-    }
-};
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 // Defines the concept of a PPE allocator
 //----------------------------------------------------------------------------
-class FGenericAllocator {
+class FAllocatorPolicy {
 public:
     using propagate_on_container_copy_assignment = std::false_type;
     using propagate_on_container_move_assignment = std::false_type;
@@ -77,12 +47,12 @@ public:
     using has_memory_tracking = std::false_type;
 
     FMemoryTracking& TrackingData() NOEXCEPT = delete;
-    FGenericAllocator& AllocatorWithoutTracking() NOEXCEPT = delete;
+    FAllocatorPolicy& AllocatorWithoutTracking() NOEXCEPT = delete;
 
 #endif
 
-    friend bool operator ==(const FGenericAllocator& lhs, const FGenericAllocator& rhs) NOEXCEPT = delete;
-    friend bool operator !=(const FGenericAllocator& lhs, const FGenericAllocator& rhs) NOEXCEPT = delete;
+    friend bool operator ==(const FAllocatorPolicy& lhs, const FAllocatorPolicy& rhs) NOEXCEPT = delete;
+    friend bool operator !=(const FAllocatorPolicy& lhs, const FAllocatorPolicy& rhs) NOEXCEPT = delete;
 };
 //----------------------------------------------------------------------------
 // Detects if given type if a valid allocator (ie has Allocate/Deallocate)
@@ -280,7 +250,7 @@ struct TAllocatorTraits {
 
     NODISCARD static FAllocatorBlock Allocate(_Allocator& a, size_t s) {
         Assert_NoAssume(s <= MaxSize(a));
-        return (s ? a.Allocate(s) : FAllocatorBlock::Null());
+        return (s ? a.Allocate(s) : Default);
     }
 
     template <typename T>
@@ -321,43 +291,30 @@ struct TAllocatorTraits {
         Assert_NoAssume(b.SizeInBytes <= MaxSize(a));
         Assert_NoAssume(s <= MaxSize(a));
 
-        if (Unlikely(b.SizeInBytes == s)) {
-            IF_CONSTEXPR(has_reallocate::value) {
-                using return_type_t = decltype(a.Reallocate(b, s));
-                IF_CONSTEXPR(not std::is_void_v<return_type_t>)
-                    return return_type_t{};
-                else
-                    return;
-            }
-            else {
-                return;
-            }
-        }
-
-        Assert_NoAssume(SnapSize(a, s) != SnapSize(a, b.SizeInBytes));
-
         IF_CONSTEXPR(has_reallocate::value) {
             return a.Reallocate(b, s);
         }
         else {
+            if (Unlikely(b.SizeInBytes == s)) {
+                return;
+            }
+
             if ((!!b) && (!!s)) {
+                Assert_NoAssume(SnapSize(a, s) != SnapSize(a, b.SizeInBytes));
                 const FAllocatorBlock r = a.Allocate(s);
                 Assert_NoAssume(r);
                 FPlatformMemory::MemcpyLarge(r.Data, b.Data, Min(s, b.SizeInBytes));
                 a.Deallocate(b);
                 b = r;
             }
-            else {
-                if (Likely(s)) {
-                    Assert_NoAssume(not b);
-                    b = a.Allocate(s);
-                }
-                else {
-                    Assert_NoAssume(b);
-                    a.Deallocate(b.Reset());
-                }
+            else if (Likely(s)) {
+                Assert_NoAssume(not b);
+                b = a.Allocate(s);
             }
-            return;
+            else {
+                Assert_NoAssume(b);
+                a.Deallocate(b.Reset());
+            }
         }
     }
 
@@ -437,6 +394,232 @@ struct TAllocatorTraits {
 #endif
 };
 //----------------------------------------------------------------------------
+template <typename _Allocator>
+struct TAllocatorTraits<TPtrRef<_Allocator>> {
+    using allocator_type = _Allocator;
+    using allocator_traits = TAllocatorTraits<_Allocator>;
+
+    using propagate_on_container_copy_assignment = std::true_type;
+    using propagate_on_container_move_assignment = std::true_type;
+    using propagate_on_container_swap = std::true_type;
+
+    using is_always_equal = typename allocator_traits::is_always_equal;
+
+    using has_maxsize = typename allocator_traits::has_maxsize;
+    using has_owns = typename allocator_traits::has_owns;
+    using has_reallocate = typename allocator_traits::has_reallocate;
+    using has_acquire = typename allocator_traits::has_acquire;
+    using has_steal = typename allocator_traits::has_steal;
+
+    STATIC_CONST_INTEGRAL(size_t, Alignment, allocator_traits::Alignment);
+
+    using reallocate_can_fail = typename allocator_traits::reallocate_can_fail;
+
+    static _Allocator& Get(const TPtrRef<_Allocator>& self) NOEXCEPT { return *self; }
+    static const _Allocator& Get(const TPtrRef<const _Allocator>& self) NOEXCEPT { return *self; }
+
+    static void Copy(TPtrRef<_Allocator> dst, TPtrRef<const _Allocator>& src) {
+        allocator_traits::Copy(dst, src);
+    }
+    NODISCARD static TPtrRef<_Allocator> SelectOnCopy(const TPtrRef<_Allocator>& other) {
+        return other; // copy reference
+    }
+    static void Move(TPtrRef<_Allocator> dst, TPtrRef<_Allocator>& src) {
+        allocator_traits::Move(dst, std::move(*src));
+    }
+    NODISCARD static TPtrRef<_Allocator> SelectOnMove(const TPtrRef<_Allocator>& other) {
+        return other; // copy reference
+    }
+    static void Swap(TPtrRef<_Allocator>& lhs, TPtrRef<_Allocator>& rhs) {
+        swap(lhs, rhs); // swap references
+    }
+    NODISCARD static bool Equals(const TPtrRef<const _Allocator>& lhs, const TPtrRef<const _Allocator>& rhs) NOEXCEPT {
+        return (lhs == rhs); // compare by address instead of value
+    }
+    template <typename _AllocatorOther>
+    NODISCARD static bool Equals(const TPtrRef<const _Allocator>& lhs, const TPtrRef<_AllocatorOther>& rhs) NOEXCEPT {
+        return allocator_traits::Equals(*lhs, *rhs); // compare by value
+    }
+    NODISCARD static size_t MaxSize(const TPtrRef<const _Allocator>& a) NOEXCEPT {
+        return allocator_traits::MaxSize(*a);
+    }
+    NODISCARD static size_t SnapSize(const TPtrRef<const _Allocator>& a, size_t size) NOEXCEPT {
+        return allocator_traits::SnapSize(*a, size);
+    }
+    template <typename T>
+    NODISCARD static size_t SnapSizeT(const TPtrRef<const _Allocator>& a, size_t count) NOEXCEPT {
+        return allocator_traits::template SnapSizeT<T>(*a, count);
+    }
+    NODISCARD static bool Owns(const TPtrRef<const _Allocator>& a, FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::Owns(*a, b);
+    }
+    NODISCARD static FAllocatorBlock Allocate(const TPtrRef<_Allocator>& a, size_t s) {
+        return allocator_traits::Allocate(*a, s);
+    }
+    template <typename T>
+    NODISCARD static TMemoryView<T> AllocateT(const TPtrRef<_Allocator>& a, size_t n) {
+        return allocator_traits::template AllocateT<T>(*a, n);
+    }
+    template <typename T>
+    NODISCARD static T* AllocateOneT(const TPtrRef<_Allocator>& a) {
+        return allocator_traits::template AllocateOneT<T>(*a);
+    }
+    static void Deallocate(const TPtrRef<_Allocator>& a, FAllocatorBlock b) {
+        allocator_traits::Deallocate(*a, b);
+    }
+    template <typename T>
+    static void DeallocateT(const TPtrRef<_Allocator>& a, TMemoryView<T> v) {
+        return allocator_traits::template DeallocateT<T>(*a, v);
+    }
+    template <typename T>
+    static void DeallocateT(const TPtrRef<_Allocator>& a, T* p, size_t n) {
+        return allocator_traits::template DeallocateT<T>(*a, p, n);
+    }
+    template <typename T>
+    static void DeallocateOneT(const TPtrRef<_Allocator>& a, T* p) {
+        allocator_traits::DeallocateOneT(*a, p);
+    }
+    NODISCARD static auto Reallocate(const TPtrRef<_Allocator>& a, FAllocatorBlock& b, size_t s) {
+        return allocator_traits::Reallocate(*a, b, s);
+    }
+    NODISCARD static bool Acquire(const TPtrRef<_Allocator>& a, FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::Acquire(*a, b);
+    }
+    NODISCARD static bool Steal(const TPtrRef<_Allocator>& a, FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::Steal(*a, b);
+    }
+    template <typename _AllocatorDst>
+    NODISCARD static bool StealAndAcquire(_AllocatorDst* dst, const TPtrRef<_Allocator>& src, FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::StealAndAcquire(dst, *src, b);
+    }
+#if USE_PPE_MEMORYDOMAINS
+    using has_memory_tracking = typename allocator_traits::has_memory_tracking;
+    NODISCARD static FMemoryTracking* TrackingData(const TPtrRef<_Allocator>& a) NOEXCEPT {
+        return allocator_traits::TrackingData(*a);
+    }
+    NODISCARD static auto& AllocatorWithoutTracking(const TPtrRef<_Allocator>& a) NOEXCEPT {
+        return allocator_traits::AllocatorWithoutTracking(a);
+    }
+#else
+    NODISCARD static auto& AllocatorWithoutTracking(const TPtrRef<_Allocator>& a) NOEXCEPT {
+        return allocator_traits::AllocatorWithoutTracking(*a);
+    }
+#endif
+};
+//----------------------------------------------------------------------------
+template <typename _Allocator, EThreadBarrier _Barrier>
+struct TAllocatorTraits<TThreadSafe<_Allocator, _Barrier>> {
+    using allocator_type = TThreadSafe<_Allocator, _Barrier>;
+    using allocator_traits = TAllocatorTraits<_Allocator>;
+
+    using propagate_on_container_copy_assignment = typename allocator_traits::propagate_on_container_copy_assignment;
+    using propagate_on_container_move_assignment = typename allocator_traits::propagate_on_container_move_assignment;
+    using propagate_on_container_swap = typename allocator_traits::propagate_on_container_swap;
+
+    using is_always_equal = typename allocator_traits::is_always_equal;
+
+    using has_maxsize = typename allocator_traits::has_maxsize;
+    using has_owns = typename allocator_traits::has_owns;
+    using has_reallocate = typename allocator_traits::has_reallocate;
+    using has_acquire = typename allocator_traits::has_acquire;
+    using has_steal = typename allocator_traits::has_steal;
+
+    STATIC_CONST_INTEGRAL(size_t, Alignment, allocator_traits::Alignment);
+
+    using reallocate_can_fail = typename allocator_traits::reallocate_can_fail;
+
+    static _Allocator& Get(allocator_type& self) NOEXCEPT { return *self.LockExclusive(); }
+    static const _Allocator& Get(const allocator_type& self) NOEXCEPT { return *self.LockShared(); }
+
+    static void Copy(allocator_type* dst, const allocator_type& src) {
+        allocator_traits::Copy(dst->LockExclusive().Get(), src.LockShared());
+    }
+    NODISCARD static const allocator_type& SelectOnCopy(const allocator_type& other) {
+        return other; // pass-through
+    }
+    static void Move(allocator_type* dst, allocator_type& src) {
+        allocator_traits::Move(dst->LockExclusive().Get(), std::move(*src.LockExclusive()));
+    }
+    NODISCARD static allocator_type&& SelectOnMove(allocator_type&& rvalue) {
+        return std::move(rvalue); // pass-through
+    }
+    static void Swap(allocator_type& lhs, allocator_type& rhs) {
+        swap(*lhs.LockExclusive(), *rhs.LockExclusive()); // swap content
+    }
+    NODISCARD static bool Equals(const allocator_type& lhs, const allocator_type& rhs) NOEXCEPT {
+        return (*lhs.LockShared() == *rhs.LockShared()); // compare by address instead of value
+    }
+    template <typename _AllocatorOther>
+    NODISCARD static bool Equals(const allocator_type& lhs, const _AllocatorOther& rhs) NOEXCEPT {
+        return allocator_traits::Equals(*lhs.LockShared(), *rhs); // compare by value
+    }
+    NODISCARD static size_t MaxSize(const allocator_type& a) NOEXCEPT {
+        return allocator_traits::MaxSize(*a.LockShared());
+    }
+    NODISCARD static size_t SnapSize(const allocator_type& a, size_t size) NOEXCEPT {
+        return allocator_traits::SnapSize(*a.LockShared(), size);
+    }
+    template <typename T>
+    NODISCARD static size_t SnapSizeT(const allocator_type& a, size_t count) NOEXCEPT {
+        return allocator_traits::template SnapSizeT<T>(*a.LockShared(), count);
+    }
+    NODISCARD static bool Owns(const allocator_type& a, FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::Owns(*a.LockShared(), b);
+    }
+    NODISCARD static FAllocatorBlock Allocate(allocator_type& a, size_t s) {
+        return allocator_traits::Allocate(*a.LockExclusive(), s);
+    }
+    template <typename T>
+    NODISCARD static TMemoryView<T> AllocateT(allocator_type& a, size_t n) {
+        return allocator_traits::template AllocateT<T>(*a.LockExclusive(), n);
+    }
+    template <typename T>
+    NODISCARD static T* AllocateOneT(allocator_type& a) {
+        return allocator_traits::template AllocateOneT<T>(*a.LockExclusive());
+    }
+    static void Deallocate(allocator_type& a, FAllocatorBlock b) {
+        allocator_traits::Deallocate(*a.LockExclusive(), b);
+    }
+    template <typename T>
+    static void DeallocateT(allocator_type& a, TMemoryView<T> v) {
+        return allocator_traits::template DeallocateT<T>(*a.LockExclusive(), v);
+    }
+    template <typename T>
+    static void DeallocateT(allocator_type& a, T* p, size_t n) {
+        return allocator_traits::template DeallocateT<T>(*a.LockExclusive(), p, n);
+    }
+    template <typename T>
+    static void DeallocateOneT(allocator_type& a, T* p) {
+        allocator_traits::DeallocateOneT(*a.LockExclusive(), p);
+    }
+    NODISCARD static auto Reallocate(allocator_type& a, FAllocatorBlock& b, size_t s) {
+        return allocator_traits::Reallocate(*a.LockExclusive(), b, s);
+    }
+    NODISCARD static bool Acquire(allocator_type& a, FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::Acquire(*a.LockExclusive(), b);
+    }
+    NODISCARD static bool Steal(allocator_type& a, FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::Steal(*a.LockExclusive(), b);
+    }
+    template <typename _AllocatorDst>
+    NODISCARD static bool StealAndAcquire(_AllocatorDst* dst, allocator_type& src, FAllocatorBlock b) NOEXCEPT {
+        return allocator_traits::StealAndAcquire(dst, *src.LockExclusive(), b);
+    }
+#if USE_PPE_MEMORYDOMAINS
+    using has_memory_tracking = typename allocator_traits::has_memory_tracking;
+    NODISCARD static FMemoryTracking* TrackingData(allocator_type& a) NOEXCEPT {
+        return allocator_traits::TrackingData(*a.LockExclusive());
+    }
+    NODISCARD static auto& AllocatorWithoutTracking(allocator_type& a) NOEXCEPT {
+        return allocator_traits::AllocatorWithoutTracking(a.LockExclusive());
+    }
+#else
+    NODISCARD static auto& AllocatorWithoutTracking(allocator_type& a) NOEXCEPT {
+        return allocator_traits::AllocatorWithoutTracking(*a.LockExclusive());
+    }
+#endif
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Propagate allocation on move, return false if the source block was copied
@@ -461,8 +644,6 @@ NODISCARD bool MoveAllocatorBlock(_Allocator* dst, _Allocator& src, FAllocatorBl
     }
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
 // Helpers for Reallocate()
 //----------------------------------------------------------------------------
 template <typename _Allocator, typename T>
@@ -479,7 +660,6 @@ NODISCARD auto ReallocateAllocatorBlock_AssumePOD(_Allocator& a, TMemoryView<T>&
     const size_t s = newSize * sizeof(T);
     if (b.SizeInBytes == s)
         return;
-    Assert_NoAssume(traits_t::SnapSize(a, s) != traits_t::SnapSize(a, b.SizeInBytes));
 
 #if 1 // specialized to exploit user oldSize, see *HERE* bellow
     IF_CONSTEXPR(traits_t::has_reallocate::value) {
@@ -492,6 +672,7 @@ NODISCARD auto ReallocateAllocatorBlock_AssumePOD(_Allocator& a, TMemoryView<T>&
     }
     else {
         if ((!!b) & (!!s)) {
+            Assert_NoAssume(traits_t::SnapSize(a, s) != traits_t::SnapSize(a, b.SizeInBytes));
             const FAllocatorBlock r = traits_t::Allocate(a, s);
             Assert_NoAssume(r);
             // *HERE* copy potentially less since we're giving the actual user size (which can be less than reserved size)
@@ -514,7 +695,9 @@ NODISCARD auto ReallocateAllocatorBlock_AssumePOD(_Allocator& a, TMemoryView<T>&
     traits_t::Reallocate(a, b, newSize);
 #endif
 
-    items = TMemoryView<T>(static_cast<T*>(b.Data), Min(newSize, items.size()));
+    if (oldSize = items.size(); newSize > oldSize)
+        newSize = oldSize;
+    items = TMemoryView<T>(static_cast<T*>(b.Data), newSize);
 }
 //---------------------------------------------------------------------------
 template <typename _Allocator, typename T>

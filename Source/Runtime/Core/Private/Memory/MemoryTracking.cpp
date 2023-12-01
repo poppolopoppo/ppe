@@ -27,7 +27,7 @@ static bool CONSTF ShouldTrackRecursively_(const FMemoryTracking& trackingData) 
     return !!trackingData.Parent();
 }
 //----------------------------------------------------------------------------
-#if USE_PPE_ASSERT || USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
+#if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
 static bool CONSTF ShouldIgnoreMemoryChecks_(const FMemoryTracking& domain) {
     // Detached domains are ignored, also ignores root domains by side-effect (but we want to warn on leaves anyway)
     if (domain.Parent() == nullptr)
@@ -69,14 +69,14 @@ FORCE_INLINE static bool CONSTF CheckMemoryPredicates_(const FMemoryTracking::FC
 #if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
 LOG_CATEGORY(, MemoryTracking)
 STATIC_CONST_INTEGRAL(size_t, SmallAllocationCountWarning, 2000);
-STATIC_CONST_INTEGRAL(size_t, SmallAllocationPercentThreshold, 15);
+STATIC_CONST_INTEGRAL(size_t, SmallAllocationPercentThreshold, 20);
 STATIC_CONST_INTEGRAL(size_t, SmallAllocationSizeThreshold, CODE3264(16_b, 32_b));
 static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTracking& domain, size_t totalAllocs, size_t smallAllocs) {
     if (ShouldIgnoreMemoryChecks_(domain))
         return;
 
-    LOG(MemoryTracking, Warning,
-        L"Too many small allocations for memory domain <{0}> -> {1} small allocs / {2} total allocs = {3}",
+    PPE_LOG(MemoryTracking, Warning,
+        "Too many small allocations for memory domain <{0}> -> {1} small allocs / {2} total allocs = {3}",
         MakeCStringView(domain.Name()),
         Fmt::CountOfElements(smallAllocs),
         Fmt::CountOfElements(totalAllocs),
@@ -93,7 +93,7 @@ static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTrack
             return; // already ignored
 #   endif
 
-        FLUSH_LOG();
+        PPE_LOG_FLUSH();
         PPE_DEBUG_BREAK();
 
 #   if USE_PPE_IGNORELIST
@@ -144,6 +144,10 @@ FMemoryTracking* FMemoryTracking::ThreadTrackingData() NOEXCEPT {
     return GThreadTrackingDataPtr_;
 }
 //----------------------------------------------------------------------------
+FMemoryTracking& FMemoryTracking::ThreadTrackingDataOr(FMemoryTracking& fallback) NOEXCEPT {
+    return (!!GThreadTrackingDataPtr_ ? *GThreadTrackingDataPtr_ : fallback);
+}
+//----------------------------------------------------------------------------
 FMemoryTracking* FMemoryTracking::SetThreadTrackingData(FMemoryTracking* trackingData) NOEXCEPT {
     std::swap(GThreadTrackingDataPtr_, trackingData);
     return trackingData;
@@ -176,7 +180,7 @@ void FMemoryTracking::Allocate(size_t userSize, size_t systemSize, const FMemory
 
 #if not USE_PPE_MEMORY_DEBUGGING
     AssertMessage_NoAssume(
-        L"more than 50% of the allocated space is wasted",
+        "more than 50% of the allocated space is wasted",
         userSize <= ALLOCATION_BOUNDARY || userSize * 2 >= systemSize ||
         ShouldIgnoreMemoryChecks_(*this) );
 #endif

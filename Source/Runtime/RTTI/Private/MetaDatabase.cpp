@@ -24,13 +24,13 @@ void* FMetaDatabase::class_singleton_storage() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 FMetaDatabase::FMetaDatabase() {
-    LOG(RTTI, Info, L"create meta database");
+    PPE_LOG(RTTI, Info, "create meta database");
 
     InitializeNativeTypes_();
 }
 //----------------------------------------------------------------------------
 FMetaDatabase::~FMetaDatabase() {
-    LOG(RTTI, Info, L"destroy meta database");
+    PPE_LOG(RTTI, Info, "destroy meta database");
 
     Assert(_transactions.empty());
     Assert(_objects.empty());
@@ -46,7 +46,7 @@ void FMetaDatabase::RegisterTransaction(const FMetaTransaction* metaTransaction)
     const FName& namespace_ = metaTransaction->Namespace();
     Assert(not namespace_.empty());
 
-    LOG(RTTI, Info, L"register transaction in DB : namespace <'{0}'>", namespace_);
+    PPE_LOG(RTTI, Info, "register transaction in DB : namespace <'{0}'>", namespace_);
 
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
@@ -60,7 +60,7 @@ void FMetaDatabase::UnregisterTransaction(const FMetaTransaction* metaTransactio
     const FName& namespace_ = metaTransaction->Namespace();
     Assert(not namespace_.empty());
 
-    LOG(RTTI, Info, L"unregister transaction in DB : '{0}'", namespace_);
+    PPE_LOG(RTTI, Info, "unregister transaction in DB : '{0}'", namespace_);
 
 #if USE_PPE_ASSERT
     // Check that all objects from this transaction were unregistered
@@ -140,7 +140,7 @@ void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
 
     const FPathName exportPath{ FPathName::FromObject(*metaObject) };
 
-    LOG(RTTI, Info, L"register object in DB : <{0}::{1}> '{2}'",
+    PPE_LOG(RTTI, Info, "register object in DB : <{0}::{1}> '{2}'",
         metaObject->RTTI_Class()->Module()->Name(),
         metaObject->RTTI_Class()->Name(),
         exportPath );
@@ -163,7 +163,7 @@ void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
 
     const FPathName exportPath{ FPathName::FromObject(*metaObject) };
 
-    LOG(RTTI, Info, L"unregister object from DB : <{0}::{1}> '{2}'",
+    PPE_LOG(RTTI, Info, "unregister object from DB : <{0}::{1}> '{2}'",
         metaObject->RTTI_Class()->Module()->Name(),
         metaObject->RTTI_Class()->Name(),
         exportPath );
@@ -208,8 +208,8 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FPathName& pathName) const {
     }
     else {
 #if USE_PPE_ASSERT
-        CLOG(TransactionIFP(pathName.Namespace).empty(),
-            RTTI, Error, L"trying to fetch an object from an unmounted transaction : {0}", pathName);
+        PPE_CLOG(TransactionIFP(pathName.Namespace).empty(),
+            RTTI, Error, "trying to fetch an object from an unmounted transaction : {0}", pathName);
 #endif
         return nullptr;
     }
@@ -243,8 +243,8 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FLazyPathName& pathName) const {
 	}
 	else {
 #if USE_PPE_ASSERT
-		CLOG(TransactionIFP(pathName.Namespace).empty(),
-			RTTI, Error, L"trying to fetch an object from an unmounted transaction : {0}", pathName);
+		PPE_CLOG(TransactionIFP(pathName.Namespace).empty(),
+			RTTI, Error, "trying to fetch an object from an unmounted transaction : {0}", pathName);
 #endif
 		return nullptr;
 	}
@@ -255,7 +255,7 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FLazyPathName& pathName) const {
 void FMetaDatabase::RegisterModule(const FMetaModule* metaModule) {
     Assert(metaModule);
 
-    LOG(RTTI, Info, L"register module in DB : <{0}>", metaModule->Name());
+    PPE_LOG(RTTI, Info, "register module in DB : <{0}>", metaModule->Name());
 
     Assert(metaModule->IsStarted());
 
@@ -284,7 +284,7 @@ void FMetaDatabase::RegisterModule(const FMetaModule* metaModule) {
 void FMetaDatabase::UnregisterModule(const FMetaModule* metaModule) {
     Assert(metaModule);
 
-    LOG(RTTI, Info, L"unregister module from DB : <{0}>", metaModule->Name());
+    PPE_LOG(RTTI, Info, "unregister module from DB : <{0}>", metaModule->Name());
 
     Assert(metaModule->IsStarted());
 

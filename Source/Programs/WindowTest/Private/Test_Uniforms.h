@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Test_Includes.h"
+#include "RHI/EnumHelpers.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

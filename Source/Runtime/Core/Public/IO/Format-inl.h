@@ -168,20 +168,30 @@ constexpr EValidateFormat ValidateFormatString_(const _Char* fmt, size_t len, si
     if (numArgs > 10) // not handled by validation, but can actually be handled by Format()
         return EValidateFormat::TooManyArguments;
 
+    size_t lastArgIndex = size_t(-1);
     size_t unusedArgs = ((size_t(1) << numArgs) - 1);
     for (size_t i = 0; i <= len - 2; ++i) {
         if (fmt[i] == STRING_LITERAL(_Char, '\0')) return EValidateFormat::InvalidFormatString;
-        if (fmt[i] == STRING_LITERAL(_Char, '{') && fmt[i + 1] >= STRING_LITERAL(_Char, '0') && fmt[i + 1] <= STRING_LITERAL(_Char, '9')) {
-            const size_t argIndex = (size_t(fmt[i + 1]) - STRING_LITERAL(_Char, '0'));
+        if (fmt[i] == STRING_LITERAL(_Char, '{')) {
+            size_t argIndex;
+            if (fmt[i + 1] >= STRING_LITERAL(_Char, '0') && fmt[i + 1] <= STRING_LITERAL(_Char, '9')) {
+                argIndex = (size_t(fmt[i + 1]) - STRING_LITERAL(_Char, '0'));
+                i += 1;
+            }
+            else {
+                argIndex = (lastArgIndex + 1);
+            }
+            lastArgIndex = argIndex;
+
             if (argIndex >= numArgs)
                 return EValidateFormat::ArgumentOutOfBounds; // argument index out of bounds
 
-            switch (fmt[i + 2]) {
+            switch (fmt[i + 1]) {
             case STRING_LITERAL(_Char, '}'): // short format
-                i += 2;
+                i += 1;
                 break;
             case STRING_LITERAL(_Char, ':'): // validate long format
-                i += 3;
+                i += 2;
                 while (i < len && fmt[i] != STRING_LITERAL(_Char, '}')) {
                     if (const EValidateFormat error = ValidateFormatManip(fmt[i++]); error != EValidateFormat::Valid)
                         return error;

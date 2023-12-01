@@ -123,12 +123,12 @@ public: // TSingleton<>
 #endif
 
     static void Create() {
-        LOG(Network, Debug, L"starting DNS cache ...");
+        PPE_LOG(Network, Debug, "starting DNS cache ...");
         singleton_type::Create();
     }
 
     static void Destroy() {
-        LOG(Network, Debug, L"stopping DNS cache ...");
+        PPE_LOG(Network, Debug, "stopping DNS cache ...");
         singleton_type::Destroy();
     }
 
@@ -174,7 +174,7 @@ public: // DNS cache
         FString key(hostname);
         FString value(ipV4);
 
-        LOG(Network, Debug, L"put '{0}' => [{1}] in DNS cache", hostname, ipV4);
+        PPE_LOG(Network, Debug, "put '{0}' => [{1}] in DNS cache", hostname, ipV4);
 
         WRITESCOPELOCK(_barrier);
 
@@ -190,14 +190,14 @@ public: // DNS cache
         FString key(ipV4);
         FString value(hostname);
 
-        LOG(Network, Debug, L"put [{0}] => '{1}' in DNS cache", ipV4, hostname);
+        PPE_LOG(Network, Debug, "put [{0}] => '{1}' in DNS cache", ipV4, hostname);
 
         WRITESCOPELOCK(_barrier);
         _ipV4ToHostname.insert_or_assign(MakePair(std::move(key), std::move(value)));
     }
 
     void Flush() {
-        LOG(Network, Debug, L"flushing DNS cache ...");
+        PPE_LOG(Network, Debug, "flushing DNS cache ...");
 
         PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
@@ -238,7 +238,7 @@ void FlushDNSCache() {
 bool LocalHostName(FString& hostname) {
     char temp[NI_MAXHOST];
     if (::gethostname(temp, NI_MAXHOST) == SOCKET_ERROR) {
-        LOG_NETWORKERROR(L"gethostname()");
+        PPE_LOG_NETWORKERROR("gethostname()");
         return false;
     }
     else {
@@ -283,7 +283,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
 
     struct ::addrinfo* serviceInfo = nullptr;
     if (int errorCode = ::getaddrinfo(nodeName, serviceName, &hints, &serviceInfo)) {
-        LOG(Network, Error, L"getaddrinfo failed: <{0}> \"{1}\"", errorCode, ::gai_strerror(errorCode));
+        PPE_LOG(Network, Error, "getaddrinfo failed: <{0}> \"{1}\"", errorCode, ::gai_strerror(errorCode));
         return false;
     }
     Assert(serviceInfo);
@@ -305,7 +305,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
         if (resolvedIpV4) {
             ip.assign(MakeCStringView(resolvedIpV4));
             Assert(ip.size());
-            LOG(Network, Info, L"resolved IPv4 : {0}:{1} -> {2}", hostname, port, ip);
+            PPE_LOG(Network, Info, "resolved IPv4 : {0}:{1} -> {2}", hostname, port, ip);
             succeed = true;
             break;
         }
@@ -347,7 +347,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
 
     // if inet_pton couldn't convert ip then return an error
     if (1 != ::inet_pton(AF_INET, temp, &sa.sin_addr) ) {
-        LOG_NETWORKERROR(L"inet_pton()");
+        PPE_LOG_NETWORKERROR("inet_pton()");
 #if USE_PPE_NETWORK_DNSCACHE
         FDNSCache_::Get().PutHostnameToIPv4(ip, FStringView());
 #endif
@@ -365,7 +365,7 @@ bool IPv4ToHostname(FString& hostname, const FStringView& ip) {
 
     // check if gethostbyaddr returned an error
     if (0 != ret) {
-        LOG_NETWORKERROR(L"getnameinfo()");
+        PPE_LOG_NETWORKERROR("getnameinfo()");
 #if USE_PPE_NETWORK_DNSCACHE
         FDNSCache_::Get().PutHostnameToIPv4(ip, FStringView());
 #endif

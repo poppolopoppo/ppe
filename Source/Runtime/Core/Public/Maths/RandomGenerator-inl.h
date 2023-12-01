@@ -76,7 +76,7 @@ float TRng<_Generator>::NextFloat01() {
 //----------------------------------------------------------------------------
 template <typename _Generator>
 float TRng<_Generator>::NextFloatM11() {
-    // On peut optimiser le calcul en tirant un nombre dans [2, 4[ et en supprimant 3, comme dans UnitRand().
+    // On peut optimiser le calcul en tirant un nombre dans [2, 4[ et en supprimant 3, comme dans NextFloat01().
     // Note : 0x40000000 est la representation hexadecimale de 2.f
     //        0x007fffff est le masque de la mantisse.
 

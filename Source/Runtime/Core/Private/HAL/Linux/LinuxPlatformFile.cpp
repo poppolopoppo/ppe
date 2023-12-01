@@ -72,7 +72,7 @@ static bool EnumerateDirNonRecursive_(
         }
         const int thisErrno = errno;
         if (thisErrno)
-            LOG(HAL, Error, L"readdir() failed with errno: {0}", FErrno{});
+            PPE_LOG(HAL, Error, "readdir() failed with errno: {0}", FErrno{});
 
         Verify(0  == ::closedir(d));
 
@@ -151,7 +151,7 @@ FWString FLinuxPlatformFile::WorkingDirectory() {
         return ToWString(MakeCStringView(cwd));
     }
     else {
-        LOG(HAL, Error, L"getcwd() failed with errno: {0}", FErrno{});
+        PPE_LOG(HAL, Error, "getcwd() failed with errno: {0}", FErrno{});
         return FWString{};
     }
 }
@@ -216,7 +216,7 @@ bool FLinuxPlatformFile::TotalSizeAndUsage(u64* pTotalSize, u64* pUsedSize, cons
         return true;
     }
     else {
-        LOG(HAL, Error, L"statvfs({0}) failed with errno: {1}",
+        PPE_LOG(HAL, Error, "statvfs({0}) failed with errno: {1}",
             MakeCStringView(path), FErrno{} );
         return false;
     }
@@ -369,7 +369,7 @@ bool FLinuxPlatformFile::CreateDirectory(const char_type* dirpath, bool* existed
             return true;
         }
         else {
-            LOG(HAL, Error, L"mkdir({0} failed: can't create a folder over a file",
+            PPE_LOG(HAL, Error, "mkdir({0} failed: can't create a folder over a file",
                 MakeCStringView(dirpath) );
 
             return false;
@@ -380,7 +380,7 @@ bool FLinuxPlatformFile::CreateDirectory(const char_type* dirpath, bool* existed
         *existed = false;
 
     if (::mkdir(dirpathUTF_8, GDirectoryMode)) {
-        LOG(HAL, Error, L"mkdir({0}) failed with errno: {1}",
+        PPE_LOG(HAL, Error, "mkdir({0}) failed with errno: {1}",
             MakeCStringView(dirpath), FErrno{});
 
         return false;
@@ -423,7 +423,7 @@ bool FLinuxPlatformFile::MoveFile(const char_type* src, const char_type* dst) {
         WCHAR_TO_UTF_8<MaxPathLength>(dst) ) == 0)
         return true;
 
-    LOG(HAL, Error, L"rename({0}, {1}) failed with errno: {2}",
+    PPE_LOG(HAL, Error, "rename({0}, {1}) failed with errno: {2}",
         MakeCStringView(src), MakeCStringView(dst), FErrno{} );
 
     return false;
@@ -478,7 +478,7 @@ bool FLinuxPlatformFile::RemoveDirectory(const char_type* dirpath, bool force) {
             }
 
             if (::rmdir(WCHAR_TO_UTF_8<MaxPathLength>(currDir.Path)) != 0) {
-                LOG(HAL, Error, L"rmdir({0}) failed with errno: {1}",
+                PPE_LOG(HAL, Error, "rmdir({0}) failed with errno: {1}",
                     currDir.Path, FErrno{} );
                 return false;
             }
@@ -488,7 +488,7 @@ bool FLinuxPlatformFile::RemoveDirectory(const char_type* dirpath, bool force) {
         return true;
     }
     else {
-        LOG(HAL, Error, L"rmdir({0}) failed with errno: {1}",
+        PPE_LOG(HAL, Error, "rmdir({0}) failed with errno: {1}",
             MakeCStringView(dirpath), FErrno{} );
         return false;
     }
@@ -500,7 +500,7 @@ bool FLinuxPlatformFile::RemoveFile(const char_type* filename) {
     if (::remove(WCHAR_TO_UTF_8<MaxPathLength>(filename)) == 0)
         return true;
 
-    LOG(HAL, Error, L"remove({0}) failed with errno: {1}",
+    PPE_LOG(HAL, Error, "remove({0}) failed with errno: {1}",
         MakeCStringView(filename), FErrno{} );
 
     return false;
@@ -532,14 +532,14 @@ bool FLinuxPlatformFile::SetFileTime(
         mtime.tv_usec = 0;
 
         if (::utimes(filenameUTF_8, timevals) != 0) {
-            LOG(HAL, Error, L"utimes({0}) failed with errno: {1}",
+            PPE_LOG(HAL, Error, "utimes({0}) failed with errno: {1}",
                 MakeCStringView(filename), FErrno{} );
 
             return false;
         }
     }
     else {
-        LOG(HAL, Error, L"stat({0}) failed with errno: {1}",
+        PPE_LOG(HAL, Error, "stat({0}) failed with errno: {1}",
             MakeCStringView(filename), FErrno{} );
 
         return false;
@@ -570,13 +570,13 @@ bool FLinuxPlatformFile::RollFile(const char_type* filename) {
             FWString logroll_bak{ MakeCStringView(filename) };
             logroll_bak.insert(ext_pos, oss.Written());
 
-            LOG(HAL, Warning, L"file roll failed because '{0}' already exists, trying {1}",
+            PPE_LOG(HAL, Warning, "file roll failed because '{0}' already exists, trying {1}",
                 logroll, logroll_bak );
 
             logroll = std::move(logroll_bak);
         }
 
-        LOG(HAL, Info, L"roll file '{0}' -> '{1}'", MakeCStringView(filename), logroll);
+        PPE_LOG(HAL, Info, "roll file '{0}' -> '{1}'", MakeCStringView(filename), logroll);
 
         if (not MoveFile(filename, logroll.c_str()))
             return false;

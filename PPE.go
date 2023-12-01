@@ -11,10 +11,7 @@ import (
 	. "github.com/poppolopoppo/ppb/utils"
 )
 
-var LogPPE = LogCategory{Name: "PPE"}
-
-var CorePublicDir = UFS.Source.Folder("Runtime", "Core", "Public")
-var NatvisFile = UFS.Extras.Folder("Debug").File("PPE.natvis")
+var LogPPE = NewLogCategory("PPE")
 
 type UsageType string
 
@@ -237,7 +234,7 @@ func makePPE_Common(rules *ModuleRules) {
 	}
 
 	IfWindows(func() {
-		rules.LinkerOptions.Append("/NATVIS:" + NatvisFile.String())
+		rules.LinkerOptions.Append("/NATVIS:" + UFS.Extras.Folder("Debug").File("PPE.natvis").String())
 	})
 }
 func makePPE_Internal(rules *ModuleRules) {
@@ -267,14 +264,14 @@ func makePPE_Internal(rules *ModuleRules) {
 func makePPE_Headers(rules *ModuleRules) {
 	Inherit(&rules.ModuleType, MODULE_HEADERS)
 	Inherit(&rules.DebugSymbols, DEBUG_EMBEDDED)
-	rules.IncludePaths.AppendUniq(CorePublicDir)
+	rules.IncludePaths.AppendUniq(UFS.Source.Folder("Runtime", "Core", "Public"))
 }
 func makePPE_External(rules *ModuleRules) {
 	makePPE_Common(rules)
 	Inherit(&rules.ModuleType, MODULE_EXTERNAL)
 	Inherit(&rules.DebugSymbols, DEBUG_EMBEDDED)
 	Inherit(&rules.Unity, UNITY_DISABLED)
-	rules.IncludePaths.AppendUniq(CorePublicDir)
+	rules.IncludePaths.AppendUniq(UFS.Source.Folder("Runtime", "Core", "Public"))
 }
 func makePPE_Module(rules *ModuleRules) {
 	makePPE_Common(rules)

@@ -3,13 +3,13 @@
 #include "Core_fwd.h"
 
 #include "Container/Stack.h"
+#include "Meta/Singleton.h"
 #include "Meta/ThreadResource.h"
 #include "Misc/Function.h"
+#include "Thread/CriticalSection.h"
 #include "Thread/Fiber.h"
 
 #include <mutex>
-
-#include "Thread/CriticalSection.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -17,40 +17,38 @@ namespace PPE {
 //----------------------------------------------------------------------------
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
-class FTaskFiberChunk; // .cpp only
 class FTaskFiberPool : Meta::FNonCopyableNorMovable {
 public:
-    using FCallback = TFunction<void()>;
-
     struct FHandle;
+    friend struct FHandle;
     using FHandleRef = const FHandle*;
 
-    struct CACHELINE_ALIGNED FHandle {
-        mutable FFiber Fiber;
-        mutable FCallback OnWakeUp;
-        FTaskFiberChunk* Chunk{ nullptr };
-
-        void AttachWakeUpCallback(FCallback&& onWakeUp) const;
-        void YieldFiber(FHandleRef to, bool release) const;
-    };
+    using FCallback = void(*)();
 
     explicit FTaskFiberPool(FCallback&& callback) NOEXCEPT;
     ~FTaskFiberPool();
 
-    const FCallback& Callback() const { return _callback; }
+    FCallback Callback() const { return _callback; }
 
     FHandleRef AcquireFiber();
     bool OwnsFiber(FHandleRef handle) const NOEXCEPT;
     void ReleaseFiber(FHandleRef handle);
-    void YieldCurrentFiber(FHandleRef self, FHandleRef to, bool release);
+    void YieldFiber(FHandleRef self, FHandleRef to, bool release);
+
     void StartThread();
+    NORETURN void ShutdownThread();
+
     void ReleaseMemory();
 
 #if !USE_PPE_FINAL_RELEASE
-    NO_INLINE void UsageStats(size_t* reserved, size_t* inUse);
+    void UsageStats(size_t* reserved, size_t* inUse) NOEXCEPT;
 #endif
 
-    static size_t ReservedStackSize();
+    static void AttachWakeUpCallback(FHandleRef fiber, TFunction<void()>&& onWakeUp);
+    static size_t ReservedStackSize() NOEXCEPT;
+    static void ResetWakeUpCallback(FHandleRef fiber);
+    static void YieldCurrentFiber(FHandleRef to, bool release);
+
     static FHandleRef CurrentHandleRef() {
         auto* h = static_cast<FHandleRef>(FFiber::CurrentFiberData()); // @FHandle is passed down as each fiber data
         Assert(h);
@@ -59,10 +57,12 @@ public:
 
 private:
     const FCallback _callback;
-    FTaskFiberChunk* _chunks;
-    FCriticalSection _barrierCS;
+    std::atomic<FHandleRef> _freeFibers;
 
-    FTaskFiberChunk* AcquireChunk_();
+#if !USE_PPE_FINAL_RELEASE
+    std::atomic<int> _numFibersAvailable;
+    std::atomic<int> _numFibersReserved;
+#endif
 };
 PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
@@ -82,7 +82,24 @@ public:
 
 private:
     FTaskFiberPool& _pool;
-    TFixedSizeStack<FHandleRef, 2> _freed;
+    FHandleRef _lastFreeFiber{ nullptr };
+};
+//----------------------------------------------------------------------------
+class PPE_CORE_API FGlobalFiberPool : private Meta::TSingleton<FTaskFiberPool, FGlobalFiberPool> {
+    friend class Meta::TSingleton<FTaskFiberPool, FGlobalFiberPool>;
+    using singleton_type = Meta::TSingleton<FTaskFiberPool, FGlobalFiberPool>;
+    static DLL_NOINLINE void* class_singleton_storage() NOEXCEPT;
+
+public:
+    using FCallback = FTaskFiberPool::FCallback;
+
+    using singleton_type::Get;
+#if USE_PPE_ASSERT
+    using singleton_type::HasInstance;
+#endif
+
+    static void Create(FCallback&& entryPoint);
+    static void Destroy();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

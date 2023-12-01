@@ -49,7 +49,7 @@ struct FCompressionBenchmark_ {
     void Finished(const wchar_t* msg, size_t a, size_t b) {
 #if USE_PPE_LOGGER
         const FTimespan elapsed = FTimepoint::ElapsedSince(StartedAt);
-        LOG(Compress, Info, L" {0:20} | {1:10f2} | {2:10f2} ==> {3:10f2} : {4:10f2}% = {5:10f2} Mb/s",
+        PPE_LOG(Compress, Info, " {0:20} | {1:10f2} | {2:10f2} ==> {3:10f2} : {4:10f2}% = {5:10f2} Mb/s",
             msg,
             Fmt::DurationInMs(elapsed),
             Fmt::SizeInBytes(a),
@@ -69,7 +69,7 @@ struct FCompressionBenchmark_ {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-size_t CompressedSizeUpperBound(size_t sizeInBytes) {
+size_t CompressedSizeUpperBound(size_t sizeInBytes) NOEXCEPT {
     Assert_NoAssume(sizeInBytes <= LZ4_MAX_INPUT_SIZE);
     return checked_cast<size_t>(::LZ4_compressBound(checked_cast<int>(sizeInBytes)))
         + sizeof(FFileHeader_);
@@ -122,7 +122,7 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
             (char*)datas.Pointer(),
             checked_cast<int>(src.SizeInBytes()),
             checked_cast<int>(datas.SizeInBytes()),
-            LZ4HC_CLEVEL_MAX/* maximum compression level */));
+            LZ4HC_CLEVEL_OPT_MIN));
         break;
 
     default:
@@ -180,12 +180,12 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
 #endif
 
     if (ret < 0) {
-        LOG(Compress, Error, L"decompression failed due to malformed input ({0})", ret);
+        PPE_LOG(Compress, Error, "decompression failed due to malformed input ({0})", ret);
 
         return false;
     }
     else {
-        Assert_NoAssume(size_t(ret) == header.SizeInBytes);
+        Assert_NoAssume(static_cast<size_t>(ret) == header.SizeInBytes);
 
 #if WITH_PPE_COMPRESSION_FINGERPRINT && USE_PPE_ASSERT_RELEASE
         const u32 readFingerprint = StreamFingerprint_(dst);

@@ -13,7 +13,7 @@ namespace Parser {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FParserException::Description(FWTextWriter& oss) const {
+FTextWriter& FParserException::Description(FTextWriter& oss) const {
     oss << MakeCStringView(What()) << L": ";
 
     if (_item)

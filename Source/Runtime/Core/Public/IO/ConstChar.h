@@ -66,7 +66,7 @@ struct TBasicConstChar {
             if (*a >= *b)
                 return false;
 
-        return (!(*a | *b) | (!*a & *b));
+        return (!(*a | *b) | ((!*a) & *b));
     }
 
     CONSTEXPR bool LessI(const TBasicConstChar& other) const NOEXCEPT {
@@ -80,7 +80,7 @@ struct TBasicConstChar {
             if (ToLower(*a) >= ToLower(*b))
                 return false;
 
-        return ( !(*a | *b) | (!*a & *b) );
+        return ( !(*a | *b) | ((!*a) & *b) );
     }
 
     CONSTEXPR size_t HashValue() const NOEXCEPT {

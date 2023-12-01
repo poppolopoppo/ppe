@@ -122,7 +122,7 @@ void FRHIModule::RegisterTarget(ETargetRHI rhi, TPtrRef<const ITargetRHI>&& rtar
     const FReadWriteLock::FScopeLockWrite slopeLock(_barrierRW);
 
     using namespace RHI;
-    LOG(RHI, Info, L"register target {0} for {1}", rtarget->DisplayName(), rhi);
+    PPE_LOG(RHI, Info, "register target {0} for {1}", rtarget->DisplayName(), rhi);
 
     _OnRegisterTarget.Invoke(rhi, rtarget);
 
@@ -136,7 +136,7 @@ void FRHIModule::UnregisterTarget(ETargetRHI rhi) {
     AssertRelease(_targets.end() != it);
 
     using namespace RHI;
-    LOG(RHI, Info, L"unregister target {0} for {1}", it->second->DisplayName(), rhi);
+    PPE_LOG(RHI, Info, "unregister target {0} for {1}", it->second->DisplayName(), rhi);
 
     _targets.Erase(it);
 
@@ -156,7 +156,7 @@ TPtrRef<const ITargetRHI> FRHIModule::Target(ETargetRHI rhi) const NOEXCEPT {
         return it->second;
 
     using namespace RHI;
-    LOG(RHI, Error, L"could not find a target for {0}", rhi);
+    PPE_LOG(RHI, Error, "could not find a target for {0}", rhi);
     return nullptr;
 }
 //----------------------------------------------------------------------------
@@ -166,7 +166,7 @@ void FRHIModule::RegisterCompiler(RHI::EShaderLangFormat lang, RHI::PPipelineCom
     const FReadWriteLock::FScopeLockWrite slopeLock(_barrierRW);
 
     using namespace RHI;
-    LOG(RHI, Info, L"register pipeline compiler {0} for {1}", rcompiler->DisplayName(), lang);
+    PPE_LOG(RHI, Info, "register pipeline compiler {0} for {1}", rcompiler->DisplayName(), lang);
 
     _OnRegisterCompiler.Invoke(lang, rcompiler);
 
@@ -180,7 +180,7 @@ void FRHIModule::UnregisterCompiler(RHI::EShaderLangFormat lang) {
     AssertRelease(_compilers.end() != it);
 
     using namespace RHI;
-    LOG(RHI, Info, L"unregister pipeline compiler {0} for {1}", it->second->DisplayName(), lang);
+    PPE_LOG(RHI, Info, "unregister pipeline compiler {0} for {1}", it->second->DisplayName(), lang);
 
     _compilers.Erase(it);
 
@@ -199,7 +199,7 @@ RHI::SPipelineCompiler FRHIModule::Compiler(RHI::EShaderLangFormat lang) const n
         return it->second;
 
     using namespace RHI;
-    LOG(RHI, Error, L"could not find a compiler for {0}", lang);
+    PPE_LOG(RHI, Error, "could not find a compiler for {0}", lang);
     return SPipelineCompiler{};
 }
 //----------------------------------------------------------------------------

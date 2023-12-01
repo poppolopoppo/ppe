@@ -8,6 +8,7 @@
 
 #include "Diagnostic/Logger.h"
 #include "Meta/Functor.h"
+#include "RHI/PixelFormatHelpers.h"
 
 namespace PPE {
 namespace RHI {
@@ -54,8 +55,9 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
 
     const bool enableShadingRateImage = desc.ShadingRate.ImageId.Valid();
 
+    // create a local heap allocating slabs from command buffer's heap
     _allocator.Construct(TSlabAllocator{ cmd.Write()->MainAllocator });
-    _allocator->SetSlabSize(4_KiB);
+    _allocator->SetSlabSize(64_KiB); // allocate 32KiB slabs from 2MiB heap
 
     _drawTasks.Construct(TSlabAllocator{ *_allocator });
 
@@ -91,7 +93,7 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
 
         FColorTarget dst;
         dst.LocalImage = cmd.ToLocal(src.ImageId);
-        LOG_CHECK(RHI, nullptr != dst.LocalImage);
+        PPE_LOG_CHECK(RHI, nullptr != dst.LocalImage);
 
         const auto sharedImg = dst.LocalImage->Read();
 
@@ -119,7 +121,7 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
             dst.Desc.Format = sharedImg->Desc.Format;
 
         if (samples.has_value())
-            LOG_CHECK(RHI, sharedImg->Desc.Samples == *samples);
+            PPE_LOG_CHECK(RHI, sharedImg->Desc.Samples == *samples);
         else
             samples = sharedImg->Desc.Samples;
 
@@ -243,13 +245,14 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
 }
 //----------------------------------------------------------------------------
 void FVulkanLogicalRenderPass::TearDown(const FVulkanResourceManager& ) {
-    AssertMessage(L"render pass was not submitted", _isSubmitted);
+    AssertMessage("render pass was not submitted", _isSubmitted);
 
     Assert_NoAssume(_allocator.Available);
     Assert_NoAssume(_drawTasks.Available);
 
     // skip destruction and forget about allocated memory: everything will be discarded with the next line
     _drawTasks.Discard();
+
     _allocator->DiscardAll();
     _allocator.Destroy();
 
@@ -299,7 +302,7 @@ bool FVulkanLogicalRenderPass::Submit(
     FVulkanCommandBuffer& cmd,
     const TMemoryView<const TPair<FRawImageID, EResourceState>>& images,
     const TMemoryView<const TPair<FRawBufferID, EResourceState>>& buffers ) {
-    LOG_CHECK(RHI, not _isSubmitted);
+    PPE_LOG_CHECK(RHI, not _isSubmitted);
 
     if (not images.empty()) {
         Assert_NoAssume(_mutableImages.empty());
@@ -324,7 +327,7 @@ bool FVulkanLogicalRenderPass::Submit(
 #if USE_PPE_RHIDEBUG
 void FVulkanLogicalRenderPass::SetShaderDebugIndex(EShaderDebugIndex id) {
     for (IVulkanDrawTask* pTask : *_drawTasks)
-        pTask->SetDebugModeIndex(id);
+        pTask->DebugModeIndex = id;
 }
 #endif
 //----------------------------------------------------------------------------

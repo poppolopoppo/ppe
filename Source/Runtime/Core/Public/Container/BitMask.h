@@ -22,15 +22,15 @@ struct TBitMask {
 
     CONSTEXPR operator word_t () const NOEXCEPT { return Data; }
 
-    CONSTEXPR bool operator [](u32 index) const { return Get(index); }
+    NODISCARD CONSTEXPR bool operator [](u32 index) const { return Get(index); }
 
     template <u32 _Index>
-    CONSTEXPR bool Get() const NOEXCEPT {
+    NODISCARD CONSTEXPR bool Get() const NOEXCEPT {
         STATIC_ASSERT(_Index < BitCount);
         return (!!((Data >> _Index) & 1));
     }
 
-    CONSTEXPR bool Get(u32 index) const {
+    NODISCARD CONSTEXPR bool Get(u32 index) const {
         Assert_NoAssume(index < BitCount);
         return (!!((Data >> index) & 1));
     }
@@ -40,20 +40,20 @@ struct TBitMask {
     CONSTEXPR void SetTrue(u32 index) { Assert(index < BitCount); Data |= One << index; }
     CONSTEXPR void SetFalse(u32 index) { Assert(index < BitCount); Data &= ~(One << index); }
 
-    CONSTEXPR bool AllTrue() const NOEXCEPT { return ((Data & AllMask) == AllMask); }
-    CONSTEXPR bool AllFalse() const NOEXCEPT { return ((Data & AllMask) == 0); }
+    NODISCARD CONSTEXPR bool AllTrue() const NOEXCEPT { return ((Data & AllMask) == AllMask); }
+    NODISCARD CONSTEXPR bool AllFalse() const NOEXCEPT { return ((Data & AllMask) == 0); }
 
-    CONSTEXPR bool AnyTrue() const NOEXCEPT { return (Data != 0); }
-    CONSTEXPR bool AnyFalse() const NOEXCEPT { return (Data != AllMask); }
+    NODISCARD CONSTEXPR bool AnyTrue() const NOEXCEPT { return (Data != 0); }
+    NODISCARD CONSTEXPR bool AnyFalse() const NOEXCEPT { return (Data != AllMask); }
 
     CONSTEXPR void SetAllTrue() NOEXCEPT { Data = AllMask; }
     CONSTEXPR void SetAllFalse() NOEXCEPT { Data = 0; }
     CONSTEXPR void ResetAll(bool value) NOEXCEPT { Data = (value ? AllMask : 0); }
 
-    CONSTEXPR TBitMask Invert() const NOEXCEPT { return TBitMask{ ~Data & AllMask }; }
+    NODISCARD CONSTEXPR TBitMask Invert() const NOEXCEPT { return TBitMask{ ~Data & AllMask }; }
 
-    CONSTEXPR bool Contains(TBitMask other) const NOEXCEPT { return (Data & other.Data) == other.Data; }
-    CONSTEXPR bool Intersects(TBitMask other) const NOEXCEPT { return !!(Data & other.Data); }
+    NODISCARD CONSTEXPR bool Contains(TBitMask other) const NOEXCEPT { return (Data & other.Data) == other.Data; }
+    NODISCARD CONSTEXPR bool Intersects(TBitMask other) const NOEXCEPT { return !!(Data & other.Data); }
 
     CONSTEXPR TBitMask& operator &=(TBitMask other) NOEXCEPT { Data &= other.Data; return (*this); }
     CONSTEXPR TBitMask& operator |=(TBitMask other) NOEXCEPT { Data |= other.Data; return (*this); }
@@ -68,28 +68,28 @@ struct TBitMask {
     CONSTEXPR TBitMask operator <<(word_t lshift) const NOEXCEPT { return TBitMask{ Data << lshift }; }
     CONSTEXPR TBitMask operator >>(word_t rshift) const NOEXCEPT { return TBitMask{ Data >> rshift }; }
 
-    u32 Count() const NOEXCEPT {
+    NODISCARD u32 Count() const NOEXCEPT {
         return checked_cast<u32>(FPlatformMaths::popcnt(Data));
     }
-    word_t LowestBitSet() const NOEXCEPT {
+    NODISCARD word_t LowestBitSet() const NOEXCEPT {
         return FPlatformMaths::ctz(Data);
     }
-    word_t CountTrailingZeros() const NOEXCEPT {
+    NODISCARD word_t CountTrailingZeros() const NOEXCEPT {
         return FPlatformMaths::ctz(Data);
     }
-    word_t CountLeadingZeros() const NOEXCEPT {
+    NODISCARD word_t CountLeadingZeros() const NOEXCEPT {
         return FPlatformMaths::lzcnt(Data << ExtraBits);
     }
 
-    word_t FirstBitSet_AssumeNotEmpty() const NOEXCEPT {
+    NODISCARD word_t FirstBitSet_AssumeNotEmpty() const NOEXCEPT {
         Assert(Data);
         return FPlatformMaths::tzcnt(Data);
     }
-    word_t FirstBitSet_Unsafe() const NOEXCEPT {
+    NODISCARD word_t FirstBitSet_Unsafe() const NOEXCEPT {
         return FPlatformMaths::tzcnt(Data);
     }
 
-    word_t LastBitSet_AssumeNotEmpty() const NOEXCEPT {
+    NODISCARD word_t LastBitSet_AssumeNotEmpty() const NOEXCEPT {
         Assert(Data);
         return FPlatformMaths::lzcnt(Data << ExtraBits);
     }
@@ -113,7 +113,14 @@ struct TBitMask {
         return front;
     }
 
-    CONSTEXPR u32 operator *() const { return LowestBitSet(); }
+    void RotateLeft(u8 n) NOEXCEPT {
+        Data = FPlatformMaths::rotl(Data, n);
+    }
+    void RotateRight(u8 n) NOEXCEPT {
+        Data = FPlatformMaths::rotr(Data, n);
+    }
+
+    NODISCARD CONSTEXPR u32 operator *() const { return LowestBitSet(); }
     CONSTEXPR TBitMask& operator ++() {
         Data &= (Data - 1);
         return (*this);
@@ -122,14 +129,14 @@ struct TBitMask {
     CONSTEXPR TBitMask begin() const { return (*this); }
     CONSTEXPR TBitMask end() const { return TBitMask{ 0 }; }
 
-    friend CONSTEXPR bool operator ==(TBitMask lhs, TBitMask rhs) { return (lhs.Data == rhs.Data); }
-    friend CONSTEXPR bool operator !=(TBitMask lhs, TBitMask rhs) { return (lhs.Data != rhs.Data); }
+    NODISCARD friend CONSTEXPR bool operator ==(TBitMask lhs, TBitMask rhs) { return (lhs.Data == rhs.Data); }
+    NODISCARD friend CONSTEXPR bool operator !=(TBitMask lhs, TBitMask rhs) { return (lhs.Data != rhs.Data); }
 
-    static CONSTEXPR TBitMask SetFirstN(word_t n) NOEXCEPT { return TBitMask{ AllMask >> (BitCount - n) }; }
-    static CONSTEXPR TBitMask UnsetFirstN(word_t n) NOEXCEPT { return TBitMask{ AllMask << n }; }
-    static CONSTEXPR TBitMask SetLastN(word_t n)  NOEXCEPT { return TBitMask{ ~SetFirstN(BitCount - n) }; }
+    NODISCARD static CONSTEXPR TBitMask SetFirstN(word_t n) NOEXCEPT { return TBitMask{ AllMask >> (BitCount - n) }; }
+    NODISCARD static CONSTEXPR TBitMask UnsetFirstN(word_t n) NOEXCEPT { return TBitMask{ AllMask << n }; }
+    NODISCARD static CONSTEXPR TBitMask SetLastN(word_t n)  NOEXCEPT { return TBitMask{ ~SetFirstN(BitCount - n) }; }
 
-    word_t Allocate(size_t n) NOEXCEPT { // return 0 if failed or bit index + 1
+    NODISCARD word_t Allocate(size_t n) NOEXCEPT { // return 0 if failed or bit index + 1
         Assert(n > 1);
         Assert(n <= BitCount);
 
@@ -148,7 +155,7 @@ struct TBitMask {
         return 0;
     }
 
-    word_t Reallocate(size_t i, size_t o, size_t n) NOEXCEPT { // return 0 if failed or bit index + 1
+    NODISCARD word_t Reallocate(size_t i, size_t o, size_t n) NOEXCEPT { // return 0 if failed or bit index + 1
         Assert(o);
         Assert(n);
         Assert(n <= BitCount);

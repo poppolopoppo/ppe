@@ -43,17 +43,30 @@ void FVFSModule::Start(FModularDomain& domain) {
     auto& vfs = FVirtualFileSystem::Get();
     auto& process = FCurrentProcess::Get();
 
-    // current process executable directory
-    vfs.MountNativePath(L"Process:/", process.Directory());
+    // /!\ MOUNTING POINT ORDER OF DECLARATION MATTERS !!!
+    // - FVirtualFileSystemTrie is managing a trie with a global sort index and
+    //   first level of the trie division will dictate whole space partitioning
+    // - The ideal order will split the range in 2 event parts each time:
+    //   [1] Data:
+    //   [3] Process:
+    //   [5] Saved:
+    //   [0] System:
+    //   [4] Tmp:
+    //   [6] User:
+    //   [2] Working:
+    // - See FFileSystemTrie::GetOrCreate_() for concrete code
 
     // data directory
     vfs.MountNativePath(MakeStringView(L"Data:/"), process.DataPath());
 
+    // current process executable directory
+    vfs.MountNativePath(L"Process:/", process.Directory());
+
     // saved directory
     vfs.MountNativePath(MakeStringView(L"Saved:/"), process.SavedPath());
 
-    // current process working directory
-    vfs.MountNativePath(L"Working:/", FPlatformFile::WorkingDirectory());
+    // system path
+    vfs.MountNativePath(L"System:/", FPlatformFile::SystemDirectory());
 
     // system temporary path
     vfs.MountNativePath(L"Tmp:/", FPlatformFile::TemporaryDirectory());
@@ -61,8 +74,8 @@ void FVFSModule::Start(FModularDomain& domain) {
     // user profile path
     vfs.MountNativePath(L"User:/", FPlatformFile::UserDirectory());
 
-    // system path
-    vfs.MountNativePath(L"System:/", FPlatformFile::SystemDirectory());
+    // current process working directory
+    vfs.MountNativePath(L"Working:/", FPlatformFile::WorkingDirectory());
 }
 //----------------------------------------------------------------------------
 void FVFSModule::Shutdown(FModularDomain& domain) {

@@ -55,16 +55,16 @@ void main ()
 	ARGS_IF_RHIDEBUG("Compiler_Reflection3_CS"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::GLSL_450);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
 
     const FDescriptorSet* ds = ppln.DescriptorSet("0"_descriptorset);
-    LOG_CHECK(WindowTest, !!ds);
+    PPE_LOG_CHECK(WindowTest, !!ds);
 
-	LOG_CHECK(WindowTest, TestStorageBuffer(*ds, "DynamicBuffer_SSBO"_uniform, 32_b, 64_b, EShaderAccess::ReadWrite, 0, EShaderStages::Compute));
+	PPE_LOG_CHECK(WindowTest, TestStorageBuffer(*ds, "DynamicBuffer_SSBO"_uniform, 32_b, 64_b, EShaderAccess::ReadWrite, 0, EShaderStages::Compute));
 
-    LOG_CHECK(WindowTest, ppln.DefaultLocalGroupSize == uint3(16, 8, 1));
+    PPE_LOG_CHECK(WindowTest, ppln.DefaultLocalGroupSize == uint3(16, 8, 1));
 
     return true;
 }

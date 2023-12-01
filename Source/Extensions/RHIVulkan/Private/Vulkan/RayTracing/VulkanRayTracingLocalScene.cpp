@@ -45,13 +45,13 @@ void FVulkanRayTracingLocalScene::AddPendingState(const FSceneState& state) cons
     _pendingAccesses.Access = EResourceState_ToAccess(state.State);
     _pendingAccesses.IsReadable = EResourceState_IsReadable(state.State);
     _pendingAccesses.IsWritable = EResourceState_IsWritable(state.State);
-    _pendingAccesses.Index = state.Task->ExecutionOrder();
+    _pendingAccesses.Index = state.Task->ExecutionOrder;
 }
 //----------------------------------------------------------------------------
 void FVulkanRayTracingLocalScene::ResetState(
     EVulkanExecutionOrder index, FVulkanBarrierManager& barriers
     ARGS_IF_RHIDEBUG(FVulkanLocalDebugger* debuggerIFP) ) {
-    AssertReleaseMessage(L"you must commit all pending states before reseting", not _pendingAccesses.Valid());
+    AssertReleaseMessage("you must commit all pending states before reseting", not _pendingAccesses.Valid());
 
     // add full range barrier
     _pendingAccesses.IsReadable = true;

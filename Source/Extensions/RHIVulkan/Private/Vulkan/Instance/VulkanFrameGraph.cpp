@@ -36,7 +36,7 @@ FVulkanFrameGraph::~FVulkanFrameGraph() {
 bool FVulkanFrameGraph::Construct() {
     Verify(SetState_(EState::Initial, EState::Initialization));
 
-    LOG(RHI, Emphasis, L"constructing vulkan frame graph");
+    PPE_LOG(RHI, Emphasis, "constructing vulkan frame graph");
 
     if (not _resourceManager.Construct()) {
         Verify(SetState_(EState::Initialization, EState::Initial));
@@ -92,7 +92,7 @@ bool FVulkanFrameGraph::Construct() {
 void FVulkanFrameGraph::TearDown() {
     Assert(IsInitialized_());
 
-    LOG(RHI, Emphasis, L"tearing down vulkan frame graph");
+    PPE_LOG(RHI, Emphasis, "tearing down vulkan frame graph");
 
     WaitIdle(MaxTimeout);
     ReleaseMemory();
@@ -152,7 +152,7 @@ void FVulkanFrameGraph::ReleaseMemory() noexcept {
 
     // delete command buffers
     {
-        RHI_LOG(Verbose, L"release memory in Vulkan frame graph pools:\n"
+        RHI_LOG(Verbose, "release memory in Vulkan frame graph pools:\n"
             " - max command batches = {0}\n"
             " - max command buffers = {1}\n"
             " - max submitted batches = {2}",
@@ -240,7 +240,7 @@ void FVulkanFrameGraph::TransitImageLayoutToDefault_(FRawImageID imageId, VkImag
     barrier.srcQueueFamilyIndex = queueFamily;
     barrier.dstQueueFamilyIndex = queueFamily;
 
-    RHI_TRACE(L"TransitImageLayoutToDefault",
+    RHI_TRACE("TransitImageLayoutToDefault",
         barrier.oldLayout,
         barrier.newLayout,
         image.DebugName());
@@ -389,7 +389,7 @@ bool FVulkanFrameGraph::CachePipelineResources(FPipelineResources& resources) {
 template <typename T>
 bool FVulkanFrameGraph::ReleaseResource_(details::TResourceWrappedId<T>& id) {
     if (not id) {
-        LOG(RHI, Warning, L"trying to release an empty resource");
+        PPE_LOG(RHI, Warning, "trying to release an empty resource");
         return false;
     }
 
@@ -548,18 +548,18 @@ FCommandBufferBatch FVulkanFrameGraph::Begin(const FCommandBufferDesc& desc, TMe
     Assert_NoAssume(IsInitialized_());
 
     PVulkanCommandBuffer cmd = _cmdBufferPool.Allocate(this);
-    AssertReleaseMessage(L"command buffer pool overflow !", cmd);
+    AssertReleaseMessage("command buffer pool overflow !", cmd);
 
     FQueueData& queue = QueueData_(desc.QueueType);
     Assert(queue.Ptr);
 
     PVulkanCommandBatch batch = _cmdBatchPool.Allocate(this);
-    AssertReleaseMessage(L"command batch pool overflow !", batch);
+    AssertReleaseMessage("command batch pool overflow !", batch);
 
     batch->Construct(queue.Type, dependsOn);
 
     if (not cmd->Begin(desc, batch, queue.Ptr)) {
-        LOG(RHI, Error, L"failed to begin command buffer recording");
+        PPE_LOG(RHI, Error, "failed to begin command buffer recording");
         _cmdBufferPool.Release(RemoveRef_AssertReachZero_KeepAlive(cmd));
         _cmdBatchPool.Release(RemoveRef_AssertReachZero_KeepAlive(batch));
         return Default;
@@ -581,7 +581,7 @@ bool FVulkanFrameGraph::Execute(FCommandBufferBatch& cmdBatch) {
 
     // execute and release the command buffer
     const bool success = cmd->Execute();
-    ONLY_IF_RHIDEBUG(CLOG(not success, RHI, Error, L"failed to execute command buffer <{0}>", cmd->DebugName()));
+    ONLY_IF_RHIDEBUG(PPE_CLOG(not success, RHI, Error, "failed to execute command buffer <{0}>", cmd->DebugName()));
     Assert_NoAssume(not cmd->Batch()); // release batch reference in buffer after Execute()
 
     cmdBatch = FCommandBufferBatch{
@@ -704,7 +704,7 @@ bool FVulkanFrameGraph::FlushQueue_(EQueueType index, u32 maxIter) {
     FVulkanSubmitted* const pSubmit = _submittedPool.Allocate([](FVulkanSubmitted* s, u32 id) {
         INPLACE_NEW(s, FVulkanSubmitted){ id };
     });
-    AssertReleaseMessage(L"submitted pool overflow !", pSubmit);
+    AssertReleaseMessage("submitted pool overflow !", pSubmit);
     pSubmit->Construct(_device, static_cast<EQueueType>(qi), pending, releaseSemaphores);
 
     // add image layout transitions
@@ -969,7 +969,15 @@ bool FVulkanFrameGraph::DumpGraph(FStringBuilder* log) const {
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
-bool FVulkanFrameGraph::DumpStatistics(FFrameStatistics* pStats) const {
+bool FVulkanFrameGraph::DumpMemory(FStringBuilder* log) const {
+    Assert(IsInitialized_());
+    Unused(log);
+    AssertNotImplemented();
+}
+#endif
+//----------------------------------------------------------------------------
+#if USE_PPE_RHIDEBUG
+bool FVulkanFrameGraph::Statistics(FFrameStatistics* pStats) const {
     Assert(IsInitialized_());
     ONLY_IF_RHIDEBUG(const FCriticalScope statsLock(&_lastFrameStatsCS));
 

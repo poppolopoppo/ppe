@@ -39,7 +39,13 @@
 // Global switch for using address sanitize, enable memory debugging with std malloc instead of stomp
 //----------------------------------------------------------------------------
 #ifndef USE_PPE_SANITIZER
-#   define USE_PPE_SANITIZER          0 //%_NOCOMMIT%
+#   if defined(__SANITIZE_ADDRESS__)
+#       define USE_PPE_SANITIZER          1
+#   elif defined(__SANITIZE_THREAD__)
+#       define USE_PPE_SANITIZER          2
+#   else
+#       define USE_PPE_SANITIZER          0 //%_NOCOMMIT%
+#   endif
 #endif
 
 //----------------------------------------------------------------------------

@@ -10,7 +10,7 @@ bool Drawing_DrawMeshes1_(FWindowTestApp& app) {
     using namespace PPE::RHI;
 
     if (not (app.RHI().Features() & ERHIFeature::MeshDraw)) {
-        LOG(WindowTest, Warning, L"Drawing_DrawMeshes1_: skipped due to lack of mesh shader support");
+        PPE_LOG(WindowTest, Warning, "Drawing_DrawMeshes1_: skipped due to lack of mesh shader support");
         return true;
     }
 
@@ -81,10 +81,10 @@ ARGS_IF_RHIDEBUG("Drawing_DrawMeshes_PS"));
         FImageDesc{}.SetDimension(viewSize).SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget"))) };
-    LOG_CHECK(WindowTest, image.Valid());
+    PPE_LOG_CHECK(WindowTest, image.Valid());
 
     const TAutoResource<FMPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Drawing_DrawMeshes1"))) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     bool dataIsCorrect = false;
     const auto onLoaded = [&dataIsCorrect](const FImageView& imageData) {
@@ -96,8 +96,8 @@ ARGS_IF_RHIDEBUG("Drawing_DrawMeshes_PS"));
             imageData.Load(&texel, uint3(ix, iy, 0));
 
             const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
-            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", float2(x, y), texel, color, isEqual);
-            LOG_CHECK(WindowTest, isEqual);
+            PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", float2(x, y), texel, color, isEqual);
+            PPE_LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);
             return true;
         };
@@ -117,12 +117,12 @@ ARGS_IF_RHIDEBUG("Drawing_DrawMeshes_PS"));
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_DrawMeshes1")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Color0, image, FLinearColor::Transparent(), EAttachmentStoreOp::Store)
         .AddViewport(viewSize));
-    LOG_CHECK(WindowTest, !!renderPass);
+    PPE_LOG_CHECK(WindowTest, !!renderPass);
 
     cmd->Task(renderPass, FDrawMeshes{}.Draw(1).SetPipeline(ppln));
 
@@ -130,10 +130,10 @@ ARGS_IF_RHIDEBUG("Drawing_DrawMeshes_PS"));
     const PFrameTask tRead = cmd->Task(FReadImage{}.SetImage(image, Default, viewSize).SetCallback(onLoaded).DependsOn(tDraw));
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

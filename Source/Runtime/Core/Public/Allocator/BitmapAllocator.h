@@ -14,7 +14,7 @@ namespace PPE {
 // Using a bit mask and an in-situ buffer
 //----------------------------------------------------------------------------
 template <size_t _BlockSize>
-class TBitmapAllocator : private FGenericAllocator {
+class TBitmapAllocator : private FAllocatorPolicy {
     STATIC_ASSERT(Meta::IsAlignedPow2(sizeof(intptr_t), _BlockSize));
 public:
     using propagate_on_container_copy_assignment = std::false_type;
@@ -85,7 +85,7 @@ public:
 
         return ((0 != i)
             ? FAllocatorBlock{ &Blocks[i - 1],  n * BlockSize }
-            : FAllocatorBlock::Null() );
+            : Default );
     }
 
     void Deallocate(FAllocatorBlock b) NOEXCEPT {

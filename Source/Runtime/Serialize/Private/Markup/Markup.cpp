@@ -324,12 +324,12 @@ bool FMarkup::Load(FMarkup* markup, const FFilename& filename, IBufferedStreamRe
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FMarkupException::Description(FWTextWriter& oss) const {
+FTextWriter& FMarkupException::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What())
-        << L": in markup file '"
+        << ": in markup file '"
         << _site
-        << L"' !";
+        << "' !";
 }
 #endif
 //----------------------------------------------------------------------------

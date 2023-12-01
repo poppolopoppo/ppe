@@ -11,7 +11,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Domain>
-class PPE_CORE_API TVirtualAllocator : private FGenericAllocator {
+class PPE_CORE_API TVirtualAllocator : private FAllocatorPolicy {
 public:
     using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;

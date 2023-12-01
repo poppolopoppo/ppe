@@ -172,7 +172,7 @@ auto TMemoryStream<_Allocator>::operator =(TMemoryStream&& rvalue) NOEXCEPT -> T
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TMemoryStream<_Allocator>::resize(size_t count, bool keepData/* = true */) {
-    if  (keepData) {
+    if (keepData) {
         reserve(count);
     }
     else if (count > _storage.size()) {

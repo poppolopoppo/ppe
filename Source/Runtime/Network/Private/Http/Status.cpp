@@ -45,10 +45,10 @@ FOREACH_HTTP_STATUSCODE(HTTP_STATUSCODE_DESCRIPTION)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FHttpException::Description(FWTextWriter& oss) const {
+FTextWriter& FHttpException::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What())
-        << L": "
+        << ": "
         << Status();
 }
 #endif

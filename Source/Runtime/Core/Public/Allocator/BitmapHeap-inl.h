@@ -90,29 +90,29 @@ inline void* TBitmapPage<_PageSize>::Allocate(u32 sizeInBytes, bool& exhausted) 
     Assert(numPages <= MaxPages);
 
     mask_t pages = Pages.load(std::memory_order_relaxed);
-    for (;;) {
+    for (const mask_t blk = (mask_t(-1) >> (MaxPages - numPages));;) {
     RETRY_CAS:
-        const mask_t blk = (mask_t(-1) >> (MaxPages - numPages));
         mask_t lookup = pages;
         if (ate) {
             lookup = FPlatformMaths::ReverseBits(lookup);
             Assert_NoAssume(FPlatformMaths::ReverseBits(lookup) == pages);
         }
 
-        for (u32 off = checked_cast<u32>(FPlatformMaths::tzcnt(lookup)); (off != MaxPages) & !!(lookup >> off); ++off) {
+        for (u32 off = checked_cast<u32>(FPlatformMaths::tzcnt(lookup)); (off + numPages <= MaxPages) && !!(lookup >> off); ++off) {
             if ((blk & (lookup >> off)) == blk) {
                 if (ate)
                     off = MaxPages - off - numPages;
                 Assert(off + numPages <= MaxPages);
 
-                const mask_t insert = (pages & ~(blk << off));
+                const mask_t insert = (pages/* lookup is potentially reversed */ & ~(blk << off));
                 if (Pages.compare_exchange_weak(pages, insert, std::memory_order_release, std::memory_order_relaxed)) {
                     Assert(off + numPages - 1 < MaxPages);
-                    ONLY_IF_ASSERT(const mask_t backup = (Sizes |= (mask_t(1) << (off + numPages - 1))));
+                    Sizes |= (mask_t(1) << (off + numPages - 1));
+
                     void* const result = (reinterpret_cast<u8*>(vAddressSpace) + PageSize * off);
-                    Assert_NoAssume(backup & (mask_t(1) << (off + numPages - 1)));
-                    Assert_NoAssume(RegionSize(result) == SnapSize(sizeInBytes));
                     exhausted = (insert == 0);
+
+                    Assert_NoAssume(RegionSize(result) == SnapSize(sizeInBytes));
                     return result;
                 }
 
@@ -211,7 +211,7 @@ template <u32 _PageSize>
 inline u32 TBitmapPage<_PageSize>::SnapSize(u32 sz) NOEXCEPT {
     Assert(sz);
     STATIC_ASSERT(Meta::IsPow2(PageSize));
-    return ((0 == sz) ? u32(0) : (sz + PageSize - u32(1)) & ~(PageSize - u32(1)));
+    return Meta::RoundToNextPow2(sz, PageSize);
 }
 //----------------------------------------------------------------------------
 template <u32 _PageSize>
@@ -244,7 +244,7 @@ TBitmapHeap<_Traits>::~TBitmapHeap() {
         auto* const page = reinterpret_cast<page_type*>(value);
         Assert_NoAssume(uintptr_t(page->vAddressSpace) == key); // check for leaks
 
-        ReleaseUnusedPage_AssumeLocked_(page);
+        ReleaseUnusedPage_ThreadSafe_(page);
         return true;
     });
 
@@ -342,7 +342,8 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
         page_type* firstFit = nullptr;
         for (const auto& MRU : hint.MRU) {
             if (Likely((MRU.Revision == Revision) & (!!MRU.Page))) {
-                if ((MRU.Page->LargestBlockAvailable() >= sizeInBytes) & ((!firstFit) | (ate ? firstFit < MRU.Page : firstFit > MRU.Page)))
+                if ((MRU.Page->LargestBlockAvailable() >= sizeInBytes) &&
+                    ((!firstFit) || (ate ? firstFit < MRU.Page : firstFit > MRU.Page)))
                     firstFit = MRU.Page;
             }
         }
@@ -513,37 +514,43 @@ void* TBitmapHeap<_Traits>::Resize(void* ptr, size_t sizeInBytes, page_type* pag
 //----------------------------------------------------------------------------
 template <typename _Traits>
 void TBitmapHeap<_Traits>::GarbageCollect() {
+    FDeferredPageDeallocator releasePagesOutsideLock(*this);
+
     if (Likely(RWLock.TryLockWrite())) {
+        DEFERRED{ RWLock.UnlockWrite(); };
+
         for (page_type* page = FreePage.load(std::memory_order_relaxed); page != GDummyPage;) {
             page_type* const pnext = static_cast<page_type*>(page->NextPage);
             Assert(pnext);
 
+            page->NextPage = nullptr; // remove from free queue
+
             if (page->Empty()) {
                 Pages.Erase(page->vAddressSpace);
-                ReleaseUnusedPage_AssumeLocked_(page);
+                releasePagesOutsideLock.Push_AssumeLocked(page);
             }
 
-            page->NextPage = nullptr;
             page = pnext;
         }
 
         FreePage = GDummyPage;
-        RWLock.UnlockWrite();
     }
 }
 //----------------------------------------------------------------------------
 template <typename _Traits>
 void TBitmapHeap<_Traits>::ForceGarbageCollect() {
+    FDeferredPageDeallocator releasePagesOutsideLock(*this);
+
     { // release every unused chunk
         const FReadWriteLock::FScopeLockWrite scopeWrite(RWLock);
 
         // run GC on every chunk to trim unused committed memory
-        Pages.DeleteIf([this](uintptr_t, uintptr_t value) NOEXCEPT -> bool{
+        Pages.DeleteIf([&](uintptr_t, uintptr_t value) NOEXCEPT -> bool{
             auto* const page = reinterpret_cast<page_type*>(value);
             page->NextPage = nullptr;
 
             if (page->Empty()) {
-                ReleaseUnusedPage_AssumeLocked_(page);
+                releasePagesOutsideLock.Push_AssumeLocked(page);
                 return true;
             }
 
@@ -582,6 +589,8 @@ size_t TBitmapHeap<_Traits>::DebugInfo(FBitmapHeapInfo* pinfo) const NOEXCEPT {
         pinfo->BitmapSize = BitmapSize;
         pinfo->Granularity = Granularity;
         pinfo->PagesPerBlock = page_type::MaxPages;
+        pinfo->MinAllocSize = MinAllocSize;
+        pinfo->MaxAllocSize = MaxAllocSize;
         pinfo->Stats = FBitmapMemoryStats{};
     }
 
@@ -665,14 +674,12 @@ void TBitmapHeap<_Traits>::RegisterFreePage_Unlocked_(page_type* page) NOEXCEPT 
 }
 //----------------------------------------------------------------------------
 template <typename _Traits>
-void TBitmapHeap<_Traits>::ReleaseUnusedPage_AssumeLocked_(page_type* page) NOEXCEPT {
+void TBitmapHeap<_Traits>::ReleaseUnusedPage_ThreadSafe_(page_type* page) NOEXCEPT {
     Assert(page);
     Assert(page->vAddressSpace);
     AssertRelease(page->Empty());
     Assert_NoAssume(page->Sizes.load(std::memory_order_relaxed) == 0);
     Assert_NoAssume(page->Pages.load(std::memory_order_relaxed) == mask_type(-1));
-
-    ++Revision; // invalidate each TLS cache
 
     traits_type::PageDecommit(page->vAddressSpace, BitmapSize);
     traits_type::PageRelease(page->vAddressSpace, BitmapSize);

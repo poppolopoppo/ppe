@@ -53,7 +53,11 @@ public:
     u32 RefCount() const;
     void CheckThreadAccess() const;
 
-    void Swap(TComPtr& other);
+    void Swap(TComPtr& other) NOEXCEPT;
+
+    friend void swap(TComPtr& lhs, TComPtr& rhs) NOEXCEPT {
+        lhs.Swap(rhs);
+    }
 
     template <typename U>
     void Steal(TComPtr<U>& other) {
@@ -68,11 +72,6 @@ private:
 
     _ComInterface *_comObject;
 };
-//----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
-void swap(const TComPtr<_Lhs>& lhs, const TComPtr<_Rhs>& rhs) {
-    lhs.Swap(rhs);
-}
 //----------------------------------------------------------------------------
 template <typename T>
 size_t ComRefCount(const TComPtr<T>& p) {

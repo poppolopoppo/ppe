@@ -49,18 +49,18 @@ void main ()
 ARGS_IF_RHIDEBUG("Compiler_Annotation1_CS"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::GLSL_450);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
     const EShaderCompilationFlags flags = compiler->CompilationFlags();
     compiler->SetCompilationFlags(flags | EShaderCompilationFlags::ParseAnnotations);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
 
     compiler->SetCompilationFlags(flags);
 
-    LOG_CHECK(WindowTest, ppln.DescriptorSet("test"_descriptorset));
-    LOG_CHECK(WindowTest, ppln.DescriptorSet("test 2"_descriptorset));
-    LOG_CHECK(WindowTest, ppln.DescriptorSet("test3"_descriptorset));
+    PPE_LOG_CHECK(WindowTest, ppln.DescriptorSet("test"_descriptorset));
+    PPE_LOG_CHECK(WindowTest, ppln.DescriptorSet("test 2"_descriptorset));
+    PPE_LOG_CHECK(WindowTest, ppln.DescriptorSet("test3"_descriptorset));
 
     return true;
 }

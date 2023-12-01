@@ -9,7 +9,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EGammaSpace {
+enum class EGammaSpace : u8 {
     /** No gamma correction is applied to this space, the incoming colors are assumed to already be in linear space. */
     Linear,
     /** A simplified sRGB gamma correction is applied, pow(1/2.2). */
@@ -20,26 +20,29 @@ enum class EGammaSpace {
     ACES,
 };
 //----------------------------------------------------------------------------
-PPE_CORE_API float3 ACESFitted(float3 linear);
+NODISCARD PPE_CORE_API float3 ACESFitted(float3 linear);
 //----------------------------------------------------------------------------
-PPE_CORE_API float3 Pastelizer(float hue);
+NODISCARD PPE_CORE_API float3 Pastelizer(float hue);
 //----------------------------------------------------------------------------
-PPE_CORE_API float3 Hue_to_RGB(float hue);
+NODISCARD PPE_CORE_API float3 Hue_to_RGB(float hue);
 //----------------------------------------------------------------------------
-PPE_CORE_API float3 RGB_to_HCV(const float3& rgb);
+NODISCARD PPE_CORE_API float3 RGB_to_HCV(const float3& rgb);
 //----------------------------------------------------------------------------
-PPE_CORE_API float3 HSV_to_RGB(const float3& hsv);
-PPE_CORE_API float3 RGB_to_HSV(const float3& rgb);
-PPE_CORE_API float3 HSV_to_RGB_smooth(const float3& hsv);
+NODISCARD PPE_CORE_API float3 HSV_to_RGB(const float3& hsv);
+NODISCARD PPE_CORE_API float3 RGB_to_HSV(const float3& rgb);
+NODISCARD PPE_CORE_API float3 HSV_to_RGB_smooth(const float3& hsv);
 //----------------------------------------------------------------------------
-PPE_CORE_API float3 HSL_to_RGB(const float3& hsl);
-PPE_CORE_API float3 RGB_to_HSL(const float3& rgb);
+NODISCARD PPE_CORE_API float3 HSL_to_RGB(const float3& hsl);
+NODISCARD PPE_CORE_API float3 RGB_to_HSL(const float3& rgb);
 //----------------------------------------------------------------------------
-PPE_CORE_API float3 YCoCg_to_RGB(const float3& yCoCg);
-PPE_CORE_API float3 RGB_to_YCoCg(const float3& rgb);
+NODISCARD PPE_CORE_API float3 YCoCg_to_RGB(const float3& yCoCg);
+NODISCARD PPE_CORE_API float3 RGB_to_YCoCg(const float3& rgb);
+//----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API float3 RGB_to_OKLab(const float3& lin);
+NODISCARD PPE_CORE_API float3 OKLab_to_RGB(const float3& oklab);
 //----------------------------------------------------------------------------
 float SRGB_to_Linear(float srgb);
-PPE_CORE_API float SRGB_to_Linear(u8 srgb); // optimized version with a precomputed table
+NODISCARD PPE_CORE_API float SRGB_to_Linear(u8 srgb); // optimized version with a precomputed table
 float Linear_to_SRGB(float lin);
 //----------------------------------------------------------------------------
 float Linear_to_Pow22(float lin);
@@ -47,388 +50,399 @@ float Pow22_to_Linear(float pow22);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_CORE_API FLinearColor {
+struct FLinearColor {
     float R, G, B, A;
 
-    FLinearColor() NOEXCEPT {}
+    FLinearColor() = default;
+
     CONSTEXPR explicit FLinearColor(Meta::FZeroValue) NOEXCEPT : R(0), G(0), B(0), A(0) {}
     CONSTEXPR explicit FLinearColor(Meta::FForceInit) NOEXCEPT : FLinearColor(Zero) {}
+    CONSTEXPR explicit FLinearColor(Meta::FNoInit) NOEXCEPT {}
     CONSTEXPR FLinearColor(float r, float g, float b, float a = 1.0f) NOEXCEPT : R(r), G(g), B(b), A(a) {}
 
-    FLinearColor(const FColor& color);
-    FLinearColor(const float3& rgb, float a = 1.0f);
-    FLinearColor(const float4& rgba);
+    PPE_CORE_API FLinearColor(const FColor& color);
+    PPE_CORE_API FLinearColor(const float3& rgb, float a = 1.0f);
+    PPE_CORE_API FLinearColor(const float4& rgba);
 
-    operator const float3&() const { return *reinterpret_cast<const float3*>(this); }
-    operator const float4&() const { return *reinterpret_cast<const float4*>(this); }
+    NODISCARD operator const float3&() const { return *reinterpret_cast<const float3*>(this); }
+    NODISCARD operator const float4&() const { return *reinterpret_cast<const float4*>(this); }
 
-    float& operator [](size_t index) { Assert(index < 4); return (&R)[index]; }
-    float operator [](size_t index) const { Assert(index < 4); return (&R)[index]; }
+    NODISCARD float& operator [](size_t index) { Assert(index < 4); return (&R)[index]; }
+    NODISCARD float operator [](size_t index) const { Assert(index < 4); return (&R)[index]; }
 
-    FLinearColor Desaturate(float desaturation) const;
-    CONSTEXPR FLinearColor Fade(float alpha) const { return FLinearColor(R, G, B, alpha); }
+    NODISCARD PPE_CORE_API  FLinearColor Desaturate(float desaturation) const;
+    NODISCARD CONSTEXPR FLinearColor Fade(float alpha) const { return FLinearColor(R, G, B, alpha); }
 
-    CONSTEXPR float Luminance() const { return (0.2126f * R + 0.7152f * G + 0.0722f * B); }
-    FLinearColor SetLuminance(float lum) const;
+    NODISCARD CONSTEXPR float Luminance() const { return (0.2126f * R + 0.7152f * G + 0.0722f * B); }
+    NODISCARD PPE_CORE_API FLinearColor SetLuminance(float lum) const;
 
-    float4 ToBGRA() const;
-    float3 ToHSL() const;
-    float3 ToHSV() const;
-    float3 ToYCoCg() const;
+    NODISCARD PPE_CORE_API float4 ToACES() const;
+    NODISCARD PPE_CORE_API float4 ToBGRA() const;
+    NODISCARD PPE_CORE_API float3 ToHSL() const;
+    NODISCARD PPE_CORE_API float3 ToHSV() const;
+    NODISCARD PPE_CORE_API float3 ToYCoCg() const;
 
-    FColor ToRGBE() const;
-    FColor Quantize(EGammaSpace gamma) const;
+    NODISCARD PPE_CORE_API FColor ToRGBE() const;
+    NODISCARD PPE_CORE_API FColor Quantize(EGammaSpace gamma) const;
 
-    static FLinearColor FromPastel(float hue, float a = 1.0f);
-    static FLinearColor FromHue(float hue, float a = 1.0f);
-    static FLinearColor FromHSL(const float3& hsl, float a = 1.0f);
-    static FLinearColor FromHSV(const float3& hsv, float a = 1.0f);
-    static FLinearColor FromHSV_smooth(const float3& hsv, float a = 1.0f);
-    static FLinearColor FromYCoCg(const float3& yCoCg, float a = 1.0f);
-    static FLinearColor FromHash(hash_t h, float a = 1.0f);
-    static FLinearColor FromHeatmap(float x, float a = 1.0f);
-    static FLinearColor FromTemperature(float kelvins, float a = 1.0f);
+    NODISCARD PPE_CORE_API static FLinearColor FromLuma(float luma, float a = 1.0f);
+    NODISCARD PPE_CORE_API static FLinearColor FromPastel(float hue, float a = 1.0f);
+    NODISCARD PPE_CORE_API static FLinearColor FromHue(float hue, float a = 1.0f);
+    NODISCARD PPE_CORE_API static FLinearColor FromHSL(const float3& hsl, float a = 1.0f);
+    NODISCARD PPE_CORE_API static FLinearColor FromHSV(const float3& hsv, float a = 1.0f);
+    NODISCARD PPE_CORE_API static FLinearColor FromHSV_smooth(const float3& hsv, float a = 1.0f);
+    NODISCARD PPE_CORE_API static FLinearColor FromYCoCg(const float3& yCoCg, float a = 1.0f);
+    NODISCARD PPE_CORE_API static FLinearColor FromHash(hash_t h, float a = 1.0f);
+    NODISCARD PPE_CORE_API static FLinearColor FromHeatmap(float x, float a = 1.0f);
+    NODISCARD PPE_CORE_API static FLinearColor FromTemperature(float kelvins, float a = 1.0f);
 
-    CONSTEXPR inline friend bool operator ==(const FLinearColor& lhs, const FLinearColor& rhs) {
+    NODISCARD CONSTEXPR inline friend bool operator ==(const FLinearColor& lhs, const FLinearColor& rhs) {
         return (lhs.R == rhs.R && lhs.G == rhs.G && lhs.B == rhs.B && lhs.A == rhs.A);
     }
-    CONSTEXPR inline friend bool operator !=(const FLinearColor& lhs, const FLinearColor& rhs) {
+    NODISCARD CONSTEXPR inline friend bool operator !=(const FLinearColor& lhs, const FLinearColor& rhs) {
         return (not operator ==(lhs, rhs));
     }
 
-    static const FLinearColor PaperWhite;
+    static CONSTEXPR FLinearColor PaperWhite() {
+        return { 1.f, 1.f, 1.f, 1.f };
+    }
 
-    static FLinearColor AliceBlue();
-    static FLinearColor AntiqueWhite();
-    static FLinearColor Aqua();
-    static FLinearColor Aquamarine();
-    static FLinearColor Azure();
-    static FLinearColor Beige();
-    static FLinearColor Bisque();
-    static FLinearColor Black();
-    static FLinearColor BlanchedAlmond();
-    static FLinearColor Blue();
-    static FLinearColor BlueViolet();
-    static FLinearColor Brown();
-    static FLinearColor BurlyWood();
-    static FLinearColor CadetBlue();
-    static FLinearColor Chartreuse();
-    static FLinearColor Chocolate();
-    static FLinearColor Coral();
-    static FLinearColor CornflowerBlue();
-    static FLinearColor Cornsilk();
-    static FLinearColor Crimson();
-    static FLinearColor Cyan();
-    static FLinearColor DarkBlue();
-    static FLinearColor DarkCyan();
-    static FLinearColor DarkGoldenRod();
-    static FLinearColor DarkGray();
-    static FLinearColor DarkGreen();
-    static FLinearColor DarkKhaki();
-    static FLinearColor DarkMagenta();
-    static FLinearColor DarkOliveGreen();
-    static FLinearColor DarkOrange();
-    static FLinearColor DarkOrchid();
-    static FLinearColor DarkRed();
-    static FLinearColor DarkSalmon();
-    static FLinearColor DarkSeaGreen();
-    static FLinearColor DarkSlateBlue();
-    static FLinearColor DarkSlateGray();
-    static FLinearColor DarkTurquoise();
-    static FLinearColor DarkViolet();
-    static FLinearColor DeepPink();
-    static FLinearColor DeepSkyBlue();
-    static FLinearColor DimGray();
-    static FLinearColor DodgerBlue();
-    static FLinearColor FireBrick();
-    static FLinearColor FloralWhite();
-    static FLinearColor ForestGreen();
-    static FLinearColor Fuchsia();
-    static FLinearColor Gainsboro();
-    static FLinearColor GhostWhite();
-    static FLinearColor Gold();
-    static FLinearColor GoldenRod();
-    static FLinearColor Gray();
-    static FLinearColor Green();
-    static FLinearColor GreenYellow();
-    static FLinearColor HoneyDew();
-    static FLinearColor HotPink();
-    static FLinearColor IndianRed();
-    static FLinearColor Indigo();
-    static FLinearColor Ivory();
-    static FLinearColor Khaki();
-    static FLinearColor Lavender();
-    static FLinearColor LavenderBlush();
-    static FLinearColor LawnGreen();
-    static FLinearColor LemonChiffon();
-    static FLinearColor LightBlue();
-    static FLinearColor LightCoral();
-    static FLinearColor LightCyan();
-    static FLinearColor LightGoldenRodYellow();
-    static FLinearColor LightGray();
-    static FLinearColor LightGreen();
-    static FLinearColor LightPink();
-    static FLinearColor LightSalmon();
-    static FLinearColor LightSeaGreen();
-    static FLinearColor LightSkyBlue();
-    static FLinearColor LightSlateGray();
-    static FLinearColor LightSteelBlue();
-    static FLinearColor LightYellow();
-    static FLinearColor Lime();
-    static FLinearColor LimeGreen();
-    static FLinearColor Linen();
-    static FLinearColor Magenta();
-    static FLinearColor Maroon();
-    static FLinearColor MediumAquamarine();
-    static FLinearColor MediumBlue();
-    static FLinearColor MediumOrchid();
-    static FLinearColor MediumPurple();
-    static FLinearColor MediumSeaGreen();
-    static FLinearColor MediumSlateBlue();
-    static FLinearColor MediumSpringGreen();
-    static FLinearColor MediumTurquoise();
-    static FLinearColor MediumVioletRed();
-    static FLinearColor MidnightBlue();
-    static FLinearColor MintCream();
-    static FLinearColor MistyRose();
-    static FLinearColor Moccasin();
-    static FLinearColor NavajoWhite();
-    static FLinearColor Navy();
-    static FLinearColor OldLace();
-    static FLinearColor Olive();
-    static FLinearColor OliveDrab();
-    static FLinearColor Orange();
-    static FLinearColor OrangeRed();
-    static FLinearColor Orchid();
-    static FLinearColor PaleGoldenRod();
-    static FLinearColor PaleGreen();
-    static FLinearColor PaleTurquoise();
-    static FLinearColor PaleVioletRed();
-    static FLinearColor PapayaWhip();
-    static FLinearColor PeachPuff();
-    static FLinearColor Peru();
-    static FLinearColor Pink();
-    static FLinearColor Plum();
-    static FLinearColor PowderBlue();
-    static FLinearColor Purple();
-    static FLinearColor Red();
-    static FLinearColor RosyBrown();
-    static FLinearColor RoyalBlue();
-    static FLinearColor SaddleBrown();
-    static FLinearColor Salmon();
-    static FLinearColor SandyBrown();
-    static FLinearColor SeaGreen();
-    static FLinearColor SeaShell();
-    static FLinearColor Sienna();
-    static FLinearColor Silver();
-    static FLinearColor SkyBlue();
-    static FLinearColor SlateBlue();
-    static FLinearColor SlateGray();
-    static FLinearColor Snow();
-    static FLinearColor SpringGreen();
-    static FLinearColor SteelBlue();
-    static FLinearColor Tan();
-    static FLinearColor Teal();
-    static FLinearColor Thistle();
-    static FLinearColor Tomato();
-    static FLinearColor Transparent();
-    static FLinearColor Turquoise();
-    static FLinearColor Violet();
-    static FLinearColor Wheat();
-    static FLinearColor White();
-    static FLinearColor WhiteSmoke();
-    static FLinearColor Yellow();
-    static FLinearColor YellowGreen();
+    NODISCARD PPE_CORE_API static FLinearColor AliceBlue();
+    NODISCARD PPE_CORE_API static FLinearColor AntiqueWhite();
+    NODISCARD PPE_CORE_API static FLinearColor Aqua();
+    NODISCARD PPE_CORE_API static FLinearColor Aquamarine();
+    NODISCARD PPE_CORE_API static FLinearColor Azure();
+    NODISCARD PPE_CORE_API static FLinearColor Beige();
+    NODISCARD PPE_CORE_API static FLinearColor Bisque();
+    NODISCARD PPE_CORE_API static FLinearColor Black();
+    NODISCARD PPE_CORE_API static FLinearColor BlanchedAlmond();
+    NODISCARD PPE_CORE_API static FLinearColor Blue();
+    NODISCARD PPE_CORE_API static FLinearColor BlueViolet();
+    NODISCARD PPE_CORE_API static FLinearColor Brown();
+    NODISCARD PPE_CORE_API static FLinearColor BurlyWood();
+    NODISCARD PPE_CORE_API static FLinearColor CadetBlue();
+    NODISCARD PPE_CORE_API static FLinearColor Chartreuse();
+    NODISCARD PPE_CORE_API static FLinearColor Chocolate();
+    NODISCARD PPE_CORE_API static FLinearColor Coral();
+    NODISCARD PPE_CORE_API static FLinearColor CornflowerBlue();
+    NODISCARD PPE_CORE_API static FLinearColor Cornsilk();
+    NODISCARD PPE_CORE_API static FLinearColor Crimson();
+    NODISCARD PPE_CORE_API static FLinearColor Cyan();
+    NODISCARD PPE_CORE_API static FLinearColor DarkBlue();
+    NODISCARD PPE_CORE_API static FLinearColor DarkCyan();
+    NODISCARD PPE_CORE_API static FLinearColor DarkGoldenRod();
+    NODISCARD PPE_CORE_API static FLinearColor DarkGray();
+    NODISCARD PPE_CORE_API static FLinearColor DarkGreen();
+    NODISCARD PPE_CORE_API static FLinearColor DarkKhaki();
+    NODISCARD PPE_CORE_API static FLinearColor DarkMagenta();
+    NODISCARD PPE_CORE_API static FLinearColor DarkOliveGreen();
+    NODISCARD PPE_CORE_API static FLinearColor DarkOrange();
+    NODISCARD PPE_CORE_API static FLinearColor DarkOrchid();
+    NODISCARD PPE_CORE_API static FLinearColor DarkRed();
+    NODISCARD PPE_CORE_API static FLinearColor DarkSalmon();
+    NODISCARD PPE_CORE_API static FLinearColor DarkSeaGreen();
+    NODISCARD PPE_CORE_API static FLinearColor DarkSlateBlue();
+    NODISCARD PPE_CORE_API static FLinearColor DarkSlateGray();
+    NODISCARD PPE_CORE_API static FLinearColor DarkTurquoise();
+    NODISCARD PPE_CORE_API static FLinearColor DarkViolet();
+    NODISCARD PPE_CORE_API static FLinearColor DeepPink();
+    NODISCARD PPE_CORE_API static FLinearColor DeepSkyBlue();
+    NODISCARD PPE_CORE_API static FLinearColor DimGray();
+    NODISCARD PPE_CORE_API static FLinearColor DodgerBlue();
+    NODISCARD PPE_CORE_API static FLinearColor FireBrick();
+    NODISCARD PPE_CORE_API static FLinearColor FloralWhite();
+    NODISCARD PPE_CORE_API static FLinearColor ForestGreen();
+    NODISCARD PPE_CORE_API static FLinearColor Fuchsia();
+    NODISCARD PPE_CORE_API static FLinearColor Gainsboro();
+    NODISCARD PPE_CORE_API static FLinearColor GhostWhite();
+    NODISCARD PPE_CORE_API static FLinearColor Gold();
+    NODISCARD PPE_CORE_API static FLinearColor GoldenRod();
+    NODISCARD PPE_CORE_API static FLinearColor Gray();
+    NODISCARD PPE_CORE_API static FLinearColor Green();
+    NODISCARD PPE_CORE_API static FLinearColor GreenYellow();
+    NODISCARD PPE_CORE_API static FLinearColor HoneyDew();
+    NODISCARD PPE_CORE_API static FLinearColor HotPink();
+    NODISCARD PPE_CORE_API static FLinearColor IndianRed();
+    NODISCARD PPE_CORE_API static FLinearColor Indigo();
+    NODISCARD PPE_CORE_API static FLinearColor Ivory();
+    NODISCARD PPE_CORE_API static FLinearColor Khaki();
+    NODISCARD PPE_CORE_API static FLinearColor Lavender();
+    NODISCARD PPE_CORE_API static FLinearColor LavenderBlush();
+    NODISCARD PPE_CORE_API static FLinearColor LawnGreen();
+    NODISCARD PPE_CORE_API static FLinearColor LemonChiffon();
+    NODISCARD PPE_CORE_API static FLinearColor LightBlue();
+    NODISCARD PPE_CORE_API static FLinearColor LightCoral();
+    NODISCARD PPE_CORE_API static FLinearColor LightCyan();
+    NODISCARD PPE_CORE_API static FLinearColor LightGoldenRodYellow();
+    NODISCARD PPE_CORE_API static FLinearColor LightGray();
+    NODISCARD PPE_CORE_API static FLinearColor LightGreen();
+    NODISCARD PPE_CORE_API static FLinearColor LightPink();
+    NODISCARD PPE_CORE_API static FLinearColor LightSalmon();
+    NODISCARD PPE_CORE_API static FLinearColor LightSeaGreen();
+    NODISCARD PPE_CORE_API static FLinearColor LightSkyBlue();
+    NODISCARD PPE_CORE_API static FLinearColor LightSlateGray();
+    NODISCARD PPE_CORE_API static FLinearColor LightSteelBlue();
+    NODISCARD PPE_CORE_API static FLinearColor LightYellow();
+    NODISCARD PPE_CORE_API static FLinearColor Lime();
+    NODISCARD PPE_CORE_API static FLinearColor LimeGreen();
+    NODISCARD PPE_CORE_API static FLinearColor Linen();
+    NODISCARD PPE_CORE_API static FLinearColor Magenta();
+    NODISCARD PPE_CORE_API static FLinearColor Maroon();
+    NODISCARD PPE_CORE_API static FLinearColor MediumAquamarine();
+    NODISCARD PPE_CORE_API static FLinearColor MediumBlue();
+    NODISCARD PPE_CORE_API static FLinearColor MediumOrchid();
+    NODISCARD PPE_CORE_API static FLinearColor MediumPurple();
+    NODISCARD PPE_CORE_API static FLinearColor MediumSeaGreen();
+    NODISCARD PPE_CORE_API static FLinearColor MediumSlateBlue();
+    NODISCARD PPE_CORE_API static FLinearColor MediumSpringGreen();
+    NODISCARD PPE_CORE_API static FLinearColor MediumTurquoise();
+    NODISCARD PPE_CORE_API static FLinearColor MediumVioletRed();
+    NODISCARD PPE_CORE_API static FLinearColor MidnightBlue();
+    NODISCARD PPE_CORE_API static FLinearColor MintCream();
+    NODISCARD PPE_CORE_API static FLinearColor MistyRose();
+    NODISCARD PPE_CORE_API static FLinearColor Moccasin();
+    NODISCARD PPE_CORE_API static FLinearColor NavajoWhite();
+    NODISCARD PPE_CORE_API static FLinearColor Navy();
+    NODISCARD PPE_CORE_API static FLinearColor OldLace();
+    NODISCARD PPE_CORE_API static FLinearColor Olive();
+    NODISCARD PPE_CORE_API static FLinearColor OliveDrab();
+    NODISCARD PPE_CORE_API static FLinearColor Orange();
+    NODISCARD PPE_CORE_API static FLinearColor OrangeRed();
+    NODISCARD PPE_CORE_API static FLinearColor Orchid();
+    NODISCARD PPE_CORE_API static FLinearColor PaleGoldenRod();
+    NODISCARD PPE_CORE_API static FLinearColor PaleGreen();
+    NODISCARD PPE_CORE_API static FLinearColor PaleTurquoise();
+    NODISCARD PPE_CORE_API static FLinearColor PaleVioletRed();
+    NODISCARD PPE_CORE_API static FLinearColor PapayaWhip();
+    NODISCARD PPE_CORE_API static FLinearColor PeachPuff();
+    NODISCARD PPE_CORE_API static FLinearColor Peru();
+    NODISCARD PPE_CORE_API static FLinearColor Pink();
+    NODISCARD PPE_CORE_API static FLinearColor Plum();
+    NODISCARD PPE_CORE_API static FLinearColor PowderBlue();
+    NODISCARD PPE_CORE_API static FLinearColor Purple();
+    NODISCARD PPE_CORE_API static FLinearColor Red();
+    NODISCARD PPE_CORE_API static FLinearColor RosyBrown();
+    NODISCARD PPE_CORE_API static FLinearColor RoyalBlue();
+    NODISCARD PPE_CORE_API static FLinearColor SaddleBrown();
+    NODISCARD PPE_CORE_API static FLinearColor Salmon();
+    NODISCARD PPE_CORE_API static FLinearColor SandyBrown();
+    NODISCARD PPE_CORE_API static FLinearColor SeaGreen();
+    NODISCARD PPE_CORE_API static FLinearColor SeaShell();
+    NODISCARD PPE_CORE_API static FLinearColor Sienna();
+    NODISCARD PPE_CORE_API static FLinearColor Silver();
+    NODISCARD PPE_CORE_API static FLinearColor SkyBlue();
+    NODISCARD PPE_CORE_API static FLinearColor SlateBlue();
+    NODISCARD PPE_CORE_API static FLinearColor SlateGray();
+    NODISCARD PPE_CORE_API static FLinearColor Snow();
+    NODISCARD PPE_CORE_API static FLinearColor SpringGreen();
+    NODISCARD PPE_CORE_API static FLinearColor SteelBlue();
+    NODISCARD PPE_CORE_API static FLinearColor Tan();
+    NODISCARD PPE_CORE_API static FLinearColor Teal();
+    NODISCARD PPE_CORE_API static FLinearColor Thistle();
+    NODISCARD PPE_CORE_API static FLinearColor Tomato();
+    NODISCARD PPE_CORE_API static FLinearColor Transparent();
+    NODISCARD PPE_CORE_API static FLinearColor Turquoise();
+    NODISCARD PPE_CORE_API static FLinearColor Violet();
+    NODISCARD PPE_CORE_API static FLinearColor Wheat();
+    NODISCARD PPE_CORE_API static FLinearColor White();
+    NODISCARD PPE_CORE_API static FLinearColor WhiteSmoke();
+    NODISCARD PPE_CORE_API static FLinearColor Yellow();
+    NODISCARD PPE_CORE_API static FLinearColor YellowGreen();
 };
 PPE_ASSUME_TYPE_AS_POD(FLinearColor)
 //----------------------------------------------------------------------------
-FLinearColor AlphaBlend(const FLinearColor& dst, const FLinearColor& src);
+NODISCARD PPE_CORE_API FLinearColor AlphaBlend(const FLinearColor& dst, const FLinearColor& src);
 FLinearColor Lerp(const FLinearColor& from, const FLinearColor& to, float t);
-FLinearColor LerpUsingHSV(const FLinearColor& from, const FLinearColor& to, float t);
+NODISCARD PPE_CORE_API FLinearColor LerpUsingHSV(const FLinearColor& from, const FLinearColor& to, float t);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_CORE_API FColor {
+struct FColor {
     union {
-        struct { u8  R, G, B, A; };
+        struct { u8  A, B, G, R; };
         u32 DWord;
     };
 
-    FColor() NOEXCEPT {}
+    FColor() = default;
+
     CONSTEXPR explicit FColor(Meta::FZeroValue) NOEXCEPT : DWord(0) {}
     CONSTEXPR explicit FColor(Meta::FForceInit) NOEXCEPT : FColor(Zero) {}
+    CONSTEXPR explicit FColor(Meta::FNoInit) NOEXCEPT {}
     CONSTEXPR explicit FColor(u32 dword) NOEXCEPT : DWord(dword) {}
-    CONSTEXPR FColor(u8 r, u8 g, u8 b, u8 a = 0xFF) NOEXCEPT : R(r), G(g), B(b), A(a) {}
+    CONSTEXPR FColor(u8 r, u8 g, u8 b, u8 a = 0xFF) NOEXCEPT : A(a), B(b), G(g), R(r) {}
 
-    FColor(const ubyte3& rgb, u8 a = 1.0f);
-    FColor(const ubyte4& rgba);
+    PPE_CORE_API FColor(const ubyte3& rgb, u8 a = 1.0f);
+    PPE_CORE_API FColor(const ubyte4& rgba);
 
-    operator const ubyte3&() const { return *reinterpret_cast<const ubyte3*>(this); }
-    operator const ubyte4&() const { return *reinterpret_cast<const ubyte4*>(this); }
+    NODISCARD operator const ubyte3&() const { return *reinterpret_cast<const ubyte3*>(this); }
+    NODISCARD operator const ubyte4&() const { return *reinterpret_cast<const ubyte4*>(this); }
 
-    u8& operator [](size_t index) { Assert(index < 4); return (&R)[index]; }
-    u8 operator [](size_t index) const { Assert(index < 4); return (&R)[index]; }
+    NODISCARD u8& operator [](size_t index) { Assert(index < 4); return (&R)[index]; }
+    NODISCARD u8 operator [](size_t index) const { Assert(index < 4); return (&R)[index]; }
 
-    CONSTEXPR FColor Fade(u8 alpha) const { return FColor(R, G, B, alpha); }
+    NODISCARD CONSTEXPR FColor Fade(u8 alpha) const { return FColor(R, G, B, alpha); }
 
-    u32 ToPackedRGBA() const { return DWord;  }
-    u32 ToPackedBGRA() const { return ((B << 24) | (G << 16) | (R << 8) | (A << 0)); }
-    u32 ToPackedARGB() const { return ((A << 24) | (R << 16) | (G << 8) | (B << 0)); }
-    u32 ToPackedABGR() const { return ((A << 24) | (B << 16) | (G << 8) | (R << 0)); }
+    NODISCARD u32 ToPackedRGBA() const { return DWord;  }
+    NODISCARD u32 ToPackedBGRA() const { return ((B << 24) | (G << 16) | (R << 8) | (A << 0)); }
+    NODISCARD u32 ToPackedARGB() const { return ((A << 24) | (R << 16) | (G << 8) | (B << 0)); }
+    NODISCARD u32 ToPackedABGR() const { return ((A << 24) | (B << 16) | (G << 8) | (R << 0)); }
 
-    FLinearColor FromRGBE() const;
-    FLinearColor ToLinear() const;
+    NODISCARD PPE_CORE_API FLinearColor FromRGBE() const;
+    NODISCARD PPE_CORE_API FLinearColor ToLinear() const;
 
-    static FColor FromTemperature(float kelvins, float a = 1.0f, EGammaSpace gamma = EGammaSpace::sRGB);
+    NODISCARD PPE_CORE_API static FColor FromHash(hash_t h, u8 a = 0xFF);
+    NODISCARD PPE_CORE_API static FColor FromTemperature(float kelvins, float a = 1.0f, EGammaSpace gamma = EGammaSpace::sRGB);
 
-    CONSTEXPR inline friend bool operator ==(const FColor& lhs, const FColor& rhs) { return (lhs.DWord == rhs.DWord); }
-    CONSTEXPR inline friend bool operator !=(const FColor& lhs, const FColor& rhs) { return (lhs.DWord != rhs.DWord); }
+    NODISCARD CONSTEXPR inline friend bool operator ==(const FColor& lhs, const FColor& rhs) { return (lhs.DWord == rhs.DWord); }
+    NODISCARD CONSTEXPR inline friend bool operator !=(const FColor& lhs, const FColor& rhs) { return (lhs.DWord != rhs.DWord); }
 
-    inline hash_t hash_value(const FColor& color) { return (color.DWord); }
+    NODISCARD inline hash_t hash_value(const FColor& color) { return (color.DWord); }
 
-    static const FColor PaperWhite;
+    static CONSTEXPR FColor PaperWhite() {
+        return { 0xFF, 0xFF, 0xFF, 0xFF };
+    }
 
-    static FColor AliceBlue();
-    static FColor AntiqueWhite();
-    static FColor Aqua();
-    static FColor Aquamarine();
-    static FColor Azure();
-    static FColor Beige();
-    static FColor Bisque();
-    static FColor Black();
-    static FColor BlanchedAlmond();
-    static FColor Blue();
-    static FColor BlueViolet();
-    static FColor Brown();
-    static FColor BurlyWood();
-    static FColor CadetBlue();
-    static FColor Chartreuse();
-    static FColor Chocolate();
-    static FColor Coral();
-    static FColor CornflowerBlue();
-    static FColor Cornsilk();
-    static FColor Crimson();
-    static FColor Cyan();
-    static FColor DarkBlue();
-    static FColor DarkCyan();
-    static FColor DarkGoldenRod();
-    static FColor DarkGray();
-    static FColor DarkGreen();
-    static FColor DarkKhaki();
-    static FColor DarkMagenta();
-    static FColor DarkOliveGreen();
-    static FColor DarkOrange();
-    static FColor DarkOrchid();
-    static FColor DarkRed();
-    static FColor DarkSalmon();
-    static FColor DarkSeaGreen();
-    static FColor DarkSlateBlue();
-    static FColor DarkSlateGray();
-    static FColor DarkTurquoise();
-    static FColor DarkViolet();
-    static FColor DeepPink();
-    static FColor DeepSkyBlue();
-    static FColor DimGray();
-    static FColor DodgerBlue();
-    static FColor FireBrick();
-    static FColor FloralWhite();
-    static FColor ForestGreen();
-    static FColor Fuchsia();
-    static FColor Gainsboro();
-    static FColor GhostWhite();
-    static FColor Gold();
-    static FColor GoldenRod();
-    static FColor Gray();
-    static FColor Green();
-    static FColor GreenYellow();
-    static FColor HoneyDew();
-    static FColor HotPink();
-    static FColor IndianRed();
-    static FColor Indigo();
-    static FColor Ivory();
-    static FColor Khaki();
-    static FColor Lavender();
-    static FColor LavenderBlush();
-    static FColor LawnGreen();
-    static FColor LemonChiffon();
-    static FColor LightBlue();
-    static FColor LightCoral();
-    static FColor LightCyan();
-    static FColor LightGoldenRodYellow();
-    static FColor LightGray();
-    static FColor LightGreen();
-    static FColor LightPink();
-    static FColor LightSalmon();
-    static FColor LightSeaGreen();
-    static FColor LightSkyBlue();
-    static FColor LightSlateGray();
-    static FColor LightSteelBlue();
-    static FColor LightYellow();
-    static FColor Lime();
-    static FColor LimeGreen();
-    static FColor Linen();
-    static FColor Magenta();
-    static FColor Maroon();
-    static FColor MediumAquamarine();
-    static FColor MediumBlue();
-    static FColor MediumOrchid();
-    static FColor MediumPurple();
-    static FColor MediumSeaGreen();
-    static FColor MediumSlateBlue();
-    static FColor MediumSpringGreen();
-    static FColor MediumTurquoise();
-    static FColor MediumVioletRed();
-    static FColor MidnightBlue();
-    static FColor MintCream();
-    static FColor MistyRose();
-    static FColor Moccasin();
-    static FColor NavajoWhite();
-    static FColor Navy();
-    static FColor OldLace();
-    static FColor Olive();
-    static FColor OliveDrab();
-    static FColor Orange();
-    static FColor OrangeRed();
-    static FColor Orchid();
-    static FColor PaleGoldenRod();
-    static FColor PaleGreen();
-    static FColor PaleTurquoise();
-    static FColor PaleVioletRed();
-    static FColor PapayaWhip();
-    static FColor PeachPuff();
-    static FColor Peru();
-    static FColor Pink();
-    static FColor Plum();
-    static FColor PowderBlue();
-    static FColor Purple();
-    static FColor Red();
-    static FColor RosyBrown();
-    static FColor RoyalBlue();
-    static FColor SaddleBrown();
-    static FColor Salmon();
-    static FColor SandyBrown();
-    static FColor SeaGreen();
-    static FColor SeaShell();
-    static FColor Sienna();
-    static FColor Silver();
-    static FColor SkyBlue();
-    static FColor SlateBlue();
-    static FColor SlateGray();
-    static FColor Snow();
-    static FColor SpringGreen();
-    static FColor SteelBlue();
-    static FColor Tan();
-    static FColor Teal();
-    static FColor Thistle();
-    static FColor Tomato();
-    static FColor Transparent();
-    static FColor Turquoise();
-    static FColor Violet();
-    static FColor Wheat();
-    static FColor White();
-    static FColor WhiteSmoke();
-    static FColor Yellow();
-    static FColor YellowGreen();
+    NODISCARD PPE_CORE_API static FColor AliceBlue();
+    NODISCARD PPE_CORE_API static FColor AntiqueWhite();
+    NODISCARD PPE_CORE_API static FColor Aqua();
+    NODISCARD PPE_CORE_API static FColor Aquamarine();
+    NODISCARD PPE_CORE_API static FColor Azure();
+    NODISCARD PPE_CORE_API static FColor Beige();
+    NODISCARD PPE_CORE_API static FColor Bisque();
+    NODISCARD PPE_CORE_API static FColor Black();
+    NODISCARD PPE_CORE_API static FColor BlanchedAlmond();
+    NODISCARD PPE_CORE_API static FColor Blue();
+    NODISCARD PPE_CORE_API static FColor BlueViolet();
+    NODISCARD PPE_CORE_API static FColor Brown();
+    NODISCARD PPE_CORE_API static FColor BurlyWood();
+    NODISCARD PPE_CORE_API static FColor CadetBlue();
+    NODISCARD PPE_CORE_API static FColor Chartreuse();
+    NODISCARD PPE_CORE_API static FColor Chocolate();
+    NODISCARD PPE_CORE_API static FColor Coral();
+    NODISCARD PPE_CORE_API static FColor CornflowerBlue();
+    NODISCARD PPE_CORE_API static FColor Cornsilk();
+    NODISCARD PPE_CORE_API static FColor Crimson();
+    NODISCARD PPE_CORE_API static FColor Cyan();
+    NODISCARD PPE_CORE_API static FColor DarkBlue();
+    NODISCARD PPE_CORE_API static FColor DarkCyan();
+    NODISCARD PPE_CORE_API static FColor DarkGoldenRod();
+    NODISCARD PPE_CORE_API static FColor DarkGray();
+    NODISCARD PPE_CORE_API static FColor DarkGreen();
+    NODISCARD PPE_CORE_API static FColor DarkKhaki();
+    NODISCARD PPE_CORE_API static FColor DarkMagenta();
+    NODISCARD PPE_CORE_API static FColor DarkOliveGreen();
+    NODISCARD PPE_CORE_API static FColor DarkOrange();
+    NODISCARD PPE_CORE_API static FColor DarkOrchid();
+    NODISCARD PPE_CORE_API static FColor DarkRed();
+    NODISCARD PPE_CORE_API static FColor DarkSalmon();
+    NODISCARD PPE_CORE_API static FColor DarkSeaGreen();
+    NODISCARD PPE_CORE_API static FColor DarkSlateBlue();
+    NODISCARD PPE_CORE_API static FColor DarkSlateGray();
+    NODISCARD PPE_CORE_API static FColor DarkTurquoise();
+    NODISCARD PPE_CORE_API static FColor DarkViolet();
+    NODISCARD PPE_CORE_API static FColor DeepPink();
+    NODISCARD PPE_CORE_API static FColor DeepSkyBlue();
+    NODISCARD PPE_CORE_API static FColor DimGray();
+    NODISCARD PPE_CORE_API static FColor DodgerBlue();
+    NODISCARD PPE_CORE_API static FColor FireBrick();
+    NODISCARD PPE_CORE_API static FColor FloralWhite();
+    NODISCARD PPE_CORE_API static FColor ForestGreen();
+    NODISCARD PPE_CORE_API static FColor Fuchsia();
+    NODISCARD PPE_CORE_API static FColor Gainsboro();
+    NODISCARD PPE_CORE_API static FColor GhostWhite();
+    NODISCARD PPE_CORE_API static FColor Gold();
+    NODISCARD PPE_CORE_API static FColor GoldenRod();
+    NODISCARD PPE_CORE_API static FColor Gray();
+    NODISCARD PPE_CORE_API static FColor Green();
+    NODISCARD PPE_CORE_API static FColor GreenYellow();
+    NODISCARD PPE_CORE_API static FColor HoneyDew();
+    NODISCARD PPE_CORE_API static FColor HotPink();
+    NODISCARD PPE_CORE_API static FColor IndianRed();
+    NODISCARD PPE_CORE_API static FColor Indigo();
+    NODISCARD PPE_CORE_API static FColor Ivory();
+    NODISCARD PPE_CORE_API static FColor Khaki();
+    NODISCARD PPE_CORE_API static FColor Lavender();
+    NODISCARD PPE_CORE_API static FColor LavenderBlush();
+    NODISCARD PPE_CORE_API static FColor LawnGreen();
+    NODISCARD PPE_CORE_API static FColor LemonChiffon();
+    NODISCARD PPE_CORE_API static FColor LightBlue();
+    NODISCARD PPE_CORE_API static FColor LightCoral();
+    NODISCARD PPE_CORE_API static FColor LightCyan();
+    NODISCARD PPE_CORE_API static FColor LightGoldenRodYellow();
+    NODISCARD PPE_CORE_API static FColor LightGray();
+    NODISCARD PPE_CORE_API static FColor LightGreen();
+    NODISCARD PPE_CORE_API static FColor LightPink();
+    NODISCARD PPE_CORE_API static FColor LightSalmon();
+    NODISCARD PPE_CORE_API static FColor LightSeaGreen();
+    NODISCARD PPE_CORE_API static FColor LightSkyBlue();
+    NODISCARD PPE_CORE_API static FColor LightSlateGray();
+    NODISCARD PPE_CORE_API static FColor LightSteelBlue();
+    NODISCARD PPE_CORE_API static FColor LightYellow();
+    NODISCARD PPE_CORE_API static FColor Lime();
+    NODISCARD PPE_CORE_API static FColor LimeGreen();
+    NODISCARD PPE_CORE_API static FColor Linen();
+    NODISCARD PPE_CORE_API static FColor Magenta();
+    NODISCARD PPE_CORE_API static FColor Maroon();
+    NODISCARD PPE_CORE_API static FColor MediumAquamarine();
+    NODISCARD PPE_CORE_API static FColor MediumBlue();
+    NODISCARD PPE_CORE_API static FColor MediumOrchid();
+    NODISCARD PPE_CORE_API static FColor MediumPurple();
+    NODISCARD PPE_CORE_API static FColor MediumSeaGreen();
+    NODISCARD PPE_CORE_API static FColor MediumSlateBlue();
+    NODISCARD PPE_CORE_API static FColor MediumSpringGreen();
+    NODISCARD PPE_CORE_API static FColor MediumTurquoise();
+    NODISCARD PPE_CORE_API static FColor MediumVioletRed();
+    NODISCARD PPE_CORE_API static FColor MidnightBlue();
+    NODISCARD PPE_CORE_API static FColor MintCream();
+    NODISCARD PPE_CORE_API static FColor MistyRose();
+    NODISCARD PPE_CORE_API static FColor Moccasin();
+    NODISCARD PPE_CORE_API static FColor NavajoWhite();
+    NODISCARD PPE_CORE_API static FColor Navy();
+    NODISCARD PPE_CORE_API static FColor OldLace();
+    NODISCARD PPE_CORE_API static FColor Olive();
+    NODISCARD PPE_CORE_API static FColor OliveDrab();
+    NODISCARD PPE_CORE_API static FColor Orange();
+    NODISCARD PPE_CORE_API static FColor OrangeRed();
+    NODISCARD PPE_CORE_API static FColor Orchid();
+    NODISCARD PPE_CORE_API static FColor PaleGoldenRod();
+    NODISCARD PPE_CORE_API static FColor PaleGreen();
+    NODISCARD PPE_CORE_API static FColor PaleTurquoise();
+    NODISCARD PPE_CORE_API static FColor PaleVioletRed();
+    NODISCARD PPE_CORE_API static FColor PapayaWhip();
+    NODISCARD PPE_CORE_API static FColor PeachPuff();
+    NODISCARD PPE_CORE_API static FColor Peru();
+    NODISCARD PPE_CORE_API static FColor Pink();
+    NODISCARD PPE_CORE_API static FColor Plum();
+    NODISCARD PPE_CORE_API static FColor PowderBlue();
+    NODISCARD PPE_CORE_API static FColor Purple();
+    NODISCARD PPE_CORE_API static FColor Red();
+    NODISCARD PPE_CORE_API static FColor RosyBrown();
+    NODISCARD PPE_CORE_API static FColor RoyalBlue();
+    NODISCARD PPE_CORE_API static FColor SaddleBrown();
+    NODISCARD PPE_CORE_API static FColor Salmon();
+    NODISCARD PPE_CORE_API static FColor SandyBrown();
+    NODISCARD PPE_CORE_API static FColor SeaGreen();
+    NODISCARD PPE_CORE_API static FColor SeaShell();
+    NODISCARD PPE_CORE_API static FColor Sienna();
+    NODISCARD PPE_CORE_API static FColor Silver();
+    NODISCARD PPE_CORE_API static FColor SkyBlue();
+    NODISCARD PPE_CORE_API static FColor SlateBlue();
+    NODISCARD PPE_CORE_API static FColor SlateGray();
+    NODISCARD PPE_CORE_API static FColor Snow();
+    NODISCARD PPE_CORE_API static FColor SpringGreen();
+    NODISCARD PPE_CORE_API static FColor SteelBlue();
+    NODISCARD PPE_CORE_API static FColor Tan();
+    NODISCARD PPE_CORE_API static FColor Teal();
+    NODISCARD PPE_CORE_API static FColor Thistle();
+    NODISCARD PPE_CORE_API static FColor Tomato();
+    NODISCARD PPE_CORE_API static FColor Transparent();
+    NODISCARD PPE_CORE_API static FColor Turquoise();
+    NODISCARD PPE_CORE_API static FColor Violet();
+    NODISCARD PPE_CORE_API static FColor Wheat();
+    NODISCARD PPE_CORE_API static FColor White();
+    NODISCARD PPE_CORE_API static FColor WhiteSmoke();
+    NODISCARD PPE_CORE_API static FColor Yellow();
+    NODISCARD PPE_CORE_API static FColor YellowGreen();
 };
 PPE_ASSUME_TYPE_AS_POD(FColor)
 //----------------------------------------------------------------------------

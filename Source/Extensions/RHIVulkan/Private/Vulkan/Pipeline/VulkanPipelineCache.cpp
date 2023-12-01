@@ -207,7 +207,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
     if (ppln->PatchControlPoints)
         inst.RenderState.InputAssembly.Topology = EPrimitiveTopology::Patch;
 
-    AssertMessage_NoAssume(L"unsupported topology", ppln->SupportedTopology.Get(static_cast<u32>(inst.RenderState.InputAssembly.Topology)));
+    AssertMessage_NoAssume("unsupported topology", ppln->SupportedTopology.Get(static_cast<u32>(inst.RenderState.InputAssembly.Topology)));
     if (not inst.VertexInput.CopyAttributes(ppln->VertexAttributes.MakeView()))
         AssertNotReached(); // not handled
 
@@ -288,7 +288,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         device.vkAllocator(),
         pPipeline));
 
-    LOG_CHECK(RHI, *pPipeline);
+    PPE_LOG_CHECK(RHI, *pPipeline);
 
     ONLY_IF_RHIDEBUG(workerCmd.EditStatistics([](FFrameStatistics& stats) {
         stats.Resources.NumNewGraphicsPipeline++;
@@ -311,7 +311,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         return true;
     }
 
-    LOG_CHECK(RHI, workerCmd.ResourceManager().AcquireResource(layoutId));
+    PPE_LOG_CHECK(RHI, workerCmd.ResourceManager().AcquireResource(layoutId));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -432,7 +432,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         device.vkAllocator(),
         pPipeline) );
 
-    LOG_CHECK(RHI, *pPipeline);
+    PPE_LOG_CHECK(RHI, *pPipeline);
 
     ONLY_IF_RHIDEBUG( workerCmd.EditStatistics([](FFrameStatistics& stats) {
        stats.Resources.NumNewMeshPipeline++;
@@ -455,7 +455,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         return true;
     }
 
-    LOG_CHECK(RHI, workerCmd.ResourceManager().AcquireResource(layoutId));
+    PPE_LOG_CHECK(RHI, workerCmd.ResourceManager().AcquireResource(layoutId));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -485,7 +485,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
 #endif
 
     AssertReleaseMessage_NoAssume(
-        L"defined local group size but shader doesn't support variable local group size, you should use 'layout (local_size_x_id = 0, local_size_y_id = 1, local_size__idz = 2) in;'",
+        "defined local group size but shader doesn't support variable local group size, you should use 'layout (local_size_x_id = 0, local_size_y_id = 1, local_size__idz = 2) in;'",
         not localGroupSize.has_value() or Any(NotEqualMask( ppln->LocalSizeSpecialization, uint3(FComputePipelineDesc::UndefinedSpecialization) )) );
 
     FVulkanComputePipeline::FPipelineInstance inst;
@@ -540,7 +540,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         pipelineInfo.stage.pName = sh.Module->EntryPoint();
         break;
     }
-    LOG_CHECK(RHI, VK_NULL_HANDLE != pipelineInfo.stage.module);
+    PPE_LOG_CHECK(RHI, VK_NULL_HANDLE != pipelineInfo.stage.module);
 
     AddLocalGroupSizeSpecialization_(
         &_transientSpecializationEntries, &_transientSpecializationDatas,
@@ -565,7 +565,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         pPipeline ) );
 
 
-    LOG_CHECK(RHI, *pPipeline);
+    PPE_LOG_CHECK(RHI, *pPipeline);
 
     ONLY_IF_RHIDEBUG( workerCmd.EditStatistics([](FFrameStatistics& stats) {
        stats.Resources.NumNewComputePipeline++;
@@ -588,7 +588,7 @@ bool FVulkanPipelineCache::CreatePipelineInstance(
         return true;
     }
 
-    LOG_CHECK(RHI, workerCmd.ResourceManager().AcquireResource(layoutId));
+    PPE_LOG_CHECK(RHI, workerCmd.ResourceManager().AcquireResource(layoutId));
     return true;
 }
 //----------------------------------------------------------------------------
@@ -619,7 +619,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
     Assert_NoAssume(Meta::IsAlignedPow2(handleSize, baseAlignment));
 
     auto* rtPipeline = workerCmd.AcquireTransient(pipelineId);
-    LOG_CHECK(RHI, !!rtPipeline);
+    PPE_LOG_CHECK(RHI, !!rtPipeline);
 
     const auto ppln = rtPipeline->Read();
 
@@ -707,7 +707,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
             FBufferDesc{ requiredSize, EBufferUsage::TransferDst | EBufferUsage::RayTracing },
             Default ARGS_IF_RHIDEBUG(pShaderTable->DebugName()) );
 
-        LOG_CHECK(RHI, !!exclusiveTable->BufferId);
+        PPE_LOG_CHECK(RHI, !!exclusiveTable->BufferId);
     }
 
     // acquire buffer
@@ -738,7 +738,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
         // create ray-gen shader
 
         VkPipelineShaderStageCreateInfo* const pShaderStage = _transientStages.push_back_Uninitialized();
-        LOG_CHECK(RHI, CreateShaderStage_(pShaderStage, *ppln, rayGenShader.Shader ARGS_IF_RHIDEBUG(mode)));
+        PPE_LOG_CHECK(RHI, CreateShaderStage_(pShaderStage, *ppln, rayGenShader.Shader ARGS_IF_RHIDEBUG(mode)));
 
         auto& groupCi = _transientRTShaderGroups[0];
         groupCi.sType = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_NV;
@@ -752,7 +752,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
         // create miss & hit shaders
 
         for (auto& it : _transientRTShaderGraph)
-            LOG_CHECK(RHI, FindShaderGroup_(
+            PPE_LOG_CHECK(RHI, FindShaderGroup_(
                 &_transientRTShaderGroups[it.second],
                 *ppln, *it.first ARGS_IF_RHIDEBUG(mode)) );
 
@@ -767,7 +767,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
                 EShaderStages::AllRayTracing,
                 FDescriptorSetID{ "dbgStorage" });
 
-            LOG_CHECK(RHI, !!layoutId);
+            PPE_LOG_CHECK(RHI, !!layoutId);
 
             workerCmd.ReleaseResource(layoutId);
         }
@@ -811,7 +811,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
         const u32 stagingSize = exclusiveTable->BlockSize;
 
         FStagingBlock stagingBlock{};
-        LOG_CHECK(RHI, workerCmd.StagingAlloc(&stagingBlock, stagingSize, baseAlignment) );
+        PPE_LOG_CHECK(RHI, workerCmd.StagingAlloc(&stagingBlock, stagingSize, baseAlignment) );
 
 #if USE_PPE_RHIDEBUG
         CONSTEXPR u8 UninitializedPattern_ = 0xAE;
@@ -932,7 +932,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
             forrange(i, 0, handleSize)
                 matched += (*(stagingBlock.Mapped + i + pos) == UninitializedPattern_);
 
-            AssertMessage_NoAssume(L"uninitialized RT handle found", matched < handleSize);
+            AssertMessage_NoAssume("uninitialized RT handle found", matched < handleSize);
         }
 
 #endif
@@ -1083,7 +1083,7 @@ bool FVulkanPipelineCache::FindShaderGroup_(
 
     switch (shaderGroup.Type) {
     case EGroupType::MissShader: {
-        LOG_CHECK(RHI, CreateShaderStage_(
+        PPE_LOG_CHECK(RHI, CreateShaderStage_(
             _transientStages.push_back_Uninitialized(),
             pipeline, shaderGroup.MainShader ARGS_IF_RHIDEBUG(mode) ));
 
@@ -1096,7 +1096,7 @@ bool FVulkanPipelineCache::FindShaderGroup_(
         pInfo->type = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_NV;
 
         if (shaderGroup.MainShader.Valid()) {
-            LOG_CHECK(RHI, CreateShaderStage_(
+            PPE_LOG_CHECK(RHI, CreateShaderStage_(
                 _transientStages.push_back_Uninitialized(),
                 pipeline, shaderGroup.MainShader ARGS_IF_RHIDEBUG(mode) ));
 
@@ -1104,7 +1104,7 @@ bool FVulkanPipelineCache::FindShaderGroup_(
         }
 
         if (shaderGroup.AnyHitShader.Valid()) {
-            LOG_CHECK(RHI, CreateShaderStage_(
+            PPE_LOG_CHECK(RHI, CreateShaderStage_(
                 _transientStages.push_back_Uninitialized(),
                 pipeline, shaderGroup.AnyHitShader ARGS_IF_RHIDEBUG(mode) ));
 
@@ -1116,12 +1116,12 @@ bool FVulkanPipelineCache::FindShaderGroup_(
     case EGroupType::ProceduralHitShader: {
         pInfo->type = VK_RAY_TRACING_SHADER_GROUP_TYPE_PROCEDURAL_HIT_GROUP_NV;
 
-        LOG_CHECK(RHI, CreateShaderStage_(
+        PPE_LOG_CHECK(RHI, CreateShaderStage_(
             _transientStages.push_back_Uninitialized(),
             pipeline, shaderGroup.IntersectionShader ARGS_IF_RHIDEBUG(mode) ));
 
         if (shaderGroup.AnyHitShader.Valid()) {
-            LOG_CHECK(RHI, CreateShaderStage_(
+            PPE_LOG_CHECK(RHI, CreateShaderStage_(
                 _transientStages.push_back_Uninitialized(),
                 pipeline, shaderGroup.AnyHitShader ARGS_IF_RHIDEBUG(mode) ));
 
@@ -1129,7 +1129,7 @@ bool FVulkanPipelineCache::FindShaderGroup_(
         }
 
         if (shaderGroup.MainShader.Valid()) {
-            LOG_CHECK(RHI, CreateShaderStage_(
+            PPE_LOG_CHECK(RHI, CreateShaderStage_(
                 _transientStages.push_back_Uninitialized(),
                 pipeline, shaderGroup.MainShader ARGS_IF_RHIDEBUG(mode) ));
 
@@ -1489,10 +1489,10 @@ void FVulkanPipelineCache::ValidateRenderState_(
                 cb.BlendOp = { EBlendOp::Add, EBlendOp::Add };
             }
             else if (not dualSrcBlend) {
-                Assert_NoAssume(not HasDualSrcBlendFactor(cb.SrcBlendFactor.Color));
-                Assert_NoAssume(not HasDualSrcBlendFactor(cb.SrcBlendFactor.Alpha));
-                Assert_NoAssume(not HasDualSrcBlendFactor(cb.DstBlendFactor.Color));
-                Assert_NoAssume(not HasDualSrcBlendFactor(cb.DstBlendFactor.Alpha));
+                Assert_NoAssume(not EBlendFactor_HasDualSrcBlendFactor(cb.SrcBlendFactor.Color));
+                Assert_NoAssume(not EBlendFactor_HasDualSrcBlendFactor(cb.SrcBlendFactor.Alpha));
+                Assert_NoAssume(not EBlendFactor_HasDualSrcBlendFactor(cb.DstBlendFactor.Color));
+                Assert_NoAssume(not EBlendFactor_HasDualSrcBlendFactor(cb.DstBlendFactor.Alpha));
             }
         }
     }
@@ -1506,40 +1506,40 @@ void FVulkanPipelineCache::ValidateRenderState_(
         break;
 
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL:
-        AssertMessage_NoAssume(L"can't write to read-only stencil attachment", pRender->Stencil.ReadOnly());
+        AssertMessage_NoAssume("can't write to read-only stencil attachment", pRender->Stencil.ReadOnly());
         break;
 
     case VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_STENCIL_ATTACHMENT_OPTIMAL:
-        AssertMessage_NoAssume(L"can't write to read-only depth attachment", not pRender->Depth.EnableDepthWrite);
+        AssertMessage_NoAssume("can't write to read-only depth attachment", not pRender->Depth.EnableDepthWrite);
         break;
 
     case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_STENCIL_READ_ONLY_OPTIMAL:
-        AssertMessage_NoAssume(L"can't write to read-only depth attachment", not pRender->Depth.EnableDepthWrite);
-        AssertMessage_NoAssume(L"can't write to read-only stencil attachment", pRender->Stencil.ReadOnly());
+        AssertMessage_NoAssume("can't write to read-only depth attachment", not pRender->Depth.EnableDepthWrite);
+        AssertMessage_NoAssume("can't write to read-only stencil attachment", pRender->Stencil.ReadOnly());
         break;
 
 #ifdef VK_NV_separate_depth_stencil_layouts
     case VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL_KHR:
-        AssertMessage_NoAssume(L"stencil attachment doesn't exists", not pRender->Stencil.EnabledStencilTests);
+        AssertMessage_NoAssume("stencil attachment doesn't exists", not pRender->Stencil.EnabledStencilTests);
         break;
 
     case VK_IMAGE_LAYOUT_DEPTH_READ_ONLY_OPTIMAL_KHR:
-        AssertMessage_NoAssume(L"can't write to read-only depth attachment", not pRender->Depth.EnableDepthWrite);
+        AssertMessage_NoAssume("can't write to read-only depth attachment", not pRender->Depth.EnableDepthWrite);
         break;
 
     case VK_IMAGE_LAYOUT_STENCIL_ATTACHMENT_OPTIMAL_KHR:
-        AssertMessage_NoAssume(L"depth attachment doesn't exists", (not pRender->Depth.EnableDepthTest and not pRender->Depth.EnableDepthWrite));
+        AssertMessage_NoAssume("depth attachment doesn't exists", (not pRender->Depth.EnableDepthTest and not pRender->Depth.EnableDepthWrite));
         break;
 
     case VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL_KHR:
-        AssertMessage_NoAssume(L"depth attachment doesn't exists", (not pRender->Depth.EnableDepthTest and not pRender->Depth.EnableDepthWrite));
-        AssertMessage_NoAssume(L"can't write to read-only stencil attachment", pRender->Stencil.ReadOnly());
+        AssertMessage_NoAssume("depth attachment doesn't exists", (not pRender->Depth.EnableDepthTest and not pRender->Depth.EnableDepthWrite));
+        AssertMessage_NoAssume("can't write to read-only stencil attachment", pRender->Stencil.ReadOnly());
         break;
 #endif
 
     case VK_IMAGE_LAYOUT_UNDEFINED:
-        AssertMessage_NoAssume(L"depth attachment doesn't exists", (not pRender->Depth.EnableDepthTest and not pRender->Depth.EnableDepthWrite));
-        AssertMessage_NoAssume(L"stencil attachment doesn't exists", not pRender->Stencil.EnabledStencilTests);
+        AssertMessage_NoAssume("depth attachment doesn't exists", (not pRender->Depth.EnableDepthTest and not pRender->Depth.EnableDepthWrite));
+        AssertMessage_NoAssume("stencil attachment doesn't exists", not pRender->Stencil.EnabledStencilTests);
         break;
 
     case VK_IMAGE_LAYOUT_GENERAL:
@@ -1563,7 +1563,7 @@ void FVulkanPipelineCache::ValidateRenderState_(
     case VK_IMAGE_LAYOUT_RANGE_SIZE :
 #endif
     case VK_IMAGE_LAYOUT_MAX_ENUM :
-        AssertMessage_NoAssume(L"unsupported depth stencil layout", false);
+        AssertMessage_NoAssume("unsupported depth stencil layout", false);
         break;
 
     default: AssertNotImplemented();

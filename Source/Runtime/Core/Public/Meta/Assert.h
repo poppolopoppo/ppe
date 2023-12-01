@@ -3,8 +3,13 @@
 #include "Diagnostic/Exception.h"
 #include "HAL/PlatformMacros.h"
 
-#define USE_PPE_ASSERT (USE_PPE_ASSERTIONS && USE_PPE_DEBUG)
-#define USE_PPE_ASSERT_RELEASE (!USE_PPE_FINAL_RELEASE && !USE_PPE_PROFILING)
+#ifndef USE_PPE_ASSERT
+#   define USE_PPE_ASSERT (USE_PPE_ASSERTIONS && USE_PPE_DEBUG)
+#endif
+
+#ifndef USE_PPE_ASSERT_RELEASE
+#   define USE_PPE_ASSERT_RELEASE (!USE_PPE_FINAL_RELEASE && !USE_PPE_PROFILING)
+#endif
 
 #define WITH_PPE_ASSERT_FALLBACK_TO_ASSUME 1 // when enabled every assert becomes an __assume() when !USE_PPE_DEBUG // %_NOCOMMIT%
 #define WITH_PPE_ASSERT_RELEASE_FALLBACK_TO_ASSUME 1 // when enabled every assert release becomes an __assume() when !USE_PPE_FINAL_RELEASE // %_NOCOMMIT%
@@ -40,28 +45,29 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using FAssertionHandler = bool (*)(const wchar_t* msg, const wchar_t* file, unsigned line);
+using FAssertionHandler = bool (*)(const char* msg, const char* file, unsigned line, bool isEnsure);
+using FReleaseAssertionHandler = bool (*)(const char* msg, const char* file, unsigned line);
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 //----------------------------------------------------------------------------
-class PPE_CORE_API FAssertException : public FException {
+class FAssertException : public FException {
 public:
-    FAssertException(const char *msg, const wchar_t *file, unsigned line);
-    ~FAssertException() override;
+    PPE_CORE_API FAssertException(const char *msg, const char *file, unsigned line);
+    PPE_CORE_API virtual ~FAssertException() override;
 
-    const wchar_t *File() const { return _file; }
+    const char *File() const { return _file; }
     unsigned Line() const { return _line; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    PPE_CORE_API virtual FTextWriter& Description(FTextWriter& oss) const override final;
 #endif
 
 private:
-    const wchar_t *_file;
+    const char *_file;
     unsigned _line;
 };
 
-PPE_CORE_API void PPE_DEBUG_SECTION AssertionFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
+PPE_CORE_API void PPE_DEBUG_SECTION AssertionFailed(const char* msg, const char *file, unsigned line);
 PPE_CORE_API FAssertionHandler SetAssertionHandler(FAssertionHandler handler) NOEXCEPT;
 PPE_CORE_API FAssertionHandler SetAssertionHandlerForCurrentThread(FAssertionHandler handler) NOEXCEPT;
 
@@ -69,23 +75,23 @@ PPE_CORE_API FAssertionHandler SetAssertionHandlerForCurrentThread(FAssertionHan
 #   define AssertMessage(_Message, ...) AnalysisAssume(!!(__VA_ARGS__))
 #   define Assert_Lightweight(...) AnalysisAssume(!!(__VA_ARGS__))
 #   define AssertMessage_NoAssume(_Message, ...) NOOP()
-#   define EnsureMessage(_Message, ...) (__VA_ARGS__)
+#   define EnsureMessage(_Message, ...) (Likely(!!(__VA_ARGS__)))
 #else
 #   define AssertMessage(_Message, ...) \
-    ( Likely(!!(__VA_ARGS__)) ? void(0) : []() NO_INLINE PPE_DEBUG_SECTION { ::PPE::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )
+    ( Likely(!!(__VA_ARGS__)) ? void(0) : []() NO_INLINE PPE_DEBUG_SECTION { ::PPE::AssertionFailed(_Message, __FILE__, __LINE__); }() )
 #   define Assert_Lightweight(...) \
     ( Likely(!!(__VA_ARGS__)) ? void(0) : PPE_ASSERT_LIGHTWEIGHT_CRASH() ) // when we need to break immediately
 #   define AssertMessage_NoAssume(_Message, ...) AssertMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
 #   define EnsureMessage(_Message, ...) \
-    ( Likely(!!(__VA_ARGS__)) ? true : ( []() NO_INLINE PPE_DEBUG_SECTION { ::PPE::AssertionFailed(_Message, WIDESTRING(__FILE__), __LINE__); }(), false ) )
+    ( Likely(!!(__VA_ARGS__)) ? true : ( []() NO_INLINE PPE_DEBUG_SECTION { ::PPE::AssertionFailed(_Message, __FILE__, __LINE__); }(), false ) )
 #endif
 
-#   define Verify(...) AssertMessage(WIDESTRING(#__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
+#   define Verify(...) AssertMessage(STRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
 
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
-inline CONSTEXPR void AssertionFailed(const wchar_t *, const wchar_t *, unsigned ) {}
+inline CONSTEXPR void AssertionFailed(const char *, const char *, unsigned ) {}
 inline CONSTEXPR FAssertionHandler SetAssertionHandler(FAssertionHandler) { return nullptr; }
 inline CONSTEXPR FAssertionHandler SetAssertionHandlerForCurrentThread(FAssertionHandler) { return nullptr; }
 
@@ -112,9 +118,9 @@ inline CONSTEXPR FAssertionHandler SetAssertionHandlerForCurrentThread(FAssertio
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#define Assert(...) AssertMessage(WSTRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
-#define Assert_NoAssume(...) AssertMessage_NoAssume(WSTRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
-#define Ensure(...) EnsureMessage(WSTRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
+#define Assert(...) AssertMessage(STRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
+#define Assert_NoAssume(...) AssertMessage_NoAssume(STRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
+#define Ensure(...) EnsureMessage(STRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -122,28 +128,28 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT_RELEASE
 //----------------------------------------------------------------------------
-class PPE_CORE_API FAssertReleaseException : public FException {
+class FAssertReleaseException : public FException {
 public:
-    FAssertReleaseException(const char* msg, const wchar_t* file, unsigned line);
-    ~FAssertReleaseException() override;
+    PPE_CORE_API FAssertReleaseException(const char* msg, const char* file, unsigned line);
+    virtual ~FAssertReleaseException() override;
 
-    const wchar_t *File() const { return _file; }
+    const char *File() const { return _file; }
     unsigned Line() const { return _line; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    PPE_CORE_API virtual FTextWriter& Description(FTextWriter& oss) const override final;
 #endif
 
 private:
-    const wchar_t *_file;
+    const char *_file;
     unsigned _line;
 };
 
-PPE_CORE_API void PPE_DEBUG_SECTION AssertionReleaseFailed(const wchar_t* msg, const wchar_t *file, unsigned line);
-PPE_CORE_API FAssertionHandler SetAssertionReleaseHandler(FAssertionHandler handler) NOEXCEPT;
-PPE_CORE_API FAssertionHandler SetAssertionReleaseHandlerForCurrentThread(FAssertionHandler handler) NOEXCEPT;
+PPE_CORE_API void PPE_DEBUG_SECTION AssertionReleaseFailed(const char* msg, const char *file, unsigned line);
+PPE_CORE_API FReleaseAssertionHandler SetAssertionReleaseHandler(FReleaseAssertionHandler handler) NOEXCEPT;
+PPE_CORE_API FReleaseAssertionHandler SetAssertionReleaseHandlerForCurrentThread(FReleaseAssertionHandler handler) NOEXCEPT;
 
-NORETURN inline void PPE_DEBUG_SECTION AssertionReleaseFailed_NoReturn(const wchar_t* msg, const wchar_t* file, unsigned line) {
+NORETURN inline void PPE_DEBUG_SECTION AssertionReleaseFailed_NoReturn(const char* msg, const char* file, unsigned line) {
     AssertionReleaseFailed(msg, file, line);
     abort();
 }
@@ -154,19 +160,19 @@ NORETURN inline void PPE_DEBUG_SECTION AssertionReleaseFailed_NoReturn(const wch
 #   define AssertReleaseMessage_NoAssume(_Message, ...) NOOP()
 #else
 #   define AssertReleaseMessage(_Message, ...) \
-    ( Likely(!!(__VA_ARGS__)) ? void(0) : []() NO_INLINE PPE_DEBUG_SECTION { ::PPE::AssertionReleaseFailed(_Message, WIDESTRING(__FILE__), __LINE__); }() )
+    ( Likely(!!(__VA_ARGS__)) ? void(0) : []() NO_INLINE PPE_DEBUG_SECTION { ::PPE::AssertionReleaseFailed(_Message, __FILE__, __LINE__); }() )
 #   define AssertReleaseFailed(_Message) \
-    ::PPE::AssertionReleaseFailed_NoReturn(_Message, WIDESTRING(__FILE__), __LINE__)
+    ::PPE::AssertionReleaseFailed_NoReturn(_Message, __FILE__, __LINE__)
 #   define AssertReleaseMessage_NoAssume(_Message, ...) AssertReleaseMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
 #endif
 
-#   define VerifyRelease(...) AssertReleaseMessage(WIDESTRING(#__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
+#   define VerifyRelease(...) AssertReleaseMessage(STRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
 
 //----------------------------------------------------------------------------
 #else
 //----------------------------------------------------------------------------
-inline CONSTEXPR void AssertionReleaseFailed(const wchar_t*, const wchar_t*, unsigned ) {}
-NORETURN inline void AssertionReleaseFailed_NoReturn(const wchar_t*, const wchar_t*, unsigned ) { abort(); }
+inline CONSTEXPR void AssertionReleaseFailed(const char*, const char*, unsigned ) {}
+NORETURN inline void AssertionReleaseFailed_NoReturn(const char*, const char*, unsigned ) { abort(); }
 inline CONSTEXPR FAssertionHandler SetAssertionReleaseHandler(FAssertionHandler) { return nullptr; }
 inline CONSTEXPR FAssertionHandler SetAssertionReleaseHandlerForCurrentThread(FAssertionHandler) { return nullptr; }
 
@@ -190,11 +196,11 @@ inline CONSTEXPR FAssertionHandler SetAssertionReleaseHandlerForCurrentThread(FA
 //----------------------------------------------------------------------------
 } //!namespace PPE
 
-#define AssertRelease(...) AssertReleaseMessage(WSTRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
-#define AssertRelease_NoAssume(...) AssertReleaseMessage_NoAssume(WSTRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
+#define AssertRelease(...) AssertReleaseMessage(STRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
+#define AssertRelease_NoAssume(...) AssertReleaseMessage_NoAssume(STRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
 
-#define AssertNotReached() AssertReleaseFailed(L"unreachable state")
-#define AssertNotImplemented() AssertReleaseFailed(L"not implemented")
+#define AssertNotReached() AssertReleaseFailed("unreachable state")
+#define AssertNotImplemented() AssertReleaseFailed("not implemented")
 
 #if USE_PPE_ASSERT
 #   define ARG0_IF_ASSERT(...) __VA_ARGS__
@@ -214,4 +220,4 @@ inline CONSTEXPR FAssertionHandler SetAssertionReleaseHandlerForCurrentThread(FA
 
 #define AssertFinalMessage(_Message, ...) \
     ( Likely(!!(__VA_ARGS__)) ? void(0) : AssertReleaseFailed(_Message) )
-#define AssertFinal(...) AssertFinalMessage(WSTRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))
+#define AssertFinal(...) AssertFinalMessage(STRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))

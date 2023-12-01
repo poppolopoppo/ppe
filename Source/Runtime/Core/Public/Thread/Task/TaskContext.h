@@ -9,6 +9,15 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 class PPE_CORE_API ITaskContext {
+protected:
+    ITaskContext() = default;
+
+    ITaskContext(const ITaskContext&) = default;
+    ITaskContext& operator =(const ITaskContext&) = default;
+
+    ITaskContext(ITaskContext&&) = default;
+    ITaskContext& operator =(ITaskContext&&) = default;
+
 public:
     virtual ~ITaskContext() = default;
 

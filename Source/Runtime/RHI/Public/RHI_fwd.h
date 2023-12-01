@@ -66,9 +66,9 @@ PPE_STRONGLYTYPED_NUMERIC_DEF(u32,   FFrameIndex);
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowHandle);
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowSurface);
 //----------------------------------------------------------------------------
-enum class EQueueType : u32;
-enum class EQueueUsage : u32;
-enum class EMemoryType : u32;
+enum class EQueueType : u8;
+enum class EQueueUsage : u8;
+enum class EMemoryType : u8;
 enum class EBufferUsage : u32;
 enum class EImageDim : u8;
 enum class EImageView : u8;
@@ -76,23 +76,23 @@ enum class EImageFlags : u8;
 enum class EImageUsage : u32;
 enum class EImageAspect : u32;
 enum class EImageSampler : u32;
-enum class EAttachmentLoadOp : u32;
-enum class EAttachmentStoreOp : u32;
+enum class EAttachmentLoadOp : u8;
+enum class EAttachmentStoreOp : u8;
 enum class EShadingRatePalette : u8;
-enum class EPixelFormat : u32;
-enum class EColorSpace : u32;
-enum class EFragmentOutput : u32;
+enum class EPixelFormat : u8;
+enum class EColorSpace : u8;
+enum class EFragmentOutput : u8;
 enum class EResourceState : u32;
 enum class EDebugFlags : u32;
 //----------------------------------------------------------------------------
-enum class EBlendFactor : u32;
-enum class EBlendOp : u32;
-enum class ELogicOp : u32;
+enum class EBlendFactor : u8;
+enum class EBlendOp : u8;
+enum class ELogicOp : u8;
 enum class EColorMask : u8;
 enum class ECompareOp : u8;
 enum class EStencilOp : u8;
-enum class EPolygonMode : u32;
-enum class EPrimitiveTopology : u32;
+enum class EPolygonMode : u8;
+enum class EPrimitiveTopology : u8;
 enum class ECullMode : u8;
 enum class EPipelineDynamicState : u8;
 //----------------------------------------------------------------------------
@@ -102,7 +102,7 @@ enum class ERayTracingBuildFlags : u32;
 //----------------------------------------------------------------------------
 enum class EShaderType : u32;
 enum class EShaderStages : u32;
-enum class EShaderAccess : u32;
+enum class EShaderAccess : u8;
 enum class EShaderLangFormat : u32;
 enum class EShaderDebugMode : u32;
 struct FPackedDebugMode {
@@ -113,19 +113,20 @@ struct FPackedDebugMode {
     }
 };
 //----------------------------------------------------------------------------
-enum class ETextureFilter : u32;
-enum class EMipmapFilter : u32;
-enum class EAddressMode : u32;
-enum class EBorderColor : u32;
+enum class ETextureFilter : u8;
+enum class EMipmapFilter : u8;
+enum class EAddressMode : u8;
+enum class EBorderColor : u8;
 //----------------------------------------------------------------------------
-enum class EIndexFormat : u32;
+enum class EIndexFormat : u8;
 enum class EVertexFormat : u32;
+enum class EVertexInputRate : u8;
 //----------------------------------------------------------------------------
 enum class EPixelValueType : u32;
 //----------------------------------------------------------------------------
-enum class ECompositeAlpha : u32;
-enum class EPresentMode : u32;
-enum class ESurfaceTransform : u32;
+enum class ECompositeAlpha : u8;
+enum class EPresentMode : u8;
+enum class ESurfaceTransform : u8;
 //----------------------------------------------------------------------------
 struct FBindingIndex;
 struct FBufferDesc;
@@ -139,6 +140,14 @@ PPE_STRONGLYTYPED_NUMERIC_DEF(u32, FImageLayer);
 PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(u16, FImageSwizzle, 0x4321); // 0 - unknown, 1 - R, 2 - G, 3 - B, 4 - A, 5 - O, 6 - 1, example: RGB0 - 0x1235
 PPE_STRONGLYTYPED_NUMERIC_DEF(u32, FMipmapLevel);
 struct FMultiSamples;
+//----------------------------------------------------------------------------
+using FPixelDecodeRGBA32f = void (*)(FRgba32f* __restrict, const FRawMemoryConst&) NOEXCEPT;
+using FPixelDecodeRGBA32i = void (*)(FRgba32i* __restrict, const FRawMemoryConst&) NOEXCEPT;
+using FPixelDecodeRGBA32u = void (*)(FRgba32u* __restrict, const FRawMemoryConst&) NOEXCEPT;
+//----------------------------------------------------------------------------
+using FPixelEncodeRGBA32f = void (*)(FRawMemory, const FRgba32f&) NOEXCEPT;
+using FPixelEncodeRGBA32i = void (*)(FRawMemory, const FRgba32i&) NOEXCEPT;
+using FPixelEncodeRGBA32u = void (*)(FRawMemory, const FRgba32u&) NOEXCEPT;
 //----------------------------------------------------------------------------
 struct FMemoryDesc;
 //----------------------------------------------------------------------------

@@ -29,7 +29,7 @@ static EShaderLangFormat VulkanApiToVersion_(u32 apiVersion) {
         if (2 == minor) return EShaderLangFormat::Vulkan_120;
     }
 
-    LOG(RHI, Warning, L"vulkan: missing support for API v{0}.{1}, fallback to v1.2", major, minor);
+    PPE_LOG(RHI, Warning, "vulkan: missing support for API v{0}.{1}, fallback to v1.2", major, minor);
     return EShaderLangFormat::Vulkan_120;
 }
 //----------------------------------------------------------------------------
@@ -67,7 +67,7 @@ FVulkanDevice::FVulkanDevice(const FVulkanDeviceInfo& info)
     SetupDeviceFeatures_();
     SetupDeviceFlags_();
 
-    LOG(RHI, Info, L"finished setup for new vulkan device:{0}",
+    PPE_LOG(RHI, Info, "finished setup for new vulkan device:{0}",
         Fmt::Formator<wchar_t>([this](FWTextWriter& log) {
             log << Eol << FTextFormat::BoolAlpha
             << Tab << L"VendorName:               " << vkVendorId() << Eol
@@ -132,7 +132,7 @@ FVulkanDevice::FVulkanDevice(const FVulkanDeviceInfo& info)
 }
 //----------------------------------------------------------------------------
 FVulkanDevice::~FVulkanDevice() {
-    LOG(RHI, Info, L"destroying vulkan device...");
+    PPE_LOG(RHI, Info, "destroying vulkan device...");
 
 
     FRHIVulkanModule::Get(FModularDomain::Get()).DeviceTearDown(*this);

@@ -98,12 +98,12 @@ inline FVSToolsWrapper::FVSToolsWrapper() {
         Verify((api.ReallocateEvent = (FReallocateEvent)_dll.FunctionAddr("vstools_ReallocateEvent")) != nullptr);
         Verify((api.DeallocateEvent = (FDeallocateEvent)_dll.FunctionAddr("vstools_DeallocateEvent")) != nullptr);
 
-        LOG(HAL, Info, L"successfully loaded vstools dll from");
+        PPE_LOG(HAL, Info, "successfully loaded vstools dll from");
     }
     else {
         API = GDummyAPI;
 
-        LOG(HAL, Warning, L"failed to load vstools dll, fallbacking to dummies !");
+        PPE_LOG(HAL, Warning, "failed to load vstools dll, fallbacking to dummies !");
     }
 
     HEAP_Alloca = API.CreateHeapTracker("Alloca");
@@ -129,7 +129,7 @@ inline FVSToolsWrapper::~FVSToolsWrapper() {
     API.DestroyHeapTracker(localLinear);
 
     if (_dll) {
-        LOG(HAL, Info, L"unloading vstools dll");
+        PPE_LOG(HAL, Info, "unloading vstools dll");
 
         API = GDummyAPI;
         _dll.Unload();

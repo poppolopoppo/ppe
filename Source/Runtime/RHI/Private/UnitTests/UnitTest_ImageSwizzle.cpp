@@ -30,7 +30,7 @@ NO_INLINE static void Test_ImageSwizzle1_() {
 void UnitTest_ImageSwizzle() {
     Test_ImageSwizzle1_();
 
-    LOG(RHI, Info, L"UnitTest_ImageSwizzle [PASSED]");
+    PPE_LOG(RHI, Info, "UnitTest_ImageSwizzle [PASSED]");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

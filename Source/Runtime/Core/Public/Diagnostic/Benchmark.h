@@ -380,7 +380,7 @@ public: // TTable<>
         void Flush() {
             if (not PendingRuns.empty()) {
                 Assert_NoAssume(UseMultiThread);
-                LOG(Benchmark, Debug, L"flushing {0} benchmark tasks...", PendingRuns.size());
+                PPE_LOG(Benchmark, Debug, "flushing {0} benchmark tasks...", PendingRuns.size());
                 FTaskManager& threadPool =
 #if 0           // high priority <=> full machine usage
                     FHighPriorityThreadPool::Get()
@@ -388,7 +388,7 @@ public: // TTable<>
                     FGlobalThreadPool::Get()
 #endif
                     ;
-                FLUSH_LOG();
+                PPE_LOG_FLUSH();
                 threadPool.RunAndWaitFor(PendingRuns.MakeView());
                 PendingRuns.clear();
             }
@@ -396,7 +396,7 @@ public: // TTable<>
 
         template <typename... _Args>
         NO_INLINE void RunST(const FStringView& name, const _Args&... args) {
-            LOG(Benchmark, Info, L"running {0} benchmarks for <{1}> on a single thread...", Dim, name);
+            PPE_LOG(Benchmark, Info, "running {0} benchmarks for <{1}> on a single thread...", Dim, name);
 
             Entries.emplace_back(name, MapTuple<FRun>(Headers, [&args...](const auto& bench) {
                 return FBenchmark::Run(bench, args...);
@@ -405,7 +405,7 @@ public: // TTable<>
 
         template <typename... _Args>
         NO_INLINE void RunMT(const FStringView& name, const _Args&... args) {
-            LOG(Benchmark, Info, L"running {0} benchmarks for <{1}> on multiple threads...", Dim, name);
+            PPE_LOG(Benchmark, Info, "running {0} benchmarks for <{1}> on multiple threads...", Dim, name);
 
             size_t column = 0;
             const size_t row = Entries.size();
@@ -443,59 +443,59 @@ public: // TTable<>
     }
 
 public: // export table results
-    template <typename... _Benchmarks>
-    static void WTxt(const TTable<_Benchmarks...>& table, FWTextWriter& oss, bool detailed = false) {
+    template <typename... _Benchmarks, typename _Char>
+    static void Txt(const TTable<_Benchmarks...>& table, TBasicTextWriter<_Char>& oss, bool detailed = false) {
         const auto originalFormat = oss .Format();
-        Meta::on_scope_exit([&]() {
+        DEFERRED {
             oss.SetFormat(originalFormat);
-        });
+        };
 
         oss << FTextFormat::TruncateR;
-        oss << L"Benchmark table <" << table.Name << L">, units = " << FCounter::Units() << L" :" << Eol;
+        oss << STRING_LITERAL(_Char, "Benchmark table <") << table.Name << STRING_LITERAL(_Char, ">, units = ") << FCounter::Units() << STRING_LITERAL(_Char, " :") << Eol;
 
         constexpr u32 header = 20;
         constexpr u32 stride = 12;
 
-        oss << L'|'
-            << FTextFormat::PadLeft(stride, L' ')
+        oss << STRING_LITERAL(_Char, '|')
+            << FTextFormat::PadLeft(stride, STRING_LITERAL(_Char, ' '))
             << table.Name;
 
         table.ForeachHeader([&oss, stride](const auto& x) {
-            oss << L'|'
-                << FTextFormat::PadLeft(stride, L' ')
+            oss << STRING_LITERAL(_Char, '|')
+                << FTextFormat::PadLeft(stride, STRING_LITERAL(_Char, ' '))
                 << x.Name;
         });
 
-        oss << L'|' << Eol;
+        oss << STRING_LITERAL(_Char, '|') << Eol;
 
-        oss << Fmt::Repeat(L'=', (stride+1) * table.dim() + header) << Eol;
+        oss << Fmt::Repeat(STRING_LITERAL(_Char, '='), (stride+1) * table.dim() + header) << Eol;
 
         if (detailed) {
             table.ForeachEntry([&oss, stride, table_dim{table.dim()}](const auto& x) {
-                oss << L'|' << FTextFormat::PadLeft(stride, L' ') << x.Name;
+                oss << STRING_LITERAL(_Char, '|') << FTextFormat::PadLeft(stride, STRING_LITERAL(_Char, ' ')) << x.Name;
 
                 for (const auto& c : x.Row)
-                    oss << L'|'
-                        << FTextFormat::PadLeft(stride, L' ')
+                    oss << STRING_LITERAL(_Char, '|')
+                        << FTextFormat::PadLeft(stride, STRING_LITERAL(_Char, ' '))
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
-                        << c.Q1 << L'/'
-                        << FTextFormat::PadLeft(stride, L' ')
+                        << c.Q1 << STRING_LITERAL(_Char, '/')
+                        << FTextFormat::PadLeft(stride, STRING_LITERAL(_Char, ' '))
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
-                        << c.Median << L'/'
-                        << FTextFormat::PadLeft(stride, L' ')
+                        << c.Median << STRING_LITERAL(_Char, '/')
+                        << FTextFormat::PadLeft(stride, STRING_LITERAL(_Char, ' '))
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
                         << c.Q3;
 
-                oss << L'|' << Eol;
+                oss << STRING_LITERAL(_Char, '|') << Eol;
             });
         }
         else {
             table.ForeachEntry([&oss, stride, table_dim{table.dim()}](const auto& x) {
-                oss << L'|' << FTextFormat::PadLeft(stride, L' ') << x.Name;
+                oss << STRING_LITERAL(_Char, '|') << FTextFormat::PadLeft(stride, STRING_LITERAL(_Char, ' ')) << x.Name;
 
                 for (const auto& c : x.Row)
                     oss << L'|'
-                        << FTextFormat::PadLeft(stride, L' ')
+                        << FTextFormat::PadLeft(stride, STRING_LITERAL(_Char, ' '))
                         << FTextFormat::Float(FTextFormat::FixedFloat, 6)
                         << c.Median;
 
@@ -506,14 +506,11 @@ public: // export table results
 
     template <typename... _Benchmarks>
     static void Log(const TTable<_Benchmarks...>& table) {
-#if USE_PPE_LOGGER
-        FWStringBuilder sb;
-        const bool detailed = (table.dim() < 5);
-        WTxt(table, sb, detailed);
-        FLogger::Log(LOG_MAKESITE(Benchmark, Profiling), sb.ToString() );
-#else
         Unused(table);
-#endif
+        PPE_LOG_DIRECT(Benchmark, Profiling, [&](FTextWriter& oss) {
+            const bool detailed = (table.dim() < 5);
+            Txt(table, oss, detailed);
+        });
     }
 
     template <typename... _Benchmarks>

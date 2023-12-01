@@ -38,12 +38,12 @@ FBenchmarkScope::~FBenchmarkScope() {
     if (_parentIFP)
         _parentIFP->_accumulated.SetValue(*_parentIFP->_accumulated + *elapsed);
 
-    LOG(Benchmark, Profiling, L"{0:28} | {1}{2} | {3:10f2} / {4:12f2}",
+    PPE_LOG(Benchmark, Profiling, "{0:28} | {1}{2} | {3:10f2} / {4:12f2}",
         _category,
-        Fmt::Repeat(L' ', _depth * 2),
-        Fmt::PadRight(_message, 28 - _depth * 2, L' '),
+        Fmt::Repeat(' ', _depth * 2),
+        Fmt::PadRight(_message, 28 - _depth * 2, ' '),
         Fmt::DurationInMs(elapsed),
-        Fmt::Ternary(*_accumulated > 0, _accumulated, L'-') );
+        Fmt::Ternary(*_accumulated > 0, _accumulated, '-') );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -59,7 +59,7 @@ FIOBenchmarkScope::~FIOBenchmarkScope() {
 #if USE_PPE_LOGGER
     const FTimespan elapsed = Elapsed();
 
-    LOG(Benchmark, Profiling, L" {0:20} | {2:10f2} | {3:10f2} = {4:10f2} Mb/s | {1}",
+    PPE_LOG(Benchmark, Profiling, " {0:20} | {2:10f2} | {3:10f2} = {4:10f2} Mb/s | {1}",
         _category,
         _message,
         Fmt::DurationInMs(elapsed),

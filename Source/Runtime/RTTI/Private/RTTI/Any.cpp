@@ -75,7 +75,7 @@ FAny::FAny(FAny&& rvalue) NOEXCEPT : FAny() {
         else {
             using std::swap;
             swap(_traitsWFlags, rvalue._traitsWFlags);
-            swap(_externalBlock, rvalue._externalBlock);
+            swap(_allocatorBlock, rvalue._allocatorBlock);
         }
 
         ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(&rvalue._inSitu, GInSituSize));
@@ -100,7 +100,7 @@ FAny& FAny::operator =(FAny&& rvalue) NOEXCEPT {
 
             using std::swap;
             swap(_traitsWFlags, rvalue._traitsWFlags);
-            swap(_externalBlock, rvalue._externalBlock);
+            swap(_allocatorBlock, rvalue._allocatorBlock);
         }
 
         ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(&rvalue._inSitu, GInSituSize));
@@ -133,12 +133,6 @@ FAny::FAny(const PTypeTraits& traits) : FAny() {
     }
 }
 //----------------------------------------------------------------------------
-#if USE_PPE_ASSERT
-FAny::FAny() NOEXCEPT {
-    FPlatformMemory::Memuninitialized(&_inSitu, GInSituSize);
-}
-#endif
-//----------------------------------------------------------------------------
 FAny::~FAny()  {
     if (Likely(Valid()))
         Reset_AssumeInitialized_();
@@ -163,21 +157,28 @@ FAny& FAny::Reset(const ITypeTraits& traits) {
 
     const size_t newSize = traits.SizeInBytes();
 
+    void* data = nullptr;
+
     // check if we can reuse current external block, if any
     if (Valid() &&
         not IsFittingInSitu_() &&
         not Any_FitInSitu_(newSize) &&
-        newSize <= _externalBlock.SizeInBytes) {
-        Assert(Meta::IsAlignedPow2(traits.Alignment(), _externalBlock.Ptr));
+        newSize <= _allocatorBlock.SizeInBytes) {
+        Assert(Meta::IsAlignedPow2(traits.Alignment(), _allocatorBlock.Data));
 
-        Traits()->Destroy(_externalBlock.Ptr);
+        Traits()->Destroy(_allocatorBlock.Data);
+
+        data = _allocatorBlock.Data;
+    }
+    else {
+        if (Valid())
+            Reset_AssumeInitialized_();
+
+        data = Allocate_AssumeNotInitialized_(traits.SizeInBytes());
     }
 
-    if (Valid())
-        Reset_AssumeInitialized_();
-
+    Assert(data);
     SetTraits_(traits);
-    void* const data = Allocate_AssumeNotInitialized_(traits.SizeInBytes());
     traits.Construct(data);
     return (*this);
 }
@@ -210,7 +211,7 @@ void FAny::Swap(FAny& other) {
 }
 //----------------------------------------------------------------------------
 void FAny::SetTraits_(const ITypeTraits& traits) NOEXCEPT {
-    _traitsWFlags.Reset(&traits);
+    _traitsWFlags.Set(&traits);
 }
 //----------------------------------------------------------------------------
 void FAny::AssignCopy_(const void* src, const ITypeTraits& traits) {
@@ -291,17 +292,14 @@ void* FAny::Allocate_AssumeNotInitialized_(const size_t sizeInBytes) {
 
     if (Likely(Any_FitInSitu_(sizeInBytes))) {
         SetFittingInSitu_(true);
+
         return (&_inSitu);
     }
 
     SetFittingInSitu_(false);
-    _externalBlock.SizeInBytes = malloc_snap_size(sizeInBytes);
-    _externalBlock.Ptr = PPE::malloc(_externalBlock.SizeInBytes);
 
-    ONLY_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(Any)
-        .Allocate(_externalBlock.SizeInBytes, _externalBlock.SizeInBytes));
-
-    return _externalBlock.Ptr;
+    _allocatorBlock = TRACKING_MALLOC_FOR_NEW(Any, sizeInBytes);
+    return _allocatorBlock.Data;
 }
 //----------------------------------------------------------------------------
 void FAny::Reset_AssumeInitialized_() {
@@ -310,15 +308,14 @@ void FAny::Reset_AssumeInitialized_() {
     Traits()->Destroy(Data());
 
     if (not IsFittingInSitu_()) {
-        Assert_NoAssume(_externalBlock.Ptr);
+        Assert_NoAssume(_allocatorBlock.Data);
 
-        ONLY_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(Any)
-            .Deallocate(_externalBlock.SizeInBytes, _externalBlock.SizeInBytes));
+        TRACKING_FREE_FOR_DELETE(Any, _allocatorBlock);
 
-        PPE::free(_externalBlock.Ptr);
+        _allocatorBlock = Default;
     }
 
-    _traitsWFlags = {}; // don't want to call the dtor
+    _traitsWFlags = Default; // don't want to call the dtor
 
     ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(&_inSitu, GInSituSize));
 }

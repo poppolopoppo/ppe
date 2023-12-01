@@ -37,9 +37,9 @@ inline FVulkanTaskProcessor::FDrawTaskCommands::FDrawTaskCommands(
 //----------------------------------------------------------------------------
 template <typename _Desc>
 void FVulkanTaskProcessor::FDrawTaskCommands::BindTaskPipeline_(const TVulkanDrawTask<_Desc>& task) {
-    ONLY_IF_RHIDEBUG( _processor.CmdDebugMarker_(task.TaskName(), task.DebugColor()) );
+    ONLY_IF_RHIDEBUG( _processor.CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
-    const FVulkanLogicalRenderPass& logicalRenderPass = *_submitRef->LogicalPass();
+    const FVulkanLogicalRenderPass& logicalRenderPass = _submitRef->LogicalPass;
     const FVulkanPipelineLayout* pPplnLayout = nullptr;
     VerifyRelease( _processor.BindPipeline_(&pPplnLayout, logicalRenderPass, task) );
 
@@ -52,7 +52,7 @@ void FVulkanTaskProcessor::FDrawTaskCommands::BindTaskPipeline_(const TVulkanDra
         _processor.SetDynamicStates_(task.DynamicStates);
     }
     IF_CONSTEXPR(Meta::has_defined_v<details::if_has_Scissors_, _Desc>) {
-        _processor.SetScissor_(logicalRenderPass, task.Scissors());
+        _processor.SetScissor_(logicalRenderPass, task.Scissors);
     }
     IF_CONSTEXPR(Meta::has_defined_v<details::if_has_IndexBuffer_, _Desc>) {
         _processor.BindIndexBuffer_(
@@ -61,12 +61,12 @@ void FVulkanTaskProcessor::FDrawTaskCommands::BindTaskPipeline_(const TVulkanDra
             VkCast(task.IndexFormat) );
     }
     IF_CONSTEXPR(Meta::has_defined_v<details::if_has_VertexBuffers_, _Desc>) {
-        BindVertexBuffers_(task.VertexBuffers(), task.VertexOffsets());
+        BindVertexBuffers_(task.VertexBuffers, task.VertexOffsets);
     }
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FDrawTaskCommands::BindVertexBuffers_(
-    TMemoryView<const FVulkanLocalBuffer* const> vertexBuffers,
+    TMemoryView<const TPtrRef<const FVulkanLocalBuffer>> vertexBuffers,
     TMemoryView<const VkDeviceSize> vertexOffsets ) const {
     if (vertexBuffers.empty()) {
         Assert_NoAssume(vertexOffsets.empty());
@@ -98,8 +98,8 @@ void FVulkanTaskProcessor::FDrawTaskCommands::BindPipelineResources_(const FVulk
             layout.Read()->FirstDescriptorSet,
             checked_cast<u32>(task.DescriptorSets.size()),
             task.DescriptorSets.data(),
-            checked_cast<u32>(task.Resources().DynamicOffsets.size()),
-            task.Resources().DynamicOffsets.data() );
+            checked_cast<u32>(task.DynamicOffsets.size()),
+            task.DynamicOffsets.data() );
 
         ONLY_IF_RHIDEBUG(_processor.EditStatistics_([](FFrameStatistics::FRendering& rendering) {
            rendering.NumDescriptorBinds++;
@@ -107,12 +107,12 @@ void FVulkanTaskProcessor::FDrawTaskCommands::BindPipelineResources_(const FVulk
     }
 
 #if USE_PPE_RHIDEBUG
-    if (task.DebugModeIndex() != Default) {
+    if (task.DebugModeIndex != Default) {
         VkDescriptorSet vkDescriptorSet;
         u32 dynamicOffset, binding;
         if (_processor._workerCmd->Batch()->FindDescriptorSetForDebug(
             &binding, &vkDescriptorSet, &dynamicOffset,
-            task.DebugModeIndex() )) {
+            task.DebugModeIndex )) {
 
             _processor.vkCmdBindDescriptorSets(
                 _vkCommandBuffer,
@@ -328,7 +328,7 @@ inline void FVulkanTaskProcessor::FDrawTaskCommands::Visit(const TVulkanDrawTask
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FDrawTaskCommands::Visit(const TVulkanDrawTask<FCustomDraw>& task) {
-    FDrawContext ctx{ _processor, *_submitRef->LogicalPass() };
+    FDrawContext ctx{ _processor, _submitRef->LogicalPass };
 
     task.Callback(task.UserParam, ctx);
 }

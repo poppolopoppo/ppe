@@ -17,15 +17,15 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_APPLICATIONUI_API FImguiService final : public IUIService {
+class PPE_APPLICATIONUI_API FImGuiService final : public IUIService {
 public:
-    explicit FImguiService(PImguiContext imguiContext) NOEXCEPT;
-    ~FImguiService() override;
+    FImGuiService();
+    ~FImGuiService() override;
 
     NODISCARD bool Construct(IInputService& input, IRHIService& rhi);
     void TearDown(IInputService& input, IRHIService& rhi);
 
-    const PImguiContext& ImguiContext() const { return _imguiContext; }
+    const PImGuiContext& ImguiContext() const { return _imGuiContext; }
 
     void OnUpdateInput(const IInputService& input, FTimespan dt) override;
     void OnWindowFocus(const IInputService& input, const FGenericWindow* previous) override;
@@ -38,19 +38,25 @@ private:
     NODISCARD RHI::PFrameTask RecreateBuffers_(const RHI::FCommandBufferBatch& cmd);
     NODISCARD RHI::PFrameTask UpdateUniformBuffer_(const RHI::FCommandBufferBatch& cmd);
     NODISCARD RHI::PFrameTask PrepareRenderCommand_(
+        RHI::IFrameGraph& fg,
         RHI::FCommandBufferBatch& cmd,
         RHI::FLogicalPassID renderPass,
         TMemoryView<const RHI::PFrameTask> dependencies);
 
-    const PImguiContext _imguiContext;
+    NODISCARD RHI::PPipelineResources FindOrAddTextureResources_(RHI::IFrameGraph& fg, const RHI::FImageID& texture);
+    void GCUnusedTextureResources_(RHI::IFrameGraph& fg);
+
+    PImGuiContext _imGuiContext{ nullptr };
+    PImPlotContext _imPlotContext{ nullptr };
 
     FRgba32f _clearColor;
 
     RHI::FGPipelineID _pipeline;
-    RHI::PPipelineResources _resources;
+
+    ASSOCIATIVE_VECTORINSITU(ImGui, RHI::FResourceHandle, RHI::PPipelineResources, 5) _textureResources;
 
     RHI::FImageID _fontTexture;
-    RHI::FSamplerID _fontSampler;
+    RHI::FSamplerID _textureSampler;
 
     RHI::FBufferID _indexBuffer;
     RHI::FBufferID _vertexBuffer;

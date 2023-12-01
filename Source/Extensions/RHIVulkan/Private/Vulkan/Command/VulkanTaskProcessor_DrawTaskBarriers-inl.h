@@ -45,16 +45,16 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
 
     // add vertex buffers
 
-    forrange(i, 0, task.VertexBuffers().size()) {
-        const VkDeviceSize vbOffset{ task.VertexOffsets()[i] };
-        const VkDeviceSize vbStride{ task.VertexStrides()[i] };
+    forrange(i, 0, task.VertexBuffers.size()) {
+        const VkDeviceSize vbOffset{ task.VertexOffsets[i] };
+        const VkDeviceSize vbStride{ task.VertexStrides[i] };
 
         for (const auto& cmd : task.Commands) {
             const VkDeviceSize cmdOffset{ vbOffset + vbStride * cmd.FirstVertex };
             const VkDeviceSize cmdSize{ vbStride * cmd.VertexCount };
 
             _processor.AddBuffer_(
-                task.VertexBuffers()[i],
+                task.VertexBuffers[i],
                 EResourceState::VertexBuffer,
                 cmdOffset, cmdSize );
         }
@@ -72,11 +72,11 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
 
     // add vertex buffers
 
-    forrange(i, 0, task.VertexBuffers().size()) {
+    forrange(i, 0, task.VertexBuffers.size()) {
         _processor.AddBuffer_(
-            task.VertexBuffers()[i],
+            task.VertexBuffers[i],
             EResourceState::VertexBuffer,
-            task.VertexOffsets()[i],
+            task.VertexOffsets[i],
             VK_WHOLE_SIZE );
     }
 
@@ -105,11 +105,11 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
 
     // add vertex buffers
 
-    forrange(i, 0, task.VertexBuffers().size()) {
+    forrange(i, 0, task.VertexBuffers.size()) {
         _processor.AddBuffer_(
-            task.VertexBuffers()[i],
+            task.VertexBuffers[i],
             EResourceState::VertexBuffer,
-            task.VertexOffsets()[i],
+            task.VertexOffsets[i],
             VK_WHOLE_SIZE );
     }
 
@@ -134,11 +134,11 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
 
     // add vertex buffers
 
-    forrange(i, 0, task.VertexBuffers().size()) {
+    forrange(i, 0, task.VertexBuffers.size()) {
         _processor.AddBuffer_(
-            task.VertexBuffers()[i],
+            task.VertexBuffers[i],
             EResourceState::VertexBuffer,
-            task.VertexOffsets()[i],
+            task.VertexOffsets[i],
             VK_WHOLE_SIZE );
     }
 
@@ -171,11 +171,11 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
 
     // add vertex buffers
 
-    forrange(i, 0, task.VertexBuffers().size()) {
+    forrange(i, 0, task.VertexBuffers.size()) {
         _processor.AddBuffer_(
-            task.VertexBuffers()[i],
+            task.VertexBuffers[i],
             EResourceState::VertexBuffer,
-            task.VertexOffsets()[i],
+            task.VertexOffsets[i],
             VK_WHOLE_SIZE );
     }
 
@@ -205,11 +205,11 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
 
     // add vertex buffers
 
-    forrange(i, 0, task.VertexBuffers().size()) {
+    forrange(i, 0, task.VertexBuffers.size()) {
         _processor.AddBuffer_(
-            task.VertexBuffers()[i],
+            task.VertexBuffers[i],
             EResourceState::VertexBuffer,
-            task.VertexOffsets()[i],
+            task.VertexOffsets[i],
             VK_WHOLE_SIZE );
     }
 
@@ -313,7 +313,7 @@ void FVulkanTaskProcessor::FDrawTaskBarriers::ExtractDescriptorSets(const FRawPi
 
     _processor.ExtractDescriptorSets_(
         &task.DescriptorSets,
-        *_processor.Resource_(layoutId), task.Resources() );
+        *_processor.Resource_(layoutId), task.DynamicOffsets, task.Resources );
 }
 //----------------------------------------------------------------------------
 template <typename _Pipeline>

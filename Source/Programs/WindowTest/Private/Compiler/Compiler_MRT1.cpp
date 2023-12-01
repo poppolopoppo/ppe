@@ -51,26 +51,26 @@ void main() {
 ARGS_IF_RHIDEBUG("Compiler_MRT1_MS"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::GLSL_450);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
     const EShaderCompilationFlags flags = compiler->CompilationFlags();
     compiler->SetCompilationFlags(EShaderCompilationFlags::Unknown);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
 
     compiler->SetCompilationFlags(flags);
 
-    LOG_CHECK(WindowTest, TestVertexInput(ppln, "in_Position"_vertex, EVertexFormat::Float3, 0));
-    LOG_CHECK(WindowTest, TestVertexInput(ppln, "in_Texcoord"_vertex, EVertexFormat::Float2, 2));
+    PPE_LOG_CHECK(WindowTest, TestVertexInput(ppln, "in_Position"_vertex, EVertexFormat::Float3, 0));
+    PPE_LOG_CHECK(WindowTest, TestVertexInput(ppln, "in_Texcoord"_vertex, EVertexFormat::Float2, 2));
 
-    LOG_CHECK(WindowTest, TestFragmentOutput(ppln, EFragmentOutput::Float4, 0));
-    LOG_CHECK(WindowTest, TestFragmentOutput(ppln, EFragmentOutput::UInt4, 2));
+    PPE_LOG_CHECK(WindowTest, TestFragmentOutput(ppln, EFragmentOutput::Float4, 0));
+    PPE_LOG_CHECK(WindowTest, TestFragmentOutput(ppln, EFragmentOutput::UInt4, 2));
 
     const FDescriptorSet* ds = ppln.DescriptorSet("0"_descriptorset);
-    LOG_CHECK(WindowTest, !!ds);
+    PPE_LOG_CHECK(WindowTest, !!ds);
 
-    LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Texture1"_uniform, EImageSampler::Float2D, /*binding*/0, EShaderStages::Fragment, /*arraySize*/1 ));
-    LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Texture2"_uniform, EImageSampler::UInt2D, /*binding*/1, EShaderStages::Fragment, /*arraySize*/1 ));
+    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Texture1"_uniform, EImageSampler::Float2D, /*binding*/0, EShaderStages::Fragment, /*arraySize*/1 ));
+    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Texture2"_uniform, EImageSampler::UInt2D, /*binding*/1, EShaderStages::Fragment, /*arraySize*/1 ));
 
     return true;
 }

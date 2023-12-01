@@ -12,8 +12,6 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-static constexpr VkQueueFlagBits VK_QUEUE_PRESENT_BIT = VkQueueFlagBits(0x80000000u);
-//----------------------------------------------------------------------------
 class PPE_RHIVULKAN_API FVulkanInstance final : FVulkanInstanceFunctions, Meta::FNonCopyableNorMovable {
 public:
     struct FQueueCreateInfo {

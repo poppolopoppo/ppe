@@ -7,6 +7,7 @@
 #include "Maths/MathHelpers.h"
 #include "Maths/PackingHelpers.h"
 #include "Maths/PackedVectors.h"
+#include "Maths/RandomGenerator.h"
 #include "Maths/ScalarMatrix.h"
 #include "Maths/ScalarVector.h"
 #include "Maths/ScalarVectorHelpers.h"
@@ -19,8 +20,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 PPE_ASSERT_TYPE_IS_POD(FColor);
 PPE_ASSERT_TYPE_IS_POD(FLinearColor);
-//----------------------------------------------------------------------------
-const FLinearColor FLinearColor::PaperWhite(1.f, 1.f, 1.f, 1.f);
 //----------------------------------------------------------------------------
 FLinearColor::FLinearColor(const FColor& color)
     : FLinearColor(
@@ -47,6 +46,10 @@ FLinearColor FLinearColor::Desaturate(float desaturation) const {
 FLinearColor FLinearColor::SetLuminance(float lum) const {
     lum /= (SmallEpsilon + Luminance()); // normalize with old luminance and rescale with new luminance
     return FLinearColor{ R * lum, G * lum, B * lum, A };
+}
+//----------------------------------------------------------------------------
+float4 FLinearColor::ToACES() const {
+    return float4(ACESFitted({ R, G, B }), A);
 }
 //----------------------------------------------------------------------------
 float4 FLinearColor::ToBGRA() const {
@@ -92,19 +95,21 @@ FColor FLinearColor::Quantize(EGammaSpace gamma) const {
         b = Saturate(b);
         break;
     case PPE::EGammaSpace::Pow22:
-        r = Linear_to_Pow22(r);
-        g = Linear_to_Pow22(g);
-        b = Linear_to_Pow22(b);
+        r = Saturate(Linear_to_Pow22(r));
+        g = Saturate(Linear_to_Pow22(g));
+        b = Saturate(Linear_to_Pow22(b));
         break;
     case PPE::EGammaSpace::sRGB:
-        r = Linear_to_SRGB(r);
-        g = Linear_to_SRGB(g);
-        b = Linear_to_SRGB(b);
+        r = Saturate(Linear_to_SRGB(r));
+        g = Saturate(Linear_to_SRGB(g));
+        b = Saturate(Linear_to_SRGB(b));
         break;
     case PPE::EGammaSpace::ACES:
         {
             const float3 c = ACESFitted(float3{ R, G, B });
-            r = c.x; g = c.y; b = c.z;
+            r = Saturate(c.x);
+            g = Saturate(c.y);
+            b = Saturate(c.z);
         }
         break;
     default:
@@ -117,6 +122,10 @@ FColor FLinearColor::Quantize(EGammaSpace gamma) const {
         Float01_to_UByte0255(g),
         Float01_to_UByte0255(b),
         Float01_to_UByte0255(A) );
+}
+//----------------------------------------------------------------------------
+FLinearColor FLinearColor::FromLuma(float luma, float a/* = 1.0f */) {
+    return FLinearColor(luma, luma, luma, a);
 }
 //----------------------------------------------------------------------------
 FLinearColor FLinearColor::FromPastel(float hue, float a/* = 1.0f */) {
@@ -144,12 +153,20 @@ FLinearColor FLinearColor::FromYCoCg(const float3& yCoCg, float a/* = 1.0f */) {
 }
 //----------------------------------------------------------------------------
 FLinearColor FLinearColor::FromHash(hash_t h, float a) {
+    float pastel;
+#if 0 // this method is fast, but the resulting color is not uniformly random
     // generate a float in [1,2] range using IEEE float representation
     FP32 fp{ 0 };
     fp.Exponent = 127;
     fp.Mantissa = static_cast<u32>(h._value);
     // convert to [0,1] range and use this to generate a pastel color
-    return FromPastel(fp.f - 1.0f, a);
+    pastel = (fp.f - 1.0f);
+#else
+    // rng will use the same float trick, but from a uniformly random integer
+    Random::FFastRng rng{ h };
+    pastel = rng.NextFloat01();
+#endif
+    return FromPastel(pastel, a);
 }
 //----------------------------------------------------------------------------
 FLinearColor FLinearColor::FromHeatmap(float x, float a) {
@@ -209,13 +226,19 @@ FLinearColor LerpUsingHSV(const FLinearColor& from, const FLinearColor& to, floa
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const FColor FColor::PaperWhite(0xFF, 0xFF, 0xFF, 0xFF);
-//----------------------------------------------------------------------------
 FColor::FColor(const ubyte3& rgb, u8 a/* = 1.0f */)
-    : R(rgb.x), G(rgb.y), B(rgb.z), A(a) {}
+    : A(a), B(rgb.z), G(rgb.y), R(rgb.x)
+{}
 //----------------------------------------------------------------------------
 FColor::FColor(const ubyte4& rgba)
-    : R(rgba.x), G(rgba.y), B(rgba.z), A(rgba.w) {}
+    : A(rgba.w), B(rgba.z), G(rgba.y), R(rgba.x)
+{}
+//----------------------------------------------------------------------------
+FColor FColor::FromHash(hash_t h, u8 a/* = 0xFF*/) {
+    FColor result = FLinearColor::FromHash(h).Quantize(EGammaSpace::Linear);
+    result.A = a;
+    return result;
+}
 //----------------------------------------------------------------------------
 FLinearColor FColor::FromRGBE() const {
     if (A == 0) {
@@ -356,13 +379,13 @@ float3 RGB_to_HCV(const float3& rgb) {
 float3 HSV_to_RGB(const float3& hsv) {
     float3 RGB = Hue_to_RGB(hsv.x);
     float3 x = RGB * 2.f;
-    return ((x - 1.0f) * hsv.y + 1.0f) * hsv.z;
+    return Saturate(((x - 1.0f) * hsv.y + 1.0f) * hsv.z);
 }
 //----------------------------------------------------------------------------
 float3 RGB_to_HSV(const float3& rgb) {
     float3 HCV = RGB_to_HCV(rgb);
     float S = HCV.y / (HCV.z + SmallEpsilon);
-    return float3(HCV.x, S, HCV.z);
+    return Saturate(float3(HCV.x, S, HCV.z));
 }
 //----------------------------------------------------------------------------
 // IQ's goodness
@@ -408,6 +431,43 @@ float3 RGB_to_YCoCg(const float3& rgb) {
     float Cg = rgb.y - tmp;
     float Co = rgb.x - rgb.z;
     return float3(y * 0.5f, Co*0.5f+0.5f, Cg*0.5f+0.5f);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// A perceptual color space for image processing
+// https://bottosson.github.io/posts/oklab/
+//----------------------------------------------------------------------------
+float3 RGB_to_OKLab(const float3& lin) {
+    const float l = 0.4122214708f * lin.x + 0.5363325363f * lin.y + 0.0514459929f * lin.z;
+    const float m = 0.2119034982f * lin.x + 0.6806995451f * lin.y + 0.1073969566f * lin.z;
+    const float s = 0.0883024619f * lin.x + 0.2817188376f * lin.y + 0.6299787005f * lin.z;
+
+    const float l_ = cbrtf(l);
+    const float m_ = cbrtf(m);
+    const float s_ = cbrtf(s);
+
+    return {
+        0.2104542553f * l_ + 0.7936177850f * m_ - 0.0040720468f * s_,
+        1.9779984951f * l_ - 2.4285922050f * m_ + 0.4505937099f * s_,
+        0.0259040371f * l_ + 0.7827717662f * m_ - 0.8086757660f * s_,
+    };
+}
+//----------------------------------------------------------------------------
+float3 OKLab_to_RGB(const float3& oklab) {
+    const float l_ = oklab.x + 0.3963377774f * oklab.y + 0.2158037573f * oklab.z;
+    const float m_ = oklab.x - 0.1055613458f * oklab.y - 0.0638541728f * oklab.z;
+    const float s_ = oklab.x - 0.0894841775f * oklab.y - 1.2914855480f * oklab.z;
+
+    const float l = l_ * l_ * l_;
+    const float m = m_ * m_ * m_;
+    const float s = s_ * s_ * s_;
+
+    return {
+        +4.0767416621f * l - 3.3077115913f * m + 0.2309699292f * s,
+        -1.2684380046f * l + 2.6097574011f * m - 0.3413193965f * s,
+        -0.0041960863f * l - 0.7034186147f * m + 1.7076147010f * s,
+    };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

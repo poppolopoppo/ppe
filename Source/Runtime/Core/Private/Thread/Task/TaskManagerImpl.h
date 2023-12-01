@@ -19,7 +19,6 @@ public:
     explicit FTaskManagerImpl(FTaskManager& manager);
     ~FTaskManagerImpl();
 
-    FTaskFiberPool& Fibers() { return _fibers; }
     FTaskManager& Manager() { return _manager; }
     FTaskScheduler& Scheduler() { return _scheduler; }
     FSynchronizationBarrier& Sync() { return _sync; }
@@ -55,8 +54,6 @@ private:
     using FTaskQueued = FTaskScheduler::FTaskQueued;
 
     FTaskScheduler _scheduler;
-    FTaskFiberPool _fibers;
-
     FTaskManager& _manager;
     FSynchronizationBarrier _sync; // for broadcast
     VECTOR(Task, std::thread) _threads;
@@ -65,7 +62,6 @@ private:
     mutable FTimeline _dumpStatsCooldown;
 #endif
 
-    static void WorkerLoop_();
     static FCompletionPort* StartPortIFN_(FCompletionPort* port, size_t n) NOEXCEPT;
 };
 //----------------------------------------------------------------------------

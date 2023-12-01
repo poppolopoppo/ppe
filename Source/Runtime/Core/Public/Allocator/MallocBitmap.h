@@ -2,10 +2,14 @@
 
 #include "Core_fwd.h"
 
+#include "Allocator/AllocatorBlock.h"
 #include "Allocator/Malloc.h"
 #include "IO/TextWriter_fwd.h"
 
 namespace PPE {
+#if !USE_PPE_FINAL_RELEASE
+struct FBitmapHeapInfo;
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -17,7 +21,7 @@ public:
     static const size_t MediumMaxAllocSize;
 
     static void* MediumAlloc(size_t sz, size_t alignment);
-    static void* MediumResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT;
+    static void* MediumReallocIFP(void* ptr, size_t sz);
     static void MediumFree(void* ptr);
 
     static void MediumTrim();
@@ -30,7 +34,7 @@ public:
     static const size_t LargeMaxAllocSize;
 
     static void* LargeAlloc(size_t sz, size_t alignment);
-    static void* LargeResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT;
+    static void* LargeReallocIFP(void* ptr, size_t sz);
     static void LargeFree(void* ptr);
 
     static void LargeTrim();
@@ -42,10 +46,9 @@ public:
     // large+medium
     static const size_t MaxAllocSize;
 
-    static void* HeapAlloc(size_t sz, size_t alignment);
-    static void* HeapResize(void* ptr, size_t newSize, size_t oldSize) NOEXCEPT;
+    static FAllocatorBlock HeapAlloc(size_t sz, size_t alignment);
     NODISCARD static bool HeapFree_ReturnIfAliases(void* ptr);
-    static void HeapFree(void* ptr) { Verify(HeapFree_ReturnIfAliases(ptr)); }
+    static void HeapFree(FAllocatorBlock blk) { Verify(HeapFree_ReturnIfAliases(blk.Data)); }
 
     static void MemoryTrim();
 
@@ -59,9 +62,19 @@ public:
     }
 
 #if !USE_PPE_FINAL_RELEASE
+    static size_t DumpMediumHeapInfo(FBitmapHeapInfo* pInfos) NOEXCEPT;
+    static size_t DumpLargeHeapInfo(FBitmapHeapInfo* pInfos) NOEXCEPT;
+
+    static void DumpMediumHeapInfo(FTextWriter& oss) NOEXCEPT;
+    static void DumpLargeHeapInfo(FTextWriter& oss) NOEXCEPT;
+
     static void DumpMediumHeapInfo(FWTextWriter& oss) NOEXCEPT;
     static void DumpLargeHeapInfo(FWTextWriter& oss) NOEXCEPT;
 
+    static void DumpHeapInfo(FTextWriter& oss) NOEXCEPT {
+        DumpMediumHeapInfo(oss);
+        DumpLargeHeapInfo(oss);
+    }
     static void DumpHeapInfo(FWTextWriter& oss) NOEXCEPT {
         DumpMediumHeapInfo(oss);
         DumpLargeHeapInfo(oss);

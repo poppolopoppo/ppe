@@ -93,15 +93,15 @@ NODISCARD EShLanguage EShaderType_ToShLanguage(EShaderType shaderType) {
 }
 //----------------------------------------------------------------------------
 struct FGLSLangError {
-    FWStringView Filename;
-    FWStringView Description;
+    FStringView Filename;
+    FStringView Description;
     u32 SourceIndex{ 0 };
     u32 Line{ 0 };
     bool IsError{ false };
 
-    bool Parse(FWStringView in) {
-        CONSTEXPR FWStringView c_error = L"error"_view;
-        CONSTEXPR FWStringView c_warning = L"warning"_view;
+    bool Parse(FStringView in) {
+        CONSTEXPR FStringView c_error = "error"_view;
+        CONSTEXPR FStringView c_warning = "warning"_view;
 
         EatSpaces(in);
 
@@ -118,14 +118,14 @@ struct FGLSLangError {
             return false;
         }
 
-        if (in.front() != L':')
+        if (in.front() != ':')
             return false;
         in = in.ShiftFront();
 
         EatSpaces(in);
 
-        const FWStringView id = EatAlnums(in);
-        if (in.front() != L':')
+        const FStringView id = EatAlnums(in);
+        if (in.front() != ':')
             return false;
         in = in.ShiftFront();
 
@@ -136,7 +136,7 @@ struct FGLSLangError {
         else
             Filename = id;
 
-        const FWStringView line = EatDigits(in);
+        const FStringView line = EatDigits(in);
         if (line.empty())
             return false;
         in = in.CutStartingAt(line.size());
@@ -155,7 +155,7 @@ struct FGLSLangError {
 // FVulkanSpirvCompiler::FCompilationContext
 //----------------------------------------------------------------------------
 struct FVulkanSpirvCompiler::FCompilationContext {
-    TPtrRef<FWStringBuilder> Log;
+    TPtrRef<FStringBuilder> Log;
     TPtrRef<FGLSLangResult> Glslang;
     TPtrRef<FIncludeResolver> Resolver;
     TPtrRef<FShaderReflection> Reflection;
@@ -319,7 +319,7 @@ bool FVulkanSpirvCompiler::CheckShaderFeatures_(EShaderType shaderType) const {
 bool FVulkanSpirvCompiler::Compile(
     FPipelineDesc::FShader* outShader,
     FShaderReflection* outReflection,
-    FWStringBuilder* outLog,
+    FStringBuilder* outLog,
     EShaderType shaderType,
     EShaderLangFormat srcShaderFormat,
     EShaderLangFormat dstShaderFormat,
@@ -327,7 +327,7 @@ bool FVulkanSpirvCompiler::Compile(
     FConstChar source
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) const {
     outLog->clear();
-    LOG_CHECK(PipelineCompiler, Meta::EnumAnd(dstShaderFormat, EShaderLangFormat::_StorageFormatMask) == EShaderLangFormat::SPIRV);
+    PPE_LOG_CHECK(PipelineCompiler, Meta::EnumAnd(dstShaderFormat, EShaderLangFormat::_StorageFormatMask) == EShaderLangFormat::SPIRV);
 
     dstShaderFormat -= EShaderLangFormat::_DebugModeMask;
 
@@ -347,7 +347,7 @@ bool FVulkanSpirvCompiler::Compile(
         compilationContext.Glslang = glslang;
         compilationContext.Resolver = resolver;
 
-        LOG_CHECK(PipelineCompiler, ParseGLSL_(
+        PPE_LOG_CHECK(PipelineCompiler, ParseGLSL_(
             compilationContext,
             shaderType, srcShaderFormat, dstShaderFormat,
             entry, source, resolver ));
@@ -370,14 +370,14 @@ bool FVulkanSpirvCompiler::Compile(
         // #TODO: caching with shaderFingerprint?
 
         FRawData spirv;
-        LOG_CHECK(PipelineCompiler, CompileSPIRV_(&spirv, compilationContext));
-        LOG_CHECK(PipelineCompiler, BuildReflection_(compilationContext));
+        PPE_LOG_CHECK(PipelineCompiler, CompileSPIRV_(&spirv, compilationContext));
+        PPE_LOG_CHECK(PipelineCompiler, BuildReflection_(compilationContext));
 
         if (_compilationFlags & EShaderCompilationFlags::ParseAnnotations) {
-            LOG_CHECK(PipelineCompiler, ParseAnnotations_(compilationContext, source.MakeView()));
+            PPE_LOG_CHECK(PipelineCompiler, ParseAnnotations_(compilationContext, source.MakeView()));
 
             for (const auto& file : resolver.Results())
-                 LOG_CHECK(PipelineCompiler, ParseAnnotations_(compilationContext, file->Source()));
+                 PPE_LOG_CHECK(PipelineCompiler, ParseAnnotations_(compilationContext, file->Source()));
         }
 
         outShader->Specializations = outReflection->Specializations;
@@ -388,7 +388,7 @@ bool FVulkanSpirvCompiler::Compile(
     const EShaderLangFormat debugModes = (Meta::EnumAnd(srcShaderFormat, EShaderLangFormat::_DebugModeMask) + _debugFlags);
 
     if (debugModes != EShaderLangFormat::Unknown) {
-        LOG_CHECK(PipelineCompiler, CheckShaderFeatures_(shaderType));
+        PPE_LOG_CHECK(PipelineCompiler, CheckShaderFeatures_(shaderType));
 
         for (auto allModes = MakeEnumBitMask(debugModes); allModes; ) {
             const auto mode = static_cast<EShaderLangFormat>(1u << allModes.PopFront_AssumeNotEmpty());
@@ -400,7 +400,7 @@ bool FVulkanSpirvCompiler::Compile(
             compilationContext.Glslang = glslang;
             compilationContext.Resolver = resolver;
 
-            LOG_CHECK(PipelineCompiler, ParseGLSL_(
+            PPE_LOG_CHECK(PipelineCompiler, ParseGLSL_(
                 compilationContext,
                 shaderType, srcShaderFormat, dstShaderFormat,
                 entry, source,
@@ -419,17 +419,17 @@ bool FVulkanSpirvCompiler::Compile(
 
             switch (mode) {
             case EShaderLangFormat::EnableDebugTrace:
-                LOG_CHECK(PipelineCompiler, trace.InsertTraceRecording(interm, DebugDescriptorSet));
+                PPE_LOG_CHECK(PipelineCompiler, trace.InsertTraceRecording(interm, DebugDescriptorSet));
                 break;
             case EShaderLangFormat::EnableProfiling:
-                LOG_CHECK(PipelineCompiler, trace.InsertFunctionProfiler(interm, DebugDescriptorSet, _features.EnableShaderSubgroupClock, _features.EnableShaderDeviceClock));
+                PPE_LOG_CHECK(PipelineCompiler, trace.InsertFunctionProfiler(interm, DebugDescriptorSet, _features.EnableShaderSubgroupClock, _features.EnableShaderDeviceClock));
                 break;
             case EShaderLangFormat::EnableTimeMap:
-                LOG_CHECK(PipelineCompiler, trace.InsertShaderClockHeatmap(interm, DebugDescriptorSet));
+                PPE_LOG_CHECK(PipelineCompiler, trace.InsertShaderClockHeatmap(interm, DebugDescriptorSet));
                 break;
 
             default:
-                LOG(PipelineCompiler, Error, L"unsupported shader debug mode: 0x{0:#8X}", Meta::EnumOrd(mode));
+                PPE_LOG(PipelineCompiler, Error, "unsupported shader debug mode: 0x{0:#8X}", Meta::EnumOrd(mode));
                 break;
             }
 
@@ -451,7 +451,7 @@ bool FVulkanSpirvCompiler::Compile(
             // #TODO: caching with debugFingerprint?
 
             FRawData debugSpirv;
-            LOG_CHECK(PipelineCompiler, CompileSPIRV_(&debugSpirv, compilationContext));
+            PPE_LOG_CHECK(PipelineCompiler, CompileSPIRV_(&debugSpirv, compilationContext));
 
             PShaderBinaryData debugShader{
                 NEW_REF(PipelineCompiler, FVulkanDebuggableShaderSPIRV,
@@ -511,7 +511,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
         shProfile = ECoreProfile;
         break;
     default:
-        LOG(PipelineCompiler, Error, L"unsupported source shader format");
+        PPE_LOG(PipelineCompiler, Error, "unsupported source shader format");
         return false;
     }
 
@@ -544,7 +544,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
             ctx.SpirvTargetEnvironment = SPV_ENV_VULKAN_1_3;
             break;
         default:
-            LOG(PipelineCompiler, Error, L"unsupported vulkan version: {0}", dstVersion);
+            PPE_LOG(PipelineCompiler, Error, "unsupported vulkan version: {0}", dstVersion);
             return false;
         }
         break;
@@ -558,7 +558,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
         break;
     }
     default:
-        LOG(PipelineCompiler, Error, L"unsupported source shader format");
+        PPE_LOG(PipelineCompiler, Error, "unsupported source shader format");
         return false;
     }
 
@@ -615,32 +615,32 @@ NODISCARD static bool OptimizeSPIRV_(
         [&log](spv_message_level_t level, const char* source, const spv_position_t& position, const char* message) {
             switch (level) {
             case SPV_MSG_FATAL:
-                log << L"fatal: ";
+                log << "fatal: ";
                 break;
             case SPV_MSG_INTERNAL_ERROR:
-                log << L"internal error: ";
+                log << "internal error: ";
                 break;
             case SPV_MSG_ERROR:
-                log << L"error: ";
+                log << "error: ";
                 break;
             case SPV_MSG_WARNING:
-                log << L"warning: ";
+                log << "warning: ";
                 break;
             case SPV_MSG_INFO:
-                log << L"info: ";
+                log << "info: ";
                 break;
             case SPV_MSG_DEBUG:
-                log << L"debug: ";
+                log << "debug: ";
                 break;
             }
 
             if (source)
-                log << MakeCStringView(source) << L':';
+                log << MakeCStringView(source) << ':';
 
-            log << position.line << L':' << position.column << L':' << position.index << L':';
+            log << position.line << ':' << position.column << ':' << position.index << ':';
 
             if (message)
-                log << L' ' << MakeCStringView(message);
+                log << ' ' << MakeCStringView(message);
         });
 
     spvtools::OptimizerOptions options{};
@@ -661,7 +661,7 @@ bool FVulkanSpirvCompiler::CompileSPIRV_(FRawData* outSPIRV, const FCompilationC
 
     const TIntermediate* const intermediate = ctx.Glslang->Program.getIntermediate(
         ctx.Glslang->Shader->getStage() );
-    LOG_CHECK(PipelineCompiler, !!intermediate);
+    PPE_LOG_CHECK(PipelineCompiler, !!intermediate);
 
     SpvOptions spvOptions{};
     spvOptions.generateDebugInfo = (_compilationFlags & EShaderCompilationFlags::GenerateDebug);
@@ -678,7 +678,7 @@ bool FVulkanSpirvCompiler::CompileSPIRV_(FRawData* outSPIRV, const FCompilationC
 
 #ifdef INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_
     if (_compilationFlags & EShaderCompilationFlags::StrongOptimization)
-        LOG_CHECK(PipelineCompiler, OptimizeSPIRV_(*ctx.Log, spirvTmp, ctx.SpirvTargetEnvironment));
+        PPE_LOG_CHECK(PipelineCompiler, OptimizeSPIRV_(*ctx.Log, spirvTmp, ctx.SpirvTargetEnvironment));
 #endif
 
     *outSPIRV = FRawData{ MakeView(spirvTmp).Cast<const u8>() };
@@ -692,15 +692,15 @@ void FVulkanSpirvCompiler::OnCompilationFailed_(
     // pattern: <error/warning>: <number>:<line>: <description>
     // pattern: <error/warning>: <file>:<line>: <description>
 
-    FWStringView line;
-    FWStringView log{ ctx.Log->Written() };
+    FStringView line;
+    FStringView log{ ctx.Log->Written() };
 
     u32 prevErrorLine{ 0 };
 
     FWStringBuilder parsedLog;
     parsedLog.reserve(ctx.Log->capacity());
 
-    while (Split(log, L'\n', line)) {
+    while (Split(log, '\n', line)) {
         EatSpaces(line);
         if (line.empty())
             continue;
@@ -720,15 +720,15 @@ void FVulkanSpirvCompiler::OnCompilationFailed_(
                 FStringView sourceLine;
                 FStringView in{ error.SourceIndex < source.size() ? source[error.SourceIndex].MakeView() : "" };
 
-                if (SplitNth(in, L'\n', sourceLine, error.Line - 1)) {
+                if (SplitNth(in, '\n', sourceLine, error.Line - 1)) {
                     parsed = true;
-                    parsedLog << L"in source (" << error.SourceIndex << L':' << error.Line << L"): " << Strip(sourceLine) << Eol;
+                    parsedLog << "in source (" << error.SourceIndex << ':' << error.Line << "): " << Strip(sourceLine) << Eol;
                 }
             }
         }
 
         if (not parsed)
-            parsedLog << ARG0_IF_ASSERT(L"<unknown> " <<) line << Eol;
+            parsedLog << ARG0_IF_ASSERT("<unknown> " <<) line << Eol;
     }
 
     size_t len;
@@ -746,14 +746,14 @@ bool FVulkanSpirvCompiler::BuildReflection_(FCompilationContext& ctx) const {
 
     ctx.Intermediate = ctx.Glslang->Program.getIntermediate(
         ctx.Glslang->Shader->getStage() );
-    LOG_CHECK(PipelineCompiler, !!ctx.Intermediate);
+    PPE_LOG_CHECK(PipelineCompiler, !!ctx.Intermediate);
 
     // deserialize shader
     TIntermNode* const root = ctx.Intermediate->getTreeRoot();
     Assert(root);
 
-    LOG_CHECK(PipelineCompiler, ProcessExternalObjects_(ctx, *root));
-    LOG_CHECK(PipelineCompiler, ProcessShaderInfos_(ctx));
+    PPE_LOG_CHECK(PipelineCompiler, ProcessExternalObjects_(ctx, *root));
+    PPE_LOG_CHECK(PipelineCompiler, ProcessShaderInfos_(ctx));
 
     ctx.Intermediate.reset();
     return true;
@@ -871,7 +871,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                     found = Meta::Visit(jt->second.Data,
                         [&](FPipelineDesc::FImage& image) {
                             if (annotations & EShaderAnnotation::DynamicOffset)
-                                *ctx.Log << L"@dynamic-offset is only supported on buffers, but found on image <" << name << L">" << Eol;
+                                *ctx.Log << "@dynamic-offset is only supported on buffers, but found on image <" << name << ">" << Eol;
                             if (annotations & EShaderAnnotation::WriteDiscard)
                                 image.State |= EResourceState::InvalidateBefore;
                             return true;
@@ -880,7 +880,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                             if (annotations & EShaderAnnotation::DynamicOffset)
                                 ubo.State |= EResourceState::_BufferDynamicOffset;
                             if (annotations & EShaderAnnotation::WriteDiscard)
-                                *ctx.Log << L"@write-discard is only supported on images or storage buffers, but found on uniform buffer <" << name << L">" << Eol;
+                                *ctx.Log << "@write-discard is only supported on images or storage buffers, but found on uniform buffer <" << name << ">" << Eol;
                             return true;
                         },
                         [&](FPipelineDesc::FStorageBuffer& ssbo) {
@@ -891,19 +891,19 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                             return true;
                         },
                         [&](FPipelineDesc::FTexture&) {
-                            *ctx.Log << L"unsupported annotation found on texture <" << name << L">" << Eol;
+                            *ctx.Log << "unsupported annotation found on texture <" << name << ">" << Eol;
                             return false;
                         },
                         [&](FPipelineDesc::FSampler&) {
-                            *ctx.Log << L"unsupported annotation found on sampler <" << name << L">" << Eol;
+                            *ctx.Log << "unsupported annotation found on sampler <" << name << ">" << Eol;
                             return false;
                         },
                         [&](FPipelineDesc::FSubpassInput&) {
-                            *ctx.Log << L"unsupported annotation found on subpass input <" << name << L">" << Eol;
+                            *ctx.Log << "unsupported annotation found on subpass input <" << name << ">" << Eol;
                             return false;
                         },
                         [&](FPipelineDesc::FRayTracingScene&) {
-                            *ctx.Log << L"unsupported annotation found on raytracing scene input <" << name << L">" << Eol;
+                            *ctx.Log << "unsupported annotation found on raytracing scene input <" << name << ">" << Eol;
                             return false;
                         },
                         [](std::monostate&) {
@@ -934,7 +934,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
             commentSingleLine = false;
 
             if ((annotations ^ (EShaderAnnotation::DynamicOffset | EShaderAnnotation::WriteDiscard)) && not commentMultiLine) {
-                LOG_CHECK(PipelineCompiler, parseUniform());
+                PPE_LOG_CHECK(PipelineCompiler, parseUniform());
                 annotations = Default;
             }
             continue;
@@ -959,7 +959,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         });
 
         if (Equals(id, "set")) {
-            LOG_CHECK(PipelineCompiler, parseSet());
+            PPE_LOG_CHECK(PipelineCompiler, parseSet());
             annotations |= EShaderAnnotation::Set;
         }
         else
@@ -969,7 +969,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         if (Equals(id, "dynamic-offset"))
             annotations |= EShaderAnnotation::DynamicOffset;
         else {
-            LOG(PipelineCompiler, Error, L"unsupported annotation: @{0}", id);
+            PPE_LOG(PipelineCompiler, Error, "unsupported annotation: @{0}", id);
             return false;
         }
 
@@ -990,14 +990,14 @@ bool FVulkanSpirvCompiler::ProcessExternalObjects_(
             case TOperator::EOpSequence:
                 for (TIntermNode* interm : aggr->getSequence()) {
                     Assert(interm);
-                    LOG_CHECK(PipelineCompiler, ProcessExternalObjects_(ctx, *interm));
+                    PPE_LOG_CHECK(PipelineCompiler, ProcessExternalObjects_(ctx, *interm));
                 }
             break;
             // uniforms, buffers, ...
             case TOperator::EOpLinkerObjects:
                 for (TIntermNode* interm : aggr->getSequence()) {
                     Assert(interm);
-                    LOG_CHECK(PipelineCompiler, DeserializeExternalObjects_(ctx, *interm));
+                    PPE_LOG_CHECK(PipelineCompiler, DeserializeExternalObjects_(ctx, *interm));
                 }
             break;
         default: break;
@@ -1034,7 +1034,7 @@ FPipelineDesc::FDescriptorSet& FVulkanSpirvCompiler::ToDescriptorSet_(const FCom
 }
 //----------------------------------------------------------------------------
 FStringView FVulkanSpirvCompiler::ExtractNodeName_(const TIntermNode* node) {
-    LOG_CHECK(PipelineCompiler, node and node->getAsSymbolNode());
+    PPE_LOG_CHECK(PipelineCompiler, node and node->getAsSymbolNode());
 
     const glslang::TString& str = node->getAsSymbolNode()->getName();
     const FStringView result{ str.c_str(), str.size() };
@@ -1120,7 +1120,7 @@ EImageSampler FVulkanSpirvCompiler::ExtractImageSampler_(const glslang::TType& t
             resource |= EImageSampler::_Int;
         }
         else {
-            LOG(PipelineCompiler, Error, L"unsupported image value type");
+            PPE_LOG(PipelineCompiler, Error, "unsupported image value type");
             return Zero;
         }
 
@@ -1223,7 +1223,7 @@ EVertexFormat FVulkanSpirvCompiler::ExtractVertexFormat_(const glslang::TType& t
     }
 
     if (type.isMatrix()) {
-        LOG(PipelineCompiler, Error, L"missing support for matrices!!!");
+        PPE_LOG(PipelineCompiler, Error, "missing support for matrices!!!");
         AssertNotImplemented(); // #TODO: add support for matrices
     }
 
@@ -1233,7 +1233,7 @@ EVertexFormat FVulkanSpirvCompiler::ExtractVertexFormat_(const glslang::TType& t
 EFragmentOutput FVulkanSpirvCompiler::ExtractFragmentOutput_(const glslang::TType& type) {
     using namespace glslang;
 
-    LOG_CHECK(PipelineCompiler, type.getVectorSize() == 4);
+    PPE_LOG_CHECK(PipelineCompiler, type.getVectorSize() == 4);
 
     switch (type.getBasicType()) {
     case TBasicType::EbtFloat: return EFragmentOutput::Float4;
@@ -1257,10 +1257,10 @@ bool FVulkanSpirvCompiler::CalculateStructSize_(
     *outStaticSize = *outArrayStride = 0;
     *outMinOffset = ~0u;
 
-    LOG_CHECK(PipelineCompiler, bufferType.isStruct());
-    LOG_CHECK(PipelineCompiler, bufferType.getQualifier().isUniformOrBuffer() or
+    PPE_LOG_CHECK(PipelineCompiler, bufferType.isStruct());
+    PPE_LOG_CHECK(PipelineCompiler, bufferType.getQualifier().isUniformOrBuffer() or
                                 bufferType.getQualifier().layoutPushConstant );
-    LOG_CHECK(PipelineCompiler, bufferType.getQualifier().layoutPacking == ElpStd140 or
+    PPE_LOG_CHECK(PipelineCompiler, bufferType.getQualifier().layoutPacking == ElpStd140 or
                                 bufferType.getQualifier().layoutPacking == ElpStd430 );
 
     int memberSize{ 0 };
@@ -1420,7 +1420,7 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
     // push constants
     if (qualifier.layoutPushConstant) {
         u32 staticSize{}, arrayStride{}, minOffset{};
-        LOG_CHECK(PipelineCompiler, CalculateStructSize_(&staticSize, &arrayStride, &minOffset, ctx, type));
+        PPE_LOG_CHECK(PipelineCompiler, CalculateStructSize_(&staticSize, &arrayStride, &minOffset, ctx, type));
 
         Assert(staticSize >= minOffset);
         staticSize -= minOffset;
@@ -1437,7 +1437,7 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
     if (type.getBasicType() == TBasicType::EbtBlock and (
         qualifier.storage == TStorageQualifier::EvqUniform or
         qualifier.storage == TStorageQualifier::EvqBuffer )) {
-        LOG_CHECK(PipelineCompiler, type.isStruct());
+        PPE_LOG_CHECK(PipelineCompiler, type.isStruct());
 
         if (qualifier.layoutShaderRecord)
             return true;
@@ -1448,8 +1448,8 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
             ubuf.State = EResourceState::UniformRead | EResourceState_FromShaders(ctx.CurrentStage);
 
             u32 stride{}, offset{};
-            LOG_CHECK(PipelineCompiler, CalculateStructSize_(&ubuf.Size, &stride, &offset, ctx, type));
-            LOG_CHECK(PipelineCompiler, 0 == offset);
+            PPE_LOG_CHECK(PipelineCompiler, CalculateStructSize_(&ubuf.Size, &stride, &offset, ctx, type));
+            PPE_LOG_CHECK(PipelineCompiler, 0 == offset);
 
             insertUniform(ExtractBufferUniformID_(type), std::move(ubuf));
             return true;
@@ -1461,8 +1461,8 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
             sbuf.State = ExtractShaderAccessType_(qualifier) | EResourceState_FromShaders(ctx.CurrentStage);
 
             u32 offset{};
-            LOG_CHECK(PipelineCompiler, CalculateStructSize_(&sbuf.StaticSize, &sbuf.ArrayStride, &offset, ctx, type));
-            LOG_CHECK(PipelineCompiler, 0 == offset);
+            PPE_LOG_CHECK(PipelineCompiler, CalculateStructSize_(&sbuf.StaticSize, &sbuf.ArrayStride, &offset, ctx, type));
+            PPE_LOG_CHECK(PipelineCompiler, 0 == offset);
 
             insertUniform(ExtractBufferUniformID_(type), std::move(sbuf));
             return true;
@@ -1488,11 +1488,11 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
 
     // uniform
     if (qualifier.storage == TStorageQualifier::EvqUniform) {
-        LOG(PipelineCompiler, Error, L"uniform is not supported for Vulkan!");
+        PPE_LOG(PipelineCompiler, Error, "uniform is not supported for Vulkan!");
         return false;
     }
 
-    LOG(PipelineCompiler, Error, L"uniform external type!");
+    PPE_LOG(PipelineCompiler, Error, "uniform external type!");
     return false;
 }
 //----------------------------------------------------------------------------
@@ -1529,7 +1529,7 @@ void FVulkanSpirvCompiler::MergeWithGeometryInputPrimitive_(
     case TLayoutGeometry::ElgQuads:
     case TLayoutGeometry::ElgIsolines:
     case TLayoutGeometry::ElgNone:
-        LOG(PipelineCompiler, Error, L"invalid geometry input primitive type!");
+        PPE_LOG(PipelineCompiler, Error, "invalid geometry input primitive type!");
         break;
     }
 }

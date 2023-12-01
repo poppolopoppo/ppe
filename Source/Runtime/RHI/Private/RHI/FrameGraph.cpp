@@ -16,7 +16,7 @@ template <u32 _Id>
 NODISCARD PPipelineResources CreatePipelineResources_(
     const IFrameGraph& fg, details::TResourceId<_Id> pipeline, const FDescriptorSetID& id) {
     auto resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(RHI, fg.InitPipelineResources(resources.get(), pipeline, id));
+    PPE_LOG_CHECK(RHI, fg.InitPipelineResources(resources.get(), pipeline, id));
     return resources;
 }
 //----------------------------------------------------------------------------

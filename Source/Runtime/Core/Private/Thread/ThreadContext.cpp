@@ -187,7 +187,7 @@ void FThreadContext::SetAffinityMask(u64 mask) const {
     Assert(0 != mask);
     Assert(std::this_thread::get_id() == _threadId);
 
-    LOG(Thread, Debug, L"set thread {0} affinity mask to {1:#16b}", ThreadId(), mask);
+    PPE_LOG(Thread, Debug, "set thread {0} affinity mask to {1:#16b}", ThreadId(), mask);
 
     FPlatformThread::SetAffinityMask(mask);
 }
@@ -201,7 +201,7 @@ EThreadPriority FThreadContext::Priority() const {
 void FThreadContext::SetPriority(EThreadPriority priority) const {
     Assert(std::this_thread::get_id() == _threadId);
 
-    LOG(Thread, Debug, L"set thread {0} priority to {1}", ThreadId(), priority);
+    PPE_LOG(Thread, Debug, "set thread {0} priority to {1}", ThreadId(), priority);
 
     return FPlatformThread::SetPriority(priority);
 }
@@ -250,7 +250,7 @@ void FThreadContextStartup::Start(const char* name, size_t tag) {
 
 #if USE_PPE_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
-    LOG(Thread, Debug, L"start thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
+    PPE_LOG(Thread, Debug, "start thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
 }
 //----------------------------------------------------------------------------
@@ -261,7 +261,7 @@ void FThreadContextStartup::Start_MainThread() {
 
 #if USE_PPE_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
-    LOG(Thread, Debug, L"start thread '{0}' with tag = {1} ({2}) <MainThread>", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
+    PPE_LOG(Thread, Debug, "start thread '{0}' with tag = {1} ({2}) <MainThread>", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
 
     FThreadContext& mainThread = FThreadLocalContext_::Get();
@@ -272,7 +272,7 @@ void FThreadContextStartup::Start_MainThread() {
 void FThreadContextStartup::Shutdown() {
 #if USE_PPE_LOGGER
     const FThreadContext& ctx = CurrentThreadContext();
-    LOG(Thread, Debug, L"stop thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
+    PPE_LOG(Thread, Debug, "stop thread '{0}' with tag = {1} ({2})", MakeCStringView(ctx.Name()), ctx.Tag(), ctx.ThreadId());
 #endif
 
     FAllocaStartup::Shutdown();

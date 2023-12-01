@@ -252,7 +252,7 @@ void Compress(FCompressedImage* dst, const FImage* src, FCompressedImage::EQuali
         break;
     }
 
-    LOG(Pixmap, Info, L"Compress {0}_{1}_{2}:{3}x{4} image to {5}",
+    PPE_LOG(Pixmap, Info, "Compress {0}_{1}_{2}:{3}x{4} image to {5}",
         src->Mask(), src->Depth(), src->Space(), src->Width(), src->Height(),
         format );
 

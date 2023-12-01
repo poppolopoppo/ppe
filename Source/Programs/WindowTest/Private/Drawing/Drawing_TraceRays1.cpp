@@ -10,7 +10,7 @@ bool Drawing_TraceRays1_(FWindowTestApp& app) {
     using namespace PPE::RHI;
 
     if (not (app.RHI().Features() & ERHIFeature::RayTracing)) {
-        LOG(WindowTest, Warning, L"Drawing_TraceRays1_: skipped due to lack of ray tracing support");
+        PPE_LOG(WindowTest, Warning, "Drawing_TraceRays1_: skipped due to lack of ray tracing support");
         return true;
     }
 
@@ -68,7 +68,7 @@ void main ()
 ARGS_IF_RHIDEBUG("Drawing_TraceRays1_RayClosestHit"));
 
     const TAutoResource<FRTPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Drawing_TraceRays1"))) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     const u32 indices[] = {0, 1, 2};
     const float3 vertices[] = {
@@ -90,19 +90,19 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays1_RayClosestHit"));
     TAutoResource<FRTGeometryID> rtGeometry{ fg.ScopedResource(fg.CreateRayTracingGeometry(
         FRayTracingGeometryDesc({ trianglesDesc }),
         Default ARGS_IF_RHIDEBUG("TraceRays1_Geometry"))) };
-    LOG_CHECK(WindowTest, rtGeometry.Valid());
+    PPE_LOG_CHECK(WindowTest, rtGeometry.Valid());
 
     TAutoResource<FRTSceneID> rtScene{ fg.ScopedResource(fg.CreateRayTracingScene(
         FRayTracingSceneDesc(1),
         Default ARGS_IF_RHIDEBUG("TraceRays1_Scene"))) };
-    LOG_CHECK(WindowTest, rtScene.Valid());
+    PPE_LOG_CHECK(WindowTest, rtScene.Valid());
 
     TAutoResource<FRTShaderTableID> rtShaders{ fg.ScopedResource(
         fg.CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG("TraceRays1_Shaders"))) };
-    LOG_CHECK(WindowTest, rtShaders.Valid());
+    PPE_LOG_CHECK(WindowTest, rtShaders.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, "0"_descriptorset));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, "0"_descriptorset));
 
     bool dataIsCorrect = false;
     const auto onLoaded = [&dataIsCorrect](const FImageView& imageData) {
@@ -114,8 +114,8 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays1_RayClosestHit"));
             imageData.Load(&texel, uint3(ix, iy, 0));
 
             const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
-            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", float2(x, y), texel, color, isEqual);
-            LOG_CHECK(WindowTest, isEqual);
+            PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", float2(x, y), texel, color, isEqual);
+            PPE_LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);
             return true;
         };
@@ -135,7 +135,7 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays1_RayClosestHit"));
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_TraceRays1")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
 #if 1
     const uint2 viewSize{ 800, 600 };
@@ -144,7 +144,7 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays1_RayClosestHit"));
         FImageDesc{}.SetDimension(viewSize).SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("OutputImage"))) };
-    LOG_CHECK(WindowTest, dstImage.Valid());
+    PPE_LOG_CHECK(WindowTest, dstImage.Valid());
 #else
     FRawImageID dstImage = cmd->SwapchainImage(*app.RHI().Swapchain());
     const uint2 viewSize = fg.Description(dstImage).Dimensions.xy;
@@ -181,10 +181,10 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays1_RayClosestHit"));
         .DependsOn(tTrace));
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

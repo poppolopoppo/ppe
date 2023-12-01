@@ -23,7 +23,7 @@ using TMultiMap = std::multimap<
     _Key,
     _Value,
     _Predicate,
-    TStlAllocator<std::pair<_Key, _Value>, _Allocator>
+    TStlAllocator<std::pair<const _Key, _Value>, _Allocator>
 >;
 //----------------------------------------------------------------------------
 #define MULTIMAP(_DOMAIN, _KEY, _VALUE) \

@@ -11,7 +11,9 @@
     _Macro(FExtname,         Raw,            L".raw") \
     _Macro(FExtname,         Z,              L".z") \
     \
+    _Macro(FExtname,         Bin,            L".bin") \
     _Macro(FExtname,         Bnx,            L".bnx") \
+    \
     _Macro(FExtname,         Csv,            L".csv") \
     _Macro(FExtname,         Json,           L".json") \
     _Macro(FExtname,         Txt,            L".txt") \

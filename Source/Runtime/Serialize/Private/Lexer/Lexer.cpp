@@ -620,7 +620,6 @@ bool FLexer::NextMatch_(FMatch& match) {
     if (_peeking) {
         _peeking = false;
         match = std::move(_peek);
-        _peek = FMatch();
         return (FSymbol::Eof != match.Symbol()->Type());
     }
 
@@ -664,14 +663,14 @@ bool FLexer::NextMatch_(FMatch& match) {
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FLexerException::Description(FWTextWriter& oss) const {
+FTextWriter& FLexerException::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What())
-        << L": with token ["
+        << ": with token ["
         << Match()
-        << L"] at '"
+        << "] at '"
         << Site()
-        << L"' !";
+        << "' !";
 }
 #endif
 //----------------------------------------------------------------------------

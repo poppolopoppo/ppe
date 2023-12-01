@@ -316,7 +316,7 @@ const RTTI::FMetaProperty* FBinaryFormatReader::FetchProperty_(const RTTI::FMeta
         m.Prop = klass.PropertyIFP(m.Name);
 
     if (nullptr == m.Prop) {
-        LOG(Serialize, Error, L"unknown meta property <{0}::{1}>", klass.Name(), m.Name);
+        PPE_LOG(Serialize, Error, "unknown meta property <{0}::{1}>", klass.Name(), m.Name);
         return nullptr;
     }
 

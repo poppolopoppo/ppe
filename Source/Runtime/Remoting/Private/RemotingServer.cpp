@@ -27,7 +27,7 @@ EXTERN_LOG_CATEGORY(PPE_REMOTING_API, Remoting)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FRemotingContext::Failed(Network::EHttpStatus status, FString&& reason) const {
-    LOG(Remoting, Error, L"request \"{0}\" failed with: {1} ({2})", Request.Uri(), status, reason);
+    PPE_LOG(Remoting, Error, "request \"{0}\" failed with: {1} ({2})", Request.Uri(), status, reason);
 
     pResponse->SetStatus(status);
     pResponse->SetReason(std::move(reason));
@@ -93,7 +93,7 @@ void FRemotingServer::Remove(const PBaseEndpoint& endpoint) {
 
     const auto exclusiveEndpoints = _endpoints.LockExclusive();
     const auto it = exclusiveEndpoints->find(prefix);
-    AssertReleaseMessage(L"endpoint not registered", exclusiveEndpoints->end() != it);
+    AssertReleaseMessage("endpoint not registered", exclusiveEndpoints->end() != it);
     Assert_NoAssume(std::get<PBaseEndpoint>(it->second) == endpoint);
 
     exclusiveEndpoints->Erase(it);
@@ -159,13 +159,13 @@ bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRe
         Network::FHttpHeader::FPostMap post;
         if (request.Method() == Network::EHttpMethod::Post &&
             not Network::FHttpHeader::UnpackPost(&post, request) ) {
-            LOG(Remoting, Warning, L"failed to unpack post parameters from request: {0}", request.Uri());
+            PPE_LOG(Remoting, Warning, "failed to unpack post parameters from request: {0}", request.Uri());
             post.clear_ReleaseMemory();
         }
 
         Network::FUriQueryMap query;
         if (not Network::FUri::Unpack(query, request.Uri())) {
-            LOG(Remoting, Warning, L"failed to unpack query parameters from uri: {0}", request.Uri());
+            PPE_LOG(Remoting, Warning, "failed to unpack query parameters from uri: {0}", request.Uri());
             query.clear_ReleaseMemory();
         }
 

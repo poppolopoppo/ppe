@@ -156,37 +156,37 @@ struct TUnaryComplement<void> {
 //----------------------------------------------------------------------------
 // Generic Min/Max/Clamp/Compare() functions
 //----------------------------------------------------------------------------
-template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
 CONSTEXPR const T& Less(const T& a, const T& b) NOEXCEPT {
     return (a < b);
 }
 //----------------------------------------------------------------------------
-template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
 CONSTEXPR const T& Max(const T& a, const T& b) NOEXCEPT {
     return (a < b ? b : a);
 }
 //----------------------------------------------------------------------------
-template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
 CONSTEXPR const T& Min(const T& a, const T& b) NOEXCEPT {
     return (a < b ? a : b);
 }
 //----------------------------------------------------------------------------
-template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
 CONSTEXPR const T& Max3(const T& a, const T& b, const T& c) NOEXCEPT {
     return Max(a, Max(b, c));
 }
 //----------------------------------------------------------------------------
-template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
 CONSTEXPR const T& Min3(const T& a, const T& b, const T& c) NOEXCEPT {
     return Min(a, Min(b, c));
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = TEnableIf<has_trivial_compare_v<_Lhs, _Rhs>> >
+template <typename _Lhs, typename _Rhs, TEnableIf<has_trivial_compare_v<_Lhs, _Rhs>>* = nullptr>
 CONSTEXPR int Compare(const _Lhs& a, const _Rhs& b) NOEXCEPT {
     return (a < b ? -1 : a == b ? 0 : 1);
 }
 //----------------------------------------------------------------------------
-template <typename T, class = TEnableIf<has_trivial_less_v<T, T>>>
+template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
 CONSTEXPR const T& Clamp(const T& value, const T& vmin, const T& vmax) NOEXCEPT {
     return Min(vmax, Max(vmin, value));
 }

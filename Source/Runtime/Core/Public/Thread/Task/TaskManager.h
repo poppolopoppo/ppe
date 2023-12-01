@@ -62,6 +62,9 @@ public:
     void DutyCycle(); // release dangling blocks, but keep cache
     void ReleaseMemory(); // release potentially unused memory
 
+    using FFiberCallback = void(*)();
+    static FFiberCallback WorkerCallbackForFiber();
+
 private:
     TUniquePtr<ITaskContext> _context;
     TUniquePtr<FTaskManagerImpl> _pimpl;

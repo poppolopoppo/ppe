@@ -22,32 +22,32 @@ IModuleInterface::~IModuleInterface() NOEXCEPT {}
 //----------------------------------------------------------------------------
 void IModuleInterface::Start(FModularDomain& domain) {
     Unused(domain);
-    LOG(Modular, Info, L"start application module <{0}> in domain <{1}>", _name, domain.Name());
+    PPE_SLOG(Modular, Info, "start application module", {{"module", _name}, {"domain", domain.Name()}});
 }
 //----------------------------------------------------------------------------
 void IModuleInterface::Shutdown(FModularDomain& domain) {
     Unused(domain);
-    LOG(Modular, Info, L"shutdown application module <{0}> in domain <{1}>", _name, domain.Name());
+    PPE_SLOG(Modular, Info, "shutdown application module", {{"module", _name}, {"domain", domain.Name()}});
 }
 //----------------------------------------------------------------------------
 void IModuleInterface::PostStart(FModularDomain& domain) {
     Unused(domain);
-    LOG(Modular, Info, L"post-start application module <{0}> in domain <{1}>", _name, domain.Name());
+    PPE_SLOG(Modular, Info, "post-start application module", {{"module", _name}, {"domain", domain.Name()}});
 }
 //----------------------------------------------------------------------------
 void IModuleInterface::PreShutdown(FModularDomain& domain) {
     Unused(domain);
-    LOG(Modular, Info, L"pre-shutdown application module <{0}> in domain <{1}>", _name, domain.Name());
+    PPE_SLOG(Modular, Info, "pre-shutdown application module", {{"module", _name}, {"domain", domain.Name()}});
 }
 //----------------------------------------------------------------------------
 void IModuleInterface::DutyCycle(FModularDomain& domain) {
     Unused(domain);
-    LOG(Modular, Info, L"duty-cycle in application module <{0}> in domain <{1}>", _name, domain.Name());
+    PPE_SLOG(Modular, Info, "duty-cycle in application module", {{"module", _name}, {"domain", domain.Name()}});
 }
 //----------------------------------------------------------------------------
 void IModuleInterface::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
     Unused(domain);
-    LOG(Modular, Info, L"release memory in application module <{0}> in domain <{1}>", _name, domain.Name());
+    PPE_SLOG(Modular, Info, "release memory in application module", {{"module", _name}, {"domain", domain.Name()}});
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

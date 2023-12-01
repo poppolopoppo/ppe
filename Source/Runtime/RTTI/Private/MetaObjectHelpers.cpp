@@ -211,19 +211,19 @@ u128 Fingerprint128(const FMetaObject& obj) {
 #if USE_PPE_RTTI_CHECKS
 void CheckMetaClassAllocation(const FMetaClass* metaClass) {
     if (nullptr == metaClass) {
-        LOG(RTTI, Error, L"trying to allocate with a null metaclass");
+        PPE_LOG(RTTI, Error, "trying to allocate with a null metaclass");
         PPE_THROW_IT(FClassException("null metaclass", metaClass));
     }
 
     if (metaClass->IsAbstract()) {
-        LOG(RTTI, Error, L"can't allocate a new object with abstract metaclass \"{0}\" ({1})",
+        PPE_LOG(RTTI, Error, "can't allocate a new object with abstract metaclass \"{0}\" ({1})",
             metaClass->Name(),
             metaClass->Flags());
         PPE_THROW_IT(FClassException("abstract metaclass", metaClass));
     }
 
     if (metaClass->IsDeprecated()) {
-        LOG(RTTI, Warning, L"allocate a new object using deprecated metaclass \"{0}\" ({1})",
+        PPE_LOG(RTTI, Warning, "allocate a new object using deprecated metaclass \"{0}\" ({1})",
             metaClass->Name(),
             metaClass->Flags() );
     }
@@ -433,7 +433,7 @@ private:
         FName Outer;
         FName Name;
         size_t Index;
-        Meta::TPointerWFlags<const void> Ref;
+        Meta::FPointerWFlags Ref;
 
         FMarker_(EMarker type, const PTypeTraits& traits, const FName& outer, const FName& name, size_t index, const void* ref)
         :   Traits(traits)
@@ -451,48 +451,44 @@ private:
     TFixedSizeHashSet<const FMetaObject*, 32> _visiteds;
 
     void OnCircularReference_(const void* ref) {
+        Unused(ref);
         _circular = true;
 
-#if USE_PPE_LOGGER
-        FWStringBuilder oss;
-        oss << L"found a circular reference !" << Eol;
+        PPE_LOG_DIRECT(RTTI, Warning, [this, ref](FTextWriter& oss) {
+            oss << "found a circular reference !" << Eol;
 
-        Fmt::FWIndent indent = Fmt::FWIndent::TwoSpaces();
-        forrange(i, 0, _chain.size()) {
-            const FMarker_& mark = (*_chain[i]);
+            Fmt::FIndent indent = Fmt::FIndent::TwoSpaces();
 
-            Format(oss, L"[{0:#2}]", i);
-            oss << indent;
+            forrange(i, 0, _chain.size()) {
+                const FMarker_& mark = (*_chain[i]);
 
-            if (mark.Ref.Get() == ref)
-                oss << L" -=> ";
-            else
-                oss << L" --- ";
+                Format(oss, "[{0:#2}]", i);
+                oss << indent;
 
-            CONSTEXPR const FWStringView typenames[] = {
-                L"OBJECT   ",
-                L"PROPERTY ",
-                L"CONTAINER",
-                L"STRUCT   "
-            };
+                if (mark.Ref.Get() == ref)
+                    oss << " -=> ";
+                else
+                    oss << " --- ";
 
-            oss << Fmt::Pointer(mark.Ref.Get())
-                << L' ' << typenames[mark.Ref.Flag01()]
-                << L" >>> " << mark.Outer
-                << L" . " << mark.Name
-                << L" [ " << mark.Index
-                << L" ]  (" << mark.Traits->NamedTypeInfos() << L")"
-                << Eol;
+                CONSTEXPR const FStringView typenames[] = {
+                    "OBJECT   ",
+                    "PROPERTY ",
+                    "CONTAINER",
+                    "STRUCT   "
+                };
 
-            indent.Inc();
-        }
+                oss << Fmt::Pointer(mark.Ref.Get())
+                    << ' ' << typenames[mark.Ref.Flag01()]
+                    << " >>> " << mark.Outer
+                    << " . " << mark.Name
+                    << " [ " << mark.Index
+                    << " ]  (" << mark.Traits->NamedTypeInfos()
+                    << ")"
+                    << Eol;
 
-        FLogger::Log(LOG_MAKESITE(RTTI, Info), oss.ToString() );
-
-#else
-        Unused(ref);
-        AssertNotReached();
-#endif
+                indent.Inc();
+            }
+        });
     }
 };
 //----------------------------------------------------------------------------

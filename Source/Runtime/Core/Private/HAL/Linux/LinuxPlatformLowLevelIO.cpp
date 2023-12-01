@@ -64,10 +64,10 @@ auto FLinuxPlatformLowLevelIO::Open(const wchar_t* filename, EOpenPolicy mode, E
         S_IWUSR|S_IRUSR );
 
     if (-1 != fd) {
-        LOG(HAL, Info, L"opened file '{0}': {1} ({2}) -> {3}", filename, mode, flags, fd);
+        PPE_LOG(HAL, Info, "opened file '{0}': {1} ({2}) -> {3}", filename, mode, flags, fd);
     }
     else {
-        LOG(HAL, Error, L"open({0}) failed with errno: {1}",
+        PPE_LOG(HAL, Error, "open({0}) failed with errno: {1}",
             MakeCStringView(filename), FErrno{} );
         Assert(InvalidHandle == fd);
     }
@@ -79,7 +79,7 @@ bool FLinuxPlatformLowLevelIO::Close(FHandle handle) {
     Assert(InvalidHandle != handle);
 
     const int res = ::close(handle);
-    CLOG(0 != res, HAL, Error, L"failed to close handle {0} : {1}", handle, FErrno{});
+    PPE_CLOG(0 != res, HAL, Error, "failed to close handle {0} : {1}", handle, FErrno{});
 
     return (0 == res);
 }
@@ -102,7 +102,7 @@ std::streamoff FLinuxPlatformLowLevelIO::Tell(FHandle handle) {
     Assert(InvalidHandle != handle);
 
     const i64 off = ::lseek64(handle, 0, SEEK_CUR);
-    CLOG(-1L == off, HAL, Error, L"lseek64(0) failed to tell handle {0} with errno: {1}", handle, FErrno{});
+    PPE_CLOG(-1L == off, HAL, Error, "lseek64(0) failed to tell handle {0} with errno: {1}", handle, FErrno{});
 
     return off;
 }
@@ -120,7 +120,7 @@ std::streamoff FLinuxPlatformLowLevelIO::Seek(FHandle handle, std::streamoff off
     }
 
     const i64 off = ::lseek64(handle, checked_cast<loff_t>(offset), _origin);
-    CLOG(-1L == off, HAL, Error, L"lseek64(0) failed to seek handle {0}@{1:X} with errno: {2}", handle, offset, FErrno{});
+    PPE_CLOG(-1L == off, HAL, Error, "lseek64(0) failed to seek handle {0}@{1:X} with errno: {2}", handle, offset, FErrno{});
 
     return off;
 }
@@ -131,7 +131,7 @@ std::streamsize FLinuxPlatformLowLevelIO::Read(FHandle handle, void* dst, std::s
     Assert(sizeInBytes);
 
     const i64 sz = ::read(handle, dst, checked_cast<size_t>(sizeInBytes));
-    CLOG(-1L == sz, HAL, Error, L"failed to read {0} from handle {1} : {2}", Fmt::SizeInBytes(sizeInBytes), handle, FErrno());
+    PPE_CLOG(-1L == sz, HAL, Error, "failed to read {0} from handle {1} : {2}", Fmt::SizeInBytes(sizeInBytes), handle, FErrno());
 
     return sz;
 }
@@ -142,7 +142,7 @@ std::streamsize FLinuxPlatformLowLevelIO::Write(FHandle handle, const void* src,
     Assert(sizeInBytes);
 
     const i64 sz = ::write(handle, src, checked_cast<size_t>(sizeInBytes));
-    CLOG(-1L == sz, HAL, Error, L"failed to write {0} to handle {1} : {2}", Fmt::SizeInBytes(sizeInBytes), handle, FErrno());
+    PPE_CLOG(-1L == sz, HAL, Error, "failed to write {0} to handle {1} : {2}", Fmt::SizeInBytes(sizeInBytes), handle, FErrno());
 
     return sz;
 }

@@ -29,6 +29,10 @@ struct FResourceHandle {
 
     FResourceHandle() = default;
 
+    CONSTEXPR explicit FResourceHandle(u64 packed) NOEXCEPT
+    :   Packed(packed)
+    {}
+
     CONSTEXPR FResourceHandle(u32 uid, u16 index, u16 instanceID) NOEXCEPT {
         Uid = uid;
         Index = index;

@@ -19,7 +19,7 @@ namespace {
 #if USE_PPE_LOGGER
 LOG_CATEGORY(, GLFW);
 static void GLFW_error_callback_(int error, const char* description) {
-    LOG(GLFW, Error, L"{0} (code: {1})", UTF_8_TO_WCHAR(description), error);
+    PPE_LOG(GLFW, Error, "{0} (code: {1})", MakeCStringView(description), error);
 }
 #endif
 //----------------------------------------------------------------------------

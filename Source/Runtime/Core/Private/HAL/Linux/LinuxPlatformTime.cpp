@@ -67,7 +67,7 @@ void FLinuxPlatformTime::LocalTime(i64 timestamp, u32& year, u32& month, u32& da
     struct ::tm tp = {};
     time_t timer = timestamp;
     if (::localtime_r(&timer, &tp) == nullptr) {
-        LOG(HAL, Fatal, L"localtime_r() failed with errno: {0}", FErrno{});
+        PPE_LOG(HAL, Fatal, "localtime_r() failed with errno: {0}", FErrno{});
         return;
     }
 
@@ -85,7 +85,7 @@ void FLinuxPlatformTime::UtcTime(i64 timestamp, u32& year, u32& month, u32& dayO
     struct ::tm tp = {};
     time_t timer = timestamp;
     if (::gmtime_r(&timer, &tp)) {
-        LOG(HAL, Fatal, L"gmtime_r() failed with errno: {0}", FErrno{});
+        PPE_LOG(HAL, Fatal, "gmtime_r() failed with errno: {0}", FErrno{});
         return;
     }
 

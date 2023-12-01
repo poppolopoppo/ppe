@@ -20,7 +20,9 @@ public:
     static const FExtname& Raw();
     static const FExtname& Z();
 
+    static const FExtname& Bin();
     static const FExtname& Bnx();
+
     static const FExtname& Csv();
     static const FExtname& Json();
     static const FExtname& Txt();

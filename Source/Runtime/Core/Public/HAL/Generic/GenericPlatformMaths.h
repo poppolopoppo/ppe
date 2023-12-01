@@ -365,6 +365,29 @@ public: // must be defined for every platform
     }
 
     //------------------------------------------------------------------------
+    // rotations
+
+    static u16 rotl(u16 x, u8 d) {
+        return (x << d) | (x >> (sizeof(x)*8 - d));
+    }
+    static u32 rotl(u32 x, u8 d) {
+        return (x << d) | (x >> (sizeof(x)*8 - d));
+    }
+    static u64 rotl(u64 x, u8 d) {
+        return (x << d) | (x >> (sizeof(x)*8 - d));
+    }
+
+    static u16 rotr(u16 x, u8 d) {
+        return (x >> d) | (x << (sizeof(x)*8 - d));
+    }
+    static u32 rotr(u32 x, u8 d) {
+        return (x >> d) | (x << (sizeof(x)*8 - d));
+    }
+    static u64 rotr(u64 x, u8 d) {
+        return (x >> d) | (x << (sizeof(x)*8 - d));
+    }
+
+    //------------------------------------------------------------------------
     // lzcnt:   leading zero count (MSB)
     // tzcnt:   trailing zero count (LSB)
     // popcnt:  number of bits set to 1

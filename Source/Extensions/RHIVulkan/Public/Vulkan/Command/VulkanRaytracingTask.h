@@ -25,13 +25,13 @@ public:
     using FShaderGroup = FUpdateRayTracingShaderTable::FShaderGroup;
 
     const FRawRTPipelineID Pipeline;
-    const FVulkanRayTracingLocalScene* RTScene;
+    const u32 MaxRecursionDepth;
+    const TPtrRef<const FVulkanRayTracingLocalScene> RTScene;
 
-    FVulkanRayTracingShaderTable* ShaderTable;
+    const TPtrRef<FVulkanRayTracingShaderTable> ShaderTable;
     const TMemoryView<const FShaderGroup> ShaderGroups;
 
     const FRayGenShader RayGenShader;
-    const u32 MaxRecursionDepth;
 
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FUpdateRayTracingShaderTable& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
@@ -48,10 +48,10 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FBuildRayTracingGeometry> final : public IVulkanFrameTask {
 public:
-    using FUsableBuffers = HASHSET_SLAB(RHICommand, const FVulkanLocalBuffer*);
+    using FUsableBuffers = HASHSET_SLAB(RHICommand, TPtrRef<const FVulkanLocalBuffer>);
 
-    const FVulkanRayTracingLocalGeometry* RTGeometry{ nullptr };
-    const FVulkanLocalBuffer* ScratchBuffer{ nullptr };
+    TPtrRef<const FVulkanRayTracingLocalGeometry> RTGeometry{ nullptr };
+    TPtrRef<const FVulkanLocalBuffer> ScratchBuffer{ nullptr };
     TMemoryView<const VkGeometryNV> Geometries;
 
     FUsableBuffers UsableBuffers;
@@ -73,17 +73,17 @@ class PPE_RHIVULKAN_API TVulkanFrameTask<FBuildRayTracingScene> final : public I
 public:
     using FInstance = FVulkanRayTracingSceneInstance;
 
-    const FVulkanRayTracingLocalScene* RTScene{ nullptr };
-    const FVulkanLocalBuffer* ScratchBuffer{ nullptr };
+    TPtrRef<const FVulkanRayTracingLocalScene> RTScene{ nullptr };
+    TPtrRef<const FVulkanLocalBuffer> ScratchBuffer{ nullptr };
 
-    const FVulkanLocalBuffer* InstanceStagingBuffer{ nullptr };
+    TPtrRef<const FVulkanLocalBuffer> InstanceStagingBuffer{ nullptr };
     VkDeviceSize InstanceStagingBufferOffset{ 0 };
 
     const FVulkanLocalBuffer* InstanceBuffer{ nullptr };
     VkDeviceSize InstanceBufferOffset{ 0 };
 
     TMemoryView<FInstance> Instances;
-    TMemoryView<const FVulkanRayTracingLocalGeometry*> RTGeometries;
+    TMemoryView<TPtrRef<const FVulkanRayTracingLocalGeometry>> RTGeometries;
 
     u32 NumInstances{ 0 };
     u32 HitShadersPerInstance{ 0 };
@@ -113,27 +113,28 @@ public:
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FTraceRays> final : public IVulkanFrameTask {
 public:
-    const FVulkanRayTracingShaderTable* ShaderTable;
-    const FPushConstantDatas PushConstants;
+    const TPtrRef<const FVulkanRayTracingShaderTable> ShaderTable;
+    const TMemoryView<const FPushConstantData> PushConstants;
+
     const uint3 GroupCount;
 
 #if USE_PPE_RHIDEBUG
     EShaderDebugIndex DebugModeIndex{ Default };
 #endif
 
+    using FResource = FVulkanPipelineResourceSet::FResource;
+
+    TMemoryView<u32> DynamicOffsets;
+    TMemoryView<const FResource> Resources;
+
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FTraceRays& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
 
     bool Valid() const { return (!!ShaderTable && !!GroupCount.x && !!GroupCount.y && !!GroupCount.z); }
 
-    const FVulkanPipelineResourceSet& Resources() const { return _resources; }
-
 #if USE_PPE_RHIDEBUG
     virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }
 #endif
-
-private:
-    FVulkanPipelineResourceSet _resources;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

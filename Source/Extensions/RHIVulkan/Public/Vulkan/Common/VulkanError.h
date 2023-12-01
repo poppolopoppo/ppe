@@ -47,17 +47,16 @@ struct FVulkanError {
     FVulkanError(long code) : Code(code) {}
 };
 //----------------------------------------------------------------------------
-class PPE_RHIVULKAN_API FVulkanException : public FRHIException {
+class FVulkanException : public FRHIException {
 protected: // use more specialized exceptions instead
-    FVulkanException(const char* what);
+    PPE_RHIVULKAN_API FVulkanException(const char* what);
 public:
-    FVulkanException(const char* what, long errorCode);
-    virtual ~FVulkanException() override;
+    PPE_RHIVULKAN_API FVulkanException(const char* what, long errorCode);
 
     const FVulkanError& ErrorCode() const { return _errorCode; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    PPE_RHIVULKAN_API virtual FTextWriter& Description(FTextWriter& oss) const override final;
 #endif
 
 private:

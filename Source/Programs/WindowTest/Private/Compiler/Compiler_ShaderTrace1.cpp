@@ -34,18 +34,18 @@ void main ()
 	ARGS_IF_RHIDEBUG("Compiler_ShaderTrace1_CS"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::VKSL_100);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
 
     auto it1 = ppln.Shader.Data.Find(EShaderLangFormat::SPIRV_100);
-    LOG_CHECK(WindowTest, ppln.Shader.Data.end() != it1);
+    PPE_LOG_CHECK(WindowTest, ppln.Shader.Data.end() != it1);
 
     auto it2 = ppln.Shader.Data.Find(EShaderLangFormat::SPIRV_100 | EShaderLangFormat::EnableDebugTrace);
-    LOG_CHECK(WindowTest, ppln.Shader.Data.end() != it2);
+    PPE_LOG_CHECK(WindowTest, ppln.Shader.Data.end() != it2);
 
     auto it3 = ppln.Shader.Data.Find(EShaderLangFormat::SPIRV_100 | EShaderLangFormat::EnableTimeMap);
-    LOG_CHECK(WindowTest, ppln.Shader.Data.end() != it3);
+    PPE_LOG_CHECK(WindowTest, ppln.Shader.Data.end() != it3);
 
     return true;
 }

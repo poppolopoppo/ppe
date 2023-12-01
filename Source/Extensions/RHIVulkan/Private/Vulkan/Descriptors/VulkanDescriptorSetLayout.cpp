@@ -42,7 +42,7 @@ FVulkanDescriptorSetLayout::FVulkanDescriptorSetLayout(
         Assert(it.first.Valid());
         hash_combine(uniformsHash, it.first);
 
-        AssertReleaseMessage(L"requires Vulkan 1.2 or VK_EXT_descriptor_indexing", enableDescriptorIndexing or it.second.ArraySize != 0);
+        AssertReleaseMessage("requires Vulkan 1.2 or VK_EXT_descriptor_indexing", enableDescriptorIndexing or it.second.ArraySize != 0);
 
         VkDescriptorSetLayoutCreateFlags flags = 0;
         if (it.second.ArraySize == 0) {

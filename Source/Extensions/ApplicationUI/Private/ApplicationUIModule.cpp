@@ -12,9 +12,6 @@
 #include "BuildModules.generated.h"
 #include "Diagnostic/BuildVersion.h"
 
-#include "UI/Imgui.h"
-#include "External/imgui/imgui.git/imgui_internal.h"
-
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -22,19 +19,6 @@ namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
 LOG_CATEGORY(PPE_APPLICATIONUI_API, UI)
-//----------------------------------------------------------------------------
-static void* ImGuiMemAlloc_(size_t sz, void* user_data) {
-    Unused(user_data);
-    return TRACKING_MALLOC(ImGui, sz);
-}
-//----------------------------------------------------------------------------
-static void ImGuiMemFree_(void* ptr, void* user_data) {
-    Unused(user_data);
-    return TRACKING_FREE(ImGui, ptr);
-}
-//----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
-//----------------------------------------------------------------------------
 //----------------------------------------------------------------------------
 } //!namespace Application
 //----------------------------------------------------------------------------
@@ -65,14 +49,9 @@ void FApplicationUIModule::Start(FModularDomain& domain) {
 
     using namespace Application;
 
-    LOG(UI, Info, L"create imgui context");
+    PPE_LOG(UI, Info, "create imgui context");
 
-    IMGUI_CHECKVERSION();
-
-    ImGui::SetAllocatorFunctions(&ImGuiMemAlloc_, &ImGuiMemFree_);
-    ImGui::CreateContext();
-
-    _ui.create(PImguiContext{ GImGui });
+    _ui.create();
 
     auto& appModule = FApplicationModule::Get(domain);
     _onApplicationStart = appModule.OnApplicationStart().Bind<&FApplicationUIModule::OnApplicationStart_>(this);
@@ -108,7 +87,7 @@ void FApplicationUIModule::OnApplicationStart_(Application::FApplicationBase&, F
     IRHIService& rhi = services.Get<IRHIService>();
 
     if (not _ui->Construct(input, rhi)) {
-        LOG(UI, Error, L"failed to initialize imgui service");
+        PPE_LOG(UI, Error, "failed to initialize imgui service");
         _ui.reset();
         return;
     }

@@ -301,6 +301,7 @@ public:
 
         if (0 == report.NumAllocs) {
             Assert(report.Callstacks.empty());
+            PPE_LOG(Leaks, Info, "no leak found ;)");
             return;
         }
 
@@ -310,7 +311,7 @@ public:
                        ((lhs.TotalSizeInBytes == rhs.TotalSizeInBytes) & (&lhs < &rhs))); // and keep ptr order
             });
 
-        LOG(Leaks, Error, L"Found {0} leaking blocks, total {1} [{2}, {3}] (mode = {4})",
+        PPE_LOG(Leaks, Error, "Found {0} leaking blocks, total {1} [{2}, {3}] (mode = {4})",
             Fmt::CountOfElements(report.NumAllocs),
             Fmt::SizeInBytes(report.TotalSizeInBytes),
             Fmt::SizeInBytes(report.MinSizeInBytes),
@@ -327,7 +328,7 @@ public:
 
             callstackData.Decode(&decodedCallstack);
 
-            LOG(Leaks, Error, L"{0} leaking blocks, total {1} [{2}, {3}], known trimmers = {4:a}, known deleters = {5:a}\n{6}\n{7}",
+            PPE_LOG(Leaks, Error, "{0} leaking blocks, total {1} [{2}, {3}], known trimmers = {4:a}, known deleters = {5:a}\n{6}\n{7}",
                 Fmt::CountOfElements(callstack.NumAllocs),
                 Fmt::SizeInBytes(callstack.TotalSizeInBytes),
                 Fmt::SizeInBytes(callstack.MinSizeInBytes),
@@ -338,7 +339,7 @@ public:
                 Fmt::Join(callstack.Samples.MakeView().Map([](auto x) { return Fmt::HexDump(x); }), Fmt::Eol));
         }
 
-        FLUSH_LOG();
+        PPE_LOG_FLUSH();
     }
 
 private:

@@ -116,7 +116,7 @@ void FImageDesc::Validate() {
 
     // validate samples and mipmaps
     if (Samples.Enabled()) {
-        CLOG(MaxLevel > 1_mipmap, RHI, Warning, L"clamping max level to 1 due to multi-sampling");
+        PPE_CLOG(MaxLevel > 1_mipmap, RHI, Warning, "clamping max level to 1 due to multi-sampling");
         MaxLevel = 1_mipmap;
     }
     else {
@@ -176,7 +176,7 @@ void FImageViewDesc::Validate(const FImageDesc& desc) {
         Format = desc.Format;
     }
     else if (Format != desc.Format && not (desc.Flags & EImageFlags::MutableFormat)) {
-        AssertMessage_NoAssume(L"can't change format for immutable image", false);
+        AssertMessage_NoAssume("can't change format for immutable image", false);
         Format = desc.Format;
     }
 

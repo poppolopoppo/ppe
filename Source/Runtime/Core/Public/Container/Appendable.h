@@ -69,8 +69,8 @@ public:
     }
 
 private:
-    void* _userData;
-    FPushBackFunc _pushBack;
+    void* _userData{ nullptr };
+    FPushBackFunc _pushBack{ nullptr };
 };
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>

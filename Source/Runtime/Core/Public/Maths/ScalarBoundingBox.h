@@ -119,6 +119,10 @@ public:
     TScalarBoundingBox operator +(const vector_type& v) const { return { _min + v, _max + v }; }
     TScalarBoundingBox operator -(const vector_type& v) const { return { _min - v, _max - v }; }
 
+    friend void swap(TScalarBoundingBox& lhs, TScalarBoundingBox& rhs) NOEXCEPT {
+        lhs.Swap(rhs);
+    }
+
 private:
     vector_type _min;
     vector_type _max;
@@ -192,11 +196,6 @@ private:
     vector_type _center;
     vector_type _halfExtents;
 };
-//----------------------------------------------------------------------------
-template <typename T, u32 _Dim>
-void swap(TScalarBoundingBox<T, _Dim>& lhs, TScalarBoundingBox<T, _Dim>& rhs) NOEXCEPT {
-    lhs.Swap(rhs);
-}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

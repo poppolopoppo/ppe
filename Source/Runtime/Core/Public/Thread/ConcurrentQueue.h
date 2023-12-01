@@ -75,9 +75,6 @@ public:
     TConcurrentPriorityQueue(const TConcurrentPriorityQueue& ) = delete;
     TConcurrentPriorityQueue& operator =(const TConcurrentPriorityQueue& ) = delete;
 
-    // no lock for empty, should be ok but be careful when you use this
-    bool empty() const { return _queue.empty(); }
-
     // lower is higher priority
     void Produce(u32 priority, T&& rvalue);
     template <typename _Lambda>

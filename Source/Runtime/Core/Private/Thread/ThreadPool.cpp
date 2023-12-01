@@ -228,6 +228,8 @@ void AsyncSyscall(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FThreadPoolStartup::Start() {
+    FGlobalFiberPool::Create(FTaskManager::WorkerCallbackForFiber());
+
     FGlobalThreadPool::Create();
     FIOThreadPool::Create();
     FHighPriorityThreadPool::Create();
@@ -245,6 +247,8 @@ void FThreadPoolStartup::Shutdown() {
     FHighPriorityThreadPool::Destroy();
     FIOThreadPool::Destroy();
     FGlobalThreadPool::Destroy();
+
+    FGlobalFiberPool::Destroy();
 
     Assert_NoAssume(MEMORYDOMAIN_TRACKING_DATA(Fibers).empty());
 }
@@ -271,6 +275,7 @@ void FThreadPoolStartup::ReleaseMemory() {
     FHighPriorityThreadPool::Get().ReleaseMemory();
     FIOThreadPool::Get().ReleaseMemory();
     FGlobalThreadPool::Get().ReleaseMemory();
+    FGlobalFiberPool::Get().ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

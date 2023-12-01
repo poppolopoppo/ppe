@@ -185,9 +185,12 @@ public:
 
 #if USE_PPE_RHIDEBUG
     void LogFrame() const override;
+
     NODISCARD bool DumpFrame(FStringBuilder* log) const override;
     NODISCARD bool DumpGraph(FStringBuilder* log) const override;
-    NODISCARD bool DumpStatistics(FFrameStatistics* pStats) const override;
+    NODISCARD bool DumpMemory(FStringBuilder* log) const override;
+
+    NODISCARD bool Statistics(FFrameStatistics* pStats) const override;
 #endif
 
 private:

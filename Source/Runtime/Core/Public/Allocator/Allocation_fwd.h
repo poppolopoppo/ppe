@@ -28,8 +28,6 @@ class TSegregateAllocator;
 template <typename _Allocator>
 class TSlabHeap;
 template <typename _Allocator>
-class TPoolingSlabHeap;
-template <typename _Allocator>
 class TSlabAllocator;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

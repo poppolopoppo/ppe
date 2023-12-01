@@ -10,6 +10,9 @@
 
 #if USE_PPE_WINDOWS_TRACELOGGING
 
+#include "IO/ConstChar.h"
+#include "Misc/Opaque.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -19,11 +22,18 @@ public:
     static void Create();
     static void Destroy();
 
-    static void TraceVerbose(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text);
-    static void TraceInformation(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text);
-    static void TraceWarning(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text);
-    static void TraceError(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text);
-    static void TraceFatal(const wchar_t* category, i64 timestamp, const wchar_t* filename, size_t line, const wchar_t* text);
+    static void TraceVerbose(const std::thread::id& tid, FConstChar category, i64 timestamp, FConstChar filename, size_t line, FConstChar text, const Opaq::value_view& data);
+    static void TraceInformation(const std::thread::id& tid, FConstChar category, i64 timestamp, FConstChar filename, size_t line, FConstChar text, const Opaq::value_view& data);
+    static void TraceWarning(const std::thread::id& tid, FConstChar category, i64 timestamp, FConstChar filename, size_t line, FConstChar text, const Opaq::value_view& data);
+    static void TraceError(const std::thread::id& tid, FConstChar category, i64 timestamp, FConstChar filename, size_t line, FConstChar text, const Opaq::value_view& data);
+    static void TraceFatal(const std::thread::id& tid, FConstChar category, i64 timestamp, FConstChar filename, size_t line, FConstChar text, const Opaq::value_view& data);
+
+    static void TraceVerbose(const std::thread::id& tid, FConstWChar category, i64 timestamp, FConstWChar filename, size_t line, FConstWChar text, const Opaq::value_view& data);
+    static void TraceInformation(const std::thread::id& tid, FConstWChar category, i64 timestamp, FConstWChar filename, size_t line, FConstWChar text, const Opaq::value_view& data);
+    static void TraceWarning(const std::thread::id& tid, FConstWChar category, i64 timestamp, FConstWChar filename, size_t line, FConstWChar text, const Opaq::value_view& data);
+    static void TraceError(const std::thread::id& tid, FConstWChar category, i64 timestamp, FConstWChar filename, size_t line, FConstWChar text, const Opaq::value_view& data);
+    static void TraceFatal(const std::thread::id& tid, FConstWChar category, i64 timestamp, FConstWChar filename, size_t line, FConstWChar text, const Opaq::value_view& data);
+
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

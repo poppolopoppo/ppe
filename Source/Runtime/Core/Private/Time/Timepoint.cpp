@@ -2,6 +2,7 @@
 
 #include "Time/Timepoint.h"
 
+#include "Diagnostic/CurrentProcess.h"
 #include "HAL/PlatformTime.h"
 
 namespace PPE {
@@ -23,7 +24,14 @@ FTimespan FTimepoint::Duration(const FTimepoint& start, const FTimepoint& stop) 
 
     const FTimepoint cycles = (stop.Value() - start.Value());
 
-    return (FPlatformTime::ToSeconds(cycles.Value()) * 1000.0);
+    return Units::Time::FSeconds(FPlatformTime::ToSeconds(cycles.Value()));
+}
+//----------------------------------------------------------------------------
+FTimestamp FTimepoint::Timestamp() const {
+    // add elapsed duration since process start and add it to process time stamp
+    const FCurrentProcess& process = FCurrentProcess::Get();
+    const FTimespan elapsedSinceProcessStart = Duration(process.StartTicks(), *this);
+    return (process.StartDate() + elapsedSinceProcessStart);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

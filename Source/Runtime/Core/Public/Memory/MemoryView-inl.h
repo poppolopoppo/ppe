@@ -63,14 +63,14 @@ CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView& other) N
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, Meta::TEnableIf<std::is_assignable_v<T*&, U*>>*>
 CONSTEXPR TMemoryView<T>::TMemoryView(const TMemoryView<U>& other) NOEXCEPT
 :   _storage(other._storage), _size(other._size) {
     STATIC_ASSERT(sizeof(T) == sizeof(U));
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, Meta::TEnableIf<std::is_assignable_v<T*&, U*>>*>
 CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView<U>& other) NOEXCEPT {
     STATIC_ASSERT(sizeof(T) == sizeof(U));
     _storage = other._storage;
@@ -194,7 +194,7 @@ NODISCARD TMemoryView<T> TMemoryView<T>::Slice(size_t index, size_t stride) cons
     Assert(stride <= _size);
     Assert(index < (_size + stride - 1) / stride);
     const size_t offset = index * stride;
-    const size_t count = Min((index + 1) * stride, _size) - offset;
+    const size_t count = PPE::Min((index + 1) * stride, _size) - offset;
     return SubRange(offset, count);
 }
 //----------------------------------------------------------------------------

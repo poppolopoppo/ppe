@@ -247,11 +247,36 @@ private:
         }
     };
 
+    struct FDeferredPageDeallocator {
+        TBitmapHeap& Heap;
+        page_type* Queue{ nullptr };
+
+        explicit FDeferredPageDeallocator(TBitmapHeap& heap) NOEXCEPT
+            : Heap(heap)
+        {}
+
+        void Push_AssumeLocked(page_type* page) NOEXCEPT {
+
+            ++Heap.Revision; // invalidate each TLS cache
+
+            page->NextPage = Queue;
+            Queue = page;
+        }
+
+        ~FDeferredPageDeallocator() {
+            while (Queue != nullptr) {
+                page_type* const nextPage = static_cast<page_type*>(Queue->NextPage);
+                Heap.ReleaseUnusedPage_ThreadSafe_(Queue);
+                Queue = nextPage;
+            }
+        }
+    };
+
     // those helpers assumes barrier to be already locked (read or write)
     page_type* AliasingPage_AssumeLocked_(const void* ptr) const NOEXCEPT;
     page_type* FindFreePage_AssumeLocked_(u32 sizeInBytes) NOEXCEPT;
     void RegisterFreePage_Unlocked_(page_type* page) NOEXCEPT;
-    void ReleaseUnusedPage_AssumeLocked_(page_type* page) NOEXCEPT;
+    void ReleaseUnusedPage_ThreadSafe_(page_type* page) NOEXCEPT;
 
     static inline page_type* const GDummyPage{ (page_type*)1 }; // avoid double registration
 

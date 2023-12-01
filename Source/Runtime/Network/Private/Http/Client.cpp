@@ -56,7 +56,7 @@ static EHttpStatus SafeHttpClient_(const FUri& uri, const _Method& method) {
     }
     PPE_CATCH(FHttpException e)
     PPE_CATCH_BLOCK({
-        LOG(Network, Error, L"HTTP {0}: {1}, {2}",  uri.Str(), e.Status(), MakeCStringView(e.What()));
+        PPE_LOG(Network, Error, "HTTP {0}: {1}, {2}",  uri.Str(), e.Status(), MakeCStringView(e.What()));
         return e.Status();
     })
     return EHttpStatus::OK;

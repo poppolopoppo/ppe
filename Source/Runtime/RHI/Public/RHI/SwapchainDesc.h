@@ -11,25 +11,25 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class ECompositeAlpha : u32 {
+enum class ECompositeAlpha : u8 {
     Opaque = 0,
     PreMultiplied,
     PostMultiplied,
     Inherit,
 
-    Unknown = ~0u,
+    Unknown = UINT8_MAX,
 };
 //----------------------------------------------------------------------------
-enum class EPresentMode : u32 {
+enum class EPresentMode : u8 {
     Immediate = 0,
     Fifo,
     RelaxedFifo,
     Mailbox,
 
-    Unknown = ~0u,
+    Unknown = UINT8_MAX,
 };
 //----------------------------------------------------------------------------
-enum class ESurfaceTransform : u32 {
+enum class ESurfaceTransform : u8 {
     Identity = 0,
 
     TransformRotate90,

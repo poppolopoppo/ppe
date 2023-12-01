@@ -70,14 +70,14 @@ public:
     static void* FiberData();
 
     static FFiber CreateFiber(
-        size_t stackCommitSize,
-        size_t stackReservedSize,
+        size_t stackSize,
         FEntryPoint entryPoint,
         void* fiberData );
 
     static void SwitchToFiber(FFiber fiber);
     static void DestroyFiber(FFiber fiber);
 
+    static void FiberStackRegion(FFiber fiber, const void** pStackBottom, size_t* pStackSize) NOEXCEPT;
 
     //------------------------------------------------------------------------
     // critical section

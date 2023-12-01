@@ -35,11 +35,11 @@ static void TestFormat_(const FStringView& expected, const FStringView& format, 
 
     const bool match = (expected == str);
 
-    LOG(Test_Format, Info,
-        L"==================================================================\n"
-        L"Format      = '{0}'\n"
-        L"Result      = '{1}'\n"
-        L"Expected    = '{2}' => {3:A}",
+    PPE_LOG(Test_Format, Info,
+        "==================================================================\n"
+        "Format      = '{0}'\n"
+        "Result      = '{1}'\n"
+        "Expected    = '{2}' => {3:A}",
         format, str, expected, match );
 
     AssertRelease(match);
@@ -61,7 +61,7 @@ static void Test_Format_() {
         oss << "Yolo!" << 42 << Eol;
         Format(oss, "This a neg test {0:#4*4} = {1:-30} ({2:5f2})", 42, "test aligned", 1.23456f);
 
-        LOG(Test_Format, Info, L"Format: {0}", oss.ToString());
+        PPE_LOG(Test_Format, Info, "Format: {0}", oss.ToString());
     }
 
     TestFormat_("722556564 -1465266736 -1246678562 414408744",
@@ -186,7 +186,7 @@ static void Test_TextWriter_Impl_() {
         << STRING_LITERAL(_Char, '>') << Endl;
     oss << FTextFormat::Capitalize
         << STRING_LITERAL(_Char, "caPItaliZe tHIS tEXt pleAsE r2-d2, you're such a sweetheart !") << Endl;
-    LOG(Test_Format, Info, L"{1} writer: {0}", oss.ToString(), MakeCStringView(typeid(_Char).name()));
+    PPE_LOG(Test_Format, Info, "{1} writer: {0}", oss.ToString(), MakeCStringView(typeid(_Char).name()));
 }
 static void Test_TextWriter_() {
     Test_TextWriter_Impl_<char>();
@@ -203,8 +203,8 @@ static void Test_StringEscaping_(TBasicStringView<_SrcChar> input, EEscape escap
     Unescape(unescaped, tmp);
     TBasicString<_SrcChar> output{ unescaped.ToString() };
 
-    LOG(Test_Format, Info, L"Src: {0}\n{1}", Fmt::Quoted(input, L'"'), Fmt::HexDump(input.MakeView()) );
-    LOG(Test_Format, Info, L"Dst: {0}\n{1}", Fmt::Quoted(output, L'"'), Fmt::HexDump(output.MakeView()) );
+    PPE_LOG(Test_Format, Info, "Src: {0}\n{1}", Fmt::Quoted(input, L'"'), Fmt::HexDump(input.MakeView()) );
+    PPE_LOG(Test_Format, Info, "Dst: {0}\n{1}", Fmt::Quoted(output, L'"'), Fmt::HexDump(output.MakeView()) );
     AssertRelease(output == input);
 }
 static void Test_StringEscaping_() {
@@ -216,8 +216,8 @@ static void Test_StringEscaping_() {
 }
 //----------------------------------------------------------------------------
 static void Test_LogPrintf_() {
-    LOG_PRINTF(Test_Format, Info, L"Printf testing %d", 42);
-    LOG_PRINTF(Test_Format, Info, L"Printf testing %s", "42");
+    PPE_LOG_PRINTF(Test_Format, Info, "Printf testing %d", 42);
+    PPE_LOG_PRINTF(Test_Format, Info, "Printf testing %s", L"42");
 }
 //----------------------------------------------------------------------------
 static void Test_Base64_() {
@@ -277,14 +277,14 @@ static void Test_Regexp_() {
     FRegexp::FMatches matches;
     VerifyRelease(re.Capture(&matches, "int:42, float:123.456, word:PoPpolLoPpOpo42 end"));
 
-    LOG(Test_Format, Info, L"int:{0}, float:{1}, word:{2} end",
+    PPE_LOG(Test_Format, Info, "int:{0}, float:{1}, word:{2} end",
         FStringConversion(matches[1]).ConvertTo<int>(),
         FStringConversion(matches[2]).ConvertTo<float>(),
         FStringView(matches[3]) );
 
     VerifyRelease(reI.Capture(&matches, "iNt:42, FLoat:123.456, WORD:PoPpolLoPpOpo42 End"));
 
-    LOG(Test_Format, Info, L"int:{0}, float:{1}, word:{2} end",
+    PPE_LOG(Test_Format, Info, "int:{0}, float:{1}, word:{2} end",
         FStringConversion(matches[1]).ConvertTo<int>(),
         FStringConversion(matches[2]).ConvertTo<float>(),
         FStringView(matches[3]) );
@@ -300,7 +300,7 @@ static void Test_Regexp_() {
     TTuple<int, float, FStringView> parseArgs;
     VerifyRelease(reI.Capture(&parseArgs, "INT:-69,   floaT:-0.1,     Word:Tornado\tend"));
 
-    LOG(Test_Format, Info, L"int:{0}, float:{1}, word:{2} end",
+    PPE_LOG(Test_Format, Info, "int:{0}, float:{1}, word:{2} end",
         std::get<0>(parseArgs), std::get<1>(parseArgs), std::get<2>(parseArgs) );
 }
 //----------------------------------------------------------------------------

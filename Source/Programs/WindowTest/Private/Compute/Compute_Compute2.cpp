@@ -38,13 +38,13 @@ ARGS_IF_RHIDEBUG("Compute_Compute2_CS"));
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("Image")) };
-    LOG_CHECK(WindowTest, image.Valid());
+    PPE_LOG_CHECK(WindowTest, image.Valid());
 
     TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Compute_Compute2")) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "2" }));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "2" }));
 
     bool dataIsCorrect = false;
     const auto onLoaded = [&dataIsCorrect](const FImageView& imageData) {
@@ -65,8 +65,8 @@ ARGS_IF_RHIDEBUG("Compute_Compute2_CS"));
                     texel.z == 255 &&
                     texel.w == 0 );
 
-                //LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(x, y), texel, FRgba32u(r, g, 0, 255), isEqual);
-                LOG_CHECKVOID(WindowTest, isEqual);
+                //PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", uint2(x, y), texel, FRgba32u(r, g, 0, 255), isEqual);
+                PPE_LOG_CHECKVOID(WindowTest, isEqual);
                 dataIsCorrect &= isEqual;
             }
         }
@@ -75,7 +75,7 @@ ARGS_IF_RHIDEBUG("Compute_Compute2_CS"));
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Compute_Compute2")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->BindImage(FUniformID{ "un_OutImage" }, image);
 
@@ -83,19 +83,19 @@ ARGS_IF_RHIDEBUG("Compute_Compute2_CS"));
         .SetPipeline(ppln)
         .AddResources(FDescriptorSetID{ "2" }, resources)
         .Dispatch({ 2, 2 }));
-    LOG_CHECK(WindowTest, tRun);
+    PPE_LOG_CHECK(WindowTest, tRun);
 
     PFrameTask tRead = cmd->Task(FReadImage{}
         .SetImage(image, int2(0), imageDim)
         .DependsOn(tRun)
         .SetCallback(onLoaded));
-    LOG_CHECK(WindowTest, tRead);
+    PPE_LOG_CHECK(WindowTest, tRead);
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

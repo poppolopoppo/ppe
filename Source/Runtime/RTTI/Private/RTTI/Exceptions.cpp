@@ -19,44 +19,44 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FClassException::Description(FWTextWriter& oss) const {
+FTextWriter& FClassException::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What())
-        << L": in class <"
+        << ": in class <"
         << _class->Name()
-        << L"> !";
+        << "> !";
 }
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FFunctionException::Description(FWTextWriter& oss) const {
+FTextWriter& FFunctionException::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What())
-        << L": in function ("
+        << ": in function ("
         << _function->Name()
-        << L") !";
+        << ") !";
 }
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FPropertyException::Description(FWTextWriter& oss) const {
+FTextWriter& FPropertyException::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What())
-        << L": in property ["
+        << ": in property ["
         << _property->Name()
-        << L"] !";
+        << "] !";
 }
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FObjectException::Description(FWTextWriter& oss) const {
+FTextWriter& FObjectException::Description(FTextWriter& oss) const {
     return oss
         << MakeCStringView(What())
-        << L": in object <"
+        << ": in object <"
         << _object->RTTI_Class()->Name()
-        << L"> '"
+        << "> '"
         << _object->RTTI_Name()
-        << L"' !";
+        << "' !";
 }
 #endif
 //----------------------------------------------------------------------------

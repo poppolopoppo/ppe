@@ -72,8 +72,6 @@ void FVulkanCommandBatch::TearDown() {
 
     _state.store(EState::Uninitialized, std::memory_order_relaxed);
 
-
-
     _frameGraph->RecycleBatch(this); // put this batch back in cache
 }
 //----------------------------------------------------------------------------
@@ -89,7 +87,7 @@ void FVulkanCommandBatch::SignalSemaphore(VkSemaphore vkSemaphore) {
 
     const auto exclusiveData = _data.LockExclusive();
 
-    AssertMessage_NoAssume(L"semaphore already added",
+    AssertMessage_NoAssume("semaphore already added",
         not exclusiveData->Batch.SignalSemaphores.Contains(vkSemaphore));
     exclusiveData->Batch.SignalSemaphores.Push(vkSemaphore);
 }
@@ -100,7 +98,7 @@ void FVulkanCommandBatch::WaitSemaphore(VkSemaphore vkSemaphore, VkPipelineStage
 
     const auto exclusiveData = _data.LockExclusive();
 
-    AssertMessage_NoAssume(L"semaphore already added",
+    AssertMessage_NoAssume("semaphore already added",
         not exclusiveData->Batch.WaitSemaphores.MakeView<0>().Contains(vkSemaphore));
     exclusiveData->Batch.WaitSemaphores.emplace_back(vkSemaphore, stages);
 }
@@ -112,7 +110,7 @@ void FVulkanCommandBatch::PushCommandToFront(FVulkanCommandPool* pPool, VkComman
 
     const auto exclusiveData = _data.LockExclusive();
 
-    AssertMessage_NoAssume(L"command buffer already added",
+    AssertMessage_NoAssume("command buffer already added",
         not exclusiveData->Batch.Commands.MakeView<0>().Contains(vkCmdBuffer));
     exclusiveData->Batch.Commands.insert(exclusiveData->Batch.Commands.begin(), { vkCmdBuffer, pPool });
 }
@@ -124,7 +122,7 @@ void FVulkanCommandBatch::PushCommandToBack(FVulkanCommandPool* pPool, VkCommand
 
     const auto exclusiveData = _data.LockExclusive();
 
-    AssertMessage_NoAssume(L"command buffer already added",
+    AssertMessage_NoAssume("command buffer already added",
         not exclusiveData->Batch.Commands.MakeView<0>().Contains(vkCmdBuffer));
     exclusiveData->Batch.Commands.emplace_back(vkCmdBuffer, pPool);
 }
@@ -145,7 +143,7 @@ void FVulkanCommandBatch::DestroyPostponed(VkObjectType type, FVulkanExternalObj
 
     const auto exclusiveData = _data.LockExclusive();
 
-    AssertMessage_NoAssume(L"resource already registered for postponed destroy",
+    AssertMessage_NoAssume("resource already registered for postponed destroy",
         exclusiveData->ReadyToDelete.end() == std::find_if(exclusiveData->ReadyToDelete.begin(), exclusiveData->ReadyToDelete.end(), [handle](const auto& it) {
             return (it.second == handle);
         }));
@@ -516,16 +514,16 @@ FVulkanCommandBatch::FStagingBuffer* FVulkanCommandBatch::FindOrAddStagingBuffer
     // else allocate a new buffer
     if (not suitable) {
         Assert(dstMinSize < stagingSize);
-        LOG_CHECK( RHI, not pStagingBuffers->full() );
+        PPE_LOG_CHECK( RHI, not pStagingBuffers->full() );
 
         FVulkanResourceManager& resources = _frameGraph->ResourceManager();
 
         FRawBufferID bufferId;
         FStagingBufferIndex stagingBufferIndex;
-        LOG_CHECK( RHI, resources.CreateStagingBuffer(&bufferId, &stagingBufferIndex, usage) );
+        PPE_LOG_CHECK( RHI, resources.CreateStagingBuffer(&bufferId, &stagingBufferIndex, usage) );
 
         const FRawMemoryID memoryId = resources.ResourceData(bufferId).Read()->MemoryId.Get();
-        LOG_CHECK( RHI, memoryId );
+        PPE_LOG_CHECK( RHI, memoryId );
 
         pStagingBuffers->Push(stagingBufferIndex, bufferId, memoryId, stagingSize);
         suitable = pStagingBuffers->Peek();
@@ -815,7 +813,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(TMemoryView<const FR
     dbg.Stages = mode.Stages;
     dbg.Payload = uint4(uint2(mode.FragCoord), 0, 0);
 
-    LOG_CHECK( RHI, AllocStorageForDebug_(dbg, size) );
+    PPE_LOG_CHECK( RHI, AllocStorageForDebug_(dbg, size) );
 
     _shaderDebugger.Modes.push_back(std::move(dbg));
     return static_cast<EShaderDebugIndex>(_shaderDebugger.Modes.size() - 1);
@@ -836,7 +834,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(const FTaskName& nam
     dbg.Stages = EShaderStages::Compute;
     dbg.Payload = uint4(mode.GlobalId.xyz, 0);
 
-    LOG_CHECK( RHI, AllocStorageForDebug_(dbg, size) );
+    PPE_LOG_CHECK( RHI, AllocStorageForDebug_(dbg, size) );
 
     _shaderDebugger.Modes.push_back(std::move(dbg));
     return static_cast<EShaderDebugIndex>(_shaderDebugger.Modes.size() - 1);
@@ -857,7 +855,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(const FTaskName& nam
     dbg.Stages = EShaderStages::AllRayTracing;
     dbg.Payload = uint4(mode.LaunchId.xyz, 0);
 
-    LOG_CHECK( RHI, AllocStorageForDebug_(dbg, size) );
+    PPE_LOG_CHECK( RHI, AllocStorageForDebug_(dbg, size) );
 
     _shaderDebugger.Modes.push_back(std::move(dbg));
     return static_cast<EShaderDebugIndex>(_shaderDebugger.Modes.size() - 1);
@@ -885,7 +883,7 @@ EShaderDebugIndex FVulkanCommandBatch::AppendTimemapForDebug(const uint2& dim, E
         static_cast<size_t>(dim.x) * dim.y * sizeof(u64) // temporary line
     };
 
-    LOG_CHECK( RHI, AllocStorageForDebug_(dbg, size) );
+    PPE_LOG_CHECK( RHI, AllocStorageForDebug_(dbg, size) );
 
     _shaderDebugger.Modes.push_back(std::move(dbg));
     return static_cast<EShaderDebugIndex>(_shaderDebugger.Modes.size() - 1);
@@ -963,19 +961,19 @@ bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, size_t si
         sb.ShaderTraceBuffer = _frameGraph->CreateBuffer(
             FBufferDesc{ sb.Capacity, EBufferUsage::Storage | EBufferUsage::Transfer },
             Default, "DebugOutputStorage" );
-        LOG_CHECK( RHI, sb.ShaderTraceBuffer );
+        PPE_LOG_CHECK( RHI, sb.ShaderTraceBuffer );
 
         sb.ReadBackBuffer = _frameGraph->CreateBuffer(
             FBufferDesc{ sb.Capacity, EBufferUsage::TransferDst },
             FMemoryDesc{ EMemoryType::HostRead },
             "DebugOutputReadBack" );
-        LOG_CHECK( RHI, sb.ReadBackBuffer );
+        PPE_LOG_CHECK( RHI, sb.ReadBackBuffer );
 
         _shaderDebugger.Buffers.push_back(std::move(sb));
     }
     Assert_NoAssume(debugMode.StorageBufferIndex != UMax);
 
-    LOG_CHECK( RHI, AllocDescriptorSetForDebug_(
+    PPE_LOG_CHECK( RHI, AllocDescriptorSetForDebug_(
         &debugMode.DescriptorSet, debugMode.Mode, debugMode.Stages,
         _shaderDebugger.Buffers[debugMode.StorageBufferIndex].ShaderTraceBuffer.Get(),
         debugMode.Size ));
@@ -1008,7 +1006,7 @@ bool FVulkanCommandBatch::AllocDescriptorSetForDebug_(
 
     // allocate descriptor set
     FVulkanDescriptorSet ds;
-    LOG_CHECK( RHI, resources.DescriptorManager().AllocateDescriptorSet(&ds, layout.Handle() ARGS_IF_RHIDEBUG("Debug")));
+    PPE_LOG_CHECK( RHI, resources.DescriptorManager().AllocateDescriptorSet(&ds, layout.Handle() ARGS_IF_RHIDEBUG("Debug")));
     Assert_NoAssume(VK_NULL_HANDLE != ds.First);
     *pDescSet = ds.First;
 
@@ -1074,7 +1072,7 @@ bool FVulkanCommandBatch::ParseDebugOutput2_(FDebugStrings* pDump, const FShader
 
     if (dbg.Mode == EShaderDebugMode::Timemap)
         return true;
-    LOG_CHECK( RHI, not dbg.Modules.empty() );
+    PPE_LOG_CHECK( RHI, not dbg.Modules.empty() );
 
     FVulkanResourceManager& resources = _frameGraph->ResourceManager();
     const FRawBufferID readBackBufferId = _shaderDebugger.Buffers[dbg.StorageBufferIndex].ReadBackBuffer.Get();
@@ -1083,14 +1081,14 @@ bool FVulkanCommandBatch::ParseDebugOutput2_(FDebugStrings* pDump, const FShader
     const FVulkanMemoryObject& mem = resources.ResourceData(buf.Read()->MemoryId.Get());
 
     FVulkanMemoryInfo info;
-    LOG_CHECK( RHI, mem.MemoryInfo(&info, resources.MemoryManager()) );
+    PPE_LOG_CHECK( RHI, mem.MemoryInfo(&info, resources.MemoryManager()) );
 
     Assert( info.MappedPtr );
     for (const PVulkanShaderModule& shader : dbg.Modules) {
         const FRawMemoryConst trace{ static_cast<const u8*>(info.MappedPtr) + dbg.Offset, dbg.Size };
 
         const size_t numMessagesBefore = pDump->size();
-        LOG_CHECK( RHI, shader->ParseDebugOutput(MakeAppendable(*pDump), dbg.Mode, trace) );
+        PPE_LOG_CHECK( RHI, shader->ParseDebugOutput(MakeAppendable(*pDump), dbg.Mode, trace) );
 
         callback(dbg.TaskName, shader->DebugName().MakeView(), dbg.Stages, pDump->MakeView().CutStartingAt(numMessagesBefore));
     }

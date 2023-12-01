@@ -127,7 +127,7 @@ size_t FSocketBuffered::Write(const TMemoryView<const u8>& rawData) {
             FlushWrite();
 
         if (nullptr == _bufferO)
-            _bufferO = NewArray<u8>(_bufferCapacity);
+            _bufferO = NEW_ARRAY(Socket, u8, _bufferCapacity);
 
         Assert(toWrite <= _bufferCapacity - _sizeO);
 
@@ -177,7 +177,7 @@ void FSocketBuffered::FlushRead(bool block/* = false */) {
         _offsetI = 0;
     }
     else if (not _bufferI) {
-        _bufferI = NewArray<u8>(_bufferCapacity);
+        _bufferI = NEW_ARRAY(Socket, u8, _bufferCapacity);
     }
 
     const TMemoryView<u8> rawData = _bufferI.CutStartingAt(_offsetI);

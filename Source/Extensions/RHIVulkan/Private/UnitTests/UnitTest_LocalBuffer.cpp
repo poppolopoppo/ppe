@@ -284,7 +284,7 @@ NO_INLINE static void Test_LocalBuffer1_() {
 void UnitTest_LocalBuffer() {
     Test_LocalBuffer1_();
 
-    LOG(RHI, Info, L"UnitTest_LocalBuffer [PASSED]");
+    PPE_LOG(RHI, Info, "UnitTest_LocalBuffer [PASSED]");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

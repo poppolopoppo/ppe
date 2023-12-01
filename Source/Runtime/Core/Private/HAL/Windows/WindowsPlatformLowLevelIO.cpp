@@ -62,12 +62,26 @@ static int AccessPolicyToOFlag_(EAccessPolicy accessFlags) {
 #if USE_PPE_LOGGER
 struct FErrno_ {
     int Num;
-    static FErrno_ LastError() { return FErrno_{ errno }; }
-    inline friend FWTextWriter& operator <<(FWTextWriter& oss, FErrno_ err) {
-        wchar_t buffer[1024];
-        return (_wcserror_s(buffer, err.Num)
-            ? oss << L"unknown error"
-            : oss << MakeCStringView(buffer));
+
+    static FErrno_ LastError() NOEXCEPT {
+        return FErrno_{ errno };
+    }
+
+    template <size_t _Len>
+    inline bool ToCStr(char (&buffer)[_Len]) const {
+        return strerror_s(buffer, Num) == 0;
+    }
+    template <size_t _Len>
+    inline bool ToCStr(wchar_t (&buffer)[_Len]) const {
+        return _wcserror_s(buffer, Num) == 0;
+    }
+
+    template <typename _Char>
+    inline friend TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, FErrno_ err) {
+        _Char buffer[1024];
+        return (err.ToCStr(buffer)
+            ? oss << MakeCStringView(buffer)
+            : oss << STRING_LITERAL(_Char, "unknown error"));
     }
 };
 #endif //!USE_PPE_LOGGER
@@ -75,8 +89,9 @@ struct FErrno_ {
 #if USE_PPE_LOGGER
 struct FHandle_ {
     int Handle;
-    inline friend FWTextWriter& operator <<(FWTextWriter& oss, FHandle_ handle) {
-        return oss << L'<' << handle.Handle << L'>';
+    template <typename _Char>
+    inline friend TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, FHandle_ handle) {
+        return oss << STRING_LITERAL(_Char, '<') << handle.Handle << STRING_LITERAL(_Char, '>');
     }
 };
 #endif //!USE_PPE_LOGGER
@@ -113,11 +128,11 @@ auto FWindowsPlatformLowLevelIO::Open(const wchar_t* filename, EOpenPolicy mode,
 
     FHandle handle;
     if (::_wsopen_s(&handle, filename, oflag, shareFlag, OpenPolicyToPMode_(mode)) != 0) {
-        LOG(HAL, Error, L"failed to open file '{0}' : {1}", filename, FErrno_::LastError());
+        PPE_LOG(HAL, Error, "failed to open file '{0}' : {1}", filename, FErrno_::LastError());
         Assert(InvalidHandle == handle);
     }
 
-    LOG(HAL, Info, L"opened file '{0}': {1} ({2}) -> {3}", filename, mode, flags, FHandle_{ handle });
+    PPE_LOG(HAL, Info, "opened file '{0}': {1} ({2}) -> {3}", filename, mode, flags, FHandle_{ handle });
     return handle;
 }
 //----------------------------------------------------------------------------
@@ -125,7 +140,7 @@ bool FWindowsPlatformLowLevelIO::Close(FHandle handle) {
     Assert(InvalidHandle != handle);
 
     const int res = ::_close(handle);
-    CLOG(0 != res, HAL, Error, L"failed to close handle {0} : {1}", FHandle_{ handle }, FErrno_::LastError());
+    PPE_CLOG(0 != res, HAL, Error, "failed to close handle {0} : {1}", FHandle_{ handle }, FErrno_::LastError());
 
     return (0 == res);
 }
@@ -136,7 +151,7 @@ bool FWindowsPlatformLowLevelIO::SetMode(FHandle handle, EAccessPolicy flags) {
     int oflag = AccessPolicyToOFlag_(flags);
 
     const int res = _setmode(handle, oflag);
-    CLOG(-1 == res, HAL, Error, L"failed to set handle {0} mode to {1} : {2}", FHandle_{ handle }, flags, FErrno_::LastError());
+    PPE_CLOG(-1 == res, HAL, Error, "failed to set handle {0} mode to {1} : {2}", FHandle_{ handle }, flags, FErrno_::LastError());
 
     return (res != -1);
 }
@@ -151,7 +166,7 @@ std::streamoff FWindowsPlatformLowLevelIO::Tell(FHandle handle) {
     Assert(InvalidHandle != handle);
 
     const i64 off = ::_telli64(handle);
-    CLOG(-1L == off, HAL, Error, L"failed to tell handle {0} : {1}", FHandle_{ handle }, FErrno_::LastError());
+    PPE_CLOG(-1L == off, HAL, Error, "failed to tell handle {0} : {1}", FHandle_{ handle }, FErrno_::LastError());
 
     return off;
 }
@@ -169,7 +184,7 @@ std::streamoff FWindowsPlatformLowLevelIO::Seek(FHandle handle, std::streamoff o
     }
 
     const i64 off = ::_lseeki64(handle, checked_cast<int>(offset), _origin);
-    CLOG(-1L == off, HAL, Error, L"failed to seek handle {0} : {1}", FHandle_{ handle }, FErrno_::LastError());
+    PPE_CLOG(-1L == off, HAL, Error, "failed to seek handle {0} : {1}", FHandle_{ handle }, FErrno_::LastError());
 
     return off;
 }
@@ -180,7 +195,7 @@ std::streamsize FWindowsPlatformLowLevelIO::Read(FHandle handle, void* dst, std:
     Assert(sizeInBytes);
 
     const i64 sz = ::_read(handle, dst, checked_cast<unsigned int>(sizeInBytes));
-    CLOG(-1L == sz, HAL, Error, L"failed to read {0} from handle {1} : {2}", Fmt::SizeInBytes(sizeInBytes), FHandle_{ handle }, FErrno_::LastError());
+    PPE_CLOG(-1L == sz, HAL, Error, "failed to read {0} from handle {1} : {2}", Fmt::SizeInBytes(sizeInBytes), FHandle_{ handle }, FErrno_::LastError());
 
     return sz;
 }
@@ -191,7 +206,7 @@ std::streamsize FWindowsPlatformLowLevelIO::Write(FHandle handle, const void* sr
     Assert(sizeInBytes);
 
     const i64 sz = ::_write(handle, src, checked_cast<unsigned int>(sizeInBytes));
-    CLOG(-1L == sz, HAL, Error, L"failed to write {0} to handle {1} : {2}", Fmt::SizeInBytes(sizeInBytes), FHandle_{ handle }, FErrno_::LastError());
+    PPE_CLOG(-1L == sz, HAL, Error, "failed to write {0} to handle {1} : {2}", Fmt::SizeInBytes(sizeInBytes), FHandle_{ handle }, FErrno_::LastError());
 
     return sz;
 }
@@ -200,7 +215,7 @@ bool FWindowsPlatformLowLevelIO::Commit(FHandle handle) {
     Assert(InvalidHandle != handle);
 
     const int res = ::_commit(handle);
-    CLOG(0 != res, HAL, Error, L"failed to commit handle {0} : {1}", handle, FErrno_::LastError());
+    PPE_CLOG(0 != res, HAL, Error, "failed to commit handle {0} : {1}", handle, FErrno_::LastError());
 
     return (0 == res);
 }

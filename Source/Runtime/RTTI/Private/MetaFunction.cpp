@@ -41,26 +41,26 @@ struct FMetaFunctionCallFormattor_ {
     {}
     template <typename _Char>
     friend TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const FMetaFunctionCallFormattor_& call) {
-        oss << L"function ";
+        oss << STRING_LITERAL(_Char, "function ");
 
         if (call.pFunc->Result())
             oss << call.pFunc->Result()->TypeName();
         else
-            oss << L"void";
+            oss << STRING_LITERAL(_Char, "void");
 
-        oss << L' ' << call.pObj->RTTI_Class()->Name() << L"::" << call.pFunc->Name() << L'(';
+        oss << STRING_LITERAL(_Char, ' ') << call.pObj->RTTI_Class()->Name() << STRING_LITERAL(_Char, "::") << call.pFunc->Name() << STRING_LITERAL(_Char, '(');
 
         forrange(i, 0, call.pFunc->Parameters().size()) {
-            if (i > 0) oss << L", ";
+            if (i > 0) oss << STRING_LITERAL(_Char, ", ");
             const FMetaParameter& prm = call.pFunc->Parameters()[i];
-            oss << prm.Name() << L" : " << prm.Traits()->TypeName() << L" <" << prm.Flags() << L'>';
+            oss << prm.Name() << STRING_LITERAL(_Char, " : ") << prm.Traits()->TypeName() << STRING_LITERAL(_Char, " <") << prm.Flags() << STRING_LITERAL(_Char, '>');
         }
 
-        oss << L") on object \""
+        oss << STRING_LITERAL(_Char, ") on object \"")
             << call.pObj->RTTI_Name()
-            << L"\" ("
+            << STRING_LITERAL(_Char, "\" (")
             << call.pObj->RTTI_Flags()
-            << L')';
+            << STRING_LITERAL(_Char, ')');
 
         return oss;
     }
@@ -140,7 +140,7 @@ bool FMetaFunction::InvokeIFP_(const FMetaObject& obj, const FAtom& result, cons
 
     if (arguments.size() != _parameters.size()) {
 #ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
-        LOG(RTTI, Warning, L"given {0} arguments instead of {1} when calling {2}",
+        PPE_LOG(RTTI, Warning, "given {0} arguments instead of {1} when calling {2}",
             arguments.size(), _parameters.size(),
             FMetaFunctionCallFormattor_(obj COMMA *this) );
 #endif
@@ -149,7 +149,7 @@ bool FMetaFunction::InvokeIFP_(const FMetaObject& obj, const FAtom& result, cons
 
     if (_result.Valid() != result.Valid()) {
 #ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
-        LOG(RTTI, Warning, L"no result is returned by {0}",
+        PPE_LOG(RTTI, Warning, "no result is returned by {0}",
             FMetaFunctionCallFormattor_(obj COMMA *this) );
 #endif
         return false;
@@ -221,10 +221,10 @@ bool FMetaFunction::PromoteInvoke_(
             if (not promoted) {
                 succeed = false;
 #ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
-                LOG(RTTI, Error, L"wrong type for argument #{1} {2} instead of {3} when calling {0}, promote {4} failed",
+                PPE_LOG(RTTI, Error, "wrong type for argument #{1} {2} instead of {3} when calling {0}, promote {4} failed",
                     FMetaFunctionCallFormattor_(obj COMMA * this),
                     i, arguments[i].Traits()->NamedTypeInfos(), traits->NamedTypeInfos(),
-                    preferMove ? L"move"_view : L"copy"_view );
+                    preferMove ? "move"_view : "copy"_view);
 #endif
             }
 
@@ -247,7 +247,7 @@ bool FMetaFunction::PromoteInvoke_(
 
             if (not nativeResult.PromoteMove(result)) {
 #ifdef WITH_PPE_RTTI_FUNCTION_CHECKS
-                LOG(RTTI, Warning, L"wrong result type <{1}> when calling {0}",
+                PPE_LOG(RTTI, Warning, "wrong result type <{1}> when calling {0}",
                     FMetaFunctionCallFormattor_(obj COMMA * this),
                     result.Traits()->NamedTypeInfos());
 #endif
@@ -273,16 +273,16 @@ void FMetaFunction::CheckFunctionCall_(
     const FAtom& result,
     const TMemoryView<const FAtom>& arguments ) const {
 
-    CLOG(not IsConst() && obj.RTTI_IsFrozen(),
-        RTTI, Fatal, L"can't use frozen object with non-const {0}",
+    PPE_CLOG(not IsConst() && obj.RTTI_IsFrozen(),
+        RTTI, Fatal, "can't use frozen object with non-const {0}",
         FMetaFunctionCallFormattor_(obj COMMA *this) );
 
-    CLOG(IsDeprecated(),
-        RTTI, Warning, L"calling deprecated {0}",
+    PPE_CLOG(IsDeprecated(),
+        RTTI, Warning, "calling deprecated {0}",
         FMetaFunctionCallFormattor_(obj COMMA *this) );
 
-    CLOG(_parameters.size() != arguments.size(), // optional parameters must still be provided with their default value
-        RTTI, Fatal, L"invalid arguments count for {0}, expected {1} but given {2}",
+    PPE_CLOG(_parameters.size() != arguments.size(), // optional parameters must still be provided with their default value
+        RTTI, Fatal, "invalid arguments count for {0}, expected {1} but given {2}",
         FMetaFunctionCallFormattor_(obj COMMA * this), _parameters.size(), arguments.size());
 
     forrange(i, 0, _parameters.size()) {
@@ -290,20 +290,20 @@ void FMetaFunction::CheckFunctionCall_(
         const PTypeTraits given = arguments[i].Traits();
         const PTypeTraits common = expected->CommonType(given);
 
-        CLOG(not common.Valid(),
-            RTTI, Fatal, L"invalid argument #{1} for {0}, expected {2} but given {3} (common type = {4})",
+        PPE_CLOG(not common.Valid(),
+            RTTI, Fatal, "invalid argument #{1} for {0}, expected {2} but given {3} (common type = {4})",
             FMetaFunctionCallFormattor_(obj COMMA * this),
             i, expected->NamedTypeInfos(), given->NamedTypeInfos(), common->NamedTypeInfos() );
     }
 
     if (_result)
-        CLOG(_result->TypeId() != result.TypeId(),
-            RTTI, Fatal, L"invalid return value for {0}, expected {1} but given {2}",
+        PPE_CLOG(_result->TypeId() != result.TypeId(),
+            RTTI, Fatal, "invalid return value for {0}, expected {1} but given {2}",
             FMetaFunctionCallFormattor_(obj COMMA* this),
             _result->NamedTypeInfos(), result.Traits()->NamedTypeInfos() );
     else
-        CLOG(!!result,
-            RTTI, Fatal, L"function {0} has no return type, but given {1}",
+        PPE_CLOG(!!result,
+            RTTI, Fatal, "function {0} has no return type, but given {1}",
             FMetaFunctionCallFormattor_(obj COMMA* this),
             result.Traits()->NamedTypeInfos() );
 }
@@ -318,78 +318,69 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, RTTI::EParameterFlags flags) {
+template <typename _Char>
+static TBasicTextWriter<_Char>& Print_(TBasicTextWriter<_Char>& oss, RTTI::EParameterFlags flags) {
     if (flags == RTTI::EParameterFlags::Default)
-        return oss << "Default";
+        return oss << STRING_LITERAL(_Char, "Default");
 
-    auto sep = Fmt::NotFirstTime('|');
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
-    if (flags & RTTI::EParameterFlags::Output)      { oss << sep << "Output"; }
-    if (flags & RTTI::EParameterFlags::Optional)    { oss << sep << "Optional"; }
+    if (flags & RTTI::EParameterFlags::Output)      { oss << sep << STRING_LITERAL(_Char, "Output"); }
+    if (flags & RTTI::EParameterFlags::Optional)    { oss << sep << STRING_LITERAL(_Char, "Optional"); }
 
     return oss;
 }
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, RTTI::EParameterFlags flags) {
+    return Print_(oss, flags);
+}
+//----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EParameterFlags flags) {
-    if (flags == RTTI::EParameterFlags::Default)
-        return oss << L"Default";
-
-    auto sep = Fmt::NotFirstTime(L'|');
-
-    if (flags & RTTI::EParameterFlags::Output)      { oss << sep << L"Output"; }
-    if (flags & RTTI::EParameterFlags::Optional)    { oss << sep << L"Optional"; }
-
-    return oss;
+    return Print_(oss, flags);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, RTTI::EFunctionFlags flags) {
-    auto sep = Fmt::NotFirstTime('|');
+template <typename _Char>
+static TBasicTextWriter<_Char>& Print_(TBasicTextWriter<_Char>& oss, RTTI::EFunctionFlags flags) {
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
-    if (flags & RTTI::EFunctionFlags::Const)        { oss << sep << "Const"; }
-    if (flags & RTTI::EFunctionFlags::Public)       { oss << sep << "Public"; }
-    if (flags & RTTI::EFunctionFlags::Protected)    { oss << sep << "Protected"; }
-    if (flags & RTTI::EFunctionFlags::Private)      { oss << sep << "Private"; }
-    if (flags & RTTI::EFunctionFlags::Deprecated)   { oss << sep << "Deprecated"; }
+    if (flags & RTTI::EFunctionFlags::Const)        { oss << sep << STRING_LITERAL(_Char, "Const"); }
+    if (flags & RTTI::EFunctionFlags::Public)       { oss << sep << STRING_LITERAL(_Char, "Public"); }
+    if (flags & RTTI::EFunctionFlags::Protected)    { oss << sep << STRING_LITERAL(_Char, "Protected"); }
+    if (flags & RTTI::EFunctionFlags::Private)      { oss << sep << STRING_LITERAL(_Char, "Private"); }
+    if (flags & RTTI::EFunctionFlags::Deprecated)   { oss << sep << STRING_LITERAL(_Char, "Deprecated"); }
 
     return oss;
+}
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, RTTI::EFunctionFlags flags) {
+    return Print_(oss, flags);
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EFunctionFlags flags) {
-    auto sep = Fmt::NotFirstTime(L'|');
-
-    if (flags & RTTI::EFunctionFlags::Const)        { oss << sep << L"Const"; }
-    if (flags & RTTI::EFunctionFlags::Public)       { oss << sep << L"Public"; }
-    if (flags & RTTI::EFunctionFlags::Protected)    { oss << sep << L"Protected"; }
-    if (flags & RTTI::EFunctionFlags::Private)      { oss << sep << L"Private"; }
-    if (flags & RTTI::EFunctionFlags::Deprecated)   { oss << sep << L"Deprecated"; }
-
-    return oss;
+    return Print_(oss, flags);
 }
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, const RTTI::FMetaFunction& fun) {
-    Format(oss, "{0} {1}({2}) [{3}]",
-        fun.Result() ? fun.Result()->TypeName() : "void",
-        fun.Name(),
-        Fmt::Join(fun.Parameters().Map([](const RTTI::FMetaParameter& prm) {
-            return Fmt::Formator<char>([&prm](FTextWriter& o) {
-                o << prm.Name() << " : " << prm.Traits()->TypeName() << " <" << prm.Flags() << '>';
-            }); }), ", "),
-        fun.Flags() );
-    return oss;
-}
-//----------------------------------------------------------------------------
-FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FMetaFunction& fun) {
-    Format(oss, L"{0} {1}({2}) [{3}]",
+template <typename _Char>
+static TBasicTextWriter<_Char>& Print_(TBasicTextWriter<_Char>& oss, const RTTI::FMetaFunction& fun) {
+    Format(oss, STRING_LITERAL(_Char, "{0} {1}({2}) [{3}]"),
         fun.Result() ? fun.Result()->TypeName() : "void",
         fun.Name(),
         Fmt::Join(fun.Parameters().Map([](const RTTI::FMetaParameter& prm) {
             return Fmt::Formator<wchar_t>([&prm](FWTextWriter& o) {
-                o << prm.Name() << L" : " << prm.Traits()->TypeName() << L" <" << prm.Flags() << L'>';
-            }); }), L", "),
+                o << prm.Name() << STRING_LITERAL(_Char, " : ") << prm.Traits()->TypeName() << STRING_LITERAL(_Char, " <") << prm.Flags() << STRING_LITERAL(_Char, '>');
+            }); }), STRING_LITERAL(_Char, ", ")),
         fun.Flags() );
     return oss;
+}
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, const RTTI::FMetaFunction& fun) {
+    return Print_(oss, fun);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, const RTTI::FMetaFunction& fun) {
+    return Print_(oss, fun);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

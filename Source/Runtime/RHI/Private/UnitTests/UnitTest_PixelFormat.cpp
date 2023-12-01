@@ -24,7 +24,7 @@ NO_INLINE static void Test_PixelFormat1_() {
 void UnitTest_PixelFormat() {
     Test_PixelFormat1_();
 
-    LOG(RHI, Info, L"UnitTest_PixelFormat [PASSED]");
+    PPE_LOG(RHI, Info, "UnitTest_PixelFormat [PASSED]");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

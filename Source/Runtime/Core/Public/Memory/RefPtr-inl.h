@@ -62,22 +62,22 @@ inline bool FRefCountable::DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT 
 }
 //----------------------------------------------------------------------------
 // /!\ Should **ALWAYS** allocate with NewRef<>() helper !
-inline void FRefCountable::operator delete(void* p, std::size_t size) {
+inline void FRefCountable::operator delete(void* p, std::size_t ) {
 #if USE_PPE_MEMORYDOMAINS
-    tracking_free_for_delete(p, size);
+    tracking_free(p);
 #else
-    PPE::free_for_delete(p, size);
+    PPE::free(p);
 #endif
 }
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
 #if USE_PPE_MEMORYDOMAINS
 NODISCARD TRefPtr< TEnableIfRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args) {
-    return TRefPtr<T>{ new (tracking_malloc_for_new(trackingData, sizeof(T))) T{ std::forward<_Args>(args)... } };
+    return TRefPtr<T>{ new (tracking_malloc(trackingData, sizeof(T))) T{ std::forward<_Args>(args)... } };
 }
 #else
 NODISCARD TRefPtr< TEnableIfRefCountable<T> > NewRef(_Args&&... args) {
-    return TRefPtr<T>{ new (PPE::malloc_for_new(sizeof(T))) T{ std::forward<_Args>(args)... } };
+    return TRefPtr<T>{ new (PPE::malloc(sizeof(T))) T{ std::forward<_Args>(args)... } };
 }
 #endif
 //----------------------------------------------------------------------------
@@ -104,7 +104,7 @@ void RemoveRef(T* ptr) {
     if (ptr->DecStrongRefCount_ReturnIfReachZero()) {
         /**
          ** 2 ways available to override destruction behavior:
-         **  - implement a custom overload of free function OnStrongRefCountReachZero, can be overriden with ADL
+         **  - implement a custom overload of free function OnStrongRefCountReachZero, can be overridden with ADL
          **  - implement OnStrongRefCountReachZero() as a member function, this method will propagate to child classes
          **/
         IF_CONSTEXPR(Meta::has_defined_v<FRefCountable::THasOnStrongRefCountReachZero, T>) {

@@ -60,7 +60,7 @@ void FVulkanCommandPool::TearDown(const FVulkanDevice& device) {
     _pool = VK_NULL_HANDLE;
 
 #if USE_PPE_RHIDEBUG
-    LOG(RHI, Info, L"tear down <{0}> command pool, max live command buffers = {1}", _debugName.Str(), _maxBuffersAllocated.load(std::memory_order_relaxed));
+    PPE_LOG(RHI, Info, "tear down <{0}> command pool, max live command buffers = {1}", _debugName.Str(), _maxBuffersAllocated.load(std::memory_order_relaxed));
     _maxBuffersAllocated.store(0);
 #endif
 }

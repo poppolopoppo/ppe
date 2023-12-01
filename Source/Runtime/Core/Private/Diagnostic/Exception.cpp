@@ -16,17 +16,15 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FException::FException(const char* what) noexcept
-:   _what(what) {
-    Assert(_what);
+:   std::exception(what) {
+    Assert(what);
 #if USE_PPE_EXCEPTION_CALLSTACK
     _siteHash = 0;
-    const size_t depth = PPE::FCallstack::Capture(MakeView(_callstack), &_siteHash, 3, lengthof(_callstack));
+    const size_t depth = FCallstack::Capture(MakeView(_callstack), &_siteHash, 3, lengthof(_callstack));
     if (depth < lengthof(_callstack))
         _callstack[depth] = nullptr;
 #endif
 }
-//----------------------------------------------------------------------------
-FException::~FException() = default;
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_CALLSTACK
 FDecodedCallstack FException::Callstack() const {
@@ -41,14 +39,14 @@ FDecodedCallstack FException::Callstack() const {
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
-FWTextWriter& FException::DefaultDescription(FWTextWriter& oss, const wchar_t* name, const FException& e) {
+FTextWriter& FException::DefaultDescription(FTextWriter& oss, const wchar_t* name, const FException& e) {
     Assert_NoAssume(name);
     return oss
-        << L"caught exception "
+        << "caught exception "
         << MakeCStringView(name)
-        << L": "
+        << ": "
         << MakeCStringView(e.What())
-        << L" !";
+        << " !";
 }
 #endif
 //----------------------------------------------------------------------------

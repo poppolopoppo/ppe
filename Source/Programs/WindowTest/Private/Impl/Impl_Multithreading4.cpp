@@ -32,7 +32,7 @@ struct FMultithreading4_ {
                     .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage::TransferSrc)
                     .SetQueues(QueueUsage),
                     Default ARGS_IF_RHIDEBUG("RenderTarget1"));
-        LOG_CHECK(WindowTest, !!Images[0]);
+        PPE_LOG_CHECK(WindowTest, !!Images[0]);
 
         ON_SCOPE_EXIT([this]() {
             Unused(Fg->ReleaseResource(Images[0]));
@@ -46,7 +46,7 @@ struct FMultithreading4_ {
 
             RHI::FCommandBufferBatch cmd = Fg->Begin(RHI::FCommandBufferDesc{ RHI::EQueueType::Graphics }
                 .SetName("RenderThread1"));
-            LOG_CHECK(WindowTest, !!cmd);
+            PPE_LOG_CHECK(WindowTest, !!cmd);
 
             PerFrame[i&1] = cmd;
             CmdBuffers[0] = cmd;
@@ -60,7 +60,7 @@ struct FMultithreading4_ {
             RHI::FLogicalPassID renderPass = cmd->CreateRenderPass(RHI::FRenderPassDesc{ viewSize }
                 .AddTarget(RHI::ERenderTargetID::Color0, Images[0], FLinearColor::Transparent(), RHI::EAttachmentStoreOp::Store)
                 .AddViewport(viewSize));
-            LOG_CHECK(WindowTest, !!renderPass);
+            PPE_LOG_CHECK(WindowTest, !!renderPass);
 
             cmd->Task(renderPass, RHI::FDrawVertices{}
                 .Draw(3)
@@ -70,12 +70,12 @@ struct FMultithreading4_ {
             RHI::PFrameTask tDraw = cmd->Task(RHI::FSubmitRenderPass{ renderPass });
             Unused(tDraw);
 
-            LOG_CHECK(WindowTest, Fg->Execute(cmd));
+            PPE_LOG_CHECK(WindowTest, Fg->Execute(cmd));
 
             // (2) wait until all threads complete command buffer recording
             Sync.Wait();
 
-            LOG_CHECK(WindowTest, Fg->Flush());
+            PPE_LOG_CHECK(WindowTest, Fg->Flush());
         }
 
         return true;
@@ -92,14 +92,14 @@ struct FMultithreading4_ {
            .SetUsage(RHI::EImageUsage::Storage | RHI::EImageUsage::TransferSrc)
            .SetQueues(QueueUsage),
            Default ARGS_IF_RHIDEBUG("RenderTarget2"));
-        LOG_CHECK(WindowTest, !!Images[1]);
+        PPE_LOG_CHECK(WindowTest, !!Images[1]);
 
         ON_SCOPE_EXIT([this]() {
             Unused(Fg->ReleaseResource(Images[1]));
         });
 
         RHI::PPipelineResources resources = NEW_REF(RHIPipeline, RHI::FPipelineResources);
-        LOG_CHECK(WindowTest, Fg->InitPipelineResources(resources.get(), CPipeline, "0"_descriptorset));
+        PPE_LOG_CHECK(WindowTest, Fg->InitPipelineResources(resources.get(), CPipeline, "0"_descriptorset));
         resources->BindImage("un_OutImage"_uniform, Images[1]);
 
         // (0) wait until all shared resources have been initialized
@@ -108,7 +108,7 @@ struct FMultithreading4_ {
         forrange(i, 0, MaxCount) {
             RHI::FCommandBufferBatch cmd = Fg->Begin(RHI::FCommandBufferDesc{ RHI::EQueueType::AsyncCompute }
                 .SetName("RenderThread2"));
-            LOG_CHECK(WindowTest, !!cmd);
+            PPE_LOG_CHECK(WindowTest, !!cmd);
 
             CmdBuffers[1] = cmd;
 
@@ -124,7 +124,7 @@ struct FMultithreading4_ {
                 .Dispatch(IntDivCeil(viewSize, localSize)));
             Unused(tComp);
 
-            LOG_CHECK(WindowTest, Fg->Execute(cmd));
+            PPE_LOG_CHECK(WindowTest, Fg->Execute(cmd));
 
             // (2) notify that thread has already finished recording the command buffer
             Sync.Wait();
@@ -144,7 +144,7 @@ struct FMultithreading4_ {
             .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage::TransferSrc)
             .SetQueues(QueueUsage),
             Default ARGS_IF_RHIDEBUG("RenderTarget3"));
-        LOG_CHECK(WindowTest, !!Images[2]);
+        PPE_LOG_CHECK(WindowTest, !!Images[2]);
 
         ON_SCOPE_EXIT([this]() {
             Unused(Fg->ReleaseResource(Images[2]));
@@ -159,7 +159,7 @@ struct FMultithreading4_ {
 
             RHI::FCommandBufferBatch cmd = Fg->Begin(RHI::FCommandBufferDesc{ RHI::EQueueType::Graphics }
                 .SetName("RenderThread3"));
-            LOG_CHECK(WindowTest, !!cmd);
+            PPE_LOG_CHECK(WindowTest, !!cmd);
 
             CmdBuffers[2] = cmd;
             cmd->DependsOn(CmdBuffers[1]);
@@ -167,7 +167,7 @@ struct FMultithreading4_ {
             RHI::FLogicalPassID renderPass = cmd->CreateRenderPass(RHI::FRenderPassDesc{ viewSize }
                 .AddTarget(RHI::ERenderTargetID::Color0, Images[2], FLinearColor::Transparent(), RHI::EAttachmentStoreOp::Store)
                 .AddViewport(viewSize));
-            LOG_CHECK(WindowTest, !!renderPass);
+            PPE_LOG_CHECK(WindowTest, !!renderPass);
 
             cmd->Task(renderPass, RHI::FDrawVertices{}
                 .Draw(3)
@@ -177,7 +177,7 @@ struct FMultithreading4_ {
             RHI::PFrameTask tDraw = cmd->Task(RHI::FSubmitRenderPass{ renderPass });
             Unused(tDraw);
 
-            LOG_CHECK(WindowTest, Fg->Execute(cmd));
+            PPE_LOG_CHECK(WindowTest, Fg->Execute(cmd));
 
             // (2) notify that thread has already finished recording the command buffer
             Sync.Wait();
@@ -196,7 +196,7 @@ struct FMultithreading4_ {
             .SetUsage(RHI::EImageUsage::TransferDst)
             .SetQueues(QueueUsage),
             Default ARGS_IF_RHIDEBUG("RenderTarget4"));
-        LOG_CHECK(WindowTest, !!Images[3]);
+        PPE_LOG_CHECK(WindowTest, !!Images[3]);
 
         ON_SCOPE_EXIT([this]() {
             Unused(Fg->ReleaseResource(Images[3]));
@@ -208,7 +208,7 @@ struct FMultithreading4_ {
         forrange(i, 0, MaxCount) {
             RHI::FCommandBufferBatch cmd = Fg->Begin(RHI::FCommandBufferDesc{ RHI::EQueueType::AsyncTransfer }
                 .SetName("RenderThread4"));
-            LOG_CHECK(WindowTest, !!cmd);
+            PPE_LOG_CHECK(WindowTest, !!cmd);
 
             // (1) wake for first and second command buffer
             Sync.Wait();
@@ -219,13 +219,13 @@ struct FMultithreading4_ {
             cmd->DependsOn(CmdBuffers[1]);
 
             RHI::PFrameTask tCopy1 = cmd->Task(RHI::FCopyImage{}.From(Images[0]).To(Images[3]).AddRegion(Default, {16,16}, Default, {0,0}, {256,256}));
-            LOG_CHECK(WindowTest, !!tCopy1);
+            PPE_LOG_CHECK(WindowTest, !!tCopy1);
             RHI::PFrameTask tCopy2 = cmd->Task(RHI::FCopyImage{}.From(Images[1]).To(Images[3]).AddRegion(Default, {256,256}, Default, {256,256}, {256,256}));
-            LOG_CHECK(WindowTest, !!tCopy2);
+            PPE_LOG_CHECK(WindowTest, !!tCopy2);
 
             Unused(tCopy1, tCopy2);
 
-            LOG_CHECK(WindowTest, Fg->Execute(cmd));
+            PPE_LOG_CHECK(WindowTest, Fg->Execute(cmd));
 
             // (2) notify that thread has already finished recording the command buffer
             Sync.Wait();
@@ -282,7 +282,7 @@ void main() {
 ARGS_IF_RHIDEBUG("Impl_Multithreading4_PS"));
 
     TAutoResource<FGPipelineID> gppln{ *fg, fg->CreatePipeline(gdesc ARGS_IF_RHIDEBUG("Impl_Multithreading4_Graphics")) };
-    LOG_CHECK(WindowTest, gppln.Valid());
+    PPE_LOG_CHECK(WindowTest, gppln.Valid());
 
     FComputePipelineDesc cdesc;
     cdesc.AddShader(EShaderLangFormat::VKSL_100, "main", R"#(
@@ -306,7 +306,7 @@ void main ()
 ARGS_IF_RHIDEBUG("Impl_Multithreading4_VS"));
 
     TAutoResource<FCPipelineID> cppln{ *fg, fg->CreatePipeline(cdesc ARGS_IF_RHIDEBUG("Impl_Multithreading4_Compute")) };
-    LOG_CHECK(WindowTest, cppln.Valid());
+    PPE_LOG_CHECK(WindowTest, cppln.Valid());
 
     FMultithreading4_ context;
     context.Fg = fg;
@@ -326,11 +326,11 @@ ARGS_IF_RHIDEBUG("Impl_Multithreading4_VS"));
 
     FHighPriorityThreadPool::Get().RunAndWaitFor(MakeView(tasks));
 
-    LOG_CHECK(WindowTest, fg->WaitIdle());
-    LOG_CHECK(WindowTest, threadResult1);
-    LOG_CHECK(WindowTest, threadResult2);
-    LOG_CHECK(WindowTest, threadResult3);
-    LOG_CHECK(WindowTest, threadResult4);
+    PPE_LOG_CHECK(WindowTest, fg->WaitIdle());
+    PPE_LOG_CHECK(WindowTest, threadResult1);
+    PPE_LOG_CHECK(WindowTest, threadResult2);
+    PPE_LOG_CHECK(WindowTest, threadResult3);
+    PPE_LOG_CHECK(WindowTest, threadResult4);
 
     Broadcast(MakeView(context.CmdBuffers), Default);
     Broadcast(MakeView(context.PerFrame), Default);

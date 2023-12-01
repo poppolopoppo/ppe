@@ -12,7 +12,7 @@ namespace PPE {
 class PPE_CORE_API FDeferredStreamReader : public IStreamReader, Meta::FNonCopyableNorMovable {
 public:
     explicit FDeferredStreamReader(IStreamReader* nonBuffered, ETaskPriority priority = ETaskPriority::Normal);
-    virtual ~FDeferredStreamReader();
+    virtual ~FDeferredStreamReader() override;
 
     ETaskPriority Priority() const { return _priority; }
 
@@ -32,14 +32,14 @@ public: // IStreamReader
     virtual size_t ReadSome(void* storage, size_t eltsize, size_t count) override final;
 
 private:
-    IStreamReader* _nonBuffered;
-    ETaskPriority _priority;
+    IStreamReader* _nonBuffered{ nullptr };
+    ETaskPriority _priority{ ETaskPriority::Normal };
 };
 //----------------------------------------------------------------------------
 class PPE_CORE_API FDeferredStreamWriter : public IStreamWriter, Meta::FNonCopyableNorMovable {
 public:
     explicit FDeferredStreamWriter(IStreamWriter* nonBuffered, ETaskPriority priority = ETaskPriority::Normal);
-    virtual ~FDeferredStreamWriter();
+    virtual ~FDeferredStreamWriter() override;
 
     ETaskPriority Priority() const { return _priority; }
 
@@ -55,8 +55,8 @@ public: // IStreamWriter
     virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final;
 
 private:
-    IStreamWriter* _nonBuffered;
-    ETaskPriority _priority;
+    IStreamWriter* _nonBuffered{ nullptr };
+    ETaskPriority _priority{ ETaskPriority::Normal };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

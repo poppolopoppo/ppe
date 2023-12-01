@@ -28,9 +28,9 @@ bool FVulkanRayTracingScene::Construct(
     FRawMemoryID memoryId, FVulkanMemoryObject& memoryObj
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     const auto exclusiveData = _data.LockExclusive();
-    LOG_CHECK(RHI, VK_NULL_HANDLE == exclusiveData->TopLevelAS);
-    LOG_CHECK(RHI, not exclusiveData->MemoryId.Valid());
-    LOG_CHECK(RHI, desc.MaxInstanceCount > 0);
+    PPE_LOG_CHECK(RHI, VK_NULL_HANDLE == exclusiveData->TopLevelAS);
+    PPE_LOG_CHECK(RHI, not exclusiveData->MemoryId.Valid());
+    PPE_LOG_CHECK(RHI, desc.MaxInstanceCount > 0);
 
     VkAccelerationStructureCreateInfoNV create{};
     create.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_NV;
@@ -46,7 +46,7 @@ bool FVulkanRayTracingScene::Construct(
         device.vkAllocator(),
         &exclusiveData->TopLevelAS ));
 
-    LOG_CHECK(RHI, memoryObj.AllocateAccelStruct(
+    PPE_LOG_CHECK(RHI, memoryObj.AllocateAccelStruct(
         resources.MemoryManager(),
         exclusiveData->TopLevelAS ));
 

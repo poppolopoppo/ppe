@@ -55,9 +55,23 @@ public:
     :   _Primary(primary)
     ,   _Fallback(fallback)
     {}
-    TFallbackAllocator(_Primary&& rprimary, _Fallback&& rfallback)
+    TFallbackAllocator(_Primary&& rprimary, _Fallback&& rfallback) NOEXCEPT
     :   _Primary(std::move(rprimary))
     ,   _Fallback(std::move(rfallback))
+    {}
+
+    TFallbackAllocator(const _Primary& primary)
+    :   _Primary(primary)
+    {}
+    explicit TFallbackAllocator(_Primary&& rprimary) NOEXCEPT
+    :   _Primary(std::move(rprimary))
+    {}
+
+    TFallbackAllocator(const _Fallback& fallback)
+    :   _Fallback(fallback)
+    {}
+    explicit TFallbackAllocator(_Fallback&& rfallback) NOEXCEPT
+    :   _Fallback(std::move(rfallback))
     {}
 
     TFallbackAllocator(const TFallbackAllocator& other)
@@ -80,22 +94,22 @@ public:
         return (*this);
     }
 
-    size_t MaxSize() const NOEXCEPT {
+    NODISCARD size_t MaxSize() const NOEXCEPT {
         return Max(primary_traits::MaxSize(*this), fallback_traits::MaxSize(*this));
     }
 
-    size_t SnapSize(size_t s) const NOEXCEPT {
+    NODISCARD size_t SnapSize(size_t s) const NOEXCEPT {
         s = primary_traits::SnapSize(*this, s);
         Assert_NoAssume(fallback_traits::SnapSize(*this, s) == s);
         return s;
     }
 
-    bool Owns(FAllocatorBlock b) const NOEXCEPT {
+    NODISCARD bool Owns(FAllocatorBlock b) const NOEXCEPT {
         return (primary_traits::Owns(*this, b) || fallback_traits::Owns(*this, b));
     }
 
-    FAllocatorBlock Allocate(size_t s) {
-        FAllocatorBlock b{ FAllocatorBlock::Null() };
+    NODISCARD FAllocatorBlock Allocate(size_t s) {
+        FAllocatorBlock b;
         if (Likely(s <= primary_traits::MaxSize(*this)))
             b = primary_traits::Allocate(*this, s);
         if (Unlikely(not b))
@@ -117,14 +131,14 @@ public:
             fallback_traits::Reallocate(*this, b, s);
     }
 
-    bool Acquire(FAllocatorBlock b) NOEXCEPT {
+    NODISCARD bool Acquire(FAllocatorBlock b) NOEXCEPT {
         if (Unlikely(not primary_traits::Acquire(*this, b)))
             return fallback_traits::Acquire(*this, b);
         else
             return true;
     }
 
-    bool Steal(FAllocatorBlock b) NOEXCEPT {
+    NODISCARD bool Steal(FAllocatorBlock b) NOEXCEPT {
         if (Likely(primary_traits::Owns(*this, b)))
             return primary_traits::Steal(*this, b);
         else
@@ -132,23 +146,23 @@ public:
     }
 
 #if USE_PPE_MEMORYDOMAINS
-    FMemoryTracking& TrackingData() NOEXCEPT {
+    NODISCARD FMemoryTracking& TrackingData() NOEXCEPT {
         return AllocatorTrackingData(
             static_cast<_Primary&>(*this),
             static_cast<_Fallback&>(*this) );
     }
 
-    NODISCARD auto& AllocatorWithoutTracking() NOEXCEPT {
+    NODISCARD NODISCARD auto& AllocatorWithoutTracking() NOEXCEPT {
         return primary_traits::AllocatorWithoutTracking(*this);
     }
 #endif
 
-    friend bool operator ==(const TFallbackAllocator& lhs, const TFallbackAllocator& rhs) NOEXCEPT {
+    NODISCARD friend bool operator ==(const TFallbackAllocator& lhs, const TFallbackAllocator& rhs) NOEXCEPT {
         return (primary_traits::Equals(lhs, rhs) &&
                 fallback_traits::Equals(lhs, rhs));
     }
 
-    friend bool operator !=(const TFallbackAllocator& lhs, const TFallbackAllocator& rhs) NOEXCEPT {
+    NODISCARD friend bool operator !=(const TFallbackAllocator& lhs, const TFallbackAllocator& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
@@ -198,20 +212,20 @@ public:
 
     using _Allocator::_Allocator;
 
-    size_t MaxSize() const {
+    NODISCARD size_t MaxSize() const {
         return allocator_traits::MaxSize(*this);
     }
 
-    size_t SnapSize(size_t s) const NOEXCEPT {
+    NODISCARD size_t SnapSize(size_t s) const NOEXCEPT {
         STATIC_ASSERT(_MinSize > 0); // or it's useless
         return allocator_traits::SnapSize(*this, (s ? Max(s, _MinSize) : 0));
     }
 
-    bool Owns(FAllocatorBlock b) const NOEXCEPT {
+    NODISCARD bool Owns(FAllocatorBlock b) const NOEXCEPT {
         return allocator_traits::Owns(*this, b);
     }
 
-    FAllocatorBlock Allocate(size_t s) {
+    NODISCARD FAllocatorBlock Allocate(size_t s) {
         return allocator_traits::Allocate(*this, s);
     }
 
@@ -223,29 +237,29 @@ public:
         allocator_traits::Reallocate(*this, b, s);
     }
 
-    bool Acquire(FAllocatorBlock b) NOEXCEPT {
+    NODISCARD bool Acquire(FAllocatorBlock b) NOEXCEPT {
         return allocator_traits::Acquire(*this, b);
     }
 
-    bool Steal(FAllocatorBlock b) NOEXCEPT {
+    NODISCARD bool Steal(FAllocatorBlock b) NOEXCEPT {
         return allocator_traits::Steal(*this, b);
     }
 
 #if USE_PPE_MEMORYDOMAINS
-    FMemoryTracking& TrackingData() NOEXCEPT {
+    NODISCARD FMemoryTracking& TrackingData() NOEXCEPT {
         return allocator_traits::TrackingData(*this);
     }
 
-    NODISCARD auto& AllocatorWithoutTracking() NOEXCEPT {
+    NODISCARD NODISCARD auto& AllocatorWithoutTracking() NOEXCEPT {
         return allocator_traits::AllocatorWithoutTracking(*this);
     }
 #endif
 
-    friend bool operator ==(const TMinSizeAllocator& lhs, const TMinSizeAllocator& rhs) NOEXCEPT {
+    NODISCARD friend bool operator ==(const TMinSizeAllocator& lhs, const TMinSizeAllocator& rhs) NOEXCEPT {
         return (allocator_traits::Equals(lhs, rhs));
     }
 
-    friend bool operator !=(const TMinSizeAllocator& lhs, const TMinSizeAllocator& rhs) NOEXCEPT {
+    NODISCARD friend bool operator !=(const TMinSizeAllocator& lhs, const TMinSizeAllocator& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
@@ -257,7 +271,7 @@ public:
 // Proxy allocator is wrapping an internal reference to another allocator
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-class TProxyAllocator : private FGenericAllocator {
+class TProxyAllocator : private FAllocatorPolicy {
 public:
     using allocator_traits = TAllocatorTraits<_Allocator>;
 
@@ -289,23 +303,24 @@ public:
     TProxyAllocator(TPtrRef<_Allocator> a) NOEXCEPT
     :   AllocRef(a)
     {}
-    explicit TProxyAllocator(Meta::FForceInit) NOEXCEPT
-    :   AllocRef(nullptr)
+
+    explicit TProxyAllocator(Meta::FForceInit forceInit) NOEXCEPT
+    :   AllocRef(forceInit)
     {}
 
-    size_t MaxSize() const NOEXCEPT {
+    NODISCARD size_t MaxSize() const NOEXCEPT {
         return allocator_traits::MaxSize(*AllocRef);
     }
 
-    size_t SnapSize(size_t s) const NOEXCEPT {
+    NODISCARD size_t SnapSize(size_t s) const NOEXCEPT {
         return allocator_traits::SnapSize(*AllocRef, s);
     }
 
-    bool Owns(FAllocatorBlock b) const NOEXCEPT {
+    NODISCARD bool Owns(FAllocatorBlock b) const NOEXCEPT {
         return allocator_traits::Owns(*AllocRef, b);
     }
 
-    FAllocatorBlock Allocate(size_t s) {
+    NODISCARD FAllocatorBlock Allocate(size_t s) {
         return allocator_traits::Allocate(*AllocRef, s);
     }
 
@@ -317,16 +332,16 @@ public:
         allocator_traits::Reallocate(*AllocRef, b, s);
     }
 
-    bool Acquire(FAllocatorBlock b) NOEXCEPT {
+    NODISCARD bool Acquire(FAllocatorBlock b) NOEXCEPT {
         return allocator_traits::Acquire(*AllocRef, b);
     }
 
-    bool Steal(FAllocatorBlock b) NOEXCEPT {
+    NODISCARD bool Steal(FAllocatorBlock b) NOEXCEPT {
         return allocator_traits::Steal(*AllocRef, b);
     }
 
 #if USE_PPE_MEMORYDOMAINS
-    FMemoryTracking& TrackingData() NOEXCEPT {
+    NODISCARD FMemoryTracking& TrackingData() NOEXCEPT {
         return allocator_traits::TrackingData(*this);
     }
 
@@ -335,11 +350,11 @@ public:
     }
 #endif
 
-    friend bool operator ==(const TProxyAllocator& lhs, const TProxyAllocator& rhs) NOEXCEPT {
+    NODISCARD friend bool operator ==(const TProxyAllocator& lhs, const TProxyAllocator& rhs) NOEXCEPT {
         return (lhs.AllocRef == rhs.AllocRef);
     }
 
-    friend bool operator !=(const TProxyAllocator& lhs, const TProxyAllocator& rhs) NOEXCEPT {
+    NODISCARD friend bool operator !=(const TProxyAllocator& lhs, const TProxyAllocator& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
@@ -395,14 +410,27 @@ public:
     :   _Under(under)
     ,   _Above(above)
     {}
-    TSegregateAllocator(_Under&& runder, _Above&& rabove)
+    TSegregateAllocator(_Under&& runder, _Above&& rabove) NOEXCEPT
     :   _Under(std::move(runder))
     ,   _Above(std::move(rabove))
     {}
 
+    TSegregateAllocator(const _Under& under)
+    :   _Under(under)
+    {}
+    explicit TSegregateAllocator(_Under&& runder) NOEXCEPT
+    :   _Under(std::move(runder))
+    {}
+
+    TSegregateAllocator(const _Above& above)
+    :   _Above(above)
+    {}
+    explicit TSegregateAllocator(_Above&& rabove) NOEXCEPT
+    :   _Above(std::move(rabove))
+    {}
+
     TSegregateAllocator(const TSegregateAllocator& other)
     :   _Under(under_traits::SelectOnCopy(other))
-    ,   _Above(above_traits::SelectOnCopy(other))
     {}
     TSegregateAllocator& operator =(const TSegregateAllocator& other) {
         under_traits::Copy(this, other);
@@ -420,25 +448,25 @@ public:
         return (*this);
     }
 
-    size_t MaxSize() const NOEXCEPT {
+    NODISCARD size_t MaxSize() const NOEXCEPT {
         return above_traits::MaxSize(*this);
     }
 
-    size_t SnapSize(size_t s) const NOEXCEPT {
+    NODISCARD size_t SnapSize(size_t s) const NOEXCEPT {
         if (Likely(s <= _Threshold))
             return under_traits::SnapSize(*this, s);
         else
             return above_traits::SnapSize(*this, s);
     }
 
-    bool Owns(FAllocatorBlock b) const NOEXCEPT {
+    NODISCARD bool Owns(FAllocatorBlock b) const NOEXCEPT {
         if (Likely(b.SizeInBytes <= _Threshold))
             return under_traits::Owns(*this, b);
         else
             return above_traits::Owns(*this, b);
     }
 
-    FAllocatorBlock Allocate(size_t s) {
+    NODISCARD FAllocatorBlock Allocate(size_t s) {
         if (Likely(s <= _Threshold))
             return under_traits::Allocate(*this, s);
         else
@@ -453,9 +481,9 @@ public:
     }
 
     void Reallocate(FAllocatorBlock& b, size_t s) {
-        if ((s <= _Threshold) & (b.SizeInBytes <= _Threshold))
+        if ((s <= _Threshold) && (b.SizeInBytes <= _Threshold))
             under_traits::Reallocate(*this, b, s);
-        else if ((s > _Threshold) & (b.SizeInBytes > _Threshold))
+        else if ((s > _Threshold) && (b.SizeInBytes > _Threshold))
             above_traits::Reallocate(*this, b, s);
         else {
             const FAllocatorBlock n = Allocate(s);
@@ -465,14 +493,14 @@ public:
         }
     }
 
-    bool Acquire(FAllocatorBlock b) NOEXCEPT {
+    NODISCARD bool Acquire(FAllocatorBlock b) NOEXCEPT {
         if (Likely(b.SizeInBytes <= _Threshold))
             return under_traits::Acquire(*this, b);
         else
             return above_traits::Acquire(*this, b);
     }
 
-    bool Steal(FAllocatorBlock b) NOEXCEPT {
+    NODISCARD bool Steal(FAllocatorBlock b) NOEXCEPT {
         if (Likely(b.SizeInBytes <= _Threshold))
             return under_traits::Steal(*this, b);
         else
@@ -480,19 +508,19 @@ public:
     }
 
 #if USE_PPE_MEMORYDOMAINS
-    FMemoryTracking* TrackingData() NOEXCEPT {
+    NODISCARD FMemoryTracking* TrackingData() NOEXCEPT {
         return AllocatorTrackingData(
             static_cast<_Under&>(*this),
             static_cast<_Above&>(*this) );
     }
 #endif
 
-    friend bool operator ==(const TSegregateAllocator& lhs, const TSegregateAllocator& rhs) NOEXCEPT {
+    NODISCARD friend bool operator ==(const TSegregateAllocator& lhs, const TSegregateAllocator& rhs) NOEXCEPT {
         return (under_traits::Equals(lhs, rhs) &&
                 above_traits::Equals(lhs, rhs) );
     }
 
-    friend bool operator !=(const TSegregateAllocator& lhs, const TSegregateAllocator& rhs) NOEXCEPT {
+    NODISCARD friend bool operator !=(const TSegregateAllocator& lhs, const TSegregateAllocator& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 

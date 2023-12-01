@@ -118,7 +118,7 @@ public:
 
     TMemoryView<const T> SubRange(size_t offset, size_t size) const {
         Assert_NoAssume(offset + size <= this->size());
-        return TMemoryView<T>(_storage + offset, size);
+        return TMemoryView<const T>(_storage + offset, size);
     }
 
     TMemoryView<T> MakeView() { return TMemoryView<T>(_storage, size()); }
@@ -134,9 +134,20 @@ protected:
     pointer _storage;
     size_type _sizeInBytes; // /!\ we keep the size in bytes so we can reinterpret-cast TRawStorage<> to any item type
 };
+//----------------------------------------------------------------------------
 template <typename U, typename AU, typename V, typename AV>
 void swap(TRawStorage<U, AU>& lhs, TRawStorage<V, AV>& rhs) NOEXCEPT {
     lhs.Swap(rhs);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+NODISCARD size_t SizeOf(const TRawStorage<T, _Allocator>& storage) NOEXCEPT {
+    return storage.size();
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+void Resize_DiscardData(TRawStorage<T, _Allocator>& storage, size_t size) {
+    storage.Resize_DiscardData(size);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

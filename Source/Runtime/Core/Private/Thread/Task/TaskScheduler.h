@@ -5,7 +5,6 @@
 #include "Thread/Task/Task.h"
 #include "Thread/Task/CompletionPort.h"
 
-#include "Container/MinMaxHeap.h"
 #include "HAL/PlatformProcess.h"
 #include "Memory/RefPtr.h"
 #include "Thread/Task/Task.h"
@@ -20,17 +19,25 @@
 // #TODO: implement MDList lock free priority queue
 // https://www.osti.gov/servlets/purl/1237474
 
-#include "Container/Vector.h"
-
+#define USE_PPE_TASK_SCHEDULER_WORKSTEALINGQUEUE (0)
 #define USE_PPE_TASK_SCHEDULER_SHUFFLING (USE_PPE_ASSERT)
+
+#if USE_PPE_TASK_SCHEDULER_WORKSTEALINGQUEUE
+#   include "Container/Array.h"
+#   include "Container/MinMaxHeap.h"
+#   include "Container/Vector.h"
+
+#   include <condition_variable>
+#   include <mutex>
+#else
+#   include "Thread/ConcurrentQueue.h"
+#endif
 
 #if USE_PPE_TASK_SCHEDULER_SHUFFLING
 #    include "Maths/RandomGenerator.h"
 #endif
 
 #include <atomic>
-#include <condition_variable>
-#include <mutex>
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -40,6 +47,24 @@ PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
 class FTaskScheduler {
 public:
+    struct FTaskQueued;
+
+    explicit FTaskScheduler(size_t numWorkers);
+    ~FTaskScheduler();
+
+    bool HasPendingTask() const NOEXCEPT;
+
+    void Produce(ETaskPriority priority, FTaskFunc&& rtask, FCompletionPort* pport);
+    void Produce(ETaskPriority priority, const FTaskFunc& task, FCompletionPort* pport);
+
+    void Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FCompletionPort* pport);
+    void Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FCompletionPort* pport);
+
+    void Consume(size_t workerIndex, FTaskQueued* pop);
+
+    void ReleaseMemory();
+
+#if USE_PPE_TASK_SCHEDULER_WORKSTEALINGQUEUE
     struct FTaskQueued {
         size_t Priority;
         SCompletionPort Port;
@@ -48,9 +73,9 @@ public:
         FTaskQueued() = default;
 
         FTaskQueued(size_t priority, FTaskFunc&& pending, FCompletionPort* port) NOEXCEPT
-        :   Priority(priority)
-        ,   Port(port)
-        ,   Pending(std::move(pending))
+            :   Priority(priority)
+            , Port(port)
+            , Pending(std::move(pending))
         {}
 
         friend bool operator <(const FTaskQueued& lhs, const FTaskQueued& rhs) NOEXCEPT {
@@ -65,23 +90,14 @@ public:
 
         FTaskQueued(FTaskQueued&& rvalue) = default;
         FTaskQueued& operator =(FTaskQueued&& rvalue) = default;
+
+        friend void swap(FTaskQueued& lhs, FTaskQueued& rhs) NOEXCEPT {
+            using namespace std;
+            std::swap(lhs.Priority, rhs.Priority);
+            swap(lhs.Port, rhs.Port);
+            swap(lhs.Pending, rhs.Pending);
+        }
     };
-
-    explicit FTaskScheduler(size_t numWorkers);
-    ~FTaskScheduler();
-
-    bool HasPendingTask() const NOEXCEPT;
-    bool HasPendingTask(ETaskPriority atleast) const NOEXCEPT;
-
-    void Produce(ETaskPriority priority, FTaskFunc&& rtask, FCompletionPort* pport);
-    void Produce(ETaskPriority priority, const FTaskFunc& task, FCompletionPort* pport);
-
-    void Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FCompletionPort* pport);
-    void Produce(ETaskPriority priority, const TMemoryView<const FTaskFunc>& tasks, FCompletionPort* pport);
-
-    void Consume(size_t workerIndex, FTaskQueued* pop);
-
-    void ReleaseMemory();
 
 private:
     STATIC_ASSERT((int)ETaskPriority::High == 0);
@@ -111,22 +127,44 @@ private:
                 (3 < highestPriority && !!_priorityGroups[3].NumTasks.load(std::memory_order_relaxed)) );
     }
 
+    STATIC_CONST_INTEGRAL(size_t, priority_firstbit_, sizeof(size_t) * 8 - 2);
+
     static CONSTEXPR size_t PackPriorityWRevision_(ETaskPriority priority, size_t revision) {
         Assert(revision);
-        const size_t packed = (size_t(priority) << 28) | revision;
-        Assert_NoAssume((packed >> 28) == size_t(priority));
+        Assert(size_t(priority) < NumPriorities);
+
+        const size_t packed = (size_t(priority) << priority_firstbit_) | (revision);
+        Assert_NoAssume(UnpackPriorityFromRevision_(packed) == size_t(priority));
+
         return packed;
     }
 
     static CONSTEXPR size_t UnpackPriorityFromRevision_(size_t packed) {
-        return (packed >> 28); // return priority bits
+        const size_t priority = (packed >> priority_firstbit_);
+        Assert_NoAssume(priority < NumPriorities);
+        return priority;
     }
 
     std::condition_variable _onTask;
-    priority_group_t _priorityGroups[NumPriorities];
+
+    TStaticArray<priority_group_t, NumPriorities> _priorityGroups;
+
     VECTOR(Task, FWorkerQueue_) _queues;
+
+#else
+    struct FTaskQueued {
+        FTaskFunc Pending;
+        SCompletionPort Port;
+    };
+
+private:
+    std::atomic<int> _numTasks{ 0 };
+    CONCURRENT_PRIORITY_QUEUE(Task, FTaskQueued) _queue;
+#endif
 };
 PRAGMA_MSVC_WARNING_POP()
+//----------------------------------------------------------------------------
+#if USE_PPE_TASK_SCHEDULER_WORKSTEALINGQUEUE
 //----------------------------------------------------------------------------
 // Using local pools with work stealing
 //  + Better occupancy than V1 (threads less idle)
@@ -141,10 +179,6 @@ inline FTaskScheduler::FTaskScheduler(size_t numWorkers) {
     _queues.resize_AssumeEmpty(numWorkers);
 }
 //----------------------------------------------------------------------------
-inline FTaskScheduler::~FTaskScheduler() {
-    Assert_NoAssume(not HasPendingTask());
-}
-//----------------------------------------------------------------------------
 inline bool FTaskScheduler::HasPendingTask() const NOEXCEPT {
     std::atomic_thread_fence(std::memory_order_acquire);
 
@@ -152,26 +186,6 @@ inline bool FTaskScheduler::HasPendingTask() const NOEXCEPT {
              !!_priorityGroups[size_t(ETaskPriority::Normal)].NumTasks.load(std::memory_order_relaxed)) ||
             (!!_priorityGroups[size_t(ETaskPriority::Low)].NumTasks.load(std::memory_order_relaxed) ||
              !!_priorityGroups[size_t(ETaskPriority::Internal)].NumTasks.load(std::memory_order_relaxed)) );
-}
-//----------------------------------------------------------------------------
-inline bool FTaskScheduler::HasPendingTask(ETaskPriority atleast) const NOEXCEPT {
-    std::atomic_thread_fence(std::memory_order_acquire);
-
-    bool pending = false;
-    switch (atleast) {
-    case ETaskPriority::Internal:
-        pending |= !!_priorityGroups[size_t(ETaskPriority::Internal)].NumTasks.load(std::memory_order_relaxed);
-    case ETaskPriority::Low:
-        pending |= !!_priorityGroups[size_t(ETaskPriority::Low)].NumTasks.load(std::memory_order_relaxed);
-    case ETaskPriority::Normal:
-        pending |= !!_priorityGroups[size_t(ETaskPriority::Normal)].NumTasks.load(std::memory_order_relaxed);
-    case ETaskPriority::High:
-        pending |= !!_priorityGroups[size_t(ETaskPriority::High)].NumTasks.load(std::memory_order_relaxed);
-        break;
-    default:
-        AssertNotImplemented();
-    }
-    return pending;
 }
 //----------------------------------------------------------------------------
 inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FCompletionPort* pport) {
@@ -245,7 +259,7 @@ inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
                         : UnpackPriorityFromRevision_(Min_MinMaxHeap(w.PriorityHeap.begin(), w.PriorityHeap.end())->Priority));
 
                     priority_group_t& p = _priorityGroups[UnpackPriorityFromRevision_(pop->Priority)];
-                    if (1 == p.NumTasks.fetch_sub(1, std::memory_order_relaxed))
+                    if (1 == p.NumTasks.fetch_sub(1))
                         p.Revision = 0;
 
                     return;
@@ -258,6 +272,53 @@ inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
 
         FPlatformProcess::SleepForSpinning(backoff);
     }
+}
+//----------------------------------------------------------------------------
+inline void FTaskScheduler::ReleaseMemory() {
+    for (FWorkerQueue_& w : _queues) {
+        Meta::FUniqueLock scopeLock(w.Barrier, std::defer_lock);
+        if (scopeLock.try_lock()) {
+            PPE_LEAKDETECTOR_WHITELIST_SCOPE();
+            w.PriorityHeap.shrink_to_fit();
+        }
+    }
+}
+//----------------------------------------------------------------------------
+#else //USE_PPE_TASK_SCHEDULER_WORKSTEALINGQUEUE
+//----------------------------------------------------------------------------
+inline FTaskScheduler::FTaskScheduler(size_t numWorkers)
+:   _queue(1024) {
+    Assert_NoAssume(numWorkers);
+    Unused(numWorkers);
+}
+//----------------------------------------------------------------------------
+inline bool FTaskScheduler::HasPendingTask() const NOEXCEPT {
+    return (_numTasks.load() > 0);
+}
+//----------------------------------------------------------------------------
+inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FCompletionPort* pport) {
+    Assert_NoAssume(rtask);
+
+    _numTasks.fetch_add(1);
+    _queue.Produce(u32(priority), FTaskQueued{ std::move(rtask), pport });
+}
+//----------------------------------------------------------------------------
+inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
+    Assert(pop);
+    Unused(workerIndex);
+
+    _queue.Consume(pop);
+    _numTasks.fetch_sub(1);
+}
+//----------------------------------------------------------------------------
+inline void FTaskScheduler::ReleaseMemory() {
+    NOOP();
+}
+//----------------------------------------------------------------------------
+#endif //!USE_PPE_TASK_SCHEDULER_WORKSTEALINGQUEUE
+//----------------------------------------------------------------------------
+inline FTaskScheduler::~FTaskScheduler() {
+    Assert_NoAssume(not HasPendingTask());
 }
 //----------------------------------------------------------------------------
 inline void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<FTaskFunc>& rtasks, FCompletionPort* pport) {
@@ -288,16 +349,6 @@ inline void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& tas
     Assert_NoAssume(task);
 
     Produce(priority, FTaskFunc{ task }, pport);
-}
-//----------------------------------------------------------------------------
-inline void FTaskScheduler::ReleaseMemory() {
-    for (FWorkerQueue_& w : _queues) {
-        Meta::FUniqueLock scopeLock(w.Barrier, std::defer_lock);
-        if (scopeLock.try_lock()) {
-            PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-            w.PriorityHeap.shrink_to_fit();
-        }
-    }
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

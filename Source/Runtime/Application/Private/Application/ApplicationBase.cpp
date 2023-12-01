@@ -98,7 +98,7 @@ static void SetupDebugMenuInSystray_(const FModularServices& services) {
                 VFS_RollFile(saveFilename, EAccessPolicy::Binary) };
 
             if (saveWriter) {
-                LOG(Application, Info, L"writing CSV tracking data to file: {0}", saveFilename);
+                PPE_LOG(Application, Info, "writing CSV tracking data to file: {0}", saveFilename);
                 UsingBufferedStream(saveWriter.get(), [](IBufferedStreamWriter* buffered) {
                     FTextWriter oss{ buffered };
                     ReportCsvTrackingData(&oss);
@@ -158,11 +158,13 @@ void FApplicationBase::Start() {
 
     _requestedExit = false;
 
+    FModularServices& services = Services_();
+
 #if !USE_PPE_FINAL_RELEASE
-    SetupDebugMenuInSystray_(Services());
+    SetupDebugMenuInSystray_(services);
 #endif
 
-    FApplicationModule::Get(Domain())._OnApplicationStart.Invoke(*this, Services());
+    FApplicationModule::Get(Domain())._OnApplicationStart.Invoke(*this, services);
 
     ReportAllTrackingData();
 }
@@ -174,11 +176,13 @@ void FApplicationBase::Tick(FTimespan dt) {
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::Shutdown() {
+    FModularServices& services = Services_();
+
 #if !USE_PPE_FINAL_RELEASE
-    TearDebugMenuInSystray_(Services());
+    TearDebugMenuInSystray_(services);
 #endif
 
-    FApplicationModule::Get(Domain())._OnApplicationShutdown.Invoke(*this, Services());
+    FApplicationModule::Get(Domain())._OnApplicationShutdown.Invoke(*this, services);
 
     FPlatformApplication::Shutdown();
 }
@@ -192,7 +196,7 @@ void FApplicationBase::RequestExit() {
     if (not _requestedExit) {
         _requestedExit = true;
 
-        LOG(Application, Info, L"application {0} exit requested, will stop next loop...", Name());
+        PPE_LOG(Application, Info, "application {0} exit requested, will stop next loop...", Name());
 
         FApplicationModule::Get(Domain())._OnApplicationRequestExit.Invoke(*this);
     }
@@ -211,7 +215,7 @@ void FApplicationBase::ApplicationLoop() {
             Tick(dt);
     }
 
-    LOG(Application, Info, L"application {0} stopped looping, total uptime = {2} (request:{1})", Name(), HasRequestedExit(), _timeline.Total());
+    PPE_LOG(Application, Info, "application {0} stopped looping, total uptime = {2} (request:{1})", Name(), HasRequestedExit(), _timeline.Total());
 
     _timeline.Reset();
 }

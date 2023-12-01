@@ -17,12 +17,17 @@ FGenericApplication::FGenericApplication(FModularDomain& domain, FString&& name)
 ,   _name(std::move(name))
 ,   _services(_name, &_domain.Services()) {
     Assert(not _name.empty());
+
+    _domain.Services().Add<IApplicationService>(this);
 }
 //----------------------------------------------------------------------------
-FGenericApplication::~FGenericApplication() NOEXCEPT {}
+FGenericApplication::~FGenericApplication() {
+
+    _domain.Services().Remove<IApplicationService>();
+}
 //----------------------------------------------------------------------------
 void FGenericApplication::Start() {
-    LOG(Application, Emphasis, L"start application <{0}>", _name);
+    PPE_SLOG(Application, Emphasis, "start application", {{"application", _name}});
 
     FPlatformTime::EnterHighResolutionTimer();
 
@@ -38,14 +43,13 @@ void FGenericApplication::Tick(FTimespan dt) {
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::ReleaseMemory() NOEXCEPT {
-    LOG(Application, Emphasis, L"release memory in application <{0}>", _name);
+    PPE_SLOG(Application, Emphasis, "release memory in application", {{"application", _name}});
 
     _services.ReleaseMemory();
-    _domain.ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::Shutdown() {
-    LOG(Application, Emphasis, L"shutdown application <{0}>", _name);
+    PPE_SLOG(Application, Emphasis, "shutdown application", {{"application", _name}});
 
     FPlatformTime::LeaveLowResolutionTimer();
 }

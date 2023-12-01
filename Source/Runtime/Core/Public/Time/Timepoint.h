@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Core.h"
-
-#include "Maths/Units.h"
+#include "Time_fwd.h"
 
 // Use FTimepoint only to measure durations, if you want a true date use FTimestamp/FDateTime instead
 
@@ -15,8 +13,6 @@
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-typedef Units::Time::FMilliseconds FTimespan;
 //----------------------------------------------------------------------------
 class FTimepoint {
 public:
@@ -48,15 +44,20 @@ public:
     bool operator >(const FTimepoint& other) const  { return _value >  other._value; }
     bool operator <=(const FTimepoint& other) const { return _value <= other._value; }
 
-    static PPE_CORE_API FTimepoint Now();
-    static PPE_CORE_API value_type Ticks(const FTimespan& duration);
-    static PPE_CORE_API FTimespan Duration(const FTimepoint& start, const FTimepoint& stop);
-    static FTimespan ElapsedSince(const FTimepoint& t) { return Duration(t, Now()); }
+    NODISCARD PPE_CORE_API FTimestamp Timestamp() const;
+
+    NODISCARD static PPE_CORE_API FTimepoint Now();
+    NODISCARD static PPE_CORE_API value_type Ticks(const FTimespan& duration);
+    NODISCARD static PPE_CORE_API FTimespan Duration(const FTimepoint& start, const FTimepoint& stop);
+    NODISCARD static FTimespan ElapsedSince(const FTimepoint& t) { return Duration(t, Now()); }
+
+    NODISCARD friend FTimespan operator -(const FTimepoint& finish, const FTimepoint& start) {
+        return Duration(start, finish);
+    }
 
 private:
     value_type _value;
 };
-PPE_ASSUME_TYPE_AS_POD(FTimepoint)
 //----------------------------------------------------------------------------
 CONSTEXPR FTimespan::value_type operator "" _hz(unsigned long long value) {
     Assert(value > 0);

@@ -92,9 +92,9 @@ public:
         return (ppe_traits::MaxSize(*this) / sizeof(T));
     }
 
-    void construct(pointer p, const_reference val) {
-        Meta::Construct(p, val);
-    }
+    // void construct(pointer p, const_reference val) {
+    //     Meta::Construct(p, val);
+    // }
 
     template <typename U, typename... _Args>
     void construct(U* p, _Args&& ... args) {
@@ -105,10 +105,10 @@ public:
         Meta::Destroy(p);
     }
 
-    template <typename U>
-    void destroy(U* p) {
-        Meta::Destroy(p);
-    }
+    // template <typename U>
+    // void destroy(U* p) {
+    //     Meta::Destroy(p);
+    // }
 
     TStlAllocator select_on_container_copy_construction() const {
         _Allocator alloc;

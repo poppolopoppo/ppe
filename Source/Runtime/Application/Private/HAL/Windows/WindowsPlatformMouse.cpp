@@ -144,7 +144,7 @@ auto FWindowsPlatformMouse::SetSystemCursor(ECursorType type) -> ECursorType {
 void FWindowsPlatformMouse::ResetSystemCursor() {
     const FAtomicSpinLock::FScope scopeLock(WindowsMouseCS_());
     // Reloads the system cursors. Set the uiParam parameter to zero and the pvParam parameter to NULL.
-    LOG_CHECKVOID(HAL, ::SystemParametersInfoW(SPI_SETCURSORS, 0, NULL, 0));
+    PPE_LOG_CHECKVOID(HAL, ::SystemParametersInfoW(SPI_SETCURSORS, 0, NULL, 0));
     GWindowsCursorType = EWindowsCursorType::Unknown;
 }
 //----------------------------------------------------------------------------
@@ -182,7 +182,8 @@ void FWindowsPlatformMouse::SetWindowCursor(const FWindowsWindow& window) {
     if (ECursorType::Invisible != window.CursorType())
         hCursor = GCursorIcons_.Get(window.CursorType());
 
-    LOG_CHECKVOID(HAL, ::SetCursor(hCursor));
+    //PPE_LOG_CHECKVOID(HAL, ::SetCursor(hCursor));
+    ::SetCursor(hCursor);
 }
 //----------------------------------------------------------------------------
 // https://docs.microsoft.com/fr-fr/windows/desktop/api/winuser/nf-winuser-getcursorinfo
@@ -246,7 +247,7 @@ void FWindowsPlatformMouse::CenterCursorOnWindow(const FWindowsWindow& window) {
 
     int x = checked_cast<int>(window.Width() / 2);
     int y = checked_cast<int>(window.Height() / 2);
-    LOG_CHECKVOID(HAL, FWindowsPlatformMouse::ClientToScreen(window, &x, &y));
+    PPE_LOG_CHECKVOID(HAL, FWindowsPlatformMouse::ClientToScreen(window, &x, &y));
 
     SetCursorPosition(x, y);
 }
@@ -254,7 +255,7 @@ void FWindowsPlatformMouse::CenterCursorOnWindow(const FWindowsWindow& window) {
 void FWindowsPlatformMouse::SetCursorPosition(int screenX, int screenY) {
     const FAtomicSpinLock::FScope scopeLock(WindowsMouseCS_());
 
-    LOG_CHECKVOID(HAL, ::SetCursorPos(screenX, screenY));
+    PPE_LOG_CHECKVOID(HAL, ::SetCursorPos(screenX, screenY));
 }
 //----------------------------------------------------------------------------
 FEventHandle FWindowsPlatformMouse::SetupMessageHandler(FWindowsWindow& window, FMouseState* mouse) {

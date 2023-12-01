@@ -56,6 +56,11 @@ CONSTEXPR CONSTF _Enum EnumRemove(_Enum lhs, _Enum rhs) {
 }
 //----------------------------------------------------------------------------
 template <typename _Enum>
+CONSTEXPR CONSTF _Enum EnumSet(_Enum set, _Enum flags, bool enabled) {
+    return (enabled ? EnumAdd(set, flags) : EnumRemove(set, flags));
+}
+//----------------------------------------------------------------------------
+template <typename _Enum>
 CONSTEXPR CONSTF bool EnumXor(_Enum lhs, _Enum rhs) {
     return !!(EnumOrd(lhs) & EnumOrd(rhs));
 }

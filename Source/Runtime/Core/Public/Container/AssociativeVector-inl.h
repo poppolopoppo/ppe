@@ -153,7 +153,7 @@ auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindAfter(const _Key& 
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Find(const _Key& key, _Value *pvalue) const {
     const const_iterator it = Find(key);
-    if (end() == it)
+    if (cend() == it)
         return false;
     Assert(pvalue);
     *pvalue = it->second;
@@ -180,7 +180,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 template <typename _KeyLike>
 bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::FindLike(const _KeyLike& keyLike, _Value *pvalue) const {
     const const_iterator it = FindLike(keyLike);
-    if (end() == it)
+    if (cend() == it)
         return false;
     Assert(pvalue);
     *pvalue = it->second;
@@ -338,7 +338,7 @@ bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::TryGet(const _Key& key
     Assert(value);
 
     const const_iterator it = Find(key);
-    if (end() == it)
+    if (cend() == it)
         return false;
 
     *value = it->second;
@@ -355,7 +355,7 @@ const _Value& TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::At(const _Key
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Erase(const _Key& key) {
     const const_iterator it = Find(key);
-    if (end() == it)
+    if (cend() == it)
         return false;
     Erase(it);
     return true;
@@ -370,7 +370,7 @@ template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Remove_AssertExists(const _Key& key, const _Value& valueForDebug) {
     Unused(valueForDebug);
     const const_iterator it = Find(key);
-    Assert(end() != it);
+    Assert(cend() != it);
     Assert(valueForDebug == it->second);
     Erase(it);
 }
@@ -378,7 +378,7 @@ void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Remove_AssertExists(co
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Remove_AssertExists(const _Key& key) {
     const const_iterator it = Find(key);
-    Assert(end() != it);
+    Assert(cend() != it);
     Erase(it);
 }
 //----------------------------------------------------------------------------

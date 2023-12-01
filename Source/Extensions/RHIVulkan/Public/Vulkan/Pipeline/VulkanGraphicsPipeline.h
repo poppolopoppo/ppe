@@ -50,6 +50,8 @@ public:
 #if USE_PPE_RHIDEBUG
         EShaderDebugMode DebugMode{ Default };
 #endif
+
+        PPE_RHIVULKAN_API ~FShaderModule();
     };
 
     using FInstanceMap = HASHMAP(RHIPipeline, FPipelineInstance, VkPipeline);

@@ -28,9 +28,9 @@ namespace {
 static NO_INLINE FPlatformDialog::EResult ShowSerializeException_(const FTransactionLinker& linker, const FSerializeException& e) {
     Unused(linker);
 
-    LOG(Serialize, Error, L"caught exception while serializing '{0}': {1}", linker.Filename(), e);
+    PPE_LOG(Serialize, Error, "caught exception while serializing '{0}': {1}", linker.Filename(), e);
 
-    FWStringBuilder text;
+    FStringBuilder text;
 #   ifdef PLATFORM_WINDOWS
     text << FTextFormat::Crlf;
 #   endif
@@ -41,7 +41,7 @@ static NO_INLINE FPlatformDialog::EResult ShowSerializeException_(const FTransac
 #   endif
 
     return FPlatformDialog::AbortRetryIgnore(
-        text.Written(),
+        UTF_8_TO_WCHAR(text.Written()),
         L"caught exception while serializing",
         FPlatformDialog::Warning );
 }

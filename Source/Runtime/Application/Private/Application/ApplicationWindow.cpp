@@ -36,7 +36,7 @@ namespace {
 static TPtrRef<const ITargetRHI> RetrieveTargetRHI_(const FModularDomain& domain, bool needRHI) {
     if (needRHI) {
         const TPtrRef<const ITargetRHI> rhiTarget = FRHIModule::Get(domain).Target();
-        CLOG(nullptr == rhiTarget, Application, Error, L"could not find any RHI target available");
+        PPE_CLOG(nullptr == rhiTarget, Application, Error, "could not find any RHI target available");
         return rhiTarget;
     }
     return nullptr;
@@ -53,10 +53,10 @@ static void RecommendedDeviceInfo_(
     outDeviceInfo->MaxStagingBufferMemory = rhiModule.MaxStagingBufferMemory();
     outDeviceInfo->StagingBufferSize = rhiModule.StagingBufferSize();
 
-    LOG(Application, Info, L"create RHI service with device info:\n"
-        L"\tFeatures                : {0}\n"
-        L"\tMaxStagingBufferMemory  : {1}\n"
-        L"\tStagingBufferSize       : {2}",
+    PPE_LOG(Application, Info, "create RHI service with device info:\n"
+        "\tFeatures                : {0}\n"
+        "\tMaxStagingBufferMemory  : {1}\n"
+        "\tStagingBufferSize       : {2}",
         outDeviceInfo->Features,
         Fmt::SizeInBytes(outDeviceInfo->MaxStagingBufferMemory),
         Fmt::SizeInBytes(outDeviceInfo->StagingBufferSize) );
@@ -72,11 +72,11 @@ static void RecommendedSurfaceInfo_(
     outSurfaceInfo->EnableFullscreen = window.Fullscreen();
     outSurfaceInfo->EnableVSync = (deviceFeatures & ERHIFeature::VSync);
 
-    LOG(Application, Info, L"create RHI framebuffer with surface info:\n"
-        L"\tHandle                  : {0}\n"
-        L"\tDimensions              : {1}\n"
-        L"\tEnableFullscreen        : {2:a}\n"
-        L"\tEnableVSync             : {3:a}",
+    PPE_LOG(Application, Info, "create RHI framebuffer with surface info:\n"
+        "\tHandle                  : {0}\n"
+        "\tDimensions              : {1}\n"
+        "\tEnableFullscreen        : {2:a}\n"
+        "\tEnableVSync             : {3:a}",
         Fmt::Pointer(outSurfaceInfo->Hwnd.Value),
         outSurfaceInfo->Dimensions,
         outSurfaceInfo->EnableFullscreen,
@@ -104,7 +104,7 @@ void FApplicationWindow::Start() {
     _main->AddListener(*this);
     _input->SetupWindow(*_main);
 
-    FModularServices& services = Services();
+    FModularServices& services = Services_();
     services.Add<IInputService>(_input.get());
     services.Add<IWindowService>(_window.get());
 
@@ -116,7 +116,7 @@ void FApplicationWindow::Start() {
         RecommendedSurfaceInfo_(&surfaceInfo, deviceInfo.Features, *_main);
 
         if (not _targetRHI->CreateService(&_rhi, Domain(), deviceInfo, &surfaceInfo))
-            LOG(Application, Fatal, L"failed to create RHI service in '{0}::{1}' abort!", Domain().Name(), Name());
+            PPE_LOG(Application, Fatal, "failed to create RHI service in '{0}::{1}' abort!", Domain().Name(), Name());
 
 #if USE_PPE_RHIDEBUG
         const auto& process = FCurrentProcess::Get();
@@ -152,7 +152,7 @@ void FApplicationWindow::Shutdown() {
     _main->RemoveListener(*this);
     _window->SetMainWindow(nullptr);
 
-    auto& services = Services();
+    FModularServices& services = Services_();
     if (_rhi) {
         Assert(&services.Get<IRHIService>() == _rhi.get());
         services.Remove<IRHIService>();
@@ -198,7 +198,10 @@ void FApplicationWindow::Tick(FTimespan dt) {
 
     FApplicationBase::Tick(dt);
 
-    if (_main->Visible() && _rhi->BeginFrame(dt)) {
+    if (not _main->Visible())
+        return;
+
+    if (_rhi->BeginFrame(dt)) {
         Render(dt);
 
         _rhi->EndFrame();

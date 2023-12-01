@@ -583,42 +583,32 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, RTTI::EObjectFlags flags) {
+template <typename _Char>
+static TBasicTextWriter<_Char>& Print_(TBasicTextWriter<_Char>& oss, RTTI::EObjectFlags flags) {
     if (flags == RTTI::EObjectFlags::None)
-        return oss << "None";
+        return oss << STRING_LITERAL(_Char, "None");
 
-    auto sep = Fmt::NotFirstTime('|');
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
-    if (flags & RTTI::EObjectFlags::Loaded)     { oss << sep << "Loaded"; }
-    if (flags & RTTI::EObjectFlags::Unloaded)   { oss << sep << "Unloaded"; }
-    if (flags & RTTI::EObjectFlags::Exported)   { oss << sep << "Exported"; }
-    if (flags & RTTI::EObjectFlags::TopObject)  { oss << sep << "TopObject"; }
-    if (flags & RTTI::EObjectFlags::Transient)  { oss << sep << "Transient"; }
-    if (flags & RTTI::EObjectFlags::Frozen)     { oss << sep << "Frozen"; }
+    if (flags & RTTI::EObjectFlags::Loaded)     { oss << sep << STRING_LITERAL(_Char, "Loaded"); }
+    if (flags & RTTI::EObjectFlags::Unloaded)   { oss << sep << STRING_LITERAL(_Char, "Unloaded"); }
+    if (flags & RTTI::EObjectFlags::Exported)   { oss << sep << STRING_LITERAL(_Char, "Exported"); }
+    if (flags & RTTI::EObjectFlags::TopObject)  { oss << sep << STRING_LITERAL(_Char, "TopObject"); }
+    if (flags & RTTI::EObjectFlags::Transient)  { oss << sep << STRING_LITERAL(_Char, "Transient"); }
+    if (flags & RTTI::EObjectFlags::Frozen)     { oss << sep << STRING_LITERAL(_Char, "Frozen"); }
 #ifdef WITH_RTTI_VERIFY_PREDICATES
-    if (flags & RTTI::EObjectFlags::Verifying)  { oss << sep << "Verifying"; }
+    if (flags & RTTI::EObjectFlags::Verifying)  { oss << sep << STRING_LITERAL(_Char, "Verifying"); }
 #endif
 
     return oss;
 }
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, RTTI::EObjectFlags flags) {
+    return Print_(oss, flags);
+}
+//----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, RTTI::EObjectFlags flags) {
-    if (flags == RTTI::EObjectFlags::None)
-        return oss << L"None";
-
-    auto sep = Fmt::NotFirstTime(L'|');
-
-    if (flags & RTTI::EObjectFlags::Loaded)     { oss << sep << L"Loaded"; }
-    if (flags & RTTI::EObjectFlags::Unloaded)   { oss << sep << L"Unloaded"; }
-    if (flags & RTTI::EObjectFlags::Exported)   { oss << sep << L"Exported"; }
-    if (flags & RTTI::EObjectFlags::TopObject)  { oss << sep << L"TopObject"; }
-    if (flags & RTTI::EObjectFlags::Transient)  { oss << sep << L"Transient"; }
-    if (flags & RTTI::EObjectFlags::Frozen)     { oss << sep << L"Frozen"; }
-#ifdef WITH_RTTI_VERIFY_PREDICATES
-    if (flags & RTTI::EObjectFlags::Verifying)  { oss << sep << L"Verifying"; }
-#endif
-
-    return oss;
+    return Print_(oss, flags);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

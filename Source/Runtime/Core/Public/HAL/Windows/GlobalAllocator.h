@@ -16,7 +16,7 @@ namespace PPE {
 // TWin32GlobalAllocator<> is wrapping GlobalMalloc/GlobalReAlloc/GlobalFree()
 //----------------------------------------------------------------------------
 template <UINT _uFlags>
-class TWin32GlobalAllocator : private FGenericAllocator {
+class TWin32GlobalAllocator : private FAllocatorPolicy {
 public:
     using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;

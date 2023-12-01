@@ -2,6 +2,7 @@
 
 #include "Core_fwd.h"
 
+#include "Allocator/AllocatorBlock.h"
 #include "HAL/PlatformDebug.h"
 
 #if !USE_PPE_FINAL_RELEASE
@@ -41,14 +42,14 @@ void*   (aligned_calloc)(size_t nmemb, size_t size, size_t alignment);
 PPE_CORE_API NOALIAS RESTRICT
 void*   (aligned_realloc)(void *ptr, size_t size, size_t alignment);
 //----------------------------------------------------------------------------
-PPE_CORE_API NOALIAS RESTRICT PPE_DECLSPEC_ALLOCATOR()
-void*   (malloc_for_new)(size_t size);
-//----------------------------------------------------------------------------
-PPE_CORE_API NOALIAS RESTRICT
-void*   (realloc_for_new)(void *ptr, size_t size, size_t old);
+PPE_CORE_API NOALIAS
+FAllocatorBlock (malloc_for_new)(size_t size);
 //----------------------------------------------------------------------------
 PPE_CORE_API NOALIAS
-void    (free_for_delete)(void *ptr, size_t size);
+FAllocatorBlock (realloc_for_new)(FAllocatorBlock blk, size_t size);
+//----------------------------------------------------------------------------
+PPE_CORE_API NOALIAS
+void    (free_for_delete)(FAllocatorBlock blk);
 //----------------------------------------------------------------------------
 PPE_CORE_API NOALIAS
 void    (malloc_release_cache_memory)();
@@ -76,6 +77,7 @@ public: // statistics
     static PPE_CORE_API bool FetchAllocationHistogram(
         TMemoryView<const u32>* sizeClasses,
         TMemoryView<const FMemoryTracking>* bins );
+    static PPE_CORE_API void DumpMemoryInfo(FTextWriter& oss);
     static PPE_CORE_API void DumpMemoryInfo(FWTextWriter& oss);
 };
 struct FLeakDetectorWhiteListScope {

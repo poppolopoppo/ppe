@@ -58,13 +58,16 @@ PPE_ASSUME_TYPE_AS_POD(FVertexAttribute);
 //----------------------------------------------------------------------------
 struct FVertexInput {
     EVertexFormat Format{Default};
-    u32 Index{UMax};
     u32 Offset{UMax};
-    u32 BufferBinding{UMax};
+    u8 Index{UMax};
+    u8 BufferBinding{UMax};
 
     FVertexInput() = default;
     FVertexInput(EVertexFormat fmt, u32 offset, u32 bufferBinding) NOEXCEPT
-        : Format(fmt), Offset(offset), BufferBinding(bufferBinding) {}
+        : Format(fmt)
+        , Offset(offset)
+        , BufferBinding(checked_cast<u8>(bufferBinding))
+    {}
 
     PPE_RHI_API EVertexFormat DestinationFormat() const;
 
@@ -83,13 +86,16 @@ struct FVertexInput {
 PPE_ASSUME_TYPE_AS_POD(FVertexInput);
 //----------------------------------------------------------------------------
 struct FVertexBufferBinding {
-    u32 Index{UMax};
-    u32 Stride{UMax};
+    u16 Stride{UMax};
+    u8 Index{UMax};
     EVertexInputRate Rate{Default};
 
     FVertexBufferBinding() = default;
     FVertexBufferBinding(u32 index, u32 stride, EVertexInputRate rate) NOEXCEPT
-        : Index(index), Stride(stride), Rate(rate) {}
+        : Stride(checked_cast<u16>(stride))
+        , Index(checked_cast<u8>(index))
+        , Rate(rate)
+    {}
 
     bool operator ==(const FVertexBufferBinding& other) const NOEXCEPT {
         return (Index == other.Index && Stride == other.Stride && Rate == other.Rate);

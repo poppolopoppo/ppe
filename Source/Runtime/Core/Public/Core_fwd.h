@@ -8,15 +8,15 @@
 #include <memory>
 #include <type_traits>
 
+#include "Meta/Config.h"
+#include "Meta/Aliases.h"
+
 #ifdef EXPORT_PPE_RUNTIME_CORE
 #   define PPE_CORE_API DLL_EXPORT
 #else
 #   define PPE_CORE_API DLL_IMPORT
 #endif
 
-#include "Meta/Config.h"
-
-#include "Meta/Aliases.h"
 #include "Meta/Alignment.h"
 #include "Meta/Arithmetic.h"
 #include "Meta/Assert.h"

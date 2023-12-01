@@ -26,7 +26,7 @@ IRHIService::IRHIService() NOEXCEPT {
 void IRHIService::UnitTest() NOEXCEPT {
     using namespace RHI;
 
-    LOG(RHI, Emphasis, L"start frame graph unit tests...");
+    PPE_LOG(RHI, Emphasis, "start frame graph unit tests...");
 
     UnitTest_Id();
     UnitTest_ImageDesc();

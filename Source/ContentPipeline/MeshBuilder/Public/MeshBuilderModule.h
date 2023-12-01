@@ -14,7 +14,7 @@ EXTERN_LOG_CATEGORY(PPE_MESHBUILDER_API, MeshBuilder)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_PIPELINECOMPILER_API FMeshBuilderModule final : public IModuleInterface {
+class PPE_MESHBUILDER_API FMeshBuilderModule final : public IModuleInterface {
 public:
     static const FModuleInfo StaticInfo;
 

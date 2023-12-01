@@ -30,7 +30,7 @@ struct FMultithreading3_ {
 
             RHI::FCommandBufferBatch cmd = Fg->Begin(RHI::FCommandBufferDesc{ RHI::EQueueType::Graphics }
                 .SetName("RenderThread1"));
-            LOG_CHECK(WindowTest, !!cmd);
+            PPE_LOG_CHECK(WindowTest, !!cmd);
 
             PerFrame[i&1] = cmd;
             CmdBuffers[0] = cmd;
@@ -45,13 +45,13 @@ struct FMultithreading3_ {
                     .SetFormat(RHI::EPixelFormat::RGBA8_UNorm)
                     .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage::TransferSrc),
                     Default ARGS_IF_RHIDEBUG("RenderTarget1"));
-                LOG_CHECK(WindowTest, !!image);
+                PPE_LOG_CHECK(WindowTest, !!image);
             }
 
             RHI::FLogicalPassID renderPass = cmd->CreateRenderPass(RHI::FRenderPassDesc{ viewSize }
                 .AddTarget(RHI::ERenderTargetID::Color0, image, FLinearColor::Transparent(), RHI::EAttachmentStoreOp::Store)
                 .AddViewport(viewSize));
-            LOG_CHECK(WindowTest, !!renderPass);
+            PPE_LOG_CHECK(WindowTest, !!renderPass);
 
             cmd->Task(renderPass, RHI::FDrawVertices{}
                 .Draw(3)
@@ -65,12 +65,12 @@ struct FMultithreading3_ {
             if (i + 1 == MaxCount)
                 Unused(Fg->ReleaseResource(image));
 
-            LOG_CHECK(WindowTest, Fg->Execute(cmd));
+            PPE_LOG_CHECK(WindowTest, Fg->Execute(cmd));
 
             // (2) wait until all threads complete command buffer recording
             Sync.Wait();
 
-            LOG_CHECK(WindowTest, Fg->Flush());
+            PPE_LOG_CHECK(WindowTest, Fg->Flush());
         }
 
         return true;
@@ -84,7 +84,7 @@ struct FMultithreading3_ {
         forrange(i, 0, MaxCount) {
             RHI::FCommandBufferBatch cmd = Fg->Begin(RHI::FCommandBufferDesc{ RHI::EQueueType::Graphics }
                 .SetName("RenderThread2"));
-            LOG_CHECK(WindowTest, !!cmd);
+            PPE_LOG_CHECK(WindowTest, !!cmd);
 
             CmdBuffers[1] = cmd;
 
@@ -100,13 +100,13 @@ struct FMultithreading3_ {
                    .SetFormat(RHI::EPixelFormat::RGBA16_UNorm)
                    .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage::TransferSrc),
                    Default ARGS_IF_RHIDEBUG("RenderTarget1"));
-                LOG_CHECK(WindowTest, !!image);
+                PPE_LOG_CHECK(WindowTest, !!image);
             }
 
             RHI::FLogicalPassID renderPass = cmd->CreateRenderPass(RHI::FRenderPassDesc{ viewSize }
                 .AddTarget(RHI::ERenderTargetID::Color0, image, FLinearColor::Transparent(), RHI::EAttachmentStoreOp::Store)
                 .AddViewport(viewSize));
-            LOG_CHECK(WindowTest, !!renderPass);
+            PPE_LOG_CHECK(WindowTest, !!renderPass);
 
             cmd->Task(renderPass, RHI::FDrawVertices{}
                 .Draw(3)
@@ -120,7 +120,7 @@ struct FMultithreading3_ {
             if (i + 1 == MaxCount)
                 Unused(Fg->ReleaseResource(image));
 
-            LOG_CHECK(WindowTest, Fg->Execute(cmd));
+            PPE_LOG_CHECK(WindowTest, Fg->Execute(cmd));
 
             // (2) notify that thread has already finished recording the command buffer
             Sync.Wait();
@@ -177,7 +177,7 @@ void main() {
 ARGS_IF_RHIDEBUG("Impl_Multithreading3_PS"));
 
     TAutoResource<FGPipelineID> ppln{ *fg, fg->CreatePipeline(desc ARGS_IF_RHIDEBUG("Impl_Multithreading3")) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     FMultithreading3_ context;
     context.Fg = fg;
@@ -192,9 +192,9 @@ ARGS_IF_RHIDEBUG("Impl_Multithreading3_PS"));
 
     FHighPriorityThreadPool::Get().RunAndWaitFor(MakeView(tasks));
 
-    LOG_CHECK(WindowTest, fg->WaitIdle());
-    LOG_CHECK(WindowTest, threadResult1);
-    LOG_CHECK(WindowTest, threadResult2);
+    PPE_LOG_CHECK(WindowTest, fg->WaitIdle());
+    PPE_LOG_CHECK(WindowTest, threadResult1);
+    PPE_LOG_CHECK(WindowTest, threadResult2);
 
     Broadcast(MakeView(context.CmdBuffers), Default);
     Broadcast(MakeView(context.PerFrame), Default);

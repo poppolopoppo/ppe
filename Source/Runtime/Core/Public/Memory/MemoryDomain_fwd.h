@@ -33,7 +33,7 @@ class TMemoryView;
 //----------------------------------------------------------------------------
 class FMemoryTracking;
 //----------------------------------------------------------------------------
-#define MEMORYDOMAIN_NAME(_Name) CONCAT(F, _Name)
+#define MEMORYDOMAIN_NAME(_Name) CONCAT(FMemoryDomain_, _Name)
 #define MEMORYDOMAIN_TAG(_Name) ::PPE::MemoryDomain::MEMORYDOMAIN_NAME(_Name)
 #define MEMORYDOMAIN_TRACKING_DATA(_Name) MEMORYDOMAIN_TAG(_Name)::TrackingData()
 //----------------------------------------------------------------------------

@@ -15,20 +15,33 @@ NO_INLINE auto unlikely(_FuncLike funcLike, _Args... args) {
 }
 //----------------------------------------------------------------------------
 // will call the trigger when leaving the scope using RAII
+// https://youtu.be/zGWj7Qo_POY?si=xNdVOFyULLz39YOO&t=629
 namespace details {
-template <typename _Lambda>
-struct on_scope_exit_t {
-    _Lambda Trigger;
-    on_scope_exit_t(_Lambda&& trigger) NOEXCEPT : Trigger(std::move(trigger)) {}
-    ~on_scope_exit_t() { Trigger(); }
+template <typename _FuncLike>
+struct scope_exit_impl : _FuncLike {
+    template <typename... _Args>
+    CONSTEXPR scope_exit_impl(_Args&& ...args)
+        : _FuncLike(std::forward<_Args>(args)...)
+    {}
+    CONSTEXPR ~scope_exit_impl() {
+        static_cast<_FuncLike&>(*this)();
+    }
+};
+struct make_scope_exit_impl {
+    template <typename _FuncLike>
+    CONSTEXPR auto operator ->*(_FuncLike&& onScopeExit) const NOEXCEPT {
+        return scope_exit_impl<_FuncLike>{ std::forward<_FuncLike>(onScopeExit) };
+    }
 };
 } //!details
-template <typename _Lambda>
-auto on_scope_exit(_Lambda&& trigger) NOEXCEPT {
-    return details::on_scope_exit_t{ std::move(trigger) };
+template <typename _FuncLike>
+CONSTEXPR auto make_scope_exit(_FuncLike&& onScopeExit) NOEXCEPT {
+    return details::scope_exit_impl<_FuncLike>(std::forward<_FuncLike>(onScopeExit));
 }
-#define ON_SCOPE_EXIT(...) \
-    const auto ANONYMIZE(scopeExit){ ::PPE::Meta::on_scope_exit(__VA_ARGS__) }
+// ON_SCOPE_EXIT([&]{ <scope guard code> });
+#define ON_SCOPE_EXIT(...) const auto ANONYMIZE(scopeExit) = ::PPE::Meta::make_scope_exit(__VA_ARGS__)
+// on_scope_exit { <scope guard code> };
+#define DEFERRED const auto ANONYMIZE(scopeExit) = ::PPE::Meta::details::make_scope_exit_impl{} ->* [&]() -> void
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

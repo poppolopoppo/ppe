@@ -12,8 +12,8 @@ namespace Lexer {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FLocation {
-    FLocation() : FLocation(FWStringView(), 0, 0, 0) {}
-    FLocation(const FWStringView& filename, size_t line, size_t column, std::streamoff offset)
+    FLocation() = default;
+    FLocation(const FWStringView& filename, size_t line, size_t column, std::streamoff offset) NOEXCEPT
         : Filename(filename)
         , Offset(offset)
         , Line(checked_cast<u32>(line))
@@ -21,9 +21,9 @@ struct FLocation {
     {}
 
     FWStringView Filename;
-    std::streamoff Offset;
-    u32 Line;
-    u32 Column;
+    std::streamoff Offset{ 0 };
+    u32 Line{ 0 };
+    u32 Column{ 0 };
 
     void Rewind() {
         Offset = 0;
@@ -34,8 +34,8 @@ struct FLocation {
 };
 //----------------------------------------------------------------------------
 struct FSpan : FLocation {
-    FSpan() : Length(0) {}
-    FSpan(const FLocation& location, size_t length)
+    FSpan() = default;
+    FSpan(const FLocation& location, size_t length) NOEXCEPT
         : FLocation(location)
         , Length(checked_cast<u32>(length))
     {}
@@ -55,16 +55,16 @@ struct FSpan : FLocation {
         return FSpan(start, checked_cast<size_t>((stop.Offset + stop.Length) - start.Offset));
     }
 
-    u32 Length;
+    u32 Length{ 0 };
 };
 //----------------------------------------------------------------------------
 // Need a copy of Filename string for errors
 struct FErrorSpan {
     FWString Filename;
-    std::streamoff Offset;
-    u32 Line;
-    u32 Column;
-    u32 Length;
+    std::streamoff Offset{ 0 };
+    u32 Line{ 0 };
+    u32 Column{ 0 };
+    u32 Length{ 0 };
 
     FErrorSpan(const FSpan& span)
         : Filename(span.Filename)
@@ -89,12 +89,11 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline FTextWriter& operator <<(FTextWriter& oss, const Lexer::FLocation& site) {
-    return oss << site.Filename << '(' << site.Line << ':' << site.Column << ')';
-}
-//----------------------------------------------------------------------------
-inline FWTextWriter& operator <<(FWTextWriter& oss, const Lexer::FLocation& site) {
-    return oss << site.Filename << L'(' << site.Line << L':' << site.Column << L')';
+template <typename _Char>
+inline TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const Lexer::FLocation& site) {
+    return oss << site.Filename << STRING_LITERAL(_Char, '(')
+        << site.Line << STRING_LITERAL(_Char, ':')
+        << site.Column << STRING_LITERAL(_Char, ')');
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

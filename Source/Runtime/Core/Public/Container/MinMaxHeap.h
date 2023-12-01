@@ -71,9 +71,14 @@ public:
 
     static CONSTEXPR void popmin(_It first, _It last, const _Less& less) {
         Assert(first < last);
-        CheckInvariantsIFN(first, last, less);
+        if (last - first < 2)
+            return;
 
         std::iter_swap(first, last - 1);
+
+        if (last - first == 2)
+            return;
+
         trickle_down(first, last - 1, first, less);
 
         CheckInvariantsIFN(first, last - 1, less);
@@ -81,17 +86,20 @@ public:
 
     static CONSTEXPR void popmax(_It first, _It last, const _Less& less) {
         Assert(first < last);
+
         CheckInvariantsIFN(first, last, less);
 
-        if (last - first < 2)
+        if (last - first <= 2)
             return;
 
-        if (last - first == 2 || less(*(first + 2),  *(first + 1))) {
+        if (less(*(first + 2),  *(first + 1))) {
             std::iter_swap(first + 1, last - 1);
+
             trickle_down(first, last - 1, first + 1, less);
         }
         else {
             std::iter_swap(first + 2, last - 1);
+
             trickle_down(first, last - 1, first + 2, less);
         }
 

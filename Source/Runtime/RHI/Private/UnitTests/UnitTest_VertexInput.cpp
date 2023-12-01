@@ -97,7 +97,7 @@ void UnitTest_VertexInput() {
     Test_VertexInput1_();
     Test_VertexInput2_();
 
-    LOG(RHI, Info, L"UnitTest_VertexInput [PASSED]");
+    PPE_LOG(RHI, Info, "UnitTest_VertexInput [PASSED]");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

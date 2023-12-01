@@ -541,7 +541,7 @@ public:
 
         ~FWritePort() {
             const FRawMemory oldM = _outp.Storage();
-            const FRawMemory newM = _heap.ReallocateT_AssumeLast(oldM, _outp.size()); // shrink to fit
+            const FRawMemory newM = _heap.ReallocateT(oldM, _outp.size()); // shrink to fit
             Assert_NoAssume(oldM.data() == newM.data()); // should realloc inplace
             Unused(newM);
         }
@@ -553,7 +553,7 @@ public:
             if (newSize > _outp.Storage().SizeInBytes()) {
                 const size_t newCapacity = SLABHEAP(TypeNames)::SnapSize(Max(_outp.Storage().SizeInBytes() * 2, newSize));
                 const FRawMemory oldStorage = _outp.Storage();
-                _outp.Relocate(_heap.ReallocateT_AssumeLast(oldStorage, newCapacity));
+                _outp.Relocate(_heap.ReallocateT(oldStorage, newCapacity));
                 Assert_NoAssume(_outp.Storage().data() == oldStorage.data()); // should realloc inplace
             }
 

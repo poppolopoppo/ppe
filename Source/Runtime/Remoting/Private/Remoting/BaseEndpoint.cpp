@@ -80,9 +80,7 @@ struct FMetaEndpointCall_ {
             MakeCStringView(e.What()) );
 #if USE_PPE_EXCEPTION_DESCRIPTION
         outp << Fmt::Repeat("-="_view, 40);
-        FWStringBuilder desc;
-        e.Description(desc);
-        outp << desc.ToString();
+        e.Description(outp);
 #endif
 #if USE_PPE_EXCEPTION_CALLSTACK
         outp << Fmt::Repeat("_."_view, 40);
@@ -141,7 +139,7 @@ struct FMetaEndpointCall_ {
                 if (Serialize::FJson::Append(dst, L"remoting:/arguments", src))
                     return true;
 
-                LOG(Remoting, Error, L"failed to parse Json argument for '{0}':\n{1}",
+                PPE_LOG(Remoting, Error, "failed to parse Json argument for '{0}':\n{1}",
                     prm.Name, Fmt::HexDump(src));
                 return false;
             }
@@ -425,7 +423,7 @@ void FBaseEndpoint::RegisterOperation(
             wrapper.Required = true; // path parameters are always required
         }
 
-        AssertReleaseMessage(L"body parameter are not supported for GET/HEAD request",
+        AssertReleaseMessage("body parameter are not supported for GET/HEAD request",
             Body != wrapper.In || (
                 Network::EHttpMethod::Get != method &&
                 Network::EHttpMethod::Head != method ));

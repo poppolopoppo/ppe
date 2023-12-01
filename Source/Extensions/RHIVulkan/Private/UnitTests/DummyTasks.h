@@ -24,8 +24,8 @@ inline auto GenerateDummyTasks_(size_t n) {
 
     forrange(i, 0, n) {
         TUniquePtr<FVulkanDummyTask_> task;
-        task.create<FVulkanDummyTask_>()->SetExecutionOrder(static_cast<EVulkanExecutionOrder>(
-            static_cast<u32>(EVulkanExecutionOrder::First) + i));
+        task.create<FVulkanDummyTask_>()->ExecutionOrder = static_cast<EVulkanExecutionOrder>(
+            static_cast<u32>(EVulkanExecutionOrder::First) + i);
 
         result.push_back(std::move(task));
     }

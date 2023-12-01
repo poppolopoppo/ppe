@@ -52,7 +52,7 @@ void FDefaultRTTIService_::RegisterModule(TPtrRef<const IModuleInterface> modula
 
     using namespace RTTI;
 
-    LOG(RTTI, Info, L"register RTTI module <{0}> for application module <{1}>",
+    PPE_LOG(RTTI, Info, "register RTTI module <{0}> for application module <{1}>",
         modular->Name(), rtti->Name() );
 
     const FReadWriteLock::FScopeLockWrite writeLock(_barrierRW);
@@ -65,7 +65,7 @@ void FDefaultRTTIService_::UnregisterModule(TPtrRef<const IModuleInterface> modu
 
     using namespace RTTI;
 
-    LOG(RTTI, Info, L"unregister RTTI module <{0}> for application module <{1}>",
+    PPE_LOG(RTTI, Info, "unregister RTTI module <{0}> for application module <{1}>",
         modular->Name(), rtti->Name() );
 
     const FReadWriteLock::FScopeLockWrite writeLock(_barrierRW);

@@ -79,12 +79,12 @@ auto FWindowsPlatformThread::AffinityMask() -> FAffinityMask {
     ::DWORD_PTR affinityMask;
 
     affinityMask = ::SetThreadAffinityMask(hThread, checked_cast<::DWORD_PTR>(AllCoresAffinity));
-    CLOG(0 == affinityMask, HAL, Fatal, L"SetThreadAffinityMask({0:#16x}) failed with = {1}", AllCoresAffinity, FLastError());
+    PPE_CLOG(0 == affinityMask, HAL, Fatal, "SetThreadAffinityMask({0:#16x}) failed with = {1}", AllCoresAffinity, FLastError());
 
     const FAffinityMask result = checked_cast<FAffinityMask>(affinityMask);
 
     affinityMask = ::SetThreadAffinityMask(hThread, affinityMask);
-    CLOG(0 == affinityMask, HAL, Fatal, L"SetThreadAffinityMask({0:#16x}) failed with = {1}", affinityMask, FLastError());
+    PPE_CLOG(0 == affinityMask, HAL, Fatal, "SetThreadAffinityMask({0:#16x}) failed with = {1}", affinityMask, FLastError());
 
     return result;
 }
@@ -95,7 +95,7 @@ void FWindowsPlatformThread::SetAffinityMask(FAffinityMask mask) {
     const ::HANDLE hThread = ::GetCurrentThread();
 
     const ::DWORD_PTR affinityMask = ::SetThreadAffinityMask(hThread, (::DWORD_PTR)mask);
-    CLOG(0 == affinityMask, HAL, Fatal, L"SetThreadAffinityMask({0:#16x}) failed with = {1}", affinityMask, FLastError());
+    PPE_CLOG(0 == affinityMask, HAL, Fatal, "SetThreadAffinityMask({0:#16x}) failed with = {1}", affinityMask, FLastError());
 
 #if USE_PPE_ASSERT
     const FAffinityMask actualMask = FWindowsPlatformThread::AffinityMask();
@@ -156,6 +156,31 @@ void FWindowsPlatformThread::SetPriority(EThreadPriority priority) {
     }
 
     Verify(::SetThreadPriority(hThread, priorityWin32));
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Fibers hack
+//----------------------------------------------------------------------------
+void FWindowsPlatformThread::FiberStackRegion(FFiber fiber, const void** pStackBottom, size_t* pStackSize) NOEXCEPT {
+    // reference: https://github.com/edubart/minicoro/commit/e2fd1dd219f725b2da58e9533fa4e1b59038a3ab
+    /* Reverse engineered Fiber struct, used to get stack base. */
+    typedef struct _win32_fiber_t {
+        LPVOID param;                /* fiber param */
+        void* except;                /* saved exception handlers list */
+        void* stack_top;             /* top of fiber stack */
+        void* stack_limit;           /* fiber stack low-water mark */
+        void* stack_allocation;      /* base of the fiber stack allocation */
+        CONTEXT context;             /* fiber context */
+        DWORD flags;                 /* fiber flags */
+        LPFIBER_START_ROUTINE start; /* start routine */
+        void** fls_slots;            /* fiber storage slots */
+    }   _win32_fiber_t;
+
+    _win32_fiber_t* const pWin32Fiber = static_cast<_win32_fiber_t*>(fiber);
+
+    *pStackBottom = pWin32Fiber->stack_limit;
+    *pStackSize = checked_cast<size_t>(uintptr_t(pWin32Fiber->stack_top) - uintptr_t(pWin32Fiber->stack_limit));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

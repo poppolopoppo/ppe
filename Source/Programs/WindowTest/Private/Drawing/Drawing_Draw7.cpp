@@ -58,17 +58,17 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget_1")) };
-    LOG_CHECK(WindowTest, image1.Valid());
+    PPE_LOG_CHECK(WindowTest, image1.Valid());
 
     TAutoResource<FImageID> image2{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget_2")) };
-    LOG_CHECK(WindowTest, image2.Valid());
+    PPE_LOG_CHECK(WindowTest, image2.Valid());
 
     TAutoResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Drawing_Draw7")) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     const auto testPixel = [](const FImageView& imageData, float x, float y, const FRgba32f& color) -> bool {
         const u32 ix = FPlatformMaths::RoundToUnsigned((x + 1.0f) * 0.5f * static_cast<float>(imageData.Dimensions().x) + 0.5f);
@@ -78,8 +78,8 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         imageData.Load(&texel, uint3(ix, iy, 0));
 
         const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
-        LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
-        LOG_CHECK(WindowTest, isEqual);
+        PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
+        PPE_LOG_CHECK(WindowTest, isEqual);
         Assert(isEqual);
         return isEqual;
     };
@@ -109,13 +109,13 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_Draw7")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Color0, image1, FLinearColor::Transparent(), EAttachmentStoreOp::Store)
         .AddTarget(ERenderTargetID::Color1, image2, FLinearColor::Transparent(), EAttachmentStoreOp::Store)
         .AddViewport(viewSize));
-    LOG_CHECK(WindowTest, !!renderPass);
+    PPE_LOG_CHECK(WindowTest, !!renderPass);
 
     cmd->Task(renderPass, FDrawVertices{}
         .Draw(3)
@@ -134,10 +134,10 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     Unused(tRead1);
     Unused(tRead2);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

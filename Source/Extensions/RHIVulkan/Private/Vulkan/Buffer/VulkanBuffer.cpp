@@ -151,7 +151,7 @@ bool FVulkanBuffer::Construct(
     VK_CHECK( device.vkCreateBuffer(device.vkDevice(), &info, device.vkAllocator(), &exclusiveData->vkBuffer) );
 
     if (not memoryObject.AllocateBuffer(resources.MemoryManager(), exclusiveData->vkBuffer)) {
-        RHI_LOG(Error, L"failed to allocate memory for buffer '{0}'", debugName);
+        RHI_LOG(Error, "failed to allocate memory for buffer '{0}'", debugName);
         device.vkDestroyBuffer(device.vkDevice(), exclusiveData->vkBuffer, device.vkAllocator());
         return false;
     }
@@ -187,7 +187,7 @@ bool FVulkanBuffer::Construct(
     exclusiveData->Desc.Usage = RHICast(desc.Usage);
     exclusiveData->IsExternal = true;
 
-    LOG_CHECK(RHI, IsSupported(device, exclusiveData->Desc, EMemoryType::Default));
+    PPE_LOG_CHECK(RHI, IsSupported(device, exclusiveData->Desc, EMemoryType::Default));
 
 #if USE_PPE_RHIDEBUG
     if (debugName) {
@@ -196,8 +196,8 @@ bool FVulkanBuffer::Construct(
     }
 #endif
 
-    LOG_CHECK(RHI, VK_QUEUE_FAMILY_IGNORED == desc.QueueFamily); // not supported yet
-    LOG_CHECK(RHI, desc.ConcurrentQueueFamilyIndices.empty() || desc.ConcurrentQueueFamilyIndices.size() >= 2);
+    PPE_LOG_CHECK(RHI, VK_QUEUE_FAMILY_IGNORED == desc.QueueFamily); // not supported yet
+    PPE_LOG_CHECK(RHI, desc.ConcurrentQueueFamilyIndices.empty() || desc.ConcurrentQueueFamilyIndices.size() >= 2);
 
     exclusiveData->QueueFamilyMask = Zero;
     for (u32 index : desc.ConcurrentQueueFamilyIndices)

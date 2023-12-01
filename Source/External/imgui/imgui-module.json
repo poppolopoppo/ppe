@@ -4,18 +4,42 @@
 	],
 	"ExtraFiles": [
 		"Public/imgui-external.h",
+		"Public/imgui-impl.h",
+
 		"imgui.git/imconfig.h",
 		"imgui.git/imgui.h",
 		"imgui.git/imgui_internal.h",
 		"imgui.git/imstb_rectpack.h",
 		"imgui.git/imstb_textedit.h",
-		"imgui.git/imstb_truetype.h"
+		"imgui.git/imstb_truetype.h",
+
+		"implot.git/implot.h",
+		"implot.git/implot_internal.h",
+
+		"IconFontCppHeaders.git/IconsCodicons.h",
+		"IconFontCppHeaders.git/IconsFontaudio.h",
+		"IconFontCppHeaders.git/IconsFontAwesome4.h",
+		"IconFontCppHeaders.git/IconsFontAwesome5.h",
+		"IconFontCppHeaders.git/IconsFontAwesome5Brands.h",
+		"IconFontCppHeaders.git/IconsFontAwesome5Pro.h",
+		"IconFontCppHeaders.git/IconsFontAwesome5ProBrands.h",
+		"IconFontCppHeaders.git/IconsFontAwesome6.h",
+		"IconFontCppHeaders.git/IconsFontAwesome6Brands.h",
+		"IconFontCppHeaders.git/IconsForkAwesome.h",
+		"IconFontCppHeaders.git/IconsKenney.h",
+		"IconFontCppHeaders.git/IconsMaterialDesign.h",
+		"IconFontCppHeaders.git/IconsMaterialDesignIcons.h"
 	],
 	"SourceFiles": [
 		"imgui.git/imgui.cpp",
 		"imgui.git/imgui_demo.cpp",
 		"imgui.git/imgui_draw.cpp",
 		"imgui.git/imgui_tables.cpp",
-		"imgui.git/imgui_widgets.cpp"
+		"imgui.git/imgui_widgets.cpp",
+
+		"implot.git/implot.cpp",
+		"implot.git/implot_demo.cpp",
+		"implot.git/implot_items.cpp"
+
 	]
 }

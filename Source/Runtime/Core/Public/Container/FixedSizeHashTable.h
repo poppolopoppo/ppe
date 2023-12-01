@@ -132,7 +132,7 @@ public:
             return (not operator ==(lhs, rhs));
         }
 
-        void swap(TIterator& lhs, TIterator& rhs) NOEXCEPT {
+        friend void swap(TIterator& lhs, TIterator& rhs) NOEXCEPT {
             std::swap(lhs._owner, rhs._owner);
             std::swap(lhs._bucket, rhs._bucket);
         }
@@ -166,7 +166,8 @@ public:
     TFixedSizeHashTable() NOEXCEPT;
     ~TFixedSizeHashTable() NOEXCEPT;
 
-    explicit TFixedSizeHashTable(std::initializer_list<value_type> uniq) NOEXCEPT;
+    TFixedSizeHashTable(std::initializer_list<value_type> uniq) NOEXCEPT;
+    TFixedSizeHashTable(TMemoryView<const typename traits_type::public_type> uniq) NOEXCEPT;
 
     FORCE_INLINE TFixedSizeHashTable(const TFixedSizeHashTable& other) NOEXCEPT : TFixedSizeHashTable() { operator =(other); }
     TFixedSizeHashTable& operator =(const TFixedSizeHashTable&) NOEXCEPT;
@@ -282,6 +283,14 @@ TFixedSizeHashTable<_Traits, _Capacity>::~TFixedSizeHashTable() NOEXCEPT {
 //----------------------------------------------------------------------------
 template <typename _Traits, size_t _Capacity>
 TFixedSizeHashTable<_Traits, _Capacity>::TFixedSizeHashTable(std::initializer_list<value_type> uniq)  NOEXCEPT
+:   TFixedSizeHashTable() {
+    Assert(uniq.size() <= _Capacity);
+    for (const value_type& it : uniq)
+        Emplace_AssertUnique(it);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, size_t _Capacity>
+TFixedSizeHashTable<_Traits, _Capacity>::TFixedSizeHashTable(TMemoryView<const typename traits_type::public_type> uniq)  NOEXCEPT
 :   TFixedSizeHashTable() {
     Assert(uniq.size() <= _Capacity);
     for (const value_type& it : uniq)

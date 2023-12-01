@@ -11,7 +11,7 @@ namespace Parser {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FParserException : public PPE::Serialize::FSerializeException {
+class FParserException : public PPE::Serialize::FSerializeException {
 public:
     typedef PPE::Serialize::FSerializeException parent_type;
 
@@ -24,13 +24,11 @@ public:
     FParserException(const char *what, Lexer::FSpan site, const FParseItem *item)
         : parent_type(what), _site(site), _item(item) {}
 
-    virtual ~FParserException() = default;
-
     Lexer::FSpan Site() const { return _site; }
     const FParseItem *Item() const { return _item.get(); }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override final;
+    PPE_SERIALIZE_API virtual FTextWriter& Description(FTextWriter& oss) const override final;
 #endif
 
 private:

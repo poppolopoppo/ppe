@@ -45,56 +45,57 @@ public:
 
     void Swap(FFilename& other);
 
-    const FDirpath& Dirpath() const { return _dirpath; }
+    NODISCARD const FDirpath& Dirpath() const { return _dirpath; }
+    NODISCARD const FDirectory& Directory() const { return _dirpath; }
 
-    FBasename& Basename() { return _basename; }
-    const FBasename& Basename() const { return _basename; }
+    NODISCARD FBasename& Basename() { return _basename; }
+    NODISCARD const FBasename& Basename() const { return _basename; }
 
-    FMountingPoint MountingPoint() const { return _dirpath.MountingPoint(); }
+    NODISCARD FMountingPoint MountingPoint() const { return _dirpath.MountingPoint(); }
     void SetMountingPoint(const FMountingPoint& mountingPoint);
-    FFilename WithReplacedMountingPoint(const FMountingPoint& mountingPoint) const;
+    NODISCARD FFilename WithReplacedMountingPoint(const FMountingPoint& mountingPoint) const;
 
-    size_t ExpandPath(FMountingPoint& mountingPoint, TMemoryView<FDirname>& dirnames) const { return _dirpath.ExpandPath(mountingPoint, dirnames); }
-    const FBasenameNoExt& BasenameNoExt() const { return _basename.BasenameNoExt(); }
-    const FExtname& Extname() const { return _basename.Extname(); }
+    NODISCARD size_t ExpandPath(FMountingPoint& mountingPoint, const TMemoryView<FDirname>& dirnames) const { return _dirpath.ExpandPath(mountingPoint, dirnames); }
+    NODISCARD const FBasenameNoExt& BasenameNoExt() const { return _basename.BasenameNoExt(); }
+    NODISCARD const FExtname& Extname() const { return _basename.Extname(); }
 
-    bool empty() const { return _dirpath.empty() && _basename.empty(); }
+    NODISCARD bool empty() const { return _dirpath.empty() && _basename.empty(); }
 
-    bool HasExtname() const { return _basename.HasExtname(); }
-    bool HasMountingPoint() const { return _dirpath.HasMountingPoint(); }
+    NODISCARD bool HasExtname() const { return _basename.HasExtname(); }
+    NODISCARD bool HasMountingPoint() const { return _dirpath.HasMountingPoint(); }
 
-    bool IsAbsolute() const { return _dirpath.IsAbsolute(); }
-    bool IsRelative() const { return _dirpath.IsRelative(); }
+    NODISCARD bool IsAbsolute() const { return _dirpath.IsAbsolute(); }
+    NODISCARD bool IsRelative() const { return _dirpath.IsRelative(); }
 
     void AppendBasename(const FileSystem::FStringView& basenameNoExt);
     void AppendBasename(const FBasenameNoExt& basenameNoExt) { AppendBasename(basenameNoExt.MakeView()); }
-    FFilename WithAppendBasename(const FileSystem::FStringView& basenameNoExt) const;
-    FFilename WithAppendBasename(const FBasenameNoExt& basenameNoExt) const { return WithAppendBasename(basenameNoExt.MakeView()); }
+    NODISCARD FFilename WithAppendBasename(const FileSystem::FStringView& basenameNoExt) const;
+    NODISCARD FFilename WithAppendBasename(const FBasenameNoExt& basenameNoExt) const { return WithAppendBasename(basenameNoExt.MakeView()); }
 
     void ReplaceExtension(const FExtname& ext);
-    FFilename WithReplacedExtension(const FExtname& ext) const;
+    NODISCARD FFilename WithReplacedExtension(const FExtname& ext) const;
 
-    bool Absolute(FFilename* absolute, const FDirpath& origin) const;
-    bool Normalize(FFilename* normalized) const;
-    bool Relative(FFilename* relative, const FDirpath& origin) const;
+    NODISCARD bool Absolute(FFilename* absolute, const FDirpath& origin) const;
+    NODISCARD bool Normalize(FFilename* normalized) const;
+    NODISCARD bool Relative(FFilename* relative, const FDirpath& origin) const;
 
-    FFilename Absolute(const FDirpath& origin) const;
-    FFilename Normalized() const;
-    FFilename Relative(const FDirpath& origin) const;
-    FFilename RemoveExtname() const;
+    NODISCARD FFilename Absolute(const FDirpath& origin) const;
+    NODISCARD FFilename Normalized() const;
+    NODISCARD FFilename Relative(const FDirpath& origin) const;
+    NODISCARD FFilename RemoveExtname() const;
 
-    bool IsRelativeTo(const FDirpath& origin) const;
+    NODISCARD bool IsRelativeTo(const FDirpath& origin) const;
 
-    bool Equals(const FFilename& other) const;
-    bool Less(const FFilename& other) const;
+    NODISCARD bool Equals(const FFilename& other) const;
+    NODISCARD bool Less(const FFilename& other) const;
 
-    size_t HashValue() const;
+    NODISCARD size_t HashValue() const;
 
-    FString ToString() const;
-    FWString ToWString() const;
+    NODISCARD FString ToString() const;
+    NODISCARD FWString ToWString() const;
 
-    FStringView ToCStr(const TMemoryView<char>& dst) const;
-    FWStringView ToWCStr(const TMemoryView<wchar_t>& dst) const;
+    NODISCARD FStringView ToCStr(const TMemoryView<char>& dst) const;
+    NODISCARD FWStringView ToWCStr(const TMemoryView<wchar_t>& dst) const;
 
 private:
     FDirpath _dirpath;
@@ -118,19 +119,19 @@ inline bool FFilename::Less(const FFilename& other) const {
         : _dirpath < other._dirpath;
 }
 //----------------------------------------------------------------------------
-inline bool operator ==(const FFilename& lhs, const FFilename& rhs) {
+NODISCARD inline bool operator ==(const FFilename& lhs, const FFilename& rhs) {
     return lhs.Equals(rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator !=(const FFilename& lhs, const FFilename& rhs) {
+NODISCARD inline bool operator !=(const FFilename& lhs, const FFilename& rhs) {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator <(const FFilename& lhs, const FFilename& rhs) {
+NODISCARD inline bool operator <(const FFilename& lhs, const FFilename& rhs) {
     return lhs.Less(rhs);
 }
 //----------------------------------------------------------------------------
-inline bool operator >=(const FFilename& lhs, const FFilename& rhs) {
+NODISCARD inline bool operator >=(const FFilename& lhs, const FFilename& rhs) {
     return !operator <(lhs, rhs);
 }
 //----------------------------------------------------------------------------

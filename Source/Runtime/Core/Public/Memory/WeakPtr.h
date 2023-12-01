@@ -36,13 +36,13 @@ public:
     }
 #endif
 
-    int RefCount() const { return _strongRefCount; }
-    int WeakRefCount() const { return FRefCountable::RefCount(); }
+    NODISCARD int RefCount() const { return _strongRefCount; }
+    NODISCARD int WeakRefCount() const { return FRefCountable::RefCount(); }
 
     // custom deleter can be used with FWeakRefCountable (!= FRefCountable)
     typedef void (*deleter_func)(void*) NOEXCEPT;
 
-    static PPE_CORE_API PWeakRefCounter Allocate(deleter_func deleter ARGS_IF_ASSERT(FWeakRefCountable* holderForDebug));
+    NODISCARD static PPE_CORE_API PWeakRefCounter Allocate(deleter_func deleter ARGS_IF_ASSERT(FWeakRefCountable* holderForDebug));
 
 private:
     template <typename T>
@@ -67,12 +67,12 @@ private:
         Assert_NoAssume(_holderForDebug);
     }
 
-    PPE_CORE_API bool TryLockForWeakPtr() NOEXCEPT;
+    NODISCARD PPE_CORE_API bool TryLockForWeakPtr() NOEXCEPT;
 
     void Weak_IncWeakRefCount() const NOEXCEPT {
         FRefCountable::IncStrongRefCount();
     }
-    bool Weak_DecWeakRefCount_ReturnIfReachZero() const NOEXCEPT {
+    NODISCARD bool Weak_DecWeakRefCount_ReturnIfReachZero() const NOEXCEPT {
         return FRefCountable::DecStrongRefCount_ReturnIfReachZero();
     }
 
@@ -80,7 +80,7 @@ private:
         Assert(_strongRefCount >= 0);
         _strongRefCount.fetch_add(1, std::memory_order_relaxed);
     }
-    bool Weak_DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT {
+    NODISCARD bool Weak_DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT {
         Assert(_strongRefCount > 0);
         const int n = atomic_fetch_sub_explicit(&_strongRefCount, 1, std::memory_order_release);
         if (1 == n) {
@@ -121,20 +121,21 @@ public:
     FWeakRefCountable(const FWeakRefCountable& ) : FWeakRefCountable() {}
     FWeakRefCountable& operator =(const FWeakRefCountable&) { return (*this); }
 
-    int RefCount() const { return _cnt->RefCount(); }
-    int WeakRefCount() const { return _cnt->WeakRefCount(); }
+    NODISCARD int RefCount() const { return _cnt->RefCount(); }
+    NODISCARD int WeakRefCount() const { return _cnt->WeakRefCount(); }
 
 #if USE_PPE_SAFEPTR
-    int SafeRefCount() const { return _safeRefCount; }
+    NODISCARD int SafeRefCount() const { return _safeRefCount; }
 #endif
 
 private: // override new/delete operators for custom allocation schemes
     using deleter_func = FWeakRefCounter::deleter_func;
 
     template <typename T, typename... _Args>
-    static TRefPtr<T> NewRefImpl(void* p, deleter_func deleter, _Args&&... args) NOEXCEPT;
+    NODISCARD static TRefPtr<T> NewRefImpl(void* p, deleter_func deleter, _Args&&... args) NOEXCEPT;
 
 public:
+    #if 0 // messing with virtual destructor in child classes...
     // general allocators are forbidden to force the client to provide metadata
     static void* operator new(std::size_t) = delete;
     static void* operator new[](std::size_t) = delete;
@@ -148,6 +149,7 @@ public:
 
     static void* operator new[](std::size_t, void* p) { return p; }
     static void operator delete[](void*, void*) {}
+    #endif
 
     // provide a custom allocator, deleter will be exported in the counter
     template <typename T, typename _Allocator, typename... _Args>
@@ -203,17 +205,17 @@ private:
     template <typename T>
     friend class TWeakPtr;
 
-    deleter_func Deleter_Unsafe() const {
+    NODISCARD deleter_func Deleter_Unsafe() const {
         Assert_NoAssume(_cnt->_holderForDebug == this);
         return _cnt->_deleter;
     }
 
     // forward ref counting to internal counter
     void IncWeakRefCount() const NOEXCEPT { _cnt->Weak_IncWeakRefCount(); }
-    bool DecWeakRefCount_ReturnIfReachZero() const NOEXCEPT { return _cnt->Weak_DecWeakRefCount_ReturnIfReachZero(); }
+    NODISCARD bool DecWeakRefCount_ReturnIfReachZero() const NOEXCEPT { return _cnt->Weak_DecWeakRefCount_ReturnIfReachZero(); }
 
     void IncStrongRefCount() const NOEXCEPT { _cnt->Weak_IncStrongRefCount(); }
-    bool DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT { return _cnt->Weak_DecStrongRefCount_ReturnIfReachZero(); }
+    NODISCARD bool DecStrongRefCount_ReturnIfReachZero() const NOEXCEPT { return _cnt->Weak_DecStrongRefCount_ReturnIfReachZero(); }
 
     mutable PWeakRefCounter _cnt;
 
@@ -243,28 +245,34 @@ public:
     void reset(const TRefPtr<U>& refptr) NOEXCEPT;
 
     template <typename U, class = TEnableIfWeakRefCountable<U> >
-    bool TryLock(TRefPtr<U>* pLocked) const NOEXCEPT;
+    NODISCARD bool TryLock(TRefPtr<U>* pLocked) const NOEXCEPT;
+
+    NODISCARD TRefPtr<T> Pin() const NOEXCEPT {
+        TRefPtr<T> pinned;
+        Unused(TryLock(&pinned));
+        return pinned;
+    }
 
 public:
-    friend hash_t hash_value(const TWeakPtr<T>& weakPtr) NOEXCEPT {
+    NODISCARD friend hash_t hash_value(const TWeakPtr<T>& weakPtr) NOEXCEPT {
         return hash_ptr(weakPtr._ptr);
     }
 
     template <typename U>
-    friend bool operator ==(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
+    NODISCARD friend bool operator ==(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
         return (lhs._ptr == rhs._ptr);
     }
     template <typename U>
-    friend bool operator !=(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
+    NODISCARD friend bool operator !=(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
     template <typename U>
-    friend bool operator <(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
+    NODISCARD friend bool operator <(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
         return (lhs._ptr < rhs._ptr);
     }
     template <typename U>
-    friend bool operator >=(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
+    NODISCARD friend bool operator >=(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
         return (not operator <(lhs, rhs));
     }
 

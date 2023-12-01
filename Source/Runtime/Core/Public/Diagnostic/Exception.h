@@ -21,7 +21,7 @@
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
 #   define PPE_DEFAULT_EXCEPTION_DESCRIPTION(_Name) \
-    virtual PPE::FWTextWriter& Description(FWTextWriter& oss) const override final { \
+    virtual PPE::FTextWriter& Description(FTextWriter& oss) const override final { \
         return PPE::FException::DefaultDescription(oss, WSTRINGIZE(_Name), *this); \
     }
 #else
@@ -35,38 +35,43 @@ class FDecodedCallstack;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_CORE_API FException {
+class FException : public std::exception {
 public:
     // don't use FStringView to avoid cyclic dependencies in includes
-    FException(const char* what) noexcept;
-    virtual ~FException();
+    PPE_CORE_API FException(const char* what) noexcept;
+    virtual ~FException() noexcept override = default;
 
-    const char* What() const { return _what; }
+    FException(const FException& ) noexcept = default;
+    FException(FException&& ) noexcept = default;
+
+    FException& operator =(const FException& ) noexcept = default;
+    FException& operator =(FException&& ) noexcept = default;
+
+    const char* What() const { return std::exception::what(); }
 #if USE_PPE_EXCEPTION_CALLSTACK
     size_t SiteHash() const { return _siteHash; }
-    FDecodedCallstack Callstack() const;
+    PPE_CORE_API FDecodedCallstack Callstack() const;
 #endif
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const = 0;
-    static FWTextWriter& DefaultDescription(FWTextWriter& oss, const wchar_t* name, const FException& e);
+    virtual FTextWriter& Description(FTextWriter& oss) const = 0;
+    PPE_CORE_API static FTextWriter& DefaultDescription(FTextWriter& oss, const wchar_t* name, const FException& e);
 #endif
 
 private:
-    const char* _what;
 #if USE_PPE_EXCEPTION_CALLSTACK
     size_t _siteHash;
     void* _callstack[8];
 #endif
 };
 //----------------------------------------------------------------------------
-class PPE_CORE_API FFatalException : FException {
+class FFatalException : FException {
 public:
     FFatalException(const char* what) : FException(what) {}
 };
 //----------------------------------------------------------------------------
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FException& e);
-PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FException& e);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FException& e);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

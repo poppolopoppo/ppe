@@ -117,12 +117,12 @@ public:
         Assert(refCount > 0);
         auto x = _refCounter.fetch_add(refCount, std::memory_order_relaxed);
         Unused(x);
-        RHI_TRACE(L"AddRef", Meta::type_info<T>.name, InstanceID(), DebugName(), x, refCount);
+        RHI_TRACE("AddRef", Meta::type_info<T>.name, InstanceID(), DebugName(), x, refCount);
         ONLY_IF_RHIDEBUG(if (x > 100) PPE_DEBUG_BREAK());
     }
     NODISCARD FORCE_INLINE bool RemoveRef(int refCount) const {
         auto x = _refCounter.fetch_sub(refCount, std::memory_order_relaxed);
-        RHI_TRACE(L"RemoveRef", Meta::type_info<T>.name, InstanceID(), DebugName(), x, refCount);
+        RHI_TRACE("RemoveRef", Meta::type_info<T>.name, InstanceID(), DebugName(), x, refCount);
         if (x == refCount) {
             std::atomic_thread_fence(std::memory_order_acquire);
             return true;
@@ -178,7 +178,7 @@ bool TResourceProxy<T>::Construct(_Args&&... args) {
     // read state and flush cache
     _state.store(result ? EState::Created : EState::Failed, std::memory_order_release);
 
-    RHI_TRACE(L"Construct", Meta::type_info<T>.name, InstanceID(), DebugName(), RefCount(), result);
+    RHI_TRACE("Construct", Meta::type_info<T>.name, InstanceID(), DebugName(), RefCount(), result);
 
     return result;
 }
@@ -195,7 +195,7 @@ template <typename... _Args>
 void TResourceProxy<T>::TearDown_Force(_Args&&... args) {
     Assert(not IsDestroyed());
 
-    RHI_TRACE(L"TearDown", Meta::type_info<T>.name, InstanceID(), DebugName(), RefCount());
+    RHI_TRACE("TearDown", Meta::type_info<T>.name, InstanceID(), DebugName(), RefCount());
 
     _data.TearDown(std::forward<_Args>(args)...);
 

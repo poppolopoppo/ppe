@@ -82,6 +82,26 @@ bool FVirtualFileSystemTrie::FileStats(FFileStat* pstat, const FFilename& filena
         : false;
 }
 //----------------------------------------------------------------------------
+size_t FVirtualFileSystemTrie::EnumerateMountingPoints(const TFunction<void(const FMountingPoint&)>& foreach) const {
+    READSCOPELOCK(_barrier);
+
+    size_t total = 0;
+    for (const  auto& [mountingPoint, component] : _nodes) {
+        foreach(mountingPoint);
+        total++;
+    }
+
+    return total;
+}
+//----------------------------------------------------------------------------
+size_t FVirtualFileSystemTrie::EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunction<void(const FDirpath&)>& onDirectory, const TFunction<void(const FFilename&)>& onFile) const {
+    READSCOPELOCK(_barrier);
+    IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
+    return (readable)
+        ? readable->EnumerateDir(dirpath, recursive, onDirectory, onFile)
+        : 0;
+}
+//----------------------------------------------------------------------------
 size_t FVirtualFileSystemTrie::EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
@@ -119,7 +139,7 @@ bool FVirtualFileSystemTrie::MoveFile(const FFilename& src, const FFilename& dst
     IVirtualFileSystemComponentWritable* const writableSrc = WritableComponent_(src.MountingPoint(), _nodes);
     IVirtualFileSystemComponentWritable* const writableDst = WritableComponent_(dst.MountingPoint(), _nodes);
     if (writableSrc != writableDst) {
-        LOG(VFS, Warning, L"can't move a file betwean different filesystem components : {0} -> {1}", src, dst);
+        PPE_LOG(VFS, Warning, "can't move a file betwean different filesystem components : {0} -> {1}", src, dst);
         return false;
     }
     else {
@@ -151,7 +171,7 @@ UStreamReader FVirtualFileSystemTrie::OpenReadable(const FFilename& filename, EA
     if (readable)
         result = readable->OpenReadable(filename, policy);
     if (not result)
-        LOG(VFS, Error, L"failed to open file '{0}' for read (access flags = {1})", filename, policy);
+        PPE_LOG(VFS, Error, "failed to open file '{0}' for read (access flags = {1})", filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -163,7 +183,7 @@ UStreamWriter FVirtualFileSystemTrie::OpenWritable(const FFilename& filename, EA
     if (writable)
         result = writable->OpenWritable(filename, policy);
     if (not result)
-        LOG(VFS, Error, L"failed to open file '{0}' for write (access flags = {1})", filename, policy);
+        PPE_LOG(VFS, Error, "failed to open file '{0}' for write (access flags = {1})", filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -175,7 +195,7 @@ UStreamReadWriter FVirtualFileSystemTrie::OpenReadWritable(const FFilename& file
     if (readWritable)
         result = readWritable->OpenReadWritable(filename, policy);
     if (not result)
-        LOG(VFS, Error, L"failed to open file '{0}' for read/write (access flags = {1})", filename, policy);
+        PPE_LOG(VFS, Error, "failed to open file '{0}' for read/write (access flags = {1})", filename, policy);
     return result;
 }
 //----------------------------------------------------------------------------
@@ -227,7 +247,7 @@ void FVirtualFileSystemTrie::Mount(const PVirtualFileSystemComponent& component)
 void FVirtualFileSystemTrie::Unmount(const PVirtualFileSystemComponent& component) {
     Assert(component);
     Assert(component->Alias().HasMountingPoint());
-    LOG(VFS, Info, L"unmount component '{0}'", component->Alias());
+    PPE_LOG(VFS, Info, "unmount component '{0}'", component->Alias());
     WRITESCOPELOCK(_barrier);
     _nodes.Remove_AssertExists(component->Alias().MountingPoint(), component);
 }
@@ -239,13 +259,13 @@ void FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, const FWStri
 //----------------------------------------------------------------------------
 void FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, FWString&& nativepPath) {
     Assert(nativepPath.size());
-    LOG(VFS, Info, L"mount native component '{0}' -> '{1}'", alias, nativepPath);
+    PPE_LOG(VFS, Info, "mount native component '{0}' -> '{1}'", alias, nativepPath);
     Mount(NEW_REF(FileSystem, FVirtualFileSystemNativeComponent, alias, std::move(nativepPath)));
 }
 //----------------------------------------------------------------------------
 void FVirtualFileSystemTrie::MountNativePath(const FDirpath& alias, const FWString& nativepPath) {
     Assert(nativepPath.size());
-    LOG(VFS, Info, L"mount native component '{0}' -> '{1}'", alias, nativepPath);
+    PPE_LOG(VFS, Info, "mount native component '{0}' -> '{1}'", alias, nativepPath);
     Mount(NEW_REF(FileSystem, FVirtualFileSystemNativeComponent, alias, nativepPath));
 }
 //----------------------------------------------------------------------------

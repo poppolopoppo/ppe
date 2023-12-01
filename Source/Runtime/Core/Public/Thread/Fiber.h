@@ -27,12 +27,14 @@ public:
     void* Pimpl() const { return _pimpl; }
 
     void Create(callback_t entryPoint, void *arg, size_t stackSize = 0);
-    void Resume();
+    void Resume() const;
     void Destroy(size_t stackSize);
 
     void Reset(void* pimpl = nullptr);
 
     void Swap(FFiber& other) { std::swap(_pimpl, other._pimpl); }
+
+    void StackRegion(const void** pStackBottom, size_t* pStackSize) const NOEXCEPT;
 
     PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_pimpl); }
 

@@ -13,15 +13,21 @@
 #if USE_PPE_RHIDEBUG
 #   include "Diagnostic/Logger.h"
 #   include "IO/FormatHelpers.h"
-#   define RHI_LOG(_LEVEL, ...) LOG(RHI, _LEVEL, __VA_ARGS__)
+#   include "Misc/Opaque.h"
+
+#   define RHI_LOG(_LEVEL, ...)     PPE_LOG(RHI, _LEVEL, __VA_ARGS__)
+#   define RHI_SLOG(_LEVEL, ...)    PPE_SLOG(RHI, _LEVEL, __VA_ARGS__)
+
 #   if USE_PPE_RHITRACE
-#       define RHI_TRACE(...) LOG_RECORD(RHITrace, Verbose, __VA_ARGS__, ::PPE::RHI::FFrameStatistics::NextTraceUID() )
+#       define RHI_TRACE(_TEXT, ...) PPE_SLOG(RHITrace, Verbose, _TEXT, {{"uid", ::PPE::RHI::FFrameStatistics::NextTraceUID()}, __VA_ARGS__ })
 #   else
-#       define RHI_TRACE(...) NOOP()
+#       define RHI_TRACE(_TEXT, ...) NOOP()
 #   endif
+
 #else
 #   define RHI_LOG(_LEVEL, ...) NOOP()
-#   define RHI_TRACE(...) NOOP()
+#   define RHI_SLOG(_LEVEL, ...) NOOP()
+#   define RHI_TRACE(_TEXT, ...) NOOP()
 #endif
 
 #include "IO/String.h"

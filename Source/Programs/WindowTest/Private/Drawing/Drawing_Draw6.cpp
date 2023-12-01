@@ -62,7 +62,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget")) };
-    LOG_CHECK(WindowTest, image.Valid());
+    PPE_LOG_CHECK(WindowTest, image.Valid());
 
     const uint2 texSize{ 128, 128 };
     TAutoResource<FImageID> texture{ fg, fg.CreateImage(FImageDesc{}
@@ -70,12 +70,12 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
         Default ARGS_IF_RHIDEBUG("Texture")) };
-    LOG_CHECK(WindowTest, texture.Valid());
+    PPE_LOG_CHECK(WindowTest, texture.Valid());
 
     TAutoResource<FSamplerID> sampler{ fg, fg.CreateSampler(FSamplerDesc{}
         .SetFilter(ETextureFilter::Linear, ETextureFilter::Linear, EMipmapFilter::Nearest)
         ARGS_IF_RHIDEBUG("TextureSampler")) };
-    LOG_CHECK(WindowTest, sampler.Valid());
+    PPE_LOG_CHECK(WindowTest, sampler.Valid());
 
     const float4 positionsRaw[] = { {0.0f, -0.5f, 0.0f, 0.0f},  {0.5f, 0.5f, 0.0f, 0.0f},  {-0.5f, 0.5f, 0.0f, 0.0f} };
     const float4 colorsRaw[] = { {1.0f, 0.0f, 0.0f, 1.0f},   {0.0f, 1.0f, 0.0f, 1.0f},  {0.0f, 0.0f, 1.0f, 1.0f} };
@@ -84,25 +84,25 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         FBufferDesc{ sizeof(positionsRaw), EBufferUsage::Uniform },
         FMemoryDesc{ EMemoryType::HostWrite }
         ARGS_IF_RHIDEBUG("PositionsUB")) };
-    LOG_CHECK(WindowTest, positionsUb.Valid());
+    PPE_LOG_CHECK(WindowTest, positionsUb.Valid());
 
     TAutoResource<FBufferID> colorsUb{ fg, fg.CreateBuffer(
         FBufferDesc{ sizeof(colorsRaw), EBufferUsage::Uniform },
         FMemoryDesc{ EMemoryType::HostWrite }
         ARGS_IF_RHIDEBUG("ColorsUB")) };
-    LOG_CHECK(WindowTest, colorsUb.Valid());
+    PPE_LOG_CHECK(WindowTest, colorsUb.Valid());
 
-    LOG_CHECK(WindowTest, fg.UpdateHostBuffer(positionsUb, 0_b, sizeof(positionsRaw), positionsRaw));
-    LOG_CHECK(WindowTest, fg.UpdateHostBuffer(colorsUb, 0_b, sizeof(colorsRaw), colorsRaw));
+    PPE_LOG_CHECK(WindowTest, fg.UpdateHostBuffer(positionsUb, 0_b, sizeof(positionsRaw), positionsRaw));
+    PPE_LOG_CHECK(WindowTest, fg.UpdateHostBuffer(colorsUb, 0_b, sizeof(colorsRaw), colorsRaw));
 
     TAutoResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Drawing_Draw6")) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     PPipelineResources resources0 = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources0.get(), ppln, FDescriptorSetID{"PerObject"}));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources0.get(), ppln, FDescriptorSetID{"PerObject"}));
 
     PPipelineResources resources1 = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources1.get(), ppln, FDescriptorSetID{"PerPass"}));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources1.get(), ppln, FDescriptorSetID{"PerPass"}));
 
     resources0->BindBuffer(FUniformID{ "VertexPositionsUB" }, positionsUb);
     resources0->BindTexture(FUniformID{ "un_ColorTexture" }, texture, sampler);
@@ -118,8 +118,8 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
             imageData.Load(&texel, uint3(ix, iy, 0));
 
             const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
-            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
-            LOG_CHECK(WindowTest, isEqual);
+            PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
+            PPE_LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);
             return isEqual;
         };
@@ -139,12 +139,12 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_Draw6")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Color0, image, FLinearColor::Transparent(), EAttachmentStoreOp::Store)
         .AddViewport(viewSize));
-    LOG_CHECK(WindowTest, !!renderPass);
+    PPE_LOG_CHECK(WindowTest, !!renderPass);
 
     struct payload_t {
         FRawGPipelineID Pipeline;
@@ -184,10 +184,10 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         .DependsOn(tDraw));
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

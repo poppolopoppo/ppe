@@ -10,7 +10,7 @@ bool Drawing_TraceRays3_(FWindowTestApp& app) {
     using namespace PPE::RHI;
 
     if (not (app.RHI().Features() & ERHIFeature::RayTracing)) {
-        LOG(WindowTest, Warning, L"Drawing_TraceRays3_: skipped due to lack of ray tracing support");
+        PPE_LOG(WindowTest, Warning, "Drawing_TraceRays3_: skipped due to lack of ray tracing support");
         return true;
     }
 
@@ -66,7 +66,7 @@ void main ()
 ARGS_IF_RHIDEBUG("Drawing_TraceRays3_RayClosestHit"));
 
     const TAutoResource<FRTPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Drawing_TraceRays3"))) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     const u32 indices[] = {0, 1, 2};
     const float3 vertices[] = {
@@ -83,19 +83,19 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays3_RayClosestHit"));
     FRTGeometryID rtGeometry{ fg.CreateRayTracingGeometry(
         FRayTracingGeometryDesc({ trianglesDesc }),
         Default ARGS_IF_RHIDEBUG("TraceRays3_Geometry")) };
-    LOG_CHECK(WindowTest, rtGeometry.Valid());
+    PPE_LOG_CHECK(WindowTest, rtGeometry.Valid());
 
     TAutoResource<FRTSceneID> rtScene{ fg.ScopedResource(fg.CreateRayTracingScene(
         FRayTracingSceneDesc(1),
         Default ARGS_IF_RHIDEBUG("TraceRays3_Scene"))) };
-    LOG_CHECK(WindowTest, rtScene.Valid());
+    PPE_LOG_CHECK(WindowTest, rtScene.Valid());
 
     TAutoResource<FRTShaderTableID> rtShaders{ fg.ScopedResource(
         fg.CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG("TraceRays3_Shaders"))) };
-    LOG_CHECK(WindowTest, rtShaders.Valid());
+    PPE_LOG_CHECK(WindowTest, rtShaders.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, "0"_descriptorset));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, "0"_descriptorset));
 
     bool dataIsCorrect = false;
     const auto onLoaded = [&dataIsCorrect](const FImageView& imageData) {
@@ -107,8 +107,8 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays3_RayClosestHit"));
             imageData.Load(&texel, uint3(ix, iy, 0));
 
             const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
-            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", float2(x, y), texel, color, isEqual);
-            LOG_CHECK(WindowTest, isEqual);
+            PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", float2(x, y), texel, color, isEqual);
+            PPE_LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);
             return true;
         };
@@ -131,13 +131,13 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays3_RayClosestHit"));
         FImageDesc{}.SetDimension(viewSize).SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("OutputImage"))) };
-    LOG_CHECK(WindowTest, dstImage.Valid());
+    PPE_LOG_CHECK(WindowTest, dstImage.Valid());
 
     // frame 1
     FCommandBufferBatch cmd1{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_TraceRays3-Frame1")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd1);
+    PPE_LOG_CHECK(WindowTest, !!cmd1);
     {
         FBuildRayTracingGeometry::FTriangles trianglesData;
         trianglesData.SetGeometryId("Triangle"_geometry)
@@ -163,14 +163,14 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays3_RayClosestHit"));
             .DependsOn(tBuildScene));
         Unused(tUpdateTable);
 
-        LOG_CHECK(WindowTest, fg.Execute(cmd1));
+        PPE_LOG_CHECK(WindowTest, fg.Execute(cmd1));
     }
 
     // frame 2
     FCommandBufferBatch cmd2{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_TraceRays3-Frame2")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd2);
+    PPE_LOG_CHECK(WindowTest, !!cmd2);
     {
         resources->BindImage("un_Output"_uniform, dstImage);
         resources->BindRayTracingScene("un_RtScene"_uniform, rtScene);
@@ -186,12 +186,12 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays3_RayClosestHit"));
             .DependsOn(tTrace));
         Unused(tRead);
 
-        LOG_CHECK(WindowTest, fg.Execute(cmd2));
+        PPE_LOG_CHECK(WindowTest, fg.Execute(cmd2));
     }
 
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

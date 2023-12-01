@@ -38,7 +38,7 @@ void FDependencyInjectionFacet::Decorate(const FMetaProperty& meta, void* data) 
         Assert_NoAssume(not obj);
     }
     else {
-        LOG(RTTI, Error, L"failed to inject dependency on <{0}> in property '{1}'",
+        PPE_LOG(RTTI, Error, "failed to inject dependency on <{0}> in property '{1}'",
             ServiceKey.name.MakeView(), meta.Name() );
     }
 }
@@ -47,13 +47,13 @@ void FDependencyInjectionFacet::Decorate(const FMetaProperty& meta, void* data) 
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-FWTextWriter& TPropertyFacetException<FEnumFacet>::Description(FWTextWriter& oss) const {
+FTextWriter& TPropertyFacetException<FEnumFacet>::Description(FTextWriter& oss) const {
     return FPropertyException::Description(oss)
-        << L" -> found value '"
+        << " -> found value '"
         << FAtom{ Data(), Property()->Traits() }
-        << L"' which does not belong user-defined set { "
-        << Fmt::Join(Facet().Values.MakeView(), MakeStringView(L", "))
-        << L" }";
+        << "' which does not belong user-defined set { "
+        << Fmt::Join(Facet().Values.MakeView(), MakeStringView(", "))
+        << " }";
 }
 #endif
 //----------------------------------------------------------------------------
@@ -76,18 +76,18 @@ FFormatFacet::FFormatFacet(EBuiltinRegexp format) NOEXCEPT
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-FWTextWriter& TPropertyFacetException<FFormatFacet>::Description(FWTextWriter& oss) const {
+FTextWriter& TPropertyFacetException<FFormatFacet>::Description(FTextWriter& oss) const {
     return FPropertyException::Description(oss)
-        << L" -> found string value '"
+        << " -> found string value '"
         << FAtom{ Data(), Property()->Traits() }
-        << L"' which does not validate requested format <"
+        << "' which does not validate requested format <"
         << Facet().Format
-        << L">";
+        << ">";
 }
 #endif
 //----------------------------------------------------------------------------
 void FFormatFacet::Validate(const FMetaProperty& meta, const void* data) const {
-    AssertMessage(L"format facet can only be applied on string types",
+    AssertMessage("format facet can only be applied on string types",
         meta.Traits()->TypeInfos().IsString() );
 
     bool validated;
@@ -122,15 +122,15 @@ FLengthFacet::FLengthFacet(size_t minLength, size_t maxLength) NOEXCEPT
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-FWTextWriter& TPropertyFacetException<FLengthFacet>::Description(FWTextWriter& oss) const {
+FTextWriter& TPropertyFacetException<FLengthFacet>::Description(FTextWriter& oss) const {
     return FPropertyException::Description(oss)
-        << L" -> found vector value '"
+        << " -> found vector value '"
         << FAtom{ Data(), Property()->Traits() }
-        << L"' with arity outside requested range [ "
+        << "' with arity outside requested range [ "
         << Facet().MinLength
         << "; "
         << Facet().MaxLength
-        << L" ]";
+        << " ]";
 }
 #endif
 //----------------------------------------------------------------------------
@@ -181,18 +181,18 @@ FPatternFacet::FPatternFacet(FConstChar pattern) NOEXCEPT
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-FWTextWriter& TPropertyFacetException<FPatternFacet>::Description(FWTextWriter& oss) const {
+FTextWriter& TPropertyFacetException<FPatternFacet>::Description(FTextWriter& oss) const {
     return FPropertyException::Description(oss)
-        << L" -> found string value '"
+        << " -> found string value '"
         << FAtom{ Data(), Property()->Traits() }
-        << L"' which does not validated requested pattern /"
+        << "' which does not validated requested pattern /"
         << Facet().Pattern.MakeView()
-        << L"/i";
+        << "/i";
 }
 #endif
 //----------------------------------------------------------------------------
 void FPatternFacet::Validate(const FMetaProperty& meta, const void* data) const {
-    AssertMessage(L"format facet can only be applied on string types",
+    AssertMessage("format facet can only be applied on string types",
         meta.Traits()->TypeInfos().IsString() );
 
     const FRegexp re{ Pattern.MakeView(), ECase::Insensitive };
@@ -216,7 +216,7 @@ void FPatternFacet::Validate(const FMetaProperty& meta, const void* data) const 
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FRangeFacet::Decorate(const FMetaProperty& meta, void* data) const NOEXCEPT {
-    AssertMessage(L"range facet can only be applied on arithmetic types",
+    AssertMessage("range facet can only be applied on arithmetic types",
         meta.Traits()->TypeInfos().IsArithmetic() );
 
     const IScalarTraits& scalar = meta.Traits()->ToScalar();
@@ -243,15 +243,15 @@ void FRangeFacet::Decorate(const FMetaProperty& meta, void* data) const NOEXCEPT
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-FWTextWriter& TPropertyFacetException<FRangeFacet>::Description(FWTextWriter& oss) const {
+FTextWriter& TPropertyFacetException<FRangeFacet>::Description(FTextWriter& oss) const {
     return FPropertyException::Description(oss)
-        << L" -> found arithmetic value '"
+        << " -> found arithmetic value '"
         << FAtom{ Data(), Property()->Traits() }
-        << L"' which lies outside requested range [ "
+        << "' which lies outside requested range [ "
         << Facet().Minimum
         << "; "
         << Facet().Maximum
-        << L" ]";
+        << " ]";
 }
 #endif
 //----------------------------------------------------------------------------
@@ -281,16 +281,16 @@ void FRangeFacet::Validate(const FMetaProperty& meta, const void* data) const {
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-FWTextWriter& TPropertyFacetException<FUniqueFacet>::Description(FWTextWriter& oss) const {
+FTextWriter& TPropertyFacetException<FUniqueFacet>::Description(FTextWriter& oss) const {
     return FPropertyException::Description(oss)
-        << L" -> list contains duplicated entries '"
+        << " -> list contains duplicated entries '"
         << FAtom{ Data(), Property()->Traits() }
-        << L"'";
+        << "'";
 }
 #endif
 //----------------------------------------------------------------------------
 void FUniqueFacet::Validate(const FMetaProperty& meta, const void* data) const {
-    AssertMessage(L"unique facet can only be applied on list types",
+    AssertMessage("unique facet can only be applied on list types",
         meta.Traits()->TypeInfos().IsList() );
 
     struct FAtomEquals_ {

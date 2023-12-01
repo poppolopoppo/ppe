@@ -72,26 +72,26 @@ public:
     static FFiber CurrentFiber() { return ::GetCurrentFiber(); }
     static void* FiberData() { return ::GetFiberData(); }
 
-    static FFiber CreateFiber(
-        size_t stackCommitSize,
-        size_t stackReservedSize,
-        FEntryPoint entryPoint,
-        void* fiberData) {
-        Assert(stackReservedSize >= 1024);
+    static FFiber CreateFiber(size_t stackSize, FEntryPoint entryPoint, void* fiberData) {
+        Assert(stackSize >= 1024);
         Assert(entryPoint);
 
-        return ::CreateFiberEx(stackCommitSize, stackReservedSize, FiberFlags, entryPoint, fiberData);
+        return ::CreateFiberEx(stackSize, stackSize, FiberFlags, entryPoint, fiberData);
     }
 
     static void SwitchToFiber(FFiber fiber) {
         Assert(fiber);
+
         ::SwitchToFiber(fiber);
     }
 
     static void DestroyFiber(FFiber fiber) {
         Assert(fiber);
+
         ::DeleteFiber(fiber);
     }
+
+    static void FiberStackRegion(FFiber fiber, const void** pStackBottom, size_t* pStackSize) NOEXCEPT;
 
     //------------------------------------------------------------------------
     // critical section
@@ -99,7 +99,6 @@ public:
     using FCriticalSection = ::CRITICAL_SECTION;
 
     static FORCE_INLINE void CreateCriticalSection(FCriticalSection* pcs) {
-        Assert(pcs);
         u32 flags = RTL_CRITICAL_SECTION_FLAG_DYNAMIC_SPIN;
 #if !USE_PPE_DEBUG
         flags |= RTL_CRITICAL_SECTION_FLAG_NO_DEBUG_INFO;

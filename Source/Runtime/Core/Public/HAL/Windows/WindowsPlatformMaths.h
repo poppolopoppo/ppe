@@ -7,15 +7,20 @@
 #include "Meta/Assert.h"
 
 #include <cmath>
+#include <cstdlib>
 #include <immintrin.h>
 #include <xmmintrin.h>
 #include <intrin.h>
 
 #pragma intrinsic(_BitScanForward)
 #pragma intrinsic(_BitScanReverse)
+#pragma intrinsic(_rotl8, _rotl16, _rotl)
+#pragma intrinsic(_rotr8, _rotr16, _rotr)
+
 #ifdef ARCH_X64
 #   pragma intrinsic(_BitScanForward64)
 #   pragma intrinsic(_BitScanReverse64)
+#   pragma intrinsic(_rotl64, _rotr64)
 #endif
 
 namespace PPE {
@@ -219,6 +224,20 @@ public:
     // branch-less float comparisons
 
     using FGenericPlatformMaths::Select;
+
+    //------------------------------------------------------------------------
+    // rotations
+
+    static u16 rotl(u16 x, u8 d) { return _rotl16(x, d); }
+    static u32 rotl(u32 x, u8 d) { return _rotl(x, d); }
+
+    static u16 rotr(u16 x, u8 d) { return _rotr16(x, d); }
+    static u32 rotr(u32 x, u8 d) { return _rotr(x, d); }
+
+#ifdef ARCH_X64
+    static u64 rotl(u64 x, u8 d) { return _rotl64(x, d); }
+    static u64 rotr(u64 x, u8 d) { return _rotr64(x, d); }
+#endif
 
     //------------------------------------------------------------------------
     // lzcnt:   leading zero count (MSB)

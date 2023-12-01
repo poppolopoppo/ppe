@@ -78,7 +78,7 @@ static bool EnumerateDirNonRecursive_(
         FIND_FIRST_EX_LARGE_FETCH);
 
     if (INVALID_HANDLE_VALUE == hFind) {
-        LOG_LASTERROR(HAL, L"FindFirstFileExW()");
+        PPE_LOG_LASTERROR(HAL, "FindFirstFileExW()");
         return false;
     }
 
@@ -105,7 +105,7 @@ static bool EnumerateDirNonRecursive_(
 #if USE_PPE_ASSERT
     ::DWORD dwError = ::GetLastError();
     if (ERROR_NO_MORE_FILES != dwError) {
-        LOG_LASTERROR(HAL, L"FindNextFileW()");
+        PPE_LOG_LASTERROR(HAL, "FindNextFileW()");
         AssertNotReached();
     }
 #endif
@@ -138,7 +138,7 @@ static void GlobFilesNonRecursive_(
         FIND_FIRST_EX_LARGE_FETCH );
 
     if (INVALID_HANDLE_VALUE == hFind) {
-        LOG_LASTERROR(HAL, L"FindFirstFileExW()");
+        PPE_LOG_LASTERROR(HAL, "FindFirstFileExW()");
         return;
     }
 
@@ -198,7 +198,7 @@ void TimetToFileTime_(time_t t, ::LPFILETIME pft) {
 FWString FWindowsPlatformFile::SystemDirectory() {
     wchar_t buffer[MAX_PATH + 1];
     const ::DWORD len = ::GetSystemDirectoryW(buffer, lengthof(buffer));
-    CLOG_LASTERROR(len == 0, HAL, L"GetSystemDirectoryW()");
+    PPE_CLOG_LASTERROR(len == 0, HAL, "GetSystemDirectoryW()");
 
     FWString result(buffer, checked_cast<size_t>(len));
     Verify(NormalizePath(result));
@@ -208,7 +208,7 @@ FWString FWindowsPlatformFile::SystemDirectory() {
 FWString FWindowsPlatformFile::TemporaryDirectory() {
     wchar_t buffer[MAX_PATH + 1];
     const ::DWORD len = ::GetTempPathW(lengthof(buffer), buffer);
-    CLOG_LASTERROR(len == 0, HAL, L"GetTempPathW()");
+    PPE_CLOG_LASTERROR(len == 0, HAL, "GetTempPathW()");
 
     FWString result(buffer, checked_cast<size_t>(len));
     Verify(NormalizePath(result));
@@ -219,7 +219,7 @@ FWString FWindowsPlatformFile::UserDirectory() {
     ::PWSTR path = NULL;
     auto success = ::SHGetKnownFolderPath(FOLDERID_Profile, 0, NULL, &path);
     NOOP(success);
-    CLOG_LASTERROR(FAILED(success), HAL, L"SHGetKnownFolderPath()");
+    PPE_CLOG_LASTERROR(FAILED(success), HAL, "SHGetKnownFolderPath()");
 
     if (path) {
         Assert(not FAILED(success));
@@ -237,7 +237,7 @@ FWString FWindowsPlatformFile::UserDirectory() {
 FWString FWindowsPlatformFile::WorkingDirectory() {
     wchar_t buffer[MAX_PATH + 1];
     const ::DWORD len = ::GetCurrentDirectoryW(lengthof(buffer), buffer);
-    CLOG_LASTERROR(0 == len, HAL, L"GetCurrentDirectoryW()");
+    PPE_CLOG_LASTERROR(0 == len, HAL, "GetCurrentDirectoryW()");
 
     FWString result(buffer, checked_cast<size_t>(len));
     Verify(NormalizePath(result));
@@ -246,10 +246,17 @@ FWString FWindowsPlatformFile::WorkingDirectory() {
 //----------------------------------------------------------------------------
 bool FWindowsPlatformFile::IsAllowedChar(char_type ch) {
     return (std::isalnum(ch) ||
+        ch == L' ' ||
+        ch == L'@' ||
+        ch == L'(' ||
+        ch == L')' ||
+        ch == L'{' ||
+        ch == L'}' ||
         ch == L'_' ||
         ch == L'-' ||
         ch == L':' ||
-        ch == L'.' );
+        ch == L',' ||
+        ch == L'.');
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformFile::NormalizePath(FWString& path) {
@@ -317,12 +324,18 @@ bool FWindowsPlatformFile::Stat(FStat* pstat, const char_type* filename) {
 
     pstat->UID = checked_cast<u16>(fs.st_uid);
     pstat->GID = checked_cast<u16>(fs.st_gid);
-    pstat->Link = checked_cast<u16>(fs.st_nlink);
-    pstat->Mode = checked_cast<u16>(fs.st_mode);
     pstat->SizeInBytes = checked_cast<u64>(fs.st_size);
     pstat->CreatedAt.SetValue(fs.st_ctime);
     pstat->LastAccess.SetValue(fs.st_atime);
     pstat->LastModified.SetValue(fs.st_mtime);
+
+    pstat->Mode = Zero;
+    if (fs.st_mode & _S_IFCHR   ) pstat->Mode += FStat::Device;
+    if (fs.st_mode & _S_IFDIR   ) pstat->Mode += FStat::Directory;
+    if (fs.st_mode & _S_IFREG   ) pstat->Mode += FStat::RegularFile;
+    if (fs.st_mode & _S_IREAD   ) pstat->Mode += FStat::Read;
+    if (fs.st_mode & _S_IWRITE  ) pstat->Mode += FStat::Write;
+    if (fs.st_mode & _S_IEXEC   ) pstat->Mode += FStat::Execute;
 
     return true;
 }
@@ -437,7 +450,7 @@ bool FWindowsPlatformFile::CreateDirectory(const char_type* dirpath, bool* exist
         if (existed)
             *existed = false;
 
-        LOG(HAL, Info, L"successfully created directory '{0}'", MakeCStringView(dirpath));
+        PPE_LOG(HAL, Info, "successfully created directory '{0}'", MakeCStringView(dirpath));
         return true;
     }
     else if (::GetLastError() == ERROR_ALREADY_EXISTS) {
@@ -447,7 +460,7 @@ bool FWindowsPlatformFile::CreateDirectory(const char_type* dirpath, bool* exist
         return true;
     }
     else {
-        LOG_LASTERROR(HAL, L"CreateDirectory()");
+        PPE_LOG_LASTERROR(HAL, "CreateDirectory()");
         if (existed)
             *existed = false;
 
@@ -487,7 +500,7 @@ bool FWindowsPlatformFile::MoveFile(const char_type* src, const char_type* dst) 
     if (::MoveFileExW(src, dst, MOVEFILE_WRITE_THROUGH | MOVEFILE_COPY_ALLOWED) == TRUE)
         return true;
 
-    LOG_LASTERROR(HAL, L"MoveFileExW()");
+    PPE_LOG_LASTERROR(HAL, "MoveFileExW()");
     return false;
 }
 //----------------------------------------------------------------------------
@@ -524,7 +537,7 @@ bool FWindowsPlatformFile::RemoveDirectory(const char_type* dirpath, bool force)
         if (0 == result)
             return true;
 
-        LOG(HAL, Error, L"SHFileOperationW() failed, last error : {0}", FLastError(result));
+        PPE_LOG(HAL, Error, "SHFileOperationW() failed, last error : {0}", FLastError(result));
         return false;
 
 #else
@@ -569,7 +582,7 @@ bool FWindowsPlatformFile::RemoveDirectory(const char_type* dirpath, bool force)
             }
 
             if (not ::RemoveDirectoryW(currDir.Path.data())) {
-                LOG_LASTERROR(HAL, L"RemoveDirectoryW()");
+                PPE_LOG_LASTERROR(HAL, "RemoveDirectoryW()");
                 return false;
             }
 
@@ -579,7 +592,7 @@ bool FWindowsPlatformFile::RemoveDirectory(const char_type* dirpath, bool force)
 #endif
     }
     else {
-        LOG_LASTERROR(HAL, L"RemoveDirectoryW()");
+        PPE_LOG_LASTERROR(HAL, "RemoveDirectoryW()");
         return false;
     }
 }
@@ -590,7 +603,7 @@ bool FWindowsPlatformFile::RemoveFile(const char_type* filename) {
     if (::DeleteFileW(filename) == TRUE)
         return true;
 
-    LOG_LASTERROR(HAL, L"DeleteFileW()");
+    PPE_LOG_LASTERROR(HAL, "DeleteFileW()");
     return false;
 }
 //----------------------------------------------------------------------------
@@ -611,7 +624,7 @@ bool FWindowsPlatformFile::SetFileTime(
         NULL );                   // no attr. template
 
     if (INVALID_HANDLE_VALUE == hFile) {
-        LOG_LASTERROR(HAL, L"CreateFileW()");
+        PPE_LOG_LASTERROR(HAL, "CreateFileW()");
         return false;
     }
 
@@ -635,7 +648,7 @@ bool FWindowsPlatformFile::SetFileTime(
         ::ZeroMemory(&lastModifiedFT, sizeof(::FILETIME));
 
     const ::BOOL succeed = ::SetFileTime(hFile, &createdAtFT, &lastAccessFT, &lastModifiedFT);
-    CLOG_LASTERROR(!succeed, HAL, L"SetFileTime()");
+    PPE_CLOG_LASTERROR(!succeed, HAL, "SetFileTime()");
 
     Verify(::CloseHandle(hFile));
 
@@ -664,13 +677,13 @@ bool FWindowsPlatformFile::RollFile(const char_type* filename) {
             FWString logroll_bak{ MakeCStringView(filename) };
             logroll_bak.insert(ext_pos, oss.Written());
 
-            LOG(HAL, Warning, L"file roll failed because '{0}' already exists, trying {1}",
+            PPE_LOG(HAL, Warning, "file roll failed because '{0}' already exists, trying {1}",
                 logroll, logroll_bak );
 
             logroll = std::move(logroll_bak);
         }
 
-        LOG(HAL, Info, L"roll file '{0}' -> '{1}'", MakeCStringView(filename), logroll);
+        PPE_LOG(HAL, Info, "roll file '{0}' -> '{1}'", MakeCStringView(filename), logroll);
 
         if (not MoveFile(filename, logroll.c_str()))
             return false;

@@ -23,7 +23,7 @@ using namespace PPE::Serialize;
 static void Test_XMLLoad_Simple_() {
     FXml xml;
     if (FXml::Load(&xml, L"Data:/Models/sample.xml"))
-        LOG(Test_Xml, Info, L"sample.xml:\n{0}", xml);
+        PPE_LOG(Test_Xml, Info, "sample.xml:\n{0}", xml);
 }
 //----------------------------------------------------------------------------
 /* TODO

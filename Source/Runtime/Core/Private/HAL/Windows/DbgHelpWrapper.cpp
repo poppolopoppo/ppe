@@ -62,17 +62,17 @@ FDbghelpWrapper::FDbghelpWrapper()
         }
         Assert(_api.MiniDumpWriteDump != nullptr);
 
-        LOG(DbgHelp, Info, L"dbghelp successfully loaded : callstacks and minidumps are available");
+        PPE_LOG(DbgHelp, Info, "dbghelp successfully loaded : callstacks and minidumps are available");
 
         _available = true;
     }
     else {
-        LOG(DbgHelp, Warning, L"dbghelp failed to load : callstacks and minidumps won't be available !");
+        PPE_LOG(DbgHelp, Warning, "dbghelp failed to load : callstacks and minidumps won't be available !");
     }
 }
 //----------------------------------------------------------------------------
 FDbghelpWrapper::~FDbghelpWrapper() {
-    LOG(DbgHelp, Info, L"destroying dbghelp wrapper");
+    PPE_LOG(DbgHelp, Info, "destroying dbghelp wrapper");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

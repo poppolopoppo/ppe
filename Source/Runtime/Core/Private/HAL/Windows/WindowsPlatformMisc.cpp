@@ -111,7 +111,7 @@ static size_t FetchNumCoresWithSMT_() {
 static BOOL WINAPI ConsoleCtrlHandler_(::DWORD /*Type*/) {
 
     // make sure as much data is written to disk as possible
-    FLUSH_LOG();
+    PPE_LOG_FLUSH();
 
     static bool GIsRequestingExit = false;
     if (not GIsRequestingExit) {
@@ -133,11 +133,11 @@ static void ClipboardCopy_(::UINT fmt, const TMemoryView<const _Char>& src) {
 
     if (::OpenClipboard(hWindow)) {
         if (not ::EmptyClipboard())
-            LOG_LASTERROR(HAL, L"EmptyClipboard()");
+            PPE_LOG_LASTERROR(HAL, "EmptyClipboard()");
 
         ::HGLOBAL const hGlobalMem = ::GlobalAlloc(GMEM_MOVEABLE, src.SizeInBytes() + sizeof(_Char));
         if (not hGlobalMem)
-            LOG_LASTERROR(HAL, L"GlobalAlloc()");
+            PPE_LOG_LASTERROR(HAL, "GlobalAlloc()");
 
         void* const pData = ::GlobalLock(hGlobalMem);
         if (pData) {
@@ -145,19 +145,19 @@ static void ClipboardCopy_(::UINT fmt, const TMemoryView<const _Char>& src) {
             static_cast<_Char*>(pData)[src.size()] = _Char(0);
         }
         else {
-            LOG_LASTERROR(HAL, L"GlobalLock()");
+            PPE_LOG_LASTERROR(HAL, "GlobalLock()");
         }
 
         ::GlobalUnlock(hGlobalMem);
 
         if (::SetClipboardData(fmt, hGlobalMem) == NULL)
-            LOG(HAL, Fatal, L"SetClipboardData failed with error : {0}", FLastError());
+            PPE_LOG(HAL, Fatal, "SetClipboardData failed with error : {0}", FLastError());
 
         if (not ::CloseClipboard())
-            LOG_LASTERROR(HAL, L"CloseClipboard()");
+            PPE_LOG_LASTERROR(HAL, "CloseClipboard()");
     }
     else {
-        LOG_LASTERROR(HAL, L"OpenClipboard()");
+        PPE_LOG_LASTERROR(HAL, "OpenClipboard()");
     }
 }
 //----------------------------------------------------------------------------
@@ -457,7 +457,7 @@ bool FWindowsPlatformMisc::SetPersistentVariable(const char* storeId, const char
     }
 
     if (result != ERROR_SUCCESS) {
-        LOG(HAL, Error, L"SetPersistentVariable: ERROR: could not store value for '{0}'. error Code : {1}",
+        PPE_LOG(HAL, Error, "SetPersistentVariable: ERROR: could not store value for '{0}'. error Code : {1}",
             MakeCStringView(key),
             FLastError(result) );
 
@@ -544,7 +544,7 @@ bool FWindowsPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t li
             0, 0, FALSE, CREATE_NO_WINDOW|DETACHED_PROCESS, 0, 0,
             &startupInfo, &processInfo) == 0) {
 
-            LOG(HAL, Error, L"failed to open external editor : {0}\n\t{1}",
+            PPE_LOG(HAL, Error, "failed to open external editor : {0}\n\t{1}",
                 FLastError(), MakeCStringView(buffer));
         }
         else {
@@ -552,7 +552,7 @@ bool FWindowsPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t li
             ::CloseHandle(processInfo.hThread);
             ::CloseHandle(processInfo.hProcess);
 
-            LOG(HAL, Emphasis, L"opened external editor : {0}", MakeCStringView(buffer));
+            PPE_LOG(HAL, Emphasis, "opened external editor : {0}", MakeCStringView(buffer));
 
             return true;
         }
@@ -637,7 +637,7 @@ bool FWindowsPlatformMisc::QueryRegKey(const ::HKEY key, const wchar_t* subKey, 
                     pValue->assign(Strip(value));
                 }
                 else {
-                    LOG_LASTERROR(HAL, L"RegQueryValueExW()");
+                    PPE_LOG_LASTERROR(HAL, "RegQueryValueExW()");
                 }
             }
             Verify(ERROR_SUCCESS == ::RegCloseKey(k));
@@ -705,13 +705,13 @@ bool FWindowsPlatformMisc::CreateDetour(FDetour* hook, ::LPCWSTR libraryName, ::
 
     const ::HMODULE hLibrary = ::LoadLibraryW(libraryName);
     if (NULL == hLibrary) {
-        LOG_LASTERROR(HAL, L"LoadLibraryW");
+        PPE_LOG_LASTERROR(HAL, "LoadLibraryW");
         return false;
     }
 
     const ::FARPROC lpFunction = ::GetProcAddress(hLibrary, functionName);
     if (NULL == lpFunction) {
-        LOG_LASTERROR(HAL, L"GetProcAddress");
+        PPE_LOG_LASTERROR(HAL, "GetProcAddress");
         return false;
     }
 
@@ -739,7 +739,7 @@ static u32 WriteRelativeJump_(void* func2hook, void* jumpTarget) {
     const i32 relativeToJumpTarget = checked_cast<i32>(relativeToJumpTarget64);
     ::memcpy(jmpInstruction + 1, &relativeToJumpTarget, 4);
 
-    LOG_CHECK(HAL, ::WriteProcessMemory(
+    PPE_LOG_CHECK(HAL, ::WriteProcessMemory(
         ::GetCurrentProcess(),
         func2hook,
         jmpInstruction,
@@ -753,7 +753,7 @@ static bool CreateDetour_X86_(FWindowsPlatformMisc::FDetour* hook, LPVOID proxyF
     using FDetour = FWindowsPlatformMisc::FDetour;
 
     // save the first 5 bytes of OriginalFunc into PrologueBackup
-    LOG_CHECK(HAL, ::ReadProcessMemory(
+    PPE_LOG_CHECK(HAL, ::ReadProcessMemory(
         ::GetCurrentProcess(),
         hook->OriginalFunc,
         hook->PrologueBackup,
@@ -765,7 +765,7 @@ static bool CreateDetour_X86_(FWindowsPlatformMisc::FDetour* hook, LPVOID proxyF
         (::DWORD)(hook->OriginalFunc) + FDetour::Size);
 
     hook->TrampolineAddress = ::VirtualAlloc(NULL, 11, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
-    LOG_CHECK(HAL, !!hook->TrampolineAddress);
+    PPE_LOG_CHECK(HAL, !!hook->TrampolineAddress);
 
     ::memcpy((BYTE*)hook->TrampolineAddress +  0, hook->PrologueBackup, FDetour::Size);
     ::memcpy((BYTE*)hook->TrampolineAddress +  5, "\x68", 1); // 68	PUSH imm16 / 32     Push Word, Doubleword or Quadword Onto the Stack
@@ -794,14 +794,14 @@ static bool CreateDetour_X64_(FWindowsPlatformMisc::FDetour* hook, LPVOID proxyF
     using FDetour = FWindowsPlatformMisc::FDetour;
 
     ::DWORD oldProtect;
-    LOG_CHECK(HAL, ::VirtualProtect(hook->OriginalFunc, FDetour::Size, PAGE_EXECUTE_READWRITE, &oldProtect));
+    PPE_LOG_CHECK(HAL, ::VirtualProtect(hook->OriginalFunc, FDetour::Size, PAGE_EXECUTE_READWRITE, &oldProtect));
     ::memcpy(hook->PrologueBackup, hook->OriginalFunc, FDetour::Size);
 
     //we need to use JMP rel32 even on x64 to fit in 5 bytes, so the offset between the trampoline
     //and the original function must fit inside a 32 bits integer: so we try to allocate the page
     //for the trampoline near the original function
     hook->TrampolineAddress = FWindowsPlatformMisc::AllocateExecutablePageNearAddress(hook->OriginalFunc);
-    LOG_CHECK(HAL, !!hook->TrampolineAddress);
+    PPE_LOG_CHECK(HAL, !!hook->TrampolineAddress);
 
     //the trampoline consists of the stolen bytes from the target function, following by a jump back
     //to the target function + 5 bytes, in order to continue the execution of that function. This continues like
@@ -810,7 +810,7 @@ static bool CreateDetour_X64_(FWindowsPlatformMisc::FDetour* hook, LPVOID proxyF
 
     u8* const dst = (u8*)hook->TrampolineAddress;
     ::memcpy(dst, hook->PrologueBackup, FDetour::Size);
-    LOG_CHECK(HAL, !!WriteAbsoluteJump64_(dst + FDetour::Size, trampolineJumpTarget));
+    PPE_LOG_CHECK(HAL, !!WriteAbsoluteJump64_(dst + FDetour::Size, trampolineJumpTarget));
 
     //the last operation is to finally overwrite the first 5 bytes of the original function with a jump
     //to our proxy function
@@ -833,7 +833,7 @@ bool FWindowsPlatformMisc::CreateDetour(FDetour* hook, LPVOID proxyFunc) {
     // note: "5 bytes classic hook" is only guaranteed on specific WinAPI,
     // more general support involves disasm and a dedicated library!
     if (CONCAT(CreateDetour_, CODE3264(X86_, X64_))(hook, proxyFunc)) {
-        LOG(HAL, Info, L"created detour hook on WinAPI function {0}()",
+        PPE_LOG(HAL, Info, "created detour hook on WinAPI function {0}()",
             MakeCStringView(hook->FunctionName));
 
         return true;
@@ -849,7 +849,7 @@ void FWindowsPlatformMisc::DestroyDetour(FDetour* hook) {
         return;
 
     // same code for both x86 and x64
-    LOG(HAL, Info, L"destroy detour hook on WinAPI function {0}()",
+    PPE_LOG(HAL, Info, "destroy detour hook on WinAPI function {0}()",
         MakeCStringView(hook->FunctionName));
 
     // release virtual memory used by trampoline
@@ -857,7 +857,7 @@ void FWindowsPlatformMisc::DestroyDetour(FDetour* hook) {
     hook->TrampolineAddress = nullptr;
 
     // restore function prologue backup
-    LOG_CHECKVOID(HAL, ::WriteProcessMemory(
+    PPE_LOG_CHECKVOID(HAL, ::WriteProcessMemory(
         ::GetCurrentProcess(),
         (::LPVOID)hook->OriginalFunc,
         hook->PrologueBackup,

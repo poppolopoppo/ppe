@@ -55,10 +55,10 @@ public:
     };
     enum EMisc : u32 {
         BoolAlpha   = 1 << 0,
-        Crlf        = 1 << 1,
-        TruncateR   = 1 << 2,
-        TruncateL   = 1 << 3,
-        //Reserved2 = 1 << 4,
+        Compact     = 1 << 1,
+        Crlf        = 1 << 2,
+        TruncateR   = 1 << 3,
+        TruncateL   = 1 << 4,
         //Reserved3 = 1 << 5,
 
         _Truncate   = (TruncateL | TruncateR),

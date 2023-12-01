@@ -16,6 +16,7 @@
 		"ContentPipeline/BuildGraph",
 		"ContentPipeline/PipelineCompiler",
 		"ContentPipeline/PipelineReflection",
+		"ContentPipeline/Texture",
 		"Runtime/Remoting"
 	]
 }

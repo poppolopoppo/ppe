@@ -29,10 +29,7 @@ void FVulkanMemoryManager::DutyCycle(u32 frameIndex) {
 }
 //----------------------------------------------------------------------------
 void FVulkanMemoryManager::ReleaseMemory(FVulkanResourceManager& resources) {
-    const auto exclusiveAllocators = _allocators.LockExclusive();
-    Assert(exclusiveAllocators->empty());
-
-    for (auto& pAllocator : *exclusiveAllocators)
+    for (auto& pAllocator : *_allocators.LockExclusive())
         pAllocator->DefragmentMemory(resources);
 }
 //----------------------------------------------------------------------------
@@ -46,7 +43,7 @@ bool FVulkanMemoryManager::Construct() {
     exclusiveAllocators->Push(MakeUnique<FVulkanMemoryAllocator>(_device, EVulkanMemoryType::All));
 #endif
 
-    AssertReleaseMessage(L"no vulkan memory allocator available", not exclusiveAllocators->empty());
+    AssertReleaseMessage("no vulkan memory allocator available", not exclusiveAllocators->empty());
     return true;
 }
 //----------------------------------------------------------------------------
@@ -66,13 +63,13 @@ bool FVulkanMemoryManager::AllocateImage(FBlock* pData, VkImage image, const FMe
         const FMemoryAllocatorPtr& alloc = sharedAllocators->at(i);
 
         if (alloc->IsSupported(desc.Type)) {
-            LOG_CHECK(RHI, alloc->AllocateImage(pData, image, desc) );
+            PPE_LOG_CHECK(RHI, alloc->AllocateImage(pData, image, desc) );
             pData->AllocatorId = checked_cast<u32>(i);
             return true;
         }
     }
 
-    LOG(RHI, Error, L"unsupported memory type: {0}", desc.Type);
+    PPE_LOG(RHI, Error, "unsupported memory type: {0}", desc.Type);
     return false;
 }
 //----------------------------------------------------------------------------
@@ -86,13 +83,13 @@ bool FVulkanMemoryManager::AllocateBuffer(FBlock* pData, VkBuffer buffer, const 
         const FMemoryAllocatorPtr& alloc = sharedAllocators->at(i);
 
         if (alloc->IsSupported(desc.Type)) {
-            LOG_CHECK(RHI, alloc->AllocateBuffer(pData, buffer, desc));
+            PPE_LOG_CHECK(RHI, alloc->AllocateBuffer(pData, buffer, desc));
             pData->AllocatorId = checked_cast<u32>(i);
             return true;
         }
     }
 
-    LOG(RHI, Error, L"unsupported memory type: {0}", desc.Type);
+    PPE_LOG(RHI, Error, "unsupported memory type: {0}", desc.Type);
     return false;
 }
 //----------------------------------------------------------------------------
@@ -106,13 +103,13 @@ bool FVulkanMemoryManager::AllocateAccelStruct(FBlock* pData, VkAccelerationStru
         const FMemoryAllocatorPtr& alloc = sharedAllocators->at(i);
 
         if (alloc->IsSupported(desc.Type)) {
-            LOG_CHECK(RHI, alloc->AllocateAccelStruct(pData, accelStruct, desc) );
+            PPE_LOG_CHECK(RHI, alloc->AllocateAccelStruct(pData, accelStruct, desc) );
             pData->AllocatorId = checked_cast<u32>(i);
             return true;
         }
     }
 
-    LOG(RHI, Error, L"unsupported memory type: {0}", desc.Type);
+    PPE_LOG(RHI, Error, "unsupported memory type: {0}", desc.Type);
     return false;
 }
 //----------------------------------------------------------------------------

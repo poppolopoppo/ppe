@@ -24,7 +24,7 @@ FIODetouringHooks& FIODetouringHooks::Get() {
 // Detours:
 //----------------------------------------------------------------------------
 void FIODetouringHooks::InitializeRealFunctions() {
-    Real_EntryPoint = NULL ;
+    Real_EntryPoint = nullptr;
     Real_ExitProcess = ::ExitProcess ;
     Real_CreateDirectoryW = ::CreateDirectoryW ;
     Real_CreateDirectoryExW = ::CreateDirectoryExW ;
@@ -45,7 +45,7 @@ void FIODetouringHooks::InitializeRealFunctions() {
     Real_MoveFileExW = ::MoveFileExW ;
     Real_CopyFileExA = ::CopyFileExA ;
     Real_CopyFileExW = ::CopyFileExW ;
-    Real_PrivCopyFileExW = NULL ;
+    Real_PrivCopyFileExW = nullptr;
     Real_CreateHardLinkA = ::CreateHardLinkA ;
     Real_CreateHardLinkW = ::CreateHardLinkW ;
     Real_SetStdHandle = ::SetStdHandle ;
@@ -65,12 +65,12 @@ void FIODetouringHooks::InitializeRealFunctions() {
     Real_ExpandEnvironmentStringsW = ::ExpandEnvironmentStringsW ;
     Real_GetEnvironmentVariableA = ::GetEnvironmentVariableA ;
     Real_GetEnvironmentVariableW = ::GetEnvironmentVariableW ;
-    Real_wgetenv = NULL; // Resolved in Real_EntryPoint()
-    Real_getenv = NULL; // Resolved in Real_EntryPoint()
-    Real_getenv_s = NULL; // Resolved in Real_EntryPoint()
-    Real_wgetenv_s = NULL; // Resolved in Real_EntryPoint()
-    Real_dupenv_s = NULL; // Resolved in Real_EntryPoint()
-    Real_wdupenv_s = NULL; // Resolved in Real_EntryPoint()
+    Real_wgetenv = nullptr; // Resolved in Real_EntryPoint()
+    Real_getenv = nullptr; // Resolved in Real_EntryPoint()
+    Real_getenv_s = nullptr; // Resolved in Real_EntryPoint()
+    Real_wgetenv_s = nullptr; // Resolved in Real_EntryPoint()
+    Real_dupenv_s = nullptr; // Resolved in Real_EntryPoint()
+    Real_wdupenv_s = nullptr; // Resolved in Real_EntryPoint()
 }
 //----------------------------------------------------------------------------
 static DWORD StringCompare_(PCSTR pszA, PCSTR pszB) {
@@ -95,7 +95,7 @@ static DWORD StringCompare_(PCSTR pszA, PCSTR pszB) {
 }
 //----------------------------------------------------------------------------
 static BOOL WINAPI ImportFileCallback_(PVOID pContext, HMODULE hFile, PCSTR pszFile) {
-    FIODetouringHooks& H = *reinterpret_cast<FIODetouringHooks*>(pContext);
+    FIODetouringHooks& H = *static_cast<FIODetouringHooks*>(pContext);
 
     static const PCSTR s_rpszMsvcrNames[] = {
         "msvcr80.dll",
@@ -104,10 +104,10 @@ static BOOL WINAPI ImportFileCallback_(PVOID pContext, HMODULE hFile, PCSTR pszF
         "msvcr71d.dll",
         "msvcr70.dll",
         "msvcr70d.dll",
-        NULL
+        nullptr
     };
 
-    if (pszFile != NULL) {
+    if (pszFile != nullptr) {
         for (int i = 0; s_rpszMsvcrNames[i]; i++) {
             if (StringCompare_(pszFile, s_rpszMsvcrNames[i]) == 0) {
                 H.hMsvcr = hFile;
@@ -120,206 +120,211 @@ static BOOL WINAPI ImportFileCallback_(PVOID pContext, HMODULE hFile, PCSTR pszF
 }
 //----------------------------------------------------------------------------
 BOOL FindMsvcrModule_(FIODetouringHooks& H) {
-    DetourEnumerateImports(NULL, &H, ImportFileCallback_, NULL);
+    ::DetourEnumerateImports(nullptr, &H, ImportFileCallback_, nullptr);
 
-    if (H.hMsvcr != NULL) {
+    if (H.hMsvcr != nullptr) {
         return TRUE;
     }
 
     return FALSE;
 }
 //----------------------------------------------------------------------------
-BOOL FindProcInMsvcr_(FIODetouringHooks& H, PVOID * ppvCode, PCSTR pwzFunc) {
-    if (PVOID const pv = GetProcAddress(H.hMsvcr, pwzFunc)) {
-        *ppvCode = pv;
+BOOL FindProcInMsvcr_(FIODetouringHooks& H, PVOID* ppvCode, PCSTR pwzFunc) {
+    if (FARPROC const pv = ::GetProcAddress(H.hMsvcr, pwzFunc)) {
+        *ppvCode = reinterpret_cast<PVOID>(pv);
         return TRUE;
     }
     else {
-        *ppvCode = NULL;
+        *ppvCode = nullptr;
         return FALSE;
     }
 }
 //----------------------------------------------------------------------------
-static LONG WINAPI DetourAttachIf_(PVOID *ppPointer, PVOID pDetour) {
-    if (*ppPointer == NULL) {
+template <typename _FunctionPointer>
+static LONG WINAPI DetourAttachIf_(_FunctionPointer* ppPointer, _FunctionPointer pDetour) {
+    if (*ppPointer == nullptr) {
         FIODetouringTblog::Get().Printf("DetourAttachIf failed: %p -->\n", pDetour);
         return NO_ERROR;
     }
 
     PDETOUR_TRAMPOLINE pRealTrampoline;
-    PVOID pRealTarget;
-    PVOID pRealDetour;
-    return DetourAttachEx(ppPointer, pDetour, &pRealTrampoline, &pRealTarget, &pRealDetour);
+    _FunctionPointer pRealTarget;
+    _FunctionPointer pRealDetour;
+    return ::DetourAttachEx(ppPointer, pDetour, &pRealTrampoline, &pRealTarget, &pRealDetour);
 }
 //----------------------------------------------------------------------------
 LONG FIODetouringHooks::AttachDetours() {
     IODETOURING_DEBUGPRINTF("attach IO detours\n");
 
-    DetourTransactionBegin();
-    DetourUpdateThread(GetCurrentThread());
+    ::DetourTransactionBegin();
+    ::DetourUpdateThread(GetCurrentThread());
 
-    DetourAttach(&Real_EntryPoint, Hook_EntryPoint);
-    DetourAttach(&Real_ExitProcess, Hook_ExitProcess);
-    DetourAttach(&Real_CreateDirectoryA, Hook_CreateDirectoryA);
-    DetourAttach(&Real_CreateDirectoryW, Hook_CreateDirectoryW);
-    DetourAttach(&Real_CreateDirectoryExA, Hook_CreateDirectoryExA);
-    DetourAttach(&Real_CreateDirectoryExW, Hook_CreateDirectoryExW);
-    DetourAttach(&Real_CreateFileA, Hook_CreateFileA);
-    DetourAttach(&Real_CreateFileW, Hook_CreateFileW);
-    DetourAttach(&Real_CreateFileMappingA, Hook_CreateFileMappingA);
-    DetourAttach(&Real_CreateFileMappingW, Hook_CreateFileMappingW);
-    DetourAttach(&Real_CreateFileMappingNumaA, Hook_CreateFileMappingNumaA);
-    DetourAttach(&Real_CreateFileMappingNumaW, Hook_CreateFileMappingNumaW);
-    DetourAttach(&Real_CreatePipe, Hook_CreatePipe);
-    DetourAttach(&Real_CloseHandle, Hook_CloseHandle);
-    DetourAttach(&Real_DuplicateHandle, Hook_DuplicateHandle);
-    DetourAttach(&Real_CreateProcessW, Hook_CreateProcessW);
-    DetourAttach(&Real_CreateProcessA, Hook_CreateProcessA);
-    DetourAttach(&Real_DeleteFileA, Hook_DeleteFileA);
-    DetourAttach(&Real_DeleteFileW, Hook_DeleteFileW);
-    DetourAttach(&Real_DeviceIoControl, Hook_DeviceIoControl);
-    DetourAttach(&Real_GetFileAttributesW, Hook_GetFileAttributesW);
-    DetourAttach(&Real_MapViewOfFile, Hook_MapViewOfFile);
-    DetourAttach(&Real_MapViewOfFileEx, Hook_MapViewOfFileEx);
-    DetourAttach(&Real_MoveFileWithProgressA, Hook_MoveFileWithProgressA);
-    DetourAttach(&Real_MoveFileWithProgressW, Hook_MoveFileWithProgressW);
-    DetourAttach(&Real_MoveFileA, Hook_MoveFileA);
-    DetourAttach(&Real_MoveFileW, Hook_MoveFileW);
-    DetourAttach(&Real_MoveFileExA, Hook_MoveFileExA);
-    DetourAttach(&Real_MoveFileExW, Hook_MoveFileExW);
-    DetourAttach(&Real_CopyFileExA, Hook_CopyFileExA);
-    DetourAttach(&Real_CopyFileExW, Hook_CopyFileExW);
-    DetourAttach(&Real_CreateHardLinkA, Hook_CreateHardLinkA);
-    DetourAttach(&Real_CreateHardLinkW, Hook_CreateHardLinkW);
-    DetourAttach(&Real_SetStdHandle, Hook_SetStdHandle);
-    DetourAttach(&Real_LoadLibraryA, Hook_LoadLibraryA);
-    DetourAttach(&Real_LoadLibraryW, Hook_LoadLibraryW);
-    DetourAttach(&Real_LoadLibraryExA, Hook_LoadLibraryExA);
-    DetourAttach(&Real_LoadLibraryExW, Hook_LoadLibraryExW);
-    DetourAttach(&Real_SetFilePointer, Hook_SetFilePointer);
-    DetourAttach(&Real_SetFilePointerEx, Hook_SetFilePointerEx);
-    DetourAttach(&Real_ReadFile, Hook_ReadFile);
-    DetourAttach(&Real_ReadFileEx, Hook_ReadFileEx);
-    DetourAttach(&Real_WriteFile, Hook_WriteFile);
-    DetourAttach(&Real_WriteFileEx, Hook_WriteFileEx);
-    DetourAttach(&Real_WriteConsoleA, Hook_WriteConsoleA);
-    DetourAttach(&Real_WriteConsoleW, Hook_WriteConsoleW);
-    DetourAttach(&Real_ExpandEnvironmentStringsA, Hook_ExpandEnvironmentStringsA);
-    DetourAttach(&Real_ExpandEnvironmentStringsW, Hook_ExpandEnvironmentStringsW);
-    DetourAttach(&Real_GetEnvironmentVariableA, Hook_GetEnvironmentVariableA);
-    DetourAttach(&Real_GetEnvironmentVariableW, Hook_GetEnvironmentVariableW);
+    ::DetourAttach(&Real_EntryPoint, Hook_EntryPoint);
+    ::DetourAttach(&Real_ExitProcess, Hook_ExitProcess);
+    ::DetourAttach(&Real_CreateDirectoryA, Hook_CreateDirectoryA);
+    ::DetourAttach(&Real_CreateDirectoryW, Hook_CreateDirectoryW);
+    ::DetourAttach(&Real_CreateDirectoryExA, Hook_CreateDirectoryExA);
+    ::DetourAttach(&Real_CreateDirectoryExW, Hook_CreateDirectoryExW);
+    ::DetourAttach(&Real_CreateFileA, Hook_CreateFileA);
+    ::DetourAttach(&Real_CreateFileW, Hook_CreateFileW);
+    ::DetourAttach(&Real_CreateFileMappingA, Hook_CreateFileMappingA);
+    ::DetourAttach(&Real_CreateFileMappingW, Hook_CreateFileMappingW);
+    ::DetourAttach(&Real_CreateFileMappingNumaA, Hook_CreateFileMappingNumaA);
+    ::DetourAttach(&Real_CreateFileMappingNumaW, Hook_CreateFileMappingNumaW);
+    ::DetourAttach(&Real_CreatePipe, Hook_CreatePipe);
+    ::DetourAttach(&Real_CloseHandle, Hook_CloseHandle);
+    ::DetourAttach(&Real_DuplicateHandle, Hook_DuplicateHandle);
+    ::DetourAttach(&Real_CreateProcessW, Hook_CreateProcessW);
+    ::DetourAttach(&Real_CreateProcessA, Hook_CreateProcessA);
+    ::DetourAttach(&Real_DeleteFileA, Hook_DeleteFileA);
+    ::DetourAttach(&Real_DeleteFileW, Hook_DeleteFileW);
+    ::DetourAttach(&Real_DeviceIoControl, Hook_DeviceIoControl);
+    ::DetourAttach(&Real_GetFileAttributesW, Hook_GetFileAttributesW);
+    ::DetourAttach(&Real_MapViewOfFile, Hook_MapViewOfFile);
+    ::DetourAttach(&Real_MapViewOfFileEx, Hook_MapViewOfFileEx);
+    ::DetourAttach(&Real_MoveFileWithProgressA, Hook_MoveFileWithProgressA);
+    ::DetourAttach(&Real_MoveFileWithProgressW, Hook_MoveFileWithProgressW);
+    ::DetourAttach(&Real_MoveFileA, Hook_MoveFileA);
+    ::DetourAttach(&Real_MoveFileW, Hook_MoveFileW);
+    ::DetourAttach(&Real_MoveFileExA, Hook_MoveFileExA);
+    ::DetourAttach(&Real_MoveFileExW, Hook_MoveFileExW);
+    ::DetourAttach(&Real_CopyFileExA, Hook_CopyFileExA);
+    ::DetourAttach(&Real_CopyFileExW, Hook_CopyFileExW);
+    ::DetourAttach(&Real_CreateHardLinkA, Hook_CreateHardLinkA);
+    ::DetourAttach(&Real_CreateHardLinkW, Hook_CreateHardLinkW);
+    ::DetourAttach(&Real_SetStdHandle, Hook_SetStdHandle);
+    ::DetourAttach(&Real_LoadLibraryA, Hook_LoadLibraryA);
+    ::DetourAttach(&Real_LoadLibraryW, Hook_LoadLibraryW);
+    ::DetourAttach(&Real_LoadLibraryExA, Hook_LoadLibraryExA);
+    ::DetourAttach(&Real_LoadLibraryExW, Hook_LoadLibraryExW);
+    ::DetourAttach(&Real_SetFilePointer, Hook_SetFilePointer);
+    ::DetourAttach(&Real_SetFilePointerEx, Hook_SetFilePointerEx);
+    ::DetourAttach(&Real_ReadFile, Hook_ReadFile);
+    ::DetourAttach(&Real_ReadFileEx, Hook_ReadFileEx);
+    ::DetourAttach(&Real_WriteFile, Hook_WriteFile);
+    ::DetourAttach(&Real_WriteFileEx, Hook_WriteFileEx);
+    ::DetourAttach(&Real_WriteConsoleA, Hook_WriteConsoleA);
+    ::DetourAttach(&Real_WriteConsoleW, Hook_WriteConsoleW);
+    ::DetourAttach(&Real_ExpandEnvironmentStringsA, Hook_ExpandEnvironmentStringsA);
+    ::DetourAttach(&Real_ExpandEnvironmentStringsW, Hook_ExpandEnvironmentStringsW);
+    ::DetourAttach(&Real_GetEnvironmentVariableA, Hook_GetEnvironmentVariableA);
+    ::DetourAttach(&Real_GetEnvironmentVariableW, Hook_GetEnvironmentVariableW);
 
     if (!!Real_PrivCopyFileExA)
-        DetourAttach(&Real_PrivCopyFileExA, Hook_PrivCopyFileExA);
+        ::DetourAttach(&Real_PrivCopyFileExA, Hook_PrivCopyFileExA);
     if (!!Real_PrivCopyFileExW)
-        DetourAttach(&Real_PrivCopyFileExW, Hook_PrivCopyFileExW);
+        ::DetourAttach(&Real_PrivCopyFileExW, Hook_PrivCopyFileExW);
 
-    return DetourTransactionCommit();
+    return ::DetourTransactionCommit();
 }
 //----------------------------------------------------------------------------
 LONG FIODetouringHooks::DetachDetours() {
     IODETOURING_DEBUGPRINTF("detach IO detours\n");
 
-    DetourTransactionBegin();
-    DetourUpdateThread(GetCurrentThread());
+    ::DetourTransactionBegin();
+    ::DetourUpdateThread(GetCurrentThread());
 
-    DetourDetach(&Real_EntryPoint, Hook_EntryPoint);
-    DetourDetach(&Real_ExitProcess, Hook_ExitProcess);
-    DetourDetach(&Real_CreateDirectoryA, Hook_CreateDirectoryA);
-    DetourDetach(&Real_CreateDirectoryW, Hook_CreateDirectoryW);
-    DetourDetach(&Real_CreateDirectoryExA, Hook_CreateDirectoryExA);
-    DetourDetach(&Real_CreateDirectoryExW, Hook_CreateDirectoryExW);
-    DetourDetach(&Real_CreateFileA, Hook_CreateFileA);
-    DetourDetach(&Real_CreateFileW, Hook_CreateFileW);
-    DetourDetach(&Real_CreateFileMappingA, Hook_CreateFileMappingA);
-    DetourDetach(&Real_CreateFileMappingW, Hook_CreateFileMappingW);
-    DetourDetach(&Real_CreateFileMappingNumaA, Hook_CreateFileMappingNumaA);
-    DetourDetach(&Real_CreateFileMappingNumaW, Hook_CreateFileMappingNumaW);
-    DetourDetach(&Real_CreatePipe, Hook_CreatePipe);
-    DetourDetach(&Real_CloseHandle, Hook_CloseHandle);
-    DetourDetach(&Real_DuplicateHandle, Hook_DuplicateHandle);
-    DetourDetach(&Real_CreateProcessW, Hook_CreateProcessW);
-    DetourDetach(&Real_CreateProcessA, Hook_CreateProcessA);
-    DetourDetach(&Real_DeleteFileA, Hook_DeleteFileA);
-    DetourDetach(&Real_DeleteFileW, Hook_DeleteFileW);
-    DetourDetach(&Real_DeviceIoControl, Hook_DeviceIoControl);
-    DetourDetach(&Real_GetFileAttributesW, Hook_GetFileAttributesW);
-    DetourDetach(&Real_MapViewOfFile, Hook_MapViewOfFile);
-    DetourDetach(&Real_MapViewOfFileEx, Hook_MapViewOfFileEx);
-    DetourDetach(&Real_MoveFileWithProgressA, Hook_MoveFileWithProgressA);
-    DetourDetach(&Real_MoveFileWithProgressW, Hook_MoveFileWithProgressW);
-    DetourDetach(&Real_MoveFileA, Hook_MoveFileA);
-    DetourDetach(&Real_MoveFileW, Hook_MoveFileW);
-    DetourDetach(&Real_MoveFileExA, Hook_MoveFileExA);
-    DetourDetach(&Real_MoveFileExW, Hook_MoveFileExW);
-    DetourDetach(&Real_CopyFileExA, Hook_CopyFileExA);
-    DetourDetach(&Real_CopyFileExW, Hook_CopyFileExW);
-    DetourDetach(&Real_CreateHardLinkA, Hook_CreateHardLinkA);
-    DetourDetach(&Real_CreateHardLinkW, Hook_CreateHardLinkW);
-    DetourDetach(&Real_SetStdHandle, Hook_SetStdHandle);
-    DetourDetach(&Real_LoadLibraryA, Hook_LoadLibraryA);
-    DetourDetach(&Real_LoadLibraryW, Hook_LoadLibraryW);
-    DetourDetach(&Real_LoadLibraryExA, Hook_LoadLibraryExA);
-    DetourDetach(&Real_LoadLibraryExW, Hook_LoadLibraryExW);
-    DetourDetach(&Real_SetFilePointer, Hook_SetFilePointer);
-    DetourDetach(&Real_SetFilePointerEx, Hook_SetFilePointerEx);
-    DetourDetach(&Real_ReadFile, Hook_ReadFile);
-    DetourDetach(&Real_ReadFileEx, Hook_ReadFileEx);
-    DetourDetach(&Real_WriteFile, Hook_WriteFile);
-    DetourDetach(&Real_WriteFileEx, Hook_WriteFileEx);
-    DetourDetach(&Real_WriteConsoleA, Hook_WriteConsoleA);
-    DetourDetach(&Real_WriteConsoleW, Hook_WriteConsoleW);
-    DetourDetach(&Real_ExpandEnvironmentStringsA, Hook_ExpandEnvironmentStringsA);
-    DetourDetach(&Real_ExpandEnvironmentStringsW, Hook_ExpandEnvironmentStringsW);
-    DetourDetach(&Real_GetEnvironmentVariableA, Hook_GetEnvironmentVariableA);
-    DetourDetach(&Real_GetEnvironmentVariableW, Hook_GetEnvironmentVariableW);
+    ::DetourDetach(&Real_EntryPoint, Hook_EntryPoint);
+    ::DetourDetach(&Real_ExitProcess, Hook_ExitProcess);
+    ::DetourDetach(&Real_CreateDirectoryA, Hook_CreateDirectoryA);
+    ::DetourDetach(&Real_CreateDirectoryW, Hook_CreateDirectoryW);
+    ::DetourDetach(&Real_CreateDirectoryExA, Hook_CreateDirectoryExA);
+    ::DetourDetach(&Real_CreateDirectoryExW, Hook_CreateDirectoryExW);
+    ::DetourDetach(&Real_CreateFileA, Hook_CreateFileA);
+    ::DetourDetach(&Real_CreateFileW, Hook_CreateFileW);
+    ::DetourDetach(&Real_CreateFileMappingA, Hook_CreateFileMappingA);
+    ::DetourDetach(&Real_CreateFileMappingW, Hook_CreateFileMappingW);
+    ::DetourDetach(&Real_CreateFileMappingNumaA, Hook_CreateFileMappingNumaA);
+    ::DetourDetach(&Real_CreateFileMappingNumaW, Hook_CreateFileMappingNumaW);
+    ::DetourDetach(&Real_CreatePipe, Hook_CreatePipe);
+    ::DetourDetach(&Real_CloseHandle, Hook_CloseHandle);
+    ::DetourDetach(&Real_DuplicateHandle, Hook_DuplicateHandle);
+    ::DetourDetach(&Real_CreateProcessW, Hook_CreateProcessW);
+    ::DetourDetach(&Real_CreateProcessA, Hook_CreateProcessA);
+    ::DetourDetach(&Real_DeleteFileA, Hook_DeleteFileA);
+    ::DetourDetach(&Real_DeleteFileW, Hook_DeleteFileW);
+    ::DetourDetach(&Real_DeviceIoControl, Hook_DeviceIoControl);
+    ::DetourDetach(&Real_GetFileAttributesW, Hook_GetFileAttributesW);
+    ::DetourDetach(&Real_MapViewOfFile, Hook_MapViewOfFile);
+    ::DetourDetach(&Real_MapViewOfFileEx, Hook_MapViewOfFileEx);
+    ::DetourDetach(&Real_MoveFileWithProgressA, Hook_MoveFileWithProgressA);
+    ::DetourDetach(&Real_MoveFileWithProgressW, Hook_MoveFileWithProgressW);
+    ::DetourDetach(&Real_MoveFileA, Hook_MoveFileA);
+    ::DetourDetach(&Real_MoveFileW, Hook_MoveFileW);
+    ::DetourDetach(&Real_MoveFileExA, Hook_MoveFileExA);
+    ::DetourDetach(&Real_MoveFileExW, Hook_MoveFileExW);
+    ::DetourDetach(&Real_CopyFileExA, Hook_CopyFileExA);
+    ::DetourDetach(&Real_CopyFileExW, Hook_CopyFileExW);
+    ::DetourDetach(&Real_CreateHardLinkA, Hook_CreateHardLinkA);
+    ::DetourDetach(&Real_CreateHardLinkW, Hook_CreateHardLinkW);
+    ::DetourDetach(&Real_SetStdHandle, Hook_SetStdHandle);
+    ::DetourDetach(&Real_LoadLibraryA, Hook_LoadLibraryA);
+    ::DetourDetach(&Real_LoadLibraryW, Hook_LoadLibraryW);
+    ::DetourDetach(&Real_LoadLibraryExA, Hook_LoadLibraryExA);
+    ::DetourDetach(&Real_LoadLibraryExW, Hook_LoadLibraryExW);
+    ::DetourDetach(&Real_SetFilePointer, Hook_SetFilePointer);
+    ::DetourDetach(&Real_SetFilePointerEx, Hook_SetFilePointerEx);
+    ::DetourDetach(&Real_ReadFile, Hook_ReadFile);
+    ::DetourDetach(&Real_ReadFileEx, Hook_ReadFileEx);
+    ::DetourDetach(&Real_WriteFile, Hook_WriteFile);
+    ::DetourDetach(&Real_WriteFileEx, Hook_WriteFileEx);
+    ::DetourDetach(&Real_WriteConsoleA, Hook_WriteConsoleA);
+    ::DetourDetach(&Real_WriteConsoleW, Hook_WriteConsoleW);
+    ::DetourDetach(&Real_ExpandEnvironmentStringsA, Hook_ExpandEnvironmentStringsA);
+    ::DetourDetach(&Real_ExpandEnvironmentStringsW, Hook_ExpandEnvironmentStringsW);
+    ::DetourDetach(&Real_GetEnvironmentVariableA, Hook_GetEnvironmentVariableA);
+    ::DetourDetach(&Real_GetEnvironmentVariableW, Hook_GetEnvironmentVariableW);
 
     if (!!Real_PrivCopyFileExA)
-        DetourDetach(&Real_PrivCopyFileExA, Hook_PrivCopyFileExA);
+        ::DetourDetach(&Real_PrivCopyFileExA, Hook_PrivCopyFileExA);
     if (!!Real_PrivCopyFileExW)
-        DetourDetach(&Real_PrivCopyFileExW, Hook_PrivCopyFileExW);
+        ::DetourDetach(&Real_PrivCopyFileExW, Hook_PrivCopyFileExW);
 
-    if (Real_getenv)    DetourDetach(&(PVOID&)Real_getenv, Hook_getenv);
-    if (Real_getenv_s)  DetourDetach(&(PVOID&)Real_getenv_s, Hook_getenv_s);
-    if (Real_wgetenv)   DetourDetach(&(PVOID&)Real_wgetenv, Hook_wgetenv);
-    if (Real_wgetenv_s) DetourDetach(&(PVOID&)Real_wgetenv, Hook_wgetenv_s);
-    if (Real_dupenv_s)  DetourDetach(&(PVOID&)Real_dupenv_s, Hook_dupenv_s);
-    if (Real_wdupenv_s) DetourDetach(&(PVOID&)Real_wdupenv_s, Hook_wdupenv_s);
+    if (Real_getenv)    ::DetourDetach(&Real_getenv, Hook_getenv);
+    if (Real_getenv_s)  ::DetourDetach(&Real_wgetenv, Hook_wgetenv);
+    if (Real_wgetenv)   ::DetourDetach(&Real_getenv_s, Hook_getenv_s);
+    if (Real_wgetenv_s) ::DetourDetach(&Real_wgetenv_s, Hook_wgetenv_s);
+    if (Real_dupenv_s)  ::DetourDetach(&Real_dupenv_s, Hook_dupenv_s);
+    if (Real_wdupenv_s) ::DetourDetach(&Real_wdupenv_s, Hook_wdupenv_s);
 
-    return DetourTransactionCommit();
+    return ::DetourTransactionCommit();
 }
 //----------------------------------------------------------------------------
 // Hooks:
 //----------------------------------------------------------------------------
 int WINAPI FIODetouringHooks::Hook_EntryPoint(VOID) {
-    FIODetouringTblog::Get().Open();
+    if (not FIODetouringTblog::Get().Open())
+        return FIODetouringTblog::PayloadExitCode;
 
     FIODetouringHooks& H = FIODetouringHooks::Get();
     if (FindMsvcrModule_(H)) {
-        FindProcInMsvcr_(H, &(PVOID&)H.Real_getenv, "getenv");
-        FindProcInMsvcr_(H, &(PVOID&)H.Real_wgetenv, "_wgetenv");
-        FindProcInMsvcr_(H, &(PVOID&)H.Real_getenv_s, "getenv_s");
-        FindProcInMsvcr_(H, &(PVOID&)H.Real_wgetenv_s, "_wgetenv_s");
-        FindProcInMsvcr_(H, &(PVOID&)H.Real_dupenv_s, "_dupenv_s");
-        FindProcInMsvcr_(H, &(PVOID&)H.Real_wdupenv_s, "_wdupenv_s");
+        FindProcInMsvcr_(H, reinterpret_cast<PVOID*>(&H.Real_getenv), "getenv");
+        FindProcInMsvcr_(H, reinterpret_cast<PVOID*>(&H.Real_wgetenv), "_wgetenv");
+        FindProcInMsvcr_(H, reinterpret_cast<PVOID*>(&H.Real_getenv_s), "getenv_s");
+        FindProcInMsvcr_(H, reinterpret_cast<PVOID*>(&H.Real_wgetenv_s), "_wgetenv_s");
+        FindProcInMsvcr_(H, reinterpret_cast<PVOID*>(&H.Real_dupenv_s), "_dupenv_s");
+        FindProcInMsvcr_(H, reinterpret_cast<PVOID*>(&H.Real_wdupenv_s), "_wdupenv_s");
 
-        DetourTransactionBegin();
-        DetourUpdateThread(GetCurrentThread());
+        ::DetourTransactionBegin();
+        ::DetourUpdateThread(GetCurrentThread());
 
-        DetourAttachIf_(&(PVOID&)H.Real_getenv, &Hook_getenv);
-        DetourAttachIf_(&(PVOID&)H.Real_getenv_s, &Hook_getenv_s);
-        DetourAttachIf_(&(PVOID&)H.Real_wgetenv, &Hook_wgetenv);
-        DetourAttachIf_(&(PVOID&)H.Real_wgetenv, &Hook_wgetenv_s);
-        DetourAttachIf_(&(PVOID&)H.Real_dupenv_s, &Hook_dupenv_s);
-        DetourAttachIf_(&(PVOID&)H.Real_wdupenv_s, &Hook_wdupenv_s);
+        DetourAttachIf_(&H.Real_getenv, &Hook_getenv);
+        DetourAttachIf_(&H.Real_wgetenv, &Hook_wgetenv);
+        DetourAttachIf_(&H.Real_getenv_s, &Hook_getenv_s);
+        DetourAttachIf_(&H.Real_wgetenv_s, &Hook_wgetenv_s);
+        DetourAttachIf_(&H.Real_dupenv_s, &Hook_dupenv_s);
+        DetourAttachIf_(&H.Real_wdupenv_s, &Hook_wdupenv_s);
 
-        DetourTransactionCommit();
+        ::DetourTransactionCommit();
     }
 
     return H.Real_EntryPoint();
 }
 //----------------------------------------------------------------------------
 VOID WINAPI FIODetouringHooks::Hook_ExitProcess(UINT uExitCode) {
+    FIODetouringFiles::Get().Dump();
+    FIODetouringTblog::Get().Close();
+
     IODETOURING_DEBUGPRINTF("call Hook_ExitProcess\n");
     return Get().Real_ExitProcess(uExitCode);
 }
@@ -340,7 +345,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryA(LPCSTR lpPathName, LPSECURI
         if (rv) {
             pInfo->bDirectory = TRUE;
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -356,7 +361,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryW(LPCWSTR lpPathName, LPSECUR
         if (rv) {
             pInfo->bDirectory = TRUE;
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -381,7 +386,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryExA(LPCSTR lpTemplateDirector
         if (rv) {
             pInfo->bDirectory = TRUE;
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -402,7 +407,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateDirectoryExW(LPCWSTR lpTemplateDirecto
         if (rv) {
             pInfo->bDirectory = TRUE;
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -420,7 +425,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDes
         rv = Get().Real_CreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
     }
     __finally {
-        if (dwDesiredAccess != 0 && rv != NULL && rv != INVALID_HANDLE_VALUE) {
+        if (dwDesiredAccess != 0 && rv != nullptr && rv != INVALID_HANDLE_VALUE) {
             // FILE_FLAG_WRITE_THROUGH              0x80000000
             // FILE_FLAG_OVERLAPPED                 0x40000000
             // FILE_FLAG_NO_BUFFERING               0x20000000
@@ -477,7 +482,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileA(LPCSTR lpFileName, DWORD dwDes
 
             files.Remember(rv, pInfo);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -491,7 +496,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileW(LPCWSTR lpFileName, DWORD dwDe
     __try {
         rv = Get().Real_CreateFileW(pInfo->pwzRealPath, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
     } __finally {
-        if (dwDesiredAccess != 0 && rv != NULL && rv != INVALID_HANDLE_VALUE) {
+        if (dwDesiredAccess != 0 && rv != nullptr && rv != INVALID_HANDLE_VALUE) {
             // FILE_FLAG_WRITE_THROUGH              0x80000000
             // FILE_FLAG_OVERLAPPED                 0x40000000
             // FILE_FLAG_NO_BUFFERING               0x20000000
@@ -548,7 +553,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileW(LPCWSTR lpFileName, DWORD dwDe
 
             files.Remember(rv, pInfo);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -560,7 +565,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileMappingA(HANDLE hFile, LPSECURIT
         rv = Get().Real_CreateFileMappingA(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
     }
     __finally {
-        if (rv != NULL && rv != INVALID_HANDLE_VALUE) {
+        if (rv != nullptr && rv != INVALID_HANDLE_VALUE) {
             FIODetouringFiles& files = FIODetouringFiles::Get();
             if (FIODetouringFiles::PFileInfo const pInfo = files.RecallFile(hFile)) {
                 switch (flProtect) {
@@ -594,7 +599,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileMappingA(HANDLE hFile, LPSECURIT
                 files.Remember(rv, pInfo);
             }
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -604,7 +609,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileMappingW(HANDLE hFile, LPSECURIT
     __try {
         rv = Get().Real_CreateFileMappingW(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName);
     } __finally {
-        if (rv != NULL && rv != INVALID_HANDLE_VALUE) {
+        if (rv != nullptr && rv != INVALID_HANDLE_VALUE) {
             FIODetouringFiles& files = FIODetouringFiles::Get();
             if (FIODetouringFiles::PFileInfo const pInfo = files.RecallFile(hFile)) {
                 switch (flProtect) {
@@ -638,7 +643,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileMappingW(HANDLE hFile, LPSECURIT
                 files.Remember(rv, pInfo);
             }
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -649,7 +654,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileMappingNumaA(HANDLE hFile, LPSEC
         rv = Get().Real_CreateFileMappingNumaA(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName, nndPreferred);
     }
     __finally {
-        if (rv != NULL && rv != INVALID_HANDLE_VALUE) {
+        if (rv != nullptr && rv != INVALID_HANDLE_VALUE) {
             FIODetouringFiles& files = FIODetouringFiles::Get();
             if (FIODetouringFiles::PFileInfo const pInfo = files.RecallFile(hFile)) {
                 switch (flProtect) {
@@ -683,7 +688,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileMappingNumaA(HANDLE hFile, LPSEC
                 files.Remember(rv, pInfo);
             }
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -694,7 +699,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileMappingNumaW(HANDLE hFile, LPSEC
         rv = Get().Real_CreateFileMappingNumaW(hFile, lpAttributes, flProtect, dwMaximumSizeHigh, dwMaximumSizeLow, lpName, nndPreferred);
     }
     __finally {
-        if (rv != NULL && rv != INVALID_HANDLE_VALUE) {
+        if (rv != nullptr && rv != INVALID_HANDLE_VALUE) {
             FIODetouringFiles& files = FIODetouringFiles::Get();
             if (FIODetouringFiles::PFileInfo const pInfo = files.RecallFile(hFile)) {
                 switch (flProtect) {
@@ -728,7 +733,7 @@ HANDLE WINAPI FIODetouringHooks::Hook_CreateFileMappingNumaW(HANDLE hFile, LPSEC
                 files.Remember(rv, pInfo);
             }
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -737,9 +742,9 @@ BOOL WINAPI FIODetouringHooks::Hook_CreatePipe(PHANDLE hReadPipe, PHANDLE hWrite
     HANDLE hRead = INVALID_HANDLE_VALUE;
     HANDLE hWrite = INVALID_HANDLE_VALUE;
 
-    if (hReadPipe == NULL)
+    if (hReadPipe == nullptr)
         hReadPipe = &hRead;
-    if (hWritePipe == NULL)
+    if (hWritePipe == nullptr)
         hWritePipe = &hWrite;
 
     BOOL rv = 0;
@@ -761,7 +766,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreatePipe(PHANDLE hReadPipe, PHANDLE hWrite
             files.Remember(*hReadPipe, pInfo);
             files.Remember(*hWritePipe, pInfo);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -770,12 +775,14 @@ BOOL WINAPI FIODetouringHooks::Hook_CloseHandle(HANDLE hObject) {
     BOOL rv = 0;
     __try {
         FIODetouringFiles& files = FIODetouringFiles::Get();
-        if (FIODetouringFiles::PProcInfo const pProc = files.RecallProc(hObject))
-            files.Close(pProc->hProc);
+        if (FIODetouringFiles::PProcInfo const pProc = files.RecallProc(hObject)) {
+            if (not files.Close(pProc->hProc))
+                IODETOURING_DEBUGPRINTF("failed to close recalled process %x\n", pProc->hProc);
+        }
 
         if (FIODetouringFiles::PFileInfo const pFile = files.RecallFile(hObject)) {
             DWORD dwErr = GetLastError();
-            pFile->cbContent = GetFileSize(hObject, NULL);
+            pFile->cbContent = GetFileSize(hObject, nullptr);
             if (pFile->cbContent == INVALID_FILE_SIZE)
                 pFile->cbContent = 0;
 
@@ -792,7 +799,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CloseHandle(HANDLE hObject) {
     } __finally {
         if (rv)
             FIODetouringFiles::Get().Forget(hObject);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -802,7 +809,7 @@ BOOL WINAPI FIODetouringHooks::Hook_DuplicateHandle(HANDLE hSourceProcessHandle,
 
     BOOL rv = 0;
     __try {
-        if (lpTargetHandle == NULL) {
+        if (lpTargetHandle == nullptr) {
             lpTargetHandle = &hTemp;
         }
         *lpTargetHandle = INVALID_HANDLE_VALUE;
@@ -813,14 +820,14 @@ BOOL WINAPI FIODetouringHooks::Hook_DuplicateHandle(HANDLE hSourceProcessHandle,
         if (rv) {
             FIODetouringFiles::Get().Duplicate(*lpTargetHandle, hSourceHandle);
         }
-    };
+    }
     return rv;
 }
 
 //----------------------------------------------------------------------------
 BOOL WINAPI FIODetouringHooks::Hook_CreateProcessA(LPCSTR lpApplicationName, LPSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCSTR lpCurrentDirectory, LPSTARTUPINFOA lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation) {
     IODETOURING_DEBUGPRINTF("call Hook_CreateProcessA\n");
-    if (lpCommandLine == NULL) {
+    if (lpCommandLine == nullptr) {
         lpCommandLine = (LPSTR)lpApplicationName;
     }
 
@@ -829,7 +836,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessA(LPCSTR lpApplicationName, LPS
 
     // retrieve application name either from user param or from command-line
     CHAR szPath[FIODetouringFiles::MaxPath];
-    if (lpApplicationName == NULL) {
+    if (lpApplicationName == nullptr) {
         PCHAR pszDst = szPath;
         PCHAR pszSrc = lpCommandLine;
 
@@ -867,13 +874,13 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessA(LPCSTR lpApplicationName, LPS
 
             LPPROCESS_INFORMATION ppi = lpProcessInformation;
             PROCESS_INFORMATION pi;
-            if (ppi == NULL) {
+            if (ppi == nullptr) {
                 ZeroMemory(&pi, sizeof(pi));
                 ppi = &pi;
             }
 
-            FIODetouringHooks& hooks = Get();
-            rv = DetourCreateProcessWithDllExA(lpApplicationName,
+            const FIODetouringHooks& hooks = Get();
+            rv = ::DetourCreateProcessWithDllExA(lpApplicationName,
                 lpCommandLine,
                 lpProcessAttributes,
                 lpThreadAttributes,
@@ -891,16 +898,21 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessA(LPCSTR lpApplicationName, LPS
                 HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
                 HANDLE hStderr = GetStdHandle(STD_ERROR_HANDLE);
 
-                if (lpStartupInfo != NULL && (lpStartupInfo->dwFlags & STARTF_USESTDHANDLES) != 0) {
+                if (lpStartupInfo != nullptr && (lpStartupInfo->dwFlags & STARTF_USESTDHANDLES) != 0) {
                     hStdin = lpStartupInfo->hStdInput;
                     hStdout = lpStartupInfo->hStdOutput;
                     hStderr = lpStartupInfo->hStdError;
                 }
 
-                FIODetouringTblog::Get().ChildPayload(ppi->hProcess, ppi->dwProcessId, szProc, hStdin, hStdout, hStderr);
-
-                if (!(dwCreationFlags & CREATE_SUSPENDED))
-                    ResumeThread(ppi->hThread);
+                if (FIODetouringTblog::Get().ChildPayload(ppi->hProcess, ppi->dwProcessId, szProc, hStdin, hStdout, hStderr)) {
+                    if (!(dwCreationFlags & CREATE_SUSPENDED))
+                        ResumeThread(ppi->hThread);
+                }
+                else {
+                    // close child process when payload copy failed
+                    IODETOURING_DEBUGPRINTF("closing child process %d since payload copy failed", GetProcessId(ppi->hProcess));
+                    TerminateProcess(ppi->hProcess, FIODetouringTblog::PayloadExitCode);
+                }
 
                 if (ppi == &pi) {
                     hooks.Real_CloseHandle(ppi->hThread);
@@ -930,7 +942,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessA(LPCSTR lpApplicationName, LPS
 //----------------------------------------------------------------------------
 BOOL WINAPI FIODetouringHooks::Hook_CreateProcessW(LPCWSTR lpApplicationName, LPWSTR lpCommandLine, LPSECURITY_ATTRIBUTES lpProcessAttributes, LPSECURITY_ATTRIBUTES lpThreadAttributes, BOOL bInheritHandles, DWORD dwCreationFlags, LPVOID lpEnvironment, LPCWSTR lpCurrentDirectory, LPSTARTUPINFOW lpStartupInfo, LPPROCESS_INFORMATION lpProcessInformation) {
     IODETOURING_DEBUGPRINTF("call Hook_CreateProcessW\n");
-    if (lpCommandLine == NULL) {
+    if (lpCommandLine == nullptr) {
         lpCommandLine = (LPWSTR)lpApplicationName;
     }
 
@@ -939,7 +951,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessW(LPCWSTR lpApplicationName, LP
 
     // retrieve application name either from user param or from command-line
     WCHAR wzPath[FIODetouringFiles::MaxPath];
-    if (lpApplicationName == NULL) {
+    if (lpApplicationName == nullptr) {
         PWCHAR pwzDst = wzPath;
         PWCHAR pwzSrc = lpCommandLine;
 
@@ -977,13 +989,13 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessW(LPCWSTR lpApplicationName, LP
 
             LPPROCESS_INFORMATION ppi = lpProcessInformation;
             PROCESS_INFORMATION pi;
-            if (ppi == NULL) {
+            if (ppi == nullptr) {
                 ZeroMemory(&pi, sizeof(pi));
                 ppi = &pi;
             }
 
             FIODetouringHooks& hooks = Get();
-            rv = DetourCreateProcessWithDllExW(lpApplicationName,
+            rv = ::DetourCreateProcessWithDllExW(lpApplicationName,
                 lpCommandLine,
                 lpProcessAttributes,
                 lpThreadAttributes,
@@ -1001,16 +1013,21 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessW(LPCWSTR lpApplicationName, LP
                 HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
                 HANDLE hStderr = GetStdHandle(STD_ERROR_HANDLE);
 
-                if (lpStartupInfo != NULL && (lpStartupInfo->dwFlags & STARTF_USESTDHANDLES) != 0) {
+                if (lpStartupInfo != nullptr && (lpStartupInfo->dwFlags & STARTF_USESTDHANDLES) != 0) {
                     hStdin = lpStartupInfo->hStdInput;
                     hStdout = lpStartupInfo->hStdOutput;
                     hStderr = lpStartupInfo->hStdError;
                 }
 
-                FIODetouringTblog::Get().ChildPayload(ppi->hProcess, ppi->dwProcessId, szProc, hStdin, hStdout, hStderr);
-
-                if (!(dwCreationFlags & CREATE_SUSPENDED))
-                    ResumeThread(ppi->hThread);
+                if (FIODetouringTblog::Get().ChildPayload(ppi->hProcess, ppi->dwProcessId, szProc, hStdin, hStdout, hStderr)) {
+                    if (!(dwCreationFlags & CREATE_SUSPENDED))
+                        ResumeThread(ppi->hThread);
+                }
+                else {
+                    // close child process when payload copy failed
+                    IODETOURING_DEBUGPRINTF("closing child process %d since payload copy failed", GetProcessId(ppi->hProcess));
+                    TerminateProcess(ppi->hProcess, FIODetouringTblog::PayloadExitCode);
+                }
 
                 if (ppi == &pi) {
                     hooks.Real_CloseHandle(ppi->hThread);
@@ -1052,7 +1069,7 @@ BOOL WINAPI FIODetouringHooks::Hook_DeleteFileA(LPCSTR lpFileName) {
     }
     __finally {
         FIODetouringFiles::Get().NoteDelete(lpFileName);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1067,14 +1084,14 @@ BOOL WINAPI FIODetouringHooks::Hook_DeleteFileW(LPCWSTR lpFileName) {
         rv = Get().Real_DeleteFileW(pInfo->pwzRealPath);
     } __finally {
         files.NoteDelete(lpFileName);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
 BOOL WINAPI FIODetouringHooks::Hook_DeviceIoControl(HANDLE hDevice, DWORD dwIoControlCode, LPVOID lpInBuffer, DWORD nInBufferSize, LPVOID lpOutBuffer, DWORD nOutBufferSize, LPDWORD lpBytesReturned, LPOVERLAPPED lpOverlapped) {
     IODETOURING_DEBUGPRINTF("call Hook_DeviceIoControl\n");
     DWORD bytesReturned = 0;
-    if (lpBytesReturned == NULL)
+    if (lpBytesReturned == nullptr)
         lpBytesReturned = &bytesReturned;
 
     BOOL rv = 0;
@@ -1085,10 +1102,9 @@ BOOL WINAPI FIODetouringHooks::Hook_DeviceIoControl(HANDLE hDevice, DWORD dwIoCo
         files.SetRead(hDevice, 0);
         files.SetWrite(hDevice, 0);
 
-        if (rv && dwIoControlCode != 0x390008 && dwIoControlCode != 0x4d0008 && dwIoControlCode != 0x6d0008) {
+        if (rv && dwIoControlCode != 0x390008 && dwIoControlCode != 0x4d0008 && dwIoControlCode != 0x6d0008)
             files.RecallFile(hDevice);
-        }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1098,17 +1114,17 @@ DWORD WINAPI FIODetouringHooks::Hook_GetFileAttributesW(LPCWSTR lpFileName) {
     __try {
         rv = Get().Real_GetFileAttributesW(lpFileName);
     } __finally {
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
 LPVOID WINAPI FIODetouringHooks::Hook_MapViewOfFile(HANDLE hFileMappingObject, DWORD dwDesiredAccess, DWORD  dwFileOffsetHigh, DWORD  dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap) {
     IODETOURING_DEBUGPRINTF("call Hook_MapViewOfFile\n");
-    LPVOID rv = NULL;
+    LPVOID rv = nullptr;
     __try {
         rv = Get().Real_MapViewOfFile(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap);
     } __finally {
-        if (dwDesiredAccess != 0 && dwNumberOfBytesToMap > 0 && rv != NULL) {
+        if (dwDesiredAccess != 0 && dwNumberOfBytesToMap > 0 && rv != nullptr) {
             if (FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().RecallFile(hFileMappingObject)) {
                 if ((dwDesiredAccess & FILE_MAP_READ) == FILE_MAP_READ) {
                     pInfo->bRead = TRUE;
@@ -1128,12 +1144,12 @@ LPVOID WINAPI FIODetouringHooks::Hook_MapViewOfFile(HANDLE hFileMappingObject, D
 //----------------------------------------------------------------------------
 LPVOID WINAPI FIODetouringHooks::Hook_MapViewOfFileEx(HANDLE hFileMappingObject, DWORD  dwDesiredAccess, DWORD  dwFileOffsetHigh, DWORD  dwFileOffsetLow, SIZE_T dwNumberOfBytesToMap, LPVOID lpBaseAddress) {
     IODETOURING_DEBUGPRINTF("call Hook_MapViewOfFileEx\n");
-    LPVOID rv = NULL;
+    LPVOID rv = nullptr;
     __try {
         rv = Get().Real_MapViewOfFileEx(hFileMappingObject, dwDesiredAccess, dwFileOffsetHigh, dwFileOffsetLow, dwNumberOfBytesToMap, lpBaseAddress);
     }
     __finally {
-        if (dwDesiredAccess != 0 && dwNumberOfBytesToMap > 0 && rv != NULL) {
+        if (dwDesiredAccess != 0 && dwNumberOfBytesToMap > 0 && rv != nullptr) {
             if (FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().RecallFile(hFileMappingObject)) {
                 if ((dwDesiredAccess & FILE_MAP_READ) == FILE_MAP_READ) {
                     pInfo->bRead = TRUE;
@@ -1163,7 +1179,7 @@ BOOL WINAPI FIODetouringHooks::Hook_MoveFileWithProgressA(LPCSTR lpExistingFileN
             files.NoteRead(lpExistingFileName);
             files.NoteWrite(lpNewFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1178,7 +1194,7 @@ BOOL WINAPI FIODetouringHooks::Hook_MoveFileWithProgressW(LPCWSTR lpExistingFile
             files.NoteRead(lpExistingFileName);
             files.NoteWrite(lpNewFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1194,7 +1210,7 @@ BOOL WINAPI FIODetouringHooks::Hook_MoveFileA(LPCSTR lpExistingFileName, LPCSTR 
             files.NoteCleanup(lpExistingFileName);
             files.NoteWrite(lpNewFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1210,7 +1226,7 @@ BOOL WINAPI FIODetouringHooks::Hook_MoveFileW(LPCWSTR lpExistingFileName, LPCWST
             files.NoteCleanup(lpExistingFileName);
             files.NoteWrite(lpNewFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1226,7 +1242,7 @@ BOOL WINAPI FIODetouringHooks::Hook_MoveFileExA(LPCSTR lpExistingFileName, LPCST
             files.NoteCleanup(lpExistingFileName);
             files.NoteWrite(lpNewFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1242,7 +1258,7 @@ BOOL WINAPI FIODetouringHooks::Hook_MoveFileExW(LPCWSTR lpExistingFileName, LPCW
             files.NoteCleanup(lpExistingFileName);
             files.NoteWrite(lpNewFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1257,7 +1273,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CopyFileExA(LPCSTR lpExistingFileName, LPCST
             files.NoteRead(lpExistingFileName);
             files.NoteWrite(lpNewFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1272,7 +1288,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CopyFileExW(LPCWSTR lpExistingFileName, LPCW
             files.NoteRead(lpExistingFileName);
             files.NoteWrite(lpNewFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1288,7 +1304,7 @@ BOOL WINAPI FIODetouringHooks::Hook_PrivCopyFileExA(LPCSTR lpExistingFileName, L
             files.NoteRead(lpExistingFileName);
             files.NoteWrite(lpNewFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1303,7 +1319,7 @@ BOOL WINAPI FIODetouringHooks::Hook_PrivCopyFileExW(LPCWSTR lpExistingFileName, 
             files.NoteRead(lpExistingFileName);
             files.NoteWrite(lpNewFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1318,7 +1334,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateHardLinkA(LPCSTR lpFileName, LPCSTR lp
             files.NoteRead(lpExistingFileName);
             files.NoteWrite(lpFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1333,7 +1349,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateHardLinkW(LPCWSTR lpFileName, LPCWSTR 
             files.NoteRead(lpExistingFileName);
             files.NoteWrite(lpFileName);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1345,7 +1361,7 @@ BOOL WINAPI FIODetouringHooks::Hook_SetStdHandle(DWORD nStdHandle, HANDLE hHandl
     } __finally {
         if (rv)
             FIODetouringFiles::Get().SetStdio(hHandle);
-    };
+    }
     return rv;}
 //----------------------------------------------------------------------------
 HMODULE WINAPI FIODetouringHooks::Hook_LoadLibraryA(LPCSTR lpLibFileName) {
@@ -1354,9 +1370,9 @@ HMODULE WINAPI FIODetouringHooks::Hook_LoadLibraryA(LPCSTR lpLibFileName) {
     __try {
         rv = Get().Real_LoadLibraryA(lpLibFileName);
     } __finally {
-        if (rv != NULL && rv != INVALID_HANDLE_VALUE)
+        if (rv != nullptr && rv != INVALID_HANDLE_VALUE)
             FIODetouringFiles::Get().NoteExecute(rv);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1366,9 +1382,9 @@ HMODULE WINAPI FIODetouringHooks::Hook_LoadLibraryW(LPCWSTR lpLibFileName) {
     __try {
         rv = Get().Real_LoadLibraryW(lpLibFileName);
     } __finally {
-        if (rv != NULL && rv != INVALID_HANDLE_VALUE)
+        if (rv != nullptr && rv != INVALID_HANDLE_VALUE)
             FIODetouringFiles::Get().NoteExecute(rv);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1378,13 +1394,12 @@ HMODULE WINAPI FIODetouringHooks::Hook_LoadLibraryExA(LPCSTR lpLibFileName, HAND
     __try {
         rv = Get().Real_LoadLibraryExA(lpLibFileName, hFile, dwFlags);
     } __finally {
-        if (rv != NULL && rv != INVALID_HANDLE_VALUE) {
+        if (rv != nullptr && rv != INVALID_HANDLE_VALUE) {
             FIODetouringFiles& files = FIODetouringFiles::Get();
             files.SetExecute(hFile);
             files.NoteExecute(rv);
         }
-
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1394,12 +1409,12 @@ HMODULE WINAPI FIODetouringHooks::Hook_LoadLibraryExW(LPCWSTR lpLibFileName, HAN
     __try {
         rv = Get().Real_LoadLibraryExW(lpLibFileName, hFile, dwFlags);
     } __finally {
-        if (rv != NULL && rv != INVALID_HANDLE_VALUE) {
+        if (rv != nullptr && rv != INVALID_HANDLE_VALUE) {
             FIODetouringFiles& files = FIODetouringFiles::Get();
             files.SetExecute(hFile);
             files.NoteExecute(rv);
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1407,18 +1422,18 @@ DWORD WINAPI FIODetouringHooks::Hook_SetFilePointer(HANDLE hFile, LONG lDistance
     IODETOURING_DEBUGPRINTF("call Hook_SetFilePointer\n");
     DWORD rv = 0;
     __try {
-        rv = Get().Real_SetFilePointer(hFile, lDistanceToMove, lpDistanceToMoveHigh, dwMoveMethod);
-    } __finally {
         LONG high = 0;
-        if (lpDistanceToMoveHigh == NULL)
+        if (lpDistanceToMoveHigh == nullptr)
             lpDistanceToMoveHigh = &high;
 
+        rv = Get().Real_SetFilePointer(hFile, lDistanceToMove, lpDistanceToMoveHigh, dwMoveMethod);
+    } __finally {
         FIODetouringFiles::PFileInfo const pInfo = FIODetouringFiles::Get().RecallFile(hFile);
-        if (pInfo != NULL) {
-            if (dwMoveMethod == FILE_END && lDistanceToMove == 0xffffffff)
+        if (pInfo != nullptr) {
+            if (dwMoveMethod == FILE_END && lDistanceToMove == static_cast<LONG>(0xFFFFFFFF))
                 pInfo->bAppend = TRUE;
         }
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1428,7 +1443,7 @@ BOOL WINAPI FIODetouringHooks::Hook_SetFilePointerEx(HANDLE hFile, LARGE_INTEGER
     __try {
         rv = Get().Real_SetFilePointerEx(hFile, liDistanceToMove, lpNewFilePointer, dwMoveMethod);
     } __finally {
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1440,7 +1455,7 @@ BOOL WINAPI FIODetouringHooks::Hook_ReadFile(HANDLE hFile, LPVOID lpBuffer, DWOR
     } __finally {
         if (rv)
             FIODetouringFiles::Get().SetRead(hFile, nNumberOfBytesToRead);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1452,7 +1467,7 @@ BOOL WINAPI FIODetouringHooks::Hook_ReadFileEx(HANDLE hFile, LPVOID lpBuffer, DW
     } __finally {
         if (rv)
             FIODetouringFiles::Get().SetRead(hFile, nNumberOfBytesToRead);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1464,7 +1479,7 @@ BOOL WINAPI FIODetouringHooks::Hook_WriteFile(HANDLE hFile, LPCVOID lpBuffer, DW
     } __finally {
         if (rv)
             FIODetouringFiles::Get().SetWrite(hFile, nNumberOfBytesToWrite);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1476,7 +1491,7 @@ BOOL WINAPI FIODetouringHooks::Hook_WriteFileEx(HANDLE hFile, LPCVOID lpBuffer, 
     } __finally {
         if (rv)
             FIODetouringFiles::Get().SetWrite(hFile, nNumberOfBytesToWrite);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1488,7 +1503,7 @@ BOOL WINAPI FIODetouringHooks::Hook_WriteConsoleA(HANDLE hConsoleOutput, const V
     } __finally {
         if (rv)
             FIODetouringFiles::Get().SetWrite(hConsoleOutput, nNumberOfCharsToWrite);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1500,7 +1515,7 @@ BOOL WINAPI FIODetouringHooks::Hook_WriteConsoleW(HANDLE hConsoleOutput, const V
     } __finally {
         if (rv)
             FIODetouringFiles::Get().SetWrite(hConsoleOutput, nNumberOfCharsToWrite);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1522,7 +1537,7 @@ DWORD WINAPI FIODetouringHooks::Hook_GetEnvironmentVariableA(PCSTR lpName, PCHAR
     }
     __finally {
         FIODetouringFiles::Get().UseEnvVar(lpName);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1534,7 +1549,7 @@ DWORD WINAPI FIODetouringHooks::Hook_GetEnvironmentVariableW(PCWSTR lpName, PWCH
     }
     __finally {
         FIODetouringFiles::Get().UseEnvVar(lpName);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1546,7 +1561,7 @@ PCWSTR CDECL FIODetouringHooks::Hook_wgetenv(PCWSTR var) {
     }
     __finally {
         FIODetouringFiles::Get().UseEnvVar(var);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1558,7 +1573,7 @@ PCSTR CDECL FIODetouringHooks::Hook_getenv(PCSTR var) {
     }
     __finally {
         FIODetouringFiles::Get().UseEnvVar(var);
-    };
+    }
     return rv;
 }
 //----------------------------------------------------------------------------
@@ -1567,7 +1582,7 @@ DWORD CDECL FIODetouringHooks::Hook_getenv_s(DWORD *pValue, PCHAR pBuffer, DWORD
     DWORD rv = 0;
     __try {
         DWORD value;
-        if (pValue == NULL)
+        if (pValue == nullptr)
             pValue = &value;
         rv = Get().Real_getenv_s(pValue, pBuffer, cBuffer, varname);
     }
@@ -1582,7 +1597,7 @@ DWORD CDECL FIODetouringHooks::Hook_wgetenv_s(DWORD *pValue, PWCHAR pBuffer, DWO
     DWORD rv = 0;
     __try {
         DWORD value;
-        if (pValue == NULL)
+        if (pValue == nullptr)
             pValue = &value;
         rv = Get().Real_wgetenv_s(pValue, pBuffer, cBuffer, varname);
     }
@@ -1598,9 +1613,9 @@ DWORD CDECL FIODetouringHooks::Hook_dupenv_s(PCHAR *ppBuffer, DWORD *pcBuffer, P
     __try {
         PCHAR pb;
         DWORD cb;
-        if (ppBuffer == NULL)
+        if (ppBuffer == nullptr)
             ppBuffer = &pb;
-        if (pcBuffer == NULL)
+        if (pcBuffer == nullptr)
             pcBuffer = &cb;
         rv = Get().Real_dupenv_s(ppBuffer, pcBuffer, varname);
     }
@@ -1616,9 +1631,9 @@ DWORD CDECL FIODetouringHooks::Hook_wdupenv_s(PWCHAR *ppBuffer, DWORD *pcBuffer,
     __try {
         PWCHAR pb;
         DWORD cb;
-        if (ppBuffer == NULL)
+        if (ppBuffer == nullptr)
             ppBuffer = &pb;
-        if (pcBuffer == NULL)
+        if (pcBuffer == nullptr)
             pcBuffer = &cb;
         rv = Get().Real_wdupenv_s(ppBuffer, pcBuffer, varname);
     }

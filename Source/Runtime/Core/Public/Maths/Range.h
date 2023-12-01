@@ -14,6 +14,7 @@ struct TRange;
 using FRange32i = TRange<i32>;
 using FRange32u = TRange<u32>;
 using FRange32f = TRange<float>;
+using FBytesRange = TRange<size_t>;
 //----------------------------------------------------------------------------
 template <typename T>
 struct TRange {
@@ -22,6 +23,7 @@ struct TRange {
 
     STATIC_CONST_INTEGRAL(value_type, MaxValue, TNumericLimits<value_type>::MaxValue());
     STATIC_CONST_INTEGRAL(value_type, MinValue, TNumericLimits<value_type>::Lowest());
+    STATIC_CONST_INTEGRAL(value_type, ZeroValue, TNumericLimits<value_type>::Zero());
 
     value_type First{ MaxValue };
     value_type Last{ MinValue };
@@ -35,6 +37,8 @@ struct TRange {
     TRange& operator =(TRange&&) = default;
 
     CONSTEXPR TRange(value_type first, value_type last) : First(first), Last(last) {}
+
+    CONSTEXPR static TRange Zero() { return { ZeroValue, ZeroValue }; }
 
     CONSTEXPR value_type Extent() const { return (Last - First); }
     CONSTEXPR bool Empty() const { return not Any(First < Last); }

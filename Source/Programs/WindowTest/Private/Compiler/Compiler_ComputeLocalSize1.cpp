@@ -43,21 +43,21 @@ void main ()
 ARGS_IF_RHIDEBUG("Compiler_ComputeLocalSize1_CS"));
 
     const SPipelineCompiler compiler = rhi.Compiler(EShaderLangFormat::GLSL_450);
-    LOG_CHECK(WindowTest, !!compiler);
+    PPE_LOG_CHECK(WindowTest, !!compiler);
 
-    LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
 
     FDescriptorSet* const ds = ppln.DescriptorSet("0"_descriptorset);
-    LOG_CHECK(WindowTest, !!ds);
+    PPE_LOG_CHECK(WindowTest, !!ds);
 
-    LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_OutImage"_uniform, EImageSampler::Float2D | EImageSampler(EPixelFormat::RGBA8_UNorm), EShaderAccess::WriteOnly, 0, EShaderStages::Compute));
-    LOG_CHECK(WindowTest, TestStorageBuffer(*ds, "un_SSBO"_uniform, 16_b, 0_b, EShaderAccess::ReadOnly, 1, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_OutImage"_uniform, EImageSampler::Float2D | EImageSampler(EPixelFormat::RGBA8_UNorm), EShaderAccess::WriteOnly, 0, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestStorageBuffer(*ds, "un_SSBO"_uniform, 16_b, 0_b, EShaderAccess::ReadOnly, 1, EShaderStages::Compute));
 
-    LOG_CHECK(WindowTest, ppln.DefaultLocalGroupSize == uint3{ 8,8,1 });
-    LOG_CHECK(WindowTest, ppln.LocalSizeSpecialization == uint3{ 0,1,UMax });
+    PPE_LOG_CHECK(WindowTest, ppln.DefaultLocalGroupSize == uint3{ 8,8,1 });
+    PPE_LOG_CHECK(WindowTest, ppln.LocalSizeSpecialization == uint3{ 0,1,UMax });
 
-    LOG_CHECK(WindowTest, ppln.Shader.Specializations.size() == 1);
-    LOG_CHECK(WindowTest, TestSpecializationConstant(ppln.Shader, "SCALE"_specialization, 2));
+    PPE_LOG_CHECK(WindowTest, ppln.Shader.Specializations.size() == 1);
+    PPE_LOG_CHECK(WindowTest, TestSpecializationConstant(ppln.Shader, "SCALE"_specialization, 2));
 
     return true;
 }

@@ -31,7 +31,7 @@ public:
     const _Facet& Facet() const { return _facet; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FWTextWriter& Description(FWTextWriter& oss) const override;
+    virtual FTextWriter& Description(FTextWriter& oss) const override;
 #endif
 
 private:
@@ -41,10 +41,10 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct PPE_RTTI_API FDescriptionFacet : FGenericUserFacet {
+struct FDescriptionFacet : FGenericUserFacet {
     FConstChar Text;
 
-    FDescriptionFacet(FConstChar text) NOEXCEPT;
+    PPE_RTTI_API FDescriptionFacet(FConstChar text) NOEXCEPT;
 
     template <typename _Meta>
     static FStringView GetIFP(const _Meta& meta) NOEXCEPT {
@@ -54,7 +54,7 @@ struct PPE_RTTI_API FDescriptionFacet : FGenericUserFacet {
     }
 };
 //----------------------------------------------------------------------------
-struct PPE_RTTI_API FDependencyInjectionFacet : FGenericUserFacet {
+struct FDependencyInjectionFacet : FGenericUserFacet {
     Meta::type_info_t ServiceKey;
 
     template <typename T>
@@ -67,10 +67,10 @@ struct PPE_RTTI_API FDependencyInjectionFacet : FGenericUserFacet {
     :   ServiceKey(std::move(serviceKey))
     {}
 
-    void Decorate(const FMetaProperty& meta, void* data) const NOEXCEPT;
+    PPE_RTTI_API void Decorate(const FMetaProperty& meta, void* data) const NOEXCEPT;
 };
 //----------------------------------------------------------------------------
-struct PPE_RTTI_API FEnumFacet : FGenericUserFacet {
+struct FEnumFacet : FGenericUserFacet {
     VECTORINSITU(UserFacet, FAny, 3) Values;
 
     template <typename T>
@@ -80,59 +80,59 @@ struct PPE_RTTI_API FEnumFacet : FGenericUserFacet {
     }
 
     using FValidateException = TPropertyFacetException<FEnumFacet>;
-    void Validate(const FMetaProperty& meta, const void* data) const;
+    PPE_RTTI_API void Validate(const FMetaProperty& meta, const void* data) const;
 };
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-PPE_RTTI_API FWTextWriter& TPropertyFacetException<FEnumFacet>::Description(FWTextWriter& oss) const;
+PPE_RTTI_API FTextWriter& TPropertyFacetException<FEnumFacet>::Description(FTextWriter& oss) const;
 #endif
-EXTERN_TEMPLATE_CLASS_DEF(PPE_RTTI_API) TPropertyFacetException<FEnumFacet>;
+template class TPropertyFacetException<FEnumFacet>;
 //----------------------------------------------------------------------------
-struct PPE_RTTI_API FFormatFacet : FGenericUserFacet {
+struct FFormatFacet : FGenericUserFacet {
     EBuiltinRegexp Format;
 
-    FFormatFacet(EBuiltinRegexp format) NOEXCEPT;
+    PPE_RTTI_API FFormatFacet(EBuiltinRegexp format) NOEXCEPT;
 
     using FValidateException = TPropertyFacetException<FFormatFacet>;
-    void Validate(const FMetaProperty& meta, const void* data) const;
+    PPE_RTTI_API void Validate(const FMetaProperty& meta, const void* data) const;
 };
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-PPE_RTTI_API FWTextWriter& TPropertyFacetException<FFormatFacet>::Description(FWTextWriter& oss) const;
+PPE_RTTI_API FTextWriter& TPropertyFacetException<FFormatFacet>::Description(FTextWriter& oss) const;
 #endif
-EXTERN_TEMPLATE_CLASS_DEF(PPE_RTTI_API) TPropertyFacetException<FFormatFacet>;
+template class TPropertyFacetException<FFormatFacet>;
 //----------------------------------------------------------------------------
-struct PPE_RTTI_API FLengthFacet : FGenericUserFacet {
+struct FLengthFacet : FGenericUserFacet {
     size_t MinLength{ 0 };
     size_t MaxLength{ TNumericLimits<size_t>::MaxValue() };
 
     FLengthFacet(size_t length) NOEXCEPT : FLengthFacet(length, length) {}
-    FLengthFacet(size_t minLength, size_t maxLength) NOEXCEPT;
+    PPE_RTTI_API FLengthFacet(size_t minLength, size_t maxLength) NOEXCEPT;
 
     using FValidateException = TPropertyFacetException<FLengthFacet>;
-    void Validate(const FMetaProperty& meta, const void* data) const;
+    PPE_RTTI_API void Validate(const FMetaProperty& meta, const void* data) const;
 };
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-PPE_RTTI_API FWTextWriter& TPropertyFacetException<FLengthFacet>::Description(FWTextWriter& oss) const;
+PPE_RTTI_API FTextWriter& TPropertyFacetException<FLengthFacet>::Description(FTextWriter& oss) const;
 #endif
-EXTERN_TEMPLATE_CLASS_DEF(PPE_RTTI_API) TPropertyFacetException<FLengthFacet>;
+template class TPropertyFacetException<FLengthFacet>;
 //----------------------------------------------------------------------------
-struct PPE_RTTI_API FPatternFacet : FGenericUserFacet {
+struct FPatternFacet : FGenericUserFacet {
     FConstChar Pattern;
 
-    FPatternFacet(FConstChar pattern) NOEXCEPT;
+    PPE_RTTI_API FPatternFacet(FConstChar pattern) NOEXCEPT;
 
     using FValidateException = TPropertyFacetException<FPatternFacet>;
-    void Validate(const FMetaProperty& meta, const void* data) const;
+    PPE_RTTI_API void Validate(const FMetaProperty& meta, const void* data) const;
 };
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-PPE_RTTI_API FWTextWriter& TPropertyFacetException<FPatternFacet>::Description(FWTextWriter& oss) const;
+PPE_RTTI_API FTextWriter& TPropertyFacetException<FPatternFacet>::Description(FTextWriter& oss) const;
 #endif
-EXTERN_TEMPLATE_CLASS_DEF(PPE_RTTI_API) TPropertyFacetException<FPatternFacet>;
+template class TPropertyFacetException<FPatternFacet>;
 //----------------------------------------------------------------------------
-struct PPE_RTTI_API FRangeFacet : FGenericUserFacet {
+struct FRangeFacet : FGenericUserFacet {
     FAny Minimum;
     FAny Maximum;
 
@@ -143,28 +143,28 @@ struct PPE_RTTI_API FRangeFacet : FGenericUserFacet {
         Assert_NoAssume(Minimum.Traits()->AsScalar());
     }
 
-    void Decorate(const FMetaProperty& meta, void* data) const NOEXCEPT;
+    PPE_RTTI_API void Decorate(const FMetaProperty& meta, void* data) const NOEXCEPT;
 
     using FValidateException = TPropertyFacetException<FRangeFacet>;
-    void Validate(const FMetaProperty& meta, const void* data) const;
+    PPE_RTTI_API void Validate(const FMetaProperty& meta, const void* data) const;
 };
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-PPE_RTTI_API FWTextWriter& TPropertyFacetException<FRangeFacet>::Description(FWTextWriter& oss) const;
+PPE_RTTI_API FTextWriter& TPropertyFacetException<FRangeFacet>::Description(FTextWriter& oss) const;
 #endif
-EXTERN_TEMPLATE_CLASS_DEF(PPE_RTTI_API) TPropertyFacetException<FRangeFacet>;
+template class TPropertyFacetException<FRangeFacet>;
 //----------------------------------------------------------------------------
-struct PPE_RTTI_API FUniqueFacet : FGenericUserFacet {
+struct FUniqueFacet : FGenericUserFacet {
     FUniqueFacet() = default;
 
     using FValidateException = TPropertyFacetException<FUniqueFacet>;
-    void Validate(const FMetaProperty& meta, const void* data) const;
+    PPE_RTTI_API void Validate(const FMetaProperty& meta, const void* data) const;
 };
 #if USE_PPE_EXCEPTION_DESCRIPTION
 template <>
-PPE_RTTI_API FWTextWriter& TPropertyFacetException<FUniqueFacet>::Description(FWTextWriter& oss) const;
+PPE_RTTI_API FTextWriter& TPropertyFacetException<FUniqueFacet>::Description(FTextWriter& oss) const;
 #endif
-EXTERN_TEMPLATE_CLASS_DEF(PPE_RTTI_API) TPropertyFacetException<FUniqueFacet>;
+template class TPropertyFacetException<FUniqueFacet>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

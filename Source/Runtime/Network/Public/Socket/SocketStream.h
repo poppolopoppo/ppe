@@ -12,7 +12,7 @@ namespace Network {
 class FSocketStreamWriter : public IStreamWriter {
 public:
     explicit FSocketStreamWriter(FSocketBuffered& socket);
-    ~FSocketStreamWriter();
+    virtual ~FSocketStreamWriter() override;
 
     FSocketStreamWriter(const FSocketStreamWriter& ) = delete;
     FSocketStreamWriter& operator =(const FSocketStreamWriter& ) = delete;

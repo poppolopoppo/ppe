@@ -43,13 +43,13 @@ ARGS_IF_RHIDEBUG("Compute_ArrayOfTextures1_CS"));
             .SetFormat(EPixelFormat::RGBA8_UNorm)
             .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
             Default ARGS_IF_RHIDEBUG(INLINE_FORMAT(16, "Texture-{0}", i)) );
-        LOG_CHECK(WindowTest, textures[i].Valid());
+        PPE_LOG_CHECK(WindowTest, textures[i].Valid());
     }
 
 
     ON_SCOPE_EXIT([&]() {
         forrange(i, 0, lengthof(textures)) {
-            LOG_CHECKVOID(WindowTest, fg.ReleaseResource(textures[i]));
+            PPE_LOG_CHECKVOID(WindowTest, fg.ReleaseResource(textures[i]));
         }
     });
 
@@ -58,16 +58,16 @@ ARGS_IF_RHIDEBUG("Compute_ArrayOfTextures1_CS"));
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
         Default ARGS_IF_RHIDEBUG("Output")) };
-    LOG_CHECK(WindowTest, imageDst.Valid());
+    PPE_LOG_CHECK(WindowTest, imageDst.Valid());
 
     TAutoResource<FSamplerID> sampler{ fg, fg.CreateSampler(FSamplerDesc{} ARGS_IF_RHIDEBUG("Sampler_ArrayOfTextures1")) };
-    LOG_CHECK(WindowTest, sampler.Valid());
+    PPE_LOG_CHECK(WindowTest, sampler.Valid());
 
     TAutoResource<FCPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Compute_ArrayOfTextures1")) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
 
     bool dataIsCorrect = false;
     const auto onLoaded = [&dataIsCorrect](const FImageView& imageData) {
@@ -77,8 +77,8 @@ ARGS_IF_RHIDEBUG("Compute_ArrayOfTextures1_CS"));
             imageData.Load(&texel, uint3{ x, y, 0 });
 
             const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
-            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(x, y), texel, color, isEqual);
-            LOG_CHECK(WindowTest, isEqual);
+            PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", uint2(x, y), texel, color, isEqual);
+            PPE_LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);
             return isEqual;
         };
@@ -107,7 +107,7 @@ ARGS_IF_RHIDEBUG("Compute_ArrayOfTextures1_CS"));
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Compute_ArrayOfTextures1")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->BindTextures(FUniformID{ "un_Textures" }, textures, sampler);
     resources->BindImage(FUniformID{ "un_OutImage" }, imageDst);
@@ -135,10 +135,10 @@ ARGS_IF_RHIDEBUG("Compute_ArrayOfTextures1_CS"));
         .DependsOn(tComp));
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, dataIsCorrect);
 
     return true;
 }

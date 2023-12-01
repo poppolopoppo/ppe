@@ -18,7 +18,7 @@ enum ECompressMethod {
     HighCompression,
 };
 //----------------------------------------------------------------------------
-PPE_CORE_API size_t  CompressedSizeUpperBound(size_t sizeInBytes);
+PPE_CORE_API size_t  CompressedSizeUpperBound(size_t sizeInBytes) NOEXCEPT;
 //----------------------------------------------------------------------------
 PPE_CORE_API size_t  CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& src, ECompressMethod method = Default);
 //----------------------------------------------------------------------------

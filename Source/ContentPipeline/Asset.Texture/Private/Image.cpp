@@ -505,7 +505,7 @@ bool Load(FImage* dst, EColorDepth depth, EColorSpace space, const TMemoryView<c
     dst->_width = checked_cast<size_t>(width);
     dst->_height = checked_cast<size_t>(height);
 
-    LOG(Pixmap, Info, L"loaded a {0}_{1}_{2}:{3}x{4} image",
+    PPE_LOG(Pixmap, Info, "loaded a {0}_{1}_{2}:{3}x{4} image",
         dst->Mask(), dst->Depth(), dst->Space(), dst->Width(), dst->Height() );
 
     const size_t decodedSizeInBytes = (dst->_width*dst->_height*dst->PixelSizeInBytes());
@@ -543,7 +543,7 @@ bool Save(const FImage* src, const FFilename& filename, IStreamWriter* writer) {
     Assert(writer);
     Assert(filename.HasExtname());
 
-    LOG(Pixmap, Info, L"saving a {0}_{1}_{2}:{3}x{4} image to '{5}'",
+    PPE_LOG(Pixmap, Info, "saving a {0}_{1}_{2}:{3}x{4} image to '{5}'",
         src->Mask(), src->Depth(), src->Space(), src->Width(), src->Height(),
         filename );
 

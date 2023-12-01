@@ -134,7 +134,7 @@ FLinuxPlatformThread::FAffinityMask FLinuxPlatformThread::SecondaryThreadAffinit
 //----------------------------------------------------------------------------
 auto FLinuxPlatformThread::AffinityMask() -> FAffinityMask {
     ::cpu_set_t cpu_set;
-    LOG_CHECK(HAL, 0 == ::pthread_getaffinity_np(::pthread_self(), sizeof(cpu_set), &cpu_set));
+    PPE_LOG_CHECK(HAL, 0 == ::pthread_getaffinity_np(::pthread_self(), sizeof(cpu_set), &cpu_set));
 
     FAffinityMask affinity{ 0 };
     forrange(i, 0, PPE_MAX_NUMCPUCORE)
@@ -154,14 +154,14 @@ void FLinuxPlatformThread::SetAffinityMask(FAffinityMask mask) {
         if (mask & (1 << i))
             CPU_SET(i, &cpu_set);
 
-    LOG_CHECKVOID(HAL, 0 == ::pthread_setaffinity_np(::pthread_self(), sizeof(cpu_set), &cpu_set));
+    PPE_LOG_CHECKVOID(HAL, 0 == ::pthread_setaffinity_np(::pthread_self(), sizeof(cpu_set), &cpu_set));
 }
 //----------------------------------------------------------------------------
 EThreadPriority FLinuxPlatformThread::Priority() {
     int policy;
     struct ::sched_param sched_param;
 
-    LOG_CHECK(HAL, 0 == ::pthread_getschedparam(::pthread_self(), &policy, &sched_param));
+    PPE_LOG_CHECK(HAL, 0 == ::pthread_getschedparam(::pthread_self(), &policy, &sched_param));
 
     return TranslateThreadPriority_(ThreadPriorityBaseLine_(), sched_param.sched_priority);
 }
@@ -174,7 +174,7 @@ void FLinuxPlatformThread::SetPriority(EThreadPriority priority) {
 
     static const int process_scheduler = ::sched_getscheduler(::getpid());
 
-    LOG_CHECKVOID(HAL, 0 == ::pthread_setschedparam(
+    PPE_LOG_CHECKVOID(HAL, 0 == ::pthread_setschedparam(
         ::pthread_self(),
         process_scheduler,
         &sched_param ));
@@ -217,7 +217,7 @@ auto FLinuxPlatformThread::ConvertCurrentThreadToFiber() -> FFiber {
 
     FFiber main = &FLinuxFiber::Main;
     main->FiberData = nullptr;
-    LOG_CHECK(HAL, 0 == ::getcontext(&main->Context));
+    PPE_LOG_CHECK(HAL, 0 == ::getcontext(&main->Context));
 
     FLinuxFiber::Running = main;
 
@@ -233,20 +233,17 @@ void FLinuxPlatformThread::RevertCurrentFiberToThread(FFiber threadFiber) {
 }
 //----------------------------------------------------------------------------
 auto FLinuxPlatformThread::CreateFiber(
-    size_t stackCommitSize,
-    size_t stackReservedSize,
+    size_t stackSize,
     FEntryPoint entryPoint,
     void* fiberData ) -> FFiber {
     Assert(entryPoint);
-    Assert(stackReservedSize > stackCommitSize);
-    Unused(stackCommitSize);
 
-    FFiber fiber = (FFiber)FLinuxFiberAllocator_::Allocate(sizeof(FLinuxFiber) + stackReservedSize).Data;
+    FFiber fiber = (FFiber)FLinuxFiberAllocator_::Allocate(sizeof(FLinuxFiber) + stackSize).Data;
 
-    LOG_CHECK(HAL, 0 == ::getcontext(&fiber->Context));
+    PPE_LOG_CHECK(HAL, 0 == ::getcontext(&fiber->Context));
     fiber->Context.uc_link = nullptr;
     fiber->Context.uc_stack.ss_sp = (fiber + 1); // stack is after the context
-    fiber->Context.uc_stack.ss_size = stackReservedSize;
+    fiber->Context.uc_stack.ss_size = stackSize;
     fiber->FiberData = fiberData;
 
     /* Some notes:
@@ -260,7 +257,7 @@ auto FLinuxPlatformThread::CreateFiber(
     - Most implementations interpret context.uc_stack.ss_sp on entry
     as the lowest stack address even if the CPU stack actually grows
     downwards. Although this means that ss_sp does NOT represent the
-    CPU stack pointer this behaviour makes perfectly sense as it is
+    CPU stack pointer this behavior makes perfectly sense as it is
     the only way to stay independent from the CPU architecture. But
     Solaris prior to release 10 interprets ss_sp as highest stack
     address thus requiring special handling. */
@@ -274,7 +271,7 @@ void FLinuxPlatformThread::SwitchToFiber(FFiber fiber) {
     FFiber yielding = FLinuxFiber::Running;
     Assert(yielding);
     FLinuxFiber::Running = fiber;
-    LOG_CHECKVOID(HAL, 0 == ::swapcontext(&yielding->Context, &fiber->Context));
+    PPE_LOG_CHECKVOID(HAL, 0 == ::swapcontext(&yielding->Context, &fiber->Context));
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformThread::DestroyFiber(FFiber fiber) {
@@ -283,6 +280,11 @@ void FLinuxPlatformThread::DestroyFiber(FFiber fiber) {
 
     const FAllocatorBlock blk{ fiber, fiber->AllocationSize() };
     FLinuxFiberAllocator_::Deallocate(blk);
+}
+//----------------------------------------------------------------------------
+void FLinuxPlatformThread::FiberStackRegion(FFiber fiber, const void** pStackBottom, size_t* pStackSize) NOEXCEPT {
+    *pStackBottom = fiber->Context.uc_stack.ss_sp;
+    *pStackSize = fiber->Context.uc_stack.ss_size;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

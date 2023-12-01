@@ -55,7 +55,7 @@ void main() {
 ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
 
     TAutoResource<FGPipelineID> ppln{ fg.ScopedResource(fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Debugger_ReadAttachment1"))) };
-    LOG_CHECK(WindowTest, ppln.Valid());
+    PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
     const uint2 viewSize{ 800, 600 };
 
@@ -74,11 +74,11 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
 
         if (fg.IsSupported(test)) {
             depthFormat = fmt;
-            LOG(WindowTest, Verbose, L"selected depth format: {0}", fmt);
+            PPE_LOG(WindowTest, Verbose, "selected depth format: {0}", fmt);
             break;
         }
     }
-    LOG_CHECK(WindowTest, depthFormat != Default);
+    PPE_LOG_CHECK(WindowTest, depthFormat != Default);
 
     TAutoResource<FImageID> colorImage{ fg.ScopedResource(
         fg.CreateImage(FImageDesc{}
@@ -86,7 +86,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
             .SetFormat(EPixelFormat::RGBA8_UNorm)
             .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
             Default ARGS_IF_RHIDEBUG("ColorTarget"))) };
-    LOG_CHECK(WindowTest, !!colorImage);
+    PPE_LOG_CHECK(WindowTest, !!colorImage);
 
     TAutoResource<FImageID> depthImage{ fg.ScopedResource(
         fg.CreateImage(FImageDesc{}
@@ -94,14 +94,14 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
             .SetFormat(depthFormat)
             .SetUsage(EImageUsage::DepthStencilAttachment | EImageUsage::TransferDst | EImageUsage::Sampled),
             Default ARGS_IF_RHIDEBUG("DepthTarget"))) };
-    LOG_CHECK(WindowTest, !!depthImage);
+    PPE_LOG_CHECK(WindowTest, !!depthImage);
 
     TAutoResource<FSamplerID> sampler{ fg.ScopedResource(
         fg.CreateSampler(FSamplerDesc{} ARGS_IF_RHIDEBUG("Sampler"))) };
-    LOG_CHECK(WindowTest, !!sampler);
+    PPE_LOG_CHECK(WindowTest, !!sampler);
 
     PPipelineResources resources = NEW_REF(RHIPipeline, FPipelineResources);
-    LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
+    PPE_LOG_CHECK(WindowTest, fg.InitPipelineResources(resources.get(), ppln, FDescriptorSetID{ "0" }));
 
     bool dataIsCorrect = false;
     const auto onLoaded = [&dataIsCorrect](const FImageView& imageData) {
@@ -113,8 +113,8 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
             imageData.Load(&texel, uint3(ix, iy, 0));
 
             const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
-            LOG(WindowTest, Debug, L"Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
-            LOG_CHECK(WindowTest, isEqual);
+            PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
+            PPE_LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);
             return isEqual;
         };
@@ -134,7 +134,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Debugger_ReadAttachment1")
         .SetDebugFlags(EDebugFlags::Default)) };
-    LOG_CHECK(WindowTest, !!cmd);
+    PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }
         .AddTarget(ERenderTargetID::Color0, colorImage, FLinearColor::Transparent(), EAttachmentStoreOp::Store)
@@ -142,7 +142,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         .SetDepthTestEnabled(true)
         .SetDepthWriteEnabled(false)
         .AddViewport(viewSize));
-    LOG_CHECK(WindowTest, !!renderPass);
+    PPE_LOG_CHECK(WindowTest, !!renderPass);
 
     FImageViewDesc viewDesc;
     viewDesc.SetAspect(EImageAspect::Depth);
@@ -159,10 +159,10 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     const PFrameTask tRead = cmd->Task(FReadImage{}.SetImage(colorImage, int2::Zero, viewSize).SetCallback(onLoaded).DependsOn(tDraw));
     Unused(tRead);
 
-    LOG_CHECK(WindowTest, fg.Execute(cmd));
-    LOG_CHECK(WindowTest, fg.WaitIdle());
+    PPE_LOG_CHECK(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECK(WindowTest, fg.WaitIdle());
 
-    LOG_CHECK(WindowTest, !!dataIsCorrect);
+    PPE_LOG_CHECK(WindowTest, !!dataIsCorrect);
 
     return true;
 }

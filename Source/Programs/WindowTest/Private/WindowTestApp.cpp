@@ -12,10 +12,14 @@
 #include "IO/FormatHelpers.h"
 #include "Maths/Threefy.h"
 
+#define RUN_PPE_WINDOWTESTS 1 // %_NOCOMMIT%
+
 namespace PPE {
 LOG_CATEGORY(, WindowTest)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+#if RUN_PPE_WINDOWTESTS
 //----------------------------------------------------------------------------
 struct FUnitTestFunc_ {
     FWStringView Name;
@@ -108,9 +112,9 @@ static void LaunchWindowTests_(Application::FApplicationBase& baseApp, FTimespan
 #if USE_PPE_DEBUG && !USE_PPE_FASTDEBUG
             ONLY_IF_RHIDEBUG(fg.LogFrame());
 #endif
-            LOG(WindowTest, Emphasis, L" -- OK : {0:10f3} -- {1}", Fmt::DurationInMs(elapsed), name);
+            PPE_LOG(WindowTest, Emphasis, " -- OK : {0:10f3} -- {1}", Fmt::DurationInMs(elapsed), name);
         } else {
-            LOG(WindowTest, Error, L" !! KO : {0:10f3} -- {1}", Fmt::DurationInMs(elapsed), name);
+            PPE_LOG(WindowTest, Error, " !! KO : {0:10f3} -- {1}", Fmt::DurationInMs(elapsed), name);
         }
 
         return success;
@@ -144,7 +148,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
         forrange(loop, 0, numLoops) {
             testIndex = 0;
 
-            LOG(WindowTest, Info, L"-==================- [LOOP:{0:#4}] -==================-", loop);
+            PPE_LOG(WindowTest, Info, "-==================- [LOOP:{0:#4}] -==================-", loop);
 
             for (const auto& test : unitTests) {
                 ++testIndex;
@@ -164,7 +168,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
                 Unused(app.PumpMessages());
             }
 
-            FLUSH_LOG();
+            PPE_LOG_FLUSH();
             rng.Shuffle(MakeView(unitTests));
 
             // app.RHI().ReleaseMemory();
@@ -190,6 +194,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 }
 //----------------------------------------------------------------------------
 #undef EACH_WINDOWTEST
+#endif //!#if RUN_PPE_WINDOWTESTS
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -209,9 +214,6 @@ FWindowTestApp::~FWindowTestApp() = default;
 void FWindowTestApp::Start() {
     parent_type::Start();
 
-    auto& appmodule = FApplicationModule::Get(Domain());
-    appmodule.OnApplicationTick().FireAndForget(&LaunchWindowTests_);
-
     ApplicationLoop();
 }
 //----------------------------------------------------------------------------
@@ -224,6 +226,11 @@ void FWindowTestApp::Shutdown() {
 void FWindowTestApp::Render(FTimespan dt) {
     parent_type::Render(dt);
 
+#if RUN_PPE_WINDOWTESTS
+    auto& appmodule = FApplicationModule::Get(Domain());
+    appmodule.OnApplicationTick().FireAndForget(&LaunchWindowTests_);
+#endif
+
     // call present() once before exit for captures
     using namespace RHI;
     IFrameGraph& fg = *RHI().FrameGraph();
@@ -233,7 +240,7 @@ void FWindowTestApp::Render(FTimespan dt) {
         .SetFormat(EPixelFormat::RGBA8_UNorm)
         .SetUsage(EImageUsage::ColorAttachment | EImageUsage::Transfer),
         Default ARGS_IF_RHIDEBUG("ColorTarget")) };
-    LOG_CHECKVOID(WindowTest, !!colorTarget);
+    PPE_LOG_CHECKVOID(WindowTest, !!colorTarget);
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("WindowTest")
@@ -245,13 +252,13 @@ void FWindowTestApp::Render(FTimespan dt) {
         .SetImage(colorTarget)
         .AddRange(0_mipmap, 1, 0_layer, 1)
         .Clear(clearColor));
-    LOG_CHECKVOID(WindowTest, !!tClear);
+    PPE_LOG_CHECKVOID(WindowTest, !!tClear);
 
     const PFrameTask tPresent = cmd->Task(FPresent{ RHI().Swapchain().Get(), colorTarget }
         .DependsOn(tClear));
-    LOG_CHECKVOID(WindowTest, !!tPresent);
+    PPE_LOG_CHECKVOID(WindowTest, !!tPresent);
 
-    LOG_CHECKVOID(WindowTest, fg.Execute(cmd));
+    PPE_LOG_CHECKVOID(WindowTest, fg.Execute(cmd));
 
     RequestExit(); // only render one loop
 }

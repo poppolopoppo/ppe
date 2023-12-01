@@ -50,15 +50,22 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+struct ITrackingDataObserver {
+    virtual void OnRegisterTrackingData(FMemoryTracking* pTrackingData) = 0;
+    virtual void OnUnregisterTrackingData(FMemoryTracking* pTrackingData) = 0;
+};
+PPE_CORE_API void RegisterTrackingDataObserver(ITrackingDataObserver* pObserver);
+PPE_CORE_API void UnregisterTrackingDataObserver(ITrackingDataObserver* pObserver);
+//----------------------------------------------------------------------------
 PPE_CORE_API bool AllTrackingData(void* user, bool (*each)(void*, TMemoryView<const FMemoryTracking* const>)) NOEXCEPT;
 //----------------------------------------------------------------------------
 PPE_CORE_API void RegisterTrackingData(FMemoryTracking *pTrackingData);
 PPE_CORE_API void UnregisterTrackingData(FMemoryTracking *pTrackingData);
 //----------------------------------------------------------------------------
-PPE_CORE_API void ReportAllocationFragmentation(FWTextWriter& oss);
-PPE_CORE_API void ReportAllocationHistogram(FWTextWriter& oss);
+PPE_CORE_API void ReportAllocationFragmentation(FTextWriter& oss);
+PPE_CORE_API void ReportAllocationHistogram(FTextWriter& oss);
 //----------------------------------------------------------------------------
-PPE_CORE_API void ReportAllTrackingData(FWTextWriter* optional = nullptr);
+PPE_CORE_API void ReportAllTrackingData(FTextWriter* optional = nullptr);
 //----------------------------------------------------------------------------
 PPE_CORE_API void ReportCsvTrackingData(FTextWriter* optional = nullptr);
 //----------------------------------------------------------------------------

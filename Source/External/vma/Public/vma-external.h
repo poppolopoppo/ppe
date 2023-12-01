@@ -42,9 +42,9 @@
 #if USE_PPE_LOGGER
 LOG_CATEGORY(, VMA)
 # if PPE_VA_OPT_SUPPORTED
-#   define VMA_DEBUG_LOG(format, ...) LOG_PRINTF(VMA, Debug, WIDESTRING(format) __VA_OPT__(,) __VA_ARGS__)
+#   define VMA_DEBUG_LOG(format, ...) PPE_LOG_PRINTF(VMA, Debug, format __VA_OPT__(,) __VA_ARGS__)
 # else
-#   define VMA_DEBUG_LOG(format, ...) LOG_PRINTF(VMA, Debug, WIDESTRING(format) ,## __VA_ARGS__)
+#   define VMA_DEBUG_LOG(format, ...) PPE_LOG_PRINTF(VMA, Debug, format ,## __VA_ARGS__)
 # endif
 #else
 # define VMA_DEBUG_LOG(format, ...)

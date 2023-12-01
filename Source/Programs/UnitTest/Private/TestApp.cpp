@@ -14,8 +14,10 @@ extern void Test_Format();
 extern void Test_Containers();
 extern void Test_RTTI();
 extern void Test_Maths();
+extern void Test_Memory();
 extern void Test_Network();
 //extern void Test_Pixmap();
+extern void Test_Opaq();
 extern void Test_Process();
 extern void Test_Thread();
 extern void Test_XML();
@@ -37,11 +39,13 @@ void FTestApp::Start() {
 
     typedef void(*test_t)();
     const test_t tests[] = {
-        &Test_Maths,
         &Test_Allocators,
         &Test_Containers,
         &Test_Format,
         &Test_Thread,
+        &Test_Maths,
+        &Test_Memory,
+        &Test_Opaq,
         &Test_VFS,
         &Test_Process,
         &Test_RTTI,

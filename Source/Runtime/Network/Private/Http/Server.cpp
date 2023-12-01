@@ -46,7 +46,7 @@ bool FHttpServer::IsRunning() const {
 void FHttpServer::Start(size_t workerCount) {
     Assert(not IsRunning());
 
-    LOG(Network, Info, L"HTTP: starting <{0}> server on {1}", _name, Localhost());
+    PPE_LOG(Network, Info, "HTTP: starting <{0}> server on {1}", _name, Localhost());
 
     _service = NEW_REF(Socket, FHandShaker, _name, workerCount,
         FListener{ Localhost() },
@@ -60,7 +60,7 @@ void FHttpServer::Start(size_t workerCount) {
 void FHttpServer::OnConnect(FServicingPort& port) const {
     Unused(port);
 
-    LOG(Network, Verbose, L"HTTP: <{0}> server has new connection {1} -> {2} ({3})",
+    PPE_LOG(Network, Verbose, "HTTP: <{0}> server has new connection {1} -> {2} ({3})",
         _name, port.Socket().Local(), port.Socket().Remote(), port.UID() );
 }
 //----------------------------------------------------------------------------
@@ -68,7 +68,7 @@ bool FHttpServer::OnRequest(FServicingPort& port, const FHttpRequest& request) c
     Unused(port);
     Unused(request);
 
-    LOG(Network, Error, L"HTTP: <{0}> server unhandled request: {1} {2} ({3})",
+    PPE_LOG(Network, Error, "HTTP: <{0}> server unhandled request: {1} {2} ({3})",
         _name, request.Method(), request.Uri(), port.UID() );
 
     PPE_THROW_IT(FHttpException(EHttpStatus::NotFound, "unhandled request"));
@@ -77,7 +77,7 @@ bool FHttpServer::OnRequest(FServicingPort& port, const FHttpRequest& request) c
 void FHttpServer::OnDisconnect(FServicingPort& port) const {
     Unused(port);
 
-    LOG(Network, Verbose, L"HTTP: <{0}> server closed connection {1} ({2})",
+    PPE_LOG(Network, Verbose, "HTTP: <{0}> server closed connection {1} ({2})",
         _name, port.Socket().Remote(), port.UID());
 }
 //----------------------------------------------------------------------------
@@ -106,7 +106,7 @@ bool FHttpServer::Servicing_ReturnKeepAlive_(FServicingPort& port) const {
 
         const bool keepAlive = (EqualsI("keep-alive", request.HTTP_Connection()));
 
-        LOG(Network, Info, L"HTTP: <{0}> server request method={1}, uri={2} from {3}:{4} (keep-alive={5})",
+        PPE_LOG(Network, Info, "HTTP: <{0}> server request method={1}, uri={2} from {3}:{4} (keep-alive={5})",
             _name,
             request.Method(), request.Uri(),
             socket.Remote().Host(), socket.Remote().Port(),
@@ -119,7 +119,7 @@ bool FHttpServer::Servicing_ReturnKeepAlive_(FServicingPort& port) const {
     }
     PPE_CATCH(FHttpException e)
     PPE_CATCH_BLOCK({
-        LOG(Network, Error, L"HTTP: <{0}> server error status={1}, reason={2} on {3}:{4}",
+        PPE_LOG(Network, Error, "HTTP: <{0}> server error status={1}, reason={2} on {3}:{4}",
             _name,
             e.Status(), e.What(),
             socket.Local().Host(), socket.Local().Port());
@@ -130,7 +130,7 @@ bool FHttpServer::Servicing_ReturnKeepAlive_(FServicingPort& port) const {
         response.SetReason(FString(MakeCStringView(e.What())));
 
         if (not FHttpResponse::Write(&socket, response)) {
-            LOG(Network, Error, L"HTTP: <{0}> server failed to respond to {1}:{2}",
+            PPE_LOG(Network, Error, "HTTP: <{0}> server failed to respond to {1}:{2}",
                 _name, socket.Local().Host(), socket.Local().Port());
             // still try to disconnect gracefully
         }

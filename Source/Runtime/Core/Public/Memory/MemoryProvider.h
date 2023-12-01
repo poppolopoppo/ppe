@@ -93,11 +93,11 @@ public:
 
     size_t size() const { return _size; }
 
-    TMemoryView<const u8> Written() const { return _rawData.CutBefore(_size); }
-    TMemoryView<const u8> WrittenSince(std::streamoff off) const {
+    FRawMemoryConst Written() const { return MakeRawConstView(_rawData.CutBefore(_size)); }
+    FRawMemoryConst WrittenSince(std::streamoff off) const {
         const size_t o = checked_cast<size_t>(off);
         Assert(o <= _size);
-        return _rawData.SubRange(o, _size - o);
+        return MakeRawConstView(_rawData.SubRange(o, _size - o));
     }
 
     bool WriteAlignmentPadding(size_t boundary, u8 padvalue = 0);
