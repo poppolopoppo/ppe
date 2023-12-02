@@ -11,6 +11,7 @@
 #include "Container/Stack.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformMemory.h"
+#include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 #include "Maths/MathHelpers.h"
@@ -220,7 +221,7 @@ static void MemoryUsage_ShowMemoryDomainsTable_(FMemoryUsageWidget& widget) {
 //----------------------------------------------------------------------------
 static void MemoryUsage_ShowAllocationSizeHistogram_(FMemoryUsageWidget& widget) {
     Unused(widget);
-
+#if !USE_PPE_FINAL_RELEASE
     TMemoryView<const u32> sizeClasses;
     TMemoryView<const FMemoryTracking> bins;
     if (not FMallocDebug::FetchAllocationHistogram(&sizeClasses, &bins)) {
@@ -287,6 +288,7 @@ static void MemoryUsage_ShowAllocationSizeHistogram_(FMemoryUsageWidget& widget)
 
         ImGui::ProgressBar(LinearStep(user.AccumulatedAllocs, 0, userAccumulatedAllocs));
     }
+#endif
 }
 //----------------------------------------------------------------------------
 static void MemoryUsage_ShowBitmapPages_(FMemoryUsageWidget& widget) {

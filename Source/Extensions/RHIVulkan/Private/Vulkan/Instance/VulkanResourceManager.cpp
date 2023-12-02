@@ -739,9 +739,8 @@ const FVulkanPipelineResources* FVulkanResourceManager::CreateDescriptorSet(
 
     if (Likely(resourcesId)) { // use cached resources ?
         TResourceProxy<FVulkanPipelineResources>* const pPplnResources = ResourcePool_(resourcesId)[resourcesId.Index];
-        Assert(pPplnResources);
 
-        if (pPplnResources->InstanceID() == resourcesId.InstanceID) {
+        if (pPplnResources && pPplnResources->InstanceID() == resourcesId.InstanceID) {
             if (resources.insert({ resourcesId.Pack(), 1 }).second)
                 pPplnResources->AddRef();
 

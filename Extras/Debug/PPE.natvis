@@ -184,8 +184,8 @@
               <If Condition="index == limit">
                 <Break />
               </If>
-              <If Condition="((FUnpackedId_*)&amp;(((FDataItem*)(slice-&gt;_base._packed._ptr &lt;&lt; 2))[index].Id))-&gt;Key != 0">
-                <Item>((FDataItem*)(slice-&gt;_base._packed._ptr &lt;&lt; 2))[index]</Item>
+              <If Condition="((FUnpackedId_*)&amp;(((FDataItem*)(slice-&gt;_base._packed &lt;&lt; 2))[index].Id))-&gt;Key != 0">
+                <Item>((FDataItem*)(slice-&gt;_base._packed &lt;&lt; 2))[index]</Item>
               </If>
               <Exec>++index</Exec>
             </Loop>

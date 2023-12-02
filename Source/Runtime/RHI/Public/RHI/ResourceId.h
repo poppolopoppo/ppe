@@ -69,7 +69,10 @@ struct TNamedId {
     size_t Index{ 0 };
     string_t Name;
 
-    CONSTEXPR TNamedId() NOEXCEPT : TNamedId("") {}
+    TNamedId() = default;
+
+    CONSTEXPR TNamedId(Meta::FDefaultValue) NOEXCEPT : TNamedId("", 0) {}
+    CONSTEXPR TNamedId(Meta::FZeroValue) NOEXCEPT : TNamedId() {}
 
     CONSTEXPR explicit TNamedId(Meta::FEmptyKey) NOEXCEPT // for Meta::TEmptyKey<> traits
         : HashValue(UMax)
@@ -79,15 +82,13 @@ struct TNamedId {
 #endif
     {}
 
-    CONSTEXPR explicit TNamedId(const FStringView& name, size_t index = 0) NOEXCEPT
-        : HashValue(hash_mem_constexpr(name.data(), name.size()))
+    CONSTEXPR explicit TNamedId(FStringView name, size_t index = 0) NOEXCEPT
+        : HashValue(1|hash_size_t_constexpr(index, hash_mem_constexpr(name.data(), name.size())))
         , Index(index)
-        , Name(name) {
-        if (not Name.empty())
-            HashValue = hash_size_t_constexpr(index, HashValue);
-    }
+        , Name(name)
+    {}
 
-    CONSTEXPR CONSTF bool Valid() const { return !!HashValue; }
+    CONSTEXPR CONSTF bool Valid() const { Assert_NoAssume(HashValue != UMax); return !!HashValue; }
     PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
     CONSTEXPR FStringView MakeView() const { return Name.Str(); }
@@ -117,19 +118,22 @@ struct TNamedId {
 //----------------------------------------------------------------------------
 template <u32 _Uid>
 struct TNamedId<_Uid, false> {
-    hash_t HashValue{0};
+    hash_t HashValue{ 0 };
 
-    TNamedId() = default;
+    CONSTEXPR TNamedId() = default;
 
-    CONSTEXPR TNamedId(const TNamedId<_Uid, true>& keepName) NOEXCEPT : HashValue(keepName.HashValue) {}
+    CONSTEXPR TNamedId(Meta::FDefaultValue) NOEXCEPT : TNamedId("", 0) {}
+    CONSTEXPR TNamedId(Meta::FZeroValue) NOEXCEPT : TNamedId() {}
 
     CONSTEXPR explicit TNamedId(Meta::FEmptyKey) NOEXCEPT : HashValue(UMax) {} // for Meta::TEmptyKey<> traits
 
-    CONSTEXPR explicit TNamedId(const FStringView& name, size_t index = 0) NOEXCEPT
-        : HashValue(hash_size_t_constexpr(index, hash_mem_constexpr(name.data(), name.size())))
+    CONSTEXPR TNamedId(const TNamedId<_Uid, true>& keepName) NOEXCEPT : HashValue(keepName.HashValue) {}
+
+    CONSTEXPR explicit TNamedId(FStringView name, size_t index = 0) NOEXCEPT
+        : HashValue(1|hash_size_t_constexpr(index, hash_mem_constexpr(name.data(), name.size())))
     {}
 
-    CONSTEXPR CONSTF bool Valid() const { return !!HashValue; }
+    CONSTEXPR CONSTF bool Valid() const { Assert_NoAssume(HashValue != UMax); return !!HashValue; }
     PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
 
     CONSTEXPR FStringView MakeView() const { return FStringView{}; }
@@ -395,7 +399,7 @@ namespace PPE {
 // String literal user operator for declaring TNamedId<>
 // Defined in PPE namespace for easier access
 #define PPE_RHI_RESOURCEID_USERLITERAL_DECL(_TYPE, _ALIAS) \
-    CONSTEXPR _TYPE operator "" CONCAT(_, _ALIAS)(const char* str, size_t len) { \
+    CONSTEVAL _TYPE operator "" CONCAT(_, _ALIAS)(const char* str, size_t len) { \
         return _TYPE{ FStringView(str, len) }; \
     }
 //----------------------------------------------------------------------------

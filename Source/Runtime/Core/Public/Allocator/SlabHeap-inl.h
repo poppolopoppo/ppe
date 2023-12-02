@@ -8,12 +8,15 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if USE_PPE_MEMORYDOMAINS
+
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap() NOEXCEPT
+#if USE_PPE_MEMORYDOMAINS
 :   _trackingData(Meta::type_info<TSlabHeap>.name, allocator_traits::TrackingData(*this)) {
     RegisterTrackingData(&_trackingData);
 }
+#else
+ = default;
 #endif
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -26,25 +29,29 @@ TSlabHeap<_Allocator>::TSlabHeap(Meta::FForceInit) NOEXCEPT
 #endif
 }
 //----------------------------------------------------------------------------
-#if USE_PPE_MEMORYDOMAINS
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap(_Allocator&& ralloc) NOEXCEPT
 :   _Allocator(TAllocatorTraits<_Allocator>::SelectOnMove(std::move(ralloc)))
 ,   _slabs(static_cast<allocator_type&>(*this))
+#if USE_PPE_MEMORYDOMAINS
 ,   _trackingData(Meta::type_info<TSlabHeap>.name, allocator_traits::TrackingData(*this)) {
     RegisterTrackingData(&_trackingData);
-}
+#else
+{
 #endif
+}
 //----------------------------------------------------------------------------
-#if USE_PPE_MEMORYDOMAINS
 template <typename _Allocator>
 TSlabHeap<_Allocator>::TSlabHeap(const _Allocator& alloc) NOEXCEPT
 :   _Allocator(TAllocatorTraits<_Allocator>::SelectOnCopy(alloc))
 ,   _slabs(static_cast<allocator_type&>(*this))
+#if USE_PPE_MEMORYDOMAINS
 ,   _trackingData(Meta::type_info<TSlabHeap>.name, allocator_traits::TrackingData(*this)) {
     RegisterTrackingData(&_trackingData);
-}
+#else
+{
 #endif
+}
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 TSlabHeap<_Allocator>::~TSlabHeap() {
@@ -133,6 +140,7 @@ void* TSlabHeap<_Allocator>::Reallocate(void* p, size_t newSize, size_t oldSize)
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TSlabHeap<_Allocator>::Deallocate(void* p, size_t sz) {
+    Unused(sz);
     if (not p) {
         Assert_NoAssume(sz == 0);
         return;

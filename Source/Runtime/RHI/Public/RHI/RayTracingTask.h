@@ -232,8 +232,8 @@ struct FUpdateRayTracingShaderTable final : details::TFrameTaskDesc<FUpdateRayTr
     FUpdateRayTracingShaderTable& SetRayGenShader(const FRTShaderID& shader);
 
     FUpdateRayTracingShaderTable& AddMissShader(const FRTShaderID& shader, u32 missIndex);
-    FUpdateRayTracingShaderTable& AddHitShader(const FInstanceID& instance, u32 offset, const FRTShaderID& closestHit, const FRTShaderID& anyHit = Default);
-    FUpdateRayTracingShaderTable& AddHitShader(const FInstanceID& instance, const FGeometryID& geometry, u32 offset, const FRTShaderID& closestHit, const FRTShaderID& anyHit = Default);
+    FUpdateRayTracingShaderTable& AddHitShader(const FInstanceID& instance, u32 offset, const FRTShaderID& closestHit, const FRTShaderID& anyHit = Zero);
+    FUpdateRayTracingShaderTable& AddHitShader(const FInstanceID& instance, const FGeometryID& geometry, u32 offset, const FRTShaderID& closestHit, const FRTShaderID& anyHit = Zero);
     FUpdateRayTracingShaderTable& AddProceduralHitShader(const FInstanceID& instance, const FGeometryID& geometry, u32 offset, const FRTShaderID& closestHit, const FRTShaderID& anyHit, const FRTShaderID& intersection);
 
 };

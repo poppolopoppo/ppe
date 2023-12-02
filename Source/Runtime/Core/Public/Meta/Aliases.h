@@ -109,7 +109,7 @@ using i64   = std::int64_t;
 #   define CONSTF
 #   define PUREF
 #   define THREAD_LOCAL thread_local
-#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static constexpr _TYPE _NAME = (_TYPE)(__VA_ARGS__)
+#   define STATIC_CONST_INTEGRAL(_TYPE, _NAME, ...) static CONSTEXPR _TYPE _NAME = (_TYPE)(__VA_ARGS__)
 #   define EMPTY_BASES  __declspec(empty_bases)
 #elif defined (CPP_VISUALSTUDIO)
 #   define NOALIAS      __declspec(noalias)
@@ -205,8 +205,10 @@ using i64   = std::int64_t;
 #endif
 #if PPE_HAS_CXX20
 #   define CONSTEVAL consteval
+#   define CONSTINIT constinit
 #else
 #   define CONSTEVAL CONSTEXPR
+#   define CONSTINIT CONSTEXPR
 #endif
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX17

@@ -41,7 +41,7 @@ NO_INLINE static void Test_VertexInput1_() {
     }};
 
     FVertexInputState vertexInput;
-    vertexInput.Bind(FVertexBufferID{}, sizeof(FVertex1));
+    vertexInput.Bind(Default, sizeof(FVertex1));
 
     vertexInput.Add(FVertexID("Position"), &FVertex1::Position);
     vertexInput.Add(FVertexID("TexCoord"), &FVertex1::TexCoord);

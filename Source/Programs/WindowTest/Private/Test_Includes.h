@@ -58,14 +58,14 @@ private:
         return GNumAssertsTLS;
     }
 
-    static bool OnAssert(const wchar_t* msg, const wchar_t* file, unsigned line, bool isEnsure) {
+    static bool OnAssert(const char* msg, const char* file, unsigned line, bool isEnsure) {
         Unused(msg, file, line);
         PPE_LOG(WindowTest, Info, "Expected {3} failed: '{0}' in {1}:{2}", MakeCStringView(msg), MakeCStringView(file), line,
             isEnsure ? MakeStringView(L"ensure") : MakeStringView(L"assert"));
         ++NumAssertsTLS_();
         return false; // no failure
     }
-    static bool OnAssertRelease(const wchar_t* msg, const wchar_t* file, unsigned line) {
+    static bool OnAssertRelease(const char* msg, const char* file, unsigned line) {
         Unused(msg, file, line);
         PPE_LOG(WindowTest, Info, "Expected release assert failed: '{0}' in {1}:{2}", MakeCStringView(msg), MakeCStringView(file), line);
         ++NumAssertsTLS_();

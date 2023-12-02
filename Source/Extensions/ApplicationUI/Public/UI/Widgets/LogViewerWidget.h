@@ -6,7 +6,10 @@
 #include "Container/RingBuffer.h"
 #include "Diagnostic/Logger.h"
 #include "IO/String.h"
+#include "Memory/PtrRef.h"
 #include "Memory/UniquePtr.h"
+
+#if USE_PPE_LOGGER
 
 namespace PPE {
 namespace Application {
@@ -15,8 +18,8 @@ namespace Application {
 //----------------------------------------------------------------------------
 class FLogViewerWidget {
 public:
-    using FSiteInfo =  FLogger::FSiteInfo;
-    using EVerbosity =  FLogger::EVerbosity;
+    using FSiteInfo = FLoggerSiteInfo;
+    using EVerbosity = ELoggerVerbosity;
 
     FString Title{ ICON_CI_OUTPUT " Log viewer" };
 
@@ -74,3 +77,5 @@ public:
 //----------------------------------------------------------------------------
 } //!namespace Application
 } //!namespace PPE
+
+#endif //!USE_PPE_LOGGER

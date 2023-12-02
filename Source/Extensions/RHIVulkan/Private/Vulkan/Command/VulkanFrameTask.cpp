@@ -283,8 +283,8 @@ TVulkanFrameTask<FClearColorImage>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, 
 :   IVulkanFrameTask(cmd, desc, process)
 ,   DstImage(cmd.ToLocal(desc.DstImage))
 ,   DstLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-,   Ranges(cmd.EmbedCopy(desc.Ranges.MakeView()))
-,   ClearValue(VKClearColorValue_(desc.ClearColor)) {
+,   ClearValue(VKClearColorValue_(desc.ClearColor))
+,   Ranges(cmd.EmbedCopy(desc.Ranges.MakeView())){
     Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------
@@ -296,8 +296,8 @@ TVulkanFrameTask<FClearDepthStencilImage>::TVulkanFrameTask(FVulkanCommandBuffer
 :   IVulkanFrameTask(cmd, desc, process)
 ,   DstImage(cmd.ToLocal(desc.DstImage))
 ,   DstLayout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
-,   Ranges(cmd.EmbedCopy(desc.Ranges.MakeView()))
-,   ClearValue{ desc.ClearDepth, desc.ClearStencil } {
+,   ClearValue{ desc.ClearDepth, desc.ClearStencil }
+,   Ranges(cmd.EmbedCopy(desc.Ranges.MakeView())) {
     Assert_NoAssume(DstImage and DstImage->Read()->Desc.Usage & EImageUsage::TransferDst);
 }
 //----------------------------------------------------------------------------

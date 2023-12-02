@@ -1,7 +1,8 @@
 ﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 #include "UI/Widgets/LogViewerWidget.h"
-#include "UI/Widgets/LogViewerWidget.h"
+
+#if USE_PPE_LOGGER
 
 #include "UI/Imgui.h"
 
@@ -488,3 +489,5 @@ void FLogViewerWidget::RefreshVisibleMessages() {
 //----------------------------------------------------------------------------
 } //!namespace Application
 } //!namespace PPE
+
+#endif //!USE_PPE_LOGGER

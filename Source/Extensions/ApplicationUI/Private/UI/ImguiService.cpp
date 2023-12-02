@@ -17,6 +17,7 @@
 #include "Input/MouseState.h"
 
 #include "Diagnostic/Logger.h"
+#include "IO/Format.h"
 #include "IO/Filename.h"
 #include "VirtualFileSystem_fwd.h"
 
@@ -411,8 +412,8 @@ static bool LoadImGuiFonts_(const FFilename& baseFontTTF, float baseFontSize) {
         iconsConfig.GlyphMinAdvanceX = iconsFontSize;
         iconsConfig.GlyphOffset.y += baseFontSize * iconsFontInfo.GlyphOffsetY;
 
-        const FFilename iconsFontTTF(StringFormat(
-            L"Data://Fonts/Icons/{0}", iconsFontInfo.FilenameTTF));
+        const FFilename iconsFontTTF(INLINE_WFORMAT(MAX_PATH,
+            L"Data://Fonts/Icons/{0}", iconsFontInfo.FilenameTTF).MakeView());
 
         PPE_LOG(UI, Info, "load icons font glyphs [{0}, {1}] from {2}",
             int(iconsFontInfo.GlyphRanges[0]),
@@ -650,7 +651,7 @@ RHI::PFrameTask FImGuiService::PrepareRenderCommand_(
         submit.DependsOn(dep);
 
     FVertexInputState vertexInput;
-    vertexInput.Bind(FVertexBufferID{}, sizeof(ImDrawVert));
+    vertexInput.Bind(Default, sizeof(ImDrawVert));
     vertexInput.Add("aPos"_vertex, EVertexFormat::Float2, Meta::StandardLayoutOffset(&ImDrawVert::pos));
     vertexInput.Add("aUV"_vertex, EVertexFormat::Float2, Meta::StandardLayoutOffset(&ImDrawVert::uv));
     vertexInput.Add("aColor"_vertex, EVertexFormat::UByte4_Norm, Meta::StandardLayoutOffset(&ImDrawVert::col));
@@ -682,18 +683,19 @@ RHI::PFrameTask FImGuiService::PrepareRenderCommand_(
                 PPipelineResources resources = FindOrAddTextureResources_(fg, textureCmd);
                 Assert_NoAssume(resources.valid());
 
-                cmd->Task(renderPass, FDrawIndexed{}
+                 FDrawIndexed draw = FDrawIndexed{}
                     .SetPipeline(_pipeline)
                     .AddResources("0"_descriptorset, std::move(resources))
                     .SetTopology(EPrimitiveTopology::TriangleList)
                     .SetIndexBuffer(_indexBuffer, 0, IndexAttrib<ImDrawIdx>())
-                    .AddVertexBuffer(""_vertexbuffer, _vertexBuffer)
+                    .AddVertexBuffer(Default, _vertexBuffer)
                     .SetVertexInput(vertexInput)
                     .AddColorBuffer(ERenderTargetID::Color0, EBlendFactor::SrcAlpha, EBlendFactor::OneMinusSrcAlpha, EBlendOp::Add)
                     .SetEnableDepthTest(false)
                     .SetCullMode(ECullMode::None)
                     .AddScissor(FRectangleU(scissor))
-                    .Draw(drawCmd.ElemCount, 1, indexOffset, checked_cast<i32>(vertexOffset + drawCmd.VtxOffset), 0));
+                    .Draw(drawCmd.ElemCount, 1, indexOffset, checked_cast<i32>(vertexOffset + drawCmd.VtxOffset), 0);
+                cmd->Task(renderPass, draw);
 
             } else {
                 drawCmd.UserCallback(&drawList, &drawCmd);

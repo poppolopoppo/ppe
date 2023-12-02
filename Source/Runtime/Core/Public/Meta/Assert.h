@@ -173,8 +173,8 @@ NORETURN inline void PPE_DEBUG_SECTION AssertionReleaseFailed_NoReturn(const cha
 //----------------------------------------------------------------------------
 inline CONSTEXPR void AssertionReleaseFailed(const char*, const char*, unsigned ) {}
 NORETURN inline void AssertionReleaseFailed_NoReturn(const char*, const char*, unsigned ) { abort(); }
-inline CONSTEXPR FAssertionHandler SetAssertionReleaseHandler(FAssertionHandler) { return nullptr; }
-inline CONSTEXPR FAssertionHandler SetAssertionReleaseHandlerForCurrentThread(FAssertionHandler) { return nullptr; }
+inline CONSTEXPR FReleaseAssertionHandler SetAssertionReleaseHandler(FReleaseAssertionHandler) { return nullptr; }
+inline CONSTEXPR FReleaseAssertionHandler SetAssertionReleaseHandlerForCurrentThread(FReleaseAssertionHandler) { return nullptr; }
 
 #   if WITH_PPE_ASSERT_ASSUME_FOR_INTELLISENSE
 #       define AssertReleaseMessage(_Message, ...) AnalysisAssume(!!(__VA_ARGS__))

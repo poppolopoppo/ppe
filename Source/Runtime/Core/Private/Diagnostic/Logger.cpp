@@ -598,7 +598,7 @@ public:
     }
 
     void AddToHistory(FMessage& msg) {
-        _history.LockExclusive()->Emplace(msg);
+        _history.LockExclusive()->Emplace(&msg);
     }
 
     void FlushAccumulatedLogs(ILowLevelLogger& other) {

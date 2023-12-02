@@ -39,16 +39,45 @@ NO_INLINE static void Test_Id2_() {
 //----------------------------------------------------------------------------
 NO_INLINE static void Test_Id3_() {
     FVertexBufferID a;
+    AssertRelease(not a.Valid());
     FVertexBufferID b = Default;
+    AssertRelease(b.Valid());
     FVertexBufferID c = ""_vertexbuffer;
+    AssertRelease(c.Valid());
+    AssertRelease(a != b);
+    AssertRelease(a != c);
+    AssertRelease(b == c);
+}
+//----------------------------------------------------------------------------
+NO_INLINE static void Test_Id4_() {
+    using ID1 = details::TNamedId<100, false>;
+    using ID2 = details::TNamedId<100, true>;
+
+    ID1 a{"test", 12};
+    ID2 b{"test", 12};
     AssertRelease(a == b);
-    AssertRelease(a == c);
+
+    ID2 c{"test"};
+    AssertRelease(a != c);
+    AssertRelease(b != c);
+
+    ID2 d{"test", 2};
+    AssertRelease(a != d);
+    AssertRelease(b != d);
+    AssertRelease(c != d);
+
+    ID2 e{"test2", 2};
+    AssertRelease(a != e);
+    AssertRelease(b != e);
+    AssertRelease(c != e);
+    AssertRelease(d != e);
 }
 //----------------------------------------------------------------------------
 void UnitTest_Id() {
     Test_Id1_();
     Test_Id2_();
     Test_Id3_();
+    Test_Id4_();
 
     PPE_LOG(RHI, Info, "UnitTest_Id [PASSED]");
 }

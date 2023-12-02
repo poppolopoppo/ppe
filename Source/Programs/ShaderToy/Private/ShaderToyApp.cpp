@@ -140,10 +140,12 @@ void FShaderToyApp::Render(FTimespan dt) {
 		NOOP();
 	}
 
+#if USE_PPE_LOGGER
 	static Application::FLogViewerWidget  logViewer;
 	if (logViewer.Show()) {
 		NOOP();
 	}
+#endif
 
 	static Application::FConsoleWidget console;
 	if (console.Show()) {

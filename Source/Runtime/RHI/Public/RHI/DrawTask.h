@@ -67,6 +67,14 @@ struct TDrawCallDesc : TDrawTaskDesc<_Task> {
 #endif
 
     TDrawCallDesc() = default;
+    ~TDrawCallDesc() = default;
+
+    TDrawCallDesc(TDrawCallDesc&&) = default;
+    TDrawCallDesc& operator =(TDrawCallDesc&&) = default;
+
+    TDrawCallDesc(const TDrawCallDesc&) = default;
+    TDrawCallDesc& operator =(const TDrawCallDesc&) = default;
+
 #if USE_PPE_RHITASKNAME
     TDrawCallDesc(FConstChar name, const FLinearColor& color) NOEXCEPT : TDrawTaskDesc<_Task>(name, color) {}
 #endif
@@ -125,6 +133,14 @@ struct TDrawVerticesDesc : TDrawCallDesc<_Task> {
     FVertexBuffers VertexBuffers;
 
     TDrawVerticesDesc() = default;
+    ~TDrawVerticesDesc() = default;
+
+    TDrawVerticesDesc(TDrawVerticesDesc&&) = default;
+    TDrawVerticesDesc& operator =(TDrawVerticesDesc&&) = default;
+
+    TDrawVerticesDesc(const TDrawVerticesDesc&) = default;
+    TDrawVerticesDesc& operator =(const TDrawVerticesDesc&) = default;
+
 #if USE_PPE_RHITASKNAME
     TDrawVerticesDesc(FConstChar name, const FLinearColor& color) NOEXCEPT : TDrawCallDesc<_Task>(name, color) {}
 #endif

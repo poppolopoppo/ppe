@@ -911,7 +911,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessA(LPCSTR lpApplicationName, LPS
                 else {
                     // close child process when payload copy failed
                     IODETOURING_DEBUGPRINTF("closing child process %d since payload copy failed", GetProcessId(ppi->hProcess));
-                    TerminateProcess(ppi->hProcess, FIODetouringTblog::PayloadExitCode);
+                    TerminateProcess(ppi->hProcess, static_cast<UINT>(FIODetouringTblog::PayloadExitCode));
                 }
 
                 if (ppi == &pi) {
@@ -1026,7 +1026,7 @@ BOOL WINAPI FIODetouringHooks::Hook_CreateProcessW(LPCWSTR lpApplicationName, LP
                 else {
                     // close child process when payload copy failed
                     IODETOURING_DEBUGPRINTF("closing child process %d since payload copy failed", GetProcessId(ppi->hProcess));
-                    TerminateProcess(ppi->hProcess, FIODetouringTblog::PayloadExitCode);
+                    TerminateProcess(ppi->hProcess, static_cast<UINT>(FIODetouringTblog::PayloadExitCode));
                 }
 
                 if (ppi == &pi) {

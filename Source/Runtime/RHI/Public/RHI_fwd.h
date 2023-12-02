@@ -12,7 +12,7 @@
 #   define USE_PPE_RHIMOBILE (0)
 #endif
 
-#define USE_PPE_RHIDEBUG (!!(USE_PPE_ASSERT)||!!(USE_PPE_MEMORY_DEBUGGING)) //%_NOCOMMIT%
+#define USE_PPE_RHIDEBUG (!!(USE_PPE_ASSERT)||!!(USE_PPE_ASSERT_RELEASE)||!!(USE_PPE_MEMORY_DEBUGGING)) //%_NOCOMMIT%
 #define USE_PPE_RHITASKNAME (!!(USE_PPE_RHIDEBUG))
 #define USE_PPE_RHIOPTIMIZEIDS (!(USE_PPE_RHITASKNAME)) // %_NOCOMMIT%
 #define USE_PPE_RHITRACE (!!(USE_PPE_RHIDEBUG)&&0) // Trace important calls, but slow ! %_NOCOMMIT%
@@ -47,6 +47,10 @@ namespace PPE {
 class IRHIService;
 namespace RHI {
 EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
+CONSTEXPR bool EnableDebug = (USE_PPE_RHIDEBUG);
+CONSTEXPR bool EnableTaskName = (USE_PPE_RHITASKNAME);
+CONSTEXPR bool EnableOptimizedIds = (USE_PPE_RHIOPTIMIZEIDS);
+CONSTEXPR bool EnableTrace = (USE_PPE_RHITRACE);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -54,13 +58,8 @@ class FRHIException;
 using FRawData = RAWSTORAGE(RHIRawData, u8);
 template <typename T>
 using TArray = VECTORINSITU(RHIMisc, T, 5);
-#if USE_PPE_RHIDEBUG
 template <typename T>
-using TRHIThreadSafe = TThreadSafe<T, EThreadBarrier::RWDataRaceCheck>;
-#else
-template <typename T>
-using TRHIThreadSafe = TThreadSafe<T, EThreadBarrier::None>;
-#endif
+using TRHIThreadSafe = TThreadSafe<T, EnableDebug ? EThreadBarrier::RWDataRaceCheck : EThreadBarrier::None>;
 //----------------------------------------------------------------------------
 PPE_STRONGLYTYPED_NUMERIC_DEF(u32,   FFrameIndex);
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FWindowHandle);
@@ -294,16 +293,16 @@ struct TResourceWrappedId;
 //----------------------------------------------------------------------------
 // Resources
 //----------------------------------------------------------------------------
-using FUniformID                = details::TNamedId<   1, !USE_PPE_RHIOPTIMIZEIDS >;
-using FPushConstantID           = details::TNamedId<   2, !USE_PPE_RHIOPTIMIZEIDS >;
-using FDescriptorSetID          = details::TNamedId<   3, !USE_PPE_RHIOPTIMIZEIDS >;
-using FSpecializationID         = details::TNamedId<   4, !USE_PPE_RHIOPTIMIZEIDS >;
-using FVertexID                 = details::TNamedId<   5, !USE_PPE_RHIOPTIMIZEIDS >;
-using FVertexBufferID           = details::TNamedId<   6, !USE_PPE_RHIOPTIMIZEIDS >;
-using FMemPoolID                = details::TNamedId<   7, !USE_PPE_RHIOPTIMIZEIDS >;
-using FRTShaderID               = details::TNamedId<   8, !USE_PPE_RHIOPTIMIZEIDS >;
-using FGeometryID               = details::TNamedId<   9, !USE_PPE_RHIOPTIMIZEIDS >;
-using FInstanceID               = details::TNamedId<  10, !USE_PPE_RHIOPTIMIZEIDS >;
+using FUniformID                = details::TNamedId<   1, !EnableOptimizedIds>;
+using FPushConstantID           = details::TNamedId<   2, !EnableOptimizedIds>;
+using FDescriptorSetID          = details::TNamedId<   3, !EnableOptimizedIds>;
+using FSpecializationID         = details::TNamedId<   4, !EnableOptimizedIds>;
+using FVertexID                 = details::TNamedId<   5, !EnableOptimizedIds>;
+using FVertexBufferID           = details::TNamedId<   6, !EnableOptimizedIds>;
+using FMemPoolID                = details::TNamedId<   7, !EnableOptimizedIds>;
+using FRTShaderID               = details::TNamedId<   8, !EnableOptimizedIds>;
+using FGeometryID               = details::TNamedId<   9, !EnableOptimizedIds>;
+using FInstanceID               = details::TNamedId<  10, !EnableOptimizedIds>;
 
 enum class ERenderTargetID : u32;
 PPE_STRONGLYTYPED_NUMERIC_DEF(u32, FStagingBufferIndex);

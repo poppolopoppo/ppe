@@ -41,11 +41,13 @@ void main ()
     auto it1 = ppln.Shader.Data.Find(EShaderLangFormat::SPIRV_100);
     PPE_LOG_CHECK(WindowTest, ppln.Shader.Data.end() != it1);
 
-    auto it2 = ppln.Shader.Data.Find(EShaderLangFormat::SPIRV_100 | EShaderLangFormat::EnableDebugTrace);
-    PPE_LOG_CHECK(WindowTest, ppln.Shader.Data.end() != it2);
+    IF_CONSTEXPR(RHI::EnableDebug) {
+		auto it2 = ppln.Shader.Data.Find(EShaderLangFormat::SPIRV_100 | EShaderLangFormat::EnableDebugTrace);
+	    PPE_LOG_CHECK(WindowTest, ppln.Shader.Data.end() != it2);
 
-    auto it3 = ppln.Shader.Data.Find(EShaderLangFormat::SPIRV_100 | EShaderLangFormat::EnableTimeMap);
-    PPE_LOG_CHECK(WindowTest, ppln.Shader.Data.end() != it3);
+	    auto it3 = ppln.Shader.Data.Find(EShaderLangFormat::SPIRV_100 | EShaderLangFormat::EnableTimeMap);
+	    PPE_LOG_CHECK(WindowTest, ppln.Shader.Data.end() != it3);
+    }
 
     return true;
 }

@@ -17,7 +17,7 @@ EXTERN_LOG_CATEGORY(PPE_APPLICATIONUI_API, UI);
 FConsoleWidget::FConsoleWidget() NOEXCEPT
 {}
 //----------------------------------------------------------------------------
-FConsoleWidget::~FConsoleWidget() NOEXCEPT
+FConsoleWidget::~FConsoleWidget()
 {}
 //----------------------------------------------------------------------------
 bool FConsoleWidget::Show() {

@@ -214,6 +214,11 @@ FWindowTestApp::~FWindowTestApp() = default;
 void FWindowTestApp::Start() {
     parent_type::Start();
 
+#if RUN_PPE_WINDOWTESTS
+    auto& appmodule = FApplicationModule::Get(Domain());
+    appmodule.OnApplicationTick().FireAndForget(&LaunchWindowTests_);
+#endif
+
     ApplicationLoop();
 }
 //----------------------------------------------------------------------------
@@ -225,11 +230,6 @@ void FWindowTestApp::Shutdown() {
 //----------------------------------------------------------------------------
 void FWindowTestApp::Render(FTimespan dt) {
     parent_type::Render(dt);
-
-#if RUN_PPE_WINDOWTESTS
-    auto& appmodule = FApplicationModule::Get(Domain());
-    appmodule.OnApplicationTick().FireAndForget(&LaunchWindowTests_);
-#endif
 
     // call present() once before exit for captures
     using namespace RHI;

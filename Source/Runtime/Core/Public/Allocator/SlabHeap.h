@@ -160,7 +160,7 @@ private:
         bool HasNextBlock() const { return HeaderWFlags.Flag0(); }
     };
 
-    // store free blocks in a self-balanced binary tree,
+    // store free blocks in a self-balanced binary tree
     // WAVL should be faster overall than AVL for insertion/deletion
     // (lookup is the same, but AVL are strictly balanced while WAVL relaxes constraints)
     struct FBlockWAVLTraits {

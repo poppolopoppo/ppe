@@ -2,6 +2,8 @@
 
 #include "HAL/RHIService.h"
 
+#include "RHI/ResourceId.h"
+
 #if USE_PPE_RHIDEBUG
 #include "RHI/FrameGraph.h"
 #include "Diagnostic/Logger.h"
@@ -19,8 +21,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-IRHIService::IRHIService() NOEXCEPT {
-}
+IRHIService::IRHIService() NOEXCEPT = default;
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
 void IRHIService::UnitTest() NOEXCEPT {

@@ -11,6 +11,7 @@
 #include "IO/ConstNames.h"
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
+#include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/StringBuilder.h"
 #include "VirtualFileSystem_fwd.h"
