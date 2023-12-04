@@ -15,7 +15,8 @@
 #define PPE_THREADTAG_BACKGROUND           size_t(4)
 #define PPE_THREADTAG_SERVICING            size_t(5)
 #define PPE_THREADTAG_SYSCALL              size_t(6)
-#define PPE_THREADTAG_OTHER                size_t(7)
+#define PPE_THREADTAG_LOGGER               size_t(7)
+#define PPE_THREADTAG_OTHER                size_t(8)
 
 namespace PPE {
 //----------------------------------------------------------------------------

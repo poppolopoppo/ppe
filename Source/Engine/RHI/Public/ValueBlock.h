@@ -53,12 +53,12 @@ public:
 
         template <typename T>
         bool Read(T& dst, const TMemoryView<const u8>& src) const {
-            return ValuePromote(TValueTraits<T>::Type, MakeRawView(dst), Type(), src.CutStartingAt(_offset));
+            return ValuePromote(TValueTraits<T>::Type, MakePodView(dst), Type(), src.CutStartingAt(_offset));
         }
 
         template <typename T>
         bool Write(const TMemoryView<u8>& dst, const T& src) const {
-            return ValuePromote(Type(), dst.CutStartingAt(_offset), TValueTraits<T>::Type, MakeRawView(src));
+            return ValuePromote(Type(), dst.CutStartingAt(_offset), TValueTraits<T>::Type, MakePodView(src));
         }
 
         void Clear(const TMemoryView<u8>& dst) const {

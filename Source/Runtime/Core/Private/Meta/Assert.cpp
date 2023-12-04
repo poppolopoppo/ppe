@@ -13,6 +13,7 @@
 #include "HAL/PlatformProcess.h"
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
+#include "Memory/MemoryView.h"
 
 namespace PPE {
 LOG_CATEGORY(PPE_CORE_API, Assertion)
@@ -27,7 +28,7 @@ static FPlatformDialog::EResult AssertIgnoreOnceAlwaysAbortRetry_(
 
     oss << title << Crlf
         << L"----------------------------------------------------------------" << Crlf
-        << file << L'(' << line << L"): " << msg;
+        << MakeCStringView(file) << L'(' << line << L"): " << MakeCStringView(msg);
 
     return FPlatformDialog::IgnoreOnceAlwaysAbortRetry(oss.ToString(), UTF_8_TO_WCHAR(title), icon);
 }
@@ -78,7 +79,7 @@ static bool PPE_DEBUG_SECTION DefaultDebugAssertHandler_(const char* msg, const 
     FIgnoreList::FIgnoreKey ignoreKey;
     ignoreKey
         << (isEnsure ? MakeStringView("Ensure") : MakeStringView("AssertDebug"))
-        << MakeCStringView(msg) << MakeCStringView(file) << MakeRawConstView(line);
+        << MakeCStringView(msg) << MakeCStringView(file) << MakePodView(line);
     if (FIgnoreList::HitIFP(ignoreKey) > 0)
         return false;
 #endif
@@ -203,7 +204,7 @@ static bool PPE_DEBUG_SECTION DefaultReleaseAssertHandler_(const char* msg, cons
 #if USE_PPE_IGNORELIST
     FIgnoreList::FIgnoreKey ignoreKey;
     ignoreKey << MakeStringView("AssertRelease")
-        << MakeCStringView(msg) << MakeCStringView(file) << MakeRawConstView(line);
+        << MakeCStringView(msg) << MakeCStringView(file) << MakePodConstView(line);
     if (FIgnoreList::HitIFP(ignoreKey) > 0)
         return false;
 #endif

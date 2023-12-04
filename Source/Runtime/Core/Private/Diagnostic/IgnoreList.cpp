@@ -7,6 +7,7 @@
 #include "HAL/PlatformAtomics.h"
 #include "HAL/PlatformHash.h"
 #include "Memory/HashFunctions.h"
+#include "Memory/MemoryView.h"
 #include "Thread/ThreadContext.h"
 
 namespace PPE {
@@ -35,7 +36,7 @@ FIgnoreList::~FIgnoreList() {
 //----------------------------------------------------------------------------
 auto FIgnoreList::FIgnoreKey::AppendThread() NOEXCEPT -> FIgnoreKey& {
     const size_t threadSeed = std::hash<std::thread::id>{}(std::this_thread::get_id());
-    return Append(MakeRawConstView(threadSeed));
+    return Append(MakePodConstView(threadSeed));
 }
 //----------------------------------------------------------------------------
 auto FIgnoreList::FIgnoreKey::Append(FRawMemoryConst key) NOEXCEPT -> FIgnoreKey& {

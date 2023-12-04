@@ -89,17 +89,17 @@ static void Test_Format_() {
     TestFormat_("test000000000000",
         "{0:#-16}", "test");
     TestFormat_("1",
-        "{0:/1}", "123456789");
+        "{0:<1}", "123456789");
     TestFormat_("1234",
-        "{0:/4}", "123456789");
+        "{0:<4}", "123456789");
     TestFormat_("1234567",
-        "{0:/7}", "123456789");
+        "{0:<7}", "123456789");
     TestFormat_("123456789",
-        "{0:/9}", "123456789");
+        "{0:<9}", "123456789");
     TestFormat_("                       123456789",
-        "{0:/32}", "123456789");
+        "{0:<32}", "123456789");
     TestFormat_("123456789                       ",
-        "{0:/-32}", "123456789");
+        "{0:<-32}", "123456789");
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -213,6 +213,10 @@ static void Test_StringEscaping_() {
     Test_StringEscaping_<wchar_t>(MakeStringView(L"This\t\x10\nescaPed\23\b\r\n\"123\u1FA4unicode"), EEscape::Octal);
     Test_StringEscaping_<wchar_t>(MakeStringView(L"This\t\x10\nescaPed\23\b\r\n\"123\u1FA4unicode"), EEscape::Hexadecimal);
     Test_StringEscaping_<wchar_t>(MakeStringView(L"This\t\x10\nescaPed\23\b\r\n\"123\u1FA4unicode"), EEscape::Unicode);
+
+    const FWString escaped = StringFormat(L"escaped = {:\\}", L"\t\r\n\u1FA4"_view);
+    AssertRelease(escaped == L"escaped = \\t\\r\\n\u1FA4"_view);
+    Unused(escaped);
 }
 //----------------------------------------------------------------------------
 static void Test_LogPrintf_() {

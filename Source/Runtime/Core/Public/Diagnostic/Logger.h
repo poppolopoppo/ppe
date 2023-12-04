@@ -225,7 +225,7 @@ public:
 #endif
     }
 
-    static PPE_CORE_API void RegisterStdoutLogger();
+    static PPE_CORE_API void RegisterStdoutLogger(bool useColors);
     static PPE_CORE_API void RegisterOutputDebugLogger();
     static PPE_CORE_API void RegisterAppendFileLogger(FConstWChar filename);
     static PPE_CORE_API void RegisterAppendJsonLogger(FConstWChar filename);

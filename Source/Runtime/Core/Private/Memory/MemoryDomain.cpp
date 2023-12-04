@@ -205,7 +205,7 @@ void ReportTrackingDatas_(
     oss << "  Reporting tracking data :" << Eol;
 
     CONSTEXPR size_t width = 194;
-    CONSTEXPR char fmtTitle[] = " {0:/-33}";
+    CONSTEXPR char fmtTitle[] = " {0:<-33}";
     CONSTEXPR char fmtSnapshot[] = "| {0:7} {1:8} | {2:9} {3:9} | {4:10} {5:10}   ";
     CONSTEXPR char fmtFooter[] = "|| {0:10} {1:10}   ";
 
@@ -332,9 +332,9 @@ void DumpTrackingDataFullName_(TBasicTextWriter<_Char>& oss, const FMemoryTracki
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS
 struct FReportAllTrackingDataToLogger_ {
-    ~FReportAllTrackingDataToLogger_() {
-        PPE_LOG_FLUSH();
-    }
+    //~FReportAllTrackingDataToLogger_() {
+    //    PPE_LOG_FLUSH();
+    //}
     template <typename _Functor>
     void operator ()(const _Functor& report) const {
         PPE_LOG_DIRECT(MemoryDomain, Info, [&report](FTextWriter& oss) {

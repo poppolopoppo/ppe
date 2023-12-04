@@ -57,7 +57,7 @@ NODISCARD FShaderDataFingerprint MakeShaderFingerprint_(const FShaderDataFingerp
     constexpr size_t capacityInBytes = (sizeof(_Args) + ... + 0);
 
     VECTORINSITU(PipelineCompiler, u8, capacityInBytes) blob;
-    FOLD_EXPR(Append(blob, MakeRawConstView(args)));
+    FOLD_EXPR(Append(blob, MakePodConstView(args)));
 
     return Fingerprint128(blob.MakeView(), seed);
 }
@@ -258,7 +258,7 @@ FVulkanSpirvCompiler::FVulkanSpirvCompiler(const FDirectories& directories)
     // precompute fingeprint for glslang toolchain
     const glslang::Version glslangVer = glslang::Version();
     _glslangFingerprint = MakeShaderFingerprint_(
-        Fingerprint128(MakeRawView(GVulkanSpirvFingerprint)),
+        Fingerprint128(MakePodView(GVulkanSpirvFingerprint)),
         glslang::GetKhronosToolId(),
         glslangVer.major, glslangVer.minor,
         glslang::GetSpirvGeneratorVersion() );

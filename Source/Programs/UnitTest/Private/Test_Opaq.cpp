@@ -4,6 +4,7 @@
 #include "Misc/OpaqueBuilder.h"
 
 #include "Diagnostic/Logger.h"
+#include "Meta/Utility.h"
 #include "Misc/Function.h"
 
 namespace PPE {
@@ -55,7 +56,7 @@ static void Test_Opaq_Init_() {
     });
 
 
-    PPE_SLOG(Test_Opaq, Info, "block object: {}", {
+    PPE_SLOG(Test_Opaq, Info, "block format:", {
         {"format", [&](FTextWriter& oss){
             Format(oss, "this is {} {}", 2, "awesome");
         }},
@@ -67,6 +68,41 @@ static void Test_Opaq_Init_() {
     DeleteBlock(obj_block);
 }
 //----------------------------------------------------------------------------
+static void Test_Opaq_Alloc_() {
+    using namespace Opaq;
+
+    value<> value;
+    TBuilder<> builder(&value);
+    builder.Object([&]() {
+        builder.KeyValue("First name", "Larry");
+        builder.KeyValue("Last name", "Treinor");
+        builder.KeyValue("Age", 38);
+        builder.KeyValue("Male", true);
+        builder.KeyValue("Children", [&]() {
+            builder.Array([&]() {
+                builder.Object([&]() {
+                    builder.KeyValue("First name", "Tania");
+                    builder.KeyValue("Last name", "Treinor");
+                }, 2);
+                builder.Object([&]() {
+                    builder.KeyValue("First name", "Tony");
+                    builder.KeyValue("Last name", "Treinor");
+                }, 2);
+            }, 2);
+        });
+    });
+
+    PPE_LOG(Test_Opaq, Info, "builder object: {}", value);
+
+    value_block value_block = builder.ToValueBlock(
+        TStaticAllocator<default_allocator>::Allocate(builder.BlockSize()));
+    DEFERRED {
+        TStaticAllocator<default_allocator>::Deallocate(value_block.block);
+    };
+
+    PPE_LOG(Test_Opaq, Info, "builder block: {}", value_block);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -75,7 +111,7 @@ void Test_Opaq() {
     PPE_DEBUG_NAMEDSCOPE("Test_Opaq");
 
     Test_Opaq_Init_();
-    //Test_Opaq_Alloc_();
+    Test_Opaq_Alloc_();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

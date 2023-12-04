@@ -155,9 +155,12 @@ constexpr EValidateFormat ValidateFormatManip_(_Char ch) noexcept {
     case STRING_LITERAL(_Char, 'l'):
     case STRING_LITERAL(_Char, 'C'):
     case STRING_LITERAL(_Char, '-'):
+    case STRING_LITERAL(_Char, '_'):
     case STRING_LITERAL(_Char, '#'):
     case STRING_LITERAL(_Char, '@'):
-    case STRING_LITERAL(_Char, '/'):
+    case STRING_LITERAL(_Char, '<'):
+    case STRING_LITERAL(_Char, '>'):
+    case STRING_LITERAL(_Char, '\\'):
         return EValidateFormat::Valid;
     default:
         return EValidateFormat::InvalidFormatManip;

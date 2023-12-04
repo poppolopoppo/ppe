@@ -13,12 +13,12 @@ template <typename T>
 void SerializeCompactSigned(FArchive& ar, TCompactInt<T>* value) {
     u8 b;
     if (ar.IsLoading()) {
-        ar.Serialize(MakeRawView(b));
+        ar.Serialize(MakePodView(b));
         const bool sign = !!(b & 0x80_u8); // extract sign bit
         T rd = checked_cast<T>(b & 0x3f_u8);
         if (!!(b & 0x40_u8)) { // has 2nd byte?
             for (T shift = 6; !!(b & 0x80_u8); shift += 7) {
-                ar.Serialize(MakeRawView(b));
+                ar.Serialize(MakePodView(b));
                 rd |= checked_cast<T>(b & 0x7f_u8) << shift;
                 if (not (b & 0x80_u8)) // no more byte?
                     break;
@@ -36,18 +36,18 @@ void SerializeCompactSigned(FArchive& ar, TCompactInt<T>* value) {
         }
         b |= checked_cast<u8>(wr & 0x3f);
         if (wr <= 0x3f) {
-            ar.Serialize(MakeRawView(b));
+            ar.Serialize(MakePodView(b));
         }
         else {
             b |= 0x40_u8; // has 2nd byte
             wr >>= 6;
-            ar.Serialize(MakeRawView(b));
+            ar.Serialize(MakePodView(b));
             while (wr != 0) {
                 b = checked_cast<u8>(wr & 0x3f);
                 wr >>= 7;
                 if (wr != 0)
                     b |= 0x80_u8; // has more bytes
-                ar.Serialize(MakeRawView(b));
+                ar.Serialize(MakePodView(b));
             }
         }
     }
@@ -57,10 +57,10 @@ template <typename T>
 void SerializeCompactUnsigned(FArchive& ar, TCompactInt<T>* value) {
     u8 b;
     if (ar.IsLoading()) {
-        ar.Serialize(MakeRawView(b));
+        ar.Serialize(MakePodView(b));
         T rd = checked_cast<T>(b & 0x7f_u8);
         for (T shift = 7; !!(b & 0x80); shift += 7) {
-            ar.Serialize(MakeRawView(b));
+            ar.Serialize(MakePodView(b));
             rd |= checked_cast<T>(b & 0x7f_u8) << shift;
         }
         value->Data = rd;
@@ -70,12 +70,12 @@ void SerializeCompactUnsigned(FArchive& ar, TCompactInt<T>* value) {
         for (;;) {
             b = checked_cast<u8>(wr & 0x7f);
             if (wr >>= 7; wr == 0) {
-                ar.Serialize(MakeRawView(b));
+                ar.Serialize(MakePodView(b));
                 break;
             }
             else {
                 b |= 0x80_u8; // has more bytes
-                ar.Serialize(MakeRawView(b));
+                ar.Serialize(MakePodView(b));
             }
         }
     }

@@ -200,7 +200,7 @@ public: // FState
             // log some progress : too heavy for MT, will saturate logging thread
             /*
             LOG(Benchmark, Info,
-                L"{0:/18}: {1:10f4} < {2:10f4} < {3:10f4} => {4:10f4} µs  [{5:6} iterations] -> {6:f4}",
+                L"{0:<18}: {1:10f4} < {2:10f4} < {3:10f4} => {4:10f4} µs  [{5:6} iterations] -> {6:f4}",
                 _benchmark.Name,
                 Low(), Mean(), High(),
                 Median(),

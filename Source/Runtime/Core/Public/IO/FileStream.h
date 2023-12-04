@@ -4,7 +4,6 @@
 
 #include "IO/StreamProvider.h"
 #include "IO/StringView.h"
-#include "IO/TextWriter_fwd.h"
 #include "HAL/PlatformLowLevelIO.h"
 
 #define WITH_PPE_FILESTREAM_FILENAMEDBG (!USE_PPE_FINAL_RELEASE) // %_NOCOMMIT%
@@ -21,7 +20,7 @@ class PPE_CORE_API FFileStream {
 public:
     using FFileHandle = FPlatformLowLevelIO::FHandle;
 protected:
-    explicit FFileStream(FFileHandle handle) : _handle(handle) {}
+    explicit FFileStream(FFileHandle handle, bool autoClose = true) NOEXCEPT;
 public:
     ~FFileStream();
 
@@ -31,6 +30,7 @@ public:
     FFileStream(FFileStream&& rvalue) NOEXCEPT;
     FFileStream& operator =(FFileStream&& rvalue) NOEXCEPT;
 
+    bool AutoClose() const { return _autoClose; }
     FFileHandle Handle() const { return _handle; }
 
 #if WITH_PPE_FILESTREAM_FILENAMEDBG
@@ -52,7 +52,9 @@ public:
     static void Shutdown();
 
 protected:
-    FFileHandle _handle;
+    FFileHandle _handle : sizeof(FFileHandle)*8 - 1;
+    bool _autoClose : 1;
+
 #if WITH_PPE_FILESTREAM_FILENAMEDBG
 private:
     FWString _filenameForDebug;
@@ -62,7 +64,7 @@ private:
 class PPE_CORE_API FFileStreamReader : public IStreamReader, public FFileStream {
 public:
     using FFileStream::FFileHandle;
-    explicit FFileStreamReader(FFileHandle handle) : FFileStream(handle) {}
+    explicit FFileStreamReader(FFileHandle handle, bool autoClose = true) NOEXCEPT : FFileStream(handle, autoClose) {}
 
 public: // IStreamReader
     virtual bool Eof() const NOEXCEPT override final;
@@ -81,7 +83,7 @@ public: // IStreamReader
 class PPE_CORE_API FFileStreamWriter : public IStreamWriter, public FFileStream {
 public:
     using FFileStream::FFileHandle;
-    explicit FFileStreamWriter(FFileHandle handle) : FFileStream(handle) {}
+    explicit FFileStreamWriter(FFileHandle handle, bool autoClose = true) NOEXCEPT : FFileStream(handle, autoClose) {}
 
 public: // IStreamWriter
     virtual bool IsSeekableO(ESeekOrigin = ESeekOrigin::All) const NOEXCEPT override final { return true; }
@@ -96,7 +98,7 @@ public: // IStreamWriter
 class PPE_CORE_API EMPTY_BASES FFileStreamReadWriter : public IStreamReadWriter, public FFileStream {
 public:
     using FFileStream::FFileHandle;
-    explicit FFileStreamReadWriter(FFileHandle handle) : FFileStream(handle) {}
+    explicit FFileStreamReadWriter(FFileHandle handle, bool autoClose = true) NOEXCEPT : FFileStream(handle, autoClose) {}
 
 public: // IStreamReader
     virtual bool Eof() const NOEXCEPT override final;

@@ -49,6 +49,7 @@ public:
     NODISCARD static PPE_CORE_API FTimepoint Now();
     NODISCARD static PPE_CORE_API value_type Ticks(const FTimespan& duration);
     NODISCARD static PPE_CORE_API FTimespan Duration(const FTimepoint& start, const FTimepoint& stop);
+    NODISCARD static PPE_CORE_API FTimespan SignedDuration(const FTimepoint& start, const FTimepoint& stop);
     NODISCARD static FTimespan ElapsedSince(const FTimepoint& t) { return Duration(t, Now()); }
 
     NODISCARD friend FTimespan operator -(const FTimepoint& finish, const FTimepoint& start) {

@@ -66,11 +66,11 @@ void FWindowsPlatformThread::OnThreadShutdown() {
 }
 //----------------------------------------------------------------------------
 FWindowsPlatformThread::FAffinityMask FWindowsPlatformThread::MainThreadAffinity() {
-    return LogicalAffinityMask_(1ul); // only the first core, with HT
+    return LogicalAffinityMask_(static_cast<FAffinityMask>(1)); // only the first core, with HT
 }
 //----------------------------------------------------------------------------
 FWindowsPlatformThread::FAffinityMask FWindowsPlatformThread::SecondaryThreadAffinity() {
-    return LogicalAffinityMask_(~1ul); // all but first core, with HT
+    return LogicalAffinityMask_(~static_cast<FAffinityMask>(1)); // all but first core, with HT
 }
 //----------------------------------------------------------------------------
 auto FWindowsPlatformThread::AffinityMask() -> FAffinityMask {

@@ -2,12 +2,10 @@
 
 #include "Core_fwd.h"
 
-#if 0
-
 #include "Misc/Opaque.h"
 
-#include "Container/Stack.h"
 #include "Container/Vector.h"
+#include "Container/Stack.h"
 #include "IO/String.h"
 
 #include <variant>
@@ -40,6 +38,7 @@ using object = VECTOR(Opaq, key_value<_Allocator>);
 namespace details {
 template <typename _Allocator>
 using value_variant = std::variant<
+    std::monostate,
     boolean, integer, uinteger, floating_point,
     string<_Allocator>, wstring<_Allocator>,
     array<_Allocator>, object<_Allocator>>;
@@ -60,6 +59,8 @@ struct value : details::value_variant<_Allocator> {
     CONSTEXPR value(u32 u) : value(static_cast<uinteger>(u)) {}
 
     CONSTEXPR value(float f) : value(static_cast<floating_point>(f)) {}
+
+    PPE_FAKEBOOL_OPERATOR_DECL() { return not std::holds_alternative<std::monostate>(*this); }
 };
 template <typename _Allocator>
 struct key_value { string<_Allocator> key; value<_Allocator> value; };
@@ -71,6 +72,11 @@ NODISCARD inline size_t BlockSize(const value<_Allocator>& value) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 NODISCARD inline value_block NewBlock(FAllocatorBlock block, const value<_Allocator>& value);
+//----------------------------------------------------------------------------
+template <typename _Allocator = default_allocator, typename _ValueAllocator = default_allocator>
+NODISCARD inline value_block NewBlock(const value<_ValueAllocator>& value) {
+    return NewBlock(TStaticAllocator<_Allocator>::Allocate(BlockSize(value)), value);
+}
 //----------------------------------------------------------------------------
 // Create a dynamic value<> from a value_init/value_view
 //----------------------------------------------------------------------------
@@ -94,7 +100,8 @@ class IBuilder {
 public:
     virtual ~IBuilder() = default;
 
-    virtual value_block ToValueBlock() = 0;
+    virtual size_t BlockSize() const NOEXCEPT = 0;
+    virtual value_block ToValueBlock(FAllocatorBlock block) = 0;
 
     virtual void Write(boolean v) = 0;
     virtual void Write(integer v) = 0;
@@ -102,6 +109,10 @@ public:
     virtual void Write(floating_point v) = 0;
     virtual void Write(string_init v) = 0;
     virtual void Write(wstring_init v) = 0;
+    virtual void Write(const string_format& v) = 0;
+    virtual void Write(const wstring_format& v) = 0;
+    virtual void Write(FString&& v) = 0;
+    virtual void Write(FWString&& v) = 0;
 
     virtual void BeginArray(size_t capacity = 0) = 0;
     virtual void EndArray() = 0;
@@ -109,7 +120,7 @@ public:
     virtual void BeginObject(size_t capacity = 0) = 0;
     virtual void EndObject() = 0;
 
-    virtual void BeginKeyValue(string_init key) = 0;
+    virtual void BeginKeyValue(FString&& rkey) = 0;
     virtual void EndKeyValue() = 0;
 
     // template helpers for closures:
@@ -121,6 +132,13 @@ public:
         EndArray();
     }
 
+    template <typename _It>
+    void Array(_It first, _It last) {
+        BeginArray(std::distance(first, last));
+        std::for_each(first, last, MakePtrRef(this));
+        EndArray();
+    }
+
     template <typename _Functor, decltype(std::declval<_Functor&>()())* = nullptr>
     void Object(_Functor&& innerScope, size_t capacity = 0) {
         BeginObject(capacity);
@@ -128,10 +146,72 @@ public:
         EndObject();
     }
 
+    template <typename _It>
+    void Object(_It first, _It last) {
+        BeginObject(std::distance(first, last));
+        std::for_each(first, last, MakePtrRef(this));
+        EndObject();
+    }
+
     template <typename _Functor, decltype(std::declval<_Functor&>()())* = nullptr>
-    void KeyValue(string_init key, _Functor&& innerScope) {
-        BeginKeyValue(key);
+    void KeyValue(FString&& key, _Functor&& innerScope) {
+        BeginKeyValue(std::move(key));
         innerScope();
+        EndKeyValue();
+    }
+
+    void BeginKeyValue(string_init key) {
+        BeginKeyValue(FString(key));
+    }
+
+    // visitor
+
+    void operator ()(std::monostate) {}
+
+    void operator ()(boolean v) { Write(v); }
+    void operator ()(integer v) { Write(v); }
+    void operator ()(uinteger v) { Write(v); }
+    void operator ()(floating_point v) { Write(v); }
+
+    void operator ()(string_init v) { Write(v); }
+    void operator ()(wstring_init v) { Write(v); }
+    void operator ()(const string_view& v) { Write(string_init(v.MakeView())); }
+    void operator ()(const wstring_view& v) { Write(wstring_init(v.MakeView())); }
+    void operator ()(const string_format& v) { Write(v); }
+    void operator ()(const wstring_format& v) { Write(v); }
+
+    void operator ()(array_init v) { Array(v.begin(), v.end()); }
+    void operator ()(const array_view& v) { Array(v.begin(), v.end()); }
+    void operator ()(TPtrRef<const array_view> v) { operator ()(*v); }
+
+    void operator ()(object_init v) { Object(v.begin(), v.end()); }
+    void operator ()(const object_view& v) { Object(v.begin(), v.end()); }
+    void operator ()(TPtrRef<const object_view> v) { operator ()(*v); }
+
+    void operator ()(const value_init& v) { std::visit(*this, v); }
+    void operator ()(const value_view& v) { std::visit(*this, v); }
+
+    void operator ()(const key_value_init& v) {
+        BeginKeyValue(v.key);
+        operator ()(v.value);
+        EndKeyValue();
+    }
+    void operator ()(const key_value_view& v) {
+        BeginKeyValue(string_init(v.key.MakeView()));
+        operator ()(v.value);
+        EndKeyValue();
+    }
+
+    template <typename _Al>
+    void operator ()(const array<_Al>& v) { Array(v.begin(), v.end()); }
+    template <typename _Al>
+    void operator ()(const object<_Al>& v) { Object(v.begin(), v.end()); }
+    template <typename _Al>
+    void operator ()(const value<_Al>& v) { std::visit(*this, v); }
+    template <typename _Al>
+    void operator ()(const key_value<_Al>& v) {
+        BeginKeyValue(string_init(v.key));
+        operator ()(v.value);
         EndKeyValue();
     }
 };
@@ -139,17 +219,43 @@ public:
 template <typename _Allocator = default_allocator>
 class TBuilder final : private _Allocator, public IBuilder {
 public:
-    TBuilder();
-    ~TBuilder();
+    using string_type = string<_Allocator>;
+    using wstring_type = wstring<_Allocator>;
+    using array_type = array<_Allocator>;
+    using object_type = object<_Allocator>;
+    using value_type = value<_Allocator>;
+    using key_value_type = key_value<_Allocator>;
 
-    virtual value_block ToValueBlock() override final;''
+    explicit TBuilder(TPtrRef<value_type> dst) NOEXCEPT { Reset(dst); }
+    virtual ~TBuilder() override;
 
-    virtual void Write(boolean v) override final;
-    virtual void Write(integer v) override final;
-    virtual void Write(uinteger v) override final;
-    virtual void Write(floating_point v) override final;
-    virtual void Write(string_init v) override final;
-    virtual void Write(wstring_init v) override final;
+    TBuilder(TPtrRef<value_type> dst, const _Allocator& allocator) : _Allocator(allocator) { Reset(dst); }
+    TBuilder(TPtrRef<value_type> dst, _Allocator&& rallocator) NOEXCEPT : _Allocator(std::move(rallocator)) { Reset(dst); }
+
+    TBuilder(const TBuilder&) = delete;
+    TBuilder& operator =(const TBuilder&) = delete;
+
+    TBuilder(TBuilder&& rvalue) NOEXCEPT
+    :   _Allocator(std::move(rvalue.Allocator_()))
+    ,   _edits(std::move(rvalue._edits))
+    {}
+    TBuilder& operator =(TBuilder&&) = delete;
+
+    void Reset(TPtrRef<value_type> dst);
+
+    virtual size_t BlockSize() const NOEXCEPT override final;
+    virtual value_block ToValueBlock(FAllocatorBlock block) override final;
+
+    virtual void Write(boolean v) override final { SetValue_(v); }
+    virtual void Write(integer v) override final { SetValue_(v); }
+    virtual void Write(uinteger v) override final { SetValue_(v); }
+    virtual void Write(floating_point v) override final { SetValue_(v); }
+    virtual void Write(string_init v) override final { SetValue_(string_type(v)); }
+    virtual void Write(wstring_init v) override final { SetValue_(wstring_type(v)); }
+    virtual void Write(const string_format& v) override final;
+    virtual void Write(const wstring_format& v) override final;
+    virtual void Write(FString&& v) override final { SetValue_(std::move(v)); }
+    virtual void Write(FWString&& v) override final { SetValue_(std::move(v)); }
 
     virtual void BeginArray(size_t capacity = 0) override final;
     virtual void EndArray() override final;
@@ -157,152 +263,23 @@ public:
     virtual void BeginObject(size_t capacity = 0) override final;
     virtual void EndObject() override final;
 
-    virtual void BeginKeyValue(string_init key) override final;
+    virtual void BeginKeyValue(FString&& rkey) override final;
     virtual void EndKeyValue() override final;
 
-private:
-
-};
-//----------------------------------------------------------------------------
-#if 0
-template <typename _Allocator = default_allocator>
-class TBuilder final : public IBuilder, _Allocator {
-public:
-    using allocator_traits = TAllocatorTraits<_Allocator>;
-
-    using string = string<_Allocator>;
-    using wstring = wstring<_Allocator>;
-    using array = array<_Allocator>;
-    using object = object<_Allocator>;
-    using value = value<_Allocator>;
-    using key_value = key_value<_Allocator>;
-
-    explicit TBuilder(TPtrRef<value> result);
-    TBuilder(_Allocator&& rallocator, TPtrRef<value> result) NOEXCEPT;
-    TBuilder(const _Allocator& allocator, TPtrRef<value> result);
-    ~TBuilder() override;
-
-    value& Head() const { return _edit.back(); }
-
-public: // IBuilder interface
-    virtual void Write(boolean v) override final;
-    virtual void Write(integer v) override final;
-    virtual void Write(uinteger v) override final;
-    virtual void Write(floating_point v) override final;
-    virtual void Write(string_view v) override final;
-    virtual void Write(wstring_view v) override final;
-
-    virtual void BeginArray(size_t capacity = 0) override;
-    virtual void EndArray() override final;
-
-    virtual void BeginObject(size_t capacity = 0) override final;
-    virtual void EndObject() override final;
-
-    virtual void BeginKeyValue(string_view key) override final;
-    virtual void EndKeyValue() override final;
-
-public: // specialized members
-    TBuilder& operator <<(boolean v);
-    TBuilder& operator <<(integer v);
-    TBuilder& operator <<(uinteger v);
-    TBuilder& operator <<(floating_point v);
-    TBuilder& operator <<(string&& v);
-    TBuilder& operator <<(wstring&& v);
-    TBuilder& operator <<(array&& v);
-    TBuilder& operator <<(object&& v);
-
-    TBuilder operator [](string&& key);
-
-    void BeginKeyValue(string&& key);
-
-    template <typename _Functor, decltype(std::declval<_Functor&>()())* = nullptr>
-    void KeyValue(string&& key, _Functor&& functor);
-
-private:
-    const _Allocator& Allocator_() const { return (*this); }
-
-    value& Write_(value&& v);
-
-    VECTORINSITU(Opaq, TPtrRef<value>, 16) _edit;
-};
-//----------------------------------------------------------------------------
-template <typename _Allocator = default_allocator>
-class TBlockBuilder final : public IBuilder, _Allocator {
-public:
-    using allocator_traits = TAllocatorTraits<_Allocator>;
-
-    using string = string<_Allocator>;
-    using wstring = wstring<_Allocator>;
-    using array = array<_Allocator>;
-    using object = object<_Allocator>;
-    using value = value<_Allocator>;
-    using key_value = key_value<_Allocator>;
-
-    explicit TBlockBuilder(TPtrRef<value> result) {
-        _edit.push_back(result);
-    }
-    TBlockBuilder(_Allocator&& rallocator, TPtrRef<value> result) NOEXCEPT : _Allocator(std::move(rallocator)) {
-        _edit.push_back(result);
-    }
-    TBlockBuilder(const _Allocator& allocator, TPtrRef<value> result) : _Allocator(allocator) {
-        _edit.push_back(result);
-    }
-    ~TBlockBuilder() override {
-        Assert_NoAssume(_edit.size() == 1);
-    }
-
-    value& Head() const { return _edit.back(); }
-
-public: // IBuilder interface
-    virtual void Write(boolean v) override final { AppendScalar_(v); }
-    virtual void Write(integer v) override final { AppendScalar_(v); }
-    virtual void Write(uinteger v) override final { AppendScalar_(v); }
-    virtual void Write(floating_point v) override final { AppendScalar_(v); }
-    virtual void Write(string_view v) override final { AppendScalar_(string(v)); }
-    virtual void Write(wstring_view v) override final { AppendScalar_(wstring(v)); }
-
-    virtual void BeginArray(size_t capacity = 0) override {
-        _edit.push_back(AppendScalar_(array{ capacity, Allocator_() }));
-    }
-    virtual void EndArray() override final {
-        Assert_NoAssume(_edit.size() > 1);
-        Assert_NoAssume(std::get_if<array>(Head()));
-        _edit.pop_back();
-    }
-
-    virtual void BeginObject(size_t capacity = 0) override final {
-        _edit.push_back(AppendScalar_(object{ capacity, Allocator_() }));
-    }
-    virtual void EndObject() override final {
-        Assert_NoAssume(_edit.size() > 1);
-        Assert_NoAssume(std::get_if<object>(Head()));
-        _edit.pop_back();
-    }
-
-    virtual void BeginKeyValue(string_view key) override final {
-        object& obj = std::get<object>(Head());
-        obj.emplace_back(std::move(key), value{});
-        _edit.push_back(obj.back().value);
-    }
-    virtual void EndKeyValue() override final {
-        Assert_NoAssume(_edit.size() > 1);
-        _edit.pop_back();
+    using IBuilder::KeyValue;
+    void KeyValue(string_type&& rkey, value_type&& rvalue) {
+        BeginKeyValue(std::move(rkey));
+        SetValue_(std::move(rvalue));
+        EndKeyValue();
     }
 
 private:
-    const _Allocator& Allocator_() const { return (*this); }
+    _Allocator& Allocator_() { return (*this); }
 
-    value& AppendScalar_(value&& v) {
-        if (Head().valueless_by_exception())
-            return (Head() = std::move(v));
+    value_type& Head_() NOEXCEPT;
+    value_type& SetValue_(value_type&& rvalue);
 
-        array& arr = std::get<array>(Head());
-        arr.push_back(std::move(v));
-        return arr.back();
-    }
-
-    VECTORINSITU(Opaq, void**, 8) _addresses;
-    VECTORINSITU(Opaq, TPtrRef<value_view>, 8) _edit;
+    TFixedSizeStack<TPtrRef<value_type>, 8> _edits;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -315,7 +292,6 @@ template <typename _Char, typename _Allocator>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const value<_Allocator>& v);
 template <typename _Char, typename _Allocator>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const key_value<_Allocator>& v);
-#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -323,5 +299,3 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const key_val
 } //!namespace PPE
 
 #include "Misc/OpaqueBuilder-inl.h"
-
-#endif

@@ -7,7 +7,7 @@
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryView.h"
 #include "Memory/RelativeView.h"
-#include "Misc/Function_fwd.h"
+#include "Misc/Function.h"
 #include "Meta/Optional.h"
 
 #include <initializer_list>
@@ -43,8 +43,8 @@ using object_init = TMemoryView<const key_value_init>;
 //----------------------------------------------------------------------------
 // can provide a format function to generate non-trivial strings
 //----------------------------------------------------------------------------
-using string_format = TFunction<void(FTextWriter&)>;
-using wstring_format = TFunction<void(FWTextWriter&)>;
+using string_format = TSmallFunction<void(FTextWriter&)>;
+using wstring_format = TSmallFunction<void(FWTextWriter&)>;
 //----------------------------------------------------------------------------
 // *_view variants are packed inside a single dynamically allocated block
 //----------------------------------------------------------------------------
@@ -57,6 +57,7 @@ using object_view = TRelativeView<const key_value_view>;
 //----------------------------------------------------------------------------
 namespace details {
 using value_init_variant = std::variant<
+    std::monostate,
     boolean, integer, uinteger, floating_point,
     string_init, wstring_init,
     array_init, object_init,
@@ -95,7 +96,8 @@ using value_view_variant = std::variant<
 } //!details
 struct value_view : details::value_view_variant {
     using details::value_view_variant::value_view_variant;
-    PPE_FAKEBOOL_OPERATOR_DECL() { return not details::value_view_variant::valueless_by_exception(); }
+
+    PPE_FAKEBOOL_OPERATOR_DECL() { return not std::holds_alternative<std::monostate>(*this); }
 };
 struct key_value_view { string_view key; value_view value; };
 //----------------------------------------------------------------------------
@@ -116,6 +118,8 @@ PPE_ASSUME_TYPE_AS_POD(key_value_view);
 //----------------------------------------------------------------------------
 struct value_block {
     FAllocatorBlock block;
+
+    PPE_FAKEBOOL_OPERATOR_DECL() { return !!block; }
 
     TPtrRef<value_view> Value() { return static_cast<value_view*>(block.Data); }
     TPtrRef<const value_view> Value() const { return static_cast<const value_view*>(block.Data); }
@@ -190,6 +194,9 @@ PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const value_view& v);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const value_view& v);
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const key_value_view& v);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const key_value_view& v);
+//----------------------------------------------------------------------------
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const value_block& v);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const value_block& v);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

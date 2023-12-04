@@ -440,12 +440,17 @@ NODISCARD CONSTEXPR TMemoryView<Meta::TAddConst<T> > MakeConstView(T* pbegin, T*
 }
 //----------------------------------------------------------------------------
 template <typename T>
-NODISCARD CONSTF TMemoryView<Meta::TEnableIf<std::is_standard_layout_v<T>, u8>> MakeRawView(T& assumePod) {
+NODISCARD CONSTF TMemoryView<Meta::TEnableIf<std::is_standard_layout_v<T>, u8>> MakePodView(T& assumePod) {
     return { reinterpret_cast<u8*>(&assumePod), sizeof(T) };
 }
 //----------------------------------------------------------------------------
 template <typename T>
-NODISCARD CONSTF TMemoryView<Meta::TEnableIf<std::is_standard_layout_v<T>, const u8>> MakeRawView(const T& assumePod) {
+NODISCARD CONSTF TMemoryView<Meta::TEnableIf<std::is_standard_layout_v<T>, const u8>> MakePodView(const T& assumePod) {
+    return { reinterpret_cast<const u8*>(&assumePod), sizeof(T) };
+}
+//----------------------------------------------------------------------------
+template <typename T>
+NODISCARD CONSTF TMemoryView<Meta::TEnableIf<std::is_standard_layout_v<T>, const u8>> MakePodConstView(const T& assumePod) {
     return { reinterpret_cast<const u8*>(&assumePod), sizeof(T) };
 }
 //----------------------------------------------------------------------------
@@ -465,11 +470,6 @@ NODISCARD TMemoryView<u8> MakeRawView(const TMemoryView<T>& assumePods) {
 template <typename T>
 NODISCARD TMemoryView<const u8> MakeRawView(const TMemoryView<const T>& assumePods) {
     return assumePods.template Cast<const u8>();
-}
-//----------------------------------------------------------------------------
-template <typename T>
-NODISCARD auto MakeRawConstView(const T& assumePod) {
-    return MakeRawView(assumePod);
 }
 //----------------------------------------------------------------------------
 template <typename T>

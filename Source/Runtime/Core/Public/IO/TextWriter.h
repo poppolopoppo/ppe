@@ -57,9 +57,9 @@ public:
         BoolAlpha   = 1 << 0,
         Compact     = 1 << 1,
         Crlf        = 1 << 2,
-        TruncateR   = 1 << 3,
-        TruncateL   = 1 << 4,
-        //Reserved3 = 1 << 5,
+        Escape      = 1 << 3,
+        TruncateR   = 1 << 4,
+        TruncateL   = 1 << 5,
 
         _Truncate   = (TruncateL | TruncateR),
     };

@@ -86,7 +86,7 @@ private:
 //----------------------------------------------------------------------------
 template <typename T>
 bool FSocketBuffered::ReadPOD(T& assumePOD) {
-    return (sizeof(T) == Read(MakeRawView(assumePOD)) );
+    return (sizeof(T) == Read(MakePodView(assumePOD)) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -104,7 +104,7 @@ bool FSocketBuffered::PeekPOD(T& assumePOD) {
 //----------------------------------------------------------------------------
 template <typename T>
 bool FSocketBuffered::WritePOD(const T& assumePOD) {
-    return (sizeof(T) == Write(MakeRawView(assumePOD)) );
+    return (sizeof(T) == Write(MakePodView(assumePOD)) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -17,13 +17,20 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+FFileStream::FFileStream(FFileHandle handle, bool autoClose/* = true */) NOEXCEPT
+:   _handle(handle)
+,   _autoClose(autoClose) {
+    Assert(_handle == handle);
+}
+//----------------------------------------------------------------------------
 FFileStream::~FFileStream() {
-    if (Good())
+    if (Good() && _autoClose)
         VerifyRelease(FPlatformLowLevelIO::Close(_handle));
 }
 //----------------------------------------------------------------------------
 FFileStream::FFileStream(FFileStream&& rvalue) NOEXCEPT
     : _handle(rvalue._handle)
+    , _autoClose(rvalue._autoClose)
 #if WITH_PPE_FILESTREAM_FILENAMEDBG
     , _filenameForDebug(std::move(rvalue._filenameForDebug))
 #endif
@@ -32,15 +39,18 @@ FFileStream::FFileStream(FFileStream&& rvalue) NOEXCEPT
 }
 //----------------------------------------------------------------------------
 FFileStream& FFileStream::operator =(FFileStream&& rvalue) NOEXCEPT {
-    if (Good())
+    if (Good() && _autoClose)
         VerifyRelease(FPlatformLowLevelIO::Close(_handle));
 
     Assert(Bad());
-    std::swap(_handle, rvalue._handle);
+    _handle = rvalue._handle;
+    _autoClose = rvalue._autoClose;
+
 #if WITH_PPE_FILESTREAM_FILENAMEDBG
     _filenameForDebug = std::move(rvalue._filenameForDebug);
 #endif
 
+    rvalue._handle = FPlatformLowLevelIO::InvalidHandle;
     return (*this);
 }
 //----------------------------------------------------------------------------

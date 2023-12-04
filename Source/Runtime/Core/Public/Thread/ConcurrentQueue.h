@@ -5,7 +5,6 @@
 #include "Allocator/Allocation.h"
 #include "Container/Pair.h"
 #include "Container/Vector.h"
-#include "Meta/ThreadResource.h"
 
 #include <algorithm>
 #include <condition_variable>
@@ -88,7 +87,7 @@ private:
 
     struct FPrioritySort_ {
         bool operator ()(const item_type& lhs, const item_type& rhs) const {
-            return (lhs.first < rhs.first);
+            return (rhs.first < lhs.first); // std::pop_heap() returns the max, so invert so order to get min instead
         }
     };
 

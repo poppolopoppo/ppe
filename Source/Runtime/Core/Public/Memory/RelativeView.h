@@ -90,7 +90,7 @@ struct TRelativeView {
         Count = 0;
     }
     void reset(TMemoryView<T> view) {
-        Offset = checked_cast<i32>(bit_cast<intptr_t>(view.data()) - bit_cast<intptr_t>(this));
+        Offset = (view.empty() ? 0 : checked_cast<i32>(bit_cast<intptr_t>(view.data()) - bit_cast<intptr_t>(this)));
         Count = checked_cast<u32>(view.size());
     }
 };

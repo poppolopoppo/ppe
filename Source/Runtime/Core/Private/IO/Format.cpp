@@ -41,8 +41,9 @@ struct TFormatTraits_ {
         fmt_NONCOMPACT =    STRING_LITERAL(_Char, '^'),
         fmt_zeropad =       STRING_LITERAL(_Char, '#'),
         fmt_center =        STRING_LITERAL(_Char, '@'),
-        fmt_truncR =        STRING_LITERAL(_Char, '/'),
-        fmt_truncL =        STRING_LITERAL(_Char, '\\'),
+        fmt_truncR =        STRING_LITERAL(_Char, '<'),
+        fmt_truncL =        STRING_LITERAL(_Char, '>'),
+        fmt_escape =        STRING_LITERAL(_Char, '\\'),
     };
 };
 //----------------------------------------------------------------------------
@@ -198,6 +199,10 @@ NO_INLINE static EFormatParserResult_ FormatParser_(TBasicStringView<_Char>& for
                         continue;
                     case format_traits::fmt_truncL:
                         props.Format.SetMisc(FTextFormat::TruncateL, true);
+                        format = format.ShiftFront();
+                        continue;
+                    case format_traits::fmt_escape:
+                        props.Format.SetMisc(FTextFormat::Escape, true);
                         format = format.ShiftFront();
                         continue;
                     }

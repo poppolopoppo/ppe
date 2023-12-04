@@ -27,10 +27,18 @@ FTimespan FTimepoint::Duration(const FTimepoint& start, const FTimepoint& stop) 
     return Units::Time::FSeconds(FPlatformTime::ToSeconds(cycles.Value()));
 }
 //----------------------------------------------------------------------------
+FTimespan FTimepoint::SignedDuration(const FTimepoint& start, const FTimepoint& stop) {
+    if (Likely(start <= stop))
+        return Duration(start, stop);
+
+    const FTimespan duration = Duration(stop, start);
+    return -duration.Value();
+}
+//----------------------------------------------------------------------------
 FTimestamp FTimepoint::Timestamp() const {
     // add elapsed duration since process start and add it to process time stamp
     const FCurrentProcess& process = FCurrentProcess::Get();
-    const FTimespan elapsedSinceProcessStart = Duration(process.StartTicks(), *this);
+    const FTimespan elapsedSinceProcessStart = SignedDuration(process.StartTicks(), *this);
     return (process.StartDate() + elapsedSinceProcessStart);
 }
 //----------------------------------------------------------------------------

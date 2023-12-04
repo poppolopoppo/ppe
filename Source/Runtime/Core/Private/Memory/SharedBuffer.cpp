@@ -134,7 +134,7 @@ FUniqueBuffer FUniqueBuffer::Clone(FRawMemoryConst view) {
     view.CopyTo(buffer.MakeView());
 #else
     Assert_NoAssume(buffer.SizeInBytes() == view.SizeInBytes());
-    FPlatformMemory::Memstream(buffer.Data(), view.data(), view.SizeInBytes());
+    FPlatformMemory::Memcpy(buffer.Data(), view.data(), view.SizeInBytes());
 #endif
     return buffer;
 }

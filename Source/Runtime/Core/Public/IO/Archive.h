@@ -5,6 +5,7 @@
 #include "Container/Resizable.h"
 #include "Container/Token_fwd.h"
 #include "IO/FileSystem_fwd.h"
+#include "Memory/MemoryView.h"
 #include "Meta/Enum.h"
 
 namespace PPE {
@@ -57,9 +58,9 @@ public:
 
     virtual void Serialize(FRawMemory view) = 0;
 
-    virtual void SerializeBool(bool* value) { Serialize(MakeRawView(*value)); }
+    virtual void SerializeBool(bool* value) { Serialize(MakePodView(*value)); }
 
-	virtual void SerializeChar(char* value) { Serialize(MakeRawView(*value)); }
+	virtual void SerializeChar(char* value) { Serialize(MakePodView(*value)); }
 	virtual void SerializeChar(wchar_t* value) { SerializePod(*this, value); }
 
     virtual void SerializeInt(i16* value) { SerializePod(*this, value); }
@@ -92,7 +93,7 @@ public:
     PPE_CORE_API virtual void SerializeCompressed(FUniqueBuffer* buffer);
 
     template <typename T, Meta::TEnableIf<Meta::is_pod_v<T>>* = nullptr>
-    friend void SerializePod(FArchive& ar, T* value) { ar.Serialize(MakeRawView(*value)); }
+    friend void SerializePod(FArchive& ar, T* value) { ar.Serialize(MakePodView(*value)); }
     template <typename T>
     friend void SerializeCompactSigned(FArchive& ar, TCompactInt<T>* value);
     template <typename T>

@@ -43,7 +43,6 @@
 #   include "Thread/Task/TaskManager.h"
 #   include "Thread/Task/TaskHelpers.h"
 #   include "Thread/ThreadContext.h"
-#   include "Thread/ThreadPool.h"
 
 #   include "Time/Timestamp.h"
 
@@ -457,12 +456,10 @@ public: // ILowLevelLogger
     virtual void Flush(bool synchronous) override final {
         const bool enableAsynchronous = _enableAsynchronous.load(std::memory_order_relaxed);
         if ((not enableAsynchronous || synchronous) && not GIsInLogger_) {
-            // wait for all potential logs before flushing
-            for (u32 loop = 0; loop < 5 && TaskManager_().WaitForAll(500/* 0.5 seconds */); ++loop){}
             _userLogger->Flush(true);
         }
         else if (enableAsynchronous) {
-            TaskManager_().RunAndWaitFor([this](ITaskContext&) {
+            _asyncWorker.RunAndWaitFor([this](ITaskContext&) {
                 _userLogger->Flush(true); // flush synchronously in asynchronous task
                 // good idea to trim the linear heaps when flushing
                 TrimCache();
@@ -472,19 +469,18 @@ public: // ILowLevelLogger
 
 private:
     const TPtrRef<FUserLogger> _userLogger;
+    FTaskManager _asyncWorker;
     std::atomic_bool _enableAsynchronous{ true };
 
     FBackgroundLogger() NOEXCEPT
     :   FLogAllocator()
     ,   _userLogger(FUserLogger::Get())
-    {}
-
-    ~FBackgroundLogger() override {
-        TaskManager_().WaitForAll(); // blocking wait before destroying, avoid necrophilia
+    ,   _asyncWorker("Logger", PPE_THREADTAG_LOGGER, 1, EThreadPriority::BelowNormal) {
+        _asyncWorker.Start({ FPlatformThread::SecondaryThreadAffinity() });
     }
 
-    static FTaskManager& TaskManager_() {
-        return FBackgroundThreadPool::Get();
+    ~FBackgroundLogger() override {
+        _asyncWorker.Shutdown();// blocking wait before destroying, avoid necrophilia
     }
 
     bool ShouldTreatInBackground_(const FLoggerCategory& category, EVerbosity level) const NOEXCEPT {
@@ -499,7 +495,7 @@ private:
     FORCE_INLINE void LogMessageBackground_(FMessage& msg) const {
         Assert_NoAssume(msg.RefCount > 0);
         if (Likely(ShouldTreatInBackground_(msg.Inner.Category, msg.Inner.Level())))
-            return TaskManager_().Run([this, msg{MakePtrRef(msg)}](ITaskContext&) {
+            return _asyncWorker.Run([this, msg{MakePtrRef(msg)}](ITaskContext&) {
                 LogMessageImmediate_(msg);
             });
         LogMessageImmediate_(msg);
@@ -842,7 +838,7 @@ NODISCARD static bool NotifyLoggerMessage_(
         ignoreKey << MakeStringView("NotifyLoggerMessage")
                   << category.Name
                   << site.SourceFile.MakeView()
-                  << MakeRawConstView(site.SourceLine);
+                  << MakePodConstView(site.SourceLine);
         if (FIgnoreList::HitIFP(ignoreKey) == 0)
 #   endif
         {
@@ -932,7 +928,7 @@ void FLogger::Start() {
     else {
         const auto& proc = FCurrentProcess::Get();
 
-        RegisterStdoutLogger();
+        RegisterStdoutLogger(FCurrentProcess::Get().HasArgument(L"-LOGUseColors"));
 
         const FWString logPath = FPlatformFile::JoinPath({
             proc.SavedPath(), L"Log",
@@ -1027,15 +1023,9 @@ private:
 class FFileHandleLogger_ final : public ILogger {
 public:
     explicit FFileHandleLogger_(FPlatformLowLevelIO::FHandle fileHandle, bool autoClose = true)
-    :   _fileWriter(fileHandle)
+    :   _fileWriter(fileHandle, autoClose)
     ,   _buffered(&_fileWriter, FPlatformMemory::PageSize)
-    ,   _autoClose(autoClose)
     {}
-
-    ~FFileHandleLogger_() override {
-        if (_autoClose)
-            Verify(FPlatformLowLevelIO::Close(_fileWriter.Handle()));
-    }
 
     virtual void LogMessage(const FLoggerMessage& msg) override final {
         FTextWriter oss(_buffered);
@@ -1050,35 +1040,28 @@ public:
 private:
     FFileStreamWriter _fileWriter;
     FBufferedStreamWriter _buffered;
-    const bool _autoClose{ false };
 };
 //----------------------------------------------------------------------------
 class FJsonHandleLogger_ final : public ILogger {
 public:
     explicit FJsonHandleLogger_ (FPlatformLowLevelIO::FHandle fileHandle, bool autoClose = true)
-    :   _fileWriter(fileHandle)
+    :   _fileWriter(fileHandle, autoClose)
     ,   _buffered(&_fileWriter, FPlatformMemory::PageSize)
-    ,   _autoClose(autoClose)
     {}
-
-    ~FJsonHandleLogger_() override {
-        if (_autoClose)
-            Verify(FPlatformLowLevelIO::Close(_fileWriter.Handle()));
-    }
 
     virtual void LogMessage(const FLoggerMessage& msg) override final {
         FTextWriter oss(_buffered);
-        oss << FTextFormat::Compact << Opaq::object_init{
+        oss << FTextFormat::Compact << FTextFormat::Escape << Opaq::object_init{
             {"timestamp", msg.Site.LogTime.Timestamp().Value() },
             {"tid", bit_cast<u32>(msg.Site.ThreadId)},
             {"category", msg.Category->Name},
             {"severity", static_cast<u32>(msg.Level())},
             {"message", msg.Text().MakeView()},
-            {"data", msg.Data},
-/*            {"site", Opaq::object_init{
-                {"file", msg.Site.SourceFile},
+            {"data", msg.Data ? Opaq::value_init{msg.Data} : std::monostate{}},
+            {"site", Opaq::object_init{
+                {"file", msg.Site.SourceFile.MakeView()},
                 {"line", msg.Site.SourceLine}
-            }}*/
+            }},
         } << Eol;
     }
 
@@ -1089,25 +1072,34 @@ public:
 private:
     FFileStreamWriter _fileWriter;
     FBufferedStreamWriter _buffered;
-    const bool _autoClose{ false };
 };
 //----------------------------------------------------------------------------
-class FConsoleWriterLogger_ final : public ILogger {
+class FConsoleWriterLogger_ final : public ILogger, IStreamWriter {
+    std::streamoff _offset{ 0 };
+
+    FBufferedStreamWriter _buffered;
+    FStringBuilder _sb;
+
     const bool _available;
+    const bool _useColors;
 public:
-    FConsoleWriterLogger_()
-    :   _available(FPlatformConsole::Open())
+    explicit FConsoleWriterLogger_(bool useColors/* colors are REALLY *SLOW* (on Windows at least) */)
+    :   _buffered(this, 16_KiB)
+    ,   _available(FPlatformConsole::Open())
+    ,   _useColors(useColors)
     {}
 
     ~FConsoleWriterLogger_() override {
+        Flush(true);
         FPlatformConsole::Close();
     }
 
-public: // ILogger
-    virtual void LogMessage(const FLoggerMessage& msg) override final {
-        if (not _available)
-            return;
+    void LogBuffered(const FLoggerMessage& msg) {
+        FTextWriter oss(&_buffered);
+        FLogFmt::Print(oss, msg.Category, msg.Site, msg.Text().MakeView(), msg.Data);
+    }
 
+    void LogWithColors(const FLoggerMessage& msg) {
         DEFERRED{ _sb.clear(); };
         FLogFmt::Print(_sb, msg.Category, msg.Site, msg.Text().MakeView(), msg.Data);
 
@@ -1146,13 +1138,45 @@ public: // ILogger
         FPlatformConsole::SyntaxicHighlight(_sb.Written(), attrs);
     }
 
-    virtual void Flush(bool) override final {
-        if (_available)
+public: // ILogger
+    virtual void LogMessage(const FLoggerMessage& msg) override final {
+        if (not _available)
+            return;
+        if (_useColors)
+            LogWithColors(msg);
+        else
+            LogBuffered(msg);
+    }
+
+    virtual void Flush(bool blocking) override final {
+        _buffered.Flush();
+        if (_available && blocking )
             FPlatformConsole::Flush();
     }
 
-private:
-    FStringBuilder _sb;
+public: // IStreamWriter
+    virtual bool IsSeekableO(ESeekOrigin origin = ESeekOrigin::All) const NOEXCEPT override final {
+        Unused(origin);
+        return false;
+    }
+    virtual std::streamoff TellO() const NOEXCEPT override final {
+        return _offset;
+    }
+    virtual std::streamoff SeekO(std::streamoff offset, ESeekOrigin origin = ESeekOrigin::Begin) override final {
+        Unused(offset, origin);
+        AssertNotImplemented();
+    }
+    virtual bool Write(const void* storage, std::streamsize sizeInBytes) override final {
+        _offset += sizeInBytes;
+        FPlatformConsole::Write(FStringView(static_cast<const char*>(storage), sizeInBytes));
+        return true;
+    }
+    virtual size_t WriteSome(const void* storage, size_t eltsize, size_t count) override final {
+        const size_t sizeInBytes = (eltsize * count);
+        return (Write(storage, static_cast<std::streamsize>(sizeInBytes)) ? sizeInBytes : 0);
+    }
+
+    virtual class IBufferedStreamWriter* ToBufferedO() NOEXCEPT override final { return nullptr; }
 };
 //----------------------------------------------------------------------------
 #if USE_PPE_PLATFORM_DEBUG
@@ -1196,9 +1220,9 @@ public:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FLogger::RegisterStdoutLogger() {
+void FLogger::RegisterStdoutLogger(bool useColors) {
     if (FPlatformConsole::HasConsole)
-        RegisterLogger(TRACKING_NEW(Logger, FConsoleWriterLogger_), true);
+        RegisterLogger(TRACKING_NEW(Logger, FConsoleWriterLogger_){useColors}, true);
     else
         RegisterLogger(TRACKING_NEW(Logger, FFileHandleLogger_){FPlatformLowLevelIO::Stdout, false}, true);
 }
@@ -1214,7 +1238,7 @@ void FLogger::RegisterAppendFileLogger(FConstWChar filename) {
             EOpenPolicy::Writable,
             EAccessPolicy::Create|EAccessPolicy::Append|EAccessPolicy::Binary|EAccessPolicy::ShareRead);
     AssertRelease(FPlatformLowLevelIO::InvalidHandle != hFile);
-    RegisterLogger(TRACKING_NEW(Logger, FFileHandleLogger_){hFile}, true);
+    RegisterLogger(TRACKING_NEW(Logger, FFileHandleLogger_){hFile, true}, true);
 }
 //----------------------------------------------------------------------------
 void FLogger::RegisterAppendJsonLogger(FConstWChar filename) {
@@ -1222,7 +1246,7 @@ void FLogger::RegisterAppendJsonLogger(FConstWChar filename) {
             EOpenPolicy::Writable,
             EAccessPolicy::Create|EAccessPolicy::Append|EAccessPolicy::Binary|EAccessPolicy::ShareRead);
     AssertRelease(FPlatformLowLevelIO::InvalidHandle != hFile);
-    RegisterLogger(TRACKING_NEW(Logger, FJsonHandleLogger_){hFile}, true);
+    RegisterLogger(TRACKING_NEW(Logger, FJsonHandleLogger_){hFile, true}, true);
 }
 //----------------------------------------------------------------------------
 void FLogger::RegisterRollFileLogger(FConstWChar filename) {

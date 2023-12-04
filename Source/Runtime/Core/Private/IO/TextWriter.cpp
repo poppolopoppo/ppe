@@ -30,7 +30,11 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> st
     if ((fmt.Case() == FTextFormat::Original) &&
         (fmt.Padding() == FTextFormat::Padding_None || str.size() >= fmt.Width()) &&
         (not (fmt.Misc() ^ FTextFormat::_Truncate) || str.size() <= fmt.Width()) ) {
-        ostream.WriteView(str);
+
+        if (fmt.Misc() & FTextFormat::Escape)
+            Escape(w, str, EEscape::Unicode);
+        else
+            ostream.WriteView(str);
 
         // Reset width padding each output to mimic std behavior
         w.Format().SetPadding(FTextFormat::Padding_None);
@@ -82,7 +86,10 @@ static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> st
 
     switch (fmt.Case()) {
     case PPE::FTextFormat::Original:
-        ostream.WriteView(str);
+        if (fmt.Misc() & FTextFormat::Escape)
+            Escape(w, str, EEscape::Unicode);
+        else
+            ostream.WriteView(str);
         break;
     case PPE::FTextFormat::Lowercase:
         foreachitem(ch, str)

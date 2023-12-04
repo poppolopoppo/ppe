@@ -184,7 +184,7 @@ void EncodeUIntVector_(FRawMemory outp, const FRgba32u& value) NOEXCEPT {
     EncodeUIntScalar_<_B, _R + _G>(&bits, value.z);
     EncodeUIntScalar_<_A, _R + _G + _B>(&bits, value.w);
 
-    MakeRawConstView(bits).CutBefore((_R + _G + _B + _A) / 8).CopyTo(outp);
+    MakePodConstView(bits).CutBefore((_R + _G + _B + _A) / 8).CopyTo(outp);
 }
 //----------------------------------------------------------------------------
 template <u32 _R, u32 _G, u32 _B, u32 _A>
@@ -197,7 +197,7 @@ void EncodeIntVector_(FRawMemory outp, const FRgba32i& value) NOEXCEPT {
     EncodeIntScalar_<_B, _R + _G>(&bits, value.z);
     EncodeIntScalar_<_A, _R + _G + _B>(&bits, value.w);
 
-    MakeRawConstView(bits).CutBefore((_R + _G + _B + _A) / 8).CopyTo(outp);
+    MakePodConstView(bits).CutBefore((_R + _G + _B + _A) / 8).CopyTo(outp);
 }
 //----------------------------------------------------------------------------
 template <u32 _R, u32 _G, u32 _B, u32 _A>
@@ -235,7 +235,7 @@ void EncodeFloatVector_(FRawMemory outp, const FRgba32f& value) NOEXCEPT {
         bits[(_R + _G) / 16] = FP32_to_FP16(value.z);
         bits[(_R + _G + _B) / 16] = FP32_to_FP16(value.w);
 
-        MakeRawConstView(bits).CutBefore((_R + _G + _B + _A) / 8).CopyTo(outp);
+        MakePodConstView(bits).CutBefore((_R + _G + _B + _A) / 8).CopyTo(outp);
     }
     else IF_CONSTEXPR ( _R == 32 ) {
         STATIC_ASSERT(Meta::IsAlignedPow2(32, _R + _G + _B + _A));
@@ -246,19 +246,19 @@ void EncodeFloatVector_(FRawMemory outp, const FRgba32f& value) NOEXCEPT {
         bits[(_R + _G) / 32] = value.z;
         bits[(_R + _G + _B) / 32] = value.w;
 
-        MakeRawConstView(bits).CutBefore((_R + _G + _B + _A) / 8).CopyTo(outp);
+        MakePodConstView(bits).CutBefore((_R + _G + _B + _A) / 8).CopyTo(outp);
     }
     else IF_CONSTEXPR( _R == 10 && _G == 10 && _B == 10 && _A == 2 ) {
         STATIC_ASSERT(sizeof(UX10Y10Z10W2N) == sizeof(u32));
 
         const UX10Y10Z10W2N bits{ value };
-        MakeRawConstView(bits).CopyTo(outp);
+        MakePodConstView(bits).CopyTo(outp);
     }
     else IF_CONSTEXPR( _R == 11 && _G == 11 && _B == 10 && _A == 0 ) {
         STATIC_ASSERT(sizeof(UX11Y11Z10) == sizeof(u32));
 
         const UX11Y11Z10 bits{ value.xyz };
-        MakeRawConstView(bits).CopyTo(outp);
+        MakePodConstView(bits).CopyTo(outp);
     }
     else {
         AssertNotImplemented();

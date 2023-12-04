@@ -760,7 +760,7 @@ RHI::PFrameTask FImGuiService::UpdateUniformBuffer_(const RHI::FCommandBufferBat
 
     return cmd->Task(FUpdateBuffer{}
         .SetBuffer(_uniformBuffer)
-        .AddData(MakeRawConstView(pcData)) );
+        .AddData(MakePodConstView(pcData)) );
 }
 //----------------------------------------------------------------------------
 RHI::PFrameTask FImGuiService::RecreateBuffers_(const RHI::FCommandBufferBatch& cmd) {
