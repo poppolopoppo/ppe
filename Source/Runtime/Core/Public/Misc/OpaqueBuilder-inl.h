@@ -107,7 +107,7 @@ struct value_printer {
         operator ()(TBasicStringView<_Char2>(tmp.MakeView().Cast<const _Char2>()));
     }
 
-    void operator ()(std::monostate) NOEXCEPT { Print("nil"); }
+    void operator ()(std::monostate) NOEXCEPT { Print("null"); }
 
     void operator ()(boolean v) { Print(v ? STRING_LITERAL(_Char, "true") : STRING_LITERAL(_Char, "false")); }
     void operator ()(integer v) { Print(v); }
