@@ -7,7 +7,7 @@
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryView.h"
 #include "Memory/RelativeView.h"
-#include "Misc/Function.h"
+#include "Misc/Function_fwd.h"
 #include "Meta/Optional.h"
 
 #include <initializer_list>

@@ -362,6 +362,9 @@ public:
     explicit TSparseArray(allocator_type&& alloc) : allocator_type(std::move(alloc)) {}
     explicit TSparseArray(const allocator_type& alloc) : allocator_type(alloc) {}
 
+    explicit TSparseArray(size_t capacity, allocator_type&& alloc) : TSparseArray(std::move(alloc)) { Reserve(capacity); }
+    explicit TSparseArray(size_t capacity, const allocator_type& alloc) : TSparseArray(alloc) { Reserve(capacity); }
+
     TSparseArray(const TSparseArray& other);
     TSparseArray& operator =(const TSparseArray& other);
 

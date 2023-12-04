@@ -627,8 +627,7 @@ void TBuilder<_Allocator>::EndObject() {
 template <typename _Allocator>
 void TBuilder<_Allocator>::BeginKeyValue(string_type&& key) {
     object_type& obj = std::get<object_type>(Head_());
-    obj.emplace_back(std::move(key), value_type{});
-    _edits.Push(obj.back().value);
+    _edits.Push(Emplace_Back(obj, std::move(key), value_type{})->value);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -645,15 +644,10 @@ auto TBuilder<_Allocator>::Head_() NOEXCEPT -> value_type& {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 auto TBuilder<_Allocator>::SetValue_(value_type&& rvalue) -> value_type& {
-    if (value_type& head = Head_(); Likely(not head)) {
+    if (value_type& head = Head_(); Likely(not head))
         return (head = std::move(rvalue));
-    }
-    else {
-        Assert(std::holds_alternative<array_type>(head));
-        array_type& arr = std::get<array_type>(head);
-        arr.push_back(std::move(rvalue));
-        return arr.back();
-    }
+    else
+        return (*Emplace_Back(std::get<array_type>(head), std::move(rvalue)));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

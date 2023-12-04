@@ -4,7 +4,7 @@
 
 #include "Misc/Opaque.h"
 
-#include "Container/Vector.h"
+#include "Container/SparseArray.h"
 #include "Container/Stack.h"
 #include "IO/String.h"
 
@@ -29,9 +29,9 @@ using string = FString;
 template <typename _Allocator = default_allocator>
 using wstring = FWString;
 template <typename _Allocator = default_allocator>
-using array = VECTOR(Opaq, value<_Allocator>);
+using array = SPARSEARRAY(Opaq, value<_Allocator>);
 template <typename _Allocator = default_allocator>
-using object = VECTOR(Opaq, key_value<_Allocator>);
+using object = SPARSEARRAY(Opaq, key_value<_Allocator>);
 //----------------------------------------------------------------------------
 // value_init: for inline declaration
 //----------------------------------------------------------------------------
