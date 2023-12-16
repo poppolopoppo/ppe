@@ -924,7 +924,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
         }
 
 
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_RHIDEBUG && USE_PPE_ASSERT
         // check if uninitialized shader handles
 
         for (u32 pos = 0; pos < stagingSize; pos += handleSize) {
@@ -934,7 +934,6 @@ bool FVulkanPipelineCache::CreateShaderTable(
 
             AssertMessage_NoAssume("uninitialized RT handle found", matched < handleSize);
         }
-
 #endif
 
         // copy from staging buffer to shader binding table

@@ -27,7 +27,7 @@ public:
 
     const PImGuiContext& ImguiContext() const { return _imGuiContext; }
 
-    void OnUpdateInput(const IInputService& input, FTimespan dt) override;
+    void OnUpdateInput(IInputService& input, FTimespan dt) override;
     void OnWindowFocus(const IInputService& input, const FGenericWindow* previous) override;
 
     void OnRenderFrame(const IRHIService& rhi, FTimespan dt) override;

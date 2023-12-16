@@ -18,7 +18,7 @@ class PPE_APPLICATION_API IUIService {
 public:
     virtual ~IUIService() = default;
 
-    virtual void OnUpdateInput(const IInputService& input, FTimespan dt) = 0;
+    virtual void OnUpdateInput(IInputService& input, FTimespan dt) = 0;
     virtual void OnWindowFocus(const IInputService& input, const Application::FGenericWindow* previous) = 0;
 
     virtual void OnRenderFrame(const IRHIService& rhi, FTimespan dt) = 0;

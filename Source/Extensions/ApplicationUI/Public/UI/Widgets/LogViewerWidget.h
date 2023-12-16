@@ -55,8 +55,8 @@ public:
 
     STATIC_CONST_INTEGRAL(size_t, HistoryCapacity, 1000);
 
-    u32 LastMessagePosted{ INDEX_NONE };
-    u32 LastMessageVisible{ INDEX_NONE };
+    size_t LastMessagePosted{ INDEX_NONE };
+    size_t LastMessageVisible{ INDEX_NONE };
     RINGBUFFER(UI, PHistoryMessage, HistoryCapacity) VisibleMessages;
 
     FLATSET(UI, FHistoryCategory) Categories;

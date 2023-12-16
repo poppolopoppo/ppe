@@ -34,6 +34,51 @@ private:
     FTimepoint _startedAt;
 };
 //----------------------------------------------------------------------------
+class FMovingAverageTimer {
+public:
+    FTimespan Average = -1;
+    FTimespan Min = -1;
+    FTimespan Max = -1;
+    FTimespan Last = -1;
+
+    struct FScope {
+        FMovingAverageTimer& Timer;
+        FTimedScope TimedScope;
+
+        explicit FScope(FMovingAverageTimer& timer) NOEXCEPT : Timer(timer) {}
+        ~FScope() NOEXCEPT {
+            Timer.Update(TimedScope.Elapsed());
+        }
+    };
+
+    void Update(const FTimedScope& scope, int n = 30) NOEXCEPT {
+        Update(scope.Elapsed(), n);
+    }
+    void Update(const FTimespan& elapsed, int n = 30) NOEXCEPT {
+        Assert(elapsed >= 0);
+        Assert(n > 0);
+
+        if (Average < 0) {
+            Average = Min = Max = Last = elapsed;
+            return;
+        }
+
+        // exponential moving average
+        double avg = Average.Value();
+        avg -= avg / n;
+        avg += elapsed.Value() / n;
+        Average.SetValue(avg);
+
+        if (elapsed < Min)
+            Min = elapsed;
+
+        if (elapsed > Max)
+            Max = elapsed;
+
+        Last = elapsed;
+    }
+};
+//----------------------------------------------------------------------------
 class PPE_CORE_API FAtomicTimedScope {
 public:
     explicit FAtomicTimedScope(std::atomic<u64>* pTicks) NOEXCEPT

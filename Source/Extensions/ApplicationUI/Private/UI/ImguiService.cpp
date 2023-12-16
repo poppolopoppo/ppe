@@ -300,7 +300,7 @@ static void PollImguiKeyboardEvents_(ImGuiIO& io, const IInputService& input) {
 #undef MAP_KEYBOARD
 }
 //----------------------------------------------------------------------------
-static void PollImguiMouseEvents_(ImGuiIO& io, const IInputService& input) {
+static void PollImguiMouseEvents_(ImGuiIO& io, IInputService& input) {
     const FMouseState& mouse = input.Mouse();
 
     if (mouse.HasMoved())
@@ -327,25 +327,17 @@ static void PollImguiMouseEvents_(ImGuiIO& io, const IInputService& input) {
     pollButton(4, EMouseButton::Thumb1);
 
     FGenericWindow* const window = input.FocusedWindow();
-    if (window) {
-        const FPlatformWindow& halWnd = *checked_cast<const FPlatformWindow*>(window);
+    if (not window)
+        return;
 
-        if (io.WantSetMousePos) {
-            int screenX{ RoundToInt(io.MousePos.x) };
-            int screenY{ RoundToInt(io.MousePos.y) };
-            FPlatformMouse::ClientToScreen(halWnd, &screenX, &screenY);
-            FPlatformMouse::SetCursorPosition(screenX, screenY);
-        }
+    window->SetCursorCapture(io.WantCaptureMouse);
 
-        if (io.WantCaptureMouse)
-            FPlatformMouse::SetCapture(halWnd);
-        else
-            FPlatformMouse::ResetCapture();
-    } else {
-        FPlatformMouse::ResetCapture();
-    }
+    if (io.WantSetMousePos)
+        window->SetCursorPosition(
+            RoundToInt(io.MousePos.x),
+            RoundToInt(io.MousePos.y));
 
-    if (not (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange) && window) {
+    if (not (io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange)) {
         const ImGuiMouseCursor imguiCursor = ImGui::GetMouseCursor();
 
         if (imguiCursor == ImGuiMouseCursor_None || io.MouseDrawCursor) {
@@ -572,7 +564,7 @@ void FImGuiService::TearDown(IInputService& input, IRHIService& rhi) {
     }
 }
 //----------------------------------------------------------------------------
-void FImGuiService::OnUpdateInput(const IInputService& input, FTimespan dt) {
+void FImGuiService::OnUpdateInput(IInputService& input, FTimespan dt) {
     ImGuiIO& io = ImGui::GetIO();
     PPE_LOG_CHECKVOID(UI, io.Fonts->IsBuilt());
 

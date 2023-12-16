@@ -161,7 +161,8 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* []) {
         EIODetouringOptions::IgnoreDoNone      |
         EIODetouringOptions::IgnorePipe        |
         EIODetouringOptions::IgnoreStdio       |
-        EIODetouringOptions::IgnoreSystem      );
+        EIODetouringOptions::IgnoreSystem      |
+        EIODetouringOptions::IgnoreVolume      );
 
     // launch detoured process
     int nExitCode = 0;

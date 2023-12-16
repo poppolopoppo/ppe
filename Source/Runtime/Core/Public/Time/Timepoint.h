@@ -60,9 +60,9 @@ private:
     value_type _value;
 };
 //----------------------------------------------------------------------------
-CONSTEXPR FTimespan::value_type operator "" _hz(unsigned long long value) {
+CONSTEXPR FTimespan operator "" _hz(unsigned long long value) {
     Assert(value > 0);
-    return Units::ConvertValue<FTimespan, Units::Time::FSeconds>(1.0 / value);
+    return (1000.0 / value);
 }
 //----------------------------------------------------------------------------
 constexpr FTimespan Timespan_120hz{ 120_hz };

@@ -142,10 +142,7 @@ static void TearDebugMenuInSystray_(const FModularServices& services) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FApplicationBase::FApplicationBase(FModularDomain& domain, FString&& name)
-:   FPlatformApplication(domain, std::move(name))
-,   _tickRate(Timespan_120hz)
-,   _requestedExit(false)
-,   _lowerTickRateInBackground(true) {
+:   FPlatformApplication(domain, std::move(name)) {
     FApplicationModule::Get(Domain())._OnApplicationCreate.Invoke(*this);
 }
 //----------------------------------------------------------------------------
@@ -155,8 +152,6 @@ FApplicationBase::~FApplicationBase() NOEXCEPT {
 //----------------------------------------------------------------------------
 void FApplicationBase::Start() {
     FPlatformApplication::Start();
-
-    _requestedExit = false;
 
     FModularServices& services = Services_();
 
@@ -187,32 +182,38 @@ void FApplicationBase::Shutdown() {
     FPlatformApplication::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FApplicationBase::SetTickRate(FTimespan period) {
-    Assert(period > 0);
-    _tickRate = Rcp(*period);
+void FApplicationBase::RequestExit() NOEXCEPT {
+    if (HasRequestedExit())
+        return;
+
+    FPlatformApplication::RequestExit();
+
+    PPE_LOG(Application, Info, "application {0} exit requested, will stop next loop...", Name());
+
+    FApplicationModule::Get(Domain())._OnApplicationRequestExit.Invoke(*this);
 }
 //----------------------------------------------------------------------------
-void FApplicationBase::RequestExit() {
-    if (not _requestedExit) {
-        _requestedExit = true;
-
-        PPE_LOG(Application, Info, "application {0} exit requested, will stop next loop...", Name());
-
-        FApplicationModule::Get(Domain())._OnApplicationRequestExit.Invoke(*this);
-    }
+NO_INLINE static void ApplicationFrame_(FApplicationBase& app, FTimespan dt) {
+    app.PumpMessages();
+    app.Tick(dt);
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::ApplicationLoop() {
     _timeline = FTimeline::StartNow();
 
-    while (PumpMessages() and not HasRequestedExit()) {
-        FTimespan actualTickRate = _tickRate;
+    while (not HasRequestedExit()) {
+        FTimespan actualTickRate = TickRate();
         if (LowerTickRateInBackground() and not HasFocus())
             actualTickRate = Timespan_1hz;
 
         FTimespan dt;
-        if (_timeline.Tick_Every(actualTickRate, dt))
-            Tick(dt);
+        if (Likely(_timeline.Tick_Every(actualTickRate, dt))) {
+            ApplicationFrame_(*this, dt);
+            continue;
+        }
+
+        const FTimespan remaining = (actualTickRate - _timeline.Elapsed());
+        FPlatformProcess::Sleep(static_cast<float>(FSeconds(remaining).Value() / 2/* bisect */));
     }
 
     PPE_LOG(Application, Info, "application {0} stopped looping, total uptime = {2} (request:{1})", Name(), HasRequestedExit(), _timeline.Total());

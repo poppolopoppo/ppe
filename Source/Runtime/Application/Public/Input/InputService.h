@@ -41,7 +41,7 @@ public:
     static PPE_APPLICATION_API void MakeDefault(UInputService* input);
 
 public:
-    using FInputUpdateEvent = TFunction<void(const IInputService&, FTimespan dt)>;
+    using FInputUpdateEvent = TFunction<void(IInputService&, FTimespan dt)>;
 
     THREADSAFE_EVENT(OnInputUpdate, FInputUpdateEvent);
 

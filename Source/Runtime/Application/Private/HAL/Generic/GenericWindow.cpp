@@ -27,6 +27,7 @@ FGenericWindow::FGenericWindow()
 ,   _hasSystemMenu(true)
 ,   _fullscreen(false)
 ,   _hasFocus(false)
+,   _mouseCapture(false)
 ,   _visible(false)
 ,   _type(EWindowType::Main)
 {}
@@ -144,6 +145,7 @@ void FGenericWindow::OnMouseLeave() {
 }
 void FGenericWindow::OnMouseMove(int , int ) {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+    _mouseClientX = _mouseClientY = -1;
 }
 void FGenericWindow::OnMouseClick(int , int , EMouseButton ) {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
@@ -157,10 +159,17 @@ void FGenericWindow::OnMouseWheel(int , int , int ) {
 void FGenericWindow::OnWindowShow(bool visible) {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _visible = visible;
+    _mouseClientX = _mouseClientY = -1;
 }
 void FGenericWindow::OnWindowClose() {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _visible = false;
+    _mouseClientX = _mouseClientY = -1;
+
+    if (_mouseCapture) {
+        _mouseCapture = false;
+        FPlatformMouse::ResetCapture();
+    }
 }
 void FGenericWindow::OnWindowDPI(u32 dpi) {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
@@ -173,6 +182,8 @@ void FGenericWindow::OnWindowMove(int x, int y) {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _left = x;
     _top = y;
+
+    _mouseClientX = _mouseClientY = -1;
 
     for (const TPtrRef<IWindowListener>& listener : *_listeners.LockShared())
         listener->OnWindowMove({ _left, _top });
@@ -259,15 +270,35 @@ ECursorType FGenericWindow::SetCursorType(ECursorType value) {
     return previous;
 }
 //----------------------------------------------------------------------------
-void FGenericWindow::SetCursorCapture(bool enabled) const {
+void FGenericWindow::SetCursorCapture(bool enabled) {
     PPE_DATARACE_SHARED_SCOPE(this);
+
+    if (_mouseCapture == enabled)
+        return;
+
+    _mouseCapture = enabled;
     if (enabled)
         FPlatformMouse::SetCapture(*checked_cast<const FPlatformWindow*>(this));
     else
         FPlatformMouse::ResetCapture();
 }
 //----------------------------------------------------------------------------
-void FGenericWindow::SetCursorOnWindowCenter() const {
+void FGenericWindow::SetCursorPosition(int clientX, int clientY) {
+    PPE_DATARACE_SHARED_SCOPE(this);
+
+    if (_mouseClientX == clientX && _mouseClientY == clientY)
+        return;
+
+    _mouseClientX = clientX;
+    _mouseClientY = clientY;
+
+    int screenX = clientX;
+    int screenY = clientY;
+    FPlatformMouse::ClientToScreen(*checked_cast<const FPlatformWindow*>(this), &screenX, &screenY);
+    FPlatformMouse::SetCursorPosition(screenX, screenY);
+}
+//----------------------------------------------------------------------------
+void FGenericWindow::SetCursorOnWindowCenter() {
     PPE_DATARACE_SHARED_SCOPE(this);
     FPlatformMouse::CenterCursorOnWindow(*checked_cast<const FPlatformWindow*>(this));
 }
@@ -292,6 +323,8 @@ bool FGenericWindow::CreateWindow(FGenericWindow* window, FWString&& title, cons
     window->_hasFocus = false;
     window->_visible = false;
     window->_type = def.Type;
+
+    window->_mouseClientX = window->_mouseClientY = -1;
 
     return true;
 }

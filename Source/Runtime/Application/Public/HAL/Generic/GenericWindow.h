@@ -101,8 +101,9 @@ public: // must be defined for every platform
     ECursorType CursorType() const NOEXCEPT { return _cursor; }
     ECursorType SetCursorType(ECursorType value);
 
-    virtual void SetCursorCapture(bool enabled) const;
-    virtual void SetCursorOnWindowCenter() const;
+    virtual void SetCursorCapture(bool enabled);
+    virtual void SetCursorPosition(int clientX, int clientY);
+    virtual void SetCursorOnWindowCenter();
 
     static FGenericWindow* ActiveWindow() = delete;
     static void MainWindowDefinition(FWindowDefinition* def);
@@ -156,7 +157,11 @@ private:
 
     bool _fullscreen        : 1;
     bool _hasFocus          : 1;
+    bool _mouseCapture      : 1;
     bool _visible           : 1;
+
+    int _mouseClientX = -1;
+    int _mouseClientY = -1;
 
     ECursorType _cursor{ Default };
     EWindowType _type;

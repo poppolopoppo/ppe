@@ -330,6 +330,8 @@ FVulkanTaskProcessor::FVulkanTaskProcessor(const SVulkanCommandBuffer& workerCmd
 ,   _maxDrawMeshTaskCount(_workerCmd->Device().Capabilities().MeshShaderProperties.maxDrawMeshTasksCount)
 ,   _pendingResourceBarriers(_workerCmd->Write()->MainAllocator) {
     Assert_NoAssume(_vkCommandBuffer);
+    // warmup pending barriers hash table
+    _pendingResourceBarriers.reserve(32);
 
 #if USE_PPE_RHIDEBUG
     _debugColor = FLinearColor::FromHash( hash_value(_workerCmd->DebugName()) );
@@ -1040,6 +1042,10 @@ bool FVulkanTaskProcessor::BindPipeline_(
 }
 //----------------------------------------------------------------------------
 // Barriers
+//----------------------------------------------------------------------------
+void FVulkanTaskProcessor::AppendBarrier_(const void* resource, FCommitBarrierFunc barrier) {
+    _pendingResourceBarriers.insert({resource, barrier}); // only insert once per resource
+}
 //----------------------------------------------------------------------------
 void FVulkanTaskProcessor::CommitBarriers_() {
     const auto exclusiveWorker = _workerCmd->Write();
@@ -2032,7 +2038,7 @@ void FVulkanTaskProcessor::AddImageState_(const FVulkanLocalImage* pLocalImage, 
     Assert(pLocalImage);
     Assert_NoAssume(not rstate.Range.Empty());
 
-    _pendingResourceBarriers.insert({ pLocalImage, &CommitResourceBarrier_<FVulkanLocalImage> });
+    AppendBarrier_(pLocalImage, &CommitResourceBarrier_<FVulkanLocalImage>);
 
 #if USE_PPE_RHIDEBUG
     if (Unlikely(_workerCmd->Debugger()))
@@ -2091,7 +2097,7 @@ void FVulkanTaskProcessor::AddImage_(
 void FVulkanTaskProcessor::AddBufferState_(const FVulkanLocalBuffer* pLocalBuffer, FBufferState&& rstate) {
     Assert(pLocalBuffer);
 
-    _pendingResourceBarriers.insert({ pLocalBuffer, &CommitResourceBarrier_<FVulkanLocalBuffer> });
+    AppendBarrier_(pLocalBuffer, &CommitResourceBarrier_<FVulkanLocalBuffer>);
 
 #if USE_PPE_RHIDEBUG
     if (Unlikely(_workerCmd->Debugger()))
@@ -2144,7 +2150,7 @@ void FVulkanTaskProcessor::AddBuffer_(
 void FVulkanTaskProcessor::AddRTGeometry_(const FVulkanRTLocalGeometry* pLocalGeom, EResourceState state) {
     Assert(pLocalGeom);
 
-    _pendingResourceBarriers.insert({ pLocalGeom, &CommitResourceBarrier_<FVulkanRTLocalGeometry> });
+    AppendBarrier_(pLocalGeom, &CommitResourceBarrier_<FVulkanRTLocalGeometry>);
 
     FRTGeometryState rtState{ state, _currentTask };
 
@@ -2159,7 +2165,7 @@ void FVulkanTaskProcessor::AddRTGeometry_(const FVulkanRTLocalGeometry* pLocalGe
 void FVulkanTaskProcessor::AddRTScene_(const FVulkanRTLocalScene* pLocalScene, EResourceState state) {
     Assert(pLocalScene);
 
-    _pendingResourceBarriers.insert({ pLocalScene, &CommitResourceBarrier_<FVulkanRTLocalScene> });
+    AppendBarrier_(pLocalScene, &CommitResourceBarrier_<FVulkanRTLocalScene>);
 
     FRTSceneState rtState{ state, _currentTask.get() };
 

@@ -22,25 +22,12 @@ public:
     virtual void Tick(FTimespan dt) override;
     virtual void Shutdown() override;
 
-    const FTimeline& Timeline() const { return _timeline; }
-
-    void SetTickRate(FTimespan period);
-    FTimespan TickRate() const { return _tickRate; }
-
-    void SetLowerTickRateInBackground(bool enabled);
-    bool LowerTickRateInBackground() const { return _lowerTickRateInBackground; }
-
-    void RequestExit();
-    bool HasRequestedExit() const { return _requestedExit; }
+    virtual void RequestExit() NOEXCEPT override;
 
     void ApplicationLoop();
 
 private:
     FTimeline _timeline;
-    FTimespan _tickRate;
-
-    bool _requestedExit : 1;
-    bool _lowerTickRateInBackground : 1;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

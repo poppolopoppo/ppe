@@ -11,13 +11,14 @@
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
 #include "Modular/ModularDomain.h"
+#include "Time/TimedScope.h"
 
 namespace PPE {
 namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_APPLICATION_API  FApplicationWindow : public FApplicationBase, private IWindowListener {
+class PPE_APPLICATION_API FApplicationWindow : public FApplicationBase, private IWindowListener {
 public:
     FApplicationWindow(FModularDomain& domain, FString&& name, bool needRHI);
     virtual ~FApplicationWindow() override;
@@ -26,6 +27,9 @@ public:
     IInputService& Input() const { return *_input; }
     IRHIService& RHI() const { return *_rhi; }
     IWindowService& Window() const { return *_window; }
+
+    const FMovingAverageTimer& MessageTime() const { return _messageTime; }
+    const FMovingAverageTimer& TickTime() const { return _tickTime; }
 
     virtual void Start() override;
     virtual void Shutdown() override;
@@ -50,6 +54,9 @@ private:
     UInputService _input;
     URHIService _rhi;
     UWindowService _window;
+
+    FMovingAverageTimer _messageTime;
+    FMovingAverageTimer _tickTime;
 
     bool _windowWasResized{ false };
 };

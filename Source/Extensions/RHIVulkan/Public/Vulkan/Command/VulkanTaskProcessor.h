@@ -99,6 +99,8 @@ private:
     template <u32 _Uid>
     NODISCARD const auto* Resource_(details::TResourceId<_Uid>) const;
 
+    void AppendBarrier_(const void* ressource, FCommitBarrierFunc barrier);
+
     void CommitBarriers_();
 
     void AddRenderTargetBarriers_(const FVulkanLogicalRenderPass& rp, const FDrawTaskBarriers& info);

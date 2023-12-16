@@ -172,6 +172,9 @@ void FApplicationWindow::Shutdown() {
 }
 //----------------------------------------------------------------------------
 bool FApplicationWindow::PumpMessages() NOEXCEPT {
+    const FMovingAverageTimer::FScope timedScope{_messageTime};
+    Unused(timedScope);
+
     if (FApplicationBase::PumpMessages() &&
         _main->PumpMessages()) {
 
@@ -183,6 +186,9 @@ bool FApplicationWindow::PumpMessages() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::Tick(FTimespan dt) {
+    const FMovingAverageTimer::FScope timedScope{_tickTime};
+    Unused(timedScope);
+
     if (_windowWasResized) {
         _windowWasResized = false;
 
