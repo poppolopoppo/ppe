@@ -1,7 +1,7 @@
 #### Custom for PPE ####
 
 # Build system configuration
-.*.build.yml
+PPE.exe
 
 # Ignore everything sitting in Output/**
 Output/**
