@@ -158,7 +158,8 @@ int _tmain(int argc, TCHAR* argv[], TCHAR* []) {
         EIODetouringOptions::IgnoreDoNone      |
         EIODetouringOptions::IgnorePipe        |
         EIODetouringOptions::IgnoreStdio       |
-        EIODetouringOptions::IgnoreSystem      );
+        EIODetouringOptions::IgnoreSystem      |
+        EIODetouringOptions::IgnoreVolume      );
 
     // launch detoured process
     int nExitCode = 0;
@@ -217,17 +218,20 @@ UNMOUNTED_FILE:
 }
 #endif
 //----------------------------------------------------------------------------
-static DWORD CopyNullTerminatedStringList_(PWCHAR pwzzOut, PCWSTR pwzzIn) {
-    PCWSTR pwzzBeg = pwzzOut;
-    while (*pwzzIn) {
-        while (*pwzzIn) {
-            *pwzzOut++ = *pwzzIn++;
-        }
-        *pwzzOut++ = *pwzzIn++;   // Copy zero.
-    }
-    *pwzzOut++ = TEXT('\0');    // Add last zero.
+static DWORD CopyEnvironmentVarToNullTerminatedStringList_(PWCHAR pwzzOut, PCWSTR pwzzIn) {
+    // environment value is an array of string delimited by ';',
+    // this function will convert it to a null-terminated array of null-terminated strings
+    const PCWSTR pwzzBeg = pwzzOut;
 
-    return (DWORD)(pwzzOut - pwzzBeg);
+    for(; *pwzzIn; ++pwzzIn) {
+        if (*pwzzIn != TEXT(';'))
+            *pwzzOut++ = *pwzzIn;
+        else
+            *pwzzOut++ = TEXT('\0');
+    }
+
+    *pwzzOut++ = TEXT('\0');    // Add last zero.
+    return static_cast<DWORD>(pwzzOut - pwzzBeg);
 }
 //----------------------------------------------------------------------------
 static bool CopyDetourPayloadToProcess_(
@@ -252,8 +256,8 @@ static bool CopyDetourPayloadToProcess_(
     StringCchCopyW(payload.wzStdout, ARRAYSIZE(payload.wzStdout), L"\\\\.\\CONOUT$");
     StringCchCopyW(payload.wzStderr, ARRAYSIZE(payload.wzStderr), L"\\\\.\\CONOUT$");
 
-    CopyNullTerminatedStringList_(payload.wzzIgnoredApplications, pwzzIgnoredApplications);
-    CopyNullTerminatedStringList_(payload.wzzMountedPaths, pwzzMountedPaths);
+    CopyEnvironmentVarToNullTerminatedStringList_(payload.wzzIgnoredApplications, pwzzIgnoredApplications);
+    CopyEnvironmentVarToNullTerminatedStringList_(payload.wzzMountedPaths, pwzzMountedPaths);
 
     return (!!DetourCopyPayloadToProcess(hProcess, GIODetouringGuid, &payload, sizeof(payload)));
 }

@@ -27,7 +27,32 @@ public:
     PPE_IODETOURING_API VOID Dump();
 
     // filenames
-    struct FFileInfo {
+    struct FFileFlags {
+        bool    bCantRead : 1;        // Set for file that are opened Create
+        bool    bCantWrite : 1;       // Set for file that are opened ReadOnly
+        bool    bRead : 1;
+        bool    bWrite : 1;
+        bool    bExecute : 1;
+
+        bool    bDelete : 1;
+        bool    bCleanup : 1;
+        bool    bSystemPath : 1;
+        bool    bTemporaryPath : 1;
+        bool    bTemporaryFile : 1;
+        bool    bPipe : 1;
+        bool    bStdio : 1;
+        bool    bVolume : 1;
+
+        bool    bAppend : 1;
+        bool    bAbsorbed : 1;        // Absorbed by TraceBld.
+        bool    bDirectory : 1;
+
+        FFileFlags() {
+            ZeroMemory(this, sizeof(*this));
+        }
+    };
+
+    struct FFileInfo : FFileFlags {
         PCWSTR  pwzInputPath{ nullptr };
         PCWSTR  pwzRealPath{ nullptr };
         PCSTR   pszRealPath{ nullptr };
@@ -38,24 +63,6 @@ public:
         SIZE_T  cbContent{ 0 };
 
         DWORD   nIndex{ 0 };
-
-        bool    bCantRead{ false };        // Set for file that are opened Create
-        bool    bCantWrite{ false };       // Set for file that are opened ReadOnly
-        bool    bRead{ false };
-        bool    bWrite{ false };
-        bool    bExecute{ false };
-
-        bool    bDelete{ false };
-        bool    bCleanup{ false };
-        bool    bSystemPath{ false };
-        bool    bTemporaryPath{ false };
-        bool    bTemporaryFile{ false };
-        bool    bPipe{ false };
-        bool    bStdio{ false };
-
-        bool    bAppend{ false };
-        bool    bAbsorbed{ false };        // Absorbed by TraceBld.
-        bool    bDirectory{ false };
 
         bool WasMounted() const { return (pwzRealPath != pwzInputPath); }
     };

@@ -32,9 +32,10 @@ public:
         IgnoreTemporary     = 1<<6,
         IgnoreStdio         = 1<<7,
         IgnoreSystem        = 1<<8,
+        IgnoreVolume        = 1<<9,
 
-        AppendStdout        = 1<<9,
-        AppendStderr        = 1<<10,
+        AppendStdout        = 1<<10,
+        AppendStderr        = 1<<11,
     };
     ENUM_FLAGS_FRIEND(EOptions);
 

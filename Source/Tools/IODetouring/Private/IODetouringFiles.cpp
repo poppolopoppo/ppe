@@ -61,6 +61,7 @@ VOID FIODetouringFiles::Dump() {
         bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreTemporary) && (file.bTemporaryFile || file.bTemporaryPath); // ignore temporary files
         bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreStdio) && (file.bPipe || file.bStdio); // ignore pipes and stdio handles
         bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreSystem) && (file.bSystemPath); // ignore system files
+        bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreVolume) && (file.bVolume); // ignore \\.\\%c: system volume raw "files"
         bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreAbsorbed) && (file.bAbsorbed); // ignore response files
         bIgnoreFile |= (nOptions & EIODetouringOptions::IgnoreDoNone) && not (file.bRead || file.bWrite || file.bExecute); // ignore do "none" files
 
@@ -155,6 +156,11 @@ VOID FIODetouringFiles::InitFileInfo_(FFileInfo& file, PPE::FConstWChar pwzPath)
         SuffixMatch(file.pwzInputPath, L"\\conout$") ||
         SuffixMatch(file.pwzInputPath, L"\\conin$") ||
         SuffixMatch(file.pwzInputPath, L"\\nul"));
+
+    if (PrefixMatch(file.pwzInputPath, L"\\\\.\\")) {
+        if (SuffixMatch(file.pwzInputPath, L":"))
+            file.bVolume = true;
+    }
 
     for (const FMountedPath_& mount : _pzzMountedPaths) {
         if (SuffixMatch(pwzPath, mount.pzInputPath)) {

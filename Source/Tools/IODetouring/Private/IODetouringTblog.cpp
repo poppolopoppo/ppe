@@ -73,7 +73,8 @@ FIODetouringTblog::FIODetouringTblog() {
         EOptions::IgnoreDirectory |
         EOptions::IgnorePipe |
         EOptions::IgnoreStdio |
-        EOptions::IgnoreSystem);
+        EOptions::IgnoreSystem |
+        EOptions::IgnoreVolume);
 }
 
 //----------------------------------------------------------------------------
