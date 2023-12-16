@@ -3,6 +3,7 @@
 #include "Diagnostic/Logger.h"
 
 #include "Container/RawStorage.h"
+#include "IO/String.h"
 #include "Memory/SharedBuffer.h"
 
 namespace PPE {
@@ -14,7 +15,8 @@ LOG_CATEGORY(, Test_Memory)
 static NO_INLINE void Test_SharedBuffer_() {
     PPE_LOG(Test_Memory, Emphasis, "testing FSharedBuffer");
 
-    FStringView source = "wow, such text";
+    FString dynamicString = "wow, such long text it is sure to be allocated";
+    FStringView source = dynamicString;
 
     FSharedBuffer notOwnedImmutable = FSharedBuffer::MakeView(MakeRawConstView(source));
     AssertRelease_NoAssume(notOwnedImmutable.IsValid());

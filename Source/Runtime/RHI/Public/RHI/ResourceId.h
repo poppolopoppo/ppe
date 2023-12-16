@@ -103,7 +103,7 @@ struct TNamedId {
             return true;
         }
         else {
-            Assert_NoAssume(Name != other.Name || Index != other.Index);
+            Assert_NoAssume(Name != other.Name || Index != other.Index || (Name.empty() && other.Name.empty()));
             return false;
         }
     }

@@ -229,12 +229,12 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::FindOrAdd(key_type
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert(const value_type& value) -> TPair<iterator, bool> {
-    return InsertIFN_(table_traits::Key(value), value);
+    return InsertIFN_(table_traits::Key(value), HashKey_(table_traits::Key(value)), value);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert(value_type&& rvalue) -> TPair<iterator, bool> {
-    return InsertIFN_(table_traits::Key(rvalue), std::move(rvalue));
+    return InsertIFN_(table_traits::Key(rvalue), HashKey_(table_traits::Key(rvalue)), std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -265,7 +265,7 @@ void TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_AssertUniqu
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_or_assign(const value_type& value) -> TPair<iterator, bool> {
-    const auto result = InsertIFN_(table_traits::Key(value), value);
+    const auto result = InsertIFN_(table_traits::Key(value), HashKey_(table_traits::Key(value)), value);
     if (not result.second)
         *reinterpret_cast<pointer>(result.first.data()) = value;
 
@@ -274,7 +274,7 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_or_assign(c
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_or_assign(value_type&& rvalue) -> TPair<iterator, bool> {
-    const auto result = InsertIFN_(table_traits::Key(rvalue), std::move(rvalue));
+    const auto result = InsertIFN_(table_traits::Key(rvalue), HashKey_(table_traits::Key(rvalue)), std::move(rvalue));
     if (not result.second)
         *reinterpret_cast<pointer>(result.first.data()) = std::move(rvalue);
 
@@ -284,13 +284,19 @@ auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::insert_or_assign(v
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 template <typename... _Args>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::try_emplace(const key_type& key, _Args&&... args) -> TPair<iterator, bool> {
-    return InsertIFN_(key, key, std::forward<_Args>(args)...);
+    return InsertIFN_(key, HashKey_(key), key, std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
 template <typename... _Args>
 auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::try_emplace(key_type&& rkey, _Args&&... args) -> TPair<iterator, bool> {
-    return InsertIFN_(rkey, std::move(rkey), std::forward<_Args>(args)...);
+    return InsertIFN_(rkey, HashKey_(rkey), std::move(rkey), std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
+template <typename _KeyLike, typename... _Args>
+auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::try_emplace_like(const _KeyLike& key, hash_t hash, _Args&&... args) -> TPair<iterator, bool> {
+    return InsertIFN_(key, hash, std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
@@ -587,14 +593,13 @@ FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Shrin
 }
 //----------------------------------------------------------------------------
 template <typename _Traits, typename _Hasher, typename _EqualTo, typename _Allocator>
-template <typename... _Args>
-FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::InsertIFN_(const key_type& key, _Args&&... args) -> TPair<iterator, bool> {
+template <typename _KeyLike, typename... _Args>
+FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::InsertIFN_(const _KeyLike& key, hash_t hash, _Args&&... args) -> TPair<iterator, bool> {
     Assert_NoAssume(not AliasesToContainer(&key));
     Assert_NoAssume(not (0 | ... | AliasesToContainer(&args)));
 
     reserve_Additional(1); // TODO: problem here -> we reserve a slot (and potential alloc) even if nothing is inserted
 
-    const size_type hash = HashKey_(key);
     const size_type bucket = FindOrAllocateBucket_(key, hash);
 
     const iterator it = MakeIterator_(bucket);
@@ -603,7 +608,7 @@ FORCE_INLINE auto TBasicHashTable<_Traits, _Hasher, _EqualTo, _Allocator>::Inser
 
     _data.Size++;
     Meta::Construct(
-        (pointer)it.data(),
+        reinterpret_cast<pointer>(remove_const(it.data())),
         table_traits::MakeValue(std::forward<_Args>(args)...) );
 
     return MakePair(it, true);

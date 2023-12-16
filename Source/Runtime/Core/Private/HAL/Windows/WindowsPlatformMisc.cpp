@@ -508,7 +508,7 @@ bool FWindowsPlatformMisc::ErasePersistentVariable(const char* storeId, const ch
 bool FWindowsPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t line/* = 0 */, size_t column/* = 0 */) {
     Assert(filename);
 
-    CONSTEXPR const FWStringView editors[] = {
+    CONSTEXPR const FWStringLiteral editors[] = {
         // visual studio code (appdata)
         L"\"%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\bin\\code.cmd\" -g \"{0}:{1}:{2}\"",
         // visual studio code (classic program files)
@@ -526,7 +526,7 @@ bool FWindowsPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t li
     ::STARTUPINFO startupInfo;
     ::PROCESS_INFORMATION processInfo;
 
-    for (const FWStringView& ed : editors) {
+    for (const FWStringLiteral& ed : editors) {
         {
             FWFixedSizeTextWriter oss(format);
             Format(oss, ed, filename, line, column);

@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Allocator/Allocation.h"
+#include "IO/ConstChar.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryView.h"
@@ -53,6 +54,16 @@ using wstring_view = TRelativeView<const wchar_t>;
 using array_view = TRelativeView<const value_view>;
 using object_view = TRelativeView<const key_value_view>;
 //----------------------------------------------------------------------------
+// string literals are never copied/allocated
+//----------------------------------------------------------------------------
+using string_literal = FStringLiteral;
+using wstring_literal = FWStringLiteral;
+//----------------------------------------------------------------------------
+// external strings are used for strings not allocated inside a value_block
+//----------------------------------------------------------------------------
+using string_external = FConstChar;
+using wstring_external = FConstWChar;
+//----------------------------------------------------------------------------
 // value_init: for inline declaration
 //----------------------------------------------------------------------------
 namespace details {
@@ -61,6 +72,8 @@ using value_init_variant = std::variant<
     boolean, integer, uinteger, floating_point,
     string_init, wstring_init,
     array_init, object_init,
+    // string literals are static strings: we do not copy them
+    string_literal, wstring_literal,
     // format strings dynamically (/!\ prefer static strings when possible)
     string_format, wstring_format,
     // forward an inlined value_view to a value_init
@@ -82,6 +95,14 @@ struct value_init : details::value_init_variant {
     CONSTEXPR value_init(u32 u) : value_init(static_cast<uinteger>(u)) {}
 
     CONSTEXPR value_init(float f) : value_init(static_cast<floating_point>(f)) {}
+
+    // need to disambiguate between TBasicStringView<> and TBasicStringLiteral<>
+    template <typename _Char, size_t _Len>
+    CONSTEXPR value_init(const _Char (&staticString)[_Len]) : value_init(TBasicStringLiteral<_Char>(staticString)) {}
+
+    void Reset() {
+        details::value_init_variant::operator =(std::monostate{});
+    }
 };
 struct key_value_init { string_init key; value_init value; };
 //----------------------------------------------------------------------------
@@ -92,12 +113,17 @@ using value_view_variant = std::variant<
     std::monostate,
     boolean, integer, uinteger, floating_point,
     string_view, wstring_view,
-    array_view, object_view>;
+    array_view, object_view
+>;
 } //!details
 struct value_view : details::value_view_variant {
     using details::value_view_variant::value_view_variant;
 
     PPE_FAKEBOOL_OPERATOR_DECL() { return not std::holds_alternative<std::monostate>(*this); }
+
+    void Reset() {
+        details::value_view_variant::operator =(std::monostate{});
+    }
 };
 struct key_value_view { string_view key; value_view value; };
 //----------------------------------------------------------------------------
@@ -109,6 +135,10 @@ PPE_ASSUME_TYPE_AS_POD(value_init);
 PPE_ASSUME_TYPE_AS_POD(key_value_init);
 PPE_ASSUME_TYPE_AS_POD(string_view);
 PPE_ASSUME_TYPE_AS_POD(wstring_view);
+PPE_ASSUME_TYPE_AS_POD(string_literal);
+PPE_ASSUME_TYPE_AS_POD(wstring_literal);
+PPE_ASSUME_TYPE_AS_POD(string_external);
+PPE_ASSUME_TYPE_AS_POD(wstring_external);
 PPE_ASSUME_TYPE_AS_POD(array_view);
 PPE_ASSUME_TYPE_AS_POD(object_view);
 PPE_ASSUME_TYPE_AS_POD(value_view);
@@ -123,6 +153,10 @@ struct value_block {
 
     TPtrRef<value_view> Value() { return static_cast<value_view*>(block.Data); }
     TPtrRef<const value_view> Value() const { return static_cast<const value_view*>(block.Data); }
+
+    NODISCARD FAllocatorBlock Reset() {
+        return std::move(block);
+    }
 
     value_view& operator *() { return Value(); }
     const value_view& operator *() const { return Value(); }

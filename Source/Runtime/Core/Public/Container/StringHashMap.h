@@ -4,8 +4,7 @@
 
 #include "Container/HashHelpers.h"
 #include "Container/HashMap.h"
-#include "IO/String.h"
-#include "IO/StringView.h"
+#include "IO/String_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

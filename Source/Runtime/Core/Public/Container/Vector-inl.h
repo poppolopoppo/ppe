@@ -326,7 +326,7 @@ auto TVector<T, _Allocator>::insert_(const_iterator pos, _It first, _It last, st
     for (; first != last; ++count, ++first) {
         Assert_NoAssume(_numElements == o + count);
 
-        reserve_AtLeast(_numElements + 1);
+        reserve_AtLeast(static_cast<size_t>(_numElements) + 1);
         Meta::Construct(push_back_Uninitialized(), *first);
     }
     Assert_NoAssume(p <= count);

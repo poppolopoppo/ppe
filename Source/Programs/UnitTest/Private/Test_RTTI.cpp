@@ -698,9 +698,10 @@ public:
             fmtArgs[i] = MakeFormatArg<char>(args[i]);
 
         FStringBuilder sb;
-        FormatArgs<char>(sb, fmt.MakeView(), fmtArgs);
+        if (UnsafeFormatArgs<char>(sb, fmt.c_str(), fmtArgs))
+            return sb.ToString();
 
-        return sb.ToString();
+        return "error!";
     }
     FWString formatW(const FWString& fmt, const VECTOR(Atom, RTTI::FAny)& args) const {
         STACKLOCAL_POD_ARRAY(FWFormatArg, fmtArgs, args.size());
@@ -708,9 +709,10 @@ public:
             fmtArgs[i] = MakeFormatArg<wchar_t>(args[i]);
 
         FWStringBuilder sb;
-        FormatArgs<wchar_t>(sb, fmt.MakeView(), fmtArgs);
+        if (UnsafeFormatArgs<wchar_t>(sb, fmt.c_str(), fmtArgs))
+            return sb.ToString();
 
-        return sb.ToString();
+        return L"error!";
     }
 };
 RTTI_CLASS_BEGIN(RTTI_UnitTest, FRTTIConsole_, Concrete)

@@ -2,9 +2,11 @@
 
 #include "Misc/OpaqueBuilder.h"
 
+#include "Allocator/StackLocalAllocator.h"
 #include "IO/DummyStreamWriter.h"
 #include "IO/StringBuilder.h"
 #include "IO/TextWriter.h"
+#include "Memory/MemoryStream.h"
 #include "Memory/PtrRef.h"
 
 namespace PPE {
@@ -19,7 +21,7 @@ namespace details {
 template <typename _Char>
 struct value_printer {
     TPtrRef<TBasicTextWriter<_Char>> Output;
-    TBasicStringView<_Char> IndentString{ STRING_LITERAL(_Char, "  ") };
+    TBasicStringLiteral<_Char> IndentString{ STRING_LITERAL(_Char, "  ") };
     u32 IndentLevel{ 0 };
     bool Compact            : 1;
     bool ControlCharacters  : 1;
@@ -128,8 +130,14 @@ struct value_printer {
         *Output << STRING_LITERAL(_Char, '"');
     }
 
-    void operator ()(const string_view& v) { operator ()(string_init(v)); }
-    void operator ()(const wstring_view& v) { operator ()(wstring_init(v)); }
+    void operator ()(const string_view& v) { operator ()(v.MakeView()); }
+    void operator ()(const wstring_view& v) { operator ()(v.MakeView()); }
+
+    void operator ()(string_external v) { operator ()(v.MakeView()); }
+    void operator ()(wstring_external v) { operator ()(v.MakeView()); }
+
+    void operator ()(string_literal v) { operator ()(v.MakeView()); }
+    void operator ()(wstring_literal v) { operator ()(v.MakeView()); }
 
     void operator ()(const string_format& v) { Yield(v); }
     void operator ()(const wstring_format& v) { Yield(v); }
@@ -149,10 +157,10 @@ struct value_printer {
     inline void operator ()(const value_view& v);
     inline void operator ()(const key_value_view& v);
 
-    // template <typename _Al>
-    void operator ()(const /*string<_Al>*/FString& v) { operator()(string_init(v)); }
-    // template <typename _Al>
-    void operator ()(const /*wstring<_Al>*/FWString& v) { operator()(wstring_init(v)); }
+    template <typename _Al>
+    void operator ()(const string<_Al>& v) { operator()(v.MakeView()); }
+    template <typename _Al>
+    void operator ()(const wstring<_Al>& v) { operator()(v.MakeView()); }
     template <typename _Al>
     void operator ()(const array<_Al>& v) { ScopedItems(v, STRING_LITERAL(_Char, '['), STRING_LITERAL(_Char, ']')); }
     template <typename _Al>
@@ -232,15 +240,27 @@ struct value_block_capacity {
         Reserve<string_view::value_type>(v.size() + 1/* '\0' */);
     }
     void operator ()(const string_view& v) NOEXCEPT {
-        Reserve<string_view::value_type>(v.size() + 1/* '\0' */);
+        Reserve<string_view::value_type>(static_cast<size_t>(v.size()) + 1/* '\0' */);
     }
 
     void operator ()(wstring_init v) NOEXCEPT {
         Reserve<wstring_view::value_type>(v.size() + 1/* '\0' */);
     }
     void operator ()(const wstring_view& v) NOEXCEPT {
-        Reserve<wstring_view::value_type>(v.size() + 1/* '\0' */);
+        Reserve<wstring_view::value_type>(static_cast<size_t>(v.size()) + 1/* '\0' */);
     }
+
+#if 0
+    void operator ()(string_external ) { /* do not copy externals: their lifetime is already handled */ }
+    void operator ()(wstring_external ) { /* do not copy externals: their lifetime is already handled */ }
+    void operator ()(string_literal ) { /* do not copy literals: they are static strings */ }
+    void operator ()(wstring_literal ) { /* do not copy literals: they are static strings */ }
+#else
+    void operator ()(string_external v) { operator ()(v.MakeView()); }
+    void operator ()(wstring_external v) { operator ()(v.MakeView()); }
+    void operator ()(string_literal v) { operator ()(v.MakeView()); }
+    void operator ()(wstring_literal v) { operator ()(v.MakeView()); }
+#endif
 
     void operator ()(const string_format& v) NOEXCEPT {
         FDummyStreamWriter dummy; // count memory without actually writing
@@ -297,10 +317,10 @@ struct value_block_capacity {
         std::visit(*this, v);
     }
 
-    // template <typename _Al>
-    void operator ()(const /*string<_Al>*/FString& v) { operator()(string_init(v)); }
-    // template <typename _Al>
-    void operator ()(const /*wstring<_Al>*/FWString& v) { operator()(wstring_init(v)); }
+    template <typename _Al>
+    void operator ()(const string<_Al>& v) { operator()(v.MakeView()); }
+    template <typename _Al>
+    void operator ()(const wstring<_Al>& v) { operator()(v.MakeView()); }
 
     template <typename _Al>
     void operator ()(const array<_Al>& v) {
@@ -421,21 +441,55 @@ struct value_block_inliner {
     void operator ()(uinteger v) const { Output->emplace<uinteger>(v); }
     void operator ()(floating_point v) const { Output->emplace<floating_point>(v); }
 
-    void operator ()(string_init v) const { Output->emplace<string_view>(Slab->AllocateString(v)); }
+    void operator ()(string_init v) const { Output->emplace<string_view>(Slab->AllocateString(std::move(v))); }
     void operator ()(const string_view& v) const { operator ()(string_init(v.MakeView())); }
 
-    void operator ()(wstring_init v) const { Output->emplace<wstring_view>(Slab->AllocateString(v)); }
+    void operator ()(wstring_init v) const { Output->emplace<wstring_view>(Slab->AllocateString(std::move(v))); }
     void operator ()(const wstring_view& v) const { operator ()(wstring_init(v.MakeView())); }
 
+    void operator ()(string_external v) const {
+#if 0
+        if (AllowExternalStrings)
+            Output->emplace<string_external>(v);
+        else
+#endif
+            operator ()(v.MakeView());
+    }
+    void operator ()(string_literal v) const {
+#if 0
+        if (AllowExternalStrings)
+            operator ()(string_external(v));
+        else
+#endif
+            operator ()(v.MakeView());
+    }
+
+    void operator ()(wstring_external v) const {
+#if 0
+        if (AllowExternalStrings)
+            Output->emplace<wstring_external>(v);
+        else
+#endif
+            operator ()(v.MakeView());
+    }
+    void operator ()(wstring_literal v) const {
+#if 0
+        if (AllowExternalStrings)
+            operator ()(wstring_external(v));
+        else
+#endif
+            operator ()(v.MakeView());
+    }
+
     void operator ()(const string_format& v) const {
-        slab_stream stream(Slab);
+        slab_stream stream(Slab); // format the string inplace, no temporary buffer
         FTextWriter oss(&stream);
         v(oss);
         oss << Eos;
         Output->emplace<string_view>(string_init(stream.Written().Cast<const char>()).ShiftBack(/*'\0'*/));
     }
     void operator ()(const wstring_format& v) const {
-        slab_stream stream(Slab);
+        slab_stream stream(Slab); // format the string inplace, no temporary buffer
         FWTextWriter oss(&stream);
         v(oss);
         oss << Eos;
@@ -470,10 +524,20 @@ struct value_block_inliner {
     }
     void operator ()(const TPtrRef<const object_view>& v) const NOEXCEPT { operator ()(*v); }
 
-    // template <typename _Al>
-    void operator ()(const /*string<_Al>*/FString& v) { operator()(string_init(v)); }
-    // template <typename _Al>
-    void operator ()(const /*wstring<_Al>*/FWString& v) { operator()(wstring_init(v)); }
+    template <typename _Al>
+    void operator ()(const string<_Al>& v) {
+        if (v.IsLiteral())
+            operator()(string_external{v.ConstChar()});
+        else
+            operator()(v.MakeView());
+    }
+    template <typename _Al>
+    void operator ()(const wstring<_Al>& v) {
+        if (v.IsLiteral())
+            operator()(wstring_external{v.ConstChar()});
+        else
+            operator()(v.MakeView());
+    }
 
     template <typename _Al>
     void operator ()(const array<_Al>& v) {
@@ -486,7 +550,7 @@ struct value_block_inliner {
     void operator ()(const object<_Al>& v) {
         auto dst = Output->emplace<object_view>(Slab->AllocateView<key_value_view>(v.size())).begin();
         for (auto src = v.begin(), last = v.end(); src != last; ++src, ++dst) {
-            const_cast<string_view&>(dst->key).reset(Slab->AllocateString(string_init(src->key)));
+            const_cast<string_view&>(dst->key).reset(Slab->AllocateString(src->key.MakeView()));
             std::visit(value_block_inliner{ const_cast<value_view&>(dst->value), Slab }, src->value);
         }
     }
@@ -524,7 +588,7 @@ value<_Allocator> NewValue(const value_init& init) {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 value<_Allocator> NewValue(_Allocator&& rallocator, const value_init& init) {
-    TBuilder<_Allocator> builder(std::move(rallocator));
+    TBuilder<_Allocator> builder(std::forward<_Allocator>(rallocator));
     builder(init);
     return builder.ToValue();
 }
@@ -545,7 +609,7 @@ value<_Allocator> NewValue(const value_view& view) {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 value<_Allocator> NewValue(_Allocator&& rallocator, const value_view& view) {
-    TBuilder<_Allocator> builder(std::move(rallocator));
+    TBuilder<_Allocator> builder(std::forward<_Allocator>(rallocator));
     builder(view);
     return builder.ToValue();
 }
@@ -573,6 +637,20 @@ void TBuilder<_Allocator>::Reset(TPtrRef<value_type> dst) {
     }
     AssertMessage_NoAssume("builder is still beeing used", _edits.size() == 1);
     _edits[0] = dst;
+    _memoization_ansi.reset();
+    _memoization_wide.reset();
+}
+//----------------------------------------------------------------------------a
+template <typename _Allocator>
+void TBuilder<_Allocator>::SetTextMemoization(TPtrRef<text_memoization_ansi> memoization) {
+    // optional text memoization can be used to merge identical strings
+    _memoization_ansi = std::move(memoization);
+}
+//----------------------------------------------------------------------------a
+template <typename _Allocator>
+void TBuilder<_Allocator>::SetTextMemoization(TPtrRef<text_memoization_wide> memoization) {
+    // optional text memoization can be used to merge identical strings
+    _memoization_wide = std::move(memoization);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -588,21 +666,25 @@ value_block TBuilder<_Allocator>::ToValueBlock(FAllocatorBlock block) {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TBuilder<_Allocator>::Write(const string_format& v) {
-    FStringBuilder oss;
-    v(oss);
-    Write(oss.ToString());
+    MEMORYSTREAM_STACKLOCAL() tmp; // use stack local stream to avoid writing TBasicTextBuilder<>
+    FTextWriter writer(&tmp);
+    v(writer);
+    Write(string_init(tmp.MakeView().Cast<const char>()));
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TBuilder<_Allocator>::Write(const wstring_format& v) {
-    FWStringBuilder oss;
-    v(oss);
-    Write(oss.ToString());
+    MEMORYSTREAM_STACKLOCAL() tmp; // use stack local stream to avoid writing TBasicTextBuilder<>
+    FWTextWriter writer(&tmp);
+    v(writer);
+    Write(wstring_init(tmp.MakeView().Cast<const wchar_t>()));
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TBuilder<_Allocator>::BeginArray(size_t capacity) {
-    _edits.Push(SetValue_(array_type{ capacity, Allocator_() }));
+    array_type arr{ Allocator_() };
+    arr.reserve(capacity);
+    _edits.Push(SetValue_(std::move(arr)));
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -614,7 +696,9 @@ void TBuilder<_Allocator>::EndArray() {
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TBuilder<_Allocator>::BeginObject(size_t capacity) {
-    _edits.Push(SetValue_(object_type{ capacity, Allocator_() }));
+    object_type obj{ Allocator_() };
+    obj.reserve(capacity);
+    _edits.Push(SetValue_(std::move(obj)));
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -625,9 +709,9 @@ void TBuilder<_Allocator>::EndObject() {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-void TBuilder<_Allocator>::BeginKeyValue(string_type&& key) {
+void TBuilder<_Allocator>::BeginKeyValue(string_type&& rkey) {
     object_type& obj = std::get<object_type>(Head_());
-    _edits.Push(Emplace_Back(obj, std::move(key), value_type{})->value);
+    _edits.Push(Emplace_Back(obj, std::move(rkey), value_type{})->value);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -648,6 +732,20 @@ auto TBuilder<_Allocator>::SetValue_(value_type&& rvalue) -> value_type& {
         return (head = std::move(rvalue));
     else
         return (*Emplace_Back(std::get<array_type>(head), std::move(rvalue)));
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+auto TBuilder<_Allocator>::AllocateString_(string_init v) -> string_type {
+    if (_memoization_ansi)
+        return _memoization_ansi->Append(v);
+    return string_type(Allocator_(), v);
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+auto TBuilder<_Allocator>::AllocateString_(wstring_init v) -> wstring_type {
+    if (_memoization_wide)
+        return _memoization_wide->Append(v);
+    return wstring_type(Allocator_(), v);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

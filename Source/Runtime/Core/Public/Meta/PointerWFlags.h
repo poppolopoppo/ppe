@@ -228,7 +228,7 @@ struct FHeapPtrWCounter { // assumed aligned on ALLOCATION_BOUNDARY (eg. 16)
         Data = 0;
     }
     void Reset(const void* ptr, u32 n) NOEXCEPT {
-        Assert_NoAssume(Meta::IsAlignedPow2(16, ptr));
+        AssertRelease_NoAssume(Meta::IsAlignedPow2(16, ptr));
         Data = (bit_cast<uintptr_t>(ptr) | n);
         Assert_NoAssume(Ptr<const void>() == ptr);
         Assert_NoAssume(Counter() == n);

@@ -4,7 +4,6 @@
 
 #include "Container/Hash.h"
 #include "IO/String_fwd.h"
-#include "IO/StringView.h"
 #include "Meta/TypeTraits.h"
 
 namespace PPE {
@@ -145,12 +144,62 @@ CONSTEXPR THashMemoizer<T> Memoize(const T& value) {
     return { value };
 }
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// String helpers:
+//----------------------------------------------------------------------------
+template <typename _Char, ECase _Sensitive>
+using TBasicConstCharHashMemoizer = THashMemoizer<
+    TBasicConstChar<_Char>,
+    TConstCharHasher<_Char, _Sensitive>,
+    TConstCharEqualTo<_Char, _Sensitive>
+>;
+//----------------------------------------------------------------------------
+#if 0
 template <typename _Char, ECase _Sensitive>
 using TBasicStringViewHashMemoizer = THashMemoizer<
     TBasicStringView<_Char>,
     TStringViewHasher<_Char, _Sensitive>,
     TStringViewEqualTo<_Char, _Sensitive>
 >;
+#else
+template <typename _Char, ECase _Sensitive>
+struct EMPTY_BASES TBasicStringViewHashMemoizer {
+    using hasher_type = TStringViewHasher<_Char, _Sensitive>;
+    using equal_to_type = TStringViewEqualTo<_Char, _Sensitive>;
+
+    const _Char* Data{ nullptr };
+    u32 Length{ 0 };
+    u32 HashValue{ 0 };
+
+    CONSTEXPR TBasicStringViewHashMemoizer() = default;
+
+    TBasicStringViewHashMemoizer(TBasicStringView<_Char> view) NOEXCEPT
+    :   Data(view.data())
+    ,   Length(checked_cast<u32>(view.size()))
+    ,   HashValue(static_cast<u32>(hasher_type{}(view))/*crop to pack with Length*/)
+    {}
+
+    CONSTEXPR TBasicStringView<_Char> MakeView() const NOEXCEPT {
+        return { Data, Length };
+    }
+
+    CONSTEXPR operator TBasicStringView<_Char> () const NOEXCEPT {
+        return MakeView();
+    }
+
+    friend hash_t hash_value(TBasicStringViewHashMemoizer value) NOEXCEPT {
+        return hash_uint(value.HashValue); // expand to size_t
+    }
+
+    bool operator ==(const TBasicStringViewHashMemoizer& other) const NOEXCEPT {
+        return (HashValue == other.HashValue && equal_to_type{}(MakeView(), other.MakeView()));
+    }
+    bool operator !=(const TBasicStringViewHashMemoizer& other) const NOEXCEPT {
+        return (not operator ==(other));
+    }
+};
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

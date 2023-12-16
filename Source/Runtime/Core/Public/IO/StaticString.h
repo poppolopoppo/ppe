@@ -171,6 +171,8 @@ using TStaticString = TBasicStaticString<char, _Capacity>;
 template <size_t _Capacity = PPE_STATICSTRING_CAPACITY>
 using TWStaticString = TBasicStaticString<wchar_t, _Capacity>;
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Char, size_t _Capacity = PPE_STATICSTRING_CAPACITY>
 auto Lower(const TBasicStringView<_Char>& src) {
     TBasicStaticString<_Char, _Capacity> dst;

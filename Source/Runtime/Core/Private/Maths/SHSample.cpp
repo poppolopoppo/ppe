@@ -54,7 +54,7 @@ static SHScalar SHFactorial_(int x) {
     //return non precomputed value starting using the last precomputed value in the array
     SHScalar result = GPrecomputedFactorial[lengthof(GPrecomputedFactorial)-1];
     for (int i = int(lengthof(GPrecomputedFactorial)); i <= x; ++i)
-        result = result *= i;
+        result *= i;
 
     return result;
 }

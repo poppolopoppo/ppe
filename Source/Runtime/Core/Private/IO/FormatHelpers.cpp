@@ -194,7 +194,7 @@ static TBasicTextWriter<_Char>& HexDump_(TBasicTextWriter<_Char>& oss, const Fmt
     Assert(!!hexDump.RawData.data() || totalBytes == 0);
 
     for (uintptr_t offset = 0; offset < totalBytes; ) {
-        PPE::Format(oss,  STRING_LITERAL(_Char, "0x{0:#8X} "),
+        PPE::Format(oss, STRING_LITERAL(_Char, "0x{0:#8X} "),
             hexDump.Absolute ? reinterpret_cast<uintptr_t>(hexDump.RawData.data() + offset) : offset);
 
         const size_t origin = offset;
@@ -228,15 +228,16 @@ FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FHexDump& hexDump) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-namespace {
+namespace {;
 //----------------------------------------------------------------------------
 template <typename _Char>
-CONSTEXPR TBasicStringView<_Char> Base64_lookup = STRING_LITERAL(_Char, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/");
-template <typename _Char>
-CONSTEXPR _Char Base64_padding = STRING_LITERAL(_Char, '=');
+constexpr _Char Base64_padding = STRING_LITERAL(_Char, '=');
 //----------------------------------------------------------------------------
 template <typename _Char>
 static void Base64Encode_(const FRawMemoryConst& src, const TAppendable<_Char>& dst) NOEXCEPT {
+    constexpr TBasicStringView<_Char> lookup{
+        STRING_LITERAL(_Char, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/") };
+
     u32 tmp;
     auto it = src.begin();
     forrange(i, 0, src.size() / 3u) {
@@ -244,26 +245,26 @@ static void Base64Encode_(const FRawMemoryConst& src, const TAppendable<_Char>& 
         tmp += (*it++) << 8u;
         tmp += (*it++);
 
-        dst.push_back(Base64_lookup<_Char>[(tmp & 0x00FC0000u) >> 18u]);
-        dst.push_back(Base64_lookup<_Char>[(tmp & 0x0003F000u) >> 12u]);
-        dst.push_back(Base64_lookup<_Char>[(tmp & 0x00000FC0u) >> 6u ]);
-        dst.push_back(Base64_lookup<_Char>[(tmp & 0x0000003Fu)       ]);
+        dst.push_back(lookup[(tmp & 0x00FC0000u) >> 18u]);
+        dst.push_back(lookup[(tmp & 0x0003F000u) >> 12u]);
+        dst.push_back(lookup[(tmp & 0x00000FC0u) >> 6u ]);
+        dst.push_back(lookup[(tmp & 0x0000003Fu)       ]);
     }
 
     switch (src.size() % 3u) {
     case 1:
         tmp  = (*it++) << 16u; // convert to big endian
-        dst.push_back(Base64_lookup<_Char>[(tmp & 0x00FC0000u) >> 18u]);
-        dst.push_back(Base64_lookup<_Char>[(tmp & 0x0003F000u) >> 12u]);
+        dst.push_back(lookup[(tmp & 0x00FC0000u) >> 18u]);
+        dst.push_back(lookup[(tmp & 0x0003F000u) >> 12u]);
         dst.push_back(Base64_padding<_Char>);
         dst.push_back(Base64_padding<_Char>);
         break;
     case 2:
         tmp  = (*it++) << 16u; // convert to big endian
         tmp += (*it++) << 8u;
-        dst.push_back(Base64_lookup<_Char>[(tmp & 0x00FC0000u) >> 18u]);
-        dst.push_back(Base64_lookup<_Char>[(tmp & 0x0003F000u) >> 12u]);
-        dst.push_back(Base64_lookup<_Char>[(tmp & 0x00000FC0u) >> 6u ]);
+        dst.push_back(lookup[(tmp & 0x00FC0000u) >> 18u]);
+        dst.push_back(lookup[(tmp & 0x0003F000u) >> 12u]);
+        dst.push_back(lookup[(tmp & 0x00000FC0u) >> 6u ]);
         dst.push_back(Base64_padding<_Char>);
         break;
     default:

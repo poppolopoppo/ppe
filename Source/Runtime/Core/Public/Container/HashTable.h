@@ -94,13 +94,13 @@ struct FHashTableData_ {
     using bitmask_t = TBitMask<u32, GGroupSize>;
 
     size_t NumBuckets() const {
-        return static_cast<size_t>(CapacityM1 + 1_u32);
+        return static_cast<size_t>(CapacityM1 + 1_u32/* overflow expected */);
     }
 
     size_t NumStates() const {
         // 15 last states are mirroring the 15th
         // allows to sample state across table boundary
-        return (CapacityM1 + 1_u32 ? CapacityM1 + 1_u32 + GGroupSize/* sentinel */ : 0);
+        return (CapacityM1 + 1_u32 ? CapacityM1 + 1_u32/* overflow expected */ + GGroupSize/* sentinel */ : 0);
     }
 
     const state_t* State(size_t index) const {
@@ -484,6 +484,9 @@ public:
     template <typename... _Args>
     TPair<iterator, bool> try_emplace(key_type&& rkey, _Args&&... args);
 
+    template <typename _KeyLike, typename... _Args>
+    TPair<iterator, bool> try_emplace_like(const _KeyLike& key, hash_t hash, _Args&&... args);
+
     void erase(const const_iterator& it);
     iterator erase_ReturnNext(const iterator& it);
 
@@ -568,8 +571,8 @@ private:
     size_type GrowIFN_ReturnNewCapacity_(size_type atleast) const;
     size_type ShrinkIFN_ReturnNewCapacity_(size_type atleast) const;
 
-    template <typename... _Args>
-    TPair<iterator, bool> InsertIFN_(const key_type& key, _Args&&... args);
+    template <typename _KeyLike, typename... _Args>
+    TPair<iterator, bool> InsertIFN_(const _KeyLike& key, hash_t hash, _Args&&... args);
 
     template <typename _KeyLike>
     size_type FindFilledBucket_(const _KeyLike& key, size_t hash) const NOEXCEPT;

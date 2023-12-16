@@ -56,7 +56,7 @@ struct TRelativeView {
     i32 Offset{ 0 };
     u32 Count{ 0 };
 
-    TRelativeView() = default;
+    CONSTEXPR TRelativeView() = default;
 
     explicit TRelativeView(memory_view view) NOEXCEPT {
         reset(view);

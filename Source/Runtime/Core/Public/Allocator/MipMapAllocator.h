@@ -55,16 +55,17 @@ struct CACHELINE_ALIGNED FMipmapPage {
 #endif
     };
 
+    FBlock Blocks[MaxBlocks];
+
     void* vAddressSpace{ nullptr };
+
+    FMipmapPage* NextPage{ nullptr };
 
     FAtomicSpinLock GrowthBarrier;
     u32 NumBlocks{ 0 };
+
     std::atomic<u32> LiveSet{ 0 };
     std::atomic<u32> NumUnused{ 0 };
-
-    FBlock Blocks[MaxBlocks];
-
-    FMipmapPage* NextPage{ nullptr };
 
     struct FMemoryStats {
         size_t TotalNumAllocations;

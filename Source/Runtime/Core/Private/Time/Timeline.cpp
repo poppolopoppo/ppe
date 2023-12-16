@@ -47,7 +47,7 @@ void FTimeline::Tick(const FTimeline& other, float speed) {
     else {
         const FTimepoint last(_last);
         _last = _now;
-        _now = last.Value() + FTimepoint::value_type((other._now.Value() - other._last.Value()) * speed);
+        _now = last.Value() + static_cast<FTimepoint::value_type>((other._now.Value() - other._last.Value()) * speed);
     }
 }
 //----------------------------------------------------------------------------

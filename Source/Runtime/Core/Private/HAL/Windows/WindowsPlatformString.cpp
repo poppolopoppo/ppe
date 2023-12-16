@@ -81,6 +81,14 @@ bool FWindowsPlatformString::Equals(const wchar_t* lhs, const wchar_t* rhs, size
 #endif
 }
 //----------------------------------------------------------------------------
+size_t FWindowsPlatformString::Length(const char* str) NOEXCEPT {
+    return ::strlen(str);
+}
+//----------------------------------------------------------------------------
+size_t FWindowsPlatformString::Length(const wchar_t* str) NOEXCEPT {
+    return ::wcslen(str);
+}
+//----------------------------------------------------------------------------
 bool FWindowsPlatformString::EqualsI(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
     Assert(lhs);
     Assert(rhs);
@@ -174,6 +182,11 @@ bool FWindowsPlatformString::EqualsI(const wchar_t* lhs, const wchar_t* rhs, siz
     return (0 == ::_wcsnicmp(lhs, rhs, len));
 #endif
 }
+//----------------------------------------------------------------------------
+int FWindowsPlatformString::Cmp(const char* lhs, const char* rhs) NOEXCEPT { return ::strcmp(lhs, rhs); }
+int FWindowsPlatformString::Cmp(const wchar_t* lhs, const wchar_t* rhs) NOEXCEPT  { return ::wcscmp(lhs, rhs); }
+int FWindowsPlatformString::CmpI(const char* lhs, const char* rhs) NOEXCEPT { return ::_strcmpi(lhs, rhs); }
+int FWindowsPlatformString::CmpI(const wchar_t* lhs, const wchar_t* rhs) NOEXCEPT { return ::_wcsicmp(lhs, rhs); }
 //----------------------------------------------------------------------------
 int FWindowsPlatformString::NCmp(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
     Assert(lhs);

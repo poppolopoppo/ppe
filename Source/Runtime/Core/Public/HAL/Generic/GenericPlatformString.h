@@ -22,6 +22,15 @@ public: // must be defined for every platform
     static bool EqualsI(const char* lhs, const char* rhs, size_t len) NOEXCEPT = delete;
     static bool EqualsI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT = delete;
 
+    static size_t Length(const char* str) NOEXCEPT = delete;
+    static size_t Length(const wchar_t* str) NOEXCEPT = delete;
+
+    static int Cmp(const char* lhs, const char* rhs) NOEXCEPT = delete;
+    static int Cmp(const wchar_t* lhs, const wchar_t* rhs) NOEXCEPT = delete;
+
+    static int CmpI(const char* lhs, const char* rhs) NOEXCEPT = delete;
+    static int CmpI(const wchar_t* lhs, const wchar_t* rhs) NOEXCEPT = delete;
+
     static int NCmp(const char* lhs, const char* rhs, size_t len) NOEXCEPT = delete;
     static int NCmp(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT = delete;
 

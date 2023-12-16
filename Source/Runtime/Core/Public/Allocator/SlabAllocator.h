@@ -27,6 +27,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 #define MEMORYSTREAM_SLAB(_DOMAIN) ::PPE::TMemoryStream< SLAB_ALLOCATOR(_DOMAIN) >
 //----------------------------------------------------------------------------
+#define TEXT_SLAB(_CHAR, _DOMAIN) ::PPE::TBasicText<_CHAR, SLAB_ALLOCATOR(_DOMAIN) >
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Slab allocator has an handle to a TSlabHeap
@@ -117,6 +119,188 @@ public:
 template <typename _Allocator>
 TSlabAllocator(TSlabHeap<_Allocator>&) -> TSlabAllocator< Meta::TDecay<_Allocator> >;
 #endif
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Accessor, typename _Allocator = ALLOCATOR(Unknown)>
+struct TScopedSlabAllocator : _Accessor {
+    using propagate_on_container_copy_assignment = std::true_type;
+    using propagate_on_container_move_assignment = std::true_type;
+    using propagate_on_container_swap = std::true_type;
+
+    using is_always_equal = std::true_type;
+
+    using has_maxsize = std::false_type;
+    using has_owns = std::false_type;
+    using has_reallocate = std::true_type;
+    using has_acquire = std::true_type;
+    using has_steal = std::true_type;
+#if USE_PPE_MEMORYDOMAINS
+    using has_memory_tracking = std::true_type;
+#endif
+
+    using heap_type = TSlabHeap<_Allocator>;
+    using heap_ref = TPtrRef<heap_type>;
+
+    STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
+
+    TScopedSlabAllocator() NOEXCEPT = default;
+
+    heap_ref HeapRef() const NOEXCEPT {
+        return static_cast<const _Accessor&>(*this)();
+    }
+
+    size_t SnapSize(size_t s) const NOEXCEPT {
+        return heap_type::SnapSize(s);
+    }
+
+    FAllocatorBlock Allocate(size_t s) const {
+        if (const heap_ref heap = HeapRef(); heap)
+            return FAllocatorBlock{ heap->Allocate(s), s };
+        return FAllocatorBlock{};
+    }
+
+    void Deallocate(FAllocatorBlock b) const {
+        if (const heap_ref heap = HeapRef(); heap)
+            heap->Deallocate(b.Data, b.SizeInBytes);
+    }
+
+    bool Reallocate(FAllocatorBlock& b, size_t s) const {
+        if (const heap_ref heap = HeapRef(); heap) {
+            b.Data = heap->Reallocate(b.Data, s, b.SizeInBytes);
+            b.SizeInBytes = s;
+            return true;
+        }
+        return false;
+    }
+
+    bool Acquire(FAllocatorBlock b) NOEXCEPT {
+        if (const heap_ref heap = HeapRef(); heap) {
+            Assert_NoAssume(heap->AliasesToHeap(b.Data));
+            Unused(b); // nothing to do
+            return true;
+        }
+        return false;
+    }
+
+    bool Steal(FAllocatorBlock b) NOEXCEPT {
+        if (const heap_ref heap = HeapRef(); heap) {
+            Assert_NoAssume(heap->AliasesToHeap(b.Data));
+            Unused(b); // nothing to do
+            return true;
+        }
+        return false;
+    }
+
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking* TrackingData() NOEXCEPT {
+        if (const heap_ref heap = HeapRef(); heap)
+            return std::addressof(heap->TrackingData());
+        return nullptr;
+    }
+    auto& AllocatorWithoutTracking() NOEXCEPT {
+        return *this; // can't remove tracking
+    }
+#endif
+};
+//----------------------------------------------------------------------------
+template <typename _Tag, typename _Allocator = ALLOCATOR(Unknown)>
+struct TThreadLocalSlabAllocator {
+    using propagate_on_container_copy_assignment = std::true_type;
+    using propagate_on_container_move_assignment = std::true_type;
+    using propagate_on_container_swap = std::true_type;
+
+    using is_always_equal = std::true_type;
+
+    using has_maxsize = std::false_type;
+    using has_owns = std::false_type;
+    using has_reallocate = std::true_type;
+    using has_acquire = std::true_type;
+    using has_steal = std::true_type;
+#if USE_PPE_MEMORYDOMAINS
+    using has_memory_tracking = std::true_type;
+#endif
+
+    using heap_type = TSlabHeap<_Allocator>;
+    using heap_ref = TPtrRef<heap_type>;
+
+    STATIC_CONST_INTEGRAL(size_t, Alignment, ALLOCATION_BOUNDARY);
+
+    TThreadLocalSlabAllocator() NOEXCEPT = default;
+
+    size_t SnapSize(size_t s) const NOEXCEPT {
+        return heap_type::SnapSize(s);
+    }
+
+    FAllocatorBlock Allocate(size_t s) const {
+        if (const heap_ref heap = Mutable(); heap)
+            return FAllocatorBlock{ heap->Allocate(s), s };
+        return FAllocatorBlock{};
+    }
+
+    void Deallocate(FAllocatorBlock b) const {
+        if (const heap_ref heap = Mutable(); heap)
+            heap->Deallocate(b.Data, b.SizeInBytes);
+    }
+
+    bool Reallocate(FAllocatorBlock& b, size_t s) const {
+        if (const heap_ref heap = Mutable(); heap) {
+            b.Data = heap->Reallocate(b.Data, s, b.SizeInBytes);
+            b.SizeInBytes = s;
+            return true;
+        }
+        return false;
+    }
+
+    bool Acquire(FAllocatorBlock b) NOEXCEPT {
+        if (const heap_ref heap = Mutable(); heap) {
+            Assert_NoAssume(heap->AliasesToHeap(b.Data));
+            Unused(b); // nothing to do
+            return true;
+        }
+        return false;
+    }
+
+    bool Steal(FAllocatorBlock b) NOEXCEPT {
+        if (const heap_ref heap = Mutable(); heap) {
+            Assert_NoAssume(heap->AliasesToHeap(b.Data));
+            Unused(b); // nothing to do
+            return true;
+        }
+        return false;
+    }
+
+#if USE_PPE_MEMORYDOMAINS
+    FMemoryTracking* TrackingData() NOEXCEPT {
+        if (const heap_ref heap = Mutable(); heap)
+            return std::addressof(heap->TrackingData());
+        return nullptr;
+    }
+    auto& AllocatorWithoutTracking() NOEXCEPT {
+        return *this; // can't remove tracking
+    }
+#endif
+
+    static heap_ref& Mutable() NOEXCEPT {
+        ONE_TIME_INITIALIZE_THREAD_LOCAL(heap_ref, GInstanceTLS);
+        return GInstanceTLS;
+    }
+
+    struct FScope {
+        heap_ref Previous;
+
+        explicit FScope(heap_ref heap) NOEXCEPT {
+            heap_ref& mut = Mutable();
+            Previous = mut;
+            mut = heap;
+        }
+
+        ~FScope() NOEXCEPT {
+            Mutable() = Previous;
+        }
+    };
+
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

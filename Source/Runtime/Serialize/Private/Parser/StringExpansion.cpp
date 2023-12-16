@@ -132,8 +132,10 @@ FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& scalar, co
     scalar.Accept(&args);
 
     FStringBuilder sb;
-    FormatArgs(sb, fmt.MakeView(), args.MakeView());
-    return sb.ToString();
+    if (UnsafeFormatArgs(sb, FConstChar{ fmt.c_str() }, args.MakeView()))
+        return sb.ToString();
+
+    return FString{"error!"};
 }
 //----------------------------------------------------------------------------
 FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& tuple, const RTTI::ITupleTraits& traits, const Lexer::FSpan& site) {
@@ -147,8 +149,10 @@ FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& tuple, con
     });
 
     FStringBuilder sb;
-    FormatArgs(sb, fmt.MakeView(), args.MakeView());
-    return sb.ToString();
+    if (UnsafeFormatArgs(sb, FConstChar{ fmt.c_str() }, args.MakeView()))
+        return sb.ToString();
+
+    return FString{"error"};
 }
 //----------------------------------------------------------------------------
 FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& list, const RTTI::IListTraits& traits, const Lexer::FSpan& site) {
@@ -162,8 +166,10 @@ FString PerformStringExpansion(const FString& fmt, const RTTI::FAtom& list, cons
     });
 
     FStringBuilder sb;
-    FormatArgs(sb, fmt.MakeView(), args.MakeView());
-    return sb.ToString();
+    if (UnsafeFormatArgs(sb, FConstChar{ fmt.c_str() }, args.MakeView()))
+        return sb.ToString();
+
+    return FString{"error"};
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

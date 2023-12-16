@@ -51,12 +51,16 @@ struct FLogMessageFilterVisitor_ {
             PassFilter = Filter->PassFilter(v.data(), v.data() + v.size());
     }
     void operator ()(const Opaq::string_view& v) { operator()(Opaq::string_init(v)); }
+    void operator ()(const Opaq::string_external& v) { operator()(v.MakeView()); }
+    void operator ()(const Opaq::string_literal& v) { operator()(v.MakeView()); }
 
     void operator ()(FWStringView v) {
         if (not PassFilter)
             operator ()(WCHAR_TO_UTF_8(v).Str());
     }
     void operator ()(const Opaq::wstring_view& v) { operator()(Opaq::wstring_init(v)); }
+    void operator ()(const Opaq::wstring_external& v) { operator()(v.MakeView()); }
+    void operator ()(const Opaq::wstring_literal& v) { operator()(v.MakeView()); }
 
     void operator ()(Opaq::array_init v) { operator ()(std::begin(v), std::end(v)); }
     void operator ()(const Opaq::array_view& v) { operator ()(std::begin(v), std::end(v)); }
@@ -103,7 +107,7 @@ struct FLogMessageFilterVisitor_ {
 };
 //----------------------------------------------------------------------------
 static bool LogViewer_PassFilter_(const ImGuiTextFilter& logFilter, const FLogViewerWidget::FHistoryMessage& msg) {
-    if (logFilter.IsActive() && not logFilter.PassFilter(msg.Text())) {
+    if (logFilter.IsActive() && not logFilter.PassFilter(msg.Text)) {
         if (msg.Data.valid()) {
             FLogMessageFilterVisitor_ visitor{ logFilter };
             visitor(*msg.Data);
@@ -122,7 +126,7 @@ static void LogViewer_ShowCategories_(FLogViewerWidget& widget) {
     for (FLogViewerWidget::FHistoryCategory& category : widget.Categories) {
         ImGui::PushStyleColor(ImGuiCol_Header, LogViewer_CategoryColor_(category).ToPackedABGR());
 
-        if (ImGui::Selectable(category->Name.data(), category.Visible)) {
+        if (ImGui::Selectable(category->Name.c_str(), category.Visible)) {
             category.Visible = not category.Visible;
             widget.FlushVisibleMessages();
         }
@@ -158,8 +162,7 @@ static void LogViewer_ShowLogs_(FLogViewerWidget& widget) {
 
     ImGui::TableHeadersRow();
 
-    char tmpStringBuf[250];
-    FFixedSizeTextWriter tmp(tmpStringBuf);
+    STACKLOCAL_TEXTWRITER(tmp, 250);
 
     ImGuiListClipper clipper;
     clipper.Begin(checked_cast<int>(widget.VisibleMessages.size()));
@@ -213,7 +216,7 @@ static void LogViewer_ShowLogs_(FLogViewerWidget& widget) {
 
             tmp.Reset();
             Format(tmp, "{0:#10f3}\0", *Units::Time::FSeconds(FTimepoint::Duration(startedAt, msg.Site.LogTime)));
-            printColoredText(tmpStringBuf, FColor::DimGray().ToPackedABGR());
+            printColoredText(tmp.data(), FColor::DimGray().ToPackedABGR());
 
             ImGui::TableNextColumn();
             ImGui::AlignTextToFramePadding();
@@ -226,7 +229,7 @@ static void LogViewer_ShowLogs_(FLogViewerWidget& widget) {
 
             tmp.Reset();
             tmp << msg.Site.LogTime.Timestamp() << Eos;
-            printColoredText(tmpStringBuf, FColor::DarkGray().ToPackedABGR());
+            printColoredText(tmp.data(), FColor::DarkGray().ToPackedABGR());
 
             ImGui::TableNextColumn();
             ImGui::AlignTextToFramePadding();
@@ -234,7 +237,7 @@ static void LogViewer_ShowLogs_(FLogViewerWidget& widget) {
             tmp.Reset();
             tmp << msg.Category->Name << Eos;
             ImGui::TableSetBgColor(ImGuiTableBgTarget_CellBg, LogViewer_CategoryColor_(msg.Category).ToPackedABGR());
-            ImGui::TextUnformatted(tmpStringBuf);
+            ImGui::TextUnformatted(tmp.data());
 
             ImGui::TableNextColumn();
             ImGui::AlignTextToFramePadding();
@@ -247,7 +250,7 @@ static void LogViewer_ShowLogs_(FLogViewerWidget& widget) {
 
             ImGui::PushStyleColor(ImGuiCol_Text, logColor(msg.Level()).ToPackedABGR());
 
-            FStringView text = msg.Text().MakeView();
+            FStringView text = msg.Text.MakeView();
             FStringView firstLine = EatUntil(text, '\n');
             ImGui::TextUnformatted(firstLine.data(), firstLine.data() + firstLine.size());
 
@@ -317,7 +320,7 @@ public:
 
     void LogMessage(const FLoggerMessage& msg) override final {
         // duplicate the transient message in local ring buffer
-        const size_t textSize = (msg.IsTextAllocated() ? msg.Text().MakeView().SizeInBytes() + 1/*'\0'*/ : 0);
+        const size_t textSize = (msg.IsTextAllocated() ? msg.Text.MakeView().SizeInBytes() + 1/*'\0'*/ : 0);
         const size_t dataSize = (msg.Data.valid() ? BlockSize(msg.Data) : 0);
 
         FHistoryMessage dup;
@@ -328,13 +331,13 @@ public:
         // non-formatted strings are static -this is enforced by FLogger- and don't need to be copied
         if (msg.IsTextAllocated()) {
             const TMemoryView<char> text = dup.Block.MakeView().CutBefore(textSize).Cast<char>();
-            const size_t lenCopied = Copy(text, msg.Text().MakeView());
+            const size_t lenCopied = Copy(text, msg.Text.MakeView());
             Assert_NoAssume(textSize - 1 == lenCopied);
             text[lenCopied] = '\0';
-            dup.TextWFlags.Reset(text.data(), true, false);
+            dup.Text = text.data();
         }
         else {
-            dup.TextWFlags.Reset(msg.Text(), true, false);
+            dup.Text = msg.Text;
         }
 
         // duplicate message opaque data, if any
@@ -351,6 +354,12 @@ public:
 
     void Flush(bool synchronous) override final {
         Unused(synchronous);
+    }
+
+    void ClearHistory() {
+        auto exlusiveHeap = Heap.LockExclusive();
+        History.LockExclusive()->clear();
+        exlusiveHeap->DiscardAll();
     }
 };
 //----------------------------------------------------------------------------
@@ -440,8 +449,10 @@ bool FLogViewerWidget::Show() {
     }
 
     {
-        if (ImGui::Button(ICON_CI_CLEAR_ALL " Clear"))
-            VisibleMessages.clear();
+        if (ImGui::Button(ICON_CI_CLEAR_ALL " Clear")) {
+            Logger->ClearHistory();
+            FlushVisibleMessages();
+        }
 
         ImGui::SameLine();
 
@@ -466,23 +477,27 @@ void FLogViewerWidget::RefreshVisibleMessages() {
     if (not Logger)
         return;
 
+    const auto sharedHistory = Logger->History.LockShared();
+
     if (LastMessagePosted == INDEX_NONE) {
-        LastMessagePosted = 0;
+        LastMessagePosted = sharedHistory->begin().Pos;
         VisibleMessages.clear();
     }
 
-    const auto sharedHistory = Logger->History.LockShared();
+    auto first = sharedHistory->begin();
+    first.Pos = LastMessagePosted;
 
-    forrange(it, sharedHistory->begin() + LastMessagePosted, sharedHistory->end()) {
-        LastMessagePosted++;
+    forrange(it, first, sharedHistory->end()) {
         const PHistoryMessage& historyMsg = *it;
 
         if (not LogViewer_PassFilter_(LogFilter, *historyMsg))
             continue;
 
         if (Categories.FindOrAdd(FHistoryCategory{historyMsg->Category}, nullptr)->Visible)
-            VisibleMessages.push_back(historyMsg);
+            Unused(VisibleMessages.push_back_OverflowIFN(nullptr, historyMsg));
     }
+
+    LastMessagePosted = sharedHistory->end().Pos;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

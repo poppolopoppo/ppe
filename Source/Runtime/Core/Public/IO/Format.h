@@ -55,30 +55,30 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API FTextWriter& Format(FTextWriter& oss, const FStringView& str);
-PPE_CORE_API FWTextWriter& Format(FWTextWriter& oss, const FWStringView& wstr);
+PPE_CORE_API FTextWriter& Format(FTextWriter& oss, FStringLiteral str);
+PPE_CORE_API FWTextWriter& Format(FWTextWriter& oss, FWStringLiteral wstr);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-size_t Format(const TMemoryView<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args);
+size_t Format(const TMemoryView<_Char>& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-void Format(TBasicString<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args);
+void Format(TBasicString<_Char>& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Capacity, typename _Arg0, typename... _Args>
-const _Char* Format(TBasicStaticString<_Char, _Capacity>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args);
+const _Char* Format(TBasicStaticString<_Char, _Capacity>& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-TBasicTextWriter<_Char>& Format(TBasicTextWriter<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args);
+TBasicTextWriter<_Char>& Format(TBasicTextWriter<_Char>& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-TBasicString<_Char> StringFormat(const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+TBasicString<_Char> StringFormat(TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args) {
     TBasicString<_Char> result;
     Format(result, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     return result;
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, const TBasicStringView<_Char>& format, _Arg0&& arg0, _Args&&... args) {
+TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args) {
     const size_t len = Format(dst, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     dst[len] = _Char(0); // end-of-string: InlineFormat() always returns null-terminated strings
     return dst.data();
@@ -88,33 +88,33 @@ TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, const TBasicS
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, size_t _Dim2, typename _Arg0, typename... _Args>
 size_t Format(_Char(&dst)[_Dim], const _Char(&format)[_Dim2], _Arg0&& arg0, _Args&&... args) {
-    return Format(MakeView(dst), MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    return Format(MakeView(dst), MakeStringLiteral(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
 size_t Format(const TMemoryView<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
-    return Format(dst, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    return Format(dst, MakeStringLiteral(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
 void Format(TBasicString<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
-    Format(dst, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    Format(dst, MakeStringLiteral(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
 TBasicTextWriter<_Char>& Format(TBasicTextWriter<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
-    Format(dst, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    Format(dst, MakeStringLiteral(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     return dst;
 }
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
 TBasicString<_Char> StringFormat(const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
-    return StringFormat(MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    return StringFormat(MakeStringLiteral(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
 TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
-    return InlineFormat(dst, MakeStringView(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    return InlineFormat(dst, MakeStringLiteral(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

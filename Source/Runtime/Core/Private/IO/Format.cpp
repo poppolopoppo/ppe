@@ -56,8 +56,8 @@ namespace {
 template <typename _Char>
 struct TBasicFormatProps_ {
     size_t Repeat{};
-    _Char FillChar{};
     FTextFormat Format{};
+    _Char FillChar{};
 
     inline friend TBasicTextWriter<_Char>& operator >>(TBasicTextWriter<_Char>& in, TBasicFormatProps_& props) {
         props.Repeat = 1;
@@ -301,8 +301,8 @@ NO_INLINE static EFormatParserResult_ FormatParser_(TBasicStringView<_Char>& for
 template <typename _Char>
 NO_INLINE static void FormatArgsImpl_(
     TBasicTextWriter<_Char>& oss,
-    const TBasicStringView<_Char>& format,
-    const TMemoryView<const details::TBasicFormatFunctor_<_Char>>& args ) {
+    TBasicStringView<_Char> format,
+    TMemoryView<const details::TBasicFormatFunctor_<_Char>> args ) {
     Assert(format.data());
 
 #if USE_PPE_ASSERT
@@ -317,7 +317,6 @@ NO_INLINE static void FormatArgsImpl_(
 #endif
 
     TBasicFormatProps_<_Char> props;
-    TBasicStringView<_Char> formatIt = format;
     TBasicStringView<_Char> outp;
 
     oss >> props;
@@ -326,7 +325,7 @@ NO_INLINE static void FormatArgsImpl_(
 
     size_t index = size_t(-1);
     for (;;) {
-        const EFormatParserResult_ result = FormatParser_(formatIt, &outp, &index, props);
+        const EFormatParserResult_ result = FormatParser_(format, &outp, &index, props);
         AssertRelease(result != EFormatParserResult_::InvalidFormat);
         if (result == EFormatParserResult_::Complete ||
             result == EFormatParserResult_::InvalidFormat)
@@ -353,9 +352,27 @@ NO_INLINE static void FormatArgsImpl_(
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
+NODISCARD NO_INLINE static bool UnsafeFormatArgsImpl_(
+    TBasicTextWriter<_Char>& oss,
+    TBasicConstChar<_Char> unsafeFormat,
+    TMemoryView<const details::TBasicFormatFunctor_<_Char>> args ) {
+    STATIC_CONST_INTEGRAL(size_t, MaxLengthForUnsafeFormat, 256);
+
+    size_t safeLength = 0;
+    if (not unsafeFormat.unsafe_length(MaxLengthForUnsafeFormat, &safeLength))
+        return false;
+
+    if (ValidateFormatString(unsafeFormat.c_str(), safeLength, args.size()) != EValidateFormat::Valid)
+        return false;
+
+    FormatArgsImpl_(oss, TBasicStringView<_Char>(unsafeFormat.c_str(), safeLength), std::move(args));
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
 NO_INLINE static void FormatRecordImpl_(
     TBasicTextWriter<_Char>& oss,
-    const TMemoryView<const details::TBasicFormatFunctor_<_Char>>& record ) {
+    TMemoryView<const details::TBasicFormatFunctor_<_Char>> record ) {
     Assert(not record.empty());
 
     oss << record.front();
@@ -376,20 +393,28 @@ NO_INLINE static void FormatRecordImpl_(
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-void FormatArgs_(FTextWriter& oss, const FStringView& format, const TMemoryView<const FFormatFunctor_>& args) {
-    FormatArgsImpl_(oss, format, args);
+bool UnsafeFormatArgs_(FTextWriter& oss, FConstChar unsafeFormat, TMemoryView<const FFormatFunctor_> args) {
+    return UnsafeFormatArgsImpl_(oss, unsafeFormat, std::move(args));
 }
 //----------------------------------------------------------------------------
-void FormatArgs_(FWTextWriter& oss, const FWStringView& format, const TMemoryView<const FWFormatFunctor_>& args) {
-    FormatArgsImpl_(oss, format, args);
+bool UnsafeFormatArgs_(FWTextWriter& oss, FConstWChar unsafeFormat, TMemoryView<const FWFormatFunctor_> args) {
+    return UnsafeFormatArgsImpl_(oss, unsafeFormat, std::move(args));
 }
 //----------------------------------------------------------------------------
-void FormatRecord_(FTextWriter& oss, const TMemoryView<const FFormatFunctor_>& record) {
-    FormatRecordImpl_(oss, record);
+void FormatArgs_(FTextWriter& oss, FStringLiteral format, TMemoryView<const FFormatFunctor_> args) {
+    FormatArgsImpl_(oss, format.MakeView(), std::move(args));
 }
 //----------------------------------------------------------------------------
-void FormatRecord_(FWTextWriter& oss, const TMemoryView<const FWFormatFunctor_>& record) {
-    FormatRecordImpl_(oss, record);
+void FormatArgs_(FWTextWriter& oss, FWStringLiteral format, TMemoryView<const FWFormatFunctor_> args) {
+    FormatArgsImpl_(oss, format.MakeView(), std::move(args));
+}
+//----------------------------------------------------------------------------
+void FormatRecord_(FTextWriter& oss, TMemoryView<const FFormatFunctor_> record) {
+    FormatRecordImpl_(oss, std::move(record));
+}
+//----------------------------------------------------------------------------
+void FormatRecord_(FWTextWriter& oss, TMemoryView<const FWFormatFunctor_> record) {
+    FormatRecordImpl_(oss, std::move(record));
 }
 //----------------------------------------------------------------------------
 } //!namespace details
@@ -398,12 +423,12 @@ void FormatRecord_(FWTextWriter& oss, const TMemoryView<const FWFormatFunctor_>&
 //----------------------------------------------------------------------------
 // Simple helpers used when Format() is called without arguments:
 //----------------------------------------------------------------------------
-FTextWriter& Format(FTextWriter& oss, const FStringView& str) {
+FTextWriter& Format(FTextWriter& oss, FStringLiteral str) {
     oss.Write(str);
     return oss;
 }
 //----------------------------------------------------------------------------
-FWTextWriter& Format(FWTextWriter& oss, const FWStringView& wstr) {
+FWTextWriter& Format(FWTextWriter& oss, FWStringLiteral wstr) {
     oss.Write(wstr);
     return oss;
 }

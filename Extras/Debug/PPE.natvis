@@ -88,6 +88,44 @@
     <DisplayString>{_storage,[_size]su} [{_size}]</DisplayString>
     <StringView>_storage,[_size]su</StringView>
   </Type>
+  <Type Name="PPE::TBasicStringLiteral&lt;char&gt;">
+    <DisplayString Condition="Length == 0">empty</DisplayString>
+    <DisplayString>{Data,[Length]s} Literal[{Length}]</DisplayString>
+    <StringView>Data,[Length]s</StringView>
+  </Type>
+  <Type Name="PPE::TBasicStringLiteral&lt;wchar_t&gt;">
+    <DisplayString Condition="Length == 0">empty</DisplayString>
+    <DisplayString>{Data,[Length]su} Literal[{Length}]</DisplayString>
+    <StringView>Data,[Length]su</StringView>
+  </Type>
+  <Type Name="PPE::TBasicText&lt;char, *&gt;">
+    <DisplayString Condition="_inplace.Source == Inplace">{(const char*)(&amp;_inplace.Inline[0]),s} [Inplace]</DisplayString>
+    <DisplayString Condition="_inplace.Source != Inplace">{_external.Storage,[_external.Length]s} {_external.Source,en}[{_external.Length}]</DisplayString>
+    <StringView Condition="_inplace.Source == Inplace">(const char*)(&amp;_inplace.Inline[0]),s</StringView>
+    <StringView Condition="_inplace.Source != Inplace">_external.Storage,[_external.Length]s</StringView>
+    <Expand>
+      <Synthetic Name="[Source]">
+        <DisplayString>{_inplace.Source,en}</DisplayString>
+      </Synthetic>
+      <Item Name="[Length]" Condition="_inplace.Source != Inplace">_external.Length</Item>
+      <Item Name="[Storage]" Condition="_inplace.Source == Inplace">(const char*)&amp;_inplace.Inline[0]</Item>
+      <Item Name="[Storage]" Condition="_inplace.Source != Inplace">_external.Storage,[_external.Length]</Item>
+    </Expand>
+  </Type>
+  <Type Name="PPE::TBasicText&lt;wchar_t, *&gt;">
+    <DisplayString Condition="_inplace.Source == Inplace">{(const wchar_t*)(&amp;_inplace.Inline[0]),su} Literal</DisplayString>
+    <DisplayString Condition="_inplace.Source != Inplace">{_external.Storage,[_external.Length]su} {_external.Source,en}[{_external.Length}]</DisplayString>
+    <StringView Condition="_inplace.Source == Inplace">(const wchar_t*)(&amp;_inplace.Inline[0]),su</StringView>
+    <StringView Condition="_inplace.Source != Inplace">_external.Storage,[_external.Length]su</StringView>
+    <Expand>
+      <Synthetic Name="[Source]">
+        <DisplayString>{_inplace.Source,en}</DisplayString>
+      </Synthetic>
+      <Item Name="[Length]" Condition="_inplace.Source != Inplace">_external.Length</Item>
+      <Item Name="[Storage]" Condition="_inplace.Source == Inplace">(const char*)&amp;_inplace.Inline[0]</Item>
+      <Item Name="[Storage]" Condition="_inplace.Source != Inplace">_external.Storage,[_external.Length]</Item>
+    </Expand>
+  </Type>
   <!--
     Memory
     ================================================================================
@@ -103,17 +141,17 @@
       </ArrayItems>
     </Expand>
   </Type>
-  <Type Name="PPE::TRelativeView&lt;char const&gt;">
+  <Type Name="PPE::TRelativeView&lt;const char&gt;">
     <DisplayString Condition="Count == 0">empty</DisplayString>
-    <DisplayString>{(char const*)((u8*)this+Offset),[Count]s} [{Count}]</DisplayString>
+    <DisplayString>{(char const*)((u8*)this+Offset),[Count]s} Relative[{Count}]</DisplayString>
     <StringView>(char const*)((u8*)this+Offset),[Count]s</StringView>
   </Type>
-  <Type Name="PPE::TRelativeView&lt;wchar_t const&gt;">
+  <Type Name="PPE::TRelativeView&lt;const wchar_t&gt;">
     <DisplayString Condition="Count == 0">empty</DisplayString>
-    <DisplayString>{(wchar_t const*)((u8*)this+Offset),[Count]su} [{Count}]</DisplayString>
+    <DisplayString>{(wchar_t const*)((u8*)this+Offset),[Count]su} Relative[{Count}]</DisplayString>
     <StringView>(wchar_t const*)((u8*)this+Offset),[Count]su</StringView>
   </Type>
-  <Type Name="PPE::TRelativeView&lt;*&gt;">
+  <Type Name="PPE::TRelativeView&lt;*&gt;" Priority="Low">
     <DisplayString Condition="Count == 0">empty</DisplayString>
     <DisplayString>{"$T1"} [{Count}] = {(void*)((u8*)this+Offset)}</DisplayString>
     <Expand>

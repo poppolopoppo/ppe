@@ -4,9 +4,10 @@
 
 #include "Misc/Opaque.h"
 
-#include "Container/SparseArray.h"
 #include "Container/Stack.h"
-#include "IO/String.h"
+#include "Container/Vector.h"
+#include "IO/Text.h"
+#include "IO/TextMemoization.h"
 
 #include <variant>
 
@@ -25,13 +26,13 @@ struct key_value;
 // trivial opaque types
 //----------------------------------------------------------------------------
 template <typename _Allocator = default_allocator>
-using string = FString;
+using string = TBasicText<char, _Allocator>;
 template <typename _Allocator = default_allocator>
-using wstring = FWString;
+using wstring = TBasicText<wchar_t, _Allocator>;
 template <typename _Allocator = default_allocator>
-using array = SPARSEARRAY(Opaq, value<_Allocator>);
+using array = TVector<value<_Allocator>, _Allocator>;
 template <typename _Allocator = default_allocator>
-using object = SPARSEARRAY(Opaq, key_value<_Allocator>);
+using object = TVector<key_value<_Allocator>, _Allocator>;
 //----------------------------------------------------------------------------
 // value_init: for inline declaration
 //----------------------------------------------------------------------------
@@ -61,6 +62,10 @@ struct value : details::value_variant<_Allocator> {
     CONSTEXPR value(float f) : value(static_cast<floating_point>(f)) {}
 
     PPE_FAKEBOOL_OPERATOR_DECL() { return not std::holds_alternative<std::monostate>(*this); }
+
+    void Reset() {
+        details::value_variant<_Allocator>::operator =(std::monostate{});
+    }
 };
 template <typename _Allocator>
 struct key_value { string<_Allocator> key; value<_Allocator> value; };
@@ -107,12 +112,33 @@ public:
     virtual void Write(integer v) = 0;
     virtual void Write(uinteger v) = 0;
     virtual void Write(floating_point v) = 0;
+
     virtual void Write(string_init v) = 0;
     virtual void Write(wstring_init v) = 0;
+    virtual void Write(string_literal v) = 0;
+    virtual void Write(wstring_literal v) = 0;
+    virtual void Write(string_external v) = 0;
+    virtual void Write(wstring_external v) = 0;
     virtual void Write(const string_format& v) = 0;
     virtual void Write(const wstring_format& v) = 0;
-    virtual void Write(FString&& v) = 0;
-    virtual void Write(FWString&& v) = 0;
+
+    void Write(const value_init& v) { std::visit(*this, v); }
+    void Write(const value_view& v) { std::visit(*this, v); }
+    template <typename _Al>
+    void Write(const value<_Al>& v) { std::visit(*this, v); }
+
+    // explicit trivial type promotion to storage format:
+    // handling all variants would drastically rise code complexity,
+    // and storage wise the stride of value_init is already majored by the largest type of the variant.
+    void Write(i8  i) { Write(static_cast<integer>(i)); }
+    void Write(i16 i) { Write(static_cast<integer>(i)); }
+    void Write(i32 i) { Write(static_cast<integer>(i)); }
+
+    void Write(u8  u) { Write(static_cast<uinteger>(u)); }
+    void Write(u16 u) { Write(static_cast<uinteger>(u)); }
+    void Write(u32 u) { Write(static_cast<uinteger>(u)); }
+
+    void Write(float f) { Write(static_cast<floating_point>(f)); }
 
     virtual void BeginArray(size_t capacity = 0) = 0;
     virtual void EndArray() = 0;
@@ -120,7 +146,9 @@ public:
     virtual void BeginObject(size_t capacity = 0) = 0;
     virtual void EndObject() = 0;
 
-    virtual void BeginKeyValue(FString&& rkey) = 0;
+    virtual void BeginKeyValue(string_init key) = 0;
+    virtual void BeginKeyValue(string_external key) = 0;
+    virtual void BeginKeyValue(string_literal key) = 0;
     virtual void EndKeyValue() = 0;
 
     // template helpers for closures:
@@ -153,15 +181,17 @@ public:
         EndObject();
     }
 
-    template <typename _Functor, decltype(std::declval<_Functor&>()())* = nullptr>
-    void KeyValue(FString&& key, _Functor&& innerScope) {
-        BeginKeyValue(std::move(key));
+    template <typename _KeyLike, typename _Functor, decltype(std::declval<_Functor&>()())* = nullptr>
+    void KeyValue(_KeyLike&& keyLike, _Functor&& innerScope) {
+        BeginKeyValue(std::forward<_KeyLike>(keyLike));
         innerScope();
         EndKeyValue();
     }
 
-    void BeginKeyValue(string_init key) {
-        BeginKeyValue(FString(key));
+    // need to desambiguate between TBasicStringView/TBasicConstChar/TBasicText
+    template <size_t _Len>
+    void BeginKeyValue(const char (&staticKey)[_Len]) {
+        BeginKeyValue(string_literal(staticKey));
     }
 
     // visitor
@@ -173,10 +203,24 @@ public:
     void operator ()(uinteger v) { Write(v); }
     void operator ()(floating_point v) { Write(v); }
 
+    void operator()(i8  i) { Write(i); }
+    void operator()(i16 i) { Write(i); }
+    void operator()(i32 i) { Write(i); }
+
+    void operator()(u8  u) { Write(u); }
+    void operator()(u16 u) { Write(u); }
+    void operator()(u32 u) { Write(u); }
+
+    void operator()(float f) { Write(f); }
+
     void operator ()(string_init v) { Write(v); }
     void operator ()(wstring_init v) { Write(v); }
     void operator ()(const string_view& v) { Write(string_init(v.MakeView())); }
     void operator ()(const wstring_view& v) { Write(wstring_init(v.MakeView())); }
+    void operator ()(string_external v) { Write(v); }
+    void operator ()(wstring_external v) { Write(v); }
+    void operator ()(string_literal v) { Write(v); }
+    void operator ()(wstring_literal v) { Write(v); }
     void operator ()(const string_format& v) { Write(v); }
     void operator ()(const wstring_format& v) { Write(v); }
 
@@ -188,8 +232,8 @@ public:
     void operator ()(const object_view& v) { Object(v.begin(), v.end()); }
     void operator ()(TPtrRef<const object_view> v) { operator ()(*v); }
 
-    void operator ()(const value_init& v) { std::visit(*this, v); }
-    void operator ()(const value_view& v) { std::visit(*this, v); }
+    void operator ()(const value_init& v) { Write(v); }
+    void operator ()(const value_view& v) { Write(v); }
 
     void operator ()(const key_value_init& v) {
         BeginKeyValue(v.key);
@@ -207,7 +251,7 @@ public:
     template <typename _Al>
     void operator ()(const object<_Al>& v) { Object(v.begin(), v.end()); }
     template <typename _Al>
-    void operator ()(const value<_Al>& v) { std::visit(*this, v); }
+    void operator ()(const value<_Al>& v) { Write(v); }
     template <typename _Al>
     void operator ()(const key_value<_Al>& v) {
         BeginKeyValue(string_init(v.key));
@@ -217,7 +261,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename _Allocator = default_allocator>
-class TBuilder final : private _Allocator, public IBuilder {
+class TBuilder final : public _Allocator, public IBuilder {
 public:
     using string_type = string<_Allocator>;
     using wstring_type = wstring<_Allocator>;
@@ -226,11 +270,19 @@ public:
     using value_type = value<_Allocator>;
     using key_value_type = key_value<_Allocator>;
 
+    using IBuilder::KeyValue;
+    using IBuilder::BeginKeyValue;
+    using IBuilder::Write;
+    using IBuilder::operator();
+
+    using text_memoization_ansi = TBasicTextMemoization<char, ECase::Sensitive, _Allocator>;
+    using text_memoization_wide = TBasicTextMemoization<wchar_t, ECase::Sensitive, _Allocator>;
+
     explicit TBuilder(TPtrRef<value_type> dst) NOEXCEPT { Reset(dst); }
     virtual ~TBuilder() override;
 
     TBuilder(TPtrRef<value_type> dst, const _Allocator& allocator) : _Allocator(allocator) { Reset(dst); }
-    TBuilder(TPtrRef<value_type> dst, _Allocator&& rallocator) NOEXCEPT : _Allocator(std::move(rallocator)) { Reset(dst); }
+    TBuilder(TPtrRef<value_type> dst, _Allocator&& rallocator) NOEXCEPT : _Allocator(std::forward<_Allocator>(rallocator)) { Reset(dst); }
 
     TBuilder(const TBuilder&) = delete;
     TBuilder& operator =(const TBuilder&) = delete;
@@ -243,6 +295,9 @@ public:
 
     void Reset(TPtrRef<value_type> dst);
 
+    void SetTextMemoization(TPtrRef<text_memoization_ansi> memoization);
+    void SetTextMemoization(TPtrRef<text_memoization_wide> memoization);
+
     virtual size_t BlockSize() const NOEXCEPT override final;
     virtual value_block ToValueBlock(FAllocatorBlock block) override final;
 
@@ -250,12 +305,18 @@ public:
     virtual void Write(integer v) override final { SetValue_(v); }
     virtual void Write(uinteger v) override final { SetValue_(v); }
     virtual void Write(floating_point v) override final { SetValue_(v); }
-    virtual void Write(string_init v) override final { SetValue_(string_type(v)); }
-    virtual void Write(wstring_init v) override final { SetValue_(wstring_type(v)); }
+
+    virtual void Write(string_init v) override final { SetValue_(AllocateString_(v)); }
+    virtual void Write(wstring_init v) override final { SetValue_(AllocateString_(v)); }
+    virtual void Write(string_external v) override final { SetValue_(string_type::MakeForeignText(v)); }
+    virtual void Write(wstring_external v) override final { SetValue_(wstring_type::MakeForeignText(v)); }
+    virtual void Write(string_literal v) override final { SetValue_(string_type(v)); }
+    virtual void Write(wstring_literal v) override final { SetValue_(wstring_type(v)); }
     virtual void Write(const string_format& v) override final;
     virtual void Write(const wstring_format& v) override final;
-    virtual void Write(FString&& v) override final { SetValue_(std::move(v)); }
-    virtual void Write(FWString&& v) override final { SetValue_(std::move(v)); }
+
+    void Write(string_type&& v) { SetValue_(std::move(v)); }
+    void Write(wstring_type&& v) { SetValue_(std::move(v)); }
 
     virtual void BeginArray(size_t capacity = 0) override final;
     virtual void EndArray() override final;
@@ -263,13 +324,29 @@ public:
     virtual void BeginObject(size_t capacity = 0) override final;
     virtual void EndObject() override final;
 
-    virtual void BeginKeyValue(FString&& rkey) override final;
+    virtual void BeginKeyValue(string_init key) override final { BeginKeyValue(AllocateString_(key)); }
+    virtual void BeginKeyValue(string_external key) override final { BeginKeyValue(string_type::MakeForeignText(key)); }
+    virtual void BeginKeyValue(string_literal key) override final { BeginKeyValue(string_type(key)); }
     virtual void EndKeyValue() override final;
 
-    using IBuilder::KeyValue;
-    void KeyValue(string_type&& rkey, value_type&& rvalue) {
-        BeginKeyValue(std::move(rkey));
-        SetValue_(std::move(rvalue));
+    void BeginKeyValue(string_type&& rkey);
+
+    template <typename _KeyLike, typename _Char, size_t _Len,
+        decltype(std::declval<IBuilder*>()->BeginKeyValue(std::forward<_KeyLike>(std::declval<_KeyLike&&>())))* = nullptr
+    >
+    void KeyValue(_KeyLike&& keyLike, const _Char (&staticString)[_Len]) {
+        BeginKeyValue(std::forward<_KeyLike>(keyLike));
+        Write(string_literal(staticString));
+        EndKeyValue();
+    }
+
+    template <typename _KeyLike, typename... _Args,
+        decltype(std::declval<IBuilder*>()->BeginKeyValue(std::forward<_KeyLike>(std::declval<_KeyLike&&>())))* = nullptr,
+        decltype(std::declval<IBuilder*>()->Write(std::forward<_Args>(std::declval<_Args&&>())...))* = nullptr
+    >
+    void KeyValue(_KeyLike&& keyLike, _Args&&... args) {
+        BeginKeyValue(std::forward<_KeyLike>(keyLike));
+        Write(std::forward<_Args>(args)...);
         EndKeyValue();
     }
 
@@ -279,7 +356,13 @@ private:
     value_type& Head_() NOEXCEPT;
     value_type& SetValue_(value_type&& rvalue);
 
+    string_type AllocateString_(string_init v);
+    wstring_type AllocateString_(wstring_init v);
+
     TFixedSizeStack<TPtrRef<value_type>, 8> _edits;
+
+    TPtrRef<text_memoization_ansi> _memoization_ansi;
+    TPtrRef<text_memoization_wide> _memoization_wide;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

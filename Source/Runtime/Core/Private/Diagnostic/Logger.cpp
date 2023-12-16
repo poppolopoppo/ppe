@@ -84,10 +84,10 @@ struct FLoggerTypes {
 //----------------------------------------------------------------------------
 class ILowLevelLogger : public FLoggerTypes, public ILogger {
 public:
-    virtual void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) = 0;
+    virtual void Log(const FCategory& category, FSiteInfo&& site, FStringLiteral text) = 0;
     virtual void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) = 0;
-    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) = 0;
-    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) = 0;
+    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, FStringLiteral format, const FFormatArgList& args) = 0;
+    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, FStringLiteral text, Opaq::object_init&& object) = 0;
     virtual void Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) = 0;
     virtual void RecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record) = 0;
 
@@ -179,7 +179,7 @@ public:
         Clear_ReleaseMemory();
     }
 
-    TPtrRef<FMessage> AllocateLog(const FCategory& category, FSiteInfo&& site, const FStringView& text) {
+    TPtrRef<FMessage> AllocateLog(const FCategory& category, FSiteInfo&& site, FStringLiteral text) {
         TPtrRef<FMessage> msg;
         {
             const FScope scopeLock(*this);
@@ -187,7 +187,7 @@ public:
             msg = INPLACE_NEW(block.Data, FMessage){ scopeLock.Bucket, block };
         }
 
-        msg->Inner = {category, std::move(site), text.data(), false};
+        msg->Inner = {category, std::move(site), text.c_str(), false};
         return msg;
     }
     TPtrRef<FMessage> AllocateLogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) {
@@ -206,7 +206,7 @@ public:
             FLoggerMessage{category, std::move(site), text.data(), true} };
         return msg;
     }
-    TPtrRef<FMessage> AllocateLogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) {
+    TPtrRef<FMessage> AllocateLogFmt(const FCategory& category, FSiteInfo&& site, FStringLiteral format, const FFormatArgList& args) {
         const FScope scopeLock(*this);
 
         MEMORYSTREAM_SLAB(Logger) oss(scopeLock.Allocator());
@@ -223,7 +223,7 @@ public:
             {category, std::move(site), text.data(), true} };
         return msg;
     }
-    TPtrRef<FMessage> AllocateLogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) {
+    TPtrRef<FMessage> AllocateLogStructured(const FCategory& category, FSiteInfo&& site, FStringLiteral text, Opaq::object_init&& object) {
         TPtrRef<FMessage> msg;
         {
             const size_t objectSize = BlockSize(object); // outside of allocator lock
@@ -233,7 +233,7 @@ public:
         }
 
         const FAllocatorBlock dataBlock = FAllocatorBlock::From(msg->Block().MakeView().CutStartingAt(sizeof(FMessage)));
-        msg->Inner = {category, std::move(site), text.data(), false,
+        msg->Inner = {category, std::move(site), text.c_str(), false,
             std::get<Opaq::object_view>(*NewBlock(dataBlock, object).Value()) };
         return msg;
     }
@@ -429,16 +429,16 @@ public:
     }
 
 public: // ILowLevelLogger
-    virtual void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) override final {
+    virtual void Log(const FCategory& category, FSiteInfo&& site, FStringLiteral text) override final {
         LogMessageBackground_(AllocateLog(category, std::move(site), text));
     }
     virtual void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) override final {
         LogMessageBackground_(AllocateLogDirect(category, std::move(site), direct));
     }
-    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) override final {
+    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, FStringLiteral format, const FFormatArgList& args) override final {
         LogMessageBackground_(AllocateLogFmt(category, std::move(site), format, args));
     }
-    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) override final {
+    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, FStringLiteral text, Opaq::object_init&& object) override final {
         LogMessageBackground_(AllocateLogStructured(category, std::move(site), text, std::move(object)));
     }
     virtual void Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) override final {
@@ -547,7 +547,7 @@ public:
 #endif
     }
 
-    static void Print(FTextWriter& oss, const FCategory& category, const FLogger::FSiteInfo& site, const FStringView& text, const TPtrRef<const Opaq::object_view>& data) {
+    static void Print(FTextWriter& oss, const FCategory& category, const FLogger::FSiteInfo& site, FStringView text, const TPtrRef<const Opaq::object_view>& data) {
         Header(oss, category, site);
         oss.Write(text);
         if (data) {
@@ -567,10 +567,10 @@ public:
     }
 
 public: // ILowLevelLogger
-    virtual void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) override final { Unused(category, site, text); }
+    virtual void Log(const FCategory& category, FSiteInfo&& site, FStringLiteral text) override final { Unused(category, site, text); }
     virtual void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) override final { Unused(category, site, direct); }
-    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) override final { Unused(category, site, format, args); }
-    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) override final { Unused(category, site, text, object); }
+    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, FStringLiteral format, const FFormatArgList& args) override final { Unused(category, site, format, args); }
+    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, FStringLiteral text, Opaq::object_init&& object) override final { Unused(category, site, text, object); }
     virtual void Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) override final { Unused(category, site, format, args); }
     virtual void RecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record) override final { Unused(category, site, record); }
 
@@ -615,16 +615,16 @@ public:
     }
 
 public:
-    virtual void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) override final {
+    virtual void Log(const FCategory& category, FSiteInfo&& site, FStringLiteral text) override final {
         AddToHistory(AllocateLog(category, std::move(site), text));
     }
     virtual void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct) override final {
         AddToHistory(AllocateLogDirect(category, std::move(site), direct));
     }
-    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) override final {
+    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, FStringLiteral format, const FFormatArgList& args) override final {
         AddToHistory(AllocateLogFmt(category, std::move(site), format, args));
     }
-    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) override final {
+    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, FStringLiteral text, Opaq::object_init&& object) override final {
         AddToHistory(AllocateLogStructured(category, std::move(site), text, std::move(object)));
     }
     virtual void Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) override final {
@@ -668,7 +668,7 @@ public:
 public: // ILowLevelLogger
     using FTransientMemoryStream_ = TMemoryStream<INLINE_ALLOCATOR(Logger, u8, 4096)>;
 
-    virtual void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) override final {
+    virtual void Log(const FCategory& category, FSiteInfo&& site, FStringLiteral text) override final {
         Assert_NoAssume(category.Verbosity ^ site.Level());
 
         FTransientMemoryStream_ tmp;
@@ -696,7 +696,7 @@ public: // ILowLevelLogger
         FPlatformDebug::OutputDebug(tmp.MakeView().Cast<char>().data());
     }
 
-    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) override final {
+    virtual void LogFmt(const FCategory& category, FSiteInfo&& site, FStringLiteral format, const FFormatArgList& args) override final {
         Assert_NoAssume(category.Verbosity ^ site.Level());
 
         FTransientMemoryStream_ tmp;
@@ -710,7 +710,7 @@ public: // ILowLevelLogger
         FPlatformDebug::OutputDebug(tmp.MakeView().Cast<char>().data());
     }
 
-    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) override final {
+    virtual void LogStructured(const FCategory& category, FSiteInfo&& site, FStringLiteral text, Opaq::object_init&& object) override final {
         Assert_NoAssume(category.Verbosity ^ site.Level());
 
         FTransientMemoryStream_ tmp;
@@ -762,7 +762,7 @@ public: // ILowLevelLogger
         FTextWriter oss(&tmp);
 
         FLogFmt::Header(oss, msg.Category, msg.Site);
-        oss << msg.Text();
+        oss << msg.Text;
         if (msg.Data)
             oss << ' ' << msg.Data;
         FLogFmt::Footer(oss, msg.Category, msg.Site);
@@ -836,7 +836,7 @@ NODISCARD static bool NotifyLoggerMessage_(
 #   if USE_PPE_IGNORELIST
         FIgnoreList::FIgnoreKey ignoreKey;
         ignoreKey << MakeStringView("NotifyLoggerMessage")
-                  << category.Name
+                  << category.Name.MakeView()
                   << site.SourceFile.MakeView()
                   << MakePodConstView(site.SourceLine);
         if (FIgnoreList::HitIFP(ignoreKey) == 0)
@@ -853,7 +853,7 @@ NODISCARD static bool NotifyLoggerMessage_(
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FLogger::Log(const FCategory& category, FSiteInfo&& site, const FStringView& text) {
+void FLogger::Log(const FCategory& category, FSiteInfo&& site, FStringLiteral text) {
     const FIsInLoggerScope loggerScope;
 
     if (NotifyLoggerMessage_(category, site))
@@ -871,7 +871,7 @@ void FLogger::LogDirect(const FCategory& category, FSiteInfo&& site, const TFunc
     HandleFatalLogIFN_(site.Level());
 }
 //----------------------------------------------------------------------------
-void FLogger::LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args) {
+void FLogger::LogFmt(const FCategory& category, FSiteInfo&& site, FStringLiteral format, const FFormatArgList& args) {
     const FIsInLoggerScope loggerScope;
 
     if (NotifyLoggerMessage_(category, site))
@@ -880,7 +880,7 @@ void FLogger::LogFmt(const FCategory& category, FSiteInfo&& site, const FStringV
     HandleFatalLogIFN_(site.Level());
 }
 //----------------------------------------------------------------------------
-void FLogger::LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object) {
+void FLogger::LogStructured(const FCategory& category, FSiteInfo&& site, FStringLiteral text, Opaq::object_init&& object) {
     const FIsInLoggerScope loggerScope;
 
     if (NotifyLoggerMessage_(category, site))
@@ -889,7 +889,7 @@ void FLogger::LogStructured(const FCategory& category, FSiteInfo&& site, const F
     HandleFatalLogIFN_(site.Level());
 }
 //----------------------------------------------------------------------------
-void FLogger::Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args) {
+void FLogger::Printf(const FCategory& category, FSiteInfo&& site, FStringLiteral format, va_list args) {
     const FIsInLoggerScope loggerScope;
 
     if (NotifyLoggerMessage_(category, site))
@@ -1007,7 +1007,7 @@ public:
     virtual void LogMessage(const FLoggerMessage& msg) override final {
         DEFERRED{ _sb.clear(); };
 
-        FLogFmt::Print(_sb, msg.Category, msg.Site, msg.Text().MakeView(), msg.Data);
+        FLogFmt::Print(_sb, msg.Category, msg.Site, msg.Text.MakeView(), msg.Data);
         _sb << Eos;
 
         FPlatformDebug::OutputDebug(_sb.Written().data());
@@ -1029,7 +1029,7 @@ public:
 
     virtual void LogMessage(const FLoggerMessage& msg) override final {
         FTextWriter oss(_buffered);
-        FLogFmt::Print(oss, msg.Category, msg.Site, msg.Text().MakeView(), msg.Data);
+        FLogFmt::Print(oss, msg.Category, msg.Site, msg.Text.MakeView(), msg.Data);
         oss << Eol;
     }
 
@@ -1056,7 +1056,7 @@ public:
             {"tid", bit_cast<u32>(msg.Site.ThreadId)},
             {"category", msg.Category->Name},
             {"severity", static_cast<u32>(msg.Level())},
-            {"message", msg.Text().MakeView()},
+            {"message", msg.Text.MakeView()},
             {"data", msg.Data ? Opaq::value_init{msg.Data} : std::monostate{}},
             {"site", Opaq::object_init{
                 {"file", msg.Site.SourceFile.MakeView()},
@@ -1096,12 +1096,12 @@ public:
 
     void LogBuffered(const FLoggerMessage& msg) {
         FTextWriter oss(&_buffered);
-        FLogFmt::Print(oss, msg.Category, msg.Site, msg.Text().MakeView(), msg.Data);
+        FLogFmt::Print(oss, msg.Category, msg.Site, msg.Text.MakeView(), msg.Data);
     }
 
     void LogWithColors(const FLoggerMessage& msg) {
         DEFERRED{ _sb.clear(); };
-        FLogFmt::Print(_sb, msg.Category, msg.Site, msg.Text().MakeView(), msg.Data);
+        FLogFmt::Print(_sb, msg.Category, msg.Site, msg.Text.MakeView(), msg.Data);
 
         FPlatformConsole::EAttribute attrs{};
 
@@ -1188,23 +1188,23 @@ public:
         switch (msg.Level()) {
         case ELoggerVerbosity::Debug:
         case ELoggerVerbosity::Verbose:
-            FPlatformDebug::TraceVerbose(msg.Site.ThreadId, msg.Category->Name.data(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text());
+            FPlatformDebug::TraceVerbose(msg.Site.ThreadId, msg.Category->Name.c_str(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text);
             break;
 
         case ELoggerVerbosity::Info:
         case ELoggerVerbosity::Profiling:
         case ELoggerVerbosity::Emphasis:
-            FPlatformDebug::TraceInformation(msg.Site.ThreadId, msg.Category->Name.data(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text());
+            FPlatformDebug::TraceInformation(msg.Site.ThreadId, msg.Category->Name.c_str(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text);
             break;
 
         case ELoggerVerbosity::Warning:
-            FPlatformDebug::TraceWarning(msg.Site.ThreadId, msg.Category->Name.data(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text());
+            FPlatformDebug::TraceWarning(msg.Site.ThreadId, msg.Category->Name.c_str(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text);
             break;
         case ELoggerVerbosity::Error:
-            FPlatformDebug::TraceError(msg.Site.ThreadId, msg.Category->Name.data(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text());
+            FPlatformDebug::TraceError(msg.Site.ThreadId, msg.Category->Name.c_str(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text);
             break;
         case ELoggerVerbosity::Fatal:
-            FPlatformDebug::TraceFatal(msg.Site.ThreadId, msg.Category->Name.data(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text());
+            FPlatformDebug::TraceFatal(msg.Site.ThreadId, msg.Category->Name.c_str(), date.Value(), msg.Site.SourceFile, msg.Site.SourceLine, msg.Text);
             break;
 
         default:
@@ -1274,15 +1274,15 @@ namespace {
 template <typename _Char>
 TBasicConstChar<_Char> ELoggerVerbosity_Text_(ELoggerVerbosity level) {
     switch (level) {
-    case FLogger::EVerbosity::None:      return STRING_LITERAL(_Char, "None").data();
-    case FLogger::EVerbosity::Debug:     return STRING_LITERAL(_Char, "Debug").data();
-    case FLogger::EVerbosity::Verbose:   return STRING_LITERAL(_Char, "Verbose").data();
-    case FLogger::EVerbosity::Info:      return STRING_LITERAL(_Char, "Info").data();
-    case FLogger::EVerbosity::Profiling: return STRING_LITERAL(_Char, "Profiling").data();
-    case FLogger::EVerbosity::Emphasis:  return STRING_LITERAL(_Char, "Emphasis").data();
-    case FLogger::EVerbosity::Warning:   return STRING_LITERAL(_Char, "Warning").data();
-    case FLogger::EVerbosity::Error:     return STRING_LITERAL(_Char, "Error").data();
-    case FLogger::EVerbosity::Fatal:     return STRING_LITERAL(_Char, "Fatal").data();
+    case FLogger::EVerbosity::None:      return STRING_LITERAL(_Char, "None");
+    case FLogger::EVerbosity::Debug:     return STRING_LITERAL(_Char, "Debug");
+    case FLogger::EVerbosity::Verbose:   return STRING_LITERAL(_Char, "Verbose");
+    case FLogger::EVerbosity::Info:      return STRING_LITERAL(_Char, "Info");
+    case FLogger::EVerbosity::Profiling: return STRING_LITERAL(_Char, "Profiling");
+    case FLogger::EVerbosity::Emphasis:  return STRING_LITERAL(_Char, "Emphasis");
+    case FLogger::EVerbosity::Warning:   return STRING_LITERAL(_Char, "Warning");
+    case FLogger::EVerbosity::Error:     return STRING_LITERAL(_Char, "Error");
+    case FLogger::EVerbosity::Fatal:     return STRING_LITERAL(_Char, "Fatal");
     default: break;
     }
     AssertNotReached();

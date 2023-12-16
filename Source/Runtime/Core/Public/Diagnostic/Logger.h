@@ -72,7 +72,7 @@ struct FLoggerCategory {
     };
     ENUM_FLAGS_FRIEND(EFlags);
 
-    FStringView Name;
+    FStringLiteral Name;
     ELoggerVerbosity Verbosity{ ELoggerVerbosity::All };
     EFlags Flags{ Default };
     hash_t HashValue{ 0 };
@@ -95,8 +95,9 @@ struct FLoggerSiteInfo {
     FTimepoint LogTime;
     FConstChar SourceFile;
     std::thread::id ThreadId;
-    u32 SourceLine : 24;
+    u32 SourceLine : 23;
     u32 PackedLevel : 8;
+    bool IsTextAllocated : 1;
 
     ELoggerVerbosity Level() const { return static_cast<ELoggerVerbosity>(PackedLevel); }
 
@@ -107,6 +108,7 @@ struct FLoggerSiteInfo {
     ,   ThreadId(std::this_thread::get_id())
     ,   SourceLine(sourceLine)
     ,   PackedLevel(static_cast<u8>(level))
+    ,   IsTextAllocated(false)
     {}
 };
 PPE_ASSUME_TYPE_AS_POD(FLoggerSiteInfo);
@@ -114,29 +116,31 @@ PPE_ASSUME_TYPE_AS_POD(FLoggerSiteInfo);
 struct FLoggerMessage {
     TPtrRef<const FLoggerCategory> Category;
     TPtrRef<const Opaq::object_view> Data;
-    Meta::TPointerWFlags<const char> TextWFlags;
+    FConstChar Text;
     FLoggerSiteInfo Site;
 
     ELoggerVerbosity Level() const { return Site.Level(); }
-    FConstChar Text() const { return TextWFlags.Get(); };
-    bool IsTextAllocated() const { return TextWFlags.Flag0(); };
+    bool IsTextAllocated() const { return Site.IsTextAllocated; };
 
     FLoggerMessage() = default;
     FLoggerMessage(
         const FLoggerCategory& category, FLoggerSiteInfo&& site,
-        const FConstChar text, bool isTextAllocated,
+        FConstChar text, bool isTextAllocated,
         const Opaq::object_view& data) NOEXCEPT
     :   Category(category)
     ,   Data(std::move(data))
+    ,   Text(std::move(text))
     ,   Site(std::move(site)) {
-        TextWFlags.Reset(text.c_str(), isTextAllocated, false/* reserved */);
+        Site.IsTextAllocated = isTextAllocated;
     }
+
     FLoggerMessage(
         const FLoggerCategory& category, FLoggerSiteInfo&& site,
-        const FConstChar text, bool isTextAllocated) NOEXCEPT
+        FConstChar text, bool isTextAllocated) NOEXCEPT
     :   Category(category)
+    ,   Text(std::move(text))
     ,   Site(std::move(site)) {
-        TextWFlags.Reset(text.c_str(), isTextAllocated, false/* reserved */);
+        Site.IsTextAllocated = isTextAllocated;
     }
 };
 PPE_ASSUME_TYPE_AS_POD(FLoggerMessage);
@@ -156,47 +160,33 @@ public:
     using FSiteInfo = FLoggerSiteInfo;
     using EVerbosity = ELoggerVerbosity;
 
-    template <size_t _Len>
-    using TStaticStringArg = const char (&)[_Len];
-
-    template <size_t _Len>
-    FORCE_INLINE static void Log(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> text) {
-        Log(category, std::move(site), MakeStringView(text));
-    }
-    template <size_t _Len>
-    FORCE_INLINE static void LogFmt(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> format, const FFormatArgList& args) {
-        LogFmt(category, std::move(site), MakeStringView(format), args);
-    }
-    template <size_t _Len>
-    FORCE_INLINE static void LogStructured(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> text, Opaq::object_init&& object) {
-        LogStructured(category, std::move(site), MakeStringView(text), std::move(object));
-    }
-    template <size_t _Len>
-    FORCE_INLINE static void Printf(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> text) {
-        Log(category, std::move(site), MakeStringView(text), text);
-    }
-
-
-    FORCE_INLINE static void Printf(const FCategory& category, FSiteInfo&& site, const char* format, .../* va_list */) {
-        va_list args;
-        va_start(args, format);
-        Printf(category, std::move(site), FConstChar(format), args);
-        va_end(args);
-    }
-
+    static PPE_CORE_API void Log(const FCategory& category, FSiteInfo&& site, FStringLiteral text);
+    static PPE_CORE_API void LogFmt(const FCategory& category, FSiteInfo&& site, FStringLiteral format, const FFormatArgList& args);
+    static PPE_CORE_API void LogStructured(const FCategory& category, FSiteInfo&& site, FStringLiteral text, Opaq::object_init&& object);
+    static PPE_CORE_API void Printf(const FCategory& category, FSiteInfo&& site, FStringLiteral format, va_list args);
     static PPE_CORE_API void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct);
     static PPE_CORE_API void RecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record);
     static PPE_CORE_API void Flush(bool synchronous = true);
 
-    template <size_t _Len>
-    static void LogFmtT(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> formatWithoutArgs) {
+    static void LogFmtT(const FCategory& category, FSiteInfo&& site, FStringLiteral formatWithoutArgs) {
         Log(category, std::move(site), formatWithoutArgs);
     }
-    template <size_t _Len, typename _Arg0, typename... _Args>
-    static void LogFmtT(const FCategory& category, FSiteInfo&& site, TStaticStringArg<_Len> format, _Arg0&& arg0, _Args&&... args) {
+    template <typename _Arg0, typename... _Args>
+    static void LogFmtT(const FCategory& category, FSiteInfo&& site, FStringLiteral format, _Arg0&& arg0, _Args&&... args) {
         LogFmt(category, std::move(site), format, {
             MakeFormatArg<char>(std::forward<_Arg0>(arg0)),
             MakeFormatArg<char>(std::forward<_Args>(args))... });
+    }
+
+    //static void Printf(const FCategory& category, FSiteInfo&& site, FStringLiteral text) {
+    //    Log(category, std::move(site), text);
+    //}
+
+    static void Printf(const FCategory& category, FSiteInfo&& site, FStringLiteral format, .../* va_list */) {
+        va_list args;
+        va_start(args, format);
+        Printf(category, std::move(site), format, args);
+        va_end(args);
     }
 
     template <typename _Arg0, typename... _Args>
@@ -213,10 +203,10 @@ public:
     static PPE_CORE_API void RegisterLogger(TPtrRef<ILogger> logger, bool autoDelete = true);
     static PPE_CORE_API void UnregisterLogger(TPtrRef<ILogger> logger);
 
-    static PPE_CORE_API ELoggerVerbosity GlobalVerbosity();
+    NODISCARD static PPE_CORE_API ELoggerVerbosity GlobalVerbosity();
     static PPE_CORE_API void SetGlobalVerbosity(ELoggerVerbosity verbosity);
 
-    static CONSTEXPR bool ShouldCompileMessage(ELoggerVerbosity verbosity) {
+    NODISCARD static CONSTEXPR bool ShouldCompileMessage(ELoggerVerbosity verbosity) {
 #if 0
         return (verbosity ^ ELoggerVerbosity::All);
 #else
@@ -233,11 +223,6 @@ public:
     static PPE_CORE_API void RegisterRollJsonLogger(FConstWChar filename);
     static PPE_CORE_API void RegisterSystemTraceLogger();
 
-private: // make FStringView private to ensure only static strings are passed as format/text
-    static PPE_CORE_API void Log(const FCategory& category, FSiteInfo&& site, const FStringView& text);
-    static PPE_CORE_API void LogFmt(const FCategory& category, FSiteInfo&& site, const FStringView& format, const FFormatArgList& args);
-    static PPE_CORE_API void LogStructured(const FCategory& category, FSiteInfo&& site, const FStringView& text, Opaq::object_init&& object);
-    static PPE_CORE_API void Printf(const FCategory& category, FSiteInfo&& site, const FConstChar& format, va_list args);
 };
 //----------------------------------------------------------------------------
 PPE_CORE_API FConstChar ToString(FLogger::EVerbosity level) NOEXCEPT;

@@ -131,6 +131,7 @@ struct TPtrRef<void> {
     TPtrRef() = default;
 
     CONSTEXPR TPtrRef(Meta::FForceInit) NOEXCEPT : Ptr(nullptr) {}
+    CONSTEXPR TPtrRef(Meta::FDefaultValue) NOEXCEPT : Ptr(nullptr) {}
 
     CONSTEXPR TPtrRef(void* ptr) NOEXCEPT : Ptr(ptr) { Assert(ptr); }
 

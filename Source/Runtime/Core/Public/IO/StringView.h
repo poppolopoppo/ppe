@@ -118,6 +118,70 @@ PPE_ASSUME_TYPE_AS_POD(FWStringView)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+// A string literal always points to static text, is null-terminated, and should not be copied
+//----------------------------------------------------------------------------
+template <typename _Char>
+class TBasicStringLiteral {
+public:
+    const _Char* Data{ nullptr };
+    size_t Length{ 0 };
+
+    CONSTEXPR TBasicStringLiteral() = default;
+
+    template <u32 _Len>
+    CONSTEXPR TBasicStringLiteral(const _Char (&arr)[_Len])
+    :   Data(&arr[0])
+    ,   Length(_Len - 1/* \0 */) {
+        STATIC_ASSERT(_Len > 0);
+        Assert_NoAssume(arr[_Len - 1] == STRING_LITERAL(_Char, '\0'));
+    }
+
+    NODISCARD CONSTEXPR bool empty() const { return (nullptr == Data); }
+    NODISCARD CONSTEXPR size_t size() const { return Length; }
+
+    NODISCARD CONSTEXPR const _Char* c_str() const NOEXCEPT {
+        return Data;
+    }
+    NODISCARD CONSTEXPR TBasicConstChar<_Char> ConstChar() const {
+        return { Data };
+    }
+    NODISCARD CONSTEXPR TBasicStringView<_Char> MakeView() const {
+        return { Data, Length };
+    }
+
+    NODISCARD CONSTEXPR const _Char* operator *() const { return Data; }
+
+    NODISCARD CONSTEXPR operator TBasicConstChar<_Char> () const { return ConstChar(); }
+    NODISCARD CONSTEXPR operator TBasicStringView<_Char> () const { return MakeView(); }
+
+    friend bool operator ==(const TBasicStringLiteral& lhs, const TBasicStringLiteral& rhs) NOEXCEPT { return Equals(lhs.MakeView(), rhs.MakeView()); }
+    friend bool operator !=(const TBasicStringLiteral& lhs, const TBasicStringLiteral& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
+
+    friend bool operator < (const TBasicStringLiteral& lhs, const TBasicStringLiteral& rhs) NOEXCEPT { return (Compare(lhs.MakeView(), rhs.MakeView()) < 0); }
+    friend bool operator >=(const TBasicStringLiteral& lhs, const TBasicStringLiteral& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
+};
+//----------------------------------------------------------------------------
+NODISCARD CONSTEXPR FStringLiteral operator "" _literal(const char* str, size_t len) NOEXCEPT {
+    FStringLiteral result;
+    result.Data = str;
+    result.Length = len;
+    return result;
+}
+//----------------------------------------------------------------------------
+NODISCARD CONSTEXPR FWStringLiteral operator "" _literal(const wchar_t* wstr, size_t len) NOEXCEPT {
+    FWStringLiteral result;
+    result.Data = wstr;
+    result.Length = len;
+    return result;
+}
+//----------------------------------------------------------------------------
+template <typename _CharA, typename _CharB>
+TBasicTextWriter<_CharA>& operator <<(TBasicTextWriter<_CharA>& oss, const TBasicStringLiteral<_CharB>& literal) {
+    return oss << literal.MakeView();
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 NODISCARD CONSTEXPR FStringView operator "" _view(const char* str, size_t len) NOEXCEPT {
     return { str, len };
 }

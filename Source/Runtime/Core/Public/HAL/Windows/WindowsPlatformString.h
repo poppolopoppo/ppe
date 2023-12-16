@@ -17,6 +17,15 @@ public:
     static bool EqualsI(const char* lhs, const char* rhs, size_t len) NOEXCEPT;
     static bool EqualsI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT;
 
+    static size_t Length(const char* str) NOEXCEPT;
+    static size_t Length(const wchar_t* str) NOEXCEPT;
+
+    static int Cmp(const char* lhs, const char* rhs) NOEXCEPT;
+    static int Cmp(const wchar_t* lhs, const wchar_t* rhs) NOEXCEPT ;
+
+    static int CmpI(const char* lhs, const char* rhs) NOEXCEPT;
+    static int CmpI(const wchar_t* lhs, const wchar_t* rhs) NOEXCEPT;
+
     static int NCmp(const char* lhs, const char* rhs, size_t len) NOEXCEPT;
     static int NCmp(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT;
 

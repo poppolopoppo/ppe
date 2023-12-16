@@ -35,8 +35,8 @@ public:
                 reinterpret_cast<const _Impl*>(_data.Get())->ReleaseReader();
         }
         const auto& Value() const { return _data->_value; }
-        const auto& operator *() const NOEXCEPT { return Meta::DerefPtr(_data->_value); }
-        const auto* operator ->() const NOEXCEPT { return std::addressof(operator*()); }
+        auto& operator *() const NOEXCEPT { return Meta::DerefPtr(_data->_value); }
+        auto* operator ->() const NOEXCEPT { return std::addressof(operator*()); }
     };
 
     class FExclusiveLock : Meta::FNonCopyableNorMovable {

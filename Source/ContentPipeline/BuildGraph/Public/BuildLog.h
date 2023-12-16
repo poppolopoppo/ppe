@@ -27,41 +27,41 @@ public:
     virtual void TraceVerbose(const FStringView& text) = 0;
     virtual void TraceWarning(const FStringView& text) = 0;
 
-    virtual void TraceDebugArgs(const FStringView& fmt, const FFormatArgList& args) = 0;
-    virtual void TraceErrorArgs(const FStringView& fmt, const FFormatArgList& args) = 0;
-    virtual void TraceInfoArgs(const FStringView& fmt, const FFormatArgList& args) = 0;
-    virtual void TraceVerboseArgs(const FStringView& fmt, const FFormatArgList& args) = 0;
-    virtual void TraceWarningArgs(const FStringView& fmt, const FFormatArgList& args) = 0;
+    virtual void TraceDebugArgs(const FStringLiteral& fmt, const FFormatArgList& args) = 0;
+    virtual void TraceErrorArgs(const FStringLiteral& fmt, const FFormatArgList& args) = 0;
+    virtual void TraceInfoArgs(const FStringLiteral& fmt, const FFormatArgList& args) = 0;
+    virtual void TraceVerboseArgs(const FStringLiteral& fmt, const FFormatArgList& args) = 0;
+    virtual void TraceWarningArgs(const FStringLiteral& fmt, const FFormatArgList& args) = 0;
 
     virtual void Flush() = 0;
 
 public: // Trace helpers:
     template <typename _Arg0, typename... _Args>
-    void TraceDebug(const FStringView& fmt, _Arg0&& arg0, _Args&&... args) {
+    void TraceDebug(const FStringLiteral& fmt, _Arg0&& arg0, _Args&&... args) {
         TraceLevel_<&IBuildLog::TraceDebugArgs>(fmt, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     }
     template <typename _Arg0, typename... _Args>
-    void TraceError(const FStringView& fmt, _Arg0&& arg0, _Args&&... args) {
+    void TraceError(const FStringLiteral& fmt, _Arg0&& arg0, _Args&&... args) {
         TraceLevel_<&IBuildLog::TraceErrorArgs>(fmt, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     }
     template <typename _Arg0, typename... _Args>
-    void TraceInfo(const FStringView& fmt, _Arg0&& arg0, _Args&&... args) {
+    void TraceInfo(const FStringLiteral& fmt, _Arg0&& arg0, _Args&&... args) {
         TraceLevel_<&IBuildLog::TraceInfoArgs>(fmt, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     }
     template <typename _Arg0, typename... _Args>
-    void TraceVerbose(const FStringView& fmt, _Arg0&& arg0, _Args&&... args) {
+    void TraceVerbose(const FStringLiteral& fmt, _Arg0&& arg0, _Args&&... args) {
         TraceLevel_<&IBuildLog::TraceVerboseArgs>(fmt, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     }
     template <typename _Arg0, typename... _Args>
-    void TraceWarning(const FStringView& fmt, _Arg0&& arg0, _Args&&... args) {
+    void TraceWarning(const FStringLiteral& fmt, _Arg0&& arg0, _Args&&... args) {
         TraceLevel_<&IBuildLog::TraceWarningArgs>(fmt, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     }
 
 private:
-    using trace_args_f = void (IBuildLog::*)(const FStringView & fmt, const FFormatArgList & args);
+    using trace_args_f = void (IBuildLog::*)(const FStringLiteral & fmt, const FFormatArgList & args);
 
     template <trace_args_f _TraceArgs, typename _Arg0, typename... _Args >
-    void TraceLevel_(const FStringView& fmt, _Arg0&& arg0, _Args&&... args) {
+    void TraceLevel_(const FStringLiteral& fmt, _Arg0&& arg0, _Args&&... args) {
         // args are always passed by pointer, wrapped in a void *
         // this avoids unintended copies and de-correlates from actual types (_FormatArgs is defined in Format.cpp)
         typedef details::FFormatFunctor_ formatfunc_type;

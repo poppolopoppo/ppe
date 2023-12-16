@@ -30,7 +30,7 @@ LOG_CATEGORY(, Test_Format)
 namespace {
 //----------------------------------------------------------------------------
 template <typename... _Args>
-static void TestFormat_(const FStringView& expected, const FStringView& format, _Args... args) {
+static void TestFormat_(const FStringView& expected, FStringLiteral format, _Args... args) {
     const FString str = StringFormat(format, std::forward<_Args>(args)...);
 
     const bool match = (expected == str);

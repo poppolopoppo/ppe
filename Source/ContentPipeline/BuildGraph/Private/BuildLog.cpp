@@ -67,27 +67,27 @@ public:
         PPE_LOG_DIRECT(BuildGraph, Warning, [&](FTextWriter& oss){ oss << text; });
     }
 
-    virtual void TraceDebugArgs(const FStringView& fmt, const FFormatArgList& args) override final {
+    virtual void TraceDebugArgs(const FStringLiteral& fmt, const FFormatArgList& args) override final {
         Unused(fmt);
         Unused(args);
         PPE_LOG_DIRECT(BuildGraph, Debug, [&](FTextWriter& oss){ FormatArgs(oss, fmt, args); });
     }
-    virtual void TraceErrorArgs(const FStringView& fmt, const FFormatArgList& args) override final {
+    virtual void TraceErrorArgs(const FStringLiteral& fmt, const FFormatArgList& args) override final {
         Unused(fmt);
         Unused(args);
         PPE_LOG_DIRECT(BuildGraph, Error, [&](FTextWriter& oss){ FormatArgs(oss, fmt, args); });
     }
-    virtual void TraceInfoArgs(const FStringView& fmt, const FFormatArgList& args) override final {
+    virtual void TraceInfoArgs(const FStringLiteral& fmt, const FFormatArgList& args) override final {
         Unused(fmt);
         Unused(args);
         PPE_LOG_DIRECT(BuildGraph, Info, [&](FTextWriter& oss){ FormatArgs(oss, fmt, args); });
     }
-    virtual void TraceVerboseArgs(const FStringView& fmt, const FFormatArgList& args) override final {
+    virtual void TraceVerboseArgs(const FStringLiteral& fmt, const FFormatArgList& args) override final {
         Unused(fmt);
         Unused(args);
         PPE_LOG_DIRECT(BuildGraph, Verbose, [&](FTextWriter& oss){ FormatArgs(oss, fmt, args); });
     }
-    virtual void TraceWarningArgs(const FStringView& fmt, const FFormatArgList& args) override final {
+    virtual void TraceWarningArgs(const FStringLiteral& fmt, const FFormatArgList& args) override final {
         Unused(fmt);
         Unused(args);
         PPE_LOG_DIRECT(BuildGraph, Warning, [&](FTextWriter& oss){ FormatArgs(oss, fmt, args); });

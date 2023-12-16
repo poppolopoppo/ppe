@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Container/HashHelpers.h"
+#include "HAL/PlatformString.h"
 #include "IO/StringView.h"
 
 namespace PPE {
@@ -25,6 +26,18 @@ struct TBasicConstChar {
         size_t len = 0;
         for(const _Char* s = Data; s[len]; ++len);
         return len;
+    }
+
+    CONSTEXPR bool unsafe_length(size_t maxLength, size_t* outLength) const {
+        *outLength = 0;
+        if (nullptr == Data) return true;
+        size_t len = 0;
+        for(const _Char* s = Data; s[len]; ++len) {
+            if (len > maxLength)
+                return false;
+        }
+        *outLength = len;
+        return true;
     }
 
     CONSTEXPR bool Equals(const TBasicConstChar& other) const NOEXCEPT {
@@ -119,6 +132,8 @@ struct TBasicConstChar {
 
 };
 //----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TConstCharEqualTo {
     CONSTEXPR bool operator ()(const TBasicConstChar<_Char>& lhs, const TBasicConstChar<_Char>& rhs) const NOEXCEPT {
@@ -162,15 +177,6 @@ template <typename _CharA, typename _CharB>
 TBasicTextWriter<_CharA>& operator <<(TBasicTextWriter<_CharA>& oss, const TBasicConstChar<_CharB>& cstr) {
     return oss << cstr.MakeView();
 }
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename _Char, ECase _Sensitive>
-using TBasicConstCharHashMemoizer = THashMemoizer<
-    TBasicConstChar<_Char>,
-    TConstCharHasher<_Char, _Sensitive>,
-    TConstCharEqualTo<_Char, _Sensitive>
->;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
