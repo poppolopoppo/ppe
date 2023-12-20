@@ -119,3 +119,5 @@ Core.VC.db
 .vscode/
 report.html
 *.pprof
+node.dot
+node.dot.svg
