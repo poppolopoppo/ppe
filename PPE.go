@@ -333,5 +333,14 @@ func main() {
 		})
 	}
 
+	OnUnitCompile(func(uce UnitCompileEvent) error {
+		if uce.Unit.CppRtti == CPPRTTI_ENABLED {
+			uce.Unit.Defines.Append("PPE_HAS_CXXRTTI=1")
+		} else {
+			uce.Unit.Defines.Append("PPE_HAS_CXXRTTI=0")
+		}
+		return nil
+	})
+
 	LaunchCommand("PPE")
 }
