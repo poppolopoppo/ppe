@@ -24,12 +24,12 @@ function __ppe_find_executable --description 'Find an executable recursively sta
 end
 
 function __ppe_run
-    set -l executable_path 'PPE.exe'
+    set -l executable_path "$__ppe_executable_name"
 
     if test -x "./$executable_path"
         "./$executable_path" $argv
     else
-        set -l executable_path (__ppe_find_executable 'PPE.exe')
+        set -l executable_path (__ppe_find_executable "$executable_path")
         set -l root_dir (dirname "$executable_path")
         "./$executable_path" -RootDir="$root_dir" $argv
     end
@@ -81,8 +81,17 @@ function __ppe_autocomplete
     end
 end
 
+switch (uname)
+    case 'MSYS*' 'Msys'
+        set -g __ppe_executable_name 'PPE.exe'
+    case 'Linux'
+        set -g __ppe_executable_name 'PPE'
+    case '*'
+        set -g __ppe_executable_name 'PPE'
+end
+
 set -g __ppe_autocomplete_memoized_arguments
 set -g __ppe_autocomplete_memoized_completions
 set -g __ppe_autocomplete_memoized_status
 complete -c ppe -f -a '(__ppe_autocomplete)' -d 'PoPpOlOpPoPpO build system'
-echo 'Enabled auto-completion for `ppe` PoPpOlOpPoPpO build system' 1>&2
+# echo 'Enabled auto-completion for `ppe` PoPpOlOpPoPpO build system' 1>&2
