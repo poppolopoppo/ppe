@@ -4,10 +4,13 @@
 
 #include "Allocator/Alloca.h"
 #include "Container/Token.h"
+#include "Container/Resizable.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// Compact signed integer serialization (use least bits possible)
 //----------------------------------------------------------------------------
 template <typename T>
 void SerializeCompactSigned(FArchive& ar, TCompactInt<T>* value) {
@@ -53,6 +56,8 @@ void SerializeCompactSigned(FArchive& ar, TCompactInt<T>* value) {
     }
 }
 //----------------------------------------------------------------------------
+// Compact unsigned integer serialization (use least bits possible)
+//----------------------------------------------------------------------------
 template <typename T>
 void SerializeCompactUnsigned(FArchive& ar, TCompactInt<T>* value) {
     u8 b;
@@ -80,6 +85,8 @@ void SerializeCompactUnsigned(FArchive& ar, TCompactInt<T>* value) {
         }
     }
 }
+//----------------------------------------------------------------------------
+// Type erasure for array-like serialization
 //----------------------------------------------------------------------------
 template <typename T>
 void SerializeResizableArray(FArchive& ar, TResizable<T> array) {

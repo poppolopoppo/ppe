@@ -19,27 +19,27 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FArchive::SerializeCompactInt(TCompactInt<i16>* value) {
-	SerializeCompactSigned(*this, value);
+	SerializeCompactSigned<i16>(*this, value);
 }
 //----------------------------------------------------------------------------
 void FArchive::SerializeCompactInt(TCompactInt<i32>* value){
-	SerializeCompactSigned(*this, value);
+	SerializeCompactSigned<i32>(*this, value);
 }
 //----------------------------------------------------------------------------
 void FArchive::SerializeCompactInt(TCompactInt<i64>* value){
-	SerializeCompactSigned(*this, value);
+	SerializeCompactSigned<i64>(*this, value);
 }
 //----------------------------------------------------------------------------
 void FArchive::SerializeCompactInt(TCompactInt<u16>* value) {
-	SerializeCompactUnsigned(*this, value);
+	SerializeCompactUnsigned<u16>(*this, value);
 }
 //----------------------------------------------------------------------------
 void FArchive::SerializeCompactInt(TCompactInt<u32>* value){
-	SerializeCompactUnsigned(*this, value);
+	SerializeCompactUnsigned<u32>(*this, value);
 }
 //----------------------------------------------------------------------------
 void FArchive::SerializeCompactInt(TCompactInt<u64>* value){
-	SerializeCompactUnsigned(*this, value);
+	SerializeCompactUnsigned<u64>(*this, value);
 }
 //----------------------------------------------------------------------------
 void FArchive::SerializeString(FString* str) {
