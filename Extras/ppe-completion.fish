@@ -26,12 +26,17 @@ end
 function __ppe_run
     set -l executable_path "$__ppe_executable_name"
 
-    if test -x "./$executable_path"
+    if test -x "./$executable_path" -a -f "./$executable_path"
         "./$executable_path" $argv
     else
         set -l executable_path (__ppe_find_executable "$executable_path")
-        set -l root_dir (dirname "$executable_path")
-        "./$executable_path" -RootDir="$root_dir" $argv
+        if test -x "./$executable_path" -a -f "./$executable_path"
+            set -l root_dir (dirname "$executable_path")
+            "./$executable_path" -RootDir="$root_dir" $argv
+        else
+            echo "$__ppe_executable_name could not be found" 1>&2
+            return 1
+        end
     end
 end
 
@@ -68,7 +73,7 @@ function __ppe_autocomplete
         set -f completions "$__ppe_autocomplete_memoized_completions"
     else
         # Call __ppe_run with 'autocomplete' command
-        set -f completions (__ppe_run -Ide -q autocomplete -MaxResults=20 $arguments)
+        set -f completions (__ppe_run -Ide -q autocomplete -MaxResults=20 $arguments 2>/dev/null)
 
         set -g __ppe_autocomplete_memoized_status $status # record __ppe_run execution result to invalidate on error
         set -g __ppe_autocomplete_memoized_arguments $arguments
