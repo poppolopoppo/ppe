@@ -13,6 +13,9 @@
 		"imgui.git/imstb_textedit.h",
 		"imgui.git/imstb_truetype.h",
 
+		"imgui.git/misc/debuggers/imgui.natvis",
+		"imgui.git/misc/debuggers/imgui.natstepfilter",
+
 		"implot.git/implot.h",
 		"implot.git/implot_internal.h",
 
