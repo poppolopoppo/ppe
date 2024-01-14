@@ -6,8 +6,11 @@ import (
 	"strconv"
 	"strings"
 
+	//lint:ignore ST1001 ignore dot imports warning
 	. "github.com/poppolopoppo/ppb"
+	//lint:ignore ST1001 ignore dot imports warning
 	. "github.com/poppolopoppo/ppb/compile"
+	//lint:ignore ST1001 ignore dot imports warning
 	. "github.com/poppolopoppo/ppb/utils"
 )
 
@@ -59,7 +62,7 @@ func (x *BuildVersionGeneratedHeader) Serialize(ar Archive) {
 	ar.String(&x.Version)
 }
 func (x BuildVersionGeneratedHeader) Generate(bc BuildContext, generated *BuildGenerated, dst io.Writer) error {
-	sourceControl, err := BuildSourceControlStatus(x.ModuleDir).Need(bc)
+	sourceControl, err := BuildSourceControlFolderStatus(x.ModuleDir).Need(bc)
 	if err != nil {
 		return err
 	}
@@ -241,15 +244,12 @@ func makePPE_Internal(rules *ModuleRules) error {
 	rules.Source.SourceDirs.AppendUniq(rules.PrivateDir())
 	rules.Source.SourceGlobs.AppendUniq("*.cpp")
 
-	rules.PCH.IsInheritable()
 	Inherit(&rules.PCH, PCH_MONOLITHIC)
 
 	switch rules.PCH {
 	case PCH_MONOLITHIC:
-		pch_h := rules.ModuleDir.File("stdafx.h")
-		pch_cpp := rules.ModuleDir.File("stdafx.cpp")
-		rules.PrecompiledHeader = &pch_h
-		rules.PrecompiledSource = &pch_cpp
+		rules.PrecompiledHeader = rules.ModuleDir.File("stdafx.h")
+		rules.PrecompiledSource = rules.ModuleDir.File("stdafx.cpp")
 	case PCH_SHARED:
 		return fmt.Errorf("shared PCH are not implemented")
 	case PCH_DISABLED:
@@ -317,11 +317,11 @@ func makePPE_Program(rules *ModuleRules, usage UsageType) error {
  ***************************************/
 
 func main() {
-	RegisterSerializable(&BuildModulesHeaderGenerator{})
-	RegisterSerializable(&BuildModulesGeneratedHeader{})
+	RegisterSerializable[*BuildModulesHeaderGenerator]()
+	RegisterSerializable[*BuildModulesGeneratedHeader]()
 
-	RegisterSerializable(&BuildVersionHeaderGenerator{})
-	RegisterSerializable(&BuildVersionGeneratedHeader{})
+	RegisterSerializable[*BuildVersionHeaderGenerator]()
+	RegisterSerializable[*BuildVersionGeneratedHeader]()
 
 	RegisterArchetype("PPE/Headers", makePPE_Headers)
 	RegisterArchetype("PPE/External", makePPE_External)
