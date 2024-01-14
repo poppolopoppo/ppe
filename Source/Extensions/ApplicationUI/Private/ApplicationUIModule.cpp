@@ -2,6 +2,8 @@
 
 #include "ApplicationUIModule.h"
 
+#include "Application/ApplicationBase.h"
+
 #include "UI/ImguiService.h"
 
 #include "Allocator/TrackingMalloc.h"
@@ -78,7 +80,7 @@ void FApplicationUIModule::ReleaseMemory(FModularDomain& domain) NOEXCEPT {
 
 }
 //----------------------------------------------------------------------------
-void FApplicationUIModule::OnApplicationStart_(Application::FApplicationBase&, FModularServices& services) NOEXCEPT {
+void FApplicationUIModule::OnApplicationStart_(Application::FApplicationBase& app, FModularServices& services) NOEXCEPT {
     Assert(_ui);
 
     using namespace Application;
@@ -86,16 +88,15 @@ void FApplicationUIModule::OnApplicationStart_(Application::FApplicationBase&, F
     IInputService& input = services.Get<IInputService>();
     IRHIService& rhi = services.Get<IRHIService>();
 
-    if (not _ui->Construct(input, rhi)) {
+    if (not _ui->Construct(app, input, rhi)) {
         PPE_LOG(UI, Error, "failed to initialize imgui service");
-        _ui.reset();
         return;
     }
 
     services.Add<IUIService>(_ui.get());
 }
 //----------------------------------------------------------------------------
-void FApplicationUIModule::OnApplicationShutdown_(Application::FApplicationBase&, FModularServices& services) NOEXCEPT {
+void FApplicationUIModule::OnApplicationShutdown_(Application::FApplicationBase& app, FModularServices& services) NOEXCEPT {
     Assert(_ui);
 
     using namespace Application;
@@ -106,7 +107,7 @@ void FApplicationUIModule::OnApplicationShutdown_(Application::FApplicationBase&
 
         services.Remove<IUIService>();
 
-        _ui->TearDown(input, rhi);
+        _ui->TearDown(app, input, rhi);
     }
 }
 //----------------------------------------------------------------------------

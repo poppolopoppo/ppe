@@ -18,6 +18,7 @@ public:
     virtual void Shutdown() override;
 
 protected:
+    virtual void Update(FTimespan dt) override;
     virtual void Render(FTimespan dt) override;
 
 };

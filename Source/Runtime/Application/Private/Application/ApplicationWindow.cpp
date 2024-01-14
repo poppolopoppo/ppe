@@ -179,6 +179,16 @@ bool FApplicationWindow::PumpMessages() NOEXCEPT {
         _main->PumpMessages()) {
 
         _input->Poll();
+
+        if (_windowWasResized) {
+            _windowWasResized = false;
+
+            FRHISurfaceCreateInfo surfaceInfo;
+            RecommendedSurfaceInfo_(&surfaceInfo, _rhi->Features(), *_main);
+
+            _rhi->ResizeWindow(surfaceInfo);
+        }
+
         return true;
     }
 
@@ -188,15 +198,6 @@ bool FApplicationWindow::PumpMessages() NOEXCEPT {
 void FApplicationWindow::Tick(FTimespan dt) {
     const FMovingAverageTimer::FScope timedScope{_tickTime};
     Unused(timedScope);
-
-    if (_windowWasResized) {
-        _windowWasResized = false;
-
-        FRHISurfaceCreateInfo surfaceInfo;
-        RecommendedSurfaceInfo_(&surfaceInfo, _rhi->Features(), *_main);
-
-        _rhi->ResizeWindow(surfaceInfo);
-    }
 
     _input->Update(dt);
 
@@ -243,6 +244,14 @@ void FApplicationWindow::OnWindowResize(const uint2& size) NOEXCEPT {
     _windowWasResized = true;
 
     UpdateTickRateFromRefreshRate_();
+}
+//----------------------------------------------------------------------------
+void FApplicationWindow::OnWindowShow(bool visible) NOEXCEPT {
+    PPE_LOG(Application, Info, "application {0} main window show({1:a})", Name(), visible);
+}
+//----------------------------------------------------------------------------
+void FApplicationWindow::OnWindowClose() NOEXCEPT {
+    PPE_LOG(Application, Info, "application {0} main window was closed", Name());
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::UpdateTickRateFromRefreshRate_() {

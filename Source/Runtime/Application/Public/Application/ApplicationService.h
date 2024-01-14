@@ -2,11 +2,11 @@
 
 #include "Application_fwd.h"
 
+#include "Misc/Event.h"
 #include "Modular/Modular_fwd.h"
 #include "Time/Time_fwd.h"
 
 namespace PPE {
-namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -33,9 +33,21 @@ public:
 
     virtual bool PumpMessages() NOEXCEPT = 0;
     virtual void ReleaseMemory() = 0;
+
+public: // for all services
+    using FApplicationEvent = TFunction<void(const IApplicationService&)>;
+
+    THREADSAFE_EVENT(OnApplicationBeginLoop, FApplicationEvent);
+    THREADSAFE_EVENT(OnApplicationEndLoop, FApplicationEvent);
+
+    THREADSAFE_EVENT(OnApplicationBeginTick, FApplicationEvent);
+    THREADSAFE_EVENT(OnApplicationEndTick, FApplicationEvent);
+
+    using FApplicationTickEvent = TFunction<void(const IApplicationService&, FTimespan dt)>;
+
+    THREADSAFE_EVENT(OnApplicationTick, FApplicationTickEvent);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace Application
 } //!namespace PPE

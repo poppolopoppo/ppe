@@ -275,6 +275,8 @@ bool FVulkanRHIService::BeginFrame(FTimespan dt) {
     const FFrameIndex previousFrame = _currentFrame;
     _currentFrame = _frameGraph->PrepareNewFrame();
 
+    _OnBeginFrame.Invoke(*this, _currentFrame);
+
     return (previousFrame != _currentFrame);
 }
 //----------------------------------------------------------------------------
@@ -285,6 +287,8 @@ void FVulkanRHIService::EndFrame() {
 
     PPE_LOG_CHECKVOID(RHI, _frameGraph->Flush(EQueueUsage::All));
     PPE_LOG_CHECKVOID(RHI, _frameGraph->WaitIdle(IFrameGraph::MaxTimeout));
+
+    _OnEndFrame.Invoke(*this, _currentFrame);
 }
 //----------------------------------------------------------------------------
 void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {

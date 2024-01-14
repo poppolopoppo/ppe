@@ -616,11 +616,9 @@ void FFileDialogWidget::RefreshVisibleEntries() {
 bool FFileDialogWidget::Show() {
     ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiCond_FirstUseEver);
 
-    if (not ImGui::Begin(*Title, &WindowVisible, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar)) {
-        ImGui::End();
-        return false;
-    }
     DEFERRED{ ImGui::End(); };
+    if (not ImGui::Begin(*Title, &WindowVisible, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar))
+        return false;
 
     if (InitialDirectory.empty())
         ChangeDirectory(L"Data://Fonts/Icons");

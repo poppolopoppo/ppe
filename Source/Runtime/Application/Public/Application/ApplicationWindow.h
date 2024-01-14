@@ -41,9 +41,11 @@ protected:
     virtual void Update(FTimespan dt);
     virtual void Render(FTimespan dt);
 
+    virtual void OnWindowShow(bool visible) NOEXCEPT override;
     virtual void OnWindowFocus(bool enabled) NOEXCEPT override;
     virtual void OnWindowMove(const int2& pos) NOEXCEPT override;
     virtual void OnWindowResize(const uint2& size) NOEXCEPT override;
+    virtual void OnWindowClose() NOEXCEPT override;
 
 private:
     void UpdateTickRateFromRefreshRate_();

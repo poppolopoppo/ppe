@@ -11,6 +11,8 @@
 #include "HAL/PlatformWindow.h"
 #include "HAL/RHIService.h"
 
+#include "Application/ApplicationService.h"
+
 #include "Input/GamepadState.h"
 #include "Input/InputService.h"
 #include "Input/KeyboardState.h"
@@ -454,7 +456,7 @@ FImGuiService::~FImGuiService() {
     ImGui::DestroyContext(_imGuiContext);
 }
 //----------------------------------------------------------------------------
-bool FImGuiService::Construct(IInputService& input, IRHIService& rhi) {
+bool FImGuiService::Construct(IApplicationService& app, IInputService& input, IRHIService& rhi) {
     Assert(not _onInputUpdate);
     Assert(not _onRenderFrame);
     Assert(_textureResources.empty());
@@ -503,6 +505,7 @@ bool FImGuiService::Construct(IInputService& input, IRHIService& rhi) {
 
     // initialize style
     {
+#if 0
         ImGui::StyleColorsClassic();
         ImGuiStyle& style = ImGui::GetStyle();
 
@@ -516,6 +519,69 @@ bool FImGuiService::Construct(IInputService& input, IRHIService& rhi) {
         colors[ImGuiCol_WindowBg] = ImVec4(0.09f, 0.05f, 0.11f, 0.85f);
         colors[ImGuiCol_ChildBg] = ImVec4(0.10f, 0.07f, 0.10f, 0.00f);
         colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.63f, 0.57f, 0.79f, 0.07f);
+
+#else // https://github.com/GraphicsProgramming/dear-imgui-styles
+        ImGuiStyle& style = ImGui::GetStyle();
+
+        style.WindowMinSize        = ImVec2( 160, 20 );
+        style.FramePadding         = ImVec2( 4, 2 );
+        style.ItemSpacing          = ImVec2( 6, 2 );
+        style.ItemInnerSpacing     = ImVec2( 6, 4 );
+        style.Alpha                = 0.95f;
+        style.WindowRounding       = 4.0f;
+        style.FrameRounding        = 2.0f;
+        style.IndentSpacing        = 6.0f;
+        style.ItemInnerSpacing     = ImVec2( 2, 4 );
+        style.ColumnsMinSpacing    = 50.0f;
+        style.GrabMinSize          = 14.0f;
+        style.GrabRounding         = 16.0f;
+        style.ScrollbarSize        = 12.0f;
+        style.ScrollbarRounding    = 16.0f;
+
+        style.Colors[ImGuiCol_Text]                  = ImVec4(0.86f, 0.93f, 0.89f, 0.78f);
+        style.Colors[ImGuiCol_TextDisabled]          = ImVec4(0.86f, 0.93f, 0.89f, 0.28f);
+        style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.13f, 0.14f, 0.17f, 1.00f);
+        style.Colors[ImGuiCol_Border]                = ImVec4(0.31f, 0.31f, 1.00f, 0.00f);
+        style.Colors[ImGuiCol_BorderShadow]          = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+        style.Colors[ImGuiCol_FrameBg]               = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
+        style.Colors[ImGuiCol_FrameBgHovered]        = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+        style.Colors[ImGuiCol_FrameBgActive]         = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        style.Colors[ImGuiCol_TitleBg]               = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
+        style.Colors[ImGuiCol_TitleBgCollapsed]      = ImVec4(0.20f, 0.22f, 0.27f, 0.75f);
+        style.Colors[ImGuiCol_TitleBgActive]         = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        style.Colors[ImGuiCol_MenuBarBg]             = ImVec4(0.20f, 0.22f, 0.27f, 0.47f);
+        style.Colors[ImGuiCol_ScrollbarBg]           = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
+        style.Colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.09f, 0.15f, 0.16f, 1.00f);
+        style.Colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+        style.Colors[ImGuiCol_ScrollbarGrabActive]   = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        style.Colors[ImGuiCol_CheckMark]             = ImVec4(0.71f, 0.22f, 0.27f, 1.00f);
+        style.Colors[ImGuiCol_SliderGrab]            = ImVec4(0.47f, 0.77f, 0.83f, 0.14f);
+        style.Colors[ImGuiCol_SliderGrabActive]      = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        style.Colors[ImGuiCol_Button]                = ImVec4(0.47f, 0.77f, 0.83f, 0.14f);
+        style.Colors[ImGuiCol_ButtonHovered]         = ImVec4(0.92f, 0.18f, 0.29f, 0.86f);
+        style.Colors[ImGuiCol_ButtonActive]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        style.Colors[ImGuiCol_Header]                = ImVec4(0.92f, 0.18f, 0.29f, 0.76f);
+        style.Colors[ImGuiCol_HeaderHovered]         = ImVec4(0.92f, 0.18f, 0.29f, 0.86f);
+        style.Colors[ImGuiCol_HeaderActive]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        style.Colors[ImGuiCol_Separator]             = ImVec4(0.14f, 0.16f, 0.19f, 1.00f);
+        style.Colors[ImGuiCol_SeparatorHovered]      = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+        style.Colors[ImGuiCol_SeparatorActive]       = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        style.Colors[ImGuiCol_ResizeGrip]            = ImVec4(0.47f, 0.77f, 0.83f, 0.04f);
+        style.Colors[ImGuiCol_ResizeGripHovered]     = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+        style.Colors[ImGuiCol_ResizeGripActive]      = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        style.Colors[ImGuiCol_PlotLines]             = ImVec4(0.86f, 0.93f, 0.89f, 0.63f);
+        style.Colors[ImGuiCol_PlotLinesHovered]      = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        style.Colors[ImGuiCol_PlotHistogram]         = ImVec4(0.86f, 0.93f, 0.89f, 0.63f);
+        style.Colors[ImGuiCol_PlotHistogramHovered]  = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+        style.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.92f, 0.18f, 0.29f, 0.43f);
+        style.Colors[ImGuiCol_PopupBg]               = ImVec4(0.20f, 0.22f, 0.27f, 0.9f);
+        style.Colors[ImGuiCol_ModalWindowDimBg]      = ImVec4(0.20f, 0.22f, 0.27f, 0.73f);
+
+        style.Colors[ImGuiCol_Tab]                = ImVec4(0.47f, 0.77f, 0.83f, 0.14f);
+        style.Colors[ImGuiCol_TabHovered]         = ImVec4(0.92f, 0.18f, 0.29f, 0.86f);
+        style.Colors[ImGuiCol_TabActive]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+
+#endif
     }
 
     // initialize font atlas
@@ -528,6 +594,9 @@ bool FImGuiService::Construct(IInputService& input, IRHIService& rhi) {
     PPE_LOG_CHECK(UI, CreateImguiPipeline_(&_pipeline, *fg));
     PPE_LOG_CHECK(UI, CreateImguiTextureSampler_(&_textureSampler, *fg));
 
+    _onBeginTick = app.OnApplicationBeginTick().Bind<&FImGuiService::OnBeginTick>(this);
+    _onEndTick = app.OnApplicationEndTick().Bind<&FImGuiService::OnEndTick>(this);
+
     _onInputUpdate = input.OnInputUpdate().Bind<&FImGuiService::OnUpdateInput>(this);
     _onWindowFocus = input.OnWindowFocus().Bind<&FImGuiService::OnWindowFocus>(this);
 
@@ -537,8 +606,11 @@ bool FImGuiService::Construct(IInputService& input, IRHIService& rhi) {
     return true;
 }
 //----------------------------------------------------------------------------
-void FImGuiService::TearDown(IInputService& input, IRHIService& rhi) {
+void FImGuiService::TearDown(IApplicationService& app, IInputService& input, IRHIService& rhi) {
     PPE_LOG(UI, Info, "destroying imgui service");
+
+    app.OnApplicationBeginTick().Remove(_onBeginTick);
+    app.OnApplicationEndTick().Remove(_onEndTick);
 
     input.OnInputUpdate().Remove(_onInputUpdate);
     input.OnWindowFocus().Remove(_onWindowFocus);
@@ -564,6 +636,17 @@ void FImGuiService::TearDown(IInputService& input, IRHIService& rhi) {
     }
 }
 //----------------------------------------------------------------------------
+void FImGuiService::OnBeginTick(const PPE::IApplicationService& ) {
+    _wasFrameRendered = false;
+
+    ImGui::NewFrame();
+}
+//----------------------------------------------------------------------------
+void FImGuiService::OnEndTick(const PPE::IApplicationService& ) {
+    if (not _wasFrameRendered)
+        ImGui::EndFrame();
+}
+//----------------------------------------------------------------------------
 void FImGuiService::OnUpdateInput(IInputService& input, FTimespan dt) {
     ImGuiIO& io = ImGui::GetIO();
     PPE_LOG_CHECKVOID(UI, io.Fonts->IsBuilt());
@@ -573,8 +656,6 @@ void FImGuiService::OnUpdateInput(IInputService& input, FTimespan dt) {
     PollImguiGamepadEvents_(io, input);
     PollImguiKeyboardEvents_(io, input);
     PollImguiMouseEvents_(io, input);
-
-    ImGui::NewFrame();
 }
 //----------------------------------------------------------------------------
 void FImGuiService::OnWindowFocus(const IInputService& input, const FGenericWindow* ) {
@@ -585,6 +666,8 @@ void FImGuiService::OnWindowFocus(const IInputService& input, const FGenericWind
 //----------------------------------------------------------------------------
 void FImGuiService::OnRenderFrame(const IRHIService& rhi, FTimespan ) {
     using namespace RHI;
+
+    _wasFrameRendered = true;
 
     ImGui::Render();
 

@@ -160,6 +160,9 @@ void FGenericWindow::OnWindowShow(bool visible) {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     _visible = visible;
     _mouseClientX = _mouseClientY = -1;
+
+    for (const TPtrRef<IWindowListener>& listener : *_listeners.LockShared())
+        listener->OnWindowShow(visible);
 }
 void FGenericWindow::OnWindowClose() {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
@@ -170,6 +173,9 @@ void FGenericWindow::OnWindowClose() {
         _mouseCapture = false;
         FPlatformMouse::ResetCapture();
     }
+
+    for (const TPtrRef<IWindowListener>& listener : *_listeners.LockShared())
+        listener->OnWindowClose();
 }
 void FGenericWindow::OnWindowDPI(u32 dpi) {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);

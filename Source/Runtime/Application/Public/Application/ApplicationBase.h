@@ -27,6 +27,8 @@ public:
     void ApplicationLoop();
 
 private:
+    NODISCARD bool ApplicationTick_(FTimespan dt);
+
     FTimeline _timeline;
 };
 //----------------------------------------------------------------------------

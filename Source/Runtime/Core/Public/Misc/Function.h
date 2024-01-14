@@ -840,6 +840,14 @@ public:
         return (*this);
     }
 
+    FORCE_INLINE CONSTEXPR _Ret operator()(_Args... args) {
+        return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
+    }
+
+    FORCE_INLINE CONSTEXPR _Ret Invoke(_Args... args) {
+        return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
+    }
+
     FORCE_INLINE CONSTEXPR _Ret operator()(_Args... args) const {
         return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
     }
@@ -885,6 +893,14 @@ public:
     CONSTEXPR TFunction& operator =(TFunction && rvalue) NOEXCEPT {
         parent_type::operator =(std::move(rvalue));
         return (*this);
+    }
+
+    FORCE_INLINE CONSTEXPR _Ret operator()(_Args... args) NOEXCEPT {
+        return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
+    }
+
+    FORCE_INLINE CONSTEXPR _Ret Invoke(_Args... args) NOEXCEPT {
+        return parent_type::VTable_().Invoke(parent_type::EmbedPtr_(), std::forward<_Args>(args)...);
     }
 
     FORCE_INLINE CONSTEXPR _Ret operator()(_Args... args) const NOEXCEPT {

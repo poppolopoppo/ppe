@@ -13,6 +13,7 @@
 
 namespace PPE {
 class FApplicationModule;
+FWD_INTEFARCE_UNIQUEPTR(ApplicationService);
 FWD_INTEFARCE_UNIQUEPTR(InputService);
 FWD_INTEFARCE_UNIQUEPTR(UIService);
 FWD_INTEFARCE_UNIQUEPTR(WindowService);

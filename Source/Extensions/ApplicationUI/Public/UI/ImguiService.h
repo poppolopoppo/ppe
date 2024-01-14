@@ -22,10 +22,13 @@ public:
     FImGuiService();
     ~FImGuiService() override;
 
-    NODISCARD bool Construct(IInputService& input, IRHIService& rhi);
-    void TearDown(IInputService& input, IRHIService& rhi);
+    NODISCARD bool Construct(IApplicationService& app, IInputService& input, IRHIService& rhi);
+    void TearDown(IApplicationService& app, IInputService& input, IRHIService& rhi);
 
     const PImGuiContext& ImguiContext() const { return _imGuiContext; }
+
+    void OnBeginTick(const IApplicationService& app) override;
+    void OnEndTick(const IApplicationService& app) override;
 
     void OnUpdateInput(IInputService& input, FTimespan dt) override;
     void OnWindowFocus(const IInputService& input, const FGenericWindow* previous) override;
@@ -65,11 +68,16 @@ private:
     size_t _indexBufferSize{0};
     size_t _vertexBufferSize{0};
 
+    FEventHandle _onBeginTick;
+    FEventHandle _onEndTick;
+
     FEventHandle _onInputUpdate;
     FEventHandle _onRenderFrame;
 
     FEventHandle _onWindowFocus;
     FEventHandle _onWindowResized;
+
+    bool _wasFrameRendered{ false };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

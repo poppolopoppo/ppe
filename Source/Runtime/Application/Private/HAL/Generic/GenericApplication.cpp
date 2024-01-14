@@ -53,6 +53,8 @@ bool FGenericApplication::PumpMessages() NOEXCEPT {
 void FGenericApplication::Tick(FTimespan dt) {
     _deltaTime = dt;
     _elapsed += dt;
+
+    _OnApplicationTick.Invoke(*this, dt);
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::ReleaseMemory() NOEXCEPT {
@@ -76,6 +78,8 @@ void FGenericApplication::RequestExit() NOEXCEPT {
 //----------------------------------------------------------------------------
 void FGenericApplication::Shutdown() {
     PPE_SLOG(Application, Emphasis, "shutdown application", {{"application", _name}});
+
+    _OnApplicationTick.Clear();
 
     FPlatformTime::LeaveLowResolutionTimer();
 }

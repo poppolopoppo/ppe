@@ -628,14 +628,23 @@ FMemoryUsageWidget::~FMemoryUsageWidget() {
         HasMemoryDomainObserver = false;
         UnregisterTrackingDataObserver(this);
     }
+
+#if USE_PPE_SAFEPTR
+    // need to remove internal safeptrs before releasing refptrs
+    for (PMemoryDomain& domain : *MemoryDomains.LockExclusive()) {
+        domain->Parent.reset();
+        domain->Children.reset();
+        domain->Siblings.reset();
+    }
+#endif
 }
 //----------------------------------------------------------------------------
 bool FMemoryUsageWidget::Show() {
     ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiCond_FirstUseEver);
 
+    DEFERRED{ ImGui::End(); };
     if (not ImGui::Begin(*Title, &WindowVisible, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar))
         return false;
-    DEFERRED{ ImGui::End(); };
 
     if (not HasMemoryDomainObserver) {
         HasMemoryDomainObserver = true;

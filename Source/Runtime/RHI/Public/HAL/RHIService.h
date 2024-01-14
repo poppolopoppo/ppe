@@ -48,6 +48,11 @@ public: // for all services
 
     THREADSAFE_EVENT(OnDeviceLost, FRHIEvent);
 
+    using FRHIFrameEvent = TFunction<void(const IRHIService&, RHI::FFrameIndex)>;
+
+    THREADSAFE_EVENT(OnBeginFrame, FRHIFrameEvent);
+    THREADSAFE_EVENT(OnEndFrame, FRHIFrameEvent);
+
     using FRHIRenderEvent = TFunction<void(const IRHIService&, FTimespan)>;
 
     THREADSAFE_EVENT(OnRenderFrame, FRHIRenderEvent);

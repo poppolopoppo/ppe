@@ -193,13 +193,23 @@ void FApplicationBase::RequestExit() NOEXCEPT {
     FApplicationModule::Get(Domain())._OnApplicationRequestExit.Invoke(*this);
 }
 //----------------------------------------------------------------------------
-NO_INLINE static void ApplicationFrame_(FApplicationBase& app, FTimespan dt) {
-    app.PumpMessages();
-    app.Tick(dt);
+NO_INLINE bool FApplicationBase::ApplicationTick_(FTimespan dt) {
+    if (not PumpMessages())
+        return false;
+
+    _OnApplicationBeginTick.Invoke(*this);
+
+    Tick(dt);
+
+    _OnApplicationEndTick.Invoke(*this);
+
+    return true;
 }
 //----------------------------------------------------------------------------
 void FApplicationBase::ApplicationLoop() {
     _timeline = FTimeline::StartNow();
+
+    _OnApplicationBeginLoop.Invoke(*this);
 
     while (not HasRequestedExit()) {
         FTimespan actualTickRate = TickRate();
@@ -208,13 +218,16 @@ void FApplicationBase::ApplicationLoop() {
 
         FTimespan dt;
         if (Likely(_timeline.Tick_Every(actualTickRate, dt))) {
-            ApplicationFrame_(*this, dt);
+            if (not ApplicationTick_(dt))
+                break;
             continue;
         }
 
         const FTimespan remaining = (actualTickRate - _timeline.Elapsed());
         FPlatformProcess::Sleep(static_cast<float>(FSeconds(remaining).Value() / 2/* bisect */));
     }
+
+    _OnApplicationEndLoop.Invoke(*this);
 
     PPE_LOG(Application, Info, "application {0} stopped looping, total uptime = {2} (request:{1})", Name(), HasRequestedExit(), _timeline.Total());
 

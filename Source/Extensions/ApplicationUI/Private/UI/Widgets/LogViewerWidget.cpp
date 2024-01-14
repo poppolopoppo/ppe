@@ -372,6 +372,8 @@ FLogViewerWidget::~FLogViewerWidget() {
         LoggerWasRegistered = false;
         FLogger::UnregisterLogger(*Logger);
     }
+
+    Logger->ClearHistory();
 }
 //----------------------------------------------------------------------------
 bool FLogViewerWidget::Show() {
