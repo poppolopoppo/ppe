@@ -9,6 +9,7 @@
 #include "Memory/MemoryDomain.h"
 #include "Memory/MemoryTracking.h"
 
+#include "vulkan-external.h"
 #include "vma-external.h"
 
 namespace PPE {

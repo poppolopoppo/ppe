@@ -1,9 +1,9 @@
 ﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 #include "UI/Widgets/MemoryUsageWidget.h"
-#include "UI/Widgets/MemoryUsageWidget.h"
 
 #include "UI/Imgui.h"
+#include "imgui-internal.h"
 
 #include "Allocator/BitmapHeap.h"
 #include "Allocator/MallocBitmap.h"
@@ -39,12 +39,12 @@ static void MemoryUsage_ShowMemoryDomainSnapshot_(
     const auto print = [&](i64 FMemoryTracking::FSnapshot::* member, bool useExp, bool isSizeInBytes) {
         tmp.Reset();
 
-        Format(tmp, "{0}\0", (&snapshot)->*member);
+        Format(tmp, "{0}\0", (snapshot).*member);
 
         ImGui::TableNextColumn();
 
         if (pParent) {
-            const i64 v = (&snapshot)->*member;
+            const i64 v = (snapshot).*member;
             const i64 p = (pParent)->*member;
             const float fraction = (p == 0 ? 0.f : Saturate(useExp
                 ? Exp(-static_cast<float>(Abs(v - p)) / 50)
@@ -74,12 +74,12 @@ static void MemoryUsage_ShowMemoryDomainSnapshot_(
             tmp.Reset();
             tmp << FTextFormat::Float(FTextFormat::FixedFloat, 3);
             if (isSizeInBytes)
-                tmp << Fmt::SizeInBytes((&snapshot)->*member);
+                tmp << Fmt::SizeInBytes((snapshot).*member);
             else
-                tmp << Fmt::CountOfElements((&snapshot)->*member);
+                tmp << Fmt::CountOfElements((snapshot).*member);
 
             if (pParent)
-                tmp << " - " << Fmt::Percentage((&snapshot)->*member, pParent->*member);
+                tmp << " - " << Fmt::Percentage((snapshot).*member, pParent->*member);
             tmp << Eos;
 
             ImGui::TextUnformatted(tmpStringBuf);
@@ -416,7 +416,7 @@ static void MemoryUsage_ShowBitmapPages_(FMemoryUsageWidget& widget) {
                 FColor allocCol = FLinearColor::FromPastel(hue).Quantize(EGammaSpace::Linear);
 
                 forrange(b, 0, infos.PagesPerBlock) {
-                    const u64 select = (u64(1) << b);
+                    const u64 select = (static_cast<u64>(1) << b);
 
                     ImGui::TableNextColumn();
                     if (not (page.Pages & select))

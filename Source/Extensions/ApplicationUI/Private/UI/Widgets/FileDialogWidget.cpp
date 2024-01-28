@@ -3,6 +3,7 @@
 #include "UI/Widgets/FileDialogWidget.h"
 
 #include "UI/Imgui.h"
+#include "imgui-internal.h"
 
 #include "Color/Color.h"
 #include "Diagnostic/Logger.h"

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "imgui-external.h"
+#include "imgui-internal.h"
 
 #ifdef __clang__
 #   pragma clang system_header
@@ -26,11 +26,11 @@ PRAGMA_MSVC_WARNING_DISABLE(4702) // unreachable code
 #include "External/imgui/imgui.git/imgui_draw.cpp"
 #include "External/imgui/imgui.git/imgui_tables.cpp"
 #include "External/imgui/imgui.git/imgui_widgets.cpp"
-#include "External/imgui/imgui.git/imgui_demo.cpp"
+// #include "External/imgui/imgui.git/imgui_demo.cpp"
 
 #include "External/imgui/implot.git/implot.cpp"
 #include "External/imgui/implot.git/implot_items.cpp"
-#include "External/imgui/implot.git/implot_demo.cpp"
+// #include "External/imgui/implot.git/implot_demo.cpp"
 
 PRAGMA_MSVC_WARNING_POP()
 

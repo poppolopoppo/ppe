@@ -54,14 +54,16 @@ PRAGMA_MSVC_WARNING_DISABLE(4702) // unreachable code
 
 // Define additional constructors and implicit cast operators in imconfig.h to convert back and forth between your math types and ImVec2.
 #define IM_VEC2_CLASS_EXTRA \
-    CONSTEXPR ImVec2(const ::PPE::float2& f) : x(f.x), y(f.y) {} \
-    CONSTEXPR operator ::PPE::float2 () const { return { x, y }; }
+    inline CONSTEXPR ImVec2(const ::PPE::float2& f) : x(f.x), y(f.y) {} \
+    template <typename _Expr> inline CONSTEXPR ImVec2(const ::PPE::details::TScalarVectorExpr<float, 2, _Expr>& f) : x(f[0]), y(f[1]) {} \
+    inline CONSTEXPR operator ::PPE::float2 () const { return { x, y }; }
 #define IM_VEC4_CLASS_EXTRA \
-    CONSTEXPR ImVec4(const ::PPE::float4& f) : x(f.x), y(f.y), z(f.z), w(f.w) {} \
-    CONSTEXPR operator ::PPE::float4 () const { return { x, y, z, w }; }
+    inline CONSTEXPR ImVec4(const ::PPE::float4& f) : x(f.x), y(f.y), z(f.z), w(f.w) {} \
+    template <typename _Expr> inline CONSTEXPR ImVec4(const ::PPE::details::TScalarVectorExpr<float, 4, _Expr>& f) : x(f[0]), y(f[1]), z(f[2]), w(f[3]) {} \
+    inline CONSTEXPR operator ::PPE::float4 () const { return { x, y, z, w }; }
 
 // You can use '#define IMGUI_DEFINE_MATH_OPERATORS' to import our operators, provided as a courtesy.
-#define IMGUI_DEFINE_MATH_OPERATORS
+// #define IMGUI_DEFINE_MATH_OPERATORS
 
 // ImTexture: user data for renderer backend to identify a texture [Compile-time configurable type]
 namespace PPE {
@@ -102,10 +104,32 @@ PPE_STRONGLYTYPED_NUMERIC_DEF(u64, FImTexturePackedID);
 #   pragma include_alias("imstb_truetype.h",    "External/imgui/imgui.git/imstb_truetype.h")
 
 #   include "External/imgui/imgui.git/imgui.h"
-#   include "External/imgui/imgui.git/imgui_internal.h"
+// #   include "External/imgui/imgui.git/imgui_internal.h"
+
+// fix header unit with inline constexpr variant of ImGui math operators (which are static)
+inline CONSTEXPR ImVec2  operator*(const ImVec2& lhs, const float rhs)     { return ImVec2(lhs.x * rhs, lhs.y * rhs); }
+inline CONSTEXPR ImVec2  operator/(const ImVec2& lhs, const float rhs)     { return ImVec2(lhs.x / rhs, lhs.y / rhs); }
+inline CONSTEXPR ImVec2  operator+(const ImVec2& lhs, const ImVec2& rhs)   { return ImVec2(lhs.x + rhs.x, lhs.y + rhs.y); }
+inline CONSTEXPR ImVec2  operator-(const ImVec2& lhs, const ImVec2& rhs)   { return ImVec2(lhs.x - rhs.x, lhs.y - rhs.y); }
+inline CONSTEXPR ImVec2  operator*(const ImVec2& lhs, const ImVec2& rhs)   { return ImVec2(lhs.x * rhs.x, lhs.y * rhs.y); }
+inline CONSTEXPR ImVec2  operator/(const ImVec2& lhs, const ImVec2& rhs)   { return ImVec2(lhs.x / rhs.x, lhs.y / rhs.y); }
+inline CONSTEXPR ImVec2  operator-(const ImVec2& lhs)                      { return ImVec2(-lhs.x, -lhs.y); }
+inline CONSTEXPR ImVec2& operator*=(ImVec2& lhs, const float rhs)          { lhs.x *= rhs; lhs.y *= rhs; return lhs; }
+inline CONSTEXPR ImVec2& operator/=(ImVec2& lhs, const float rhs)          { lhs.x /= rhs; lhs.y /= rhs; return lhs; }
+inline CONSTEXPR ImVec2& operator+=(ImVec2& lhs, const ImVec2& rhs)        { lhs.x += rhs.x; lhs.y += rhs.y; return lhs; }
+inline CONSTEXPR ImVec2& operator-=(ImVec2& lhs, const ImVec2& rhs)        { lhs.x -= rhs.x; lhs.y -= rhs.y; return lhs; }
+inline CONSTEXPR ImVec2& operator*=(ImVec2& lhs, const ImVec2& rhs)        { lhs.x *= rhs.x; lhs.y *= rhs.y; return lhs; }
+inline CONSTEXPR ImVec2& operator/=(ImVec2& lhs, const ImVec2& rhs)        { lhs.x /= rhs.x; lhs.y /= rhs.y; return lhs; }
+inline CONSTEXPR bool    operator==(const ImVec2& lhs, const ImVec2& rhs)  { return lhs.x == rhs.x && lhs.y == rhs.y; }
+inline CONSTEXPR bool    operator!=(const ImVec2& lhs, const ImVec2& rhs)  { return lhs.x != rhs.x || lhs.y != rhs.y; }
+inline CONSTEXPR ImVec4  operator+(const ImVec4& lhs, const ImVec4& rhs)   { return ImVec4(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z, lhs.w + rhs.w); }
+inline CONSTEXPR ImVec4  operator-(const ImVec4& lhs, const ImVec4& rhs)   { return ImVec4(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z, lhs.w - rhs.w); }
+inline CONSTEXPR ImVec4  operator*(const ImVec4& lhs, const ImVec4& rhs)   { return ImVec4(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z, lhs.w * rhs.w); }
+inline CONSTEXPR bool    operator==(const ImVec4& lhs, const ImVec4& rhs)  { return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w; }
+inline CONSTEXPR bool    operator!=(const ImVec4& lhs, const ImVec4& rhs)  { return lhs.x != rhs.x || lhs.y != rhs.y || lhs.z != rhs.z || lhs.w != rhs.w; }
 
 #   include "External/imgui/implot.git/implot.h"
-#   include "External/imgui/implot.git/implot_internal.h"
+// #   include "External/imgui/implot.git/implot_internal.h"
 
 #   include "External/imgui/IconFontCppHeaders.git/IconsCodicons.h"
 //#   include "External/imgui/IconFontCppHeaders.git/IconsFontaudio.h"

@@ -5,6 +5,7 @@
 #if USE_PPE_LOGGER
 
 #include "UI/Imgui.h"
+#include "imgui-internal.h"
 
 #include "Allocator/SlabAllocator.h"
 #include "Color/Color.h"

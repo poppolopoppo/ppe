@@ -12,6 +12,7 @@
 
 PRAGMA_MSVC_WARNING_PUSH()
 
+#pragma include_alias(<vulkan/vulkan.h>, <External/vulkan/Vulkan-Header.git/include/vulkan/vulkan.h>)
 #pragma include_alias("vulkan/vk_platform.h", "External/vulkan/Vulkan-Header.git/include/vulkan/vk_platform.h")
 
 #include "HAL/PlatformIncludes.h"

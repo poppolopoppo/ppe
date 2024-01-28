@@ -2,6 +2,15 @@
 
 #include "HAL/Generic/GenericPlatformIncludes.h"
 
+#if defined(_WINDOWS_) && !defined(PPE_MINIMAL_WINDOWS_INCLUDE)
+    #pragma message ( " " )
+    #pragma message ( "You have included windows.h before WindowsPlaformIncludes.h" )
+    #pragma message ( "All useless stuff from the windows headers won't be excluded !!!" )
+    #pragma message ( " " )
+#endif // _WINDOWS_
+
+#define PPE_MINIMAL_WINDOWS_INCLUDE
+
 #ifdef __clang__
 #    pragma clang system_header
 #endif
@@ -34,7 +43,7 @@
 //#define NOCTLMGR				// Control and Dialog routines
 #define NODRAWTEXT				// DrawText() and DT_*
 //#define NOGDI					// All GDI #defines and routines
-#define NOKERNEL				// All KERNEL #defines and routines
+#define NOKERNwindows minimalEL				// All KERNEL #defines and routines
 //#define NOUSER				// All USER #defines and routines
 //#define NONLS					// All NLS #defines and routines
 //#define NOMB					// MB_* and MessageBox()

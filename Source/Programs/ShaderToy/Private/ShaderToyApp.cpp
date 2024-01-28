@@ -7,6 +7,8 @@
 #include "RHIModule.h"
 
 #include "UI/Imgui.h"
+#include "External/imgui/Public/imgui-internal.h"
+
 #include "UI/Widgets/ConsoleWidget.h"
 #include "UI/Widgets/FileDialogWidget.h"
 #include "UI/Widgets/LogViewerWidget.h"

@@ -752,11 +752,11 @@ NODISCARD CONSTEXPR auto MakeScalarVectorOp(
         return details::MakeScalarVectorOp(MakeScalarVectorRef(lhs), MakeScalarVectorRef(rhs), __VA_ARGS__); \
     } \
     template <typename T, u32 _Dim, typename _Lhs> \
-    inline CONSTEXPR auto _FunctionName(const details::TScalarVectorExpr<T, _Dim, _Lhs>& lhs, T rhs) { \
+    inline CONSTEXPR auto _FunctionName(const details::TScalarVectorExpr<T, _Dim, _Lhs>& lhs, Meta::TDontDeduce<T> rhs) { \
         return details::MakeScalarVectorOp(MakeScalarVectorRef(lhs), details::MakeScalarVectorLiteral<_Dim>(std::move(rhs)), __VA_ARGS__); \
     } \
     template <typename T, u32 _Dim, typename _Rhs> \
-    inline CONSTEXPR auto _FunctionName(T lhs, const details::TScalarVectorExpr<T, _Dim, _Rhs>& rhs) { \
+    inline CONSTEXPR auto _FunctionName(Meta::TDontDeduce<T> lhs, const details::TScalarVectorExpr<T, _Dim, _Rhs>& rhs) { \
         return details::MakeScalarVectorOp(details::MakeScalarVectorLiteral<_Dim>(std::move(lhs)), MakeScalarVectorRef(rhs), __VA_ARGS__); \
     }
 #define PPE_SCALARVECTOR_BINARYOP_OPERATOR(_FunctionName, ...) \
@@ -767,7 +767,7 @@ NODISCARD CONSTEXPR auto MakeScalarVectorOp(
         return lhs; \
     } \
     template <typename T, u32 _Dim, typename _Lhs> \
-    inline CONSTEXPR auto& CONCAT(_FunctionName, =)(details::TScalarVectorExpr<T, _Dim, _Lhs>& lhs, T rhs) { \
+    inline CONSTEXPR auto& CONCAT(_FunctionName, =)(details::TScalarVectorExpr<T, _Dim, _Lhs>& lhs, Meta::TDontDeduce<T> rhs) { \
         lhs = details::MakeScalarVectorOp(MakeScalarVectorRef(lhs), details::MakeScalarVectorLiteral<_Dim>(std::move(rhs)), __VA_ARGS__); \
         return lhs; \
     }
