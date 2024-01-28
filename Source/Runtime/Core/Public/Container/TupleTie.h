@@ -383,7 +383,7 @@ constexpr std::size_t struct_num_fields() noexcept {
 }
 //----------------------------------------------------------------------------
 template <class T>
-constexpr std::size_t struct_num_fields_v = struct_num_fields<T>();
+inline CONSTEXPR std::size_t struct_num_fields_v = struct_num_fields<T>();
 //----------------------------------------------------------------------------
 #ifdef __clang__
 #   pragma clang diagnostic pop
@@ -396,7 +396,7 @@ constexpr std::size_t struct_num_fields_v = struct_num_fields<T>();
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX17
 //----------------------------------------------------------------------------
-static constexpr size_t MaxArityForTieAsTuple = 30;
+inline CONSTEXPR size_t MaxArityForTieAsTuple = 30;
 //----------------------------------------------------------------------------
 template <typename T>
 constexpr bool has_tie_as_tuple() noexcept {
@@ -433,7 +433,7 @@ constexpr bool has_tie_as_tuple() noexcept {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr bool has_tie_as_tuple_v = has_tie_as_tuple<T>();
+inline CONSTEXPR bool has_tie_as_tuple_v = has_tie_as_tuple<T>();
 //----------------------------------------------------------------------------
 // Use new structured bindings with C++17
 namespace details {
@@ -658,7 +658,7 @@ constexpr auto tie_as_tuple_rec(T& val) noexcept {
 //----------------------------------------------------------------------------
 #else //PPE_HAS_CXX17
 //----------------------------------------------------------------------------
-static constexpr size_t MaxArityForTieAsTuple = 0;
+inline CONSTEXPR size_t MaxArityForTieAsTuple = 0;
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR bool has_tie_as_tuple() noexcept {
@@ -666,7 +666,7 @@ CONSTEXPR bool has_tie_as_tuple() noexcept {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR bool has_tie_as_tuple_v = false;
+inline CONSTEXPR bool has_tie_as_tuple_v = false;
 //----------------------------------------------------------------------------
 #endif //!PPE_HAS_CXX17
 //----------------------------------------------------------------------------

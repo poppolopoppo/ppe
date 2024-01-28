@@ -14,7 +14,7 @@ namespace RTTI {
 PPE_RTTI_API PTypeTraits MakeAnyTuple(size_t arity) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
-static CONSTEXPR const PTypeInfos MakeTupleTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
+inline CONSTEXPR const PTypeInfos MakeTupleTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
     return FTypeInfos::CombineTypes(
         FTypeId(ETypeFlags::Tuple),
         FTypeInfos::BasicInfos<T>(ETypeFlags::Tuple),

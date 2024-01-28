@@ -66,6 +66,9 @@ struct TBasicStringConversion {
     bool operator >>(stringview_type* dst) const NOEXCEPT { *dst = Input; return true; }
 
     template <typename T>
+    using if_has_stringconversion_t = decltype(std::declval<const TBasicStringConversion&>() >> std::declval<T*>());
+
+    template <typename T, if_has_stringconversion_t<T>* = nullptr >
     bool operator >>(Meta::TOptional<T>* dst) const NOEXCEPT {
         T tmp{ Default };
         if (operator >>(&tmp)) {
@@ -75,17 +78,28 @@ struct TBasicStringConversion {
         return false;
     }
 
-    template <typename T>
+    template <typename T, if_has_stringconversion_t<T>* = nullptr >
     T ConvertTo() const {
         T result = Meta::MakeForceInit<T>();
         VerifyRelease( ConvertTo(&result) );
         return result;
     }
 
-    template <typename T>
+    template <typename T, if_has_stringconversion_t<T>* = nullptr >
     bool ConvertTo(T* dst) const {
         Assert(dst);
         return (*this >> dst); // Can be expanded thanks to ADL
+    }
+
+    template <typename T>
+    bool ConvertToIFP(T* dst) const {
+        Assert(dst);
+        IF_CONSTEXPR(Meta::has_defined_v<if_has_stringconversion_t, T>) {
+            return (*this >> dst); // Can be expanded thanks to ADL
+        }
+        else {
+            return false; // Unsupported type
+        }
     }
 
 private:

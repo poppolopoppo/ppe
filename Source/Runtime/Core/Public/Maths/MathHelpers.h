@@ -265,6 +265,7 @@ float GridSnap(float location, float grid) NOEXCEPT;
 inline CONSTEXPR u32 Bounded(u32 x, u32 N) NOEXCEPT {
     return (u32)(((u64)x * (u64)N) >> 32);
 }
+#if 0
 inline u64 Bounded(u64 x, u64 N) NOEXCEPT {
 #ifdef __SIZEOF_INT128__ // then we know we have a 128-bit int
     return (u64)(((__uint128_t)x * (__uint128_t)N) >> 64);
@@ -282,6 +283,7 @@ inline u64 Bounded(u64 x, u64 N) NOEXCEPT {
     return x % N; // fallback
 #endif // __SIZEOF_INT128__
 }
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

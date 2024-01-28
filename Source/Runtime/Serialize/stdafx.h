@@ -12,6 +12,7 @@
 #include "IO/Filename.h"
 #include "IO/String.h"
 
+#include "RTTI/NativeTypes.h"
 #include "RTTI/Macros.h"
 #include "RTTI/Macros-impl.h"
 

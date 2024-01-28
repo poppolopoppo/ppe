@@ -59,9 +59,7 @@ int TBaseScalarTraits<T>::Compare(const void* lhs, const void* rhs) const NOEXCE
 //----------------------------------------------------------------------------
 template <typename T>
 bool TBaseScalarTraits<T>::FromString(void* dst, const FStringConversion& iss) const NOEXCEPT {
-    Assert(dst);
-
-    return (iss >> static_cast<T*>(dst));
+    return iss.template ConvertToIFP<T>(static_cast<T*>(dst));
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -211,6 +209,11 @@ PPE_RTTI_API bool ObjectFromString(const IScalarTraits& self, PMetaObject* dst, 
 PPE_RTTI_API bool PromoteCopyObject(const IScalarTraits& self, const PMetaObject& src, const FAtom& dst);
 PPE_RTTI_API bool PromoteMoveObject(const IScalarTraits& self, PMetaObject& src, const FAtom& dst) NOEXCEPT;
 //----------------------------------------------------------------------------
+template <>
+inline bool TBaseScalarTraits<PMetaObject>::FromString(void* dst, const FStringConversion& iss) const NOEXCEPT {
+    return ObjectFromString(*this, static_cast<PMetaObject*>(dst), iss);
+}
+//----------------------------------------------------------------------------
 template <typename T>
 class TObjectTraits final : public TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>> {
     using base_traits = TBaseTypeTraits<PMetaObject, TBaseScalarTraits<PMetaObject>>;
@@ -247,11 +250,6 @@ CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< TRefPtr<_Class> >) {
 template <typename _Class, typename = Meta::TEnableIf< std::is_base_of_v<FMetaObject, _Class> > >
 CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TRefPtr<_Class> >) {
     return MakeStaticType< TObjectTraits<Meta::TDecay<_Class>>, TRefPtr<_Class> >();
-}
-//----------------------------------------------------------------------------
-template <>
-inline bool TBaseScalarTraits<PMetaObject>::FromString(void* dst, const FStringConversion& iss) const NOEXCEPT {
-    return ObjectFromString(*this, static_cast<PMetaObject*>(dst), iss);
 }
 //----------------------------------------------------------------------------
 template <typename T>

@@ -65,12 +65,12 @@ CONSTEXPR FTimespan operator "" _hz(unsigned long long value) {
     return (1000.0 / value);
 }
 //----------------------------------------------------------------------------
-constexpr FTimespan Timespan_120hz{ 120_hz };
-constexpr FTimespan Timespan_60hz{ 60_hz };
-constexpr FTimespan Timespan_30hz{ 30_hz };
-constexpr FTimespan Timespan_15hz{ 15_hz };
-constexpr FTimespan Timespan_5hz{ 5_hz };
-constexpr FTimespan Timespan_1hz{ 1_hz };
+inline CONSTEXPR FTimespan Timespan_120hz{ 120_hz };
+inline CONSTEXPR FTimespan Timespan_60hz{ 60_hz };
+inline CONSTEXPR FTimespan Timespan_30hz{ 30_hz };
+inline CONSTEXPR FTimespan Timespan_15hz{ 15_hz };
+inline CONSTEXPR FTimespan Timespan_5hz{ 5_hz };
+inline CONSTEXPR FTimespan Timespan_1hz{ 1_hz };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

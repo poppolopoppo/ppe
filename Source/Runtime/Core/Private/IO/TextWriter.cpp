@@ -12,9 +12,6 @@
 
 #include "double-conversion-external.h"
 
-EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::TFunction<PPE::TBasicTextWriter<char>& (PPE::TBasicTextWriter<char>&)>;
-EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::TFunction<PPE::TBasicTextWriter<wchar_t>& (PPE::TBasicTextWriter<wchar_t>&)>;
-
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -22,7 +19,7 @@ namespace PPE {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
-static void WriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> str) {
+static void TextWriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> str) {
     const FTextFormat& fmt = w.Format();
     IStreamWriter& ostream = w.Stream();
 
@@ -218,15 +215,15 @@ static size_t Itoa_(u64 v, u64 base, const TMemoryView<_Char>& buffer) {
 #endif
 //----------------------------------------------------------------------------
 template <typename _Char>
-static void WriteItoaUnsigned_(TBasicTextWriter<_Char>& w, u64 v) {
+static void TextWriteItoaUnsigned_(TBasicTextWriter<_Char>& w, u64 v) {
     _Char buffer[GItoaCapacity_];
     const u64 base = GBasesU64_[w.Format().Base()];
     const size_t len = Itoa_(v, base, MakeView(buffer));
-    WriteWFormat_(w, TBasicStringView<_Char>(buffer, len));
+    TextWriteWFormat_(w, TBasicStringView<_Char>(buffer, len));
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static void WriteItoaSigned_(TBasicTextWriter<_Char>& w, i64 v) {
+static void TextWriteItoaSigned_(TBasicTextWriter<_Char>& w, i64 v) {
     _Char buffer[GItoaCapacity_];
     const u64 base = GBasesU64_[w.Format().Base()];
     size_t len;
@@ -237,7 +234,7 @@ static void WriteItoaSigned_(TBasicTextWriter<_Char>& w, i64 v) {
     else {
         len = Itoa_(checked_cast<u64>(v), base, MakeView(buffer));
     }
-    WriteWFormat_(w, TBasicStringView<_Char>(buffer, len));
+    TextWriteWFormat_(w, TBasicStringView<_Char>(buffer, len));
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -292,19 +289,19 @@ static size_t Dtoa_(const TMemoryView<char>& buffer, const FTextFormat& fmt, _Fl
 }
 //----------------------------------------------------------------------------
 template <typename _Flt>
-static void WriteDtoa_(TBasicTextWriter<char>& w, _Flt flt) {
+static void TextWriteDtoa_(TBasicTextWriter<char>& w, _Flt flt) {
     char buffer[GDtoaCapacity_];
-    WriteWFormat_(w, FStringView(buffer, Dtoa_(buffer, w.Format(), flt)));
+    TextWriteWFormat_(w, FStringView(buffer, Dtoa_(buffer, w.Format(), flt)));
 }
 //----------------------------------------------------------------------------
 template <typename _Flt>
-static void WriteDtoa_(TBasicTextWriter<wchar_t>& w, _Flt flt) {
+static void TextWriteDtoa_(TBasicTextWriter<wchar_t>& w, _Flt flt) {
     char ascii[GDtoaCapacity_];
     wchar_t wide[GDtoaCapacity_];
     const size_t len = Dtoa_(ascii, w.Format(), flt);
     const size_t len2 = ToWCStr(wide, GDtoaCapacity_, ascii, len);
     Assert(len2 == len + 1/* final \0 */);
-    WriteWFormat_(w, FWStringView(wide, len2 - 1/* final \0 */));
+    TextWriteWFormat_(w, FWStringView(wide, len2 - 1/* final \0 */));
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -313,23 +310,23 @@ static void WriteDtoa_(TBasicTextWriter<wchar_t>& w, _Flt flt) {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void Write_(Meta::TType<char>, TBasicTextWriter<char>& w, bool v) {
-    WriteWFormat_(w, (w.Format().Misc() ^ FTextFormat::BoolAlpha)
+static void TextWrite_(Meta::TType<char>, TBasicTextWriter<char>& w, bool v) {
+    TextWriteWFormat_(w, (w.Format().Misc() ^ FTextFormat::BoolAlpha)
         ? (v ? MakeStringView("true") : MakeStringView("false"))
         : (v ? MakeStringView("1") : MakeStringView("0")) );
 }
 //----------------------------------------------------------------------------
-static void Write_(Meta::TType<wchar_t>, TBasicTextWriter<wchar_t>& w, bool v) {
-    WriteWFormat_(w, (w.Format().Misc() ^ FTextFormat::BoolAlpha)
+static void TextWrite_(Meta::TType<wchar_t>, TBasicTextWriter<wchar_t>& w, bool v) {
+    TextWriteWFormat_(w, (w.Format().Misc() ^ FTextFormat::BoolAlpha)
         ? (v ? MakeStringView(L"true") : MakeStringView(L"false"))
         : (v ? MakeStringView(L"1") : MakeStringView(L"0")));
 }
 //----------------------------------------------------------------------------
-static void Write_(Meta::TType<char>, FTextWriter& w, const void* v) {
+static void TextWrite_(Meta::TType<char>, FTextWriter& w, const void* v) {
     w << Fmt::Pointer(v);
 }
 //----------------------------------------------------------------------------
-static void Write_(Meta::TType<wchar_t>, FWTextWriter& w, const void* v) {
+static void TextWrite_(Meta::TType<wchar_t>, FWTextWriter& w, const void* v) {
     w << Fmt::Pointer(v);
 }
 //----------------------------------------------------------------------------
@@ -367,44 +364,47 @@ void FBaseTextWriter::Reset() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <> void TBasicTextWriter<char>::Put(char ch) { _ostream->WritePOD(ch); }
-template <> void TBasicTextWriter<wchar_t>::Put(wchar_t ch) { _ostream->WritePOD(ch); }
+void FBaseTextWriter::BasePut(TBasicTextWriter<char>* oss, char v) { oss->Stream().WritePOD(v); }
+void FBaseTextWriter::BasePut(TBasicTextWriter<wchar_t>* oss, wchar_t v) { oss->Stream().WritePOD(v); }
 //----------------------------------------------------------------------------
-template <> void TBasicTextWriter<char>::Put(const TBasicStringView<char>& str) { _ostream->WriteView(str); }
-template <> void TBasicTextWriter<wchar_t>::Put(const TBasicStringView<wchar_t>& str) { _ostream->WriteView(str); }
+void FBaseTextWriter::BasePut(TBasicTextWriter<char>* oss, const TBasicStringView<char>& str) { oss->Stream().WriteView(str); }
+void FBaseTextWriter::BasePut(TBasicTextWriter<wchar_t>* oss, const TBasicStringView<wchar_t>& str) { oss->Stream().WriteView(str); }
 //----------------------------------------------------------------------------
-template <> void TBasicTextWriter<char>::Write(bool v) { Write_(Meta::Type<char>, *this, v); }
-template <> void TBasicTextWriter<char>::Write(i8 v) { WriteItoaSigned_(*this, i64(v)); }
-template <> void TBasicTextWriter<char>::Write(i16 v) { WriteItoaSigned_(*this, i64(v)); }
-template <> void TBasicTextWriter<char>::Write(i32 v) { WriteItoaSigned_(*this, i64(v)); }
-template <> void TBasicTextWriter<char>::Write(i64 v) { WriteItoaSigned_(*this, i64(v)); }
-template <> void TBasicTextWriter<char>::Write(u8 v) { WriteItoaUnsigned_(*this, u64(v)); }
-template <> void TBasicTextWriter<char>::Write(u16 v) { WriteItoaUnsigned_(*this, u64(v)); }
-template <> void TBasicTextWriter<char>::Write(u32 v) { WriteItoaUnsigned_(*this, u64(v)); }
-template <> void TBasicTextWriter<char>::Write(u64 v) { WriteItoaUnsigned_(*this, u64(v)); }
-template <> void TBasicTextWriter<char>::Write(float v) { WriteDtoa_(*this, v); }
-template <> void TBasicTextWriter<char>::Write(double v) { WriteDtoa_(*this, v); }
-template <> void TBasicTextWriter<char>::Write(const void* v) { Write_(Meta::Type<char>, *this, v); }
-template <> void TBasicTextWriter<char>::Write(const char* v) { WriteWFormat_(*this, MakeCStringView(v)); }
-template <> void TBasicTextWriter<char>::Write(const TBasicStringView<char>& v) { WriteWFormat_(*this, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, bool v) { TextWrite_(Meta::Type<char>, *oss, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, i8 v) { TextWriteItoaSigned_(*oss, i64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, i16 v) { TextWriteItoaSigned_(*oss, i64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, i32 v) { TextWriteItoaSigned_(*oss, i64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, i64 v) { TextWriteItoaSigned_(*oss, i64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, u8 v) { TextWriteItoaUnsigned_(*oss, u64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, u16 v) { TextWriteItoaUnsigned_(*oss, u64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, u32 v) { TextWriteItoaUnsigned_(*oss, u64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, u64 v) { TextWriteItoaUnsigned_(*oss, u64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, float v) { TextWriteDtoa_(*oss, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, double v) { TextWriteDtoa_(*oss, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, const void* v) { TextWrite_(Meta::Type<char>, *oss, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, const char* v) { TextWriteWFormat_(*oss, MakeCStringView(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, const TBasicStringView<char>& v) { TextWriteWFormat_(*oss, v); }
 //----------------------------------------------------------------------------
-template <> void TBasicTextWriter<wchar_t>::Write(bool v) { Write_(Meta::Type<wchar_t>, *this, v); }
-template <> void TBasicTextWriter<wchar_t>::Write(i8 v) { WriteItoaSigned_(*this, i64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(i16 v) { WriteItoaSigned_(*this, i64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(i32 v) { WriteItoaSigned_(*this, i64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(i64 v) { WriteItoaSigned_(*this, i64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(u8 v) { WriteItoaUnsigned_(*this, u64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(u16 v) { WriteItoaUnsigned_(*this, u64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(u32 v) { WriteItoaUnsigned_(*this, u64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(u64 v) { WriteItoaUnsigned_(*this, u64(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(float v) { WriteDtoa_(*this, v); }
-template <> void TBasicTextWriter<wchar_t>::Write(double v) { WriteDtoa_(*this, v); }
-template <> void TBasicTextWriter<wchar_t>::Write(const void* v) { Write_(Meta::Type<wchar_t>, *this, v); }
-template <> void TBasicTextWriter<wchar_t>::Write(const wchar_t* v) { WriteWFormat_(*this, MakeCStringView(v)); }
-template <> void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v) { WriteWFormat_(*this, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, bool v) { TextWrite_(Meta::Type<wchar_t>, *oss, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, i8 v) { TextWriteItoaSigned_(*oss, i64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, i16 v) { TextWriteItoaSigned_(*oss, i64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, i32 v) { TextWriteItoaSigned_(*oss, i64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, i64 v) { TextWriteItoaSigned_(*oss, i64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, u8 v) { TextWriteItoaUnsigned_(*oss, u64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, u16 v) { TextWriteItoaUnsigned_(*oss, u64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, u32 v) { TextWriteItoaUnsigned_(*oss, u64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, u64 v) { TextWriteItoaUnsigned_(*oss, u64(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, float v) { TextWriteDtoa_(*oss, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, double v) { TextWriteDtoa_(*oss, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, const void* v) { TextWrite_(Meta::Type<wchar_t>, *oss, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, const wchar_t* v) { TextWriteWFormat_(*oss, MakeCStringView(v)); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, const TBasicStringView<wchar_t>& v) { TextWriteWFormat_(*oss, v); }
 //----------------------------------------------------------------------------
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicTextWriter<char>;
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicTextWriter<wchar_t>;
+//----------------------------------------------------------------------------
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TFunction<TBasicTextWriter<char>& (TBasicTextWriter<char>&)>;
+EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TFunction<TBasicTextWriter<wchar_t>& (TBasicTextWriter<wchar_t>&)>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

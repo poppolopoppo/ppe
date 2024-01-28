@@ -9,6 +9,9 @@
 #define CONCURRENT_HASHMAP(_DOMAIN, _KEY, _VALUE) \
     ::PPE::TConcurrentQueue<_KEY, _VALUE, ::PPE::Meta::THash<_KEY>, ::PPE::Meta::TEqualTo<_KEY>, ALLOCATOR(_DOMAIN)>
 
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4324) // 'XXX' structure was padded due to alignment
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -211,3 +214,5 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+PRAGMA_MSVC_WARNING_POP()

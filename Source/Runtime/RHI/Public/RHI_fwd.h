@@ -47,10 +47,10 @@ namespace PPE {
 class IRHIService;
 namespace RHI {
 EXTERN_LOG_CATEGORY(PPE_RHI_API, RHI);
-CONSTEXPR bool EnableDebug = (USE_PPE_RHIDEBUG);
-CONSTEXPR bool EnableTaskName = (USE_PPE_RHITASKNAME);
-CONSTEXPR bool EnableOptimizedIds = (USE_PPE_RHIOPTIMIZEIDS);
-CONSTEXPR bool EnableTrace = (USE_PPE_RHITRACE);
+inline CONSTEXPR bool EnableDebug = (USE_PPE_RHIDEBUG);
+inline CONSTEXPR bool EnableTaskName = (USE_PPE_RHITASKNAME);
+inline CONSTEXPR bool EnableOptimizedIds = (USE_PPE_RHIOPTIMIZEIDS);
+inline CONSTEXPR bool EnableTrace = (USE_PPE_RHITRACE);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

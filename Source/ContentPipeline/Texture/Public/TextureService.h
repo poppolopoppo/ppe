@@ -39,28 +39,28 @@ public: // Interface:
 
 public: // Public helpers:
 
-    NODISCARD ContentPipeline::UImageFormat ImageFormat(const FExtname& extname) const NOEXCEPT;
+    PPE_TEXTURE_API NODISCARD ContentPipeline::UImageFormat ImageFormat(const FExtname& extname) const NOEXCEPT;
 
-    NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSource2D(const FFilename& sourceFile) const;
-    NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSource2DArray(const FFilename& sourceFile) const;
-    NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSource3D(const FFilename& sourceFile) const;
-    NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSourceCube(const FFilename& sourceFile) const;
-    NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSourceCubeArray(const FFilename& sourceFile) const;
-    NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSourceCubeLongLat(const FFilename& sourceFile) const;
+    PPE_TEXTURE_API NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSource2D(const FFilename& sourceFile) const;
+    PPE_TEXTURE_API NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSource2DArray(const FFilename& sourceFile) const;
+    PPE_TEXTURE_API NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSource3D(const FFilename& sourceFile) const;
+    PPE_TEXTURE_API NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSourceCube(const FFilename& sourceFile) const;
+    PPE_TEXTURE_API NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSourceCubeArray(const FFilename& sourceFile) const;
+    PPE_TEXTURE_API NODISCARD Meta::TOptional<ContentPipeline::FTextureSource> ImportTextureSourceCubeLongLat(const FFilename& sourceFile) const;
 
-    NODISCARD bool ExportTextureSource2D(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
-    NODISCARD bool ExportTextureSource2DArray(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
-    NODISCARD bool ExportTextureSource3D(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
-    NODISCARD bool ExportTextureSourceCube(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
-    NODISCARD bool ExportTextureSourceCubeArray(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
-    NODISCARD bool ExportTextureSourceCubeLongLat(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTextureSource2D(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTextureSource2DArray(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTextureSource3D(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTextureSourceCube(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTextureSourceCubeArray(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTextureSourceCubeLongLat(const FFilename& sourceFile, const ContentPipeline::FTextureSource& sourceData) const;
 
-    NODISCARD bool ExportTexture2D(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
-    NODISCARD bool ExportTexture2DArray(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
-    NODISCARD bool ExportTexture3D(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
-    NODISCARD bool ExportTextureCube(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
-    NODISCARD bool ExportTextureCubeArray(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
-    NODISCARD bool ExportTextureCubeLongLat(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTexture2D(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTexture2DArray(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTexture3D(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTextureCube(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTextureCubeArray(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
+    PPE_TEXTURE_API NODISCARD bool ExportTextureCubeLongLat(const FFilename& sourceFile, const ContentPipeline::FTextureSourceProperties& properties, const FRawMemoryConst& bulk) const;
 
 public:
     static PPE_TEXTURE_API void MakeDefault(UTextureService* texture);

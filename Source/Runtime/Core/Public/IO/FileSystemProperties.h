@@ -13,9 +13,9 @@ namespace FileSystem {
 //----------------------------------------------------------------------------
 typedef FPlatformFile::char_type char_type;
 //----------------------------------------------------------------------------
-STATIC_CONST_INTEGRAL(ECase, CaseSensitive, FPlatformFile::IsCaseSensitive ? ECase::Sensitive : ECase::Insensitive);
+inline CONSTEXPR ECase CaseSensitive = FPlatformFile::IsCaseSensitive ? ECase::Sensitive : ECase::Insensitive;
 //----------------------------------------------------------------------------
-STATIC_CONST_INTEGRAL(size_t, MaxPathLength, FPlatformFile::MaxPathLength);
+inline CONSTEXPR size_t MaxPathLength = FPlatformFile::MaxPathLength;
 //----------------------------------------------------------------------------
 enum : char_type {
     Separator = FPlatformFile::PathSeparator,

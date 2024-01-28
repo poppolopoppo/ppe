@@ -8,7 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 // TFunction<> is using an insitu storage to avoid allocation, unlike std::function<>
 //----------------------------------------------------------------------------
-CONSTEXPR size_t GFunctionInSitu = (4 * sizeof(size_t) - sizeof(void*));
+inline CONSTEXPR size_t GFunctionInSitu = (4 * sizeof(size_t) - sizeof(void*));
 //----------------------------------------------------------------------------
 template <typename T, size_t _InSitu = GFunctionInSitu>
 class TFunction;

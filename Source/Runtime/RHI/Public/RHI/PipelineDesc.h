@@ -17,9 +17,7 @@
 #include "Container/Stack.h"
 #include "IO/String.h"
 #include "Meta/AutoStruct.h"
-#include "Meta/Utility.h"
 
-#include <memory>
 #include <variant>
 
 namespace PPE {
@@ -134,7 +132,7 @@ public:
     }
 };
 //----------------------------------------------------------------------------
-STATIC_CONST_INTEGRAL(u32, PipelineStaticOffset, UMax);
+inline CONSTEXPR u32 PipelineStaticOffset = UMax;
 #if 0 // empty struct is a special case that we prefer to dodge
 PPE_DEFINE_AUTOPOD(FPipelineSampler)
 #else

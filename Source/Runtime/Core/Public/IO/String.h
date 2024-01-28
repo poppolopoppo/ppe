@@ -438,6 +438,11 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
+inline CONSTEXPR size_t BasicStringInSituSize = TBasicString<_Char>::GInSituSize;
+inline CONSTEXPR size_t StringInSituSize = BasicStringInSituSize<char>;
+inline CONSTEXPR size_t WStringInSituSize = BasicStringInSituSize<wchar_t>;
+//----------------------------------------------------------------------------
+template <typename _Char>
 template <typename _It, class>
 inline void TBasicString<_Char>::assign(_It first, _It last) {
     clear();

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core.h"
+#include "Core_fwd.h"
 
 #include "IO/StringView.h"
 #include "Memory/MemoryDomain.h"

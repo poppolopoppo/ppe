@@ -16,22 +16,22 @@ namespace RTTI {
 PPE_RTTI_API PTypeTraits MakeTraits(ENativeType nativeType) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T, FTypeId _NativeType, ETypeFlags _TypeFlags>
-static CONSTEXPR const PTypeInfos MakeScalarTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
+inline CONSTEXPR const PTypeInfos MakeScalarTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
     return FTypeInfos{ _NativeType, FTypeInfos::BasicInfos<T>(ETypeFlags::Scalar + _TypeFlags) };
 };
 //----------------------------------------------------------------------------
 template <typename T, FTypeId _NativeType>
-static CONSTEXPR const PTypeInfos MakeBooleanTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::Boolean + ETypeFlags::Native>;
+inline CONSTEXPR const PTypeInfos MakeBooleanTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::Boolean + ETypeFlags::Native>;
 template <typename T, FTypeId _NativeType>
-static CONSTEXPR const PTypeInfos MakeEnumTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::Enum + ETypeFlags::Native>;
+inline CONSTEXPR const PTypeInfos MakeEnumTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::Enum + ETypeFlags::Native>;
 template <typename T, FTypeId _NativeType>
-static CONSTEXPR const PTypeInfos MakeNativeTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::Native>;
+inline CONSTEXPR const PTypeInfos MakeNativeTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::Native>;
 template <typename T, FTypeId _NativeType>
-static CONSTEXPR const PTypeInfos MakeNativeObjectTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::Native + ETypeFlags::Object>;
+inline CONSTEXPR const PTypeInfos MakeNativeObjectTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::Native + ETypeFlags::Object>;
 template <typename T, FTypeId _NativeType>
-static CONSTEXPR const PTypeInfos MakeObjectTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::Object>;
+inline CONSTEXPR const PTypeInfos MakeObjectTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::Object>;
 template <typename T, FTypeId _NativeType>
-static CONSTEXPR const PTypeInfos MakeStringTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::String + ETypeFlags::Native>;
+inline CONSTEXPR const PTypeInfos MakeStringTypeInfos = MakeScalarTypeInfos<T, _NativeType, ETypeFlags::String + ETypeFlags::Native>;
 //----------------------------------------------------------------------------
 enum class ENativeType : FTypeId {
     Unknown = 0,
@@ -88,11 +88,11 @@ struct TDeferredTypeInfos_ {
 //----------------------------------------------------------------------------
 #define DECL_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) \
     PPE_RTTI_API PTypeTraits RTTI_Traits(TTypeTag< T >) NOEXCEPT; \
-    CONSTEXPR FTypeId NativeTypeId(TTypeTag< T >) { \
+    inline CONSTEVAL FTypeId NativeTypeId(TTypeTag< T >) { \
         return FTypeId(_TypeId); \
     } \
-    CONSTEXPR auto/* TDeferredTypeInfos_<> */ RTTI_TypeInfos(TTypeTag< T >) { \
-        return details::TDeferredTypeInfos_< ENativeType::_Name, T >{}; \
+    inline CONSTEVAL details::TDeferredTypeInfos_< ENativeType::_Name, T> RTTI_TypeInfos(TTypeTag< T >) { \
+        return details::TDeferredTypeInfos_< ENativeType::_Name, T>{}; \
     }
 FOREACH_RTTI_NATIVETYPES(DECL_RTTI_NATIVETYPE_TRAITS)
 #undef DECL_RTTI_NATIVETYPE_TRAITS

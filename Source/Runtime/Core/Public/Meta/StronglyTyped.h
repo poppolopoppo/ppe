@@ -95,24 +95,24 @@ PPE_ASSUME_TEMPLATE_AS_POD(TNumericDefault<T COMMA _Tag COMMA _DefaultValue>, ty
 //----------------------------------------------------------------------------
 PPE_STRONGLYTYPED_NUMERIC_DEF(size_t, FSizeInBytes);
 //----------------------------------------------------------------------------
-CONSTEXPR FSizeInBytes operator "" _B (unsigned long long sizeInBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInBytes)); }
-CONSTEXPR FSizeInBytes operator "" _b (unsigned long long sizeInBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInBytes)); }
+inline CONSTEXPR FSizeInBytes operator "" _B (unsigned long long sizeInBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInBytes)); }
+inline CONSTEXPR FSizeInBytes operator "" _b (unsigned long long sizeInBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInBytes)); }
 //----------------------------------------------------------------------------
-CONSTEXPR FSizeInBytes OneKikiByte{ 1024u };
-CONSTEXPR FSizeInBytes OneMebiByte{ 1024u * OneKikiByte };
-CONSTEXPR FSizeInBytes OneGibiByte{ 1024u * OneMebiByte };
+inline CONSTEXPR FSizeInBytes OneKikiByte{ 1024u };
+inline CONSTEXPR FSizeInBytes OneMebiByte{ 1024u * OneKikiByte };
+inline CONSTEXPR FSizeInBytes OneGibiByte{ 1024u * OneMebiByte };
 //----------------------------------------------------------------------------
-CONSTEXPR FSizeInBytes operator "" _KiB (unsigned long long sizeInKikiBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInKikiBytes * OneKikiByte)); }
-CONSTEXPR FSizeInBytes operator "" _MiB (unsigned long long sizeInMebiBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInMebiBytes * OneMebiByte)); }
-CONSTEXPR FSizeInBytes operator "" _GiB (unsigned long long sizeInGibiBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInGibiBytes * OneGibiByte)); }
+inline CONSTEXPR FSizeInBytes operator "" _KiB (unsigned long long sizeInKikiBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInKikiBytes * OneKikiByte)); }
+inline CONSTEXPR FSizeInBytes operator "" _MiB (unsigned long long sizeInMebiBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInMebiBytes * OneMebiByte)); }
+inline CONSTEXPR FSizeInBytes operator "" _GiB (unsigned long long sizeInGibiBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInGibiBytes * OneGibiByte)); }
 //----------------------------------------------------------------------------
-CONSTEXPR FSizeInBytes OneKiloByte{ 1000u };
-CONSTEXPR FSizeInBytes OneMegaByte{ 1000u * OneKiloByte };
-CONSTEXPR FSizeInBytes OneGigaByte{ 1000u * OneMegaByte };
+inline CONSTEXPR FSizeInBytes OneKiloByte{ 1000u };
+inline CONSTEXPR FSizeInBytes OneMegaByte{ 1000u * OneKiloByte };
+inline CONSTEXPR FSizeInBytes OneGigaByte{ 1000u * OneMegaByte };
 //----------------------------------------------------------------------------
-CONSTEXPR FSizeInBytes operator "" _kB (unsigned long long sizeInKiloBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInKiloBytes * OneKiloByte)); }
-CONSTEXPR FSizeInBytes operator "" _MB (unsigned long long sizeInMegaBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInMegaBytes * OneMegaByte)); }
-CONSTEXPR FSizeInBytes operator "" _GB (unsigned long long sizeInGigaBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInGigaBytes * OneGigaByte)); }
+inline CONSTEXPR FSizeInBytes operator "" _kB (unsigned long long sizeInKiloBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInKiloBytes * OneKiloByte)); }
+inline CONSTEXPR FSizeInBytes operator "" _MB (unsigned long long sizeInMegaBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInMegaBytes * OneMegaByte)); }
+inline CONSTEXPR FSizeInBytes operator "" _GB (unsigned long long sizeInGigaBytes) { return FSizeInBytes(checked_cast<FSizeInBytes::value_type>(sizeInGigaBytes * OneGigaByte)); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

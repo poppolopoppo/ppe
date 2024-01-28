@@ -13,12 +13,12 @@ class IBufferedStreamWriter;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define STACKLOCAL_TEXTWRITER(_NAME, _COUNT) \
-    MALLOCA_POD(char, CONCAT(_Alloca_, _NAME), _COUNT); \
-    FFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
+MALLOCA_POD(char, CONCAT(_Alloca_, _NAME), _COUNT); \
+FFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
 //----------------------------------------------------------------------------
 #define STACKLOCAL_WTEXTWRITER(_NAME, _COUNT) \
-    MALLOCA_POD(wchar_t, CONCAT(_Alloca_, _NAME), _COUNT); \
-    FWFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
+MALLOCA_POD(wchar_t, CONCAT(_Alloca_, _NAME), _COUNT); \
+FWFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -165,6 +165,40 @@ public:
     void Reset();
 
 protected:
+    static void BasePut(FTextWriter* oss, char ch);
+    static void BasePut(FTextWriter* oss, const FStringView& str);
+    static void BaseWrite(FTextWriter* oss, bool v);
+    static void BaseWrite(FTextWriter* oss, i8 v);
+    static void BaseWrite(FTextWriter* oss, i16 v);
+    static void BaseWrite(FTextWriter* oss, i32 v);
+    static void BaseWrite(FTextWriter* oss, i64 v);
+    static void BaseWrite(FTextWriter* oss, u8 v);
+    static void BaseWrite(FTextWriter* oss, u16 v);
+    static void BaseWrite(FTextWriter* oss, u32 v);
+    static void BaseWrite(FTextWriter* oss, u64 v);
+    static void BaseWrite(FTextWriter* oss, float v);
+    static void BaseWrite(FTextWriter* oss, double v);
+    static void BaseWrite(FTextWriter* oss, const void* v);
+    static void BaseWrite(FTextWriter* oss, const char* v);
+    static void BaseWrite(FTextWriter* oss, const FStringView& v);
+
+    static void BasePut(FWTextWriter* oss, wchar_t ch);
+    static void BasePut(FWTextWriter* oss, const FWStringView& str);
+    static void BaseWrite(FWTextWriter* oss, bool v);
+    static void BaseWrite(FWTextWriter* oss, i8 v);
+    static void BaseWrite(FWTextWriter* oss, i16 v);
+    static void BaseWrite(FWTextWriter* oss, i32 v);
+    static void BaseWrite(FWTextWriter* oss, i64 v);
+    static void BaseWrite(FWTextWriter* oss, u8 v);
+    static void BaseWrite(FWTextWriter* oss, u16 v);
+    static void BaseWrite(FWTextWriter* oss, u32 v);
+    static void BaseWrite(FWTextWriter* oss, u64 v);
+    static void BaseWrite(FWTextWriter* oss, float v);
+    static void BaseWrite(FWTextWriter* oss, double v);
+    static void BaseWrite(FWTextWriter* oss, const void* v);
+    static void BaseWrite(FWTextWriter* oss, const wchar_t* v);
+    static void BaseWrite(FWTextWriter* oss, const FWStringView& v);
+
     TPtrRef<IStreamWriter> _ostream;
     FTextFormat _format;
 };
@@ -192,24 +226,24 @@ public:
     }
 
     // won't format the text :
-    void Put(_Char ch);
-    void Put(const TBasicStringView<_Char>& str);
+    void Put(_Char ch) { return FBaseTextWriter::BasePut(this, ch); }
+    void Put(const TBasicStringView<_Char>& str) { return FBaseTextWriter::BasePut(this, str); }
 
     // will be formated using FTextFormat :
-    void Write(bool v);
-    void Write(i8 v);
-    void Write(i16 v);
-    void Write(i32 v);
-    void Write(i64 v);
-    void Write(u8 v);
-    void Write(u16 v);
-    void Write(u32 v);
-    void Write(u64 v);
-    void Write(float v);
-    void Write(double v);
-    void Write(const void* v);
-    void Write(const _Char* v);
-    void Write(const TBasicStringView<_Char>& v);
+    void Write(bool v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(i8 v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(i16 v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(i32 v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(i64 v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(u8 v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(u16 v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(u32 v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(u64 v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(float v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(double v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(const void* v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(const _Char* v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(const TBasicStringView<_Char>& v) { return FBaseTextWriter::BaseWrite(this, v); }
 
     inline friend void swap(TBasicTextWriter& lhs, TBasicTextWriter& rhs) NOEXCEPT {
         using std::swap;
@@ -246,42 +280,6 @@ public:
 private:
     _Char _fillChar;
 };
-//----------------------------------------------------------------------------
-template <> PPE_CORE_API void TBasicTextWriter<char>::Put(char ch);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Put(wchar_t ch);
-//----------------------------------------------------------------------------
-template <> PPE_CORE_API void TBasicTextWriter<char>::Put(const TBasicStringView<char>& str);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Put(const TBasicStringView<wchar_t>& str);
-//----------------------------------------------------------------------------
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(bool v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(i8 v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(i16 v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(i32 v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(i64 v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(u8 v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(u16 v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(u32 v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(u64 v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(float v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(double v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(const void* v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(const char* v);
-template <> PPE_CORE_API void TBasicTextWriter<char>::Write(const TBasicStringView<char>& v);
-//----------------------------------------------------------------------------
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(bool v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(i8 v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(i16 v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(i32 v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(i64 v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(u8 v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(u16 v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(u32 v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(u64 v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(float v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(double v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const void* v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const wchar_t* v);
-template <> PPE_CORE_API void TBasicTextWriter<wchar_t>::Write(const TBasicStringView<wchar_t>& v);
 //----------------------------------------------------------------------------
 #ifndef EXPORT_PPE_RUNTIME_CORE_TEXTWRITER
 EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBasicTextWriter<char>;

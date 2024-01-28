@@ -21,7 +21,7 @@ namespace RTTI {
 //----------------------------------------------------------------------------
 // defer alias evaluation, so _From/_To don't need to be defined (forward declaration is enough)
 template <typename _From, typename _To>
-static CONSTEXPR const PTypeInfos MakeAliasTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
+inline CONSTEXPR const PTypeInfos MakeAliasTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
     CONSTEXPR FTypeInfos infos = RTTI_TypeInfos(TypeTag< _To >)();
     return FTypeInfos{
         infos.TypeId,
@@ -32,8 +32,8 @@ static CONSTEXPR const PTypeInfos MakeAliasTypeInfos = []() CONSTEXPR NOEXCEPT -
         }};
 };
 //----------------------------------------------------------------------------
-#define DEF_RTTI_ALIASING_TRAITS(_FROM, ...) \
-CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< _FROM >) { \
+#define  DEF_RTTI_ALIASING_TRAITS(_FROM, ...) \
+inline CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< _FROM >) { \
     return MakeAliasTypeInfos< _FROM, __VA_ARGS__ >; \
 } \
 inline PTypeTraits RTTI_Traits(TTypeTag<_FROM >) NOEXCEPT { \
@@ -77,7 +77,7 @@ DEF_RTTI_ALIASING_TRAITS(float4x4, TStaticArray<float, 4*4>)
 // common types wrapped as tuples :
 //----------------------------------------------------------------------------
 DEF_RTTI_ALIASING_TRAITS(FGuid, TStaticArray<u32, 2>)
-DEF_RTTI_ALIASING_TRAITS(FQuaternion, float4)
+DEF_RTTI_ALIASING_TRAITS(FQuaternion, TStaticArray<float, 4>)
 DEF_RTTI_ALIASING_TRAITS(FTimestamp, i64)
 DEF_RTTI_ALIASING_TRAITS(u128, TStaticArray<u64, 2>)
 //----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ DEF_RTTI_ALIASING_TRAITS(u128, TStaticArray<u64, 2>)
 // Bindings for some basic types which don't justify being a native type
 //----------------------------------------------------------------------------
 #define DEF_RTTI_ALIASING_STRUCT(T) \
-CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< T > tag) { \
+inline CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< T > tag) { \
     return StructInfos(tag); \
 } \
 inline PTypeTraits RTTI_Traits(TTypeTag< T > tag) NOEXCEPT { \
@@ -105,11 +105,11 @@ DEF_RTTI_ALIASING_STRUCT(FPathName)
 // Bindings for all TRawData<> template instances
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< TRawData<T> >) {
+inline CONSTEXPR PTypeInfos RTTI_TypeInfos(TTypeTag< TRawData<T> >) {
     return MakeAliasTypeInfos< TRawStorage<T, typename FBinaryData::allocator_type>, FBinaryData >;
 }
 template <typename T>
-CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TRawData<T> >) NOEXCEPT {
+inline CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TRawData<T> >) NOEXCEPT {
     return MakeTraits< FBinaryData >();
 }
 //----------------------------------------------------------------------------

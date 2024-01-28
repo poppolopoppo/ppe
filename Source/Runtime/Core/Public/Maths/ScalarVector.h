@@ -35,11 +35,12 @@ namespace PPE {
 namespace details {
 template <typename T, u32 _Dim, typename _Expr>
 struct TScalarVectorExprBase : _Expr {
-    using _Expr::_Expr;
+    using expr_type = _Expr;
+    using expr_type::expr_type;
 
     using component_type = T;
-    using reference_type = decltype(std::declval<_Expr&>().Get(0));
-    using const_reference_type = decltype(std::declval<const _Expr&>().Get(0));
+    using reference_type = decltype(std::declval<expr_type&>().Get(0));
+    using const_reference_type = decltype(std::declval<const expr_type&>().Get(0));
 
     static CONSTEXPR const u32 dim = _Dim;
 
@@ -48,21 +49,21 @@ struct TScalarVectorExprBase : _Expr {
     template <u32 _Index>
     NODISCARD CONSTEXPR reference_type Get() {
         static_assert(_Index < _Dim, "out-of-bounds");
-        return _Expr::Get(_Index);
+        return expr_type::Get(_Index);
     }
     template <u32 _Index>
     NODISCARD CONSTEXPR const_reference_type Get() const {
         static_assert(_Index < _Dim, "out-of-bounds");
-        return _Expr::Get(_Index);
+        return expr_type::Get(_Index);
     }
 
     NODISCARD CONSTEXPR reference_type Get(u32 index) {
         Assert(index < _Dim && "out-of-bounds");
-        return _Expr::Get(index);
+        return expr_type::Get(index);
     }
     NODISCARD CONSTEXPR const_reference_type Get(u32 index) const {
         Assert(index < _Dim && "out-of-bounds");
-        return _Expr::Get(index);
+        return expr_type::Get(index);
     }
 
     NODISCARD CONSTEXPR reference_type operator [](u32 index) { return Get(index); }
@@ -138,9 +139,10 @@ struct TScalarVectorExprBase : _Expr {
 namespace details {
 template <typename T, u32 _Dim, typename _Expr>
 struct TScalarVectorExpr : TScalarVectorExprBase<T, _Dim, _Expr> {
-    using TScalarVectorExprBase<T, _Dim, _Expr>::TScalarVectorExprBase;
-    using TScalarVectorExprBase<T, _Dim, _Expr>::Get;
-    using TScalarVectorExprBase<T, _Dim, _Expr>::operator [];
+    using base_type = TScalarVectorExprBase<T, _Dim, _Expr>;
+    using base_type::base_type;
+    using base_type::Get;
+    using base_type::operator [];
 
     CONSTEXPR TScalarVectorExpr() = default;
     CONSTEXPR ~TScalarVectorExpr() = default;
@@ -153,10 +155,13 @@ struct TScalarVectorExpr : TScalarVectorExprBase<T, _Dim, _Expr> {
 };
 template <typename T, u32 _Dim, typename _Expr>
 struct TScalarVectorExpr<T, _Dim, TScalarVectorAssignable<T, _Dim, _Expr>> : TScalarVectorExprBase<T, _Dim, TScalarVectorAssignable<T, _Dim, _Expr>> {
-    using TScalarVectorExprBase<T, _Dim, TScalarVectorAssignable<T, _Dim, _Expr>>::TScalarVectorExprBase;
-    using TScalarVectorExprBase<T, _Dim, TScalarVectorAssignable<T, _Dim, _Expr>>::Get;
-    using TScalarVectorExprBase<T, _Dim, TScalarVectorAssignable<T, _Dim, _Expr>>::operator [];
-    using TScalarVectorAssignable<T, _Dim, _Expr>::Assign;
+    using assignable_type = TScalarVectorAssignable<T, _Dim, _Expr>;
+    using assignable_type::Assign;
+
+    using base_type = TScalarVectorExprBase<T, _Dim, assignable_type>;
+    using base_type::TScalarVectorExprBase;
+    using base_type::Get;
+    using base_type::operator [];
 
     CONSTEXPR TScalarVectorExpr() = default;
     CONSTEXPR ~TScalarVectorExpr() = default;
@@ -277,11 +282,12 @@ NODISCARD CONSTEXPR auto MakeScalarVectorRef(const TScalarVectorExpr<T, _Dim, _R
 namespace details {
 template <typename T, u32 _Dim, typename _Expr>
 struct TScalarVectorAssignable : _Expr {
-    using _Expr::_Expr;
-    using _Expr::Get;
-    using _Expr::data;
+    using expr_type = _Expr;
+    using expr_type::expr_type;
+    using expr_type::Get;
+    using expr_type::data;
 
-    static_assert(sizeof(T)* _Dim <= sizeof(_Expr::data), "invalid assignable vector dimension");
+    static_assert(sizeof(T)* _Dim <= sizeof(expr_type::data), "invalid assignable vector dimension");
 
     CONSTEXPR TScalarVectorAssignable(Meta::FForceInit) NOEXCEPT {
         Broadcast(Meta::MakeForceInit<T>());
@@ -341,10 +347,10 @@ struct TScalarVectorShuffle {
     static CONSTEXPR const u32 component_indices[sizeof...(_Shuffle)] = {_Shuffle...};
     STATIC_ASSERT(((_Shuffle < _Dim) && ...));
 
-    template <u32>
-    using shuffle_type = T;
-
     T data[_Dim];
+
+    template <u32 N>
+    using shuffle_type = Meta::TDecay<decltype(data[N])>;
 
     CONSTEXPR TScalarVectorShuffle() = default;
     CONSTEXPR TScalarVectorShuffle(shuffle_type<_Shuffle>... args) {
@@ -361,16 +367,11 @@ struct TScalarVectorShuffle {
     }
 };
 template <typename T, u32 _Dim, u32... _Shuffle>
-using TMakeScalarVectorShuffleExpr = TScalarVectorExpr<T,
-    sizeof...(_Shuffle),
-    std::conditional_t<
-        Meta::Uniq_v<_Dim, u32, _Shuffle...>,
-        // assignable
-        TScalarVectorAssignable<T, sizeof...(_Shuffle),
-            TScalarVectorShuffle<T, _Dim, _Shuffle...>>,
-        // non-assignable
-        TScalarVectorShuffle<T, _Dim, _Shuffle...>
-    >>;
+using TScalarVectorShuffleExpr = TScalarVectorExpr<T, (sizeof...(_Shuffle)),
+    TScalarVectorShuffle<T, _Dim, _Shuffle...>>;
+template <typename T, u32 _Dim, u32... _Shuffle>
+using TScalarVectorShuffleAssignable = TScalarVectorExpr<T, (sizeof...(_Shuffle)),
+    TScalarVectorAssignable<T, (sizeof...(_Shuffle)), TScalarVectorShuffle<T, _Dim, _Shuffle...>>>;
 } //!namespace details
 //----------------------------------------------------------------------------
 // TScalarVectorStorage<T, N>
@@ -441,17 +442,17 @@ struct TScalarVectorStorage<T, 2> {
             T x, y;
         };
 
-        TMakeScalarVectorShuffleExpr<T, 2, 0, 1> xy;
-        TMakeScalarVectorShuffleExpr<T, 2, 1, 0> yx;
+        TScalarVectorShuffleAssignable<T, 2, 0, 1> xy;
+        TScalarVectorShuffleAssignable<T, 2, 1, 0> yx;
 
-        TMakeScalarVectorShuffleExpr<T, 2, 0, 0> xx;
-        TMakeScalarVectorShuffleExpr<T, 2, 1, 1> yy;
+        TScalarVectorShuffleExpr<T, 2, 0, 0> xx;
+        TScalarVectorShuffleExpr<T, 2, 1, 1> yy;
 
-        TMakeScalarVectorShuffleExpr<T, 2, 0, 0, 0> xxx;
-        TMakeScalarVectorShuffleExpr<T, 2, 1, 1, 1> yyy;
+        TScalarVectorShuffleExpr<T, 2, 0, 0, 0> xxx;
+        TScalarVectorShuffleExpr<T, 2, 1, 1, 1> yyy;
 
-        TMakeScalarVectorShuffleExpr<T, 2, 0, 0, 0, 0> xxxx;
-        TMakeScalarVectorShuffleExpr<T, 2, 1, 1, 1, 1> yyyy;
+        TScalarVectorShuffleExpr<T, 2, 0, 0, 0, 0> xxxx;
+        TScalarVectorShuffleExpr<T, 2, 1, 1, 1, 1> yyyy;
     };
 
     CONSTEXPR TScalarVectorStorage() NOEXCEPT : data{} {}
@@ -484,31 +485,31 @@ struct TScalarVectorStorage<T, 3> {
             T x, y, z;
         };
 
-        TMakeScalarVectorShuffleExpr<T, 3, 0, 1> xy;
-        TMakeScalarVectorShuffleExpr<T, 3, 0, 2> xz;
-        TMakeScalarVectorShuffleExpr<T, 3, 1, 0> yx;
-        TMakeScalarVectorShuffleExpr<T, 3, 1, 2> yz;
-        TMakeScalarVectorShuffleExpr<T, 3, 2, 0> zx;
-        TMakeScalarVectorShuffleExpr<T, 3, 2, 1> zy;
+        TScalarVectorShuffleAssignable<T, 3, 0, 1> xy;
+        TScalarVectorShuffleAssignable<T, 3, 0, 2> xz;
+        TScalarVectorShuffleAssignable<T, 3, 1, 0> yx;
+        TScalarVectorShuffleAssignable<T, 3, 1, 2> yz;
+        TScalarVectorShuffleAssignable<T, 3, 2, 0> zx;
+        TScalarVectorShuffleAssignable<T, 3, 2, 1> zy;
 
-        TMakeScalarVectorShuffleExpr<T, 3, 0, 1, 2> xyz;
-        TMakeScalarVectorShuffleExpr<T, 3, 0, 2, 1> xzy;
-        TMakeScalarVectorShuffleExpr<T, 3, 1, 0, 2> yxz;
-        TMakeScalarVectorShuffleExpr<T, 3, 1, 2, 0> yzx;
-        TMakeScalarVectorShuffleExpr<T, 3, 2, 0, 1> zxy;
-        TMakeScalarVectorShuffleExpr<T, 3, 2, 1, 0> zyx;
+        TScalarVectorShuffleAssignable<T, 3, 0, 1, 2> xyz;
+        TScalarVectorShuffleAssignable<T, 3, 0, 2, 1> xzy;
+        TScalarVectorShuffleAssignable<T, 3, 1, 0, 2> yxz;
+        TScalarVectorShuffleAssignable<T, 3, 1, 2, 0> yzx;
+        TScalarVectorShuffleAssignable<T, 3, 2, 0, 1> zxy;
+        TScalarVectorShuffleAssignable<T, 3, 2, 1, 0> zyx;
 
-        TMakeScalarVectorShuffleExpr<T, 3, 0, 0> xx;
-        TMakeScalarVectorShuffleExpr<T, 3, 1, 1> yy;
-        TMakeScalarVectorShuffleExpr<T, 3, 2, 2> zz;
+        TScalarVectorShuffleExpr<T, 3, 0, 0> xx;
+        TScalarVectorShuffleExpr<T, 3, 1, 1> yy;
+        TScalarVectorShuffleExpr<T, 3, 2, 2> zz;
 
-        TMakeScalarVectorShuffleExpr<T, 3, 0, 0, 0> xxx;
-        TMakeScalarVectorShuffleExpr<T, 3, 1, 1, 1> yyy;
-        TMakeScalarVectorShuffleExpr<T, 3, 2, 2, 2> zzz;
+        TScalarVectorShuffleExpr<T, 3, 0, 0, 0> xxx;
+        TScalarVectorShuffleExpr<T, 3, 1, 1, 1> yyy;
+        TScalarVectorShuffleExpr<T, 3, 2, 2, 2> zzz;
 
-        TMakeScalarVectorShuffleExpr<T, 3, 0, 0, 0, 0> xxxx;
-        TMakeScalarVectorShuffleExpr<T, 3, 1, 1, 1, 1> yyyy;
-        TMakeScalarVectorShuffleExpr<T, 3, 2, 2, 2, 2> zzzz;
+        TScalarVectorShuffleExpr<T, 3, 0, 0, 0, 0> xxxx;
+        TScalarVectorShuffleExpr<T, 3, 1, 1, 1, 1> yyyy;
+        TScalarVectorShuffleExpr<T, 3, 2, 2, 2, 2> zzzz;
 
     };
 
@@ -548,83 +549,83 @@ struct TScalarVectorStorage<T, 4> {
             T x, y, z, w;
         };
 
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 0> xx;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 1> yy;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 2> zz;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 3> ww;
+        TScalarVectorShuffleExpr<T, 4, 0, 0> xx;
+        TScalarVectorShuffleExpr<T, 4, 1, 1> yy;
+        TScalarVectorShuffleExpr<T, 4, 2, 2> zz;
+        TScalarVectorShuffleExpr<T, 4, 3, 3> ww;
 
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 0, 0> xxx;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 1, 1> yyy;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 2, 2> zzz;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 2, 2> www;
+        TScalarVectorShuffleExpr<T, 4, 0, 0, 0> xxx;
+        TScalarVectorShuffleExpr<T, 4, 1, 1, 1> yyy;
+        TScalarVectorShuffleExpr<T, 4, 2, 2, 2> zzz;
+        TScalarVectorShuffleExpr<T, 4, 2, 2, 2> www;
 
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 0, 0, 0> xxxx;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 1, 1, 1> yyyy;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 2, 2, 2> zzzz;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 3, 3, 3> wwww;
+        TScalarVectorShuffleExpr<T, 4, 0, 0, 0, 0> xxxx;
+        TScalarVectorShuffleExpr<T, 4, 1, 1, 1, 1> yyyy;
+        TScalarVectorShuffleExpr<T, 4, 2, 2, 2, 2> zzzz;
+        TScalarVectorShuffleExpr<T, 4, 3, 3, 3, 3> wwww;
 
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 1> xy;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 2> xz;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 3> xw;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 0> yx;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 2> yz;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 3> yw;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 0> zx;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 1> zy;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 3> zw;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 0> wx;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 1> wy;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 2> wz;
+        TScalarVectorShuffleAssignable<T, 4, 0, 1> xy;
+        TScalarVectorShuffleAssignable<T, 4, 0, 2> xz;
+        TScalarVectorShuffleAssignable<T, 4, 0, 3> xw;
+        TScalarVectorShuffleAssignable<T, 4, 1, 0> yx;
+        TScalarVectorShuffleAssignable<T, 4, 1, 2> yz;
+        TScalarVectorShuffleAssignable<T, 4, 1, 3> yw;
+        TScalarVectorShuffleAssignable<T, 4, 2, 0> zx;
+        TScalarVectorShuffleAssignable<T, 4, 2, 1> zy;
+        TScalarVectorShuffleAssignable<T, 4, 2, 3> zw;
+        TScalarVectorShuffleAssignable<T, 4, 3, 0> wx;
+        TScalarVectorShuffleAssignable<T, 4, 3, 1> wy;
+        TScalarVectorShuffleAssignable<T, 4, 3, 2> wz;
 
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 1, 2> xyz;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 2, 1> xzy;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 1, 3> xyw;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 3, 1> xwy;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 2, 3> xzw;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 3, 2> xwz;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 0, 2> yxz;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 2, 0> yzx;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 0, 3> yxw;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 3, 0> ywx;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 2, 3> yzw;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 3, 2> ywz;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 0, 1> zxy;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 1, 0> zyx;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 0, 3> zxw;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 3, 0> zwx;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 1, 3> zyw;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 3, 1> zwy;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 0, 1> wxy;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 1, 0> wyx;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 0, 2> wxz;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 2, 0> wzx;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 1, 2> wyz;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 2, 1> wzy;
+        TScalarVectorShuffleAssignable<T, 4, 0, 1, 2> xyz;
+        TScalarVectorShuffleAssignable<T, 4, 0, 2, 1> xzy;
+        TScalarVectorShuffleAssignable<T, 4, 0, 1, 3> xyw;
+        TScalarVectorShuffleAssignable<T, 4, 0, 3, 1> xwy;
+        TScalarVectorShuffleAssignable<T, 4, 0, 2, 3> xzw;
+        TScalarVectorShuffleAssignable<T, 4, 0, 3, 2> xwz;
+        TScalarVectorShuffleAssignable<T, 4, 1, 0, 2> yxz;
+        TScalarVectorShuffleAssignable<T, 4, 1, 2, 0> yzx;
+        TScalarVectorShuffleAssignable<T, 4, 1, 0, 3> yxw;
+        TScalarVectorShuffleAssignable<T, 4, 1, 3, 0> ywx;
+        TScalarVectorShuffleAssignable<T, 4, 1, 2, 3> yzw;
+        TScalarVectorShuffleAssignable<T, 4, 1, 3, 2> ywz;
+        TScalarVectorShuffleAssignable<T, 4, 2, 0, 1> zxy;
+        TScalarVectorShuffleAssignable<T, 4, 2, 1, 0> zyx;
+        TScalarVectorShuffleAssignable<T, 4, 2, 0, 3> zxw;
+        TScalarVectorShuffleAssignable<T, 4, 2, 3, 0> zwx;
+        TScalarVectorShuffleAssignable<T, 4, 2, 1, 3> zyw;
+        TScalarVectorShuffleAssignable<T, 4, 2, 3, 1> zwy;
+        TScalarVectorShuffleAssignable<T, 4, 3, 0, 1> wxy;
+        TScalarVectorShuffleAssignable<T, 4, 3, 1, 0> wyx;
+        TScalarVectorShuffleAssignable<T, 4, 3, 0, 2> wxz;
+        TScalarVectorShuffleAssignable<T, 4, 3, 2, 0> wzx;
+        TScalarVectorShuffleAssignable<T, 4, 3, 1, 2> wyz;
+        TScalarVectorShuffleAssignable<T, 4, 3, 2, 1> wzy;
 
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 1, 2, 3> xyzw;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 1, 3, 2> xywz;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 2, 1, 3> xzyw;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 2, 3, 1> xzwy;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 3, 1, 2> xwyz;
-        TMakeScalarVectorShuffleExpr<T, 4, 0, 3, 2, 1> xwzy;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 0, 2, 3> yxzw;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 0, 3, 2> yxwz;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 2, 0, 3> yzxw;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 2, 3, 0> yzwx;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 3, 0, 2> ywxz;
-        TMakeScalarVectorShuffleExpr<T, 4, 1, 3, 2, 0> ywzx;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 0, 1, 3> zxyw;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 0, 3, 1> zxwy;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 1, 0, 3> zyxw;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 1, 3, 0> zywx;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 3, 0, 1> zwxy;
-        TMakeScalarVectorShuffleExpr<T, 4, 2, 3, 1, 0> zwyx;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 0, 1, 2> wxyz;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 0, 2, 1> wxzy;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 1, 0, 2> wyxz;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 1, 2, 0> wyzx;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 2, 0, 1> wzxy;
-        TMakeScalarVectorShuffleExpr<T, 4, 3, 2, 1, 0> wzyx;
+        TScalarVectorShuffleAssignable<T, 4, 0, 1, 2, 3> xyzw;
+        TScalarVectorShuffleAssignable<T, 4, 0, 1, 3, 2> xywz;
+        TScalarVectorShuffleAssignable<T, 4, 0, 2, 1, 3> xzyw;
+        TScalarVectorShuffleAssignable<T, 4, 0, 2, 3, 1> xzwy;
+        TScalarVectorShuffleAssignable<T, 4, 0, 3, 1, 2> xwyz;
+        TScalarVectorShuffleAssignable<T, 4, 0, 3, 2, 1> xwzy;
+        TScalarVectorShuffleAssignable<T, 4, 1, 0, 2, 3> yxzw;
+        TScalarVectorShuffleAssignable<T, 4, 1, 0, 3, 2> yxwz;
+        TScalarVectorShuffleAssignable<T, 4, 1, 2, 0, 3> yzxw;
+        TScalarVectorShuffleAssignable<T, 4, 1, 2, 3, 0> yzwx;
+        TScalarVectorShuffleAssignable<T, 4, 1, 3, 0, 2> ywxz;
+        TScalarVectorShuffleAssignable<T, 4, 1, 3, 2, 0> ywzx;
+        TScalarVectorShuffleAssignable<T, 4, 2, 0, 1, 3> zxyw;
+        TScalarVectorShuffleAssignable<T, 4, 2, 0, 3, 1> zxwy;
+        TScalarVectorShuffleAssignable<T, 4, 2, 1, 0, 3> zyxw;
+        TScalarVectorShuffleAssignable<T, 4, 2, 1, 3, 0> zywx;
+        TScalarVectorShuffleAssignable<T, 4, 2, 3, 0, 1> zwxy;
+        TScalarVectorShuffleAssignable<T, 4, 2, 3, 1, 0> zwyx;
+        TScalarVectorShuffleAssignable<T, 4, 3, 0, 1, 2> wxyz;
+        TScalarVectorShuffleAssignable<T, 4, 3, 0, 2, 1> wxzy;
+        TScalarVectorShuffleAssignable<T, 4, 3, 1, 0, 2> wyxz;
+        TScalarVectorShuffleAssignable<T, 4, 3, 1, 2, 0> wyzx;
+        TScalarVectorShuffleAssignable<T, 4, 3, 2, 0, 1> wzxy;
+        TScalarVectorShuffleAssignable<T, 4, 3, 2, 1, 0> wzyx;
     };
 
     CONSTEXPR TScalarVectorStorage() NOEXCEPT : data{} {}

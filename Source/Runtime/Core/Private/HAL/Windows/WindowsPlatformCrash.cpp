@@ -32,10 +32,9 @@
 
 #include "HAL/Windows/DbgHelpWrapper.h"
 #include "HAL/Windows/WindowsPlatformIncludes.h"
+#include "HAL/Windows/WindowsPlatformTime.h"
 
-#include <winnt.h>
-#include <time.h>
-#include <TlHelp32.h>
+#include <chrono>
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -251,40 +250,65 @@ DWORD CALLBACK MinidumpWriter_(LPVOID inParam) {
     return DWORD(EResult::CantCreateFile);
 }
 //----------------------------------------------------------------------------
-static void EnumerateThreads_(DWORD (WINAPI *inCallback)( HANDLE ), DWORD inExceptThisOne, DWORD inCurrentThread)
-{
-    // Create a snapshot of all the threads in the process, and walk over
-    // them, calling the callback function on each of them, except for
-    // the thread identified by the inExceptThisOne parameter.
-    ::HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0 );
-    if (INVALID_HANDLE_VALUE != hSnapshot) {
-        const ::DWORD currentProcessId = ::GetCurrentProcessId();
-        ::THREADENTRY32 thread;
-        thread.dwSize = sizeof(thread);
-        if (::Thread32First( hSnapshot, &thread)) {
-            do {
-                if (thread.th32OwnerProcessID == currentProcessId &&
-                    thread.th32ThreadID != inExceptThisOne &&
-                    thread.th32ThreadID != inCurrentThread ) {
-                    // We're making a big assumption that this call will only
-                    // be used to suspend or resume a thread, and so we know
-                    // that we only require the THREAD_SUSPEND_RESUME access right.
-                    ::HANDLE hThread = ::OpenThread(THREAD_SUSPEND_RESUME, FALSE, thread.th32ThreadID);
-                    if (hThread) {
-                        inCallback(hThread);
-                        ::CloseHandle(hThread);
-                    }
-                }
-            } while (::Thread32Next(hSnapshot, &thread));
-        }
-        ::CloseHandle(hSnapshot);
+// Define the NtGetNextThread function
+typedef LONG (NTAPI *pfnNtGetNextThread) (
+    IN HANDLE ProcessHandle,
+    IN HANDLE ThreadHandle,
+    IN ACCESS_MASK DesiredAccess,
+    IN ULONG HandleAttributes,
+    IN ULONG Flags,
+    OUT PHANDLE NewThreadHandle
+);
+static pfnNtGetNextThread LoadNtGetNextThread_() {
+    // Load ntdll.dll
+    HMODULE hNtDll = ::LoadLibrary(TEXT("ntdll.dll"));
+    if (hNtDll == NULL) {
+        // Error loading module
+        return NULL;
     }
+
+    // Get the NtGetNextThread function
+    pfnNtGetNextThread NtGetNextThread = (pfnNtGetNextThread)::GetProcAddress(hNtDll, "NtGetNextThread");
+    if (NtGetNextThread == NULL) {
+        // Error getting function
+        ::FreeLibrary(hNtDll);
+        return NULL;
+    }
+
+    return NtGetNextThread;
+}
+//----------------------------------------------------------------------------
+static FWindowsPlatformCrash::EResult EnumerateThreads_(DWORD (WINAPI *inCallback)( HANDLE ), DWORD inExceptThisOne, DWORD inCurrentThread) {
+    const HANDLE hProcess = ::GetCurrentProcess();
+    if (hProcess == NULL)
+        return FWindowsPlatformCrash::NoDbgHelpDLL;
+
+    static const pfnNtGetNextThread NtGetNextThread = LoadNtGetNextThread_();
+    if (NtGetNextThread == NULL)
+        return FWindowsPlatformCrash::NoDbgHelpDLL;
+
+    // Enumerate the threads
+    HANDLE hThread = NULL;
+    while (NtGetNextThread(hProcess, hThread, THREAD_ALL_ACCESS, 0, 0, &hThread) == 0) {
+        // Do something with the thread handle, e.g., print the thread ID
+        const DWORD dwThreadId = ::GetThreadId(hThread);
+        if (dwThreadId != inExceptThisOne &&
+            dwThreadId != inCurrentThread) {
+            inCallback(hThread);
+        }
+
+        // Close the thread handle
+        ::CloseHandle(hThread);
+    }
+
+    return FWindowsPlatformCrash::Success;
 }
 //----------------------------------------------------------------------------
 static FWindowsPlatformCrash::EResult DumpException_(::PEXCEPTION_POINTERS pExceptionInfo) {
-    time_t tNow = ::time(NULL);
-    struct tm pTm;
-    ::localtime_s(&pTm, &tNow);
+    // Get current time
+    const i64 now = FWindowsPlatformTime::Timestamp();
+    u32 year, month, dayOfWeek, dayOfYear, dayOfMon, hour, min, sec;
+    FWindowsPlatformTime::LocalTime(now, year, month, dayOfWeek, dayOfYear, dayOfMon, hour, min, sec);
 
     wchar_t filename[MAX_PATH];
     {
@@ -292,11 +316,12 @@ static FWindowsPlatformCrash::EResult DumpException_(::PEXCEPTION_POINTERS pExce
         if (0 == ::GetModuleFileNameW(NULL, modulePath, MAX_PATH))
             return FWindowsPlatformCrash::EResult::InvalidFilename;
 
-        ::swprintf_s(filename, MAX_PATH,
+        if (0 == ::swprintf_s(filename, MAX_PATH,
             L"%s.%02d%02d%04d_%02d%02d%02d.dmp",
             modulePath,
-            pTm.tm_year, pTm.tm_mon, pTm.tm_mday,
-            pTm.tm_hour, pTm.tm_min, pTm.tm_sec);
+            year, month, dayOfMon,
+            hour, min, sec))
+            return FWindowsPlatformCrash::EResult::InvalidFilename;
     }
 
     return FWindowsPlatformCrash::WriteMiniDump(
@@ -357,7 +382,7 @@ auto FWindowsPlatformCrash::WriteMiniDump(
     };
 
     ::DWORD threadId = 0;
-    ::HANDLE hThread = ::CreateThread(NULL, 0, MinidumpWriter_, (PVOID)&params, CREATE_SUSPENDED, &threadId);
+    const ::HANDLE hThread = ::CreateThread(NULL, 0, MinidumpWriter_, (PVOID)&params, CREATE_SUSPENDED, &threadId);
 
     if (hThread) {
         // Having created the thread successfully, we need to put all of the other
@@ -365,8 +390,11 @@ auto FWindowsPlatformCrash::WriteMiniDump(
         // our newly-created thread.  We do this because we want this function to
         // behave as a snapshot, and that means other threads should not continue
         // to perform work while we're creating the minidump.
-        if (suspendThreads)
-            EnumerateThreads_(::SuspendThread, threadId, params.ExceptionThreadId);
+        if (suspendThreads) {
+            const EResult result = EnumerateThreads_(::SuspendThread, threadId, params.ExceptionThreadId);
+            if (result != EResult::Success)
+                return result;
+        }
 
         // Now we can resume our worker thread
         ::ResumeThread(hThread);
@@ -383,8 +411,11 @@ auto FWindowsPlatformCrash::WriteMiniDump(
         ::CloseHandle(hThread);
 
         // If we suspended other threads, now is the time to wake them up
-        if (suspendThreads)
-            EnumerateThreads_(::ResumeThread, threadId, params.ExceptionThreadId);
+        if (suspendThreads) {
+            const EResult result = EnumerateThreads_(::ResumeThread, threadId, params.ExceptionThreadId);
+            if (result != EResult::Success)
+                return result;
+        }
 
         return EResult(code);
     }

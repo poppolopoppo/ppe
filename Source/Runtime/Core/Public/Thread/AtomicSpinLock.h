@@ -23,7 +23,7 @@ namespace PPE {
 // Update:
 // use C++20 new std::atomic<>.wait()/notify_one() to avoid busy waiting
 //----------------------------------------------------------------------------
-constexpr i32 ATOMIC_SPINLOCK_CYCLES = 100;
+inline CONSTEXPR i32 ATOMIC_SPINLOCK_CYCLES = 100;
 //----------------------------------------------------------------------------
 namespace details {
 template <typename _AtomicBarrier>
@@ -503,3 +503,5 @@ public: // Write
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+PRAGMA_MSVC_WARNING_POP()

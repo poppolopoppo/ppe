@@ -6,11 +6,13 @@
 PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("ALLOCATOR")
 #   pragma push_macro("FORCE_INLINE")
+#   pragma push_macro("XXH_NAMESPACE")
 #endif
 
 #undef ALLOCATOR
 #undef FORCE_INLINE
 
+#define XXH_NAMESPACE LZ4_
 #define LZ4_USER_MEMORY_FUNCTIONS
 
 PRAGMA_MSVC_WARNING_DISABLE(4244) // conversion from 'XXX' to 'YYY', possible loss of data
@@ -33,10 +35,13 @@ PRAGMA_MSVC_WARNING_DISABLE(6262) // function uses '16456' bytes of stack. consi
 #   include "External/lz4/lz4.git/lib/lz4.h"
 #   include "External/lz4/lz4.git/lib/lz4hc.h"
 
+#   undef XXH_NAMESPACE
+
 // clean the mess done by lz4-config.h :
 
 #   pragma pop_macro("ALLOCATOR")
 #   pragma pop_macro("FORCE_INLINE")
+#   pragma pop_macro("XXH_NAMESPACE")
 
     PRAGMA_MSVC_WARNING_POP()
 

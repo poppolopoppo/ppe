@@ -67,8 +67,8 @@ EXTERN_LOG_CATEGORY(PPE_NETWORK_API, Network)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-STATIC_CONST_INTEGRAL(size_t, MaxRecvLength_, 1024*1024*100);
-STATIC_CONST_INTEGRAL(size_t, MaxSendLength_, 1024*1024*100);
+inline CONSTEXPR size_t MaxRecvLength_ =  1024*1024*100;
+inline CONSTEXPR size_t MaxSendLength_ = 1024*1024*100;
 //----------------------------------------------------------------------------
 STATIC_ASSERT(sizeof(SOCKET) <= sizeof(void*));
 STATIC_ASSERT(Meta::is_pod_v<SOCKET>);

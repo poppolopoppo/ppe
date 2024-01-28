@@ -342,25 +342,26 @@ struct TFunctionTraits<_Ret, false, _Args...> {
 
     template <typename _Class, typename... _Extra>
     struct otherfunc_t<_Ret(_Class::*)(_Args..., _Extra...)> {
+        using class_type = _Class;
         template <typename... _ExtraArgs>
         struct extra_t;
         template <typename... _ExtraArgs>
-        struct extra_t<_Class*, _ExtraArgs...> {
-            using type = TFunctionTuple<_Class*, _ExtraArgs...>;
+        struct extra_t<class_type*, _ExtraArgs...> {
+            using type = TFunctionTuple<class_type*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TPtrRef<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TPtrRef<_Class>, _ExtraArgs...>;
+        struct extra_t<TPtrRef<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TPtrRef<class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TSafePtr<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TSafePtr<_Class>, _ExtraArgs...>;
+        struct extra_t<TSafePtr<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TSafePtr<class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TRefPtr<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TRefPtr<_Class>, _ExtraArgs...>;
+        struct extra_t<TRefPtr<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TRefPtr<class_type>, _ExtraArgs...>;
         };
-        template <_Ret(_Class::* _MemFunc)(_Args..., _Extra...), typename _Payload>
+        template <_Ret(class_type::* _MemFunc)(_Args..., _Extra...), typename _Payload>
         struct bind_t {
             static CONSTEXPR _Ret invoke(const void* embed, _Args... args) {
                 return CallTupleEx(_MemFunc, _Payload::Get(embed), std::forward<_Args>(args)...);
@@ -372,41 +373,42 @@ struct TFunctionTraits<_Ret, false, _Args...> {
 
     template <typename _Class, typename... _Extra>
     struct otherfunc_t<_Ret(_Class::*)(_Args..., _Extra...) const> {
+        using class_type = _Class;
         template <typename... _ExtraArgs>
         struct extra_t;
         template <typename... _ExtraArgs>
-        struct extra_t<_Class*, _ExtraArgs...> {
-            using type = TFunctionTuple<const _Class*, _ExtraArgs...>;
+        struct extra_t<class_type*, _ExtraArgs...> {
+            using type = TFunctionTuple<const class_type*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TPtrRef<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TPtrRef<const _Class>, _ExtraArgs...>;
+        struct extra_t<TPtrRef<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TPtrRef<const class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TSafePtr<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TSafePtr<const _Class>, _ExtraArgs...>;
+        struct extra_t<TSafePtr<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TSafePtr<const class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TRefPtr<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TRefPtr<const _Class>, _ExtraArgs...>;
+        struct extra_t<TRefPtr<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TRefPtr<const class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<const _Class*, _ExtraArgs...> {
-            using type = TFunctionTuple<const _Class*, _ExtraArgs...>;
+        struct extra_t<const class_type*, _ExtraArgs...> {
+            using type = TFunctionTuple<const class_type*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TPtrRef<const _Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TPtrRef<const _Class>, _ExtraArgs...>;
+        struct extra_t<TPtrRef<const class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TPtrRef<const class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TSafePtr<const _Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TSafePtr<const _Class>, _ExtraArgs...>;
+        struct extra_t<TSafePtr<const class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TSafePtr<const class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TRefPtr<const _Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TRefPtr<const _Class>, _ExtraArgs...>;
+        struct extra_t<TRefPtr<const class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TRefPtr<const class_type>, _ExtraArgs...>;
         };
-        template <_Ret(_Class::* _MemFuncConst)(_Args..., _Extra...) const, typename _Payload>
+        template <_Ret(class_type::* _MemFuncConst)(_Args..., _Extra...) const, typename _Payload>
         struct bind_t {
             static CONSTEXPR _Ret invoke(const void* embed, _Args... args) {
                 return CallTupleEx(_MemFuncConst, _Payload::Get(embed), std::forward<_Args>(args)...);
@@ -481,25 +483,26 @@ struct TFunctionTraits<_Ret, true, _Args...> {
 
     template <typename _Class, typename... _Extra>
     struct otherfunc_t<_Ret(_Class::*)(_Args..., _Extra...) NOEXCEPT> {
+        using class_type = _Class;
         template <typename... _ExtraArgs>
         struct extra_t;
         template <typename... _ExtraArgs>
-        struct extra_t<_Class*, _ExtraArgs...> {
-            using type = TFunctionTuple<_Class*, _ExtraArgs...>;
+        struct extra_t<class_type*, _ExtraArgs...> {
+            using type = TFunctionTuple<class_type*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TPtrRef<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TPtrRef<_Class>, _ExtraArgs...>;
+        struct extra_t<TPtrRef<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TPtrRef<class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TSafePtr<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TSafePtr<_Class>, _ExtraArgs...>;
+        struct extra_t<TSafePtr<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TSafePtr<class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TRefPtr<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TRefPtr<_Class>, _ExtraArgs...>;
+        struct extra_t<TRefPtr<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TRefPtr<class_type>, _ExtraArgs...>;
         };
-        template <_Ret(_Class::* _MemFunc)(_Args..., _Extra...) NOEXCEPT, typename _Payload>
+        template <_Ret(class_type::* _MemFunc)(_Args..., _Extra...) NOEXCEPT, typename _Payload>
         struct bind_t {
             static CONSTEXPR _Ret invoke(const void* embed, _Args... args) NOEXCEPT {
                 return CallTupleEx(_MemFunc, _Payload::Get(embed), std::forward<_Args>(args)...);
@@ -511,41 +514,42 @@ struct TFunctionTraits<_Ret, true, _Args...> {
 
     template <typename _Class, typename... _Extra>
     struct otherfunc_t<_Ret(_Class::*)(_Args..., _Extra...) const NOEXCEPT> {
+        using class_type = _Class;
         template <typename... _ExtraArgs>
         struct extra_t;
         template <typename... _ExtraArgs>
-        struct extra_t<_Class*, _ExtraArgs...> {
-            using type = TFunctionTuple<const _Class*, _ExtraArgs...>;
+        struct extra_t<class_type*, _ExtraArgs...> {
+            using type = TFunctionTuple<const class_type*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TPtrRef<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TPtrRef<const _Class>, _ExtraArgs...>;
+        struct extra_t<TPtrRef<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TPtrRef<const class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TSafePtr<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TSafePtr<const _Class>, _ExtraArgs...>;
+        struct extra_t<TSafePtr<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TSafePtr<const class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TRefPtr<_Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TRefPtr<const _Class>, _ExtraArgs...>;
+        struct extra_t<TRefPtr<class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TRefPtr<const class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<const _Class*, _ExtraArgs...> {
-            using type = TFunctionTuple<const _Class*, _ExtraArgs...>;
+        struct extra_t<const class_type*, _ExtraArgs...> {
+            using type = TFunctionTuple<const class_type*, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TPtrRef<const _Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TPtrRef<const _Class>, _ExtraArgs...>;
+        struct extra_t<TPtrRef<const class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TPtrRef<const class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TSafePtr<const _Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TSafePtr<const _Class>, _ExtraArgs...>;
+        struct extra_t<TSafePtr<const class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TSafePtr<const class_type>, _ExtraArgs...>;
         };
         template <typename... _ExtraArgs>
-        struct extra_t<TRefPtr<const _Class>, _ExtraArgs...> {
-            using type = TFunctionTuple<TRefPtr<const _Class>, _ExtraArgs...>;
+        struct extra_t<TRefPtr<const class_type>, _ExtraArgs...> {
+            using type = TFunctionTuple<TRefPtr<const class_type>, _ExtraArgs...>;
         };
-        template <_Ret(_Class::* _MemFuncConst)(_Args..., _Extra...) const NOEXCEPT, typename _Payload>
+        template <_Ret(class_type::* _MemFuncConst)(_Args..., _Extra...) const NOEXCEPT, typename _Payload>
         struct bind_t {
             static CONSTEXPR _Ret invoke(const void* embed, _Args... args) NOEXCEPT {
                 return CallTupleEx(_MemFuncConst, _Payload::Get(embed), std::forward<_Args>(args)...);
@@ -961,7 +965,7 @@ struct FNoFunction {
     }
 };
 //----------------------------------------------------------------------------
-CONSTEXPR const FNoFunction NoFunction;
+inline const FNoFunction NoFunction;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

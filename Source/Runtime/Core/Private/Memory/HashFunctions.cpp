@@ -24,7 +24,7 @@ u128 hash_128(const void* key, const size_t len, u64 seed/* = 0 */) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 u128 hash_128(const void* key, const size_t len, FRawMemoryConst secret) NOEXCEPT {
-    auto[lo,hi] = XXH_INLINE_XXH3_128bits_withSecret(key, len, secret.data(), secret.SizeInBytes());
+    auto[lo,hi] = XXH3_128bits_withSecret(key, len, secret.data(), secret.SizeInBytes());
     return { lo, hi };
 }
 //----------------------------------------------------------------------------

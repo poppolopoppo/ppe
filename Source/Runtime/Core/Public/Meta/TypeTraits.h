@@ -82,7 +82,7 @@ template <typename T>
 struct TType final { using type = T; };
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR const TType<T> Type{};
+inline CONSTEXPR const TType<T> Type{};
 //----------------------------------------------------------------------------
 // Tricking the compiler to make implicit conversion with template argument deduction
 // https://stackoverflow.com/questions/45765205/template-function-argument-deduction-with-an-implicit-conversion
@@ -258,8 +258,8 @@ using optional_definition_t = decltype(details::optional_definition_<_Using, _Fa
 struct FNoInit final {}; // ctor with that arg must *NOT* initialize the data
 struct FForceInit final {}; // ctor with that arg must initialize the data
 //----------------------------------------------------------------------------
-CONSTEXPR FNoInit NoInit{};
-CONSTEXPR FForceInit ForceInit{};
+inline CONSTEXPR FNoInit NoInit{};
+inline CONSTEXPR FForceInit ForceInit{};
 //----------------------------------------------------------------------------
 template <typename T>
 using has_noinit_constructor = has_constructor<T, Meta::FNoInit>;
@@ -467,7 +467,7 @@ struct FDefaultValue final {
     template <typename T>
     CONSTEXPR friend bool operator !=(FDefaultValue lhs, T rhs) { return (not operator ==(lhs, rhs)); }
 };
-CONSTEXPR FDefaultValue Default{};
+inline CONSTEXPR FDefaultValue Default{};
 //----------------------------------------------------------------------------
 struct FZeroValue final {
     template <typename T>
@@ -481,7 +481,7 @@ struct FZeroValue final {
     template <typename T>
     CONSTEXPR friend bool operator !=(FZeroValue lhs, T rhs) { return (not operator ==(lhs, rhs)); }
 };
-CONSTEXPR FZeroValue Zero{};
+inline CONSTEXPR FZeroValue Zero{};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

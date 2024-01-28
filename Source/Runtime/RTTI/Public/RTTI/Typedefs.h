@@ -27,7 +27,7 @@ using FClassId = TPrimeNumberProduct<class FMetaClass>;
 //      ex:     explicit MyClass(FConstructorTag);
 //----------------------------------------------------------------------------
 struct FConstructorTag {};
-CONSTEXPR FConstructorTag ConstructorTag;
+inline CONSTEXPR FConstructorTag ConstructorTag;
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<Meta::is_pod_v<T>> >
 using TRawData = RAWSTORAGE_ALIGNED(BinaryData, T, ALLOCATION_BOUNDARY);

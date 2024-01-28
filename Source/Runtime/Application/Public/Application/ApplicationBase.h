@@ -24,6 +24,7 @@ public:
 
     virtual void RequestExit() NOEXCEPT override;
 
+    const FTimeline& Timeline() const { return _timeline; }
     void ApplicationLoop();
 
 private:

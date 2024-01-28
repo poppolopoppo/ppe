@@ -11,7 +11,7 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Key, typename _Value>
-static CONSTEXPR const PTypeInfos MakeDicoTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
+inline CONSTEXPR const PTypeInfos MakeDicoTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
     return FTypeInfos::CombineTypes(
         FTypeId(ETypeFlags::Dico),
         FTypeInfos::BasicInfos<T>(ETypeFlags::Dico),

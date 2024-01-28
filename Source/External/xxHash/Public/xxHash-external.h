@@ -13,6 +13,7 @@
 #ifndef EXPORT_PPE_EXTERNAL_XXHASH
     PRAGMA_MSVC_WARNING_PUSH()
 #   pragma push_macro("FORCE_INLINE")
+#   pragma push_macro("XXH_INLINE_ALL")
 #   ifdef __clang__
 #       pragma clang diagnostic push
 #   endif
@@ -20,8 +21,8 @@
 
 #define USE_PPE_XXH3 1 // new algorithm, 2x to 3x times faster
 
-#define XXH_INLINE_ALL // inlining for better performance
-#define XXH_STATIC_LINKING_ONLY // unlocks XXH3
+// #define XXH_INLINE_ALL // inlining for better performance
+// #define XXH_STATIC_LINKING_ONLY // unlocks XXH3
 
 // overrides xxhash detection for compiler intrinsics
 #if defined(__AVX2__)
@@ -41,6 +42,8 @@ PRAGMA_MSVC_WARNING_DISABLE(6011) // dereferencing NULL pointer 'ptr'
 
 #   include "External/xxHash/xxHash.git/xxhash.h"
 
+#   undef XXH_INLINE_ALL
+
 // clean the mess done by xxHash-config.h :
 
 #   ifdef __clang__
@@ -48,6 +51,7 @@ PRAGMA_MSVC_WARNING_DISABLE(6011) // dereferencing NULL pointer 'ptr'
 #   endif
 
 #   pragma pop_macro("FORCE_INLINE")
+#   pragma pop_macro("XXH_INLINE_ALL")
 
     PRAGMA_MSVC_WARNING_POP()
 

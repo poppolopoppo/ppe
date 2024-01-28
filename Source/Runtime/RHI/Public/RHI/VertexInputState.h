@@ -30,12 +30,12 @@ CONSTEXPR FVertexID BinormalN(size_t index) NOEXCEPT { return FVertexID("v_Binor
 CONSTEXPR FVertexID TexcoordN(size_t index) NOEXCEPT { return FVertexID("v_Texcoord", index); }
 CONSTEXPR FVertexID ColorN(size_t index) NOEXCEPT { return FVertexID("v_Color", index); }
 //----------------------------------------------------------------------------
-CONSTEXPR FVertexID Position{ PositionN(0) };
-CONSTEXPR FVertexID Normal{ NormalN(0) };
-CONSTEXPR FVertexID Tangent{ TangentN(0) };
-CONSTEXPR FVertexID Binormal{ BinormalN(0) };
-CONSTEXPR FVertexID Texcoord{ TexcoordN(0) };
-CONSTEXPR FVertexID Color{ ColorN(0) };
+inline CONSTEXPR FVertexID Position{ PositionN(0) };
+inline CONSTEXPR FVertexID Normal{ NormalN(0) };
+inline CONSTEXPR FVertexID Tangent{ TangentN(0) };
+inline CONSTEXPR FVertexID Binormal{ BinormalN(0) };
+inline CONSTEXPR FVertexID Texcoord{ TexcoordN(0) };
+inline CONSTEXPR FVertexID Color{ ColorN(0) };
 //----------------------------------------------------------------------------
 } //!namespace VertexID
 //----------------------------------------------------------------------------

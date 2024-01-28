@@ -17,7 +17,7 @@ namespace Meta {
 struct FEmptyKey {
     CONSTEXPR explicit FEmptyKey(int) {} // avoid promotion/copy
 };
-CONSTEXPR const FEmptyKey EmptyKey{0};
+inline CONSTEXPR const FEmptyKey EmptyKey{0};
 //----------------------------------------------------------------------------
 template <typename T, class = void>
 struct TEmptyKey {

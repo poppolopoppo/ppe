@@ -165,11 +165,11 @@ FTextWriter& FAssertException::Description(FTextWriter& oss) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-NO_INLINE void PPE_DEBUG_SECTION AssertionFailed(const char* msg, const char *file, unsigned line) {
+void PPE_DEBUG_SECTION AssertionFailed(const char* msg, const char *file, unsigned line) {
     DebugPredicateFailed_(msg, file, line, false);
 }
 //----------------------------------------------------------------------------
-NO_INLINE void PPE_DEBUG_SECTION EnsureFailed(const char* msg, const char *file, unsigned line) {
+void PPE_DEBUG_SECTION EnsureFailed(const char* msg, const char *file, unsigned line) {
     DebugPredicateFailed_(msg, file, line, true);
 }
 //----------------------------------------------------------------------------

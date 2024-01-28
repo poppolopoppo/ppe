@@ -10,7 +10,7 @@ namespace RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, typename _Item>
-static CONSTEXPR const PTypeInfos MakeListTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
+inline CONSTEXPR const PTypeInfos MakeListTypeInfos = []() CONSTEXPR NOEXCEPT -> FTypeInfos {
     return FTypeInfos::CombineTypes(
         FTypeId(ETypeFlags::List),
         FTypeInfos::BasicInfos<T>(ETypeFlags::List),

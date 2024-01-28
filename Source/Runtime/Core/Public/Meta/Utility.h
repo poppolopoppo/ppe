@@ -71,12 +71,10 @@ struct TStaticBitset {
     }
 
     CONSTEXPR void set(size_t i) NOEXCEPT {
-        Assert(i < N);
         Bytes[i / BitsPerByte] |= (u8(1) << u8(i % BitsPerByte));
     }
 
     CONSTEXPR void reset(size_t i) NOEXCEPT {
-        Assert(i < N);
         Bytes[i / BitsPerByte] &= ~(u8(1) << u8(i % BitsPerByte));
     }
 
@@ -85,7 +83,6 @@ struct TStaticBitset {
     }
 
     CONSTEXPR bool test(size_t i) const NOEXCEPT {
-        Assert(i < N);
         return !!(Bytes[i / BitsPerByte] & (u8(1) << u8(i % BitsPerByte)));
     }
 

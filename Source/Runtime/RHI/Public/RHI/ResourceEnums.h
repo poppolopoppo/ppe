@@ -291,9 +291,9 @@ enum class EImageDim : u8 {
 
     Unknown                 = 0xFFu,
 };
-static CONSTEXPR auto EImageDim_1D = EImageDim::_1D;
-static CONSTEXPR auto EImageDim_2D = EImageDim::_2D;
-static CONSTEXPR auto EImageDim_3D = EImageDim::_3D;
+inline CONSTEXPR EImageDim EImageDim_1D = EImageDim::_1D;
+inline CONSTEXPR EImageDim EImageDim_2D = EImageDim::_2D;
+inline CONSTEXPR EImageDim EImageDim_3D = EImageDim::_3D;
 //----------------------------------------------------------------------------
 enum class EImageView : u8 {
     _1D,
@@ -306,13 +306,13 @@ enum class EImageView : u8 {
 
     Unknown                 = 0xFFu,
 };
-static CONSTEXPR auto EImageView_1D = EImageView::_1D;
-static CONSTEXPR auto EImageView_2D = EImageView::_2D;
-static CONSTEXPR auto EImageView_3D = EImageView::_3D;
-static CONSTEXPR auto EImageView_1DArray = EImageView::_1DArray;
-static CONSTEXPR auto EImageView_2DArray = EImageView::_2DArray;
-static CONSTEXPR auto EImageView_Cube = EImageView::_Cube;
-static CONSTEXPR auto EImageView_CubeArray = EImageView::_CubeArray;
+inline CONSTEXPR EImageView EImageView_1D = EImageView::_1D;
+inline CONSTEXPR EImageView EImageView_2D = EImageView::_2D;
+inline CONSTEXPR EImageView EImageView_3D = EImageView::_3D;
+inline CONSTEXPR EImageView EImageView_1DArray = EImageView::_1DArray;
+inline CONSTEXPR EImageView EImageView_2DArray = EImageView::_2DArray;
+inline CONSTEXPR EImageView EImageView_Cube = EImageView::_Cube;
+inline CONSTEXPR EImageView EImageView_CubeArray = EImageView::_CubeArray;
 //----------------------------------------------------------------------------
 enum class EImageFlags : u8 {
     MutableFormat               = 1 << 0,   // allows to change image format
