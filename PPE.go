@@ -317,11 +317,11 @@ func makePPE_Program(rules *ModuleRules, usage UsageType) error {
  ***************************************/
 
 func main() {
-	RegisterSerializable[*BuildModulesHeaderGenerator]()
-	RegisterSerializable[*BuildModulesGeneratedHeader]()
+	RegisterSerializable[BuildModulesHeaderGenerator]()
+	RegisterSerializable[BuildModulesGeneratedHeader]()
 
-	RegisterSerializable[*BuildVersionHeaderGenerator]()
-	RegisterSerializable[*BuildVersionGeneratedHeader]()
+	RegisterSerializable[BuildVersionHeaderGenerator]()
+	RegisterSerializable[BuildVersionGeneratedHeader]()
 
 	RegisterArchetype("PPE/Headers", makePPE_Headers)
 	RegisterArchetype("PPE/External", makePPE_External)
