@@ -4,6 +4,7 @@
 	],
 	"ExtraFiles": [
 		"Public/vma-external.h",
-		"vma.git/include/vk_mem_alloc.h"
+		"vma.git/include/vk_mem_alloc.h",
+		"vma.git/src/vk_mem_alloc.natvis"
 	]
 }
