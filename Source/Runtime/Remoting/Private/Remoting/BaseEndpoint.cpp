@@ -22,6 +22,7 @@
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/StringBuilder.h"
+#include "IO/TextFormat.h"
 #include "Misc/Function.h"
 #include "Thread/ThreadContext.h"
 
@@ -205,7 +206,7 @@ struct FMetaEndpointCall_ {
             Context.pResponse->SetStatus(Network::EHttpStatus::OK);
 
             if (func.HasReturnValue()) {
-                Assert(Response.Root().Valid());
+                Assert(not Response.Root().Nil());
 
                 FTextWriter outp{ &Context.pResponse->Body() };
                 Response.ToStream(outp, MinifyJsonForDebug_);
@@ -297,47 +298,42 @@ void FBaseEndpoint::ExportAPI(
     const FStringView& root,
     const FOperationKey& key,
     const FOperation& operation,
-    std::initializer_list<FStringView> tags) const {
+    std::initializer_list<FStringLiteral> tags) const {
     const auto& func = (*static_cast<RTTI::FMetaFunction*>(operation.UserData));
 
-    FStringBuilder path;
-    path << Fmt::Join({ root, std::get<0>(key).MakeView() }, Network::FUri::PathSeparator);
-    if (not operation.Path.empty())
-        path << Network::FUri::PathSeparator << Fmt::Join(operation.Path.MakeView(), Network::FUri::PathSeparator);
-
-    FString httpMethod = ToString(operation.Method);
-    httpMethod.to_lower();
-
     api.Operation(
-        func.Name(),
-        path.Written(),
-        httpMethod,
-        Default,
+        func.Name().MakeLiteral(),
+        api.Format("{}{}{}",
+            Fmt::Join({ root, std::get<0>(key).MakeView() }, Network::FUri::PathSeparator),
+            Fmt::Conditional(Network::FUri::PathSeparator, not operation.Path.empty()),
+            Fmt::Join(operation.Path.MakeView(), Network::FUri::PathSeparator)),
+        api.Format("{:l}", operation.Method),
+        "",
         RTTI::FDescriptionFacet::GetIFP(func),
         tags,
         [&](FOpenAPI::FOperation* span) {
             for (const FParameter& prm : operation.Parameters) {
                 const auto& prop = (*static_cast<const RTTI::FMetaProperty*>(prm.UserData));
 
-                FOpenAPI::FSchema schema;
+                FOpenAPI::FSchema schema{ api.Content.Heap() };
                 if (const FParameterSchemaFacet* const overrideFacet = prop.Facets().GetIFP<FParameterSchemaFacet>())
-                    schema = api.Ref(Serialize::FJson::LiteralText(overrideFacet->Schema));
+                    schema = api.Ref(overrideFacet->Schema);
                 else
                     api.Traits(&schema, prop.Traits());
 
                 switch (prm.In) {
                 case Body: {
                     api.Operation_Body(span,
-                        Network::FMimeTypes::Application_json().MakeView(),
-                        prm.Name.MakeView(),
+                        Network::FMimeTypes::Application_json().MakeLiteral(),
+                        prm.Name.MakeLiteral(),
                         std::move(schema),
                         prm.Required);
                     break;
                 }
                 case FormData: {
                     api.Operation_Body(span,
-                        Network::FMimeTypes::Application_x_www_form_urlencoded().MakeView(),
-                        prm.Name.MakeView(),
+                        Network::FMimeTypes::Application_x_www_form_urlencoded().MakeLiteral(),
+                        prm.Name.MakeLiteral(),
                         std::move(schema),
                         prm.Required);
                     break;
@@ -346,11 +342,9 @@ void FBaseEndpoint::ExportAPI(
                 case Headers:
                 case Path:
                 case Query: {
-                    FString location = ToString(prm.In);
-                    location.to_lower();
                     api.Operation_Parameter(span,
-                        std::move(location),
-                        prm.Name,
+                        api.Format("{:l}", prm.In),
+                        prm.Name.MakeLiteral(),
                         RTTI::FDescriptionFacet::GetIFP(prop),
                         std::move(schema),
                         prm.Required);
@@ -359,12 +353,12 @@ void FBaseEndpoint::ExportAPI(
             }
 
             if (func.HasReturnValue()) {
-                FOpenAPI::FSchema schema;
+                FOpenAPI::FSchema schema{ api.Content.Heap() };
                 api.Traits(&schema, func.Result());
 
                 api.Operation_Response(span,
                     "200", // Http OK
-                    Network::FMimeTypes::Application_json().MakeView(),
+                    Network::FMimeTypes::Application_json().MakeLiteral(),
                     "success",
                     std::move(schema) );
             }
@@ -376,7 +370,7 @@ void FBaseEndpoint::ExportAPI(
 
             if (not func.IsNoExcept())
                 api.Operation_Response(span, "500", "text/plain", "exception thrown",
-                    api.Scalar("error message", "string", Default));
+                    api.Scalar("error message", "string", ""));
         });
 }
 //----------------------------------------------------------------------------
@@ -491,13 +485,13 @@ bool FBaseEndpoint::DispatchOperations(const FRemotingContext& ctx, FStringView 
 void FBaseEndpoint::PrivateEndpointOpenAPI(FOpenAPI& api) const {
     const RTTI::FMetaClass& class_ = *RTTI_Class();
 
-    api.Tag(class_.Name().MakeView(),
+    api.Tag(class_.Name().MakeLiteral(),
             RTTI::FDescriptionFacet::GetIFP(class_),
             NoFunction);
 
     for (const auto& it : _operations) {
         ExportAPI(api, _endpointPrefix, it.first, it.second, {
-            class_.Name().MakeView()
+            class_.Name().MakeLiteral()
         });
     }
 }

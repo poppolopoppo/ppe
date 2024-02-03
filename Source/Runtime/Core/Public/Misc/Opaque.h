@@ -30,6 +30,7 @@ struct key_value_view;
 //----------------------------------------------------------------------------
 // trivial opaque types
 //----------------------------------------------------------------------------
+using nil = std::monostate;
 using boolean = bool;
 using integer = i64;
 using uinteger = u64;
@@ -68,7 +69,7 @@ using wstring_external = FConstWChar;
 //----------------------------------------------------------------------------
 namespace details {
 using value_init_variant = std::variant<
-    std::monostate,
+    nil,
     boolean, integer, uinteger, floating_point,
     string_init, wstring_init,
     array_init, object_init,
@@ -100,17 +101,31 @@ struct value_init : details::value_init_variant {
     template <typename _Char, size_t _Len>
     CONSTEXPR value_init(const _Char (&staticString)[_Len]) : value_init(TBasicStringLiteral<_Char>(staticString)) {}
 
+    bool Nil() const {
+        return std::holds_alternative<nil>(*this);
+    }
+
     void Reset() {
-        details::value_init_variant::operator =(std::monostate{});
+        details::value_init_variant::operator =(nil{});
     }
 };
-struct key_value_init { string_init key; value_init value; };
+struct key_value_init {
+    string_init key;
+    value_init value;
+
+    friend bool operator ==(const key_value_init& lhs, const key_value_init& rhs) NOEXCEPT {
+        return (lhs.key == rhs.key && lhs.value == rhs.value);
+    }
+    friend bool operator !=(const key_value_init& lhs, const key_value_init& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
+    }
+};
 //----------------------------------------------------------------------------
 // value_view: one contiguous memory block with every value packed inside
 //----------------------------------------------------------------------------
 namespace details {
 using value_view_variant = std::variant<
-    std::monostate,
+    nil,
     boolean, integer, uinteger, floating_point,
     string_view, wstring_view,
     array_view, object_view
@@ -119,13 +134,27 @@ using value_view_variant = std::variant<
 struct value_view : details::value_view_variant {
     using details::value_view_variant::value_view_variant;
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return not std::holds_alternative<std::monostate>(*this); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return not std::holds_alternative<nil>(*this); }
+
+    bool Nil() const {
+        return std::holds_alternative<nil>(*this);
+    }
 
     void Reset() {
-        details::value_view_variant::operator =(std::monostate{});
+        details::value_view_variant::operator =(nil{});
     }
 };
-struct key_value_view { string_view key; value_view value; };
+struct key_value_view {
+    string_view key;
+    value_view value;
+
+    friend bool operator ==(const key_value_view& lhs, const key_value_view& rhs) NOEXCEPT {
+        return (lhs.key.MakeView() == rhs.key.MakeView() && lhs.value == rhs.value);
+    }
+    friend bool operator !=(const key_value_view& lhs, const key_value_view& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
+    }
+};
 //----------------------------------------------------------------------------
 PPE_ASSUME_TYPE_AS_POD(string_init);
 PPE_ASSUME_TYPE_AS_POD(wstring_init);
@@ -200,12 +229,20 @@ void DeleteBlock(_Allocator& allocator, const value_block& v) {
 //----------------------------------------------------------------------------
 // Lookup value_view for expected named properties
 //----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API Meta::TOptional<TPtrRef<const value_view>> XPath(const object_view& o, FStringView key) NOEXCEPT;
 NODISCARD PPE_CORE_API Meta::TOptional<TPtrRef<const value_view>> XPath(const value_view& v, std::initializer_list<FStringView> path) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T>
-NODISCARD Meta::TOptionalReference<T> XPathAs(const value_view& v, std::initializer_list<FStringView> path) NOEXCEPT {
+NODISCARD Meta::TOptionalReference<const T> XPathAs(const object_view& o, FStringView key) NOEXCEPT {
+    if (Meta::TOptional<TPtrRef<const value_view>> result = XPath(o, key); result.has_value())
+        return std::get_if<T>(result->get());
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+template <typename T>
+NODISCARD Meta::TOptionalReference<const T> XPathAs(const value_view& v, std::initializer_list<FStringView> path) NOEXCEPT {
     if (Meta::TOptional<TPtrRef<const value_view>> result = XPath(v, path); result.has_value())
-        return std::get_if<T>(result.value());
+        return std::get_if<T>(result->get());
     return nullptr;
 }
 //----------------------------------------------------------------------------

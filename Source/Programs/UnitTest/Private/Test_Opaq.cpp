@@ -7,6 +7,7 @@
 #include "Allocator/SlabAllocator.h"
 #include "Allocator/SlabHeap.h"
 #include "Diagnostic/Logger.h"
+#include "IO/TextWriter.h"
 #include "Meta/Utility.h"
 #include "Misc/Function.h"
 
@@ -63,10 +64,9 @@ static void Test_Opaq_Init_() {
         {"recursive", std::get<object_view>(*obj_block)}
     });
 
-
     PPE_SLOG(Test_Opaq, Info, "block format:", {
         {"format", [&](FTextWriter& oss){
-            Format(oss, "this is {} {}", 2, "awesome");
+            Format(oss, "this is {} {}!", 2, "awesome");
         }},
         {"wformat", [&](FWTextWriter& oss){
             Format(oss, L"this is {} {}", 2, MakeStringView("awesome"));
@@ -79,7 +79,7 @@ static void Test_Opaq_Init_() {
 static void Test_Opaq_Alloc_() {
     using namespace Opaq;
 
-    string<> small = MakeStringView("sm");
+    string<> small = "sm"_view;
     Unused(small);
 
     string<> address = MakeStringView("33 colombus street Alabama");

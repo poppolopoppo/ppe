@@ -19,7 +19,7 @@
 #include "VirtualFileSystem.h"
 #include "IO/Filename.h"
 #include "Meta/Functor.h"
-#include "RTTI/NativeTraits.h"
+#include "Meta/Utility.h"
 
 namespace PPE {
 namespace Serialize {
@@ -28,100 +28,104 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static void EscapeJson_(FTextWriter& oss, const FJson::FText& str) {
-    Escape(oss, str.MakeView(), EEscape::Unicode);
-}
-//----------------------------------------------------------------------------
-static void EscapeJson_(FWTextWriter& oss, const FJson::FText& str) {
-    Escape(oss, ToWCStr(INLINE_MALLOCA(wchar_t, str.size() + 1), str), EEscape::Unicode);
-}
-//----------------------------------------------------------------------------
-static bool ParseValue_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value);
-//----------------------------------------------------------------------------
-static bool ParseObject_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) {
-    FJson::FObject& object = value.Construct<FJson::FObject>(doc.Heap());
+struct FJsonParser_ {
+    Lexer::FLexer Lexer;
+    FJson::FBuilder Builder;
 
-    if (lexer.ReadIFN(Lexer::FSymbols::RBrace)) // quick reject for empty object
-        return true;
+    bool ParseValue();
 
-    Lexer::FMatch key;
-    for (bool notFirst = false;; notFirst = true) {
-        if (notFirst && not lexer.ReadIFN(Lexer::FSymbols::Comma))
-            break;
+    bool ParseObject() {
+        Builder.BeginObject();
+        DEFERRED{ Builder.EndObject(); };
 
-        if (not lexer.Expect(key, Lexer::FSymbols::String))
-            break;
+        if (Lexer.ReadIFN(Lexer::FSymbols::RBrace)) // quick reject for empty object
+            return true;
 
-        if (not lexer.Expect(Lexer::FSymbols::Colon))
-            PPE_THROW_IT(FJsonException("missing comma", key.Site()));
+        Lexer::FMatch key;
+        for (bool notFirst = false;; notFirst = true) {
+            if (notFirst && not Lexer.ReadIFN(Lexer::FSymbols::Comma))
+                break;
 
-        const FJson::FText name = doc.MakeText(key.Value());
-        FJson::FValue& v = object.Add(name);
-        if (not ParseValue_(lexer, doc, v))
-            PPE_THROW_IT(FJsonException("missing value", key.Site()));
+            if (not Lexer.Expect(key, Lexer::FSymbols::String))
+                break;
+
+            if (not Lexer.Expect(Lexer::FSymbols::Colon))
+                PPE_THROW_IT(FJsonException("missing comma", key.Site()));
+
+            Builder.KeyValue(key.Value(), [&]() {
+                if (not ParseValue())
+                    PPE_THROW_IT(FJsonException("missing value", key.Site()));
+            });
+        }
+
+        return Lexer.Expect(Lexer::FSymbols::RBrace);
     }
 
-    return lexer.Expect(Lexer::FSymbols::RBrace);
-}
-//----------------------------------------------------------------------------
-static bool ParseArray_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) {
-    FJson::FArray& arr = value.Construct<FJson::FArray>(doc.Heap());
+    bool ParseArray() {
+        Builder.BeginArray();
+        DEFERRED{ Builder.EndArray(); };
 
-    if (lexer.ReadIFN(Lexer::FSymbols::RBracket)) // quick reject for empty array
-        return true;
+        if (Lexer.ReadIFN(Lexer::FSymbols::RBracket)) // quick reject for empty array
+            return true;
 
-    for (bool notFirst = false;; notFirst = true) {
-        if (notFirst && not lexer.ReadIFN(Lexer::FSymbols::Comma))
-            break;
+        for (bool notFirst = false;; notFirst = true) {
+            if (notFirst && not Lexer.ReadIFN(Lexer::FSymbols::Comma))
+                break;
 
-        if (not ParseValue_(lexer, doc, *Emplace_Back(arr)) )
-            return false;
+            if (not ParseValue())
+                return false;
+        }
+
+        return Lexer.Expect(Lexer::FSymbols::RBracket);
     }
-
-    return lexer.Expect(Lexer::FSymbols::RBracket);
-}
+};
 //----------------------------------------------------------------------------
-static bool ParseValue_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) {
+bool FJsonParser_::ParseValue() {
     Lexer::FMatch read;
-    if (not lexer.Read(read))
+    if (not Lexer.Read(read))
         return false;
 
     bool unexpectedToken = false;
 
     if (read.Symbol() == Lexer::FSymbols::LBrace) {
-        return ParseObject_(lexer, doc, value);
+        return ParseObject();
     }
     else if (read.Symbol() == Lexer::FSymbols::LBracket) {
-        return ParseArray_(lexer, doc, value);
+        return ParseArray();
     }
     else if (read.Symbol() == Lexer::FSymbols::String) {
-        value.Assign(doc.MakeText(read.Value(), false));
+        Builder.Write(read.Value().MakeView());
     }
     else if (read.Symbol() == Lexer::FSymbols::Integer) {
-        FJson::FInteger& num = value.Construct<FJson::FInteger>();
+        FJson::FInteger num;
         if (not Atoi(&num, read.Value().MakeView(), 10))
             PPE_THROW_IT(FJsonException("malformed int", read.Site()));
+
+        Builder.Write(num);
     }
     else if (read.Symbol() == Lexer::FSymbols::Unsigned) {
         u64 u;
         if (not Atoi(&u, read.Value().MakeView(), 10))
             PPE_THROW_IT(FJsonException("malformed int", read.Site()));
-        value.Assign(checked_cast<FJson::FInteger>(u));
+
+        Builder.Write(u);
     }
     else if (read.Symbol() == Lexer::FSymbols::Float) {
-        FJson::FFloat& fp = value.Construct<FJson::FFloat>();
+        FJson::FFloat fp;
         if (not Atod(&fp, read.Value().MakeView()))
             PPE_THROW_IT(FJsonException("malformed float", read.Site()));
+
+        Builder.Write(fp);
     }
     // unary minus ?
     else if (read.Symbol() == Lexer::FSymbols::Sub) {
-        const Lexer::FMatch* const peek = lexer.Peek();
+        const Lexer::FMatch* const peek = Lexer.Peek();
 
         unexpectedToken = true;
 
         if (peek && peek->Symbol() == Lexer::FSymbols::Integer) {
-            if (ParseValue_(lexer, doc, value)) {
-                FJson::FInteger& num = value.Get<FJson::FInteger>();
+            if (ParseValue()) {
+                FJson::FInteger& num = std::get<FJson::FInteger>(*Builder.Peek());
                 num = -num;
                 unexpectedToken = false;
             }
@@ -130,21 +134,21 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) 
             AssertNotReached(); // -unsigned isn't supported !
         }
         else if (peek && peek->Symbol() == Lexer::FSymbols::Float) {
-            if (ParseValue_(lexer, doc, value)) {
-                FJson::FFloat& dbl = value.Get<FJson::FFloat>();
+            if (ParseValue()) {
+                FJson::FFloat& dbl = std::get<FJson::FFloat>(*Builder.Peek());
                 dbl = -dbl;
                 unexpectedToken = false;
             }
         }
     }
     else if (read.Symbol() == Lexer::FSymbols::True) {
-        value.Assign(true);
+        Builder.Write(true);
     }
     else if (read.Symbol() == Lexer::FSymbols::False) {
-        value.Assign(false);
+        Builder.Write(false);
     }
     else if (read.Symbol() == Lexer::FSymbols::Null) {
-        value.Assign(RTTI::PMetaObject{});
+        Builder.Write(FJson::FNull{});
     }
     else {
         unexpectedToken = true;
@@ -156,81 +160,18 @@ static bool ParseValue_(Lexer::FLexer& lexer, FJson& doc, FJson::FValue& value) 
     return true;
 }
 //----------------------------------------------------------------------------
-template <typename _Char>
-static void ToStream_(const FJson::FValue& value, TBasicTextWriter<_Char>& oss, Fmt::TBasicIndent<_Char>& indent, bool minify) {
-    Meta::Visit(value.Data,
-        [](const std::monostate&) {
-            AssertNotReached();
-        },
-        [&oss](const FJson::FNull&) {
-            oss << "null";
-        },
-        [&oss](const auto& value) {
-            oss << value;
-        },
-        [&oss](const FJson::FText& value) {
-            oss << Fmt::DoubleQuote;
-            EscapeJson_(oss, value);
-            oss << Fmt::DoubleQuote;
-        },
-        [&oss, &indent, minify](const FJson::FArray& value) {
-            if (not value.empty()) {
-                oss << Fmt::LBracket;
-                if (not minify) oss << Eol;
-                {
-                    const typename Fmt::TBasicIndent<_Char>::FScope scopeIndent(indent);
-
-                    size_t n = value.size();
-                    for (const auto& item : value) {
-                        oss << indent;
-                        ToStream_(item, oss, indent, minify);
-                        if (--n)
-                            oss << Fmt::Comma;
-                        if (not minify)
-                            oss << Eol;
-                    }
-                }
-                oss << indent << Fmt::RBracket;
-            }
-            else {
-                oss << Fmt::LBracket << Fmt::RBracket;
-            }
-        },
-        [&oss, &indent, minify](const FJson::FObject& value) {
-            if (not value.empty()) {
-                oss << Fmt::LBrace;
-                if (not minify) oss << Eol;
-                {
-                    const typename Fmt::TBasicIndent<_Char>::FScope scopeIndent(indent);
-
-                    size_t n = value.size();
-                    for (const auto& member : value) {
-                        oss << indent << Fmt::DoubleQuote;
-                        EscapeJson_(oss, member.first);
-                        oss << Fmt::DoubleQuote << Fmt::Colon;
-                        if (not minify)
-                            oss << Fmt::Space;
-                        ToStream_(member.second, oss, indent, minify);
-                        if (--n)
-                            oss << Fmt::Comma;
-                        if (not minify)
-                            oss << Eol;
-                    }
-                }
-                oss << indent << Fmt::RBrace;
-            }
-            else {
-                oss << Fmt::LBrace << Fmt::RBrace;
-            }
-        });
-}
-//----------------------------------------------------------------------------
 static bool ParseJson_(FJson::FValue* dst, FJson& doc, const FWStringView& filename, IBufferedStreamReader& src) {
     Assert(dst);
-    Lexer::FLexer lexer(src, filename, false);
+    FJsonParser_ parser{
+        Lexer::FLexer(src, filename, false),
+        FJson::FBuilder(dst, doc.Heap()),
+    };
+
+    parser.Builder.SetTextMemoization(doc.AnsiText());
+    parser.Builder.SetTextMemoization(doc.WideText());
 
     PPE_TRY{
-        if (not ParseValue_(lexer, doc, *dst))
+        if (not parser.ParseValue())
             return false;
     }
     PPE_CATCH(Lexer::FLexerException e)
@@ -245,58 +186,24 @@ static bool ParseJson_(FJson::FValue* dst, FJson& doc, const FWStringView& filen
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// FJson::FValue
-//----------------------------------------------------------------------------
-void FJson::FValue::Construct(FJson& doc, EType type) {
-    switch (type) {
-    case Null: Construct<FNull>(); break;
-    case Bool: Construct<FBool>(); break;
-    case Integer: Construct<FInteger>(); break;
-    case Float: Construct<FFloat>(); break;
-    case String: Construct<FText>(); break;
-    case Array: Construct<FArray>(doc.Heap()); break;
-    case Object: Construct<FObject>(doc.Heap()); break;
-    }
-}
-//----------------------------------------------------------------------------
-hash_t FJson::FValue::HashValue() const NOEXCEPT {
-    return Meta::Visit(Data,
-        [](const auto& x) -> hash_t {
-            return hash_value(x);
-        },
-        [](const std::monostate&) -> hash_t {
-            AssertNotReached();
-        });
-}
-//----------------------------------------------------------------------------
-void FJson::FValue::Reset() NOEXCEPT {
-    Data = std::monostate{};
-}
-//----------------------------------------------------------------------------
-bool FJson::FValue::Equals(const FValue& other) const NOEXCEPT {
-    return (Data == other.Data);
-}
-//----------------------------------------------------------------------------
-// FJson
-//----------------------------------------------------------------------------
 FJson::~FJson()  {
     Clear_ReleaseMemory();
 }
 //----------------------------------------------------------------------------
 void FJson::ToStream(FTextWriter& oss, bool minify/* = false */) const {
-    Fmt::FIndent indent = (minify ? Fmt::FIndent::None() : Fmt::FIndent::TwoSpaces());
-    oss << FTextFormat::DefaultFloat
-        << FTextFormat::BoolAlpha;
-    ToStream_(_root, oss, indent, minify);
-    Assert(0 == indent.Level);
+    const FTextWriter::FFormatScope format(oss);
+    oss << FTextFormat::Escape;
+    if (minify)
+        oss << FTextFormat::Compact;
+    oss << _root;
 }
 //----------------------------------------------------------------------------
 void FJson::ToStream(FWTextWriter& oss, bool minify/* = false */) const {
-    Fmt::FWIndent indent = (minify ? Fmt::FWIndent::None() : Fmt::FWIndent::TwoSpaces());
-    oss << FTextFormat::DefaultFloat
-        << FTextFormat::BoolAlpha;
-    ToStream_(_root, oss, indent, minify);
-    Assert(0 == indent.Level);
+    const FWTextWriter::FFormatScope format(oss);
+    oss << FTextFormat::Escape;
+    if (minify)
+        oss << FTextFormat::Compact;
+    oss << _root;
 }
 //----------------------------------------------------------------------------
 bool FJson::Load(FJson* json, const FFilename& filename) {
@@ -341,32 +248,31 @@ bool FJson::Append(FJson* json, const FWStringView& filename, IBufferedStreamRea
     Assert(json);
     Assert(input);
 
-    TPtrRef<FJson::FValue> dst;
-    if (json->_root.Valid()) {
-        FJson::FArray* arrIFP{ json->_root.AsArray() };
-        if (not arrIFP) {
-            FJson::FArray newRoot{ json->Heap() };
-            newRoot.Emplace(std::move(json->_root));
-            json->_root = std::move(newRoot);
-            arrIFP = &json->_root.ToArray();
-        }
-        Assert(arrIFP);
-        dst = *Emplace_Back(*arrIFP);
+    TPtrRef<FValue> dst;
+    if (json->_root.Nil()) {
+        dst = json->_root;
+    }
+    else if (FArray* pArr = std::get_if<FArray>(&json->_root)) {
+        dst = pArr->push_back_Default();
     }
     else {
-        dst = json->_root;
+        FArray newRoot{ json->Heap() };
+        newRoot.push_back(std::move(json->_root));
+
+        json->_root = std::move(newRoot);
+        dst = std::get<FArray>(json->_root).push_back_Default();
     }
 
     return ParseJson_(dst, *json, filename, *input);
 }
 //----------------------------------------------------------------------------
-/*static*/ const FJson::FText FJson::Id{ LiteralText("$id") };
-/*static*/ const FJson::FText FJson::Ref{ LiteralText("$ref") };
-/*static*/ const FJson::FText FJson::Class{ LiteralText("_class") };
-/*static*/ const FJson::FText FJson::Export{ LiteralText("_export") };
-/*static*/ const FJson::FText FJson::Inner{ LiteralText("_inner") };
-/*static*/ const FJson::FText FJson::TopObject{ LiteralText("_topObject") };
-/*static*/ const FJson::FText FJson::TypeId{ LiteralText("_typeId") };
+/*static*/ const FJson::FText FJson::Id{ Literal_Id };
+/*static*/ const FJson::FText FJson::Ref{ Literal_Ref };
+/*static*/ const FJson::FText FJson::Class{ Literal_Class };
+/*static*/ const FJson::FText FJson::Export{ Literal_Export };
+/*static*/ const FJson::FText FJson::Inner{ Literal_Inner };
+/*static*/ const FJson::FText FJson::TopObject{ Literal_TopObject };
+/*static*/ const FJson::FText FJson::TypeId{ Literal_TypeId };
 //----------------------------------------------------------------------------
 bool FJson::IsReservedKeyword(const FJson::FText& str) NOEXCEPT {
     return (
@@ -390,7 +296,8 @@ void FJson::Clear_ReleaseMemory() {
 //----------------------------------------------------------------------------
 FJson::FAllocator::~FAllocator() {
     // can't track all blocks need to clear all
-    Text.Clear_ForgetMemory();
+    AnsiText.clear_ReleaseMemory();
+    WideText.clear_ReleaseMemory();
     Heap.DiscardAll();
 }
 //----------------------------------------------------------------------------

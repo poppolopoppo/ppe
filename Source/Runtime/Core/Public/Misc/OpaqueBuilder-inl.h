@@ -109,7 +109,7 @@ struct value_printer {
         operator ()(TBasicStringView<_Char2>(tmp.MakeView().Cast<const _Char2>()));
     }
 
-    void operator ()(std::monostate) NOEXCEPT { Print("null"); }
+    void operator ()(nil) NOEXCEPT { Print("null"); }
 
     void operator ()(boolean v) { Print(v ? STRING_LITERAL(_Char, "true") : STRING_LITERAL(_Char, "false")); }
     void operator ()(integer v) { Print(v); }
@@ -229,7 +229,7 @@ struct value_block_capacity {
     }
 
     /// already fit in value_view ////////////////
-    void operator ()(std::monostate) NOEXCEPT {}
+    void operator ()(nil) NOEXCEPT {}
     void operator ()(boolean) NOEXCEPT {}
     void operator ()(integer) NOEXCEPT {}
     void operator ()(uinteger) NOEXCEPT {}
@@ -434,7 +434,7 @@ struct value_block_inliner {
     ,   Slab(slab)
     {}
 
-    void operator ()(std::monostate) const { Assert_NoAssume(Output->valueless_by_exception()); }
+    void operator ()(nil) const { Assert_NoAssume(Output->valueless_by_exception()); }
 
     void operator ()(boolean v) const { Output->emplace<boolean>(v); }
     void operator ()(integer v) const { Output->emplace<integer>(v); }
@@ -621,6 +621,80 @@ value<_Allocator> NewValue(const _Allocator& allocator, const value_view& view) 
     return builder.ToValue();
 }
 //----------------------------------------------------------------------------
+template <typename _Allocator>
+Meta::TOptional<TPtrRef<value<_Allocator>>> XPath(object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT {
+    for (key_value<_Allocator>& it : o) {
+        if (it.key == key) {
+            return it.value;
+        }
+    }
+    return Meta::TOptional<TPtrRef<value<_Allocator>>>{};
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+Meta::TOptional<TPtrRef<const value<_Allocator>>> XPath(const object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT {
+    for (const key_value<_Allocator>& it : o) {
+        if (it.key == key) {
+            return it.value;
+        }
+    }
+    return Meta::TOptional<TPtrRef<const value<_Allocator>>>{};
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+Meta::TOptional<TPtrRef<value<_Allocator>>> XPath(value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT {
+    TPtrRef node{ &v };
+
+    for (const string<_Allocator>& key : path) {
+        const Meta::TOptionalReference<object<_Allocator>> obj{ std::get_if<object<_Allocator>>(node.get()) };
+        if (not obj)
+            break;
+
+        node.reset();
+        for (key_value<_Allocator>& it : *obj) {
+            if (it.key == key) {
+                node = &it.value;
+                break;
+            }
+        }
+
+        if (not node.valid())
+            break;
+    }
+
+    if (Likely(node.valid()))
+        return *node;
+
+    return Meta::TOptional<TPtrRef<value<_Allocator>>>{};
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+Meta::TOptional<TPtrRef<const value<_Allocator>>> XPath(const value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT {
+    TPtrRef node{ &v };
+
+    for (const string<_Allocator>& key : path) {
+        const Meta::TOptionalReference<const object<_Allocator>> obj{ std::get_if<object<_Allocator>>(node.get()) };
+        if (not obj)
+            break;
+
+        node.reset();
+        for (const key_value<_Allocator>& it : *obj) {
+            if (it.key == key) {
+                node = &it.value;
+                break;
+            }
+        }
+
+        if (not node.valid())
+            break;
+    }
+
+    if (Likely(node.valid()))
+        return *node;
+
+    return Meta::TOptional<TPtrRef<const value<_Allocator>>>{};
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -635,10 +709,10 @@ void TBuilder<_Allocator>::Reset(TPtrRef<value_type> dst) {
         _edits.Push(dst);
         return;
     }
+
     AssertMessage_NoAssume("builder is still beeing used", _edits.size() == 1);
+
     _edits[0] = dst;
-    _memoization_ansi.reset();
-    _memoization_wide.reset();
 }
 //----------------------------------------------------------------------------a
 template <typename _Allocator>
@@ -661,6 +735,7 @@ size_t TBuilder<_Allocator>::BlockSize() const NOEXCEPT {
 template <typename _Allocator>
 value_block TBuilder<_Allocator>::ToValueBlock(FAllocatorBlock block) {
     Assert_NoAssume(_edits.size() == 1);
+
     return NewBlock(block, *_edits[0]);
 }
 //----------------------------------------------------------------------------
@@ -691,6 +766,7 @@ template <typename _Allocator>
 void TBuilder<_Allocator>::EndArray() {
     Assert_NoAssume(not _edits.empty());
     Assert_NoAssume(std::holds_alternative<array_type>(*_edits.Peek()));
+
     _edits.Pop();
 }
 //----------------------------------------------------------------------------
@@ -698,6 +774,7 @@ template <typename _Allocator>
 void TBuilder<_Allocator>::BeginObject(size_t capacity) {
     object_type obj{ Allocator_() };
     obj.reserve(capacity);
+
     _edits.Push(SetValue_(std::move(obj)));
 }
 //----------------------------------------------------------------------------
@@ -705,25 +782,40 @@ template <typename _Allocator>
 void TBuilder<_Allocator>::EndObject() {
     Assert_NoAssume(not _edits.empty());
     Assert_NoAssume(std::holds_alternative<object_type>(*_edits.Peek()));
+
     _edits.Pop();
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TBuilder<_Allocator>::BeginKeyValue(string_type&& rkey) {
     object_type& obj = std::get<object_type>(Head_());
+
     _edits.Push(Emplace_Back(obj, std::move(rkey), value_type{})->value);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void TBuilder<_Allocator>::EndKeyValue() {
     Assert_NoAssume(not _edits.empty());
-    Assert_NoAssume(*_edits.Peek());
+
     _edits.Pop();
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 auto TBuilder<_Allocator>::Head_() NOEXCEPT -> value_type& {
     return *_edits.Peek();
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+auto TBuilder<_Allocator>::Peek() NOEXCEPT -> Meta::TOptionalReference<value_type> {
+    if (value_type& head = Head_(); Likely(head)) {
+        if (array_type* const pArr = std::get_if<array_type>(&head)) {
+            if (not pArr->empty())
+                return Meta::MakeOptionalRef(pArr->back());
+        } else {
+            return Meta::MakeOptionalRef(head);
+        }
+    }
+    return Meta::TOptionalReference<value_type>{};
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
@@ -738,6 +830,7 @@ template <typename _Allocator>
 auto TBuilder<_Allocator>::AllocateString_(string_init v) -> string_type {
     if (_memoization_ansi)
         return _memoization_ansi->Append(v);
+
     return string_type(Allocator_(), v);
 }
 //----------------------------------------------------------------------------
@@ -745,6 +838,7 @@ template <typename _Allocator>
 auto TBuilder<_Allocator>::AllocateString_(wstring_init v) -> wstring_type {
     if (_memoization_wide)
         return _memoization_wide->Append(v);
+
     return wstring_type(Allocator_(), v);
 }
 //----------------------------------------------------------------------------

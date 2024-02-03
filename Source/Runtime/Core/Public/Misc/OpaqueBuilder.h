@@ -39,7 +39,7 @@ using object = TVector<key_value<_Allocator>, _Allocator>;
 namespace details {
 template <typename _Allocator>
 using value_variant = std::variant<
-    std::monostate,
+    nil,
     boolean, integer, uinteger, floating_point,
     string<_Allocator>, wstring<_Allocator>,
     array<_Allocator>, object<_Allocator>>;
@@ -61,14 +61,28 @@ struct value : details::value_variant<_Allocator> {
 
     CONSTEXPR value(float f) : value(static_cast<floating_point>(f)) {}
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return not std::holds_alternative<std::monostate>(*this); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return not std::holds_alternative<nil>(*this); }
+
+    bool Nil() const {
+        return std::holds_alternative<nil>(*this);
+    }
 
     void Reset() {
-        details::value_variant<_Allocator>::operator =(std::monostate{});
+        details::value_variant<_Allocator>::operator =(nil{});
     }
 };
 template <typename _Allocator>
-struct key_value { string<_Allocator> key; value<_Allocator> value; };
+struct key_value {
+    string<_Allocator> key;
+    value<_Allocator> value;
+
+    friend bool operator ==(const key_value& lhs, const key_value& rhs) NOEXCEPT {
+        return (lhs.key == rhs.key && lhs.value == rhs.value);
+    }
+    friend bool operator !=(const key_value& lhs, const key_value& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
+    }
+};
 //----------------------------------------------------------------------------
 // Create a value_view from a dynamic value<>
 //----------------------------------------------------------------------------
@@ -99,6 +113,61 @@ NODISCARD inline value<_Allocator> NewValue(_Allocator&& rallocator, const value
 template <typename _Allocator>
 NODISCARD inline value<_Allocator> NewValue(const _Allocator& allocator, const value_view& view);
 //----------------------------------------------------------------------------
+// Lookup value_view for expected named properties
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+inline NODISCARD Meta::TOptional<TPtrRef<value<_Allocator>>> XPath(object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT;
+template <typename _Allocator>
+inline NODISCARD Meta::TOptional<TPtrRef<value<_Allocator>>> XPath(object<_Allocator>& o, FStringLiteral literal) NOEXCEPT { return XPath(o, string<_Allocator>(literal)); }
+template <typename _Allocator>
+inline NODISCARD Meta::TOptional<TPtrRef<value<_Allocator>>> XPath(value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+inline NODISCARD Meta::TOptional<TPtrRef<const value<_Allocator>>> XPath(const object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT;
+template <typename _Allocator>
+inline NODISCARD Meta::TOptional<TPtrRef<const value<_Allocator>>> XPath(const object<_Allocator>& o, FStringLiteral literal) NOEXCEPT { return XPath(o, string<_Allocator>(literal)); }
+template <typename _Allocator>
+inline NODISCARD Meta::TOptional<TPtrRef<const value<_Allocator>>> XPath(const value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+inline NODISCARD Meta::TOptionalReference<T> XPathAs(object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT {
+    if (Meta::TOptional<TPtrRef<value<_Allocator>>> result = XPath(o, key))
+        return std::get_if<T>(result->get());
+    return nullptr;
+}
+template <typename T, typename _Allocator>
+inline NODISCARD Meta::TOptionalReference<T> XPathAs(object<_Allocator>& o, FStringLiteral literal) NOEXCEPT {
+    if (Meta::TOptional<TPtrRef<value<_Allocator>>> result = XPath(o, literal))
+        return std::get_if<T>(result->get());
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+inline NODISCARD Meta::TOptionalReference<const T> XPathAs(const object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT {
+    if (Meta::TOptional<TPtrRef<const value<_Allocator>>> result = XPath(o, key))
+        return std::get_if<T>(result->get());
+    return nullptr;
+}
+template <typename T, typename _Allocator>
+inline NODISCARD Meta::TOptionalReference<const T> XPathAs(const object<_Allocator>& o, FStringLiteral literal) NOEXCEPT {
+    if (Meta::TOptional<TPtrRef<const value<_Allocator>>> result = XPath(o, literal))
+        return std::get_if<T>(result->get());
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+inline NODISCARD Meta::TOptionalReference<T> XPathAs(value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT {
+    if (Meta::TOptional<TPtrRef<value<_Allocator>>> result = XPath(v, path))
+        return std::get_if<T>(result->get());
+    return nullptr;
+}
+template <typename T, typename _Allocator>
+inline NODISCARD Meta::TOptionalReference<const T> XPathAs(const value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT {
+    if (Meta::TOptional<TPtrRef<const value<_Allocator>>> result = XPath(v, path))
+        return std::get_if<T>(result->get());
+    return nullptr;
+}
+//----------------------------------------------------------------------------
 // Create a dynamic value<> interactively
 //----------------------------------------------------------------------------
 class IBuilder {
@@ -108,6 +177,7 @@ public:
     virtual size_t BlockSize() const NOEXCEPT = 0;
     virtual value_block ToValueBlock(FAllocatorBlock block) = 0;
 
+    virtual void Write(nil v) = 0;
     virtual void Write(boolean v) = 0;
     virtual void Write(integer v) = 0;
     virtual void Write(uinteger v) = 0;
@@ -189,6 +259,10 @@ public:
     }
 
     // need to desambiguate between TBasicStringView/TBasicConstChar/TBasicText
+    template <typename _Char, size_t _Len>
+    void Write(const _Char (&stringArr)[_Len]) {
+        Write(MakeStringLiteral(stringArr));
+    }
     template <size_t _Len>
     void BeginKeyValue(const char (&staticKey)[_Len]) {
         BeginKeyValue(string_literal(staticKey));
@@ -196,7 +270,7 @@ public:
 
     // visitor
 
-    void operator ()(std::monostate) {}
+    void operator ()(nil) {}
 
     void operator ()(boolean v) { Write(v); }
     void operator ()(integer v) { Write(v); }
@@ -298,9 +372,13 @@ public:
     void SetTextMemoization(TPtrRef<text_memoization_ansi> memoization);
     void SetTextMemoization(TPtrRef<text_memoization_wide> memoization);
 
+    Meta::TOptionalReference<value_type> Peek() NOEXCEPT;
+    Meta::TOptionalReference<const value_type> Peek() const NOEXCEPT { return const_cast<TBuilder*>(this)->Peek(); }
+
     virtual size_t BlockSize() const NOEXCEPT override final;
     virtual value_block ToValueBlock(FAllocatorBlock block) override final;
 
+    virtual void Write(nil v) override final { SetValue_(v); }
     virtual void Write(boolean v) override final { SetValue_(v); }
     virtual void Write(integer v) override final { SetValue_(v); }
     virtual void Write(uinteger v) override final { SetValue_(v); }
@@ -318,6 +396,9 @@ public:
     void Write(string_type&& v) { SetValue_(std::move(v)); }
     void Write(wstring_type&& v) { SetValue_(std::move(v)); }
 
+    void Write(const string_type& v) { SetValue_(string_type(v)); }
+    void Write(const wstring_type& v) { SetValue_(wstring_type(v)); }
+
     virtual void BeginArray(size_t capacity = 0) override final;
     virtual void EndArray() override final;
 
@@ -330,6 +411,7 @@ public:
     virtual void EndKeyValue() override final;
 
     void BeginKeyValue(string_type&& rkey);
+    void BeginKeyValue(const string_type& key) { BeginKeyValue(string_type(key)); }
 
     template <typename _KeyLike, typename _Char, size_t _Len,
         decltype(std::declval<IBuilder*>()->BeginKeyValue(std::forward<_KeyLike>(std::declval<_KeyLike&&>())))* = nullptr
@@ -341,8 +423,8 @@ public:
     }
 
     template <typename _KeyLike, typename... _Args,
-        decltype(std::declval<IBuilder*>()->BeginKeyValue(std::forward<_KeyLike>(std::declval<_KeyLike&&>())))* = nullptr,
-        decltype(std::declval<IBuilder*>()->Write(std::forward<_Args>(std::declval<_Args&&>())...))* = nullptr
+        decltype(std::declval<TBuilder*>()->BeginKeyValue(std::forward<_KeyLike>(std::declval<_KeyLike&&>())))* = nullptr,
+        decltype(std::declval<TBuilder*>()->Write(std::forward<_Args>(std::declval<_Args&&>())...))* = nullptr
     >
     void KeyValue(_KeyLike&& keyLike, _Args&&... args) {
         BeginKeyValue(std::forward<_KeyLike>(keyLike));
@@ -359,7 +441,7 @@ private:
     string_type AllocateString_(string_init v);
     wstring_type AllocateString_(wstring_init v);
 
-    TFixedSizeStack<TPtrRef<value_type>, 8> _edits;
+    TFixedSizeStack<TPtrRef<value_type>, 16> _edits;
 
     TPtrRef<text_memoization_ansi> _memoization_ansi;
     TPtrRef<text_memoization_wide> _memoization_wide;

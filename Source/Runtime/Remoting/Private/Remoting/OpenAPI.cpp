@@ -2,6 +2,8 @@
 
 #include "Remoting/OpenAPI.h"
 
+#include <shobjidl_core.h>
+
 #include "Uri.h"
 
 #include "MetaClass.h"
@@ -11,7 +13,7 @@
 #include "RTTI/TypeTraits.h"
 
 #include "IO/Format.h"
-#include "IO/StringBuilder.h"
+#include "IO/TextFormat.h"
 #include "Meta/BitField.h"
 
 namespace PPE {
@@ -24,14 +26,14 @@ namespace {
 static void DefineNativeSchema_(
     FOpenAPI* api,
     Meta::TType<bool>,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     Assert(api);
     Assert(not name.empty());
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            description, "boolean", Default, NoFunction );
+            std::move(description), "boolean", "", NoFunction );
     });
 }
 //----------------------------------------------------------------------------
@@ -39,22 +41,22 @@ template <typename T>
 static void DefineNativeSchema_(
     Meta::TEnableIf<std::is_integral_v<T>, FOpenAPI*> api,
     Meta::TType<T>,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     Assert(api);
     Assert(not name.empty());
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
-        FStringView format;
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
+        FStringLiteral format;
         IF_CONSTEXPR(std::is_unsigned_v<T>)
             format = (sizeof(T) > sizeof(u16) ? "int64" : "int32");
         else // OAS doesn't support unsigned integers bcoz JS/JSON encoding long on 53 bits
             format = (sizeof(T) > sizeof(u32) ? "int64" : "int32");
 
-        *schema = api->Scalar(description, "integer", format, NoFunction);
+        *schema = api->Scalar(std::move(description), "integer", format, NoFunction);
 
         IF_CONSTEXPR(std::is_unsigned_v<T>)
-            schema->Add("minimum"_json).Assign(static_cast<Serialize::FJson::FInteger>(0));
+            schema->emplace_back("minimum"_json, 0);
     });
 }
 //----------------------------------------------------------------------------
@@ -62,16 +64,16 @@ template <typename T>
 static void DefineNativeSchema_(
     Meta::TEnableIf<std::is_floating_point_v<T>, FOpenAPI*> api,
     Meta::TType<T>,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     Assert(api);
     Assert(not name.empty());
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            description, "number", std::is_same_v<float, T>
-                ? MakeStringView("float")
-                : MakeStringView("double"), NoFunction );
+            std::move(description), "number", std::is_same_v<float, T>
+                ? FStringLiteral("float")
+                : FStringLiteral("double"), NoFunction );
     });
 }
 //----------------------------------------------------------------------------
@@ -79,82 +81,82 @@ template <typename _Char>
 static void DefineNativeSchema_(
     FOpenAPI* api,
     Meta::TType< TBasicString<_Char> >,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     Assert(api);
     Assert(not name.empty());
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            description, "string", Default, NoFunction );
+            std::move(description), "string", "", NoFunction );
     });
 }
 //----------------------------------------------------------------------------
 static void DefineNativeSchema_(
     FOpenAPI* api,
     Meta::TType< RTTI::FName >,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     Assert(api);
     Assert(not name.empty());
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            description, "string", "token", NoFunction );
+            std::move(description), "string", "token", NoFunction );
     });
 }
 //----------------------------------------------------------------------------
 static void DefineNativeSchema_(
     FOpenAPI* api,
     Meta::TType< FDirpath >,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     Assert(api);
     Assert(not name.empty());
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            description, "string", "path", NoFunction );
+            std::move(description), "string", "path", NoFunction );
     });
 }
 //----------------------------------------------------------------------------
 static void DefineNativeSchema_(
     FOpenAPI* api,
     Meta::TType< FFilename >,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     Assert(api);
     Assert(not name.empty());
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            description, "string", "filename", NoFunction );
+            std::move(description), "string", "filename", NoFunction );
     });
 }
 //----------------------------------------------------------------------------
 static void DefineNativeSchema_(
     FOpenAPI* api,
     Meta::TType< RTTI::FBinaryData >,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     Assert(api);
     Assert(not name.empty());
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            description, "string", "binary", NoFunction );
+            std::move(description), "string", "binary", NoFunction );
     });
 }
 //----------------------------------------------------------------------------
 static void DefineNativeSchema_(
     FOpenAPI* api,
     Meta::TType< RTTI::FAny >,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     Assert(api);
     Assert(not name.empty());
 
-    const std::initializer_list<FStringView> variants{
+    const FStringLiteral variants[] = {
 #define PPE_REMOTING_NATIVE_SCHEMA_REF(_Name, _Type, _Uid) \
             STRINGIZE(_Name),
         FOREACH_RTTI_NATIVETYPES(PPE_REMOTING_NATIVE_SCHEMA_REF)
@@ -163,38 +165,41 @@ static void DefineNativeSchema_(
         "OpaqueData"
     };
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         FOpenAPI::FBuildSpan properties{ api->Content.Heap() };
-        properties.Add(Serialize::FJson::TypeId).Assign(std::move(api->Scalar(Default, "string"_json, Default).Inner()));
-        *schema = api->Object(description, std::move(properties), { Serialize::FJson::TypeId });
+        properties.emplace_back(Serialize::FJson::TypeId, api->Scalar("", "string", ""));
+        properties.emplace_back(Serialize::FJson::TypeId, api->Scalar("", "string", ""));
+
+        *schema = api->Object(std::move(description), std::move(properties), { Serialize::FJson::Literal_TypeId });
 
         FOpenAPI::FBuildSpan mapping{ api->Content.Heap() };
-        mapping.reserve(variants.size());
-        for (const FStringView& variant : variants) {
+        mapping.reserve(lengthof(variants));
+
+        for (FStringLiteral variant : variants) {
             if (variant == "Any") continue;
-            mapping.Add(FOpenAPI::LiteralText(variant))
-                .Assign(api->Content.MakeText(StringFormat("#/components/schemas/Any{0}", variant)));
+            mapping.emplace_back(variant, TextFormat(api->Content.Allocator(), "#/components/schemas/Any{0}", variant));
         }
 
-        auto& discriminator = schema->Add("discriminator"_json)
-            .Construct<FOpenAPI::FBuildSpan>(api->Content.Heap());
-        discriminator.Add("propertyName"_json).Assign(Serialize::FJson::TypeId);
-        discriminator.Add("mapping"_json).Assign(std::move(mapping));
+        auto& discriminator =Emplace_Back(*schema, "discriminator")
+            ->value.emplace<FOpenAPI::FBuildSpan>(api->Content.Heap());
+
+        discriminator.emplace_back("propertyName", Serialize::FJson::TypeId);
+        discriminator.emplace_back("mapping", std::move(mapping));
     });
 
-    for (const FStringView& variant : variants) {
+    for (FStringLiteral variant : variants) {
         if (variant == "Any") continue;
 
         api->Schema(
-            FString("Any") + variant,
+            TextFormat(api->Content.Allocator(), "Any{}", variant),
             [&](FOpenAPI::FSchema* schema) {
                 FOpenAPI::FBuildSpan properties{ api->Content.Heap() };
-                properties.Add("inner"_json).Assign(std::move(api->Ref(
-                    api->Content.MakeText(StringFormat("#/components/schemas/{0}", variant))).Inner()));
+                properties.emplace_back("inner", api->Ref(
+                    TextFormat(api->Content.Allocator(), "#/components/schemas/{0}", variant)));
 
-                *schema = api->AllOf(Default,
-                    { "#/components/schemas/Any" },
-                    api->Object(Default, std::move(properties), { "inner"_json }));
+                *schema = api->AllOf("",
+                    "#/components/schemas/Any",
+                    api->Object("", std::move(properties), { "inner" }));
             });
     }
 }
@@ -202,51 +207,50 @@ static void DefineNativeSchema_(
 static void DefineNativeSchema_(
     FOpenAPI* api,
     Meta::TType< RTTI::FOpaqueArray >,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     Assert(api);
     Assert(not name.empty());
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
-        *schema = api->Array(
-            description, FOpenAPI::FRef{ "#/components/schemas/Any"_json });
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
+        *schema = api->Array(std::move(description),  "#/components/schemas/Any");
     });
 }
 //----------------------------------------------------------------------------
 static void DefineNativeSchema_(
     FOpenAPI* api,
     Meta::TType< RTTI::FOpaqueData >,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     Assert(api);
     Assert(not name.empty());
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
-        *schema = api->Object(description, {}, {}, true);
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
+        *schema = api->Object(std::move(description), FOpenAPI::FBuildSpan{ForceInit}, {}, true);
     });
 }
 //----------------------------------------------------------------------------
 static void DefineNativeSchema_(
     FOpenAPI* api,
     Meta::TType< RTTI::PMetaObject >,
-    const FStringView& name,
-    const FStringView& description ) {
+    FOpenAPI::FText&& name,
+    FOpenAPI::FText&& description ) {
     using namespace RTTI;
 
     Assert(api);
     Assert(not name.empty());
 
-    api->Schema(name, [&](FOpenAPI::FSchema* schema) {
+    api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         FOpenAPI::FBuildSpan properties(api->Content.Heap());
-        properties.Add(Serialize::FJson::Class).Assign(std::move(api->Scalar(
-            "object class", "string", Default).Inner()));
-        properties.Add(Serialize::FJson::Export).Assign(std::move(api->Scalar(
-            "name if exported", "string", Default).Inner()));
-        properties.Add(Serialize::FJson::TopObject).Assign(std::move(api->Scalar(
-            "true if top object", "boolean", Default).Inner()));
+        properties.emplace_back(Serialize::FJson::Class, api->Scalar(
+            "object class", "string", ""));
+        properties.emplace_back(Serialize::FJson::Export, api->Scalar(
+            "name if exported", "string", ""));
+        properties.emplace_back(Serialize::FJson::TopObject, api->Scalar(
+            "true if top object", "boolean", ""));
 
         *schema = api->Object(
-            description,
+            std::move(description),
             std::move(properties),
             { "class", "properties" },
             true );
@@ -263,25 +267,25 @@ static void DefineSpecializedSchema_(
     const RTTI::FMetaClass* parent ) {
     Assert(api);
 
-    api->Schema(class_.Name(), [&](FOpenAPI::FSchema* schema) {
+    api->Schema(class_.Name().MakeLiteral(), [&](FOpenAPI::FSchema* schema) {
         auto propertySchema = [api](const RTTI::FMetaProperty* prop) -> FOpenAPI::FBuildSpan::value_type {
-            FOpenAPI::FSchema item;
+            FOpenAPI::FSchema item{api->Content.Heap()};
             api->Traits(&item, prop->Traits());
             return {
-                FOpenAPI::LiteralText(prop->Name().MakeView()),
-                std::move(item.Inner()) };
+                prop->Name().MakeLiteral(),
+                std::move(item) };
         };
 
-        FString parentSchema;
+        FOpenAPI::FText parentSchema{ForceInit};
         FOpenAPI::FBuildSpan properties(api->Content.Heap());
         if (not parent) {
             parent = RTTI::FMetaObject::RTTI_FMetaClass::Get();
             parentSchema = "#/components/schemas/MetaObject";
-            properties.insert(class_.AllProperties().Map(propertySchema));
+            properties.append(class_.AllProperties().Map(propertySchema));
         }
         else {
-            parentSchema = StringFormat("#/components/schemas/{0}", parent->Name());
-            properties.insert(class_.AllProperties()
+            parentSchema = TextFormat(api->Content.Allocator(), "#/components/schemas/{0}", parent->Name());
+            properties.append(class_.AllProperties()
                 .FilterBy([parent](const RTTI::FMetaProperty* prop) {
                     // only declare properties which were not declared in the parent
                     return (not parent->HasProperty(*prop, true));
@@ -289,31 +293,34 @@ static void DefineSpecializedSchema_(
                 .Map(propertySchema));
         }
 
-        *schema = api->AllOf(Default,
-            { parentSchema },
-            api->Object(Default, std::move(properties), {}) );
+        *schema = api->AllOf("",
+             std::move(parentSchema),
+            api->Object("", std::move(properties), {}) );
 
         if (IsAbstractSchema_(class_)) {
             for (const RTTI::FMetaClass* child : class_.Children())
                 api->DefineRTTIMetaClass(*child, std::addressof(class_));
         }
 
-        for (; parent->Parent(); parent = parent->Parent());
-        FOpenAPI::FBuildSpan& parentDecl = api->Schemas->Get(FOpenAPI::LiteralText(parent->Name())).ToObject();
+        for (; parent->Parent(); parent = parent->Parent())
+            NOOP(); // look for top-most object
+
+        FOpenAPI::FBuildSpan& parentDecl = *Opaq::XPathAs<FOpenAPI::FBuildSpan>(*api->Schemas, parent->Name().MakeLiteral());
 
         TPtrRef<FOpenAPI::FBuildSpan> mappings;
-        auto& discriminator = parentDecl.FindOrAdd("discriminator"_json);
-        if (Likely(discriminator.Valid())) {
-            mappings = discriminator.ToObject().Get("mapping"_json).ToObject();
+        auto& discriminator = Emplace_Back(parentDecl, "discriminator")->value;
+        if (Likely(not discriminator.Nil())) {
+            mappings = XPathAs<FOpenAPI::FBuildSpan>(discriminator, { "mapping"_json });
         }
         else {
-            auto& dico = discriminator.Construct<FOpenAPI::FBuildSpan>(api->Content.Heap());
-            dico.Add("propertyName"_json).Assign(Serialize::FJson::Class);
-            mappings = dico.Add("mapping"_json).Construct<FOpenAPI::FBuildSpan>(api->Content.Heap());
+            auto& dico = discriminator.emplace<FOpenAPI::FBuildSpan>(api->Content.Heap());
+            dico.emplace_back("propertyName", Serialize::FJson::Class);
+            mappings = Emplace_Back(dico, "mappings")
+                ->value.emplace<FOpenAPI::FBuildSpan>(api->Content.Heap());
         }
 
-        mappings->Add(FOpenAPI::LiteralText(class_.Name()))
-             .Assign(api->Content.MakeText(StringFormat("#/components/schemas/{0}", class_.Name())));
+        mappings->emplace_back(class_.Name().MakeLiteral(),
+            TextFormat(api->Content.Allocator(), "#/components/schemas/{0}", class_.Name()));
     });
 }
 //----------------------------------------------------------------------------
@@ -328,10 +335,10 @@ FOpenAPI::~FOpenAPI() {
 // Header
 //----------------------------------------------------------------------------
 void FOpenAPI::Header(
-    const FStringView& title,
-    const FStringView& version,
-    const FStringView& description,
-    const FStringView& hostUri ) {
+    FText&& title,
+    FText&& version,
+    FText&& description,
+    FText&& hostUri ) {
     Assert(not title.empty());
     Assert(not version.empty());
     Assert(not description.empty());
@@ -340,169 +347,185 @@ void FOpenAPI::Header(
     using namespace RTTI; // for ""_json
 
     FBuildSpan info(Content.Heap());
-    info.Add("title"_json) = Content.MakeText(title);
-    info.Add("version"_json) = Content.MakeText(version);
-    info.Add("description"_json) = Content.MakeText(description);
+    info.reserve(3);
+    info.emplace_back("title", std::move(title));
+    info.emplace_back("version", std::move(version));
+    info.emplace_back("description", std::move(description));
 
     FBuildSpan server(Content.Heap());
-    server.Add("url"_json) = Content.MakeText(hostUri);
+    server.emplace_back("url", std::move(hostUri));
 
-    FBuildSpan& header = Content.Root().Construct<FBuildSpan>(Content.Heap());
+    FBuildArray servers(Content.Heap());
+    servers.push_back(std::move(server));
+
+    FBuildSpan header(Content.Heap());
     header.reserve(6);
-    header.Add("openapi"_json) = "3.0.1"_json;
-    header.Add("info"_json).Assign(std::move(info));
-    header.Add("servers"_json).Construct<FBuildArray>(Content.Heap()).Emplace(std::move(server));
+    header.emplace_back("openapi", "3.0.1"_json);
+    header.emplace_back("info", std::move(info));
+    header.emplace_back("servers", std::move(servers));
 
-    Tags = header.Add("tags"_json).Construct<FBuildArray>(Content.Heap());
-    Paths = header.Add("paths"_json).Construct<FBuildSpan>(Content.Heap());
-    Schemas = header.Add("components"_json)
-        .Construct<FBuildSpan>(Content.Heap())
-        .Add("schemas"_json)
-        .Construct<FBuildSpan>(Content.Heap());
+    Tags = Emplace_Back(header, "tags")->value.emplace<FBuildArray>(Content.Heap());
+    Paths = Emplace_Back(header, "tags")->value.emplace<FBuildSpan>(Content.Heap());
+    Schemas = Emplace_Back(Emplace_Back(header, "components")
+        ->value.emplace<FBuildSpan>(Content.Heap()), "schemas")
+        ->value.emplace<FBuildSpan>(Content.Heap());
 }
 //----------------------------------------------------------------------------
 // Schema
 //----------------------------------------------------------------------------
 FOpenAPI::FSchema FOpenAPI::AllOf(
-    const FStringView& description,
-    std::initializer_list<FStringView> composed,
+    FText&& description,
+    FText&& composed,
+    FSchema&& additional ) {
+    Assert(not composed.empty());
+
+    FSchema span(Content.Heap());
+
+    if (not description.empty())
+        span.emplace_back("description", std::move(description));
+
+    FBuildArray& allOf = Emplace_Back(span, "allOf")
+        ->value.emplace<FBuildArray>(Content.Heap());
+
+    allOf.emplace_back(std::move(composed));
+
+    if (not additional.empty())
+        allOf.push_back(std::move(additional));
+
+    return span;
+}
+//----------------------------------------------------------------------------
+FOpenAPI::FSchema FOpenAPI::AllOf(
+    FText&& description,
+    std::initializer_list<FStringLiteral> composed,
     FSchema&& additional ) {
     Assert(composed.size() > 0);
 
     FSchema span(Content.Heap());
 
     if (not description.empty())
-        span.Add("description"_json).Assign(Content.MakeText(description));
+        span.emplace_back("description", std::move(description));
 
-    FBuildArray& allOf = span.Add("allOf"_json)
-        .Construct<FBuildArray>(Content.Heap());
+    FBuildArray& allOf = Emplace_Back(span, "allOf")
+        ->value.emplace<FBuildArray>(Content.Heap());
 
-    allOf.Append(MakeIterable(composed).Map([this](const FStringView& name) {
-        return Ref(Content.MakeText(name)).Inner();
+    allOf.append(MakeIterable(composed).Map([this](FStringLiteral name) -> FRef {
+        return name;
     }));
 
     if (not additional.empty())
-        allOf.Emplace(std::move(additional.Inner()));
+        allOf.push_back(std::move(additional));
 
     return span;
 }
 //----------------------------------------------------------------------------
-FOpenAPI::FSchema FOpenAPI::Array(const FStringView& description, const FStringView& type, const FStringView& format) {
+FOpenAPI::FSchema FOpenAPI::Array(FText&& description, FText&& type, FText&& format) {
     using namespace RTTI;
 
     Assert(not type.empty());
 
     FSchema items(Content.Heap());
-    items.Add("type"_json).Assign(Content.MakeText(type));
+    items.emplace_back("type", std::move(type));
 
     if (not format.empty())
-        items.Add("format"_json).Assign(Content.MakeText(format));
+        items.emplace_back("format", std::move(format));
 
-    return Array(description, std::move(items));
+    return Array(std::move(description), std::move(items));
 }
 //----------------------------------------------------------------------------
-FOpenAPI::FSchema FOpenAPI::Array(const FStringView& description, const FRef& schema) {
+FOpenAPI::FSchema FOpenAPI::Array(FText&& description, const FRef& schema) {
     using namespace RTTI;
 
     Assert(not schema.empty());
 
-    return Array(description, Ref(schema.Inner()));
+    return Array(std::move(description), Ref(schema));
 }
 //----------------------------------------------------------------------------
-FOpenAPI::FSchema FOpenAPI::Array(const FStringView& description, FSchema&& items) {
+FOpenAPI::FSchema FOpenAPI::Array(FText&& description, FSchema&& items) {
     using namespace RTTI;
 
     Assert(not items.empty());
 
     FSchema schema(Content.Heap());
-    schema.Add("type"_json).Assign("array"_json);
-    schema.Add("items"_json)
-        .Assign(std::move(items.Inner()));
+    schema.emplace_back("type", "array"_json);
+    schema.emplace_back("items", std::move(items));
 
     if (not description.empty())
-        schema.Add("description"_json).Assign(Content.MakeText(description));
+        schema.emplace_back("description", std::move(description));
 
     return schema;
 }
 //----------------------------------------------------------------------------
-FOpenAPI::FSchema FOpenAPI::Enum(const FStringView& description, const FStringView& type, const FStringView& format, std::initializer_list<FStringView> values) {
+FOpenAPI::FSchema FOpenAPI::Enum(FText&& description, FText&& type, FText&& format, std::initializer_list<FStringLiteral> values) {
     using namespace RTTI;
 
-    return Scalar(description, type, format, [&](FSchema* span) {
-        span->Add("enum"_json).Assign(FBuildArray{
-            MakeIterable(values).Map([this](const FStringView& x) {
-                return Content.MakeText(x);
-            }),
+    return Scalar(std::move(description), std::move(type), std::move(format), [&](FSchema* span) {
+        span->emplace_back("enum", FBuildArray{
+            MakeIterable(values),
             Content.Heap()
         });
     });
 }
 //----------------------------------------------------------------------------
 FOpenAPI::FSchema FOpenAPI::Object(
-    const FStringView& description,
+    FText&& description,
     FBuildSpan&& properties,
-    std::initializer_list<FStringView> required,
+    std::initializer_list<FStringLiteral> required,
     bool additionalProperties/* = false */) {
     using namespace RTTI;
 
-    return Scalar(description, "object", Default, [&](FSchema* schema) {
-        schema->Add("properties"_json)
-            .Assign(std::move(properties));
-
-        schema->Add("additionalProperties"_json).Assign(additionalProperties);
+    return Scalar(std::move(description), "object", "", [&](FSchema* schema) {
+        schema->emplace_back("properties", std::move(properties));
+        schema->emplace_back("additionalProperties", additionalProperties);
 
         if (required.size() > 0)
-            schema->Add("required"_json).Assign(FBuildArray{
-                MakeIterable(required).Map([this](const FStringView& x) {
-                    return Content.MakeText(x);
-                }),
+            schema->emplace_back("required", FBuildArray{
+                MakeIterable(required),
                 Content.Heap()
             });
     });
 }
 //----------------------------------------------------------------------------
-FOpenAPI::FSchema FOpenAPI::OneOf(const FStringView& description, std::initializer_list<FStringView> refs) {
+FOpenAPI::FSchema FOpenAPI::OneOf(FText&& description, std::initializer_list<FStringLiteral> refs) {
     Assert(refs.size() > 0);
 
     FBuildArray list(Content.Heap());
-    list.Append(MakeIterable(refs).Map([this](FStringView ref) {
-        return Ref(FOpenAPI::LiteralText(ref)).Inner();
-    }));
+    list.append(MakeIterable(refs));
 
-    return OneOf(description, std::move(list));
+    return OneOf(std::move(description), std::move(list));
 }
 //----------------------------------------------------------------------------
-FOpenAPI::FSchema FOpenAPI::OneOf(const FStringView& description, FBuildArray&& list) {
+FOpenAPI::FSchema FOpenAPI::OneOf(FText&& description, FBuildArray&& list) {
     Assert(list.size() > 0);
 
     FSchema span(Content.Heap());
-    span.Add("oneOf"_json).Assign(std::move(list));
+    span.emplace_back("oneOf", std::move(list));
 
     if (not description.empty())
-        span.Add("description"_json).Assign(Content.MakeText(description));
+        span.emplace_back("description", std::move(description));
 
     return span;
 }
 //----------------------------------------------------------------------------
-FOpenAPI::FSchema FOpenAPI::Ref(const FOpenAPI::FText& literal) {
+FOpenAPI::FSchema FOpenAPI::Ref(FText&& literal) {
     Assert(not literal.empty());
 
     FSchema schema(Content.Heap());
-    schema.Add("$ref"_json).Assign(literal);
+    schema.emplace_back("$ref", std::move(literal));
     return schema;
 }
 //----------------------------------------------------------------------------
-FOpenAPI::FSchema FOpenAPI::Scalar(const FStringView& description, const FStringView& type, const FStringView& format, const FSchemaFunc& schema) {
+FOpenAPI::FSchema FOpenAPI::Scalar(FText&& description, FText&& type, FText&& format, const FSchemaFunc& schema) {
     Assert(not type.empty());
 
     FSchema span(Content.Heap());
-    span.Add("type"_json).Assign(Content.MakeText(type));
+    span.emplace_back("type", std::move(type));
 
     if (not format.empty())
-        span.Add("format"_json).Assign(Content.MakeText(format));
+        span.emplace_back("format", std::move(format));
 
     if (not description.empty())
-        span.Add("description"_json).Assign(Content.MakeText(description));
+        span.emplace_back("description", std::move(description));
 
     if (schema.Valid())
         schema(&span);
@@ -510,49 +533,46 @@ FOpenAPI::FSchema FOpenAPI::Scalar(const FStringView& description, const FString
     return span;
 }
 //----------------------------------------------------------------------------
-FOpenAPI::FSchema FOpenAPI::Scalar(const FStringView& description, const FStringView& type, const FStringView& format) {
-    return Scalar(description, type, format, NoFunction);
+FOpenAPI::FSchema FOpenAPI::Scalar(FText&& description, FText&& type, FText&& format) {
+    return Scalar(std::move(description), std::move(type), std::move(format), NoFunction);
 }
 //----------------------------------------------------------------------------
 // Tag
 //----------------------------------------------------------------------------
-void FOpenAPI::Tag(const FStringView& name, const FStringView& description, const FTagFunc& tag) {
+void FOpenAPI::Tag(FText&& name, FText&& description, const FTagFunc& tag) {
     Assert(Tags);
     Assert(not name.empty());
-    Assert(not Tags->Iterable().Any([&](const Serialize::FJson::FValue& x) {
-        return (x.ToObject().Get("name"_json).ToString() == name);
+    Assert(not MakeIterable(*Tags).Any([&](const Serialize::FJson::FValue& x) {
+        return (*XPathAs<Serialize::FJson::FText>(std::get<Serialize::FJson::FObject>(x), "name"_json) == name);
     }));
 
     FTag span(Content.Heap());
-    span.Add("name"_json) = Content.MakeText(name);
+    span.emplace_back("name", std::move(name));
 
     if (not description.empty())
-        span.Add("description"_json) = Content.MakeText(description);
+        span.emplace_back("description", std::move(description));
 
     if (tag.Valid())
         tag(&span);
 
-    Emplace_Back(*Tags, std::move(span.Inner()));
+    Emplace_Back(*Tags, std::move(span));
 }
 //----------------------------------------------------------------------------
 // Definition
 //----------------------------------------------------------------------------
 const FOpenAPI::FRef& FOpenAPI::Schema(
-    const FStringView& name,
+    FText&& name,
     FSchemaFunc&& definition,
     bool force_override/* = false */) {
     Assert(not name.empty());
     Assert(definition);
 
-    const FText key = Content.MakeText(name);
-    const auto it = Refs.Find(key);
+    const auto it = Refs.Find(name);
     if (it == Refs.end() || force_override) {
-        const FRef& result = Refs.FindOrAdd(key) = FRef{
-            Content.MakeText(StringFormat("#/components/schemas/{0}", name))
-        };
+        const FRef& result = Refs.Insert_AssertUnique(name, Format("#/components/schemas/{0}", name))->second;
         FBuildSpan schema{ Content.Heap() };
-        definition(static_cast<FSchema*>(&schema));
-        Schemas->FindOrAdd(key).Assign(std::move(schema));
+        definition(&schema);
+        Schemas->emplace_back(std::move(name), std::move(schema));
         return result;
     }
 
@@ -562,124 +582,118 @@ const FOpenAPI::FRef& FOpenAPI::Schema(
 // Operation
 //----------------------------------------------------------------------------
 void FOpenAPI::Operation(
-    const FStringView& id,
-    const FStringView& path,
-    const FStringView& method,
-    const FStringView& summary,
-    const FStringView& description,
-    std::initializer_list<FStringView> tags,
+    FText&& id,
+    FText&& path,
+    FText&& method,
+    FText&& summary,
+    FText&& description,
+    std::initializer_list<FStringLiteral> tags,
     const FOperationFunc& operation ) {
     Assert(not id.empty());
     Assert(not path.empty());
-    Assert(path.StartsWith(Network::FUri::PathSeparator));
+    Assert(path.MakeView().StartsWith(Network::FUri::PathSeparator));
     Assert(not method.empty());
     Assert(operation.Valid());
 
     FOperation span(Content.Heap());
-    span.Add("operationId"_json).Assign(Content.MakeText(id));
-    span.Add("parameters"_json).Construct<FBuildArray>(Content.Heap());
-    span.Add("responses"_json).Construct<FBuildSpan>(Content.Heap());
+    span.emplace_back("operationId", std::move(id));
+    Emplace_Back(span, "parameters")->value.emplace<FBuildArray>(Content.Heap());
+    Emplace_Back(span, "responses")->value.emplace<FBuildSpan>(Content.Heap());
 
     if (not summary.empty())
-        span.Add("summary"_json).Assign(Content.MakeText(summary));
+        span.emplace_back("summary", std::move(summary));
 
     if (not description.empty())
-        span.Add("description"_json).Assign(Content.MakeText(description));
+        span.emplace_back("description", std::move(description));
 
-    if (not empty(tags)) span.Add("tags"_json).Assign(FBuildArray{
-        MakeIterable(tags).Map([this](const FStringView& x) {
-            Assert(not x.empty());
-            return Content.MakeText(x);
-        }),
+    if (not empty(tags)) span.emplace_back("tags", FBuildArray{
+        MakeIterable(tags),
         Content.Heap()
     });
 
     operation(&span);
 
-    Assert_NoAssume(not span.Get("responses"_json).ToObject().empty());
+    Assert_NoAssume(not XPathAs<Serialize::FJson::FObject>(span, "responses"_json)->empty());
 
-    (*Paths)
-        .FindOrAdd(Content.MakeText(path))
-        .Construct<FBuildSpan>(Content.Heap())
-        .Add(Content.MakeText(method))
-        .Assign(std::move(span.Inner()));
+    Emplace_Back(Emplace_Back(*Paths, std::move(path))
+        ->value.emplace<FBuildSpan>(Content.Heap()),
+        std::move(method))
+        ->value = std::move(span);
 }
 //----------------------------------------------------------------------------
-void FOpenAPI::Operation_Body(FOperation* operation, const FStringView& mediaType, const FStringView& description, FSchema&& schema, bool required) {
+void FOpenAPI::Operation_Body(FOperation* operation, FText&& mediaType, FText&& description, FSchema&& schema, bool required) {
     Assert(operation);
     Assert(not mediaType.empty());
     Assert(not schema.empty());
 
-    auto& body = operation->FindOrAdd("requestBody"_json).Construct<FBuildSpan>(Content.Heap());
+    auto& body = Emplace_Back(*operation, "requestBody")->value.emplace<FBuildSpan>(Content.Heap());
 
     if (required)
-        body.FindOrAdd("required"_json).Assign(true);
+        body.emplace_back("required", true);
 
     if (not description.empty())
-        body.FindOrAdd("description"_json).Assign(Content.MakeText(description));
+        body.emplace_back("description", std::move(description));
 
-    body.FindOrAdd("content"_json).Construct<FBuildSpan>(Content.Heap())
-        .Add(Content.MakeText(mediaType)).Construct<FBuildSpan>(Content.Heap())
-        .Add("schema"_json)
-        .Assign(std::move(schema.Inner()));
+    Emplace_Back(
+    Emplace_Back(
+        Emplace_Back(body, "content")
+            ->value.emplace<FBuildSpan>(Content.Heap()),
+        std::move(mediaType))
+        ->value.emplace<FBuildSpan>(Content.Heap()),
+        "schema")->value = std::move(schema);
 }
 //----------------------------------------------------------------------------
-void FOpenAPI::Operation_Parameter(FOperation* operation, const FStringView& in, const FStringView& name, const FStringView& description, FSchema&& schema, bool required) {
+void FOpenAPI::Operation_Parameter(FOperation* operation, FText&& in, FText&& name, FText&& description, FSchema&& schema, bool required) {
     Assert(operation);
     Assert(not in.empty());
     Assert(not name.empty());
     Assert(not schema.empty());
 
     FBuildSpan parameter(Content.Heap());
-    parameter.Add("in"_json).Assign(Content.MakeText(in));
-    parameter.Add("name"_json).Assign(Content.MakeText(name));
-    parameter.Add("schema"_json).Assign(std::move(schema.Inner()));
+    parameter.emplace_back("in", std::move(in));
+    parameter.emplace_back("name", std::move(name));
+    parameter.emplace_back("schema", std::move(schema));
 
     if (required)
-        parameter.Add("required"_json).Assign(true);
+        parameter.emplace_back("required", true);
 
     if (not description.empty())
-        parameter.FindOrAdd("description"_json).Assign(Content.MakeText(description));
+        parameter.emplace_back("description", std::move(description));
 
-    operation->Get("parameters"_json)
-        .ToArray()
-        .Emplace(std::move(parameter));
+    XPathAs<FBuildArray>(*operation, "parameters"_json)
+        ->push_back(std::move(parameter));
 }
 //----------------------------------------------------------------------------
-void FOpenAPI::Operation_Response(FOperation* operation, const FStringView& code, const FStringView& description) {
+void FOpenAPI::Operation_Response(FOperation* operation, FText&& code, FText&& description) {
     Assert(operation);
     Assert(not code.empty());
     Assert(not description.empty());
 
-    auto& response = operation->Get("responses"_json)
-        .ToObject()
-        .Add(Content.MakeText(code))
-        .Construct<FBuildSpan>(Content.Heap());
+    auto& response = Emplace_Back(*XPathAs<FBuildSpan>(*operation, "responses"_json), std::move(code))
+        ->value.emplace<FBuildSpan>(Content.Heap());
 
     if (not description.empty())
-        response.FindOrAdd("description"_json).Assign(Content.MakeText(description));
+        response.emplace_back("description", std::move(description));
 }
 //----------------------------------------------------------------------------
-void FOpenAPI::Operation_Response(FOperation* operation, const FStringView& code, const FStringView& mediaType, const FStringView& description, FSchema&& schema) {
+void FOpenAPI::Operation_Response(FOperation* operation, FText&& code, FText&& mediaType, FText&& description, FSchema&& schema) {
     Assert(operation);
     Assert(not code.empty());
     Assert(not mediaType.empty());
     Assert(not schema.empty());
 
-    auto& response = operation->Get("responses"_json)
-        .ToObject()
-        .Add(Content.MakeText(code))
-        .Construct<FBuildSpan>(Content.Heap());
-
-    FBuildSpan& content = response.Add("content"_json).Construct<FBuildSpan>(Content.Heap());
-    content
-        .Add(Content.MakeText(mediaType))
-        .Construct<FBuildSpan>(Content.Heap())
-        .Add("schema"_json)
-        .Assign(std::move(schema.Inner()));
+    auto& response = Emplace_Back(*XPathAs<FBuildSpan>(*operation, "responses"_json), std::move(code))
+        ->value.emplace<FBuildSpan>(Content.Heap());
 
     if (not description.empty())
-        response.FindOrAdd("description"_json).Assign(Content.MakeText(description));
+        response.emplace_back("description", std::move(description));
+
+    auto& content = Emplace_Back(response, "content")
+        ->value.emplace<FBuildSpan>(Content.Heap());
+
+    Emplace_Back(Emplace_Back(content, std::move(mediaType))
+        ->value.emplace<FBuildSpan>(Content.Heap()),
+        "schema")->value = std::move(schema);
 }
 //----------------------------------------------------------------------------
 // Schema
@@ -691,11 +705,11 @@ void FOpenAPI::Traits(FSchema* schema, const RTTI::PTypeTraits& traits) {
     if (const RTTI::IScalarTraits* scalar = traits->AsScalar()) {
         if (const RTTI::FMetaClass* class_ = scalar->ObjectClass()) {
             DefineRTTIMetaClass(*class_);
-            *schema = Ref(Content.MakeText(StringFormat("#/components/schemas/{0}", class_->Name())));
+            *schema = Ref(TextFormat(Content.Allocator(),"#/components/schemas/{0}", class_->Name()));
         }
         else
-            *schema = Ref(Content.MakeText(StringFormat("#/components/schemas/{0}",
-                MakeTraits(scalar->NativeType())->TypeName()/* erase concrete type name */) ));
+            *schema = Ref(TextFormat(Content.Allocator(), "#/components/schemas/{0}",
+                MakeTraits(scalar->NativeType())->TypeName()/* erase concrete type name */) );
     }
     else if (const RTTI::IListTraits* list = traits->AsList()) {
         FSchema item(Content.Heap());
@@ -714,7 +728,7 @@ void FOpenAPI::Traits(FSchema* schema, const RTTI::PTypeTraits& traits) {
 }
 //----------------------------------------------------------------------------
 bool FOpenAPI::DefineRTTIMetaClass(const RTTI::FMetaClass& class_, const RTTI::FMetaClass* parent/* = nullptr */) {
-    if (Schemas->end() == Schemas->Find(Content.MakeText(class_.Name().MakeView()))) {
+    if (not XPath(*Schemas, FRef{ class_.Name().MakeLiteral() })) {
         DefineSpecializedSchema_(this, class_, parent);
         return true;
     }
@@ -729,10 +743,10 @@ void FOpenAPI::DefineRTTISchemas() {
     FOREACH_RTTI_NATIVETYPES(PPE_REMOTING_NATIVE_SCHEMA_DEF)
 #undef PPE_REMOTING_NATIVE_SCHEMA_DEF
 
-    DefineNativeSchema_(this, Meta::Type<FOpaqueArray>, "OpaqueArray",
-        ToString(RTTI::MakeTraits<FOpaqueArray>()->TypeId()) );
-    DefineNativeSchema_(this, Meta::Type<FOpaqueData>, "OpaqueData",
-        ToString(RTTI::MakeTraits<FOpaqueData>()->TypeId()) );
+    DefineNativeSchema_(this, Meta::Type<FOpaqueArray>, "OpaqueArray"_json,
+        TextFormat(Content.Allocator(), "{}", RTTI::MakeTraits<FOpaqueArray>()->TypeId()) );
+    DefineNativeSchema_(this, Meta::Type<FOpaqueData>, "OpaqueData"_json,
+        TextFormat(Content.Allocator(), "{}", RTTI::MakeTraits<FOpaqueData>()->TypeId()) );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

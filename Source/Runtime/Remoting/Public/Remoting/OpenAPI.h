@@ -2,8 +2,10 @@
 
 #include "Remoting_fwd.h"
 
-#include "IO/String.h"
+#include "Container/AssociativeVector.h"
+#include "IO/TextFormat.h"
 #include "Json/Json.h"
+#include "Memory/MemoryDomain.h"
 #include "RTTI_fwd.h"
 
 namespace PPE {
@@ -24,12 +26,16 @@ struct PPE_REMOTING_API FOpenAPI : Meta::FNonCopyableNorMovable {
     TPtrRef<FBuildSpan> Schemas;
     TPtrRef<FBuildSpan> Paths;
 
-    INSTANTIATE_CLASS_TYPEDEF(, FRef, FText);
-    INSTANTIATE_CLASS_TYPEDEF(, FOperation, FBuildSpan);
-    INSTANTIATE_CLASS_TYPEDEF(, FSchema, FBuildSpan);
-    INSTANTIATE_CLASS_TYPEDEF(, FTag, FBuildSpan);
+    // INSTANTIATE_CLASS_TYPEDEF(, FRef, FText);
+    // INSTANTIATE_CLASS_TYPEDEF(, FOperation, FBuildSpan);
+    // INSTANTIATE_CLASS_TYPEDEF(, FSchema, FBuildSpan);
+    // INSTANTIATE_CLASS_TYPEDEF(, FTag, FBuildSpan);
+    using FRef = FText;
+    using FOperation = FBuildSpan;
+    using FSchema = FBuildSpan;
+    using FTag = FBuildSpan;
 
-    ASSOCIATIVE_SPARSEARRAY(Json, FText, FRef) Refs;
+    ASSOCIATIVE_VECTOR(Opaq, FText, FRef) Refs;
 
     using FTagFunc = TFunction< void(FTag*) >;
     using FOperationFunc = TFunction< void(FOperation*) >;
@@ -37,88 +43,93 @@ struct PPE_REMOTING_API FOpenAPI : Meta::FNonCopyableNorMovable {
 
     FOpenAPI() = default;
     FOpenAPI(
-        const FStringView& title,
-        const FStringView& version,
-        const FStringView& description,
-        const FStringView& hostUri ) {
-        Header(title, version, description, hostUri);
+        FText&& title,
+        FText&& version,
+        FText&& description,
+        FText&& hostUri ) {
+        Header(std::move(title), std::move(version), std::move(description), std::move(hostUri));
     }
 
     ~FOpenAPI();
 
     void Header(
-        const FStringView& title,
-        const FStringView& version,
-        const FStringView& description,
-        const FStringView& hostUri );
+        FText&& title,
+        FText&& version,
+        FText&& description,
+        FText&& hostUri );
 
     // ** Schema **
     FSchema AllOf(
-        const FStringView& description,
-        std::initializer_list<FStringView> composed,
+        FText&& description,
+        FText&& composed,
+        FSchema&& additional );
+    FSchema AllOf(
+        FText&& description,
+        std::initializer_list<FStringLiteral> composed,
         FSchema&& additional );
     FSchema Array(
-        const FStringView& description,
-        const FStringView& type,
-        const FStringView& format );
-    FSchema Array(const FStringView& description, const FRef& schema);
-    FSchema Array(const FStringView& description, FSchema&& items);
+        FText&& description,
+        FText&& type,
+        FText&& format );
+    FSchema Array(FText&& description, const FRef& schema);
+    FSchema Array(FText&& description, FSchema&& items);
     FSchema Enum(
-        const FStringView& description,
-        const FStringView& type,
-        const FStringView& format,
-        std::initializer_list<FStringView> values );
+        FText&& description,
+        FText&& type,
+        FText&& format,
+        std::initializer_list<FStringLiteral> values );
     FSchema Object(
-        const FStringView& description,
+        FText&& description,
         FBuildSpan&& properties,
-        std::initializer_list<FStringView> required,
+        std::initializer_list<FStringLiteral> required,
         bool additionalProperties = false );
     FSchema OneOf(
-        const FStringView& description,
-        std::initializer_list<FStringView> refs );
+        FText&& description,
+        std::initializer_list<FStringLiteral> refs );
     FSchema OneOf(
-        const FStringView& description,
+        FText&& description,
         FBuildArray&& list );;
-    FSchema Ref(const Serialize::FJson::FText& literal);
+    FSchema Ref(Serialize::FJson::FText&& ref);
+    FSchema Ref(const Serialize::FJson::FText& literal) { return Ref(FText(literal)); }
     FSchema Scalar(
-        const FStringView& description,
-        const FStringView& type,
-        const FStringView& format,
+        FText&& description,
+        FText&& type,
+        FText&& format,
         const FSchemaFunc& schema );
-    FSchema Scalar(const FStringView& description, const FStringView& type, const FStringView& format);
+    FSchema Scalar(FText&& description, FText&& type, FText&& format);
 
     // ** Tag **
-    void Tag(const FStringView& name, const FStringView& description, const FTagFunc& tag);
+    void Tag(FText&& name, FText&& description, const FTagFunc& tag);
 
     // ** Schemas **
-    const FRef& Schema(const FStringView& name, FSchemaFunc&& definition, bool force_override = false);
+    const FRef& Schema(FText&& name, FSchemaFunc&& definition, bool force_override = false);
 
     // ** Operation **
     void Operation(
-        const FStringView& id,
-        const FStringView& path,
-        const FStringView& method,
-        const FStringView& summary,
-        const FStringView& description,
-        std::initializer_list<FStringView> tags,
+        FText&& id,
+        FText&& path,
+        FText&& method,
+        FText&& summary,
+        FText&& description,
+        std::initializer_list<FStringLiteral> tags,
         const FOperationFunc& operation );
     void Operation_Body(FOperation* operation,
-        const FStringView& mediaType, const FStringView& description, FSchema&& schema, bool required = false);
+        FText&& mediaType, FText&& description, FSchema&& schema, bool required = false);
     void Operation_Parameter(FOperation* operation,
-        const FStringView& in, const FStringView& name, const FStringView& description, FSchema&& schema, bool required = false);
+        FText&& in, FText&& name, FText&& description, FSchema&& schema, bool required = false);
     void Operation_Response(FOperation* operation,
-        const FStringView& code, const FStringView& mediaType, const FStringView& description, FSchema&& schema );
-    void Operation_Response(FOperation* operation, const FStringView& code, const FStringView& description);
+        FText&& code, FText&& mediaType, FText&& description, FSchema&& schema );
+    void Operation_Response(FOperation* operation, FText&& code, FText&& description);
 
     // ** RTTI **
     void DefineRTTISchemas();
     bool DefineRTTIMetaClass(const RTTI::FMetaClass& class_, const RTTI::FMetaClass* parent = nullptr);
     void Traits(FSchema* schema, const RTTI::PTypeTraits& traits);
 
-    static FText LiteralText(const FStringView& str) {
-        return Serialize::FJson::LiteralText(str);
+    template <typename _Arg0, typename ..._Args>
+    NODISCARD FText Format(FStringLiteral format, _Arg0&& arg0, _Args&&... args) {
+        return TextFormat(Content.Allocator(), format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     }
-
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

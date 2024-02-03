@@ -39,6 +39,15 @@ value_block NewBlock(FAllocatorBlock block, const value_view& view) {
     return { block };
 }
 //----------------------------------------------------------------------------
+Meta::TOptional<TPtrRef<const value_view>> XPath(const object_view& o, FStringView key) NOEXCEPT {
+    for (const key_value_view& it : o) {
+        if (it.key == key) {
+            return it.value;
+        }
+    }
+    return Meta::TOptional<TPtrRef<const value_view>>{};
+}
+//----------------------------------------------------------------------------
 Meta::TOptional<TPtrRef<const value_view>> XPath(const value_view& v, std::initializer_list<FStringView> path) NOEXCEPT {
     TPtrRef<const value_view> node{ &v };
 

@@ -13,6 +13,7 @@
 #include "IO/Format.h"
 #include "IO/String.h"
 #include "IO/StringBuilder.h"
+#include "IO/TextFormat.h"
 
 namespace PPE {
 namespace Remoting {
@@ -44,24 +45,21 @@ void FSwaggerEndpoint::PrivateEndpointProcess(const FRemotingContext& ctx, const
         return;
     }
 
-    FStringBuilder baseUri;
-    baseUri << "http://" << ctx.Localhost.Host() << ':' << ctx.Localhost.Port();
-
     FOpenAPI api;
     api.Header(
         "PPE remoting API",
         "1.0",
         "Pilot the engine through REST",
-        baseUri.Written() );
+        TextFormat(api.Content.Allocator(), "http://{}:{}", ctx.Localhost.Host(), ctx.Localhost.Port()) );
     api.DefineRTTISchemas();
 
     for (const IRemotingEndpoint& endpoint : ctx.Endpoints)
         endpoint.EndpointOpenAPI(&api);
 
-    BubbleSort(api.Paths->begin(), api.Paths->end(),
-        [](const auto& a, const auto& b) NOEXCEPT -> bool {
-            return Meta::TLess<>{}( a.first, b.first );
-        });
+    Meta::BubbleSort(api.Paths->begin(), api.Paths->end(),
+                     [](const auto& a, const auto& b) NOEXCEPT -> bool {
+                         return Meta::TLess<>{}( a.key, b.key );
+                     });
 
     ctx.pResponse->SetStatus(Network::EHttpStatus::OK);
     ctx.pResponse->HTTP_SetContentType(Network::FMimeTypes::Application_json());

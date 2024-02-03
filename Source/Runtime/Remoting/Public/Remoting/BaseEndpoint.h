@@ -61,9 +61,9 @@ struct PPE_REMOTING_API FParameterLocationFacet : RTTI::FGenericUserFacet  {
 };
 //----------------------------------------------------------------------------
 struct PPE_REMOTING_API FParameterSchemaFacet : RTTI::FGenericUserFacet  {
-    FStringView Schema;
+    FStringLiteral Schema;
 
-    FParameterSchemaFacet(FStringView schema) NOEXCEPT
+    FParameterSchemaFacet(FStringLiteral schema) NOEXCEPT
     :   Schema(schema)
     {}
 };
@@ -116,7 +116,7 @@ protected:
         const FStringView& root,
         const FOperationKey& key,
         const FOperation& operation,
-        std::initializer_list<FStringView> tags ) const;
+        std::initializer_list<FStringLiteral> tags ) const;
 
     void RegisterOperation(
         Network::EHttpMethod method,
