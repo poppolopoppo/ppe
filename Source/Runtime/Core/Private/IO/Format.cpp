@@ -11,49 +11,6 @@ namespace PPE {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
-struct TFormatTraits_ {
-    enum EFlags : _Char {
-        null =              STRING_LITERAL(_Char, '\0'),
-        lbrace =            STRING_LITERAL(_Char, '{'),
-        rbrace =            STRING_LITERAL(_Char, '}'),
-        colon =             STRING_LITERAL(_Char, ':'),
-        multiply =          STRING_LITERAL(_Char, '*'),
-        zero =              STRING_LITERAL(_Char, '0'),
-        fmt_alpha =         STRING_LITERAL(_Char, 'a'),
-        fmt_ALPHA =         STRING_LITERAL(_Char, 'A'),
-        fmt_bin =           STRING_LITERAL(_Char, 'b'),
-        fmt_BIN =           STRING_LITERAL(_Char, 'B'),
-        fmt_dec =           STRING_LITERAL(_Char, 'd'),
-        fmt_DEC =           STRING_LITERAL(_Char, 'D'),
-        fmt_hex =           STRING_LITERAL(_Char, 'x'),
-        fmt_HEX =           STRING_LITERAL(_Char, 'X'),
-        fmt_oct =           STRING_LITERAL(_Char, 'o'),
-        fmt_OCT =           STRING_LITERAL(_Char, 'O'),
-        fmt_fixed =         STRING_LITERAL(_Char, 'f'),
-        fmt_FIXED =         STRING_LITERAL(_Char, 'F'),
-        fmt_scient =        STRING_LITERAL(_Char, 's'),
-        fmt_SCIENT =        STRING_LITERAL(_Char, 'S'),
-        fmt_UPPER =         STRING_LITERAL(_Char, 'U'),
-        fmt_lower =         STRING_LITERAL(_Char, 'l'),
-        fmt_Capital =       STRING_LITERAL(_Char, 'C'),
-        fmt_minus =         STRING_LITERAL(_Char, '-'),
-        fmt_compact =       STRING_LITERAL(_Char, '_'),
-        fmt_NONCOMPACT =    STRING_LITERAL(_Char, '^'),
-        fmt_zeropad =       STRING_LITERAL(_Char, '#'),
-        fmt_center =        STRING_LITERAL(_Char, '@'),
-        fmt_truncR =        STRING_LITERAL(_Char, '<'),
-        fmt_truncL =        STRING_LITERAL(_Char, '>'),
-        fmt_escape =        STRING_LITERAL(_Char, '\\'),
-    };
-};
-//----------------------------------------------------------------------------
-} //!namespace
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace {
-//----------------------------------------------------------------------------
-template <typename _Char>
 struct TBasicFormatProps_ {
     size_t Repeat{};
     FTextFormat Format{};
@@ -90,7 +47,7 @@ enum class EFormatParserResult_ : int {
 //----------------------------------------------------------------------------
 template <typename _Char>
 NO_INLINE static EFormatParserResult_ FormatParser_(TBasicStringView<_Char>& format, TBasicStringView<_Char> *outp, size_t *index, TBasicFormatProps_<_Char>& props) {
-    typedef typename TFormatTraits_<_Char>::EFlags format_traits;
+    typedef typename TBasicFormatTraits<_Char>::EFlags format_traits;
 
     if (format.empty())
         return EFormatParserResult_::Complete;
@@ -201,8 +158,13 @@ NO_INLINE static EFormatParserResult_ FormatParser_(TBasicStringView<_Char>& for
                         props.Format.SetMisc(FTextFormat::TruncateL, true);
                         format = format.ShiftFront();
                         continue;
+
                     case format_traits::fmt_escape:
                         props.Format.SetMisc(FTextFormat::Escape, true);
+                        format = format.ShiftFront();
+                        continue;
+                    case format_traits::fmt_quote:
+                        props.Format.SetMisc(FTextFormat::Quote, true);
                         format = format.ShiftFront();
                         continue;
                     }

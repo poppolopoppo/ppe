@@ -128,7 +128,7 @@ struct FLoggerMessage {
         FConstChar text, bool isTextAllocated,
         const Opaq::object_view& data) NOEXCEPT
     :   Category(category)
-    ,   Data(std::move(data))
+    ,   Data(data)
     ,   Text(std::move(text))
     ,   Site(std::move(site)) {
         Site.IsTextAllocated = isTextAllocated;

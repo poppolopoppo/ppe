@@ -7,6 +7,7 @@
 #include "MetaProperty.h"
 #include "RTTI/AtomHelpers.h"
 
+#include "Container/HashHelpers.h"
 #include "Container/HashSet.h"
 #include "Diagnostic/Logger.h"
 #include "IO/FormatHelpers.h"
@@ -21,9 +22,9 @@ EXTERN_LOG_CATEGORY(PPE_RTTI_API, RTTI)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FDescriptionFacet::FDescriptionFacet(FConstChar text) NOEXCEPT
+FDescriptionFacet::FDescriptionFacet(FStringLiteral text) NOEXCEPT
 :   Text(text) {
-    Assert(text);
+    Assert(not text.empty());
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -173,9 +174,9 @@ void FLengthFacet::Validate(const FMetaProperty& meta, const void* data) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FPatternFacet::FPatternFacet(FConstChar pattern) NOEXCEPT
+FPatternFacet::FPatternFacet(FStringLiteral pattern) NOEXCEPT
 :   Pattern(pattern) {
-    Assert_NoAssume(Pattern);
+    Assert_NoAssume(not Pattern.empty());
     Assert_NoAssume(FRegexp::ValidateSyntax(Pattern.MakeView()));
 }
 //----------------------------------------------------------------------------

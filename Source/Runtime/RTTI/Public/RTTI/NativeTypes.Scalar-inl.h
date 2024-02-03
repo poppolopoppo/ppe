@@ -94,7 +94,7 @@ public: // ITypeTraits
     virtual const FMetaClass* ObjectClass() const NOEXCEPT override final { return nullptr; }
 
 public: // ITypeTraits
-    virtual FStringView TypeName() const override final;
+    virtual FStringLiteral TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const NOEXCEPT override final;
     virtual void ResetToDefaultValue(void* data) const override final;
@@ -124,7 +124,7 @@ CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< _Enum >, Meta::TEnableIf< std::is_en
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FStringView TEnumTraits<T>::TypeName() const {
+FStringLiteral TEnumTraits<T>::TypeName() const {
     return MetaEnumName(TEnumTraits<T>::EnumClass());
 }
 //----------------------------------------------------------------------------
@@ -225,7 +225,7 @@ public: // IScalarTraits
 public: // ITypeTraits
     using base_traits::base_traits;
 
-    virtual FStringView TypeName() const override final;
+    virtual FStringLiteral TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const NOEXCEPT override final;
     virtual void ResetToDefaultValue(void* data) const override final;
@@ -253,7 +253,7 @@ CONSTEXPR PTypeTraits RTTI_Traits(TTypeTag< TRefPtr<_Class> >) {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FStringView TObjectTraits<T>::TypeName() const {
+FStringLiteral TObjectTraits<T>::TypeName() const {
     return MetaClassName(TObjectTraits<T>::ObjectClass());
 }
 //----------------------------------------------------------------------------

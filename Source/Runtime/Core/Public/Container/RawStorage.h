@@ -40,8 +40,10 @@ public:
     ~TRawStorage();
 
     explicit TRawStorage(size_type size);
-    explicit TRawStorage(allocator_type&& allocator) NOEXCEPT;
-    TRawStorage(allocator_type&& allocator, size_type size);
+    explicit TRawStorage(allocator_type&& rallocator) NOEXCEPT;
+    explicit TRawStorage(const allocator_type& allocator) NOEXCEPT;
+    TRawStorage(allocator_type&& rallocator, size_type size);
+    TRawStorage(const allocator_type& allocator, size_type size);
 
     template <typename _It>
     TRawStorage(_It&& begin, _It&& end);

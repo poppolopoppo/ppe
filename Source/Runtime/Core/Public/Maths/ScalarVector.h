@@ -19,6 +19,9 @@
 
 PRAGMA_DISABLE_RUNTIMECHECKS
 
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(26495) // Variable 'PPE::details::TScalarVectorStorage<bool,1>::<unnamed-tag>::data' is uninitialized. Always initialize a member variable (type.6).
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -819,12 +822,12 @@ PPE_ASSUME_TEMPLATE_AS_POD(TScalarVector<T COMMA _Dim>, typename T, u32 _Dim)
 } //!namespace details
 //----------------------------------------------------------------------------
 template <typename _Dst, typename T, u32 _Dim, typename _Expr>
-CONSTEXPR auto bit_cast(const details::TScalarVectorExpr<T, _Dim, _Expr>& v) {
+CONSTEXPR TScalarVector<_Dst, _Dim> bit_cast(const details::TScalarVectorExpr<T, _Dim, _Expr>& v) {
     return details::MakeScalarVectorOp(v, [](const T& x) CONSTEXPR { return PPE::bit_cast<_Dst>(x); });
 }
 //----------------------------------------------------------------------------
 template <typename _Dst, typename T, u32 _Dim, typename _Expr>
-CONSTEXPR auto checked_cast(const details::TScalarVectorExpr<T, _Dim, _Expr>& v) {
+CONSTEXPR TScalarVector<_Dst, _Dim> checked_cast(const details::TScalarVectorExpr<T, _Dim, _Expr>& v) {
     return details::MakeScalarVectorOp(v, [](const T& x) CONSTEXPR { return PPE::checked_cast<_Dst>(x); });
 }
 //----------------------------------------------------------------------------
@@ -906,5 +909,7 @@ EXTERN_RUNTIME_CORE_SCALARVECTOR_DECL(double, 4);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
+
+PRAGMA_MSVC_WARNING_POP()
 
 PRAGMA_RESTORE_RUNTIMECHECKS

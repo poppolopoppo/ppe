@@ -28,7 +28,7 @@ protected:
     using IDicoTraits::IDicoTraits;
 
 public: // ITypeTraits
-    virtual FStringView TypeName() const override final;
+    virtual FStringLiteral TypeName() const override final;
 
 public: // IDicoTraits
     virtual PTypeTraits KeyTraits() const NOEXCEPT override final { return MakeTraits<_Key>(); }
@@ -36,8 +36,8 @@ public: // IDicoTraits
 };
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value>
-FStringView TBaseDicoTraits<_Key, _Value>::TypeName() const {
-    ONE_TIME_INITIALIZE(const FStringView, GTypeName, MakeDicoTypeName(
+FStringLiteral TBaseDicoTraits<_Key, _Value>::TypeName() const {
+    ONE_TIME_INITIALIZE(const FStringLiteral, GTypeName, MakeDicoTypeName(
         MakeTraits<_Key>(),
         MakeTraits<_Value>()
     ));
@@ -165,8 +165,8 @@ void TDicoTraits<_Dico, _Key, _Value>::DeepCopy(const void* src, void* dst) cons
     dstT.clear();
     dstT.reserve(n);
 
-    typename _Dico::value_type cpy;
     for (const auto& elt : srcT) {
+        typename _Dico::value_type cpy{};
         key->DeepCopy(&elt.first, &cpy.first);
         value->DeepCopy(&elt.second, &cpy.second);
         dstT.insert(std::move(cpy));

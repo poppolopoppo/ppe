@@ -42,14 +42,14 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FDescriptionFacet : FGenericUserFacet {
-    FConstChar Text;
+    FStringLiteral Text;
 
-    PPE_RTTI_API FDescriptionFacet(FConstChar text) NOEXCEPT;
+    PPE_RTTI_API FDescriptionFacet(FStringLiteral text) NOEXCEPT;
 
     template <typename _Meta>
-    static FStringView GetIFP(const _Meta& meta) NOEXCEPT {
+    static FStringLiteral GetIFP(const _Meta& meta) NOEXCEPT {
         if (auto* const facet = meta.Facets().template GetIFP<FDescriptionFacet>())
-            return facet->Text.MakeView();
+            return facet->Text;
         return Default;
     }
 };
@@ -119,9 +119,9 @@ PPE_RTTI_API FTextWriter& TPropertyFacetException<FLengthFacet>::Description(FTe
 template class TPropertyFacetException<FLengthFacet>;
 //----------------------------------------------------------------------------
 struct FPatternFacet : FGenericUserFacet {
-    FConstChar Pattern;
+    FStringLiteral Pattern;
 
-    PPE_RTTI_API FPatternFacet(FConstChar pattern) NOEXCEPT;
+    PPE_RTTI_API FPatternFacet(FStringLiteral pattern) NOEXCEPT;
 
     using FValidateException = TPropertyFacetException<FPatternFacet>;
     PPE_RTTI_API void Validate(const FMetaProperty& meta, const void* data) const;

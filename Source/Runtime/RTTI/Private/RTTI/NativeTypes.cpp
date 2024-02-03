@@ -301,7 +301,7 @@ public: // IScalarTraits
     }
 
 public: // ITypeTraits
-    virtual FStringView TypeName() const override final;
+    virtual FStringLiteral TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const NOEXCEPT override final {
         Assert(data);
@@ -440,7 +440,7 @@ void* TNativeTypeTraits<PMetaObject>::Cast(void* data, const PTypeTraits& dst) c
 //----------------------------------------------------------------------------
 #define DEF_RTTI_NATIVETYPE_TRAITS(_Name, T, _TypeId) \
     template <> \
-    FStringView TNativeTypeTraits< T >::TypeName() const { \
+    FStringLiteral TNativeTypeTraits< T >::TypeName() const { \
         return STRINGIZE(_Name); \
     } \
     /* Global helper for MakeTraits<T>() */ \
@@ -529,7 +529,7 @@ public:
         singleton_type::Destroy();
     }
 
-    STATIC_CONST_INTEGRAL(size_t, DefaultReserve, 128);
+    STATIC_CONST_INTEGRAL(size_t, DefaultReserve, 32);
 
     class FWritePort : FCriticalScope {
     public:
@@ -560,8 +560,13 @@ public:
             _outp.WriteView(str);
         }
 
-        FStringView Written() const {
-            return _outp.Written().Cast<const char>();
+        FStringLiteral Written() {
+            _outp.WritePOD('\0');
+            FStringView view = _outp.Written().Cast<const char>();
+            FStringLiteral result;
+            result.Data = view.data();
+            result.Length = view.size();
+            return result;
         }
 
     private:
@@ -580,7 +585,7 @@ void TypeNamesShutdown() {
     FTypeNamesBuilder_::Destroy();
 }
 //----------------------------------------------------------------------------
-FStringView MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements) {
+FStringLiteral MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements) {
     STACKLOCAL_POD_ARRAY(FStringView, elementNames, elements.size());
     forrange(i, 0, elements.size()) // fetch outside of the lock
         elementNames[i] = elements[i]->TypeName(); // <- can recurse in this function
@@ -597,7 +602,7 @@ FStringView MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements) {
     return sb.Written();
 }
 //----------------------------------------------------------------------------
-FStringView MakeListTypeName(const PTypeTraits& value) {
+FStringLiteral MakeListTypeName(const PTypeTraits& value) {
     const FStringView valueName = value->TypeName(); // <- can recurse in this function
     FTypeNamesBuilder_::FWritePort sb{ FTypeNamesBuilder_::Get() };
     sb.Append("TList<");
@@ -606,7 +611,7 @@ FStringView MakeListTypeName(const PTypeTraits& value) {
     return sb.Written();
 }
 //----------------------------------------------------------------------------
-FStringView MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value) {
+FStringLiteral MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value) {
     const FStringView keyName = key->TypeName(); // outside of the lock
     const FStringView valueName = value->TypeName(); // <- can recurse in this function
     FTypeNamesBuilder_::FWritePort sb{ FTypeNamesBuilder_::Get() };

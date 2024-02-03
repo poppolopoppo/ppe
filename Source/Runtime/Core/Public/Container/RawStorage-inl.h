@@ -18,14 +18,28 @@ TRawStorage<T, _Allocator>::TRawStorage(size_type size)
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-TRawStorage<T, _Allocator>::TRawStorage(allocator_type&& allocator) NOEXCEPT
-:   allocator_type(std::move(allocator))
+TRawStorage<T, _Allocator>::TRawStorage(allocator_type&& rallocator) NOEXCEPT
+:   allocator_type(std::move(rallocator))
 ,   _storage(nullptr)
 ,   _sizeInBytes(0) {}
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-TRawStorage<T, _Allocator>::TRawStorage(allocator_type&& allocator, size_type size)
-:   allocator_type(std::move(allocator))
+TRawStorage<T, _Allocator>::TRawStorage(const allocator_type& allocator) NOEXCEPT
+:   allocator_type(allocator)
+,   _storage(nullptr)
+,   _sizeInBytes(0) {}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+TRawStorage<T, _Allocator>::TRawStorage(allocator_type&& rallocator, size_type size)
+:   allocator_type(std::move(rallocator))
+,   _storage(nullptr)
+,   _sizeInBytes(0) {
+    Resize_DiscardData(size);
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
+TRawStorage<T, _Allocator>::TRawStorage(const allocator_type& allocator, size_type size)
+:   allocator_type(allocator)
 ,   _storage(nullptr)
 ,   _sizeInBytes(0) {
     Resize_DiscardData(size);

@@ -5,9 +5,10 @@
 #ifdef PLATFORM_WINDOWS
 
 #include "Diagnostic/Logger.h"
+#include "IO/ConstChar.h"
 #include "IO/FormatHelpers.h"
-#include "HAL/PlatformMaths.h"
 
+#include "HAL/PlatformMaths.h"
 #include "HAL/Windows/WindowsPlatformIncludes.h"
 
 #include <fcntl.h>
@@ -128,11 +129,13 @@ auto FWindowsPlatformLowLevelIO::Open(const wchar_t* filename, EOpenPolicy mode,
 
     FHandle handle;
     if (::_wsopen_s(&handle, filename, oflag, shareFlag, OpenPolicyToPMode_(mode)) != 0) {
-        PPE_LOG(HAL, Error, "failed to open file '{0}' : {1}", filename, FErrno_::LastError());
+        PPE_LOG(HAL, Error, "failed to open file '{0}' : {1}",
+            FConstWChar{ filename }, FErrno_::LastError());
         Assert(InvalidHandle == handle);
     }
 
-    PPE_LOG(HAL, Info, "opened file '{0}': {1} ({2}) -> {3}", filename, mode, flags, FHandle_{ handle });
+    PPE_LOG(HAL, Info, "opened file '{0}': {1} ({2}) -> {3}",
+        FConstWChar{ filename }, mode, flags, FHandle_{ handle });
     return handle;
 }
 //----------------------------------------------------------------------------

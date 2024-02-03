@@ -46,8 +46,17 @@ bool Equals(const FMetaObject& lhs, const FMetaObject& rhs) {
         const FAtom lhsValue = prop->Get(lhs);
         const FAtom rhsValue = prop->Get(rhs);
 
-        if (not lhsValue.Equals(rhsValue))
+        if (not lhsValue.Equals(rhsValue)) {
+            PPE_LOG(RTTI, Warning,
+                "A:{:q} and B:{:q} are not equal since property {}::{} value differs between them:\n"
+                "  - A={}: {}\n"
+                "  - B={}: {}",
+                lhs.RTTI_Name(), rhs.RTTI_Name(),
+                metaClass->Name(), prop->Name(),
+                Fmt::Pointer(&lhs), lhsValue,
+                Fmt::Pointer(&rhs), rhsValue);
             return false;
+        }
     }
 
     return true;
@@ -67,8 +76,17 @@ bool DeepEquals(const FMetaObject& lhs, const FMetaObject& rhs) {
         const FAtom lhsValue = prop->Get(lhs);
         const FAtom rhsValue = prop->Get(rhs);
 
-        if (not lhsValue.DeepEquals(rhsValue))
+        if (not lhsValue.DeepEquals(rhsValue)) {
+            PPE_LOG(RTTI, Warning,
+                "A:{:q} and B:{:q} are not deeply-equal since property {}::{} value differs between them:\n"
+                "  - A={}: {}\n"
+                "  - B={}: {}",
+                lhs.RTTI_Name(), rhs.RTTI_Name(),
+                metaClass->Name(), prop->Name(),
+                Fmt::Pointer(&lhs), lhsValue,
+                Fmt::Pointer(&rhs), rhsValue);
             return false;
+        }
     }
 
     return true;
@@ -216,14 +234,14 @@ void CheckMetaClassAllocation(const FMetaClass* metaClass) {
     }
 
     if (metaClass->IsAbstract()) {
-        PPE_LOG(RTTI, Error, "can't allocate a new object with abstract metaclass \"{0}\" ({1})",
+        PPE_LOG(RTTI, Error, "can't allocate a new object with abstract metaclass {0:q} ({1})",
             metaClass->Name(),
             metaClass->Flags());
         PPE_THROW_IT(FClassException("abstract metaclass", metaClass));
     }
 
     if (metaClass->IsDeprecated()) {
-        PPE_LOG(RTTI, Warning, "allocate a new object using deprecated metaclass \"{0}\" ({1})",
+        PPE_LOG(RTTI, Warning, "allocate a new object using deprecated metaclass {0:q} ({1})",
             metaClass->Name(),
             metaClass->Flags() );
     }

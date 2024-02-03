@@ -93,6 +93,13 @@ struct TRelativeView {
         Offset = (view.empty() ? 0 : checked_cast<i32>(bit_cast<intptr_t>(view.data()) - bit_cast<intptr_t>(this)));
         Count = checked_cast<u32>(view.size());
     }
+
+    friend bool operator ==(const TRelativeView& lhs, const TRelativeView& rhs) NOEXCEPT {
+        return (lhs.MakeView() == rhs.MakeView());
+    }
+    friend bool operator !=(const TRelativeView& lhs, const TRelativeView& rhs) NOEXCEPT {
+        return (not operator ==(lhs, rhs));
+    }
 };
 //----------------------------------------------------------------------------
 PPE_ASSUME_TEMPLATE_AS_POD(TRelativeView<T>, typename T)

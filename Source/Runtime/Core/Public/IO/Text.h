@@ -15,6 +15,7 @@ namespace PPE {
 template <typename _Char, typename _Allocator = ALLOCATOR(Text)>
 class TBasicText : _Allocator {
 private:
+    using allocator_type = _Allocator;
     using allocator_traits = TAllocatorTraits<_Allocator>;
 
     enum EStringSource_ : _Char {
@@ -39,8 +40,6 @@ private:
         _Char Inline[(sizeof(FExternalString_) - sizeof(EStringSource_))/sizeof(_Char)]{};
     };
 
-    STATIC_CONST_INTEGRAL(size_t, SmallCapacity_, sizeof(FInplaceString_::Inline)/sizeof(_Char) - 1/* '\0' */);
-
     union {
         FInplaceString_ _inplace{};
         FExternalString_ _external;
@@ -52,6 +51,8 @@ private:
     friend class TBasicTextMemoization;
 
 public:
+    STATIC_CONST_INTEGRAL(size_t, SmallCapacity, sizeof(FInplaceString_::Inline)/sizeof(_Char) - 1/* '\0' */);
+
     CONSTEXPR TBasicText() = default;
 
     CONSTEXPR  explicit TBasicText(Meta::FForceInit) NOEXCEPT
@@ -70,8 +71,9 @@ public:
     template <size_t _Len>
     TBasicText(const _Char (&staticString)[_Len]) NOEXCEPT : TBasicText(TBasicStringLiteral<_Char>(staticString)) {}
 
-    TBasicText(TBasicConstChar<_Char> txt) : TBasicText() { Assign(txt); }
-    TBasicText(TBasicStringView<_Char> txt) : TBasicText() { Assign(txt); }
+    // this constructor must copy input and need to have a valid constructor, either user specified or default constructed
+    TBasicText(TBasicConstChar<_Char> txt, allocator_type&& default_constructible_alloc = {}) : TBasicText(std::move(default_constructible_alloc)) { Assign(txt); }
+    TBasicText(TBasicStringView<_Char> txt, allocator_type&& default_constructible_alloc = {}) : TBasicText(std::move(default_constructible_alloc)) { Assign(txt); }
 
     TBasicText(_Allocator&& allocator, TBasicConstChar<_Char> txt) : TBasicText(std::move(allocator)) { Assign(txt); }
     TBasicText(const _Allocator& allocator, TBasicConstChar<_Char> txt) : TBasicText(allocator) { Assign(txt); }
@@ -116,7 +118,9 @@ public:
     }
 
     CONSTEXPR operator const _Char* () const NOEXCEPT { return c_str(); }
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (length() != 0); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (not empty()); }
+
+    bool empty() const NOEXCEPT { return (length() == 0); }
 
     size_t length() const NOEXCEPT {
         return (_inplace.Source == Inplace
@@ -153,7 +157,7 @@ public:
         Assign(cstr.MakeView());
     }
     void Assign(TBasicStringView<_Char> txt) {
-        if (txt.size() <= SmallCapacity_)
+        if (txt.size() <= SmallCapacity)
             AssignSmall(txt);
         else
             AssignExternal(txt);
@@ -164,15 +168,15 @@ public:
     }
 
     void AssignSmall(TBasicStringView<_Char> txt) NOEXCEPT {
-        Assert(txt.size() <= SmallCapacity_);
+        Assert(txt.size() <= SmallCapacity);
         Reset();
 
         _inplace.Source = Inplace;
-        FPlatformMemory::Memcpy(&_inplace.Inline[0], txt.data(), txt.size());
+        FPlatformMemory::Memcpy(&_inplace.Inline[0], txt.data(), txt.SizeInBytes());
     }
 
     void AssignExternal(TBasicStringView<_Char> txt) {
-        Assert(txt.size() > SmallCapacity_);
+        Assert(txt.size() > SmallCapacity);
 
         Reset();
 
@@ -182,31 +186,37 @@ public:
         txt.CopyTo(cpy.ShiftBack());
         cpy.back() = STRING_LITERAL(_Char, '\0');
 
-        _external.Source = External;
-        _external.Storage = cpy.data();
-        _external.Length = checked_cast<u32>(txt.size());
+        _external = {
+            .Source = External,
+            .Length = checked_cast<u32>(txt.size()),
+            .Storage = cpy.data(),
+        };
     }
 
     void AssignLiteral(TBasicConstChar<_Char> const_char) NOEXCEPT {
         Reset();
 
-        _external.Source = Literal;
-        _external.Storage = const_char.c_str();
-        _external.Length = checked_cast<u32>(const_char.length());
+        _external = {
+            .Source = Literal,
+            .Length = checked_cast<u32>(const_char.length()),
+            .Storage = const_char.c_str(),
+        };
     }
 
     void AssignLiteral(TBasicStringLiteral<_Char> literal) NOEXCEPT {
         Reset();
 
-        _external.Source = Literal;
-        _external.Storage = literal.Data;
-        _external.Length = checked_cast<u32>(literal.Length);
+        _external = {
+            .Source = Literal,
+            .Length = checked_cast<u32>(literal.Length),
+            .Storage = literal.Data,
+        };
     }
 
     void Reset() {
         if (_inplace.Source == External) {
             const size_t len = length();
-            Assert(len > SmallCapacity_);
+            Assert(len > SmallCapacity);
             const TMemoryView<_Char> alloc{ const_cast<_Char*>(_external.Storage), len + 1 };
             allocator_traits::template DeallocateT(*this, alloc);
         }
@@ -228,23 +238,19 @@ public:
         return result;
     }
 
-    NODISCARD CONSTF bool Equals(const TBasicText& other) const NOEXCEPT {
-        if (IsInplace() != other.IsInplace())
-            return false;
-        if (_external.Length != other._external.Length)
-            return false;
-        return (FPlatformString::Cmp(c_str(), other.c_str()) == 0);
-    }
-    NODISCARD CONSTF bool EqualsI(const TBasicText& other) const NOEXCEPT {
-        if (IsInplace() != other.IsInplace())
-            return false;
-        if (_external.Length != other._external.Length)
-            return false;
-        return (FPlatformString::CmpI(c_str(), other.c_str()) == 0);
-    }
-
     NODISCARD CONSTF int Compare(const TBasicText& other) const NOEXCEPT { return FPlatformString::Cmp(c_str(), other.c_str()); }
     NODISCARD CONSTF int CompareI(const TBasicText& other) const NOEXCEPT { return FPlatformString::CmpI(c_str(), other.c_str()); }
+
+    NODISCARD CONSTF bool Equals(const TBasicText& other) const NOEXCEPT {
+        if (not IsInplace() && not other.IsInplace() && _external.Length != other._external.Length)
+            return false;
+        return (Compare(other) == 0);
+    }
+    NODISCARD CONSTF bool EqualsI(const TBasicText& other) const NOEXCEPT {
+        if (not IsInplace() && not other.IsInplace() && _external.Length != other._external.Length)
+            return false;
+        return (CompareI(other) == 0);
+    }
 
     NODISCARD CONSTF bool Less(const TBasicText& other) const NOEXCEPT { return (Compare(other) < 0); }
     NODISCARD CONSTF bool LessI(const TBasicText& other) const NOEXCEPT { return (CompareI(other) < 0); }
@@ -272,17 +278,43 @@ public:
     friend bool operator < (const TBasicConstChar<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return MakeForeignText(lhs).Less(rhs); }
     friend bool operator >=(const TBasicConstChar<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
 
-    friend bool operator ==(const TBasicText& lhs, const TBasicStringView<_Char>& rhs) NOEXCEPT { return lhs.MakeView().Equals(rhs); }
+    friend bool operator ==(const TBasicText& lhs, const TBasicStringView<_Char>& rhs) NOEXCEPT { return PPE::Equals(lhs.MakeView(), rhs); }
     friend bool operator !=(const TBasicText& lhs, const TBasicStringView<_Char>& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
 
-    friend bool operator < (const TBasicText& lhs, const TBasicStringView<_Char>& rhs) NOEXCEPT { return lhs.MakeView().Less(rhs); }
+    friend bool operator < (const TBasicText& lhs, const TBasicStringView<_Char>& rhs) NOEXCEPT { return (PPE::Compare(lhs.MakeView(), rhs) < 0); }
     friend bool operator >=(const TBasicText& lhs, const TBasicStringView<_Char>& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
 
-    friend bool operator ==(const TBasicStringView<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return lhs.Equals(rhs.MakeView()); }
+    friend bool operator ==(const TBasicStringView<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return PPE::Equals(lhs, rhs.MakeView()); }
     friend bool operator !=(const TBasicStringView<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
 
-    friend bool operator < (const TBasicStringView<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return lhs.Less(rhs.MakeView()); }
+    friend bool operator < (const TBasicStringView<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return (PPE::Compare(lhs, rhs.MakeView()) < 0); }
     friend bool operator >=(const TBasicStringView<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
+
+    friend bool operator ==(const TBasicText& lhs, const TBasicStringLiteral<_Char>& rhs) NOEXCEPT { return PPE::Equals(lhs.MakeView(), rhs.MakeView()); }
+    friend bool operator !=(const TBasicText& lhs, const TBasicStringLiteral<_Char>& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
+
+    friend bool operator < (const TBasicText& lhs, const TBasicStringLiteral<_Char>& rhs) NOEXCEPT { return (PPE::Compare(lhs.MakeView(), rhs.MakeView()) < 0); }
+    friend bool operator >=(const TBasicText& lhs, const TBasicStringLiteral<_Char>& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
+
+    friend bool operator ==(const TBasicStringLiteral<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return PPE::Equals(lhs.MakeView(), rhs.MakeView()); }
+    friend bool operator !=(const TBasicStringLiteral<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
+
+    friend bool operator < (const TBasicStringLiteral<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return (PPE::Compare(lhs.MakeView(), rhs.MakeView()) < 0); }
+    friend bool operator >=(const TBasicStringLiteral<_Char>& lhs, const TBasicText& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
+
+    NODISCARD bool AcquireDataUnsafe(FAllocatorBlock b, size_t sz) NOEXCEPT {
+        if (allocator_traits::Acquire(*this, b)) {
+            Reset();
+
+            _external = {
+                .Source = External,
+                .Length = checked_cast<u32>(sz),
+                .Storage = static_cast<const _Char*>(b.Data),
+            };
+            return true;
+        }
+        return false;
+    }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>

@@ -137,11 +137,47 @@ const _Char* Format(TBasicStaticString<_Char, _Capacity>& dst, TBasicStringLiter
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename _Char>
+CONSTEXPR bool TBasicFormatTraits<_Char>:: IsValidManipFlag(_Char ch) {
+    switch (ch) {
+    case multiply:
+    case zero:
+    case fmt_alpha:
+    case fmt_ALPHA:
+    case fmt_bin:
+    case fmt_BIN:
+    case fmt_dec:
+    case fmt_DEC:
+    case fmt_hex:
+    case fmt_HEX:
+    case fmt_oct:
+    case fmt_OCT:
+    case fmt_fixed:
+    case fmt_FIXED:
+    case fmt_scient:
+    case fmt_SCIENT:
+    case fmt_UPPER:
+    case fmt_lower:
+    case fmt_Capital:
+    case fmt_minus:
+    case fmt_compact:
+    case fmt_NONCOMPACT:
+    case fmt_zeropad:
+    case fmt_center:
+    case fmt_truncR:
+    case fmt_truncL:
+    case fmt_escape:
+    case fmt_quote:
+        return true;
+    default:
+        return false;
+    }
+}
+//----------------------------------------------------------------------------
 namespace details {
 template <typename _Char>
 constexpr EValidateFormat ValidateFormatManip_(_Char ch) noexcept {
     switch (ch) {
-    case STRING_LITERAL(_Char, '*'):
     case STRING_LITERAL(_Char, '0'):
     case STRING_LITERAL(_Char, '1'):
     case STRING_LITERAL(_Char, '2'):
@@ -152,26 +188,13 @@ constexpr EValidateFormat ValidateFormatManip_(_Char ch) noexcept {
     case STRING_LITERAL(_Char, '7'):
     case STRING_LITERAL(_Char, '8'):
     case STRING_LITERAL(_Char, '9'):
-    case STRING_LITERAL(_Char, 'a'):case STRING_LITERAL(_Char, 'A'):
-    case STRING_LITERAL(_Char, 'b'):case STRING_LITERAL(_Char, 'B'):
-    case STRING_LITERAL(_Char, 'd'):case STRING_LITERAL(_Char, 'D'):
-    case STRING_LITERAL(_Char, 'x'):case STRING_LITERAL(_Char, 'X'):
-    case STRING_LITERAL(_Char, 'o'):case STRING_LITERAL(_Char, 'O'):
-    case STRING_LITERAL(_Char, 'f'):case STRING_LITERAL(_Char, 'F'):
-    case STRING_LITERAL(_Char, 's'):case STRING_LITERAL(_Char, 'S'):
-    case STRING_LITERAL(_Char, 'U'):
-    case STRING_LITERAL(_Char, 'l'):
-    case STRING_LITERAL(_Char, 'C'):
-    case STRING_LITERAL(_Char, '-'):
-    case STRING_LITERAL(_Char, '_'):
-    case STRING_LITERAL(_Char, '#'):
-    case STRING_LITERAL(_Char, '@'):
-    case STRING_LITERAL(_Char, '<'):
-    case STRING_LITERAL(_Char, '>'):
-    case STRING_LITERAL(_Char, '\\'):
         return EValidateFormat::Valid;
+
     default:
-        return EValidateFormat::InvalidFormatManip;
+        using traits_type = TBasicFormatTraits<_Char>;
+        return (traits_type::IsValidManipFlag(ch)
+            ? EValidateFormat::Valid
+            : EValidateFormat::InvalidFormatManip);
     }
 }
 template <typename _Char>

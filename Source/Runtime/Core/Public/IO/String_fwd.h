@@ -12,7 +12,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 // Stores a null-terminated string with storage ownership and small-string-buffer-optimization (fixed allocator)
 //----------------------------------------------------------------------------
-enum class ECase : bool;
+enum class ECase : bool {
+    Sensitive   = true,
+    Insensitive = false,
+};
 //----------------------------------------------------------------------------
 template <typename _Char>
 class TBasicString;
@@ -90,6 +93,9 @@ struct TBasicStaticString;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Use a string builder if you can't predict the size of a string
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Allocator>
+class TGenericStringBuilder;
 //----------------------------------------------------------------------------
 template <typename _Char>
 class TBasicStringBuilder;

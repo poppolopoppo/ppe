@@ -17,7 +17,7 @@ NO_INLINE auto unlikely(_FuncLike funcLike, _Args... args) {
 // will call the trigger when leaving the scope using RAII
 // https://youtu.be/zGWj7Qo_POY?si=xNdVOFyULLz39YOO&t=629
 namespace details {
-template <typename _FuncLike>
+template <typename _FuncLike, decltype(std::declval<_FuncLike&>()())* = nullptr>
 struct scope_exit_impl : _FuncLike {
     template <typename... _Args>
     CONSTEXPR scope_exit_impl(_Args&& ...args)

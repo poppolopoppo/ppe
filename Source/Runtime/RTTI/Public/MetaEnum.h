@@ -96,9 +96,9 @@ const FMetaEnum* MetaEnum() {
     return RTTI_Enum(_Enum{});
 }
 //----------------------------------------------------------------------------
-inline FStringView MetaEnumName(const FMetaEnum* metaEnum) {
+inline FStringLiteral MetaEnumName(const FMetaEnum* metaEnum) {
     Assert(metaEnum);
-    return metaEnum->Name().MakeView();
+    return metaEnum->Name().MakeLiteral();
 }
 //----------------------------------------------------------------------------
 inline FMetaEnumOrd MetaEnumDefaultValue(const FMetaEnum* metaEnum) {

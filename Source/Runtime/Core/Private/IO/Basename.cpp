@@ -62,13 +62,13 @@ FBasename& FBasename::operator =(const FileSystem::FString& content) {
 }
 //----------------------------------------------------------------------------
 FBasename::FBasename(const FileSystem::FStringView& content) {
-    Assert(not content.empty());
-    VerifyRelease( ParseBasename_(content, _basenameNoExt, _extname) );
+    if (not content.empty())
+        VerifyRelease( ParseBasename_(content, _basenameNoExt, _extname) );
 }
 //----------------------------------------------------------------------------
 FBasename& FBasename::operator =(const FileSystem::FStringView& content) {
-    Assert(not content.empty());
-    VerifyRelease( ParseBasename_(content, _basenameNoExt, _extname) );
+    if (not content.empty())
+        VerifyRelease( ParseBasename_(content, _basenameNoExt, _extname) );
     return *this;
 }
 //----------------------------------------------------------------------------

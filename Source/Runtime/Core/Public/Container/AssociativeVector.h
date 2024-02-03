@@ -161,7 +161,7 @@ public:
     template <class... _Args>
     bool Emplace_Overwrite(_Key&& key, _Args&&... args);
     template <class... _Args>
-    void Emplace_AssertUnique(_Key&& key, _Args&&... args);
+    iterator Emplace_AssertUnique(_Key&& key, _Args&&... args);
 
     template <class... _Args>
     bool Emplace_ReturnIfExists(const _Key& key, _Args&&... args);
@@ -170,17 +170,17 @@ public:
     template <class... _Args>
     bool Emplace_Overwrite(const _Key& key, _Args&&... args);
     template <class... _Args>
-    void Emplace_AssertUnique(const _Key& key, _Args&&... args);
+    iterator Emplace_AssertUnique(const _Key& key, _Args&&... args);
 
     bool Insert_ReturnIfExists(_Key&& key, _Value&& rvalue);
     void Insert_KeepOldIFN(_Key&& key, _Value&& rvalue);
     bool Insert_Overwrite(_Key&& key, _Value&& rvalue);
-    void Insert_AssertUnique(_Key&& key, _Value&& rvalue);
+    iterator Insert_AssertUnique(_Key&& key, _Value&& rvalue);
 
     bool Insert_ReturnIfExists(const _Key& key, const _Value& value);
     void Insert_KeepOldIFN(const _Key& key, const _Value& value);
     bool Insert_Overwrite(const _Key& key, const _Value& value);
-    void Insert_AssertUnique(const _Key& key, const _Value& value);
+    iterator Insert_AssertUnique(const _Key& key, const _Value& value);
 
     _Value& Get(const _Key& key);
     const _Value& Get(const _Key& key) const { return remove_const(this)->Get(key); }
@@ -263,11 +263,8 @@ void Resize_DiscardData(TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& v, 
     Resize_DiscardData(v.Vector(), size);
 }
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-FTextWriter& operator <<(FTextWriter& oss, const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector);
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-FWTextWriter& operator <<(FWTextWriter& oss, const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector);
+template <typename _Char, typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+inline TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 template <

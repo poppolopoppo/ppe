@@ -103,15 +103,15 @@ public:
         CopyTo(TMemoryView<Meta::TRemoveConst<T>>(dst + offset, _size));
     }
 
-    CONSTEXPR TMemoryView<T> Eat(size_t n) {
+    CONSTEXPR TMemoryView Eat(size_t n) {
         AssertRelease(n <= _size);
-        const TMemoryView<T> eaten{ _storage, n };
+        const TMemoryView eaten{ _storage, n };
         _storage += n;
         _size -= n;
         return eaten;
     }
 
-    bool Eat(const TMemoryView<T>& other) {
+    bool Eat(const TMemoryView& other) {
         if (StartsWith(other)) {
             Eat(other.size());
             return true;
@@ -181,11 +181,11 @@ public:
     NODISCARD TMemoryView TrimFirstNElements(size_t count) const { return CutStartingAt(count); }
     NODISCARD TMemoryView TrimLastNElements(size_t count) const { Assert(_size >= count); return CutBefore(_size - count); }
 
-    NODISCARD TMemoryView ShiftBack(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage, _size - n); }
-    NODISCARD TMemoryView ShiftFront(const size_type n = 1) const { Assert(_size >= n); return TMemoryView<T>(_storage + n, _size - n); }
+    NODISCARD TMemoryView ShiftBack(const size_type n = 1) const { Assert(_size >= n); return TMemoryView(_storage, _size - n); }
+    NODISCARD TMemoryView ShiftFront(const size_type n = 1) const { Assert(_size >= n); return TMemoryView(_storage + n, _size - n); }
 
-    NODISCARD TMemoryView GrowBack(const size_type n = 1) const { return TMemoryView<T>(_storage, _size + n); }
-    NODISCARD TMemoryView GrowFront(const size_type n = 1) const { return TMemoryView<T>(_storage - n, _size + n); }
+    NODISCARD TMemoryView GrowBack(const size_type n = 1) const { return TMemoryView(_storage, _size + n); }
+    NODISCARD TMemoryView GrowFront(const size_type n = 1) const { return TMemoryView(_storage - n, _size + n); }
 
     template <typename U>
     bool IsSubRangeOf(const TMemoryView<U>& parent) const {
@@ -248,15 +248,15 @@ public:
     template <typename _Pred>
     iterator FindMax(const _Pred& pred = Meta::TLess<Meta::TDecay<T>>{}) const { return std::max_element(begin(), end(), pred); }
 
-    iterator FindSubRange(const TMemoryView<T>& subrange) const;
+    iterator FindSubRange(const TMemoryView& subrange) const;
 
     bool EndsWith(const T& suffix) const;
     bool StartsWith(const T& prefix) const;
 
-    bool EndsWith(const TMemoryView<T>& suffix) const;
-    bool StartsWith(const TMemoryView<T>& prefix) const;
+    bool EndsWith(const TMemoryView& suffix) const;
+    bool StartsWith(const TMemoryView& prefix) const;
 
-    bool RangeEqual(TMemoryView<T> other) const {
+    bool RangeEqual(TMemoryView other) const {
         return std::equal(begin(), end(), other.begin(), other.end());
     }
     template <typename U, typename _Pred = Meta::TEqualTo<T>, Meta::TEnableIf<std::is_assignable_v<T*&, U*>>* = nullptr>

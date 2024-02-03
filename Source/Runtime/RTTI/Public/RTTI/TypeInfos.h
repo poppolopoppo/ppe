@@ -213,10 +213,10 @@ class FNamedTypeInfos {
 public:
     FNamedTypeInfos() = default;
 
-    CONSTEXPR FNamedTypeInfos(const FStringView& name, const FTypeInfos& type) NOEXCEPT
+    CONSTEXPR FNamedTypeInfos(FStringLiteral name, const FTypeInfos& type) NOEXCEPT
     :   FNamedTypeInfos(name, type.Id(), type.Flags(), type.Alignment(), type.SizeInBytes())
     {}
-    CONSTEXPR FNamedTypeInfos(const FStringView& name, FTypeId id, ETypeFlags flags, size_t alignment, size_t sizeInBytes) NOEXCEPT
+    CONSTEXPR FNamedTypeInfos(FStringLiteral name, FTypeId id, ETypeFlags flags, size_t alignment, size_t sizeInBytes) NOEXCEPT
     :   _name(name)
     ,   _typeInfos(id, FSizeAndFlags(alignment, sizeInBytes, flags)) {
         Assert(not _name.empty());
@@ -224,7 +224,7 @@ public:
         Assert(_typeInfos.SizeInBytes());
     }
 
-    CONSTEXPR const FStringView& Name() const { return _name; }
+    CONSTEXPR FStringLiteral Name() const { return _name; }
     CONSTEXPR const FTypeInfos& TypeInfos() const { return _typeInfos; }
 
     CONSTEXPR FTypeId Id() const { return _typeInfos.Id(); }
@@ -235,7 +235,7 @@ public:
     CONSTEXPR friend bool operator !=(const FNamedTypeInfos& lhs, const FNamedTypeInfos& rhs) { return not operator ==(lhs, rhs); }
 
 private:
-    FStringView _name;
+    FStringLiteral _name;
     FTypeInfos _typeInfos;
 };
 PPE_ASSUME_TYPE_AS_POD(FNamedTypeInfos);

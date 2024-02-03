@@ -374,7 +374,7 @@ UStreamWriter FVirtualFileSystemNativeComponent::OpenWritable(const FFilename& f
 
     if (policy ^ EAccessPolicy::Roll) {
         if (not FPlatformFile::RollFile(nativeFilename)) {
-            PPE_LOG(VFS, Error, "failed to roll native file '{0}' : {1}", filename, nativeFilename);
+            PPE_LOG(VFS, Error, "failed to roll native file '{0}' : {1}", filename, FConstWChar{ nativeFilename });
             return result;
         }
     }

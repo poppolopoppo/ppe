@@ -334,8 +334,8 @@ public: // non stl
     explicit TBasicString(TBasicStringBuilder<_Char>&& sb) NOEXCEPT;
     void assign(TBasicStringBuilder<_Char>&& sb);
 
-    bool AcquireDataUnsafe(FAllocatorBlock b, size_t sz) NOEXCEPT;
-    FAllocatorBlock StealDataUnsafe(size_t* sz = nullptr) NOEXCEPT;
+    NODISCARD bool AcquireDataUnsafe(FAllocatorBlock b, size_t sz) NOEXCEPT;
+    NODISCARD FAllocatorBlock StealDataUnsafe(size_t* sz = nullptr) NOEXCEPT;
 
     // can be implicitly casted to TBasicStringView<> since it's cheap and convenient
     operator TBasicStringView<_Char> () const { return MakeView(); }
@@ -434,11 +434,11 @@ private:
     };
 
 public:
-    STATIC_CONST_INTEGRAL(size_t, GInSituSize, FSmallString_::GCapacity);
+    STATIC_CONST_INTEGRAL(size_t, SmallCapacity, FSmallString_::GCapacity);
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
-inline CONSTEXPR size_t BasicStringInSituSize = TBasicString<_Char>::GInSituSize;
+inline CONSTEXPR size_t BasicStringInSituSize = TBasicString<_Char>::SmallCapacity;
 inline CONSTEXPR size_t StringInSituSize = BasicStringInSituSize<char>;
 inline CONSTEXPR size_t WStringInSituSize = BasicStringInSituSize<wchar_t>;
 //----------------------------------------------------------------------------

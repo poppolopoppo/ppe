@@ -8,6 +8,7 @@
 #include "IO/StreamProvider.h"
 #include "IO/String.h"
 #include "IO/StringView.h"
+#include "Meta/Utility.h"
 #include "Misc/Function.h"
 
 #include "double-conversion-external.h"
@@ -22,6 +23,17 @@ template <typename _Char>
 static void TextWriteWFormat_(TBasicTextWriter<_Char>& w, TBasicStringView<_Char> str) {
     const FTextFormat& fmt = w.Format();
     IStreamWriter& ostream = w.Stream();
+
+    // Handles quoting outside of every other formating:
+    bool shouldQuote{ false };
+    if (fmt.Misc() ^ FTextFormat::Quote) {
+        shouldQuote = true;
+        ostream.WritePOD(STRING_LITERAL(_Char, '"'));
+    }
+    DEFERRED {
+        if (shouldQuote)
+            ostream.WritePOD(STRING_LITERAL(_Char, '"'));
+    };
 
     // Fast path for trivial case :
     if ((fmt.Case() == FTextFormat::Original) &&

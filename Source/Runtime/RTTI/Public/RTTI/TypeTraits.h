@@ -34,7 +34,7 @@ public:
     virtual void ConstructSwap(void* data, void* other) const NOEXCEPT = 0;
     virtual void Destroy(void* data) const NOEXCEPT = 0;
 
-    virtual FStringView TypeName() const = 0;
+    virtual FStringLiteral TypeName() const = 0;
 
     virtual bool IsDefaultValue(const void* data) const NOEXCEPT = 0;
     virtual void ResetToDefaultValue(void* data) const = 0;

@@ -189,9 +189,9 @@ const FMetaClass* MetaClass() {
     return TMetaClass<_Class>::Get();
 }
 //----------------------------------------------------------------------------
-inline FStringView MetaClassName(const FMetaClass* metaClass) {
+inline FStringLiteral MetaClassName(const FMetaClass* metaClass) {
     Assert(metaClass);
-    return metaClass->Name().MakeView();
+    return metaClass->Name().MakeLiteral();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

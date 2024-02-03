@@ -95,12 +95,12 @@ FWD_REFPTR(AtomHeap);
 //----------------------------------------------------------------------------
 template <typename _Enum>
 const FMetaEnum* MetaEnum();
-FStringView MetaEnumName(const FMetaEnum* metaEnum);
+FStringLiteral MetaEnumName(const FMetaEnum* metaEnum);
 i64 MetaEnumDefaultValue(const FMetaEnum* metaEnum);
 //----------------------------------------------------------------------------
 template <typename _Class>
 const FMetaClass* MetaClass();
-FStringView MetaClassName(const FMetaClass* metaClass);
+FStringLiteral MetaClassName(const FMetaClass* metaClass);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

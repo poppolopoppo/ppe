@@ -133,7 +133,7 @@ FDirpath::FDirpath(std::initializer_list<const FileSystem::char_type *> path)  {
 
     for (const FileSystem::char_type *wcstr : path) {
         tokens.Push(MakeCStringView(wcstr));
-        Assert(!tokens.Peek()->empty());
+        Assert_NoAssume(not tokens.Peek()->empty());
     }
 
     _path = FFileSystemTrie::Get().GetOrCreate(tokens.MakeView());

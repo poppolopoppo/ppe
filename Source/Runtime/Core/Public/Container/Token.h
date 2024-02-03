@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Allocator/SlabHeap.h"
+#include "External/imgui/imgui.git/imgui_internal.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 #include "Meta/Singleton.h"
@@ -206,6 +207,15 @@ public:
 
     NODISCARD const _Char* c_str() const { return reinterpret_cast<const _Char*>(_handle ? _handle->Data() : nullptr); }
     NODISCARD const _Char* data() const { return reinterpret_cast<const _Char*>(_handle ? _handle->Data() : nullptr); }
+
+    NODISCARD TBasicStringLiteral<_Char> MakeLiteral() const {
+        TBasicStringLiteral<_Char> literal;
+        if (_handle) {
+            literal.Data = reinterpret_cast<const _Char*>(_handle->Data());
+            literal.Length = _handle->Length;
+        }
+        return literal;
+    }
 
     NODISCARD stringview_type MakeView() const {
         return ((_handle)

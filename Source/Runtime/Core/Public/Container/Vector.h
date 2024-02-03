@@ -208,16 +208,19 @@ public:
     void assign(const TMemoryView<value_type>& view) { assign(std::make_move_iterator(view.begin()), std::make_move_iterator(view.end())); }
     void assign(const TMemoryView<const value_type>& view) { assign(view.begin(), view.end()); }
 
-    template <class... _Args>
-    iterator emplace(const_iterator pos, _Args&&... args);
+    template <typename _Result, class... _Args>
+    using TEnableIfConstructible = Meta::TEnableIf<std::is_constructible_v<T, _Args...>, _Result>;
 
     template <class... _Args>
-    void emplace_back(_Args&&... args);
+    TEnableIfConstructible<iterator, _Args&&...> emplace(const_iterator pos, _Args&&... args);
+
+    template <class... _Args>
+    TEnableIfConstructible<void, _Args&&...> emplace_back(_Args&&... args);
     void emplace_back(const T& value);
     void emplace_back(T&& rvalue);
 
     template <class... _Args>
-    void emplace_back_AssumeNoGrow(_Args&&... args);
+    TEnableIfConstructible<void, _Args&&...> emplace_back_AssumeNoGrow(_Args&&... args);
     void emplace_back_AssumeNoGrow(const T& value);
     void emplace_back_AssumeNoGrow(T&& rvalue);
 
@@ -235,8 +238,10 @@ public:
 
     template <typename _It>
     auto insert(const_iterator pos, TIterable<_It> range) { return insert(pos, range.begin(), range.end()); }
+
     template <typename _It>
     auto append(TIterable<_It> range) { return insert(end(), range.begin(), range.end()); }
+    auto append(std::initializer_list<T> ilist) { return insert(end(), ilist.begin(), ilist.end()); }
 
     void push_back(const T& value) { emplace_back(value); }
     void push_back(T&& rvalue) { emplace_back(std::move(rvalue)); }
@@ -347,7 +352,8 @@ template <typename T, typename _Allocator>
 bool Add_Unique(TVector<T, _Allocator>& v, Meta::TDontDeduce<T>&& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename... _Args>
-auto Emplace_Back(TVector<T, _Allocator>& v, _Args&&... args) -> typename TVector<T, _Allocator>::iterator;
+auto Emplace_Back(TVector<T, _Allocator>& v, _Args&&... args) -> Meta::TEnableIf<std::is_constructible_v<T, _Args&&...>,
+    typename TVector<T, _Allocator>::iterator>;
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename _Pred>
 size_t Remove_If(TVector<T, _Allocator>& v, _Pred&& pred);

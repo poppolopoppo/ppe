@@ -26,15 +26,15 @@ protected:
     using IListTraits::IListTraits;
 
 public: // ITypeTraits
-    virtual FStringView TypeName() const override final;
+    virtual FStringLiteral TypeName() const override final;
 
 public: // IListTraits
     virtual PTypeTraits ValueTraits() const NOEXCEPT override final { return MakeTraits<T>(); }
 };
 //----------------------------------------------------------------------------
 template <typename T>
-FStringView TBaseListTraits<T>::TypeName() const {
-    ONE_TIME_INITIALIZE(const FStringView, GTypeName, MakeListTypeName(
+FStringLiteral TBaseListTraits<T>::TypeName() const {
+    ONE_TIME_INITIALIZE(const FStringLiteral, GTypeName, MakeListTypeName(
         MakeTraits<T>()
     ));
     return GTypeName;

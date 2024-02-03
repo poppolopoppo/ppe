@@ -23,7 +23,7 @@ public:
     using string_literal_type = TBasicStringLiteral<_Char>;
     using string_view_type = TBasicStringView<_Char>;
 
-    STATIC_CONST_INTEGRAL(size_t, DefaultMaxLengthForMemoization, 200); // don't memoize large strings, as they are
+    STATIC_CONST_INTEGRAL(size_t, DefaultMaxLengthForMemoization, 200); // don't memoize large strings
 
     TBasicTextMemoization() NOEXCEPT = default;
 
@@ -62,10 +62,14 @@ public:
         return { literal }; // string literals are never copied
     }
 
+    NODISCARD text_type AppendWithoutMemoization(string_view_type str) {
+        return {Allocator_(), str};
+    }
+
     NODISCARD text_type Append(string_view_type str) {
-        if (str.size() <= text_type::SmallCapacity_ ||
+        if (str.size() <= text_type::SmallCapacity ||
             str.size() > _maxLengthForMemoization)
-            return {Allocator_(), str};
+            return AppendWithoutMemoization(str);
 
         const hash_t hash = TStringViewHasher<_Char, _Sensitive>{}(str);
         const auto[it, inserted] = _set.try_emplace_like(str, hash, Allocator_(), str);

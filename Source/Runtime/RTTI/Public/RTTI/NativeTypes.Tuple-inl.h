@@ -31,7 +31,7 @@ public: // ITypeTraits
 
     using tuple_type = TTuple<_Args...>;
 
-    virtual FStringView TypeName() const override final;
+    virtual FStringLiteral TypeName() const override final;
 
     virtual bool IsDefaultValue(const void* data) const NOEXCEPT override final;
     virtual void ResetToDefaultValue(void* data) const override final;
@@ -52,8 +52,8 @@ public: // ITupleTraits
 };
 //----------------------------------------------------------------------------
 template <typename... _Args>
-FStringView TBaseTupleTraits<_Args...>::TypeName() const {
-    ONE_TIME_INITIALIZE(const FStringView, GTypeName, MakeTupleTypeName({ MakeTraits<_Args>()... }));
+FStringLiteral TBaseTupleTraits<_Args...>::TypeName() const {
+    ONE_TIME_INITIALIZE(const FStringLiteral, GTypeName, MakeTupleTypeName({ MakeTraits<_Args>()... }));
     return GTypeName;
 }
 //----------------------------------------------------------------------------

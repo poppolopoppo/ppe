@@ -46,7 +46,7 @@ static u32 StreamFingerprint_(const TMemoryView<const u8>& src) {
 struct FCompressionBenchmark_ {
     const FTimepoint StartedAt;
     FCompressionBenchmark_() : StartedAt(FTimepoint::Now()) {}
-    void Finished(const wchar_t* msg, size_t a, size_t b) {
+    void Finished(const FStringLiteral& msg, size_t a, size_t b) {
 #if USE_PPE_LOGGER
         const FTimespan elapsed = FTimepoint::ElapsedSince(StartedAt);
         PPE_LOG(Compress, Info, " {0:20} | {1:10f2} | {2:10f2} ==> {3:10f2} : {4:10f2}% = {5:10f2} Mb/s",
@@ -131,7 +131,7 @@ size_t CompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
     }
 
 #if USE_PPE_BENCHMARK
-    bm.Finished(L"COMPRESS", src.SizeInBytes(), compressedSizeInBytes);
+    bm.Finished("COMPRESS", src.SizeInBytes(), compressedSizeInBytes);
 #endif
 
     Assert(compressedSizeInBytes > sizeof(FFileHeader_));
@@ -176,7 +176,7 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
         checked_cast<int>(dst.SizeInBytes()) );
 
 #if USE_PPE_BENCHMARK
-    bm.Finished(L"DECOMPRESS", src.SizeInBytes(), header.SizeInBytes);
+    bm.Finished("DECOMPRESS", src.SizeInBytes(), header.SizeInBytes);
 #endif
 
     if (ret < 0) {

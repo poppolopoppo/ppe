@@ -34,6 +34,10 @@
 //          "
 //      Format(std::cout, "escaped = {:\\}", '\t\n');
 //      ->  "escaped = \t\n"
+//      Format(std::cout, "escaped and quoted = {:q\\}", '\t\n');
+//      ->  "escaped and quoted = \"\t\n\""
+//
+//ex5:
 //      Format(std::cout, "{:*16}\n", '-');
 //      ->  "----------------
 //          "
@@ -44,6 +48,59 @@
 */
 
 namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename _Char>
+struct TBasicFormatTraits {
+    enum EFlags : _Char {
+        null =              STRING_LITERAL(_Char, '\0'),
+        lbrace =            STRING_LITERAL(_Char, '{'),
+        rbrace =            STRING_LITERAL(_Char, '}'),
+        colon =             STRING_LITERAL(_Char, ':'),
+        multiply =          STRING_LITERAL(_Char, '*'),
+        zero =              STRING_LITERAL(_Char, '0'),
+
+        fmt_alpha =         STRING_LITERAL(_Char, 'a'),
+        fmt_ALPHA =         STRING_LITERAL(_Char, 'A'),
+
+        fmt_bin =           STRING_LITERAL(_Char, 'b'),
+        fmt_BIN =           STRING_LITERAL(_Char, 'B'),
+
+        fmt_dec =           STRING_LITERAL(_Char, 'd'),
+        fmt_DEC =           STRING_LITERAL(_Char, 'D'),
+
+        fmt_hex =           STRING_LITERAL(_Char, 'x'),
+        fmt_HEX =           STRING_LITERAL(_Char, 'X'),
+
+        fmt_oct =           STRING_LITERAL(_Char, 'o'),
+        fmt_OCT =           STRING_LITERAL(_Char, 'O'),
+
+        fmt_fixed =         STRING_LITERAL(_Char, 'f'),
+        fmt_FIXED =         STRING_LITERAL(_Char, 'F'),
+
+        fmt_scient =        STRING_LITERAL(_Char, 's'),
+        fmt_SCIENT =        STRING_LITERAL(_Char, 'S'),
+
+        fmt_UPPER =         STRING_LITERAL(_Char, 'U'),
+        fmt_lower =         STRING_LITERAL(_Char, 'l'),
+
+        fmt_Capital =       STRING_LITERAL(_Char, 'C'),
+        fmt_minus =         STRING_LITERAL(_Char, '-'),
+        fmt_compact =       STRING_LITERAL(_Char, '_'),
+        fmt_NONCOMPACT =    STRING_LITERAL(_Char, '^'),
+
+        fmt_zeropad =       STRING_LITERAL(_Char, '#'),
+        fmt_center =        STRING_LITERAL(_Char, '@'),
+        fmt_truncR =        STRING_LITERAL(_Char, '<'),
+        fmt_truncL =        STRING_LITERAL(_Char, '>'),
+
+        fmt_escape =        STRING_LITERAL(_Char, '\\'),
+        fmt_quote =         STRING_LITERAL(_Char, 'q'),
+    };
+
+    static CONSTEXPR bool IsValidManipFlag(_Char ch);
+};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -71,14 +128,14 @@ template <typename _Char, typename _Arg0, typename... _Args>
 TBasicTextWriter<_Char>& Format(TBasicTextWriter<_Char>& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-TBasicString<_Char> StringFormat(TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args) {
+NODISCARD TBasicString<_Char> StringFormat(TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args) {
     TBasicString<_Char> result;
     Format(result, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     return result;
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args) {
+NODISCARD TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args) {
     const size_t len = Format(dst, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
     dst[len] = _Char(0); // end-of-string: InlineFormat() always returns null-terminated strings
     return dst.data();
@@ -108,12 +165,12 @@ TBasicTextWriter<_Char>& Format(TBasicTextWriter<_Char>& dst, const _Char(&forma
 }
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
-TBasicString<_Char> StringFormat(const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+NODISCARD TBasicString<_Char> StringFormat(const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
     return StringFormat(MakeStringLiteral(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
-TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+NODISCARD TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
     return InlineFormat(dst, MakeStringLiteral(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
@@ -128,14 +185,14 @@ enum class EValidateFormat {
     TooManyArguments,
 };
 //----------------------------------------------------------------------------
-constexpr EValidateFormat ValidateFormatManip(char ch) noexcept;
-constexpr EValidateFormat ValidateFormatManip(wchar_t ch) noexcept;
+NODISCARD constexpr EValidateFormat ValidateFormatManip(char ch) noexcept;
+NODISCARD constexpr EValidateFormat ValidateFormatManip(wchar_t ch) noexcept;
 //----------------------------------------------------------------------------
-constexpr EValidateFormat ValidateFormatString(const char* str, size_t len, size_t numArgs) noexcept;
-constexpr EValidateFormat ValidateFormatString(const wchar_t* str, size_t len, size_t numArgs) noexcept;
+NODISCARD constexpr EValidateFormat ValidateFormatString(const char* str, size_t len, size_t numArgs) noexcept;
+NODISCARD constexpr EValidateFormat ValidateFormatString(const wchar_t* str, size_t len, size_t numArgs) noexcept;
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim>
-constexpr EValidateFormat ValidateFormatString(const _Char(&fmt)[_Dim], size_t numArgs) noexcept {
+NODISCARD constexpr EValidateFormat ValidateFormatString(const _Char(&fmt)[_Dim], size_t numArgs) noexcept {
     return ValidateFormatString(fmt, _Dim - 1/* - null char */, numArgs);
 }
 //----------------------------------------------------------------------------

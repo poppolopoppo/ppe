@@ -13,12 +13,12 @@ class IBufferedStreamWriter;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #define STACKLOCAL_TEXTWRITER(_NAME, _COUNT) \
-MALLOCA_POD(char, CONCAT(_Alloca_, _NAME), _COUNT); \
-FFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
+    MALLOCA_POD(char, CONCAT(_Alloca_, _NAME), _COUNT); \
+    FFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
 //----------------------------------------------------------------------------
 #define STACKLOCAL_WTEXTWRITER(_NAME, _COUNT) \
-MALLOCA_POD(wchar_t, CONCAT(_Alloca_, _NAME), _COUNT); \
-FWFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
+    MALLOCA_POD(wchar_t, CONCAT(_Alloca_, _NAME), _COUNT); \
+    FWFixedSizeTextWriter _NAME(CONCAT(_Alloca_, _NAME).MakeView())
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -58,8 +58,9 @@ public:
         Compact     = 1 << 1,
         Crlf        = 1 << 2,
         Escape      = 1 << 3,
-        TruncateR   = 1 << 4,
-        TruncateL   = 1 << 5,
+        Quote       = 1 << 4,
+        TruncateR   = 1 << 5,
+        TruncateL   = 1 << 6,
 
         _Truncate   = (TruncateL | TruncateR),
     };

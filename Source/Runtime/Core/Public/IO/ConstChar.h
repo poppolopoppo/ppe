@@ -2,9 +2,8 @@
 
 #include "Core_fwd.h"
 
-#include "Container/HashHelpers.h"
-#include "HAL/PlatformString.h"
-#include "IO/StringView.h"
+#include "Meta/hash_fwd.h"
+#include "IO/String_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------

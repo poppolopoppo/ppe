@@ -187,7 +187,7 @@ void TVector<T, _Allocator>::assign(size_type count, const_reference value) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <class... _Args>
-auto TVector<T, _Allocator>::emplace(const_iterator pos, _Args&&... args) -> iterator {
+auto TVector<T, _Allocator>::emplace(const_iterator pos, _Args&&... args) -> TEnableIfConstructible<iterator, _Args&&...> {
     Assert_NoAssume(cend() == pos || AliasesToContainer(pos));
 
     const size_type i = std::distance<const_iterator>(begin(), pos);
@@ -200,7 +200,7 @@ auto TVector<T, _Allocator>::emplace(const_iterator pos, _Args&&... args) -> ite
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <class... _Args>
-void TVector<T, _Allocator>::emplace_back(_Args&&... args) {
+auto TVector<T, _Allocator>::emplace_back(_Args&&... args) -> TEnableIfConstructible<void, _Args&&...> {
     reserve_Additional(1);
     emplace_back_AssumeNoGrow(std::forward<_Args>(args)...);
 }
@@ -223,7 +223,7 @@ void TVector<T, _Allocator>::emplace_back(T&& rvalue) {
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 template <class... _Args>
-void TVector<T, _Allocator>::emplace_back_AssumeNoGrow(_Args&&... args) {
+auto TVector<T, _Allocator>::emplace_back_AssumeNoGrow(_Args&&... args) -> TEnableIfConstructible<void, _Args&&...> {
     Assert_NoAssume(_numElements < capacity());
 
     Meta::Construct(&_data[_numElements++], std::forward<_Args>(args)...);
@@ -426,7 +426,8 @@ void TVector<T, _Allocator>::reserve_AtLeast(size_type count) {
         size_type newCapacity = capacity();
 
         // growth heuristic faster than n^2 bellow 1024 and slower above
-        for(; newCapacity < count; newCapacity = ((1 + newCapacity) * 9) / 5);
+        for(; newCapacity < count; newCapacity = ((1 + newCapacity) * 9) / 5)
+            NOOP();
 
         reserve_Exactly(newCapacity);
     }
@@ -740,7 +741,8 @@ void Add_AssertUnique(TVector<T, _Allocator>& v, Meta::TDontDeduce<T>&& elt) {
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename... _Args>
-auto Emplace_Back(TVector<T, _Allocator>& v, _Args&&... args) -> typename TVector<T, _Allocator>::iterator {
+auto Emplace_Back(TVector<T, _Allocator>& v, _Args&&... args) -> Meta::TEnableIf<std::is_constructible_v<T, _Args&&...>,
+    typename TVector<T, _Allocator>::iterator> {
     v.emplace_back(std::forward<_Args>(args)...);
     return (v.end() - 1);
 }

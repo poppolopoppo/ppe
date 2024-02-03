@@ -31,7 +31,8 @@ public:
     typedef typename storage_type::allocator_traits allocator_traits;
 
     TMemoryStream() = default;
-    explicit TMemoryStream(allocator_type&& alloc) NOEXCEPT;
+    explicit TMemoryStream(allocator_type&& ralloc) NOEXCEPT;
+    explicit TMemoryStream(const allocator_type& alloc) NOEXCEPT;
     explicit TMemoryStream(storage_type&& storage) NOEXCEPT;
     TMemoryStream(storage_type&& storage, std::streamsize size);
 
@@ -143,8 +144,12 @@ private:
 };
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-TMemoryStream<_Allocator>::TMemoryStream(allocator_type&& alloc) NOEXCEPT
-    : _storage(std::move(alloc)) {}
+TMemoryStream<_Allocator>::TMemoryStream(allocator_type&& ralloc) NOEXCEPT
+    : _storage(std::move(ralloc)) {}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+TMemoryStream<_Allocator>::TMemoryStream(const allocator_type& alloc) NOEXCEPT
+    : _storage(alloc) {}
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 TMemoryStream<_Allocator>::TMemoryStream(storage_type&& storage) NOEXCEPT

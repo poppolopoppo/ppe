@@ -221,9 +221,9 @@ bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_Overwrite(_Key
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 template <class... _Args>
-void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_AssertUnique(_Key&& key, _Args&&... args) {
+auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_AssertUnique(_Key&& key, _Args&&... args) -> iterator {
     Assert(end() == Find(key));
-    PPE::Emplace_Back(_vector, std::move(key), mapped_type(std::forward<_Args>(args)...));
+    return PPE::Emplace_Back(_vector, std::move(key), mapped_type(std::forward<_Args>(args)...));
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
@@ -246,7 +246,7 @@ bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_Overwrite(cons
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
 template <class... _Args>
-void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_AssertUnique(const _Key& key, _Args&&... args) {
+auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Emplace_AssertUnique(const _Key& key, _Args&&... args) -> iterator {
     return Emplace_AssertUnique(_Key(key), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------
@@ -273,16 +273,15 @@ bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_Overwrite(_Key&
         PPE::Emplace_Back(_vector, std::move(key), std::move(rvalue));
         return false;
     }
-    else {
-        it->second = std::move(rvalue);
-        return true;
-    }
+
+    it->second = std::move(rvalue);
+    return true;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_AssertUnique(_Key&& key, _Value&& rvalue) {
+auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_AssertUnique(_Key&& key, _Value&& rvalue) -> iterator {
     Assert(end() == Find(key));
-    PPE::Emplace_Back(_vector, std::move(key), std::move(rvalue));
+    return PPE::Emplace_Back(_vector, std::move(key), std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
@@ -291,9 +290,7 @@ bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_ReturnIfExists(
         PPE::Emplace_Back(_vector, key, value);
         return false;
     }
-    else {
-        return true;
-    }
+    return true;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
@@ -308,16 +305,15 @@ bool TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_Overwrite(const
         PPE::Emplace_Back(_vector, key, value);
         return false;
     }
-    else {
-        it->second = value;
-        return true;
-    }
+
+    it->second = value;
+    return true;
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_AssertUnique(const _Key& key, const _Value& value) {
+auto TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Insert_AssertUnique(const _Key& key, const _Value& value) -> iterator {
     Assert(end() == Find(key));
-    PPE::Emplace_Back(_vector, key, value);
+    return PPE::Emplace_Back(_vector, key, value);
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
@@ -384,34 +380,18 @@ void TAssociativeVector<_Key, _Value, _EqualTo, _Vector>::Remove_AssertExists(co
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-FTextWriter& operator <<(FTextWriter& oss, const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
-    if (associativeVector.empty()) {
-        return oss << "{}";
-    }
-    else {
-        auto it = associativeVector.begin();
-        oss << "{(" << it->first << ", " << it->second << ')';
-        ++it;
-        for (const auto end = associativeVector.end(); it != end; ++it)
-            oss << ",(" << it->first << ", " << it->second << ')';
-        return oss << '}';
-    }
-}
-//----------------------------------------------------------------------------
-template <typename _Key, typename _Value, typename _EqualTo, typename _Vector>
-FWTextWriter& operator <<(FWTextWriter& oss, const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
-    if (associativeVector.empty()) {
-        return oss << L"{}";
-    }
-    else {
-        auto it = associativeVector.begin();
-        oss << L"{(" << it->first << L", " << it->second << L')';
-        ++it;
-        for (const auto end = associativeVector.end(); it != end; ++it)
-            oss << L",(" << it->first << L", " << it->second << L')';
-        return oss << L'}';
-    }
+template <typename _Char, typename _Key, typename _Value, typename _EqualTo, typename _Vector>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TAssociativeVector<_Key, _Value, _EqualTo, _Vector>& associativeVector) {
+    if (associativeVector.empty())
+        return oss << STRING_LITERAL(_Char, "{}");
+
+    auto it = associativeVector.begin();
+    oss << STRING_LITERAL(_Char, "{(") << it->first << STRING_LITERAL(_Char, ", ") << it->second << STRING_LITERAL(_Char, ')');
+    ++it;
+    for (const auto end = associativeVector.end(); it != end; ++it)
+        oss << STRING_LITERAL(_Char, ",(") << it->first << STRING_LITERAL(_Char, ", ") << it->second << STRING_LITERAL(_Char, ')');
+
+    return oss << STRING_LITERAL(_Char, '}');
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

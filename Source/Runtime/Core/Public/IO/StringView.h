@@ -17,11 +17,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class ECase : bool {
-    Sensitive   = true,
-    Insensitive = false,
-};
-//----------------------------------------------------------------------------
 CONSTEXPR char ToLower(char ch) NOEXCEPT { return ((ch >= 'A') && (ch <= 'Z')) ? 'a' + (ch - 'A') : ch; }
 CONSTEXPR char ToUpper(char ch) NOEXCEPT { return ((ch >= 'a') && (ch <= 'z')) ? 'A' + (ch - 'a') : ch; }
 //----------------------------------------------------------------------------
@@ -105,6 +100,18 @@ public:
         _Char(*transform)(_Char) = &PPE::ToUpper;
         return parent_type::Map(transform);
     }
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // override parent member function, which takes a TMemoryView as input: we don't want to have implicit conversion between const _Const (&arr)[N] and TMemoryView<> due to '\0' handling !
+    iterator FindSubRange(const TBasicStringView& subrange) const { return parent_type::FindSubRange(subrange); }
+    bool EndsWith(_Char suffix) const  { return parent_type::EndsWith(suffix); }
+    bool StartsWith(_Char prefix) const { return parent_type::StartsWith(prefix); }
+    bool EndsWith(const TBasicStringView& suffix) const { return parent_type::EndsWith(suffix); }
+    bool StartsWith(const TBasicStringView& prefix) const { return parent_type::StartsWith(prefix); }
+    bool RangeEqual(TBasicStringView other) const { return parent_type::RangeEqual(other); }
+    NODISCARD TBasicStringView Concat(const TBasicStringView& other) const { return parent_type::Concat(other); }
+    NODISCARD TBasicStringView Concat_AssumeNotEmpty(const TBasicStringView& other) const { return parent_type::Concat_AssumeNotEmpty(other); }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     friend bool operator ==(const TBasicStringView& lhs, const TBasicStringView& rhs) NOEXCEPT { return Equals(lhs, rhs); }
     friend bool operator !=(const TBasicStringView& lhs, const TBasicStringView& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }

@@ -231,7 +231,7 @@ bool FUri::Parse(FUri& dst, FString&& src) {
 
     FStringView str = MakeStringView(dst._str);
 
-    const FStringView::iterator ischeme = str.FindSubRange("://");
+    const FStringView::iterator ischeme = str.FindSubRange( "://");
     if (str.end() != ischeme) {
         dst._scheme = str.CutBefore(ischeme);
         if (not IsAlpha(dst._scheme))

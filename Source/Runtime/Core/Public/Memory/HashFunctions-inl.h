@@ -8,23 +8,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace details {
 //----------------------------------------------------------------------------
-// Understanding the Linux Kernel
-// https://books.google.fr/books?id=h0lltXyJ8aIC&lpg=PT109&ots=gO2uM_c7FQ&dq=The%20Magic%20Constant%20linux%20hash&hl=fr&pg=PT109#v=onepage&q=The%20Magic%20Constant%20linux%20hash&f=false
-// 2^31 + 2^29 - 2^25 + 2^22 - 2^19 - 2^16 + 1
-#define GOLDEN_RATIO_PRIME_32 0x9e370001UL
-// 2^63 + 2^61 - 2^57 + 2^54 - 2^51 - 2^18 + 1
-#define GOLDEN_RATIO_PRIME_64 0x9e37fffffffc0001ULL
-//----------------------------------------------------------------------------
-#define GOLDEN_RATIO_PRIME CODE3264(GOLDEN_RATIO_PRIME_32, GOLDEN_RATIO_PRIME_64)
-//----------------------------------------------------------------------------
-// Random generated hash value seeds :
-// '0x' << Array.new(8).collect!{ rand(16).to_s(16).upcase }.join << 'ul'
-#define PPE_HASH_VALUE_SEED_32 0xD8D40566ull
-// '0x' << Array.new(16).collect!{ rand(16).to_s(16).upcase }.join << 'ull'
-#define PPE_HASH_VALUE_SEED_64 0x829787DB44E899F5ull
-//----------------------------------------------------------------------------
-#define PPE_HASH_VALUE_SEED CODE3264(PPE_HASH_VALUE_SEED_32, PPE_HASH_VALUE_SEED_64)
-//----------------------------------------------------------------------------
 // Any pod size fall back to generic hash_mem()
 template <typename T, size_t _Sz = sizeof(T)>
 struct TCRC32Hash {

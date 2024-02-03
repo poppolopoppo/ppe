@@ -206,9 +206,9 @@ bool TBaseTypeTraits<T, _Parent>::BasePromoteMove(void* src, const FAtom& dst) c
 PPE_RTTI_API void TypeNamesStart();
 PPE_RTTI_API void TypeNamesShutdown();
 // this is why these methods can return a FStringView instead of a FString:
-PPE_RTTI_API FStringView MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements);
-PPE_RTTI_API FStringView MakeListTypeName(const PTypeTraits& value);
-PPE_RTTI_API FStringView MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value);
+PPE_RTTI_API FStringLiteral MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements);
+PPE_RTTI_API FStringLiteral MakeListTypeName(const PTypeTraits& value);
+PPE_RTTI_API FStringLiteral MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
