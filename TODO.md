@@ -58,6 +58,19 @@
 - [x] A perceptual color space for image processing
     - https://bottosson.github.io/posts/oklab/
 
+- [ ] Point Cloud Rendering
+    - https://www.magnopus.com/blog/how-we-render-extremely-large-point-clouds
+    - http://indigo.diginext.fr/EN/Documents/vast2011-pbr.pdf
+    - https://www.cg.tuwien.ac.at/research/publications/2019/schuetz-2019-CLOD/
+    - https://www.cg.tuwien.ac.at/research/publications/2021/SCHUETZ-2021-PCC/
+    - https://www.cg.tuwien.ac.at/research/publications/2022/SCHUETZ-2022-PCC/SCHUETZ-2022-PCC-paper.pdf
+- [ ] Gaussian Splatting
+    - https://www.magnopus.com/blog/the-rise-of-3d-gaussian-splatting
+    - https://repo-sam.inria.fr/fungraph/3d-gaussian-splatting/
+- [ ] Media Mollecule CSG > DF > Point-Clouds
+    - https://advances.realtimerendering.com/s2015/AlexEvans_SIGGRAPH-2015-sml.pdf
+    - https://www.youtube.com/watch?v=u9KNtnCZDMI
+
 - [ ] Volumetric clouds
     - https://gist.github.com/pxv8270/e3904c49cbd8ff52cb53d95ceda3980e
     - https://github.com/AmanSachan1/Meteoros
