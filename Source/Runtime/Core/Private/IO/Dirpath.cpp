@@ -148,7 +148,7 @@ FMountingPoint FDirpath::MountingPoint() const {
     if (nullptr == _path)
         return Default;
 
-    if (not EndsWith(_path->MakeView().front(), L":"))
+    if (not EndsWith(_path->MakeView().front(), L":"_view))
         return Default;
 
     return { _path->MakeView().front() };
@@ -158,7 +158,7 @@ FDirname FDirpath::LastDirname() const {
     if (nullptr == _path)
         return Default;
 
-    if (EndsWith(_path->MakeView().back(), L":"))
+    if (EndsWith(_path->MakeView().back(), L":"_view))
         return Default;
 
     return { _path->MakeView().back() };

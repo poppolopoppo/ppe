@@ -397,7 +397,7 @@ NO_INLINE void Test_Graph_Preprocess_(FGraph& g) {
             dispatch.Join(ctx);
         }
 
-        g.OnBuildFinished(L"PreProcess");
+        g.OnBuildFinished(L"PreProcess"_view);
     });
 }
 //----------------------------------------------------------------------------
@@ -435,7 +435,7 @@ NO_INLINE void Test_Graph_Incremental_(FGraph& g) {
 
         waitAll.Join(ctx);
 
-        g.OnBuildFinished(L"Incremental");
+        g.OnBuildFinished(L"Incremental"_view);
     });
 }
 //----------------------------------------------------------------------------
@@ -452,7 +452,7 @@ struct FOutOfCoreBuilder_Incremental_ : Meta::FNonCopyableNorMovable {
 
         BatchBuild(ctx, g.Nodes);
 
-        g.OnBuildFinished(L"OutOfOrder-Incremental");
+        g.OnBuildFinished(L"OutOfOrder-Incremental"_view);
     }
 
 private:

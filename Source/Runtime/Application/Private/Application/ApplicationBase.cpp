@@ -43,47 +43,47 @@ static void SetupDebugMenuInSystray_(const FModularServices& services) {
     pWindow->ShowSystray();
 
     pWindow->AddSystrayCommand(
-        L"Debug",
-        L"Create mini dump",
+        L"Debug"_view,
+        L"Create mini dump"_view,
         []() {
         FPlatformCrash::WriteMiniDump();
     });
     pWindow->AddSystrayCommand(
-        L"Debug",
-        L"Debug break",
+        L"Debug"_view,
+        L"Debug break"_view,
         []() {
         PPE_DEBUG_BREAK();
     });
 
 #if USE_PPE_PLATFORM_DEBUG
     pWindow->AddSystrayCommand(
-        L"Memory",
-        L"Check memory",
+        L"Memory"_view,
+        L"Check memory"_view,
         []() {
         FPlatformDebug::CheckMemory();
     });
 #endif
     pWindow->AddSystrayCommand(
-        L"Memory",
-        L"Dump memory leaks",
+        L"Memory"_view,
+        L"Dump memory leaks"_view,
         []() {
         FMallocDebug::DumpMemoryLeaks();
     });
     pWindow->AddSystrayCommand(
-        L"Memory",
-        L"Release memory in modules",
+        L"Memory"_view,
+        L"Release memory in modules"_view,
         []() {
         ReleaseMemoryInModules();
     });
     pWindow->AddSystrayCommand(
-        L"Memory",
-        L"Report all tracking data",
+        L"Memory"_view,
+        L"Report all tracking data"_view,
         []() {
         ReportAllTrackingData();
     });
     pWindow->AddSystrayCommand(
-        L"Memory",
-        L"Report tracking data to CSV",
+        L"Memory"_view,
+        L"Report tracking data to CSV"_view,
     []() {
         const FDirpath savePath(FFSConstNames::SavedDir(), {
             FDirname{ L"TrackingData" } });
@@ -108,20 +108,20 @@ static void SetupDebugMenuInSystray_(const FModularServices& services) {
     });
 
     pWindow->AddSystrayCommand(
-        L"Process",
-        L"Dump memory stats",
+        L"Process"_view,
+        L"Dump memory stats"_view,
         []() {
         FCurrentProcess::Get().LogMemoryStats();
     });
     pWindow->AddSystrayCommand(
-        L"Process",
-        L"Dump process infos",
+        L"Process"_view,
+        L"Dump process infos"_view,
         []() {
         FCurrentProcess::Get().LogProcessInfos();
     });
     pWindow->AddSystrayCommand(
-        L"Process",
-        L"Dump storage infos",
+        L"Process"_view,
+        L"Dump storage infos"_view,
         []() {
         FCurrentProcess::Get().LogStorageInfos();
     });

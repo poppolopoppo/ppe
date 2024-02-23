@@ -40,8 +40,8 @@ public:
 #endif
 
     // special argument tokens
-    static const FWStringView Token_Input;
-    static const FWStringView Token_Output;
+    static const FWStringLiteral Token_Input;
+    static const FWStringLiteral Token_Output;
 
 public: // FBuildNode:
     virtual EBuildResult Scan(FScanContext& ctx) override;

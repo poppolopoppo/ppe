@@ -328,8 +328,8 @@ struct TSamplePool {
 };
 class FContainerBenchmark : public FBenchmark {
 public:
-    FContainerBenchmark(const FStringView& name)
-    :   FBenchmark{ name } {
+    FContainerBenchmark(FStringView name)
+    :   FBenchmark{ name.MakeView() } {
 #if !USE_PPE_CONTAINERS_LONGRUN
         MaxIterations = Min(MaxIterations, 1000000_u32);
         ONLY_IF_ASSERT(MaxIterations = Min(MinIterations, MaxIterations));
@@ -343,6 +343,7 @@ public:
         MaxVarianceError = 1e-9f;
 #endif
     }
+    FContainerBenchmark(FStringLiteral literal) : FContainerBenchmark(literal.MakeView()) {}
 };
 class construct_noreserve_t : public FContainerBenchmark {
 public:
@@ -956,14 +957,14 @@ NO_INLINE static void Benchmark_Containers_Exhaustive_(
 
         FStringBuilder sb;
         FBenchmark::StackedBarCharts(bm, sb);
-        VFS_WriteAll(fname, sb.Written().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll);
+        PPE_LOG_CHECKVOID(Test_Containers, VFS_WriteAll(fname, sb.Written().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll));
     }
 }
 //----------------------------------------------------------------------------
 namespace BenchmarkContainers {
 class findspeed_dense_pos_t : public FContainerBenchmark {
 public:
-    findspeed_dense_pos_t(size_t n, const FStringView& name)
+    findspeed_dense_pos_t(size_t n, FStringLiteral name)
     :   FContainerBenchmark{ name } {
         InputDim = checked_cast<u32>(n);
     }
@@ -988,7 +989,7 @@ public:
 };
 class findspeed_dense_neg_t : public FContainerBenchmark {
 public:
-    findspeed_dense_neg_t(size_t n, const FStringView& name)
+    findspeed_dense_neg_t(size_t n, FStringLiteral name)
     :   FContainerBenchmark{ name } {
         InputDim = checked_cast<u32>(n);
     }
@@ -1014,7 +1015,7 @@ public:
 } //!namespace BenchmarkContainers
 template <typename _Test, typename T, typename _Containers>
 static void Benchmark_Containers_FindSpeed_Impl_(
-    const FStringView& name,
+    const FString& name,
     _Containers& tests,
     const BenchmarkContainers::TSamplePool<T>& pool ) {
     auto bm = FBenchmark::MakeTable(
@@ -1104,7 +1105,7 @@ static void Benchmark_Containers_FindSpeed_Impl_(
 
         FStringBuilder sb;
         FBenchmark::StackedBarCharts(bm, sb);
-        VFS_WriteAll(fname, sb.Written().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll);
+        PPE_LOG_CHECKVOID(Test_Containers, VFS_WriteAll(fname, sb.Written().RawView(), EAccessPolicy::Truncate_Binary | EAccessPolicy::Roll));
     }
 #else
     auto graph = [&](const FWStringView& feature, auto projector) {
@@ -1205,13 +1206,13 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             THashSet<T> HashSet;
-            bm.Run("HashSet", HashSet, input);
+            bm.Run("HashSet"_view, HashSet, input);
         }
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             THashSet<T, Meta::TCRC32<T> > HashSet;
-            bm.Run("HashSet_CRC32", HashSet, input);
+            bm.Run("HashSet_CRC32"_view, HashSet, input);
         }
 #endif
 #if 0//!PPE_RUN_BENCHMARK_ONE_CONTAINER
@@ -1223,13 +1224,13 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
 #if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TSSEHashSet2<T> set;
-            bm.Run("SSEHashSet2", set, input);
+            bm.Run("SSEHashSet2"_view, set, input);
         }
 #endif
 #if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TSSEHashSet2<T, Meta::TCRC32<T> > set;
-            bm.Run("SSEHashSet2_CRC32", set, input);
+            bm.Run("SSEHashSet2_CRC32"_view, set, input);
     }
 #endif
 #if 0//USE_PPE_AVX2//!PPE_RUN_BENCHMARK_ONE_CONTAINER
@@ -1241,7 +1242,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TSSEHashSet4<T> set;
-            bm.Run("SSEHashSet4", set, input);
+            bm.Run("SSEHashSet4"_view, set, input);
         }
 #endif
 #if 0//PPE_RUN_EXHAUSTIVE_BENCHMARKS

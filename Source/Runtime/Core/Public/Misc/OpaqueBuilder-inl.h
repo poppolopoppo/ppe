@@ -511,7 +511,7 @@ struct value_block_inliner {
     void operator ()(object_init v) const {
         auto dst = Output->emplace<object_view>(Slab->AllocateView<key_value_view>(v.size())).begin();
         for (auto src = v.begin(), last = v.end(); src != last; ++src, ++dst) {
-            const_cast<string_view&>(dst->key).reset(Slab->AllocateString(src->key));
+            const_cast<string_view&>(dst->key).reset(Slab->AllocateString(src->key.MakeView()));
             std::visit(value_block_inliner{ const_cast<value_view&>(dst->value), Slab }, src->value);
         }
     }

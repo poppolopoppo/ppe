@@ -546,6 +546,9 @@ public:
             Unused(newM);
         }
 
+        void Append(FStringLiteral literal) {
+            Append(literal.MakeView());
+        }
         void Append(const FStringView& str) {
             const size_t oldSize = _outp.Written().SizeInBytes();
             const size_t newSize = oldSize + str.size();
@@ -603,7 +606,7 @@ FStringLiteral MakeTupleTypeName(const TMemoryView<const PTypeTraits>& elements)
 }
 //----------------------------------------------------------------------------
 FStringLiteral MakeListTypeName(const PTypeTraits& value) {
-    const FStringView valueName = value->TypeName(); // <- can recurse in this function
+    const FStringLiteral valueName = value->TypeName(); // <- can recurse in this function
     FTypeNamesBuilder_::FWritePort sb{ FTypeNamesBuilder_::Get() };
     sb.Append("TList<");
     sb.Append(valueName);
@@ -612,8 +615,8 @@ FStringLiteral MakeListTypeName(const PTypeTraits& value) {
 }
 //----------------------------------------------------------------------------
 FStringLiteral MakeDicoTypeName(const PTypeTraits& key, const PTypeTraits& value) {
-    const FStringView keyName = key->TypeName(); // outside of the lock
-    const FStringView valueName = value->TypeName(); // <- can recurse in this function
+    const FStringLiteral keyName = key->TypeName(); // outside of the lock
+    const FStringLiteral valueName = value->TypeName(); // <- can recurse in this function
     FTypeNamesBuilder_::FWritePort sb{ FTypeNamesBuilder_::Get() };
     sb.Append("TDico<");
     sb.Append(keyName);

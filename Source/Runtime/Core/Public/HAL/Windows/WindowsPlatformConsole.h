@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HAL/Generic/GenericPlatformConsole.h"
+#include "IO/StringView.h"
 
 #ifdef PLATFORM_WINDOWS
 
@@ -22,6 +23,9 @@ public:
 
     static void Write(const FStringView& text, EAttribute attrs = Default);
     static void Write(const FWStringView& text, EAttribute attrs = Default);
+
+    static void Write(FStringLiteral text, EAttribute attrs = Default) { Write(text.MakeView(), attrs); }
+    static void Write(FWStringLiteral text, EAttribute attrs = Default) { Write(text.MakeView(), attrs); }
 
     static void Flush();
 

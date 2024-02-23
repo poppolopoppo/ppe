@@ -15,6 +15,7 @@
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
+#include "Memory/SharedBuffer.h"
 #include "Memory/MemoryProvider.h"
 #include "VirtualFileSystem.h"
 #include "IO/Filename.h"
@@ -214,11 +215,10 @@ bool FJson::Load(FJson* json, const FFilename& filename) {
     if (filename.Extname() == FFSConstNames::Z())
         policy = policy + EAccessPolicy::Compress;
 
-    RAWSTORAGE(FileSystem, u8) content;
-    if (not VFS_ReadAll(&content, filename, policy))
-        return false;
+    if (const FUniqueBuffer content = VFS_ReadAll(filename, policy))
+        return Load(json, filename.ToWString(), content.MakeView().Cast<const char>());
 
-    return Load(json, filename.ToWString(), content.MakeConstView().Cast<const char>());
+    return false;
 }
 //----------------------------------------------------------------------------
 bool FJson::Load(FJson* json, const FFilename& filename, IBufferedStreamReader* input) {

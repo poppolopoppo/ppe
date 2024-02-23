@@ -58,6 +58,8 @@
 
 #include <iostream> // Test_InteractiveConsole_
 
+#include "Memory/SharedBuffer.h"
+
 namespace PPE {
 namespace Test {
 LOG_CATEGORY(, Test_RTTI)
@@ -584,11 +586,10 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
     RTTI::FMetaTransaction output(RTTI::FName(MakeStringView("UnitTest_Output")));
 
     {
-        RAWSTORAGE(FileSystem, u8) compressed;
-        if (false == VFS_ReadAll(&compressed, fname_binz, EAccessPolicy::Binary))
-            AssertNotReached();
+        const Meta::TOptional<FUniqueBuffer> compressed = VFS_ReadAll(fname_binz, EAccessPolicy::Binary);
+        AssertRelease(compressed);
 
-        RAWSTORAGE(Stream, u8) decompressed;
+        FUniqueBuffer decompressed;
         if (false == Compression::DecompressMemory(decompressed, compressed.MakeConstView()))
             AssertNotReached();
 
@@ -774,11 +775,11 @@ static NO_INLINE void Test_InteractiveConsole_() {
             else if (0 == CompareI(MakeStringView("exit"), line))
                 break;
 
-            CONSTEXPR const wchar_t filename[] = L"@in_memory";
+            CONSTEXPR const FWStringLiteral filename = L"@in_memory";
 
             try {
                 FMemoryViewReader reader(line.Cast<const u8>());
-                Lexer::FLexer lexer(reader, filename, true);
+                Lexer::FLexer lexer(reader, filename.MakeView(), true);
 
                 Parser::FParseList input;
                 input.Parse(&lexer);
@@ -946,7 +947,7 @@ static NO_INLINE void Test_Serialize_() {
             in.Root() = 165674.5454 / 0.666666;
             serialized << in;
 
-            if (not Serialize::FJson::Load(&out, L"memory", serialized.Written()))
+            if (not Serialize::FJson::Load(&out, L"memory"_view, serialized.Written()))
                 AssertNotReached();
 
             Assert(in.Root() == out.Root());
@@ -962,15 +963,15 @@ static NO_INLINE void Test_Serialize_() {
             in.Root() = in.AnsiText().Append(str);
             serialized << in;
 
-            if (not Serialize::FJson::Load(&out, L"memory", serialized.Written()))
+            if (not Serialize::FJson::Load(&out, L"memory"_view, serialized.Written()))
                 AssertNotReached();
 
             Assert(in.Root() == out.Root());
         }
     }
     {
-        const FStringView RTTITestSimple_{ FRTTITestSimple_::RTTI_FMetaClass::Get()->Name() };
-        const FStringView RTTITest_{ FRTTITest_::RTTI_FMetaClass::Get()->Name() };
+        const FStringLiteral RTTITestSimple_{ FRTTITestSimple_::RTTI_FMetaClass::Get()->Name() };
+        const FStringLiteral RTTITest_{ FRTTITest_::RTTI_FMetaClass::Get()->Name() };
         AssertRelease(RTTITestSimple_ == "RTTITestSimple_");
         AssertRelease(RTTITest_ == "RTTITest_");
     }
@@ -983,12 +984,12 @@ static NO_INLINE void Test_Serialize_() {
     }
 }
 //----------------------------------------------------------------------------
-static bool EvalExpr_(Parser::FParseContext* context, const FStringView& input) {
+static bool EvalExpr_(Parser::FParseContext* context, FStringLiteral input) {
     PPE_LOG(Test_RTTI, Info, "EvalExpr('{0}') :", input);
     try
     {
-        FMemoryViewReader reader(input.RawView());
-        Lexer::FLexer lexer(reader, L"@memory", true);
+        FMemoryViewReader reader(input.MakeView().RawView());
+        Lexer::FLexer lexer(reader, L"@memory"_view, true);
 
         Parser::FParseList parser;
         parser.Parse(&lexer);

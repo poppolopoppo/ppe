@@ -25,7 +25,7 @@ EXTERN_LOG_CATEGORY(PPE_NETWORK_API, Network)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FHttpServer::FHttpServer(
-    const FStringView& name,
+    FStringLiteral name,
     FAddress&& localhost,
     FMilliseconds timeout,
     FBytes maxContentLength )
@@ -104,7 +104,7 @@ bool FHttpServer::Servicing_ReturnKeepAlive_(FServicingPort& port) const {
         if (not FHttpRequest::Read(&request, socket, _maxContentLength))
             return false;
 
-        const bool keepAlive = (EqualsI("keep-alive", request.HTTP_Connection()));
+        const bool keepAlive = (EqualsI("keep-alive"_view, request.HTTP_Connection().MakeView()));
 
         PPE_LOG(Network, Info, "HTTP: <{0}> server request method={1}, uri={2} from {3}:{4} (keep-alive={5})",
             _name,

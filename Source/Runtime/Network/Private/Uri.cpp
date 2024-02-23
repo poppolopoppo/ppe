@@ -131,7 +131,7 @@ bool FUri::Pack(
     const size_t iport = checked_cast<size_t>(oss.size());
 
     if (path.size()) {
-        if (not StartsWith(path, "/"))
+        if (not StartsWith(path, "/"_view))
             return false;
 
         oss << path;
@@ -231,7 +231,7 @@ bool FUri::Parse(FUri& dst, FString&& src) {
 
     FStringView str = MakeStringView(dst._str);
 
-    const FStringView::iterator ischeme = str.FindSubRange( "://");
+    const FStringView::iterator ischeme = str.FindSubRange( "://"_view);
     if (str.end() != ischeme) {
         dst._scheme = str.CutBefore(ischeme);
         if (not IsAlpha(dst._scheme))

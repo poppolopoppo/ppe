@@ -484,6 +484,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FBase64& b6
 namespace Fmt {
 template <typename _Char>
 struct TBasicIndent {
+    explicit TBasicIndent(const TBasicStringLiteral<_Char>& tab) : Tab(tab.MakeView()) {}
     explicit TBasicIndent(const TBasicStringView<_Char>& tab) : Tab(tab) {}
     TBasicStringView<_Char> Tab;
     int Level = 0;
@@ -498,7 +499,9 @@ struct TBasicIndent {
 struct FIndent : TBasicIndent<char> {
     using TBasicIndent<char>::FScope;
 
-    explicit FIndent(const FStringView& tab = "    ") NOEXCEPT
+    explicit FIndent(FStringLiteral tab = "    ") NOEXCEPT
+        : TBasicIndent<char>(tab) {}
+    explicit FIndent(const FStringView& tab) NOEXCEPT
         : TBasicIndent<char>(tab) {}
 
     static FIndent UsingTabs() { return FIndent{ "\t" }; }
@@ -509,7 +512,9 @@ struct FIndent : TBasicIndent<char> {
 struct FWIndent : TBasicIndent<wchar_t> {
     using TBasicIndent<wchar_t>::FScope;
 
-    explicit FWIndent(const FWStringView& tab = L"    ") NOEXCEPT
+    explicit FWIndent(const FWStringLiteral& tab = L"    ") NOEXCEPT
+        : TBasicIndent<wchar_t>(tab) {}
+    explicit FWIndent(const FWStringView& tab) NOEXCEPT
         : TBasicIndent<wchar_t>(tab) {}
 
     static FWIndent UsingTabs() { return FWIndent{ L"\t" }; }

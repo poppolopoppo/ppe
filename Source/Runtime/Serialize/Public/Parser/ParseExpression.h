@@ -28,9 +28,9 @@ FWD_REFPTR(ParseStatement);
 class PPE_SERIALIZE_API FParseExpression : public FParseItem, Meta::FNonCopyableNorMovable {
 public:
     FParseExpression(const Lexer::FSpan& site);
-    virtual ~FParseExpression();
+    virtual ~FParseExpression() override;
 
-    virtual FStringView Alias() const = 0;
+    virtual FStringLiteral Alias() const = 0;
     virtual RTTI::FAtom Eval(FParseContext *context) const = 0;
     virtual void Invoke(FParseContext *context) const override { Eval(context); }
 };
@@ -42,9 +42,9 @@ class TLiteral : public FParseExpression {
 public:
     TLiteral(T&& rvalue, const Lexer::FSpan& site);
     TLiteral(const T& value, const Lexer::FSpan& site) : TLiteral(T(value), site) {}
-    virtual ~TLiteral();
+    virtual ~TLiteral() override;
 
-    virtual FStringView Alias() const override final { return "Literal"; }
+    virtual FStringLiteral Alias() const override final { return "Literal"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -68,9 +68,9 @@ public:
     };
 
     explicit FVariableExport(const RTTI::FName& name, const PCParseExpression& value, const EFlags scope, const Lexer::FSpan& site);
-    virtual ~FVariableExport();
+    virtual ~FVariableExport() override;
 
-    virtual FStringView Alias() const override final { return "VariableExport"; }
+    virtual FStringLiteral Alias() const override final { return "VariableExport"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -89,9 +89,9 @@ inline TRefPtr<FVariableExport> MakeVariableExport(const RTTI::FName& name, cons
 class PPE_SERIALIZE_API FVariableReference : public FParseExpression {
 public:
     FVariableReference(const RTTI::FPathName& pathName, const Lexer::FSpan& site);
-    virtual ~FVariableReference();
+    virtual ~FVariableReference() override;
 
-    virtual FStringView Alias() const override final { return "VariableReference"; }
+    virtual FStringLiteral Alias() const override final { return "VariableReference"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -110,9 +110,9 @@ template <typename _Functor>
 class TUnaryFunction : public FParseExpression {
 public:
     explicit TUnaryFunction(FString&& symbol, _Functor&& functor, const FParseExpression *expr, const Lexer::FSpan& site);
-    virtual ~TUnaryFunction();
+    virtual ~TUnaryFunction() override;
 
-    virtual FStringView Alias() const override final { return "UnaryFunction"; }
+    virtual FStringLiteral Alias() const override final { return "UnaryFunction"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -133,9 +133,9 @@ template <typename _Functor>
 class TBinaryFunction : public FParseExpression {
 public:
     explicit TBinaryFunction(FString&& symbol, _Functor&& functor, const FParseExpression *lhs, const FParseExpression *rhs, const Lexer::FSpan& site);
-    virtual ~TBinaryFunction();
+    virtual ~TBinaryFunction() override;
 
-    virtual FStringView Alias() const override final { return "BinaryFunction"; }
+    virtual FStringLiteral Alias() const override final { return "BinaryFunction"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -157,9 +157,9 @@ template <typename _Test>
 class TTernary : public FParseExpression {
 public:
     explicit TTernary(_Test&& test, const FParseExpression *pif, const FParseExpression *ptrue, const FParseExpression *pfalse, const Lexer::FSpan& site);
-    virtual ~TTernary();
+    virtual ~TTernary() override;
 
-    virtual FStringView Alias() const override final { return "Ternary"; }
+    virtual FStringLiteral Alias() const override final { return "Ternary"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -180,7 +180,7 @@ TRefPtr<TTernary<_Test>> MakeTernary(_Test&& test, const FParseExpression *pif, 
 class PPE_SERIALIZE_API FObjectDefinition : public FParseExpression {
 public:
     FObjectDefinition(const RTTI::FName& name, const Lexer::FSpan& site);
-    virtual ~FObjectDefinition();
+    virtual ~FObjectDefinition() override;
 
     void AddStatement(const FParseStatement *statement);
 
@@ -189,7 +189,7 @@ public:
         _statements.insert(_statements.end(), begin, end);
     }
 
-    virtual FStringView Alias() const override final { return "ObjectDefinition"; }
+    virtual FStringLiteral Alias() const override final { return "ObjectDefinition"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -213,9 +213,9 @@ inline TRefPtr<FObjectDefinition> MakeObjectDefinition(
 class PPE_SERIALIZE_API FPropertyReference : public FParseExpression {
 public:
     FPropertyReference(PCParseExpression&& object, const RTTI::FName& member, const Lexer::FSpan& site);
-    virtual ~FPropertyReference();
+    virtual ~FPropertyReference() override;
 
-    virtual FStringView Alias() const override final { return "PropertyReference"; }
+    virtual FStringLiteral Alias() const override final { return "PropertyReference"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -239,9 +239,9 @@ public:
 
     explicit FTupleExpr(const Lexer::FSpan& site);
     FTupleExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site);
-    virtual ~FTupleExpr();
+    virtual ~FTupleExpr() override;
 
-    virtual FStringView Alias() const override final { return "TupleExpr"; }
+    virtual FStringLiteral Alias() const override final { return "TupleExpr"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -261,14 +261,14 @@ public:
 
     explicit FArrayExpr(const Lexer::FSpan& site);
     FArrayExpr(const TMemoryView<PCParseExpression>& elts, const Lexer::FSpan& site);
-    virtual ~FArrayExpr();
+    virtual ~FArrayExpr() override;
 
     size_t size() const { return _items.size(); }
     bool empty() const { return _items.empty(); }
     void reserve(size_t capacity) { return _items.reserve(capacity); }
     void push_back(const PCParseExpression& expr) { _items.push_back(expr); }
 
-    virtual FStringView Alias() const override final { return "ArrayExpr"; }
+    virtual FStringLiteral Alias() const override final { return "ArrayExpr"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -292,14 +292,14 @@ public:
 
     explicit FDictionaryExpr(const Lexer::FSpan& site);
     FDictionaryExpr(dico_type&& rdico, const Lexer::FSpan& site);
-    virtual ~FDictionaryExpr();
+    virtual ~FDictionaryExpr() override;
 
     size_t size() const { return _dico.size(); }
     bool empty() const { return _dico.empty(); }
     void reserve(size_t capacity) { return _dico.reserve(capacity); }
     void insert(const PCParseExpression& key, const PCParseExpression& value) { _dico.Insert_AssertUnique(key, value); }
 
-    virtual FStringView Alias() const override final { return "DictionaryExpr"; }
+    virtual FStringLiteral Alias() const override final { return "DictionaryExpr"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -320,9 +320,9 @@ inline TRefPtr<FDictionaryExpr> MakeDictionaryExpr(FDictionaryExpr::dico_type&& 
 class PPE_SERIALIZE_API FCastExpr : public FParseExpression {
 public:
     FCastExpr(const RTTI::PTypeTraits& traits, const FParseExpression* expr, const Lexer::FSpan& site);
-    virtual ~FCastExpr();
+    virtual ~FCastExpr() override;
 
-    virtual FStringView Alias() const override final { return "CastExpr"; }
+    virtual FStringLiteral Alias() const override final { return "CastExpr"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -342,9 +342,9 @@ public:
     using args_type = VECTORINSITU(Parser, PCParseExpression, 4);
 
     FFunctionCall(PCParseExpression&& obj, const RTTI::FName& funcname, const TMemoryView<PCParseExpression>& args, const Lexer::FSpan& site);
-    virtual ~FFunctionCall();
+    virtual ~FFunctionCall() override;
 
-    virtual FStringView Alias() const override final { return "FunctionCall"; }
+    virtual FStringLiteral Alias() const override final { return "FunctionCall"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 
@@ -363,9 +363,9 @@ inline TRefPtr<FFunctionCall> MakeFunctionCall(PCParseExpression&& obj, const RT
 class PPE_SERIALIZE_API FSubscriptOperator : public FParseExpression {
 public:
     FSubscriptOperator(PCParseExpression&& lvalue, PCParseExpression&& subscript, const Lexer::FSpan& site);
-    virtual ~FSubscriptOperator();
+    virtual ~FSubscriptOperator() override;
 
-    virtual FStringView Alias() const override final { return "SubscriptOperator"; }
+    virtual FStringLiteral Alias() const override final { return "SubscriptOperator"; }
     virtual RTTI::FAtom Eval(FParseContext *context) const override final;
     virtual FString ToString() const override final;
 

@@ -72,7 +72,7 @@ void FHttpResponse::Read(FHttpResponse* presponse, FSocketBuffered& socket, size
         ResponseReadUntil_(&oss, socket, ' ');
 
         const FStringView protocol = Strip(oss.Written());
-        if (not EqualsI(protocol, FHttpHeader::ProtocolVersion()) )
+        if (not EqualsI(protocol, FHttpHeader::ProtocolVersion().MakeView()) )
             PPE_THROW_IT(FHttpException(EHttpStatus::HTTPVersionNotSupported, "HTTP invalid protocol version, expected HTTP/1.1"));
 
         oss.Reset();

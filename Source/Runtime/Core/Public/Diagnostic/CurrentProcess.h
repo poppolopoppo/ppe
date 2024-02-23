@@ -61,6 +61,7 @@ public:
     const FTimepoint& StartTicks() const { return _startTicks; }
 
     bool HasArgument(const FWStringView& arg) const NOEXCEPT;
+    bool HasArgument(FWStringLiteral literal) const NOEXCEPT;
 
     static bool StartedWithDebugger();
 

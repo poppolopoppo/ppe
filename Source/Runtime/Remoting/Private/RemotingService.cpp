@@ -32,8 +32,8 @@ public:
         auto swagger = MakeUnique<FSwaggerEndpoint>();
 
         _swapperCmdIndex = Application::FPlatformNotification::AddSystrayCommand(
-            L"Remoting",
-            L"Swagger/API",
+            L"Remoting"_view,
+            L"Swagger/API"_view,
             [pSwagger{ swagger.get() }, pSrv{ _srv.get() }]() {
                 const FWString swaggerUrl = ToWString(pSwagger->SwaggerApi(*pSrv));
                 FPlatformProcess::OpenURL(swaggerUrl.c_str());

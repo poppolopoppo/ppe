@@ -225,7 +225,7 @@ bool FHttpHeader::UnpackPost(FPostMap* ppost, const FHttpHeader& header) {
     return true;
 }
 //----------------------------------------------------------------------------
-FStringView FHttpHeader::ProtocolVersion() {
+FStringLiteral FHttpHeader::ProtocolVersion() {
     return "HTTP/1.1";
 }
 //----------------------------------------------------------------------------

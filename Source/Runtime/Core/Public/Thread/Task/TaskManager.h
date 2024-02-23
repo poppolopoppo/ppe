@@ -17,13 +17,13 @@ class FTaskManagerImpl;
 //----------------------------------------------------------------------------
 class PPE_CORE_API FTaskManager {
 public:
-    FTaskManager(const FStringView& name, size_t threadTag, size_t workerCount, EThreadPriority priority);
+    FTaskManager(FStringLiteral name, size_t threadTag, size_t workerCount, EThreadPriority priority);
     ~FTaskManager();
 
     FTaskManager(const FTaskManager& ) = delete;
     FTaskManager& operator =(const FTaskManager& ) = delete;
 
-    const FStringView& Name() const { return _name; }
+    FStringLiteral Name() const { return _name; }
     size_t ThreadTag() const { return _threadTag; }
     size_t WorkerCount() const { return _workerCount; }
     EThreadPriority Priority() const { return _priority; }
@@ -69,7 +69,7 @@ private:
     TUniquePtr<ITaskContext> _context;
     TUniquePtr<FTaskManagerImpl> _pimpl;
 
-    const FStringView _name;
+    const FStringLiteral _name;
     const size_t _threadTag;
     const size_t _workerCount;
     const EThreadPriority _priority;

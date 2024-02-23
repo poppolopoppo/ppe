@@ -51,6 +51,7 @@ public:
 
     size_t Write(const TMemoryView<const u8>& rawData);
     size_t Write(const FStringView& str) { return Write(str.Cast<const u8>()); }
+    size_t Write(FStringLiteral literal) { return Write(literal.MakeView()); }
 
     template <typename T> bool ReadPOD(T& assumePOD);
     template <typename T> bool PeekPOD(T& assumePOD);

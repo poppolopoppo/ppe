@@ -22,7 +22,7 @@ LOG_CATEGORY(PPE_CORE_API, Assertion)
 //----------------------------------------------------------------------------
 static FPlatformDialog::EResult AssertIgnoreOnceAlwaysAbortRetry_(
     FPlatformDialog::EIcon icon,
-    const FStringView& title, const char* msg,
+    const FStringLiteral& title, const char* msg,
     const char *file, unsigned line ) {
     FWStringBuilder oss;
 
@@ -30,11 +30,11 @@ static FPlatformDialog::EResult AssertIgnoreOnceAlwaysAbortRetry_(
         << L"----------------------------------------------------------------" << Crlf
         << MakeCStringView(file) << L'(' << line << L"): " << MakeCStringView(msg);
 
-    return FPlatformDialog::IgnoreOnceAlwaysAbortRetry(oss.ToString(), UTF_8_TO_WCHAR(title), icon);
+    return FPlatformDialog::IgnoreOnceAlwaysAbortRetry(oss.ToString(), UTF_8_TO_WCHAR(title.MakeView()), icon);
 }
 //----------------------------------------------------------------------------
 static bool ReportAssertionForDebug_(
-    const FStringView& level,
+    const FStringLiteral& level,
     const char* msg, const char* file, unsigned line) {
 #if USE_PPE_PLATFORM_DEBUG
     if (FCurrentProcess::StartedWithDebugger()) {
@@ -78,19 +78,20 @@ static bool PPE_DEBUG_SECTION DefaultDebugAssertHandler_(const char* msg, const 
 #if USE_PPE_IGNORELIST
     FIgnoreList::FIgnoreKey ignoreKey;
     ignoreKey
-        << (isEnsure ? MakeStringView("Ensure") : MakeStringView("AssertDebug"))
+        << (isEnsure ? "Ensure"_view : "AssertDebug"_view)
         << MakeCStringView(msg) << MakeCStringView(file) << MakePodView(line);
     if (FIgnoreList::HitIFP(ignoreKey) > 0)
         return false;
 #endif
 
-    if (not ReportAssertionForDebug_((isEnsure ? MakeStringView("ensure") : MakeStringView("debug assert")), msg, file, line)) {
-        PPE_LOG(Assertion, Error, "{3} '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line,
-            (isEnsure ? MakeStringView("ensure") : MakeStringView("debug assert")));
+    if (not ReportAssertionForDebug_(isEnsure ? "ensure"_literal : "debug assert"_literal, msg, file, line)) {
+        PPE_LOG(Assertion, Error, "{3} '{0}' failed !\n\t{1}({2})",
+            MakeCStringView(msg), MakeCStringView(file), line,
+            isEnsure ? "ensure"_literal : "debug assert"_literal);
         PPE_LOG_FLUSH(); // flush log before continuing to get eventual log messages
 
         switch (AssertIgnoreOnceAlwaysAbortRetry_(FPlatformDialog::Warning,
-            (isEnsure ? MakeStringView("Ensure failed !") : MakeStringView("Assert debug failed !")),
+            (isEnsure ? "Ensure failed !"_literal : "Assert debug failed !"_literal),
             msg, file, line)) {
         case FPlatformDialog::Abort:
             PPE_DEBUG_CRASH();
@@ -203,7 +204,7 @@ namespace {
 static bool PPE_DEBUG_SECTION DefaultReleaseAssertHandler_(const char* msg, const char *file, unsigned line) {
 #if USE_PPE_IGNORELIST
     FIgnoreList::FIgnoreKey ignoreKey;
-    ignoreKey << MakeStringView("AssertRelease")
+    ignoreKey << "AssertRelease"_view
         << MakeCStringView(msg) << MakeCStringView(file) << MakePodConstView(line);
     if (FIgnoreList::HitIFP(ignoreKey) > 0)
         return false;

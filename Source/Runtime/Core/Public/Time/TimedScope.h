@@ -97,11 +97,11 @@ private:
 #if USE_PPE_BENCHMARK
 class PPE_CORE_API FBenchmarkScope : public FTimedScope {
 public:
-    FBenchmarkScope(const FWStringView& category, const FWStringView& message);
+    FBenchmarkScope(FWStringLiteral category, const FWStringView& message);
     ~FBenchmarkScope();
 
 private:
-    const FWStringView _category;
+    const FWStringLiteral _category;
     const FWStringView _message;
     FBenchmarkScope* const _parentIFP;
     const size_t _depth;
@@ -112,11 +112,11 @@ private:
 #if USE_PPE_BENCHMARK
 class PPE_CORE_API FIOBenchmarkScope : public FTimedScope {
 public:
-    FIOBenchmarkScope(const FWStringView& category, const FWStringView& message, const std::streamsize* pSizeInBytes);
+    FIOBenchmarkScope(FWStringLiteral category, const FWStringView& message, const std::streamsize* pSizeInBytes);
     ~FIOBenchmarkScope();
 
 private:
-    const FWStringView _category;
+    const FWStringLiteral _category;
     const FWStringView _message;
     const std::streamsize* _pSizeInBytes;
 };

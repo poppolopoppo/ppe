@@ -19,15 +19,15 @@ using FModuleDependencyList = TMemoryView<const FStringView>;
 using FModuleStaticInitializer = TUniquePtr<IModuleInterface> (*)() NOEXCEPT;
 //----------------------------------------------------------------------------
 struct FBuildVersion {
-    FStringView Branch;
-    FStringView Revision;
-    FStringView Family;
-    FStringView Compiler;
+    FStringLiteral Branch;
+    FStringLiteral Revision;
+    FStringLiteral Family;
+    FStringLiteral Compiler;
     FTimestamp Timestamp;
 };
 //----------------------------------------------------------------------------
 struct FModuleInfo {
-    FStringView Name;
+    FStringLiteral Name;
     EModulePhase Phase{};
     EModuleUsage Usage{};
     EModuleSource Source{};
@@ -39,7 +39,7 @@ struct FModuleInfo {
     FModuleInfo() = default;
 
     CONSTEXPR FModuleInfo(
-        const FStringView& name,
+        FStringLiteral name,
         EModulePhase phase,
         EModuleUsage usage,
         EModuleSource source,

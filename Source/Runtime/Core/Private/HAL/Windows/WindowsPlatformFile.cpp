@@ -84,10 +84,10 @@ static bool EnumerateDirNonRecursive_(
 
     do {
         const auto fname = MakeCStringView(ffd.cFileName);
-        if (FILE_ATTRIBUTE_DIRECTORY & ffd.dwFileAttributes) {
-            if (fname == L"." || fname == L"..")
-                continue;
+        if (Equals(fname, L"."_view) || Equals(fname, L".."_view))
+            continue;
 
+        if (FILE_ATTRIBUTE_DIRECTORY & ffd.dwFileAttributes) {
             onSubDir(fname);
         }
         else {
@@ -476,7 +476,7 @@ bool FWindowsPlatformFile::CreateDirectoryRecursively(const char_type* dirpath, 
 
     FWStringView slice;
     FWStringView s = MakeCStringView(dirpath);
-    while (Split(s, L"\\/", slice)) {
+    while (Split(s, L"\\/"_view, slice)) {
         if (sz)
             folder[sz++] = PathSeparator;
 

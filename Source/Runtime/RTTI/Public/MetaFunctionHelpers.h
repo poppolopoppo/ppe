@@ -21,7 +21,7 @@ static PTypeTraits MakeFunctionResultTraits() {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-FMetaParameter MakeParameter(TTypeTag< T >, const FStringView& name) {
+FMetaParameter MakeParameter(TTypeTag< T >, FStringLiteral name) {
     static_assert(not std::is_pointer<T>::value, "pointers are not supported, use non-const references instead");
     return FMetaParameter(
         FName(name),
@@ -41,7 +41,7 @@ struct TMakeFunction;
     template <typename _Result, class _Class, typename... _Args> \
     struct TMakeFunction<_Result (_Class::*)(_Args...) _CONST _NOEXCEPT> { \
         template <_Result (_Class::* _Member)(_Args...) _CONST _NOEXCEPT> \
-        static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringView> parametersName) { \
+        static FMetaFunction Make(const FName& name, EFunctionFlags flags, std::initializer_list<FStringLiteral> parametersName) { \
             Assert(sizeof...(_Args) == parametersName.size()); \
             \
             auto nameIt = std::begin(parametersName); \
@@ -84,7 +84,7 @@ PPE_RTTI_MAKEFUNCTION_DEF(      , NOEXCEPT)
 template <auto _Function>
 FMetaFunction MakeFunction(
     const FName& name,
-    std::initializer_list<FStringView> parametersName,
+    std::initializer_list<FStringLiteral> parametersName,
     EFunctionFlags flags = EFunctionFlags::Public ) {
 #if !PPE_VA_OPT_SUPPORTED
     if (parametersName.size() == 1 && parametersName.begin()->empty())

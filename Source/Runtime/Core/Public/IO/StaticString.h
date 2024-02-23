@@ -29,6 +29,14 @@ struct TBasicStaticString {
         Assign(len, broadcast);
     }
 
+    CONSTEXPR TBasicStaticString(TBasicStringLiteral<_Char> str) {
+        Assign(str.MakeView());
+    }
+    CONSTEXPR TBasicStaticString& operator =(TBasicStringLiteral<_Char> str) {
+        Assign(str.MakeView());
+        return (*this);
+    }
+
     CONSTEXPR TBasicStaticString(const TBasicStringView<_Char>& str) {
         Assign(str);
     }
@@ -77,6 +85,10 @@ struct TBasicStaticString {
         Assert(capacity() >= Len + 1);
         Assert(Data[Len] == Zero);
         return Data;
+    }
+
+    CONSTEXPR void Assign(TBasicStringLiteral<_Char> literal) {
+        Assign(literal.MakeView());
     }
 
     CONSTEXPR void Assign(const TBasicStringView<_Char>& str) {

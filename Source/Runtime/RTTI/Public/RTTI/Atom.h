@@ -30,7 +30,7 @@ public:
     FTypeId TypeId() const { return _traits->TypeId(); }
     ETypeFlags TypeFlags() const { return _traits->TypeFlags(); }
     FTypeInfos TypeInfos() const { return _traits->TypeInfos(); }
-    FStringView TypeName() const { return _traits->TypeName(); }
+    FStringLiteral TypeName() const { return _traits->TypeName(); }
     size_t SizeInBytes() const { return _traits->SizeInBytes(); }
     FNamedTypeInfos NamedTypeInfos() const { return _traits->NamedTypeInfos(); }
 

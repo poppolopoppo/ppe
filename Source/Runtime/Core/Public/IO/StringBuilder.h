@@ -49,7 +49,7 @@ public:
     auto begin() const { return Written().begin(); }
     auto end() const { return Written().end(); }
 
-    const _Char* c_str() const NOEXCEPT { return Written().data(); }
+    const _Char* c_str() { return NullTerminated(); }
 
     TMemoryView<_Char> AppendUninitialized(size_t n);
 

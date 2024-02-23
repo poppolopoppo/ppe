@@ -147,7 +147,7 @@ bool IRemotingEndpoint::EndpointDispatchIFP(
         if (prm.Required) {
             PPE_LOG(Remoting, Error, "operation <{1}>: missing required param '{0}'",
                 prm.Name, Fmt::Join(operation.Path.MakeView(), Network::FUri::PathSeparator) );
-            ctx.BadRequest("missing argument");
+            ctx.BadRequest("missing argument"_view);
             return false;
         }
 

@@ -192,7 +192,7 @@ private:
 #if USE_PPE_MEMORYDOMAINS
 void ReportTrackingDatas_(
     FTextWriter& oss,
-    FStringView header,
+    FStringLiteral header,
     const TMemoryView<const FMemoryTracking * const>& datas) {
 
     if (datas.empty())

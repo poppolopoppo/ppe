@@ -194,7 +194,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-DEBUG_FUNCTION(PPE_RTTI_API, DebugTraitsTypeName, FStringView, (const RTTI::ITypeTraits& traits), {
+DEBUG_FUNCTION(PPE_RTTI_API, DebugTraitsTypeName, FStringLiteral, (const RTTI::ITypeTraits& traits), {
     return traits.TypeName();
 })
 //----------------------------------------------------------------------------

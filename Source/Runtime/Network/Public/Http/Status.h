@@ -77,9 +77,9 @@ FOREACH_HTTP_STATUSCODE(HTTP_ERRORCODE_ENUMDEF)
 #undef HTTP_ERRORCODE_ENUMDEF
 };
 //----------------------------------------------------------------------------
-PPE_NETWORK_API FStringView HttpStatusName(EHttpStatus status);
-PPE_NETWORK_API FStringView HttpStatusCode(EHttpStatus status);
-PPE_NETWORK_API FStringView HttpStatusDescription(EHttpStatus status);
+PPE_NETWORK_API FStringLiteral HttpStatusName(EHttpStatus status);
+PPE_NETWORK_API FStringLiteral HttpStatusCode(EHttpStatus status);
+PPE_NETWORK_API FStringLiteral HttpStatusDescription(EHttpStatus status);
 //----------------------------------------------------------------------------
 inline bool HttpIsInformation(EHttpStatus status) { return (size_t(status) >= 100 && size_t(status) < 200); }
 inline bool HttpIsSuccessful (EHttpStatus status) { return (size_t(status) >= 200 && size_t(status) < 300); }

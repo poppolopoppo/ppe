@@ -218,7 +218,10 @@ static void InitializeSymbols_(const FDbghelpWrapper::FLocked& dbghelp) {
     ::BOOL succeed = dbghelp->SymInitializeW(process, symbol_path, FALSE);
     Unused(succeed);
 
-    PPE_LOG(HAL, Info, "path = '{0}' -> succeed = {1:A}", symbol_path, (FALSE != succeed));
+    PPE_SLOG(HAL, Info, "initialize callstack symbols path", {
+        {"SymbolsPath", MakeCStringView(symbol_path)},
+        {"Succeed", FALSE != succeed},
+    });
 }
 //----------------------------------------------------------------------------
 } //!namespace

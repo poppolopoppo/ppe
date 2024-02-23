@@ -16,7 +16,7 @@ namespace PPE {
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Pool>
-static void CreateThreadPool_(const FStringView& name, size_t threadTag, const FPlatformThread::FThreadGroupInfo& info) {
+static void CreateThreadPool_(const FStringLiteral& name, size_t threadTag, const FPlatformThread::FThreadGroupInfo& info) {
     _Pool::Create(name, threadTag, info.NumWorkers, info.Priority);
     _Pool::Get().Start(MakeView(info.Affinities).CutBefore(info.NumWorkers));
 }

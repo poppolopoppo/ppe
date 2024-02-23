@@ -69,8 +69,8 @@ FCurrentProcess::FCurrentProcess(
     Verify(FPlatformFile::NormalizePath(_fileName));
     Verify(FPlatformFile::NormalizePath(_directory));
 
-    _dataPath = FPlatformFile::JoinPath({ _directory, L"..", L"..", L"Data" });
-    _savedPath = FPlatformFile::JoinPath({ _directory, L"..", L"Saved" });
+    _dataPath = FPlatformFile::JoinPath({ _directory, L".."_view, L".."_view, L"Data"_view });
+    _savedPath = FPlatformFile::JoinPath({ _directory, L".."_view, L"Saved"_view });
 
     Verify(FPlatformFile::NormalizePath(_dataPath));
     Verify(FPlatformFile::NormalizePath(_savedPath));
@@ -80,12 +80,12 @@ FCurrentProcess::FCurrentProcess(
     _appHandle = appHandle;
     _nShowCmd = nShowCmd;
 #if USE_PPE_PLATFORM_DEBUG
-    if (HasArgument(L"-IgnoreDebugger"))
+    if (HasArgument(L"-IgnoreDebugger"_view))
         GStartedWithDebugger = false;
 #endif
 
 #if USE_PPE_PLATFORM_DEBUG
-    if (HasArgument(L"-WaitForDebugger")) {
+    if (HasArgument(L"-WaitForDebugger"_view)) {
         GStartedWithDebugger = false; // some parts of the code won't detect that the debugger is attached
         volatile bool bTurnThisOffWhenDebuggerIsAttached = (!FPlatformDebug::IsDebuggerPresent());
         volatile size_t loopCount = 0;
@@ -98,7 +98,7 @@ FCurrentProcess::FCurrentProcess(
 #endif
 
 #if !USE_PPE_FINAL_RELEASE
-    if (HasArgument(L"-AbortOnAssert")) {
+    if (HasArgument(L"-AbortOnAssert"_view)) {
         SetAssertionHandler([](const char*, const char*, unsigned, bool isEnsure) -> bool {
             if (isEnsure) // ensures are ignored
                 return false;
@@ -113,9 +113,9 @@ FCurrentProcess::FCurrentProcess(
 #endif
 
 #if !USE_PPE_FINAL_RELEASE && USE_PPE_LOGGER
-    if (HasArgument(L"-Unattended"))
+    if (HasArgument(L"-Unattended"_view))
         FLogger::SetGlobalVerbosity(ELoggerVerbosity::Warning);
-    if (HasArgument(L"-Quiet"))
+    if (HasArgument(L"-Quiet"_view))
         FLogger::SetGlobalVerbosity(ELoggerVerbosity::None);
 #endif
 
@@ -271,11 +271,11 @@ void FCurrentProcess::DumpStorageInfos(FTextWriter& oss) const {
         };
 
         const FDirectory directories[] = {
-            { "start",      _directory  },
-            { "data",       _dataPath   },
-            { "working",    workingDir  },
-            { "user",       userDir     },
-            { "temporary",  tempDir     }
+            { "start"_view,      _directory  },
+            { "data"_view,       _dataPath   },
+            { "working"_view,    workingDir  },
+            { "user"_view,       userDir     },
+            { "temporary"_view,  tempDir     }
         };
 
         for (const FDirectory& dir : directories) {
@@ -325,6 +325,10 @@ void FCurrentProcess::DumpCrashInfos(FWTextWriter& oss) const {
     DumpPhysicalMemory(oss);
     DumpMemoryStats(oss);
     DumpStorageInfos(oss);
+}
+//----------------------------------------------------------------------------
+bool FCurrentProcess::HasArgument(FWStringLiteral literal) const NOEXCEPT {
+    return HasArgument(literal.MakeView());
 }
 //----------------------------------------------------------------------------
 bool FCurrentProcess::HasArgument(const FWStringView& arg) const NOEXCEPT {

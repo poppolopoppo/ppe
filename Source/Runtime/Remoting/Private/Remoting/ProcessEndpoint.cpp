@@ -144,17 +144,17 @@ PProcessAbout FProcessEndpoint::About() const {
 
     const ITargetPlaftorm& platform = CurrentPlatform();
     if (platform.SupportsFeature(EPlatformFeature::Client))
-        about->Features.emplace_back("client"_rtti);
+        about->Features.emplace_back("client");
     if (platform.SupportsFeature(EPlatformFeature::Server))
-        about->Features.emplace_back("cerver"_rtti);
+        about->Features.emplace_back("cerver");
     if (platform.SupportsFeature(EPlatformFeature::Editor))
-        about->Features.emplace_back("editor"_rtti);
+        about->Features.emplace_back("editor");
     if (platform.SupportsFeature(EPlatformFeature::DataGeneration))
-        about->Features.emplace_back("data_generation"_rtti);
+        about->Features.emplace_back("data_generation");
     if (platform.SupportsFeature(EPlatformFeature::HighQuality))
-        about->Features.emplace_back("high_quality"_rtti);
+        about->Features.emplace_back("high_quality");
     if (platform.SupportsFeature(EPlatformFeature::CookedData))
-        about->Features.emplace_back("cooked_data"_rtti);
+        about->Features.emplace_back("cooked_data");
 
     about->PlatformFullName = platform.FullName();
     about->PlatformDisplayName = platform.DisplayName();

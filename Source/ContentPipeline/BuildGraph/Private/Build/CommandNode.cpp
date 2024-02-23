@@ -42,7 +42,7 @@ static void FormatParameters_(
 
     for (const FWString& prm : parameters) {
         if (prm.front() == L'$') {
-            if (Equals(prm, FCommandNode::Token_Input)) {
+            if (Equals(prm.MakeView(), FCommandNode::Token_Input.MakeView())) {
                 // assumes dynamic deps <=> input files to avoid calling again FillFileNodeList()
                 for (const PBuildNode& input : sources) {
                     const FFileNode* const file = RTTI::CastChecked<FFileNode>(input.get());
@@ -50,7 +50,7 @@ static void FormatParameters_(
                 }
                 continue;
             }
-            else if (Equals(prm, FCommandNode::Token_Output)) {
+            else if (Equals(prm.MakeView(), FCommandNode::Token_Output.MakeView())) {
                 prmFormat(VFS_Unalias(destination));
                 continue;
             }
@@ -86,11 +86,10 @@ void FCommandNode::RTTI_VerifyPredicates() const PPE_THROW() {
 //  - ${input}   : input file(s), as provided via Input
 //  - ${output}  : output file, as provided by Filename
 //
-const FWStringView FCommandNode::Token_Input = L"${input}";
-const FWStringView FCommandNode::Token_Output = L"${output}";
+const FWStringLiteral FCommandNode::Token_Input = L"${input}";
+const FWStringLiteral FCommandNode::Token_Output = L"${output}";
 //----------------------------------------------------------------------------
-FCommandNode::FCommandNode() NOEXCEPT
-{}
+FCommandNode::FCommandNode() NOEXCEPT = default;
 //----------------------------------------------------------------------------
 FCommandNode::FCommandNode(
     FBuildNode* input,

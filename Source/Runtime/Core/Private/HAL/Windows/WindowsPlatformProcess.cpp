@@ -117,7 +117,7 @@ static bool OpenWebURL_(const FWStringView& url) {
 
         // If anything failed to parse right, don't continue down this path, just use shell execute.
 
-        if (browserOpenCommand.gsub(L"%1", url) == 0) {
+        if (browserOpenCommand.gsub(L"%1"_view, url) == 0) {
             // If we fail to detect the placement token we append the URL to the arguments.
             // This is for robustness, and to fix a known error case when using Internet Explorer 8.
             browserOpenCommand.append(L" \"");
@@ -132,7 +132,7 @@ static bool OpenWebURL_(const FWStringView& url) {
 
     // If all else fails just do a shell execute and let windows sort it out.  But only do it if it's an
     // HTTP or HTTPS address.  A malicious address could be problematic if just passed directly to shell execute.
-    if (StartsWithI(url, L"http://") || StartsWithI(url, L"https://")) {
+    if (StartsWithI(url, L"http://"_view) || StartsWithI(url, L"https://"_view)) {
         const FWString urlNullTerminated(url);
         const ::HINSTANCE code = ::ShellExecuteW(NULL, L"open", urlNullTerminated.data(), NULL, NULL, SW_SHOWNORMAL);
         if (intptr_t(code) > 32) // https://docs.microsoft.com/en-us/windows/desktop/api/shellapi/nf-shellapi-shellexecutea
@@ -910,7 +910,7 @@ bool FWindowsPlatformProcess::OpenURL(const wchar_t* url) {
     Assert(url);
 
     const FWStringView s{ MakeCStringView(url) };
-    return ((StartsWithI(s, L"http://") || StartsWithI(s, L"https://"))
+    return ((StartsWithI(s, L"http://"_view) || StartsWithI(s, L"https://"_view))
         ? OpenWebURL_(s)
         : OpenWithDefaultApp(url) );
 }

@@ -97,13 +97,16 @@ bool TextReader_ReadLine_(IBufferedStreamReader& iss, TBasicString<_Char>* s) {
 
         if (ch == STRING_LITERAL(_Char, '\n'))
         {
+            iss.ReadPOD(&ch);
             break;
         }
         if (ch == STRING_LITERAL(_Char, '\r'))
         {
             iss.ReadPOD(&ch); // look at next character for CRLF
-            if (ch == STRING_LITERAL(_Char, '\n'))
+            if (iss.Peek(ch) && ch == STRING_LITERAL(_Char, '\n')) {
+                iss.ReadPOD(&ch);
                 break;
+            }
 
             iss.SeekI(-static_cast<std::streamoff>(sizeof(_Char)), ESeekOrigin::Relative);
         }

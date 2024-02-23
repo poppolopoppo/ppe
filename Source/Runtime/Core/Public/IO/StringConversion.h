@@ -15,6 +15,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <typename _Char>
 struct TBasicStringConversion {
+    using stringliteral_type = TBasicStringLiteral<_Char>;
     using stringview_type = TBasicStringView<_Char>;
     using iterator = typename stringview_type::iterator;
 
@@ -30,19 +31,26 @@ struct TBasicStringConversion {
         return (*this);
     }
 
+    TBasicStringConversion(stringliteral_type input) NOEXCEPT : TBasicStringConversion(input.MakeView()) {}
+    TBasicStringConversion(stringliteral_type input, u32  base) NOEXCEPT : TBasicStringConversion(input.MakeView(), base) {}
+    TBasicStringConversion& operator =(stringliteral_type input) NOEXCEPT {
+        Input = input.empty();
+        return (*this);
+    }
+
     TBasicStringConversion(iterator first, iterator last) NOEXCEPT : Input(first, last) {}
     TBasicStringConversion(const TPair<iterator, iterator>& span) NOEXCEPT : Input(span) {}
 
     bool empty() const { return Input.empty(); }
 
     bool operator >>(bool* dst) const NOEXCEPT {
-        if (EqualsI(Input, STRING_LITERAL(_Char, "true")) ||
-            EqualsI(Input, STRING_LITERAL(_Char, "1")) ) {
+        if (EqualsI(Input, MakeStringView(STRING_LITERAL(_Char, "true"))) ||
+            EqualsI(Input, MakeStringView(STRING_LITERAL(_Char, "1"))) ) {
             *dst = true;
             return true;
         }
-        if (EqualsI(Input, STRING_LITERAL(_Char, "false")) ||
-            EqualsI(Input, STRING_LITERAL(_Char, "0")) ) {
+        if (EqualsI(Input, MakeStringView(STRING_LITERAL(_Char, "false"))) ||
+            EqualsI(Input, MakeStringView(STRING_LITERAL(_Char, "0"))) ) {
             *dst = false;
             return true;
         }
@@ -114,6 +122,8 @@ private:
     }
 };
 //----------------------------------------------------------------------------
+template <typename _Char>
+TBasicStringConversion(TBasicStringLiteral<_Char>) NOEXCEPT -> TBasicStringConversion<_Char>;
 template <typename _Char>
 TBasicStringConversion(TBasicStringView<_Char>) NOEXCEPT -> TBasicStringConversion<_Char>;
 //----------------------------------------------------------------------------

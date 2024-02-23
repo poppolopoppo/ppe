@@ -94,7 +94,14 @@ public:
     ENUM_FLAGS_FRIEND(ETypeId);
 
     FSymbol() : _type(Invalid), _ord(0) {}
-    FSymbol(ETypeId type, const FStringView& cstr, u64 ord = 0) : _type(type), _cstr(cstr), _ord(ord) {}
+
+    FSymbol(ETypeId type, FStringLiteral literal, u64 ord = 0)
+    :   FSymbol(type, literal.MakeView(), ord)
+    {}
+
+    FSymbol(ETypeId type, const FStringView& view, u64 ord = 0)
+    :   _type(type), _cstr(view), _ord(ord)
+    {}
 
     CONSTF bool IsValid() const { return (FPlatformMaths::popcnt64(u64(_type)) == 1); }
     CONSTF bool IsPrefix() const { return (_type ^ Prefix); }
@@ -136,7 +143,7 @@ TBasicTextWriter<_Char>& operator <<(
     const Lexer::FSymbol& symbol) {
     return oss << symbol.CStr();
 }
-//----------------------------------------------------------------------------
+//-------------------------,---------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

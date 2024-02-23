@@ -31,7 +31,7 @@ static ::HINSTANCE AppHandleWin32_() {
     return reinterpret_cast<::HINSTANCE>(FCurrentProcess::Get().AppHandle());
 }
 //----------------------------------------------------------------------------
-static const wchar_t GAppWindowClassName_[] = L"PPE::MainWindow";
+static const FWStringLiteral GAppWindowClassName_{ L"PPE::MainWindow" };
 //----------------------------------------------------------------------------
 static void WindowsScreenSize_(::HWND hWnd, ::LONG* screenW, ::LONG* screenH) {
     ::MONITORINFO monitor_info;
@@ -59,7 +59,7 @@ static FWindowsWindow* WindowsWindowFromHWnd_(::HWND hWnd) {
         return nullptr;
     }
 
-    return (Equals(FWStringView(className, classNameSz), GAppWindowClassName_)
+    return (Equals(FWStringView(className, classNameSz), GAppWindowClassName_.MakeView())
         ? reinterpret_cast<FWindowsWindow*>(::GetWindowLongPtr(hWnd, GWLP_USERDATA))
         : nullptr/* unkown window class */ );
 }
@@ -117,14 +117,14 @@ static void AppCreateWindowClass_() {
         ::GetSystemMetrics(SM_CYSMICON),
         LR_DEFAULTCOLOR | LR_SHARED);
     wc.hbrBackground = (::HBRUSH)COLOR_WINDOW;
-    wc.lpszClassName = GAppWindowClassName_;
+    wc.lpszClassName = GAppWindowClassName_.c_str();
 
     if (!::RegisterClassExW(&wc))
         PPE_THROW_IT(FLastErrorException("RegisterClassExW"));
 }
 //----------------------------------------------------------------------------
 static void AppDestroyWindowClass_() {
-    if (!::UnregisterClassW(GAppWindowClassName_, AppHandleWin32_()))
+    if (!::UnregisterClassW(GAppWindowClassName_.c_str(), AppHandleWin32_()))
         PPE_THROW_IT(FLastErrorException("UnregisterClassW"));
 }
 //----------------------------------------------------------------------------
@@ -426,7 +426,7 @@ bool FWindowsWindow::CreateWindow(FWindowsWindow* window, FWString&& title, cons
 
     ::HWND const hWnd = ::CreateWindowExW(
         dwStyleEx,
-        GAppWindowClassName_,
+        GAppWindowClassName_.c_str(),
         title.data(),
         dwStyle,
         checked_cast<int>(corrected.Left),

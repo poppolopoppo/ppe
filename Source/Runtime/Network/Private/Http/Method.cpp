@@ -9,7 +9,7 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FStringView HttpMethodToCStr(EHttpMethod method) {
+FStringLiteral HttpMethodToCStr(EHttpMethod method) {
     switch (method) {
     case PPE::Network::EHttpMethod::Get:
         return "GET";
@@ -36,39 +36,39 @@ FStringView HttpMethodToCStr(EHttpMethod method) {
 bool HttpMethodFromCStr(EHttpMethod* method, const FStringView& str) {
     Assert(method);
 
-    if      (EqualsI(str, "GET")) {
+    if      (EqualsI(str, "GET"_view)) {
         *method = EHttpMethod::Get;
         return true;
     }
-    else if (EqualsI(str, "HEAD")) {
+    else if (EqualsI(str, "HEAD"_view)) {
         *method = EHttpMethod::Head;
         return true;
     }
-    else if (EqualsI(str, "POST")) {
+    else if (EqualsI(str, "POST"_view)) {
         *method = EHttpMethod::Post;
         return true;
     }
-    else if (EqualsI(str, "PUT")) {
+    else if (EqualsI(str, "PUT"_view)) {
         *method = EHttpMethod::Put;
         return true;
     }
-    else if (EqualsI(str, "DELETE")) {
+    else if (EqualsI(str, "DELETE"_view)) {
         *method = EHttpMethod::Delete;
         return true;
     }
-    else if (EqualsI(str, "TRACE")) {
+    else if (EqualsI(str, "TRACE"_view)) {
         *method = EHttpMethod::Trace;
         return true;
     }
-    else if (EqualsI(str, "OPTIONS")) {
+    else if (EqualsI(str, "OPTIONS"_view)) {
         *method = EHttpMethod::Options;
         return true;
     }
-    else if (EqualsI(str, "CONNECT")) {
+    else if (EqualsI(str, "CONNECT"_view)) {
         *method = EHttpMethod::Connect;
         return true;
     }
-    else if (EqualsI(str, "PATCH")) {
+    else if (EqualsI(str, "PATCH"_view)) {
         *method = EHttpMethod::Patch;
         return true;
     }

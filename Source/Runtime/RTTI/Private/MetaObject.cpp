@@ -538,15 +538,15 @@ FMetaObject::RTTI_FMetaClass::RTTI_FMetaClass(FClassId id, const FMetaModule* mo
     // Register common RTTI functions
 
     RegisterFunction(RTTI::MakeFunction<&FMetaObject::RTTI_PropertySet>(
-        RTTI::FName("_set"), { "propertyName", "value" }) );
+        "_set"_rtti, { "propertyName", "value" }) );
     RegisterFunction(RTTI::MakeFunction<&FMetaObject::RTTI_PropertyAdd>(
-        RTTI::FName("_add"), { "propertyName", "item" }) );
+        "_add"_rtti, { "propertyName", "item" }) );
     RegisterFunction(RTTI::MakeFunction<&FMetaObject::RTTI_PropertyRemove>(
-        RTTI::FName("_remove"), { "propertyName", "item" }) );
+        "_remove"_rtti, { "propertyName", "item" }) );
     RegisterFunction(RTTI::MakeFunction<&FMetaObject::RTTI_PropertyInsert>(
-        RTTI::FName("_insert"), { "propertyName", "key", "value" }) );
+        "_insert"_rtti, { "propertyName", "key", "value" }) );
     RegisterFunction(RTTI::MakeFunction<&FMetaObject::RTTI_PropertyErase>(
-        RTTI::FName("_erase"), { "propertyName", "key" }) );
+        "_erase"_rtti, { "propertyName", "key" }) );
 }
 //----------------------------------------------------------------------------
 const FMetaClass* FMetaObject::RTTI_FMetaClass::Parent() const NOEXCEPT {

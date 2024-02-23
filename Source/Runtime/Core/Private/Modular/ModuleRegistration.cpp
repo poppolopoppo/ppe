@@ -57,7 +57,7 @@ void FModuleStaticRegistration::RegisterModule(const FModuleInfo& info) {
 
     WRITESCOPELOCK(_rwlock);
 
-    _modules.Insert_AssertUnique(info.Name, info);
+    _modules.Insert_AssertUnique(info.Name.MakeView(), info);
 }
 //----------------------------------------------------------------------------
 void FModuleStaticRegistration::UnregisterModule(const FModuleInfo& info) {
@@ -68,7 +68,7 @@ void FModuleStaticRegistration::UnregisterModule(const FModuleInfo& info) {
 
     WRITESCOPELOCK(_rwlock);
 
-    _modules.Remove_AssertExists(info.Name);
+    _modules.Remove_AssertExists(info.Name.MakeView());
     _modules.shrink_to_fit(); // release mem asap to avoid static destroy fiasco
 }
 //----------------------------------------------------------------------------
@@ -147,7 +147,7 @@ bool FModuleDynamicRegistration::UnloadIFP(const FStringView& name) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void FModuleDynamicRegistration::RegisterLibrary(
-    const FStringView& name,
+    FStringLiteral name,
     const char *anchor,
     const wchar_t *path ) {
     Assert_NoAssume(not name.empty());

@@ -94,8 +94,8 @@ public:
     NODISCARD FString ToString() const;
     NODISCARD FWString ToWString() const;
 
-    NODISCARD FStringView ToCStr(const TMemoryView<char>& dst) const;
-    NODISCARD FWStringView ToWCStr(const TMemoryView<wchar_t>& dst) const;
+    FStringView ToCStr(const TMemoryView<char>& dst) const;
+    FWStringView ToWCStr(const TMemoryView<wchar_t>& dst) const;
 
 private:
     FDirpath _dirpath;

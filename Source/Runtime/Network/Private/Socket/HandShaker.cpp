@@ -12,7 +12,7 @@ EXTERN_LOG_CATEGORY(PPE_NETWORK_API, Network)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FHandShaker::FHandShaker(
-    const FStringView& name,
+    FStringLiteral name,
     size_t workerCount,
     FListener&& rlistener,
     FServicingTask&& rdispatch,

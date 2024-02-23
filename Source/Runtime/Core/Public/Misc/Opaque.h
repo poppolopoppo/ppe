@@ -2,7 +2,8 @@
 
 #include "Core_fwd.h"
 
-#include "Allocator/Allocation.h"
+#include "Misc/Opaque_fwd.h"
+
 #include "IO/ConstChar.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
@@ -20,29 +21,6 @@
 namespace PPE {
 namespace Opaq {
 //----------------------------------------------------------------------------
-// main wrapper struct forward declaration
-//----------------------------------------------------------------------------
-using default_allocator = ALLOCATOR(Opaq);
-struct value_init;
-struct key_value_init;
-struct value_view;
-struct key_value_view;
-//----------------------------------------------------------------------------
-// trivial opaque types
-//----------------------------------------------------------------------------
-using nil = std::monostate;
-using boolean = bool;
-using integer = i64;
-using uinteger = u64;
-using floating_point = double;
-//----------------------------------------------------------------------------
-// *_init variants are used for inline definition
-//----------------------------------------------------------------------------
-using string_init = FStringView;
-using wstring_init = FWStringView;
-using array_init = TMemoryView<const value_init>;
-using object_init = TMemoryView<const key_value_init>;
-//----------------------------------------------------------------------------
 // can provide a format function to generate non-trivial strings
 //----------------------------------------------------------------------------
 using string_format = TSmallFunction<void(FTextWriter&)>;
@@ -54,16 +32,6 @@ using string_view = TRelativeView<const char>;
 using wstring_view = TRelativeView<const wchar_t>;
 using array_view = TRelativeView<const value_view>;
 using object_view = TRelativeView<const key_value_view>;
-//----------------------------------------------------------------------------
-// string literals are never copied/allocated
-//----------------------------------------------------------------------------
-using string_literal = FStringLiteral;
-using wstring_literal = FWStringLiteral;
-//----------------------------------------------------------------------------
-// external strings are used for strings not allocated inside a value_block
-//----------------------------------------------------------------------------
-using string_external = FConstChar;
-using wstring_external = FConstWChar;
 //----------------------------------------------------------------------------
 // value_init: for inline declaration
 //----------------------------------------------------------------------------
@@ -110,7 +78,7 @@ struct value_init : details::value_init_variant {
     }
 };
 struct key_value_init {
-    string_init key;
+    string_literal key;
     value_init value;
 
     friend bool operator ==(const key_value_init& lhs, const key_value_init& rhs) NOEXCEPT {

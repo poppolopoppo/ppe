@@ -11,6 +11,7 @@
 #include "IO/BufferedStreamProvider.h"
 #include "IO/FS/ConstNames.h"
 #include "VirtualFileSystemStream.h"
+#include "IO/ConstNames.h"
 #include "IO/StreamProvider.h"
 #include "IO/String.h"
 #include "IO/VirtualFileSystem.h"

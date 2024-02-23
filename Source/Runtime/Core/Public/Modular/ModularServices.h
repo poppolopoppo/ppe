@@ -37,7 +37,7 @@ public:
     }
 
     template <typename _Interface>
-    NODISCARD _Interface* GetIFP() const NOEXCEPT {
+    NODISCARD Meta::TOptionalReference<_Interface> GetIFP() const NOEXCEPT {
         if (_Interface* const p = _services.GetIFP<_Interface>())
             return p;
         return (_parent ? _parent->GetIFP<_Interface>() : nullptr);

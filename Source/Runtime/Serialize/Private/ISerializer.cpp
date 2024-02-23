@@ -42,7 +42,7 @@ static NO_INLINE FPlatformDialog::EResult ShowSerializeException_(const FTransac
 
     return FPlatformDialog::AbortRetryIgnore(
         UTF_8_TO_WCHAR(text.Written()),
-        L"caught exception while serializing",
+        L"caught exception while serializing"_view,
         FPlatformDialog::Warning );
 }
 #endif //!#if USE_PPE_EXCEPTIONS

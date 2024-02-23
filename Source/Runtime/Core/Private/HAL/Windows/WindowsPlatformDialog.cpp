@@ -2,6 +2,13 @@
 
 #include "HAL/Windows/WindowsPlatformDialog.h"
 
+#include "HAL/PlatformLowLevelIO.h"
+#include "IO/BufferedStream.h"
+#include "IO/FileStream.h"
+#include "IO/TextReader.h"
+#include "IO/TextReader_fwd.h"
+#include "Runtime/VFS/Public/VirtualFileSystem_fwd.h"
+
 #ifdef PLATFORM_WINDOWS
 
 #include "Diagnostic/Callstack.h"
@@ -53,7 +60,7 @@ static LPCWSTR SystemIcon_(FWindowsPlatformDialog::EIcon iconType) {
     }
 }
 //----------------------------------------------------------------------------
-static FWStringView ResultCaption_(FWindowsPlatformDialog::EResult result) {
+static FWStringLiteral ResultCaption_(FWindowsPlatformDialog::EResult result) {
     switch (result)
     {
     case PPE::FWindowsPlatformDialog::EResult::Ok:
@@ -97,6 +104,7 @@ static constexpr size_t DIALOG_ID_MINIDUMP  = 152;
 static constexpr size_t DIALOG_ID_COPY      = 153;
 static constexpr size_t DIALOG_ID_BREAK     = 154;
 static constexpr size_t DIALOG_ID_ICON      = 155;
+static constexpr size_t DIALOG_ID_EDIT      = 156;
 static constexpr size_t ResultToID_(FWindowsPlatformDialog::EResult button) { return 200+size_t(button); }
 static constexpr FWindowsPlatformDialog::EResult IDToResult_(size_t id) { return FWindowsPlatformDialog::EResult(id-200); }
 //----------------------------------------------------------------------------
@@ -137,42 +145,49 @@ static void Template_AddButton_(
     size_t x, size_t y,
     size_t cx, size_t cy,
     size_t id,
-    const FWStringView& caption ) {
+    const FWStringLiteral& caption ) {
     Template_AddItem_(writer, x, y, cx, cy,
         id,
         WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON, EAtomClass_::Button);
-    Template_AddCaption_(writer, caption);
+    Template_AddCaption_(writer, caption.MakeView());
     writer.WritePOD(WORD(0)); // no creation data
 }
 //----------------------------------------------------------------------------
 struct FTemplate_DialogContext_ {
     FWStringView Text;
     FWStringView Caption;
+    FConstWChar SourceFile;
+    u32 SourceLine{ 0 };
     FWindowsPlatformDialog::EType Buttons;
     ::LPCWSTR IconId;
     ::HICON IconResource;
     FDecodedCallstack DecodedCallstack;
-    TMemoryView<const FWString> CallstackFrames;
+    TMemoryView<const FWString> ListItems;
 };
 //----------------------------------------------------------------------------
 static LRESULT CALLBACK Template_TextProc_(HWND hwndDlg, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message)
     {
-        case WM_LBUTTONDBLCLK:
+        case WM_RBUTTONUP:
             {
-                DWORD selection = Edit_GetSel(hwndDlg);
-                selection = selection & 0xffff;
+                const DWORD selection = Edit_GetSel(hwndDlg);
+                const DWORD sel0 = LOWORD(selection);
+                const DWORD sel1 = HIWORD(selection);
 
                 wchar_t buffer[2048];
                 DWORD length = ::GetWindowTextW(hwndDlg, buffer, lengthof(buffer));
 
-                const FWStringView text(buffer, length);
+                FWStringView text(buffer, length);
+                if (sel0 < sel1 && sel1 < length)
+                    text = text.SubRange(sel0, sel1 - sel0);
+
+                FPlatformMisc::ClipboardCopy(text.data(), text.size());
             }
-            break;
+            return TRUE;
 
         default:
             {
-                if (::WNDPROC prevProc = reinterpret_cast<::WNDPROC>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA)))
+                if (::WNDPROC prevProc = bit_cast<::WNDPROC>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA)))
                     return ::CallWindowProc(prevProc, hwndDlg, message, wParam, lParam);
             }
     }
@@ -189,19 +204,26 @@ static LRESULT CALLBACK Template_StackProc_(HWND hwndDlg, UINT message, WPARAM w
                 HWND window = ::GetParent(hwndDlg);
                 LRESULT index = ::SendDlgItemMessage(window, DIALOG_ID_STACK, LB_GETCURSEL, 0, 0);
                 if (index != LB_ERR) {
-                    const FTemplate_DialogContext_* ctx = reinterpret_cast<const FTemplate_DialogContext_*>(::GetWindowLongPtr(window, GWLP_USERDATA));
+                    const FTemplate_DialogContext_* ctx = bit_cast<const FTemplate_DialogContext_*>(::GetWindowLongPtr(window, GWLP_USERDATA));
                     Assert(ctx);
 
-                    FPlatformMisc::ExternalTextEditor(
-                        ctx->DecodedCallstack.Frames()[index].Filename().data(),
-                        ctx->DecodedCallstack.Frames()[index].Line() );
+                    if (ctx->SourceFile) {
+                        // assume source file content
+                        FPlatformMisc::ExternalTextEditor(ctx->SourceFile, index + 1);
+                    }
+                    else {
+                        // assume callstack
+                        FPlatformMisc::ExternalTextEditor(
+                            ctx->DecodedCallstack.Frames()[index].Filename().data(),
+                            ctx->DecodedCallstack.Frames()[index].Line() );
+                    }
                 }
             }
             break;
 
         default:
             {
-                if (::WNDPROC prevProc = reinterpret_cast<::WNDPROC>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA)) )
+                if (::WNDPROC prevProc = bit_cast<::WNDPROC>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA)) )
                     return ::CallWindowProc(prevProc, hwndDlg, message, wParam, lParam);
             }
     }
@@ -214,7 +236,7 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
     case WM_INITDIALOG:
         {
             Assert(lParam);
-            const FTemplate_DialogContext_* ctx = reinterpret_cast<const FTemplate_DialogContext_*>(lParam);
+            const FTemplate_DialogContext_* ctx = bit_cast<const FTemplate_DialogContext_*>(lParam);
 
             ::SetWindowLongPtr(hwndDlg, GWLP_USERDATA, (LONG_PTR)ctx);
 
@@ -229,8 +251,12 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
             ::HWND stack = ::GetDlgItem(hwndDlg, DIALOG_ID_STACK);
             ::SetWindowLongPtr(stack, GWLP_USERDATA, ::SetWindowLongPtr(stack, GWLP_WNDPROC, (LPARAM)Template_StackProc_));
             ::SendMessage(stack, LB_SETHORIZONTALEXTENT, 4096, 0);
-            for (const FWString& str : ctx->CallstackFrames)
-                ::SendMessageW(stack, LB_ADDSTRING, 0, (LPARAM)str.c_str());
+
+            for (const FWString& it : ctx->ListItems)
+                ::SendMessageW(stack, LB_ADDSTRING, 0, (LPARAM)it.c_str());
+
+            if (ctx->SourceFile && ctx->SourceLine > 0)
+                ::SendMessageW(stack, LB_SETCURSEL, ctx->SourceLine - 1, 0);
 
             ::RECT rect;
             ::GetWindowRect(hwndDlg, &rect);
@@ -261,17 +287,27 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
 
         case DIALOG_ID_COPY:
             {
-                const FTemplate_DialogContext_* ctx = reinterpret_cast<const FTemplate_DialogContext_*>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
+                const FTemplate_DialogContext_* ctx = bit_cast<const FTemplate_DialogContext_*>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
                 Assert(ctx);
 
                 FWStringBuilder oss;
-                oss << ctx->Text << Crlf
+
+                if (ctx->SourceFile) {
+                    oss << ctx->Text << Crlf
+                    << Crlf
+                    << L"----------------------------------------------------------------" << Crlf
+                    << L"Source: " << Fmt::Quoted(ctx->SourceFile, '"') << Crlf
+                    << L"----------------------------------------------------------------" << Crlf;
+                }
+                else {
+                    oss << ctx->Text << Crlf
                     << Crlf
                     << L"----------------------------------------------------------------" << Crlf
                     << L"FCallstack:" << Crlf
                     << L"----------------------------------------------------------------" << Crlf;
+                }
 
-                for (const FWString& frame : ctx->CallstackFrames)
+                for (const FWString& frame : ctx->ListItems)
                     oss << frame << Crlf;
 
                 const FWStringView clipboard = oss.Written();
@@ -282,6 +318,16 @@ static LRESULT CALLBACK Template_DialogProc_(HWND hwndDlg, UINT message, WPARAM 
         case DIALOG_ID_BREAK:
             {
                 ::DebugBreak();
+            }
+            return TRUE;
+
+        case DIALOG_ID_EDIT:
+            {
+                const FTemplate_DialogContext_* ctx = bit_cast<const FTemplate_DialogContext_*>(::GetWindowLongPtr(hwndDlg, GWLP_USERDATA));
+                Assert(ctx);
+
+                if (ctx and ctx->SourceFile)
+                    FPlatformMisc::ExternalTextEditor(ctx->SourceFile);
             }
             return TRUE;
 
@@ -356,34 +402,57 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
     FWindowsPlatformDialog::EIcon icon,
     FWindowsPlatformDialog::EType buttons,
     const FWStringView& text,
-    const FWStringView& caption ) {
+    const FWStringView& caption,
+    FConstWChar sourceFile = nullptr,
+    u32 sourceLine = 0 ) {
     STATIC_ASSERT(sizeof(u16) == sizeof(::WORD));
     STATIC_ASSERT(sizeof(u32) == sizeof(::DWORD));
 
     FTemplate_DialogContext_ ctx;
     ctx.Text = text;
     ctx.Caption = caption;
+    ctx.SourceFile = sourceFile;
+    ctx.SourceLine = sourceLine;
     ctx.Buttons = buttons;
     ctx.IconId = SystemIcon_(icon);
     ctx.IconResource = ::LoadIconW(nullptr, ctx.IconId);
 
-    VECTORINSITU(Diagnostic, FWString, FCallstack::MaxDepth) callstackFrames;
-    {
+    VECTORINSITU(Diagnostic, FWString, FCallstack::MaxDepth) listItems;
+
+    if (not ctx.SourceFile) {
+        // no source file provided -> decode current frame callstack
         FCallstack callstack;
         FCallstack::Capture(&callstack, 5, FCallstack::MaxDepth);
 
         ctx.DecodedCallstack = FDecodedCallstack(callstack);
-        callstackFrames.reserve(ctx.DecodedCallstack.Frames().size());
+        listItems.reserve(ctx.DecodedCallstack.Frames().size());
 
         FWStringBuilder sb;
         for (const FDecodedCallstack::FFrame& frame : ctx.DecodedCallstack.Frames()) {
-            sb  << Fmt::Pointer(frame.Address())
-                << L' ' << frame.Filename()
+            sb  << L' ' << frame.Filename()
                 << L'(' << frame.Line() << L"): " << frame.Symbol();
-            callstackFrames.emplace_back(sb.ToString());
+            listItems.emplace_back(sb.ToString());
         }
     }
-    ctx.CallstackFrames = callstackFrames.MakeConstView();
+    else {
+        // source file provided -> read content and display it assuming text
+        FFileStreamReader reader = FFileStreamReader::OpenRead(sourceFile, EAccessPolicy::Binary);
+        if (reader.Good()) {
+            UsingBufferedStream(&reader, [&](IBufferedStreamReader* buffered) {
+                FTextReader text{ buffered };
+
+                FString line;
+                for (u32 index = 0; text.ReadLine(&line); index++) {
+                    listItems.push_back(StringFormat(L"{:#4}| {}", (index + 1), line));
+                    line.clear();
+                }
+            });
+        }
+        else {
+            listItems.push_back(StringFormat(L"failed to open source file: {:q}", sourceFile));
+        }
+    }
+    ctx.ListItems = listItems.MakeConstView();
 
     CONSTEXPR const size_t GAllocSize = 8192;
 
@@ -398,7 +467,7 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
 
         const auto eaten = writer.Eat(sizeof(::DLGTEMPLATE));
         Assert(Meta::IsAlignedPow2(sizeof(::DWORD), eaten.Pointer()));
-        ::LPDLGTEMPLATE const tpl = reinterpret_cast<::LPDLGTEMPLATE>(eaten.Pointer());
+        ::LPDLGTEMPLATE const tpl = bit_cast<::LPDLGTEMPLATE>(eaten.Pointer());
 
         tpl->x = 10;
         tpl->y = 10;
@@ -413,7 +482,7 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
         Template_AddCaption_(writer, caption);
 
         writer.WritePOD(::WORD(8)); // Font size
-        Template_AddCaption_(writer, L"Consolas"); // Font name
+        Template_AddCaption_(writer, L"Consolas"_view); // Font name
 
         // modal buttons
         const size_t buttonTop = size_t(tpl->cy) - 5 - buttonHeight;
@@ -421,7 +490,7 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
 
         for (FWindowsPlatformDialog::EResult button : GTemplate_AllButtons) {
             if ((size_t)button & (size_t)buttons) {
-                const FWStringView buttonCaption = ResultCaption_(button);
+                const FWStringLiteral buttonCaption = ResultCaption_(button);
                 const size_t w = buttonWidthPadding * 2 + buttonWidthPerChar * buttonCaption.size();
                 buttonRight -= buttonWidthPadding + w;
 
@@ -439,6 +508,11 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
         Template_AddButton_(writer, 75, buttonTop, 55, buttonHeight, DIALOG_ID_MINIDUMP, L"Minidump");
         tpl->cdit++;
 
+        if (sourceFile) {
+            Template_AddButton_(writer, 75+3+55, buttonTop, 32, buttonHeight, DIALOG_ID_EDIT, L"Edit");
+            tpl->cdit++;
+        }
+
         Template_AddItem_(writer, 15, 10, 32, 32,
             DIALOG_ID_ICON,
             WS_CHILD | WS_VISIBLE | SS_ICON | SS_LEFT, EAtomClass_::Static);
@@ -446,14 +520,14 @@ static FWindowsPlatformDialog::EResult Template_CreateDialogBox_(
         writer.WritePOD(::WORD(0)); // no creation data
         tpl->cdit++;
 
-        Template_AddItem_(writer, 45, 8, 550, 47,
+        Template_AddItem_(writer, 45, 8, 550, 67,
             DIALOG_ID_TEXT,
             WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_WANTRETURN | ES_READONLY, EAtomClass_::Edit);
         Template_AddCaption_(writer, text);
         writer.WritePOD(::WORD(0)); // no creation data
         tpl->cdit++;
 
-        Template_AddItem_(writer, 5, 5+50+5, 590, 227,
+        Template_AddItem_(writer, 5, 5+70+5, 590, 207,
             DIALOG_ID_STACK,
             WS_BORDER | WS_HSCROLL | WS_VSCROLL | WS_CHILD | WS_VISIBLE, EAtomClass_::ListBox);
         writer.WritePOD(::WORD(0));
@@ -479,6 +553,14 @@ auto FWindowsPlatformDialog::Show(const FWStringView& text, const FWStringView& 
     Assert(not caption.empty());
 
     return Template_CreateDialogBox_(iconType, dialogType, text, caption);
+}
+//----------------------------------------------------------------------------
+auto FWindowsPlatformDialog::FileDialog(const FConstWChar& sourceFile, u32 sourceLine, const FWStringView& text, const FWStringView& caption, EType dialogType, EIcon iconType) -> EResult {
+    Assert(sourceFile.Data);
+    Assert(not text.empty());
+    Assert(not caption.empty());
+
+    return Template_CreateDialogBox_(iconType, dialogType, text, caption, sourceFile, sourceLine);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

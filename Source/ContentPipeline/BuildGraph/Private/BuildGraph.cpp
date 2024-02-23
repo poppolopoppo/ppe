@@ -22,7 +22,7 @@ EXTERN_LOG_CATEGORY(PPE_BUILDGRAPH_API, BuildGraph)
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static EBuildResult ReportBuildStatus_(const FPipelineContext& ctx, const FWStringView& action) {
+static EBuildResult ReportBuildStatus_(const FPipelineContext& ctx, FStringLiteral action) {
     const FTimespan elapsed = FTimepoint::ElapsedSince(ctx.StartedAt());
 
     const size_t numBuilt = ctx.NumBuilt();
@@ -190,7 +190,7 @@ EBuildResult FBuildGraph::ScanNodes_(const FBuildEnvironment& env, const TMemory
         AddFiles(std::begin(ctx.OutputFiles()), std::end(ctx.OutputFiles()));
     }
 
-    return ReportBuildStatus_(ctx, L"SCAN");
+    return ReportBuildStatus_(ctx, "SCAN");
 }
 //----------------------------------------------------------------------------
 EBuildResult FBuildGraph::BuildNodes_(const FBuildEnvironment& env, const TMemoryView<const SBuildNode>& nodes) {
@@ -200,7 +200,7 @@ EBuildResult FBuildGraph::BuildNodes_(const FBuildEnvironment& env, const TMemor
     exe.QueueAndWaitFor(ctx, nodes);
     exe.WaitForAll();
 
-    return ReportBuildStatus_(ctx, L"BUILD");
+    return ReportBuildStatus_(ctx, "BUILD");
 }
 //----------------------------------------------------------------------------
 EBuildResult FBuildGraph::CleanNodes_(const FBuildEnvironment& env, const TMemoryView<const SBuildNode>& nodes) {
@@ -210,7 +210,7 @@ EBuildResult FBuildGraph::CleanNodes_(const FBuildEnvironment& env, const TMemor
     exe.QueueAndWaitFor(ctx, nodes);
     exe.WaitForAll();
 
-    return ReportBuildStatus_(ctx, L"CLEAN");
+    return ReportBuildStatus_(ctx, "CLEAN");
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

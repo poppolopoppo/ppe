@@ -18,13 +18,13 @@ namespace Network {
 class PPE_NETWORK_API FHttpServer : Meta::FNonCopyable {
 public:
     FHttpServer(
-        const FStringView& name,
+        FStringLiteral name,
         FAddress&& localhost,
         FMilliseconds timeout = 1.0_s,
         FBytes maxContentLength = 10.0_mb );
     virtual ~FHttpServer();
 
-    const FString& Name() const { return _name; }
+    FStringLiteral Name() const { return _name; }
     const FAddress& Localhost() const { return _localhost; }
 
     size_t MaxContentLength() const { return _maxContentLength; }
@@ -45,7 +45,7 @@ protected:
 private:
     bool Servicing_ReturnKeepAlive_(FServicingPort& port) const;
 
-    FString _name;
+    FStringLiteral _name;
     FAddress _localhost;
     FMilliseconds _timeout;
     size_t _maxContentLength;

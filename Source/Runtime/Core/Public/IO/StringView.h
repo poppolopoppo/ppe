@@ -70,16 +70,14 @@ public:
     TBasicStringView(const TPair<iterator, iterator>& span) NOEXCEPT : parent_type(span.first, span.second) {}
     CONSTEXPR TBasicStringView(pointer storage, size_type size) NOEXCEPT : parent_type(storage, size) {}
 
-    template <size_t _Dim>
-    CONSTEXPR TBasicStringView(const _Char(&staticChars)[_Dim]) NOEXCEPT
-    :   parent_type(staticChars, _Dim - 1/* assume null terminated string */) {
-        static_assert(_Dim, "invalid string");
-    }
+    CONSTEXPR TBasicStringView(TBasicStringLiteral<_Char> literal);
+    CONSTEXPR TBasicStringView& operator =(TBasicStringLiteral<_Char> literal);
 
-    template <size_t _Dim>
-    CONSTEXPR TBasicStringView& operator =(const _Char(&staticChars)[_Dim]) NOEXCEPT {
-        static_assert(_Dim, "invalid string");
-        return (*this = TBasicStringView(staticChars, _Dim - 1));
+    template <u32 _Len>
+    explicit CONSTEXPR TBasicStringView(const _Char (&arr)[_Len])
+    :   parent_type(&arr[0], _Len - 1/* \0 */) {
+        STATIC_ASSERT(_Len > 0);
+        Assert_NoAssume(arr[_Len - 1] == STRING_LITERAL(_Char, '\0'));
     }
 
     template <size_t _Dim>
@@ -146,6 +144,8 @@ public:
     NODISCARD CONSTEXPR bool empty() const { return (nullptr == Data); }
     NODISCARD CONSTEXPR size_t size() const { return Length; }
 
+    NODISCARD CONSTEXPR size_t SizeInBytes() const { return (Length * sizeof(_Char)); }
+
     NODISCARD CONSTEXPR const _Char* c_str() const NOEXCEPT {
         return Data;
     }
@@ -158,6 +158,15 @@ public:
 
     NODISCARD CONSTEXPR const _Char* operator *() const { return Data; }
 
+    NODISCARD CONSTEXPR _Char& operator [](size_t index) {
+        Assert(index < Length);
+        return Data[index];
+    }
+    NODISCARD CONSTEXPR _Char operator [](size_t index) const {
+        Assert(index < Length);
+        return Data[index];
+    }
+
     NODISCARD CONSTEXPR operator TBasicConstChar<_Char> () const { return ConstChar(); }
     NODISCARD CONSTEXPR operator TBasicStringView<_Char> () const { return MakeView(); }
 
@@ -168,14 +177,14 @@ public:
     friend bool operator >=(const TBasicStringLiteral& lhs, const TBasicStringLiteral& rhs) NOEXCEPT { return not operator < (lhs, rhs); }
 };
 //----------------------------------------------------------------------------
-NODISCARD CONSTEXPR FStringLiteral operator "" _literal(const char* str, size_t len) NOEXCEPT {
+NODISCARD CONSTEXPR FStringLiteral operator ""_literal(const char* str, size_t len) NOEXCEPT {
     FStringLiteral result;
     result.Data = str;
     result.Length = len;
     return result;
 }
 //----------------------------------------------------------------------------
-NODISCARD CONSTEXPR FWStringLiteral operator "" _literal(const wchar_t* wstr, size_t len) NOEXCEPT {
+NODISCARD CONSTEXPR FWStringLiteral operator ""_literal(const wchar_t* wstr, size_t len) NOEXCEPT {
     FWStringLiteral result;
     result.Data = wstr;
     result.Length = len;
@@ -187,13 +196,23 @@ TBasicTextWriter<_CharA>& operator <<(TBasicTextWriter<_CharA>& oss, const TBasi
     return oss << literal.MakeView();
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+CONSTEXPR TBasicStringView<_Char>::TBasicStringView(TBasicStringLiteral<_Char> literal)
+:   TBasicStringView(literal.MakeView())
+{}
+//----------------------------------------------------------------------------
+template <typename _Char>
+CONSTEXPR TBasicStringView<_Char>& TBasicStringView<_Char>::operator =(TBasicStringLiteral<_Char> literal) {
+    return operator =(literal.MakeView());
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-NODISCARD CONSTEXPR FStringView operator "" _view(const char* str, size_t len) NOEXCEPT {
+NODISCARD CONSTEXPR FStringView operator ""_view(const char* str, size_t len) NOEXCEPT {
     return { str, len };
 }
 //----------------------------------------------------------------------------
-NODISCARD CONSTEXPR FWStringView operator "" _view(const wchar_t* wstr, size_t len) NOEXCEPT {
+NODISCARD CONSTEXPR FWStringView operator ""_view(const wchar_t* wstr, size_t len) NOEXCEPT {
     return { wstr, len };
 }
 //----------------------------------------------------------------------------
@@ -204,12 +223,12 @@ NODISCARD TBasicStringView<_Char> MakeStringView(const TBasicString<_Char>& str)
 //----------------------------------------------------------------------------
 template <size_t _Dim>
 NODISCARD CONSTEXPR FStringView MakeStringView(const char(&cstr)[_Dim]) NOEXCEPT {
-    return FStringView(cstr);
+    return FStringView(MakeStringLiteral(cstr));
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim>
 NODISCARD CONSTEXPR FWStringView MakeStringView(const wchar_t(&cstr)[_Dim]) NOEXCEPT {
-    return FWStringView(cstr);
+    return FWStringView(MakeStringLiteral(cstr));
 }
 //----------------------------------------------------------------------------
 NODISCARD CONSTEXPR FStringView MakeStringView(const TMemoryView<const char>& view) NOEXCEPT {
@@ -490,8 +509,18 @@ NODISCARD PPE_CORE_API bool CONSTF EqualsNI(const wchar_t* lhs, const wchar_t* r
 NODISCARD PPE_CORE_API bool CONSTF Equals(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
 NODISCARD PPE_CORE_API bool CONSTF Equals(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
 //----------------------------------------------------------------------------
+NODISCARD inline bool CONSTF Equals(const FStringView& lhs, const FStringLiteral& rhs) NOEXCEPT { return Equals(lhs, rhs.MakeView()); }
+NODISCARD inline bool CONSTF Equals(const FStringLiteral& lhs, const FStringView& rhs) NOEXCEPT { return Equals(lhs.MakeView(), rhs); }
+NODISCARD inline bool CONSTF Equals(const FWStringView& lhs, const FWStringLiteral& rhs) NOEXCEPT { return Equals(lhs, rhs.MakeView()); }
+NODISCARD inline bool CONSTF Equals(const FWStringLiteral& lhs, const FWStringView& rhs) NOEXCEPT { return Equals(lhs.MakeView(), rhs); }
+//----------------------------------------------------------------------------
 NODISCARD PPE_CORE_API bool CONSTF EqualsI(const FStringView& lhs, const FStringView& rhs) NOEXCEPT;
 NODISCARD PPE_CORE_API bool CONSTF EqualsI(const FWStringView& lhs, const FWStringView& rhs) NOEXCEPT;
+//----------------------------------------------------------------------------
+NODISCARD inline bool CONSTF EqualsI(const FStringView& lhs, const FStringLiteral& rhs) NOEXCEPT { return EqualsI(lhs, rhs.MakeView()); }
+NODISCARD inline bool CONSTF EqualsI(const FStringLiteral& lhs, const FStringView& rhs) NOEXCEPT { return EqualsI(lhs.MakeView(), rhs); }
+NODISCARD inline bool CONSTF EqualsI(const FWStringView& lhs, const FWStringLiteral& rhs) NOEXCEPT { return EqualsI(lhs, rhs.MakeView()); }
+NODISCARD inline bool CONSTF EqualsI(const FWStringLiteral& lhs, const FWStringView& rhs) NOEXCEPT { return EqualsI(lhs.MakeView(), rhs); }
 //----------------------------------------------------------------------------
 NODISCARD inline bool CONSTF EqualsI(char lhs, char rhs) NOEXCEPT { return (ToUpper(lhs) == ToUpper(rhs)); }
 NODISCARD inline bool CONSTF EqualsI(wchar_t lhs, wchar_t rhs) NOEXCEPT { return (ToUpper(lhs) == ToUpper(rhs)); }
@@ -503,6 +532,15 @@ NODISCARD inline bool CONSTF Equals(wchar_t lhs, wchar_t rhs, ECase cmp) NOEXCEP
 //----------------------------------------------------------------------------
 NODISCARD PPE_CORE_API bool CONSTF StartsWith(const FStringView& str, const FStringView& prefix) NOEXCEPT;
 NODISCARD PPE_CORE_API bool CONSTF StartsWith(const FWStringView& wstr, const FWStringView& wprefix) NOEXCEPT;
+//----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API bool CONSTF StartsWithI(const FStringView& str, const FStringView& prefix) NOEXCEPT;
+NODISCARD PPE_CORE_API bool CONSTF StartsWithI(const FWStringView& wstr, const FWStringView& wprefix) NOEXCEPT;
+//----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API bool CONSTF EndsWith(const FStringView& str, const FStringView& suffix) NOEXCEPT;
+NODISCARD PPE_CORE_API bool CONSTF EndsWith(const FWStringView& wstr, const FWStringView& wsuffix) NOEXCEPT;
+//----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API bool CONSTF EndsWithI(const FStringView& str, const FStringView& suffix) NOEXCEPT;
+NODISCARD PPE_CORE_API bool CONSTF EndsWithI(const FWStringView& wstr, const FWStringView& wsuffix) NOEXCEPT;
 //----------------------------------------------------------------------------
 NODISCARD PPE_CORE_API bool CONSTF StartsWithI(const FStringView& str, const FStringView& prefix) NOEXCEPT;
 NODISCARD PPE_CORE_API bool CONSTF StartsWithI(const FWStringView& wstr, const FWStringView& wprefix) NOEXCEPT;
@@ -581,8 +619,8 @@ NODISCARD PPE_CORE_API size_t LevenshteinDistanceI(const FWStringView& lhs, cons
 NODISCARD PPE_CORE_API size_t Copy(const TMemoryView<char>& dst, const FStringView& src);
 NODISCARD PPE_CORE_API size_t Copy(const TMemoryView<wchar_t>& dst, const FWStringView& src);
 //----------------------------------------------------------------------------
-NODISCARD PPE_CORE_API const char* NullTerminated(const TMemoryView<char>& dst, const FStringView& src);
-NODISCARD PPE_CORE_API const wchar_t* NullTerminated(const TMemoryView<wchar_t>& dst, const FWStringView& src);
+PPE_CORE_API const char* NullTerminated(const TMemoryView<char>& dst, const FStringView& src);
+PPE_CORE_API const wchar_t* NullTerminated(const TMemoryView<wchar_t>& dst, const FWStringView& src);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

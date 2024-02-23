@@ -31,6 +31,7 @@ public:
     typedef TAllocatorTraits<allocator_type> allocator_traits;
 
     typedef TMemoryView<_Char> mutableview_type;
+    typedef TBasicStringLiteral<_Char> stringliteral_type;
     typedef TBasicStringView<_Char> stringview_type;
     typedef TBasicStringConversion<_Char> stringconvertion_type;
 
@@ -56,6 +57,9 @@ public:
     TBasicString(const _Char(&staticStr)[_Dim]) : TBasicString(MakeStringView(staticStr)) {}
     template <size_t _Dim>
     TBasicString& operator =(const _Char(&staticStr)[_Dim]) { assign(MakeStringView(staticStr)); return (*this); }
+
+    explicit TBasicString(const stringliteral_type& str) : TBasicString() { assign(str.MakeView()); }
+    TBasicString& operator =(const stringliteral_type& str) { assign(str.MakeView()); return (*this); }
 
     explicit TBasicString(const stringview_type& str) : TBasicString() { assign(str); }
     TBasicString& operator =(const stringview_type& str) { assign(str); return (*this); }
@@ -231,6 +235,7 @@ public:
     int compare(const _Char(&staticArray)[_Dim]) const noexcept { return Compare(MakeView(), MakeStringView(staticArray)); }
 
     TBasicString& operator +=(_Char ch) { append(ch); return (*this); }
+    TBasicString& operator +=(const stringliteral_type& str) { append(str.MakeView()); return (*this); }
     TBasicString& operator +=(const stringview_type& str) { append(str); return (*this); }
     TBasicString& operator +=(const TBasicString& other) { append(other); return (*this); }
     TBasicString& operator +=(std::initializer_list<_Char> il) { append(il.begin(), il.end()); return (*this); }
@@ -246,6 +251,9 @@ public:
     inline friend TBasicString operator +(TBasicString&& lhs, const stringview_type& rhs) { return Concat(std::move(lhs), rhs); }
     inline friend TBasicString operator +(const stringview_type& lhs, const TBasicString& rhs) { return Concat(lhs, rhs); }
     inline friend TBasicString operator +(const stringview_type& lhs, TBasicString&& rhs) { return Concat(lhs, std::move(rhs)); }
+
+    inline friend TBasicString operator +(const TBasicString& lhs, const stringliteral_type& rhs) { return Concat(lhs, rhs.MakeView()); }
+    inline friend TBasicString operator +(const stringliteral_type& lhs, const TBasicString& rhs) { return Concat(lhs.MakeView(), rhs); }
 
     inline friend TBasicString operator +(const TBasicString& lhs, _Char rhs) { return Concat(lhs, rhs); }
     inline friend TBasicString operator +(TBasicString&& lhs, _Char rhs) { return Concat(std::move(lhs), rhs); }

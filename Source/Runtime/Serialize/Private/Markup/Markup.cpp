@@ -15,6 +15,7 @@
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 #include "Memory/MemoryProvider.h"
+#include "Memory/SharedBuffer.h"
 #include "VirtualFileSystem.h"
 
 namespace PPE {
@@ -273,11 +274,10 @@ bool FMarkup::Load(FMarkup* markup, const FFilename& filename) {
     if (filename.Extname() == FFSConstNames::Z())
         policy = policy + EAccessPolicy::Compress;
 
-    RAWSTORAGE(FileSystem, u8) content;
-    if (not VFS_ReadAll(&content, filename, policy))
-        return false;
+    if (FUniqueBuffer content = VFS_ReadAll(filename, policy))
+        return Load(markup, filename, content.MakeView().Cast<const char>());
 
-    return Load(markup, filename, content.MakeConstView().Cast<const char>());
+    return false;
 }
 //----------------------------------------------------------------------------
 bool FMarkup::Load(FMarkup* markup, const FFilename& filename, const FStringView& content) {

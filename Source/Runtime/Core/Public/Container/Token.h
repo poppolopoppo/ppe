@@ -3,7 +3,6 @@
 #include "Core.h"
 
 #include "Allocator/SlabHeap.h"
-#include "External/imgui/imgui.git/imgui_internal.h"
 #include "IO/StringView.h"
 #include "IO/TextWriter_fwd.h"
 #include "Meta/Singleton.h"
@@ -162,6 +161,7 @@ public:
     using lazytoken_type = TLazyToken<_Tag, _Char, _Sensitive, _TokenTraits>;
 
     using memoryview_type = TMemoryView<_Char>;
+    using stringliteral_type = TBasicStringLiteral<_Char>;
     using stringview_type = TBasicStringView<_Char>;
 
     using equalto_type = TStringViewEqualTo<_Char, _Sensitive>;
@@ -187,8 +187,11 @@ public:
     }
 #endif
 
-    explicit TToken(const lazytoken_type& lazy) : _handle(FindOrAdd_(lazy)) {}
+    TToken(const lazytoken_type& lazy) : _handle(FindOrAdd_(lazy)) {}
     TToken& operator =(const lazytoken_type& lazy) { _handle = FindOrAdd_(lazy); return (*this); }
+
+    explicit TToken(const stringliteral_type& content) : _handle(FindOrAdd_(content.MakeView())) {}
+    TToken& operator =(const stringliteral_type& content) { _handle = FindOrAdd_(content.MakeView()); return (*this); }
 
     explicit TToken(const stringview_type& content) : _handle(FindOrAdd_(content)) {}
     TToken& operator =(const stringview_type& content) { _handle = FindOrAdd_(content); return (*this); }
@@ -201,6 +204,9 @@ public:
     TToken& operator =(const _Char(&content)[_Dim]) {
         return operator =(MakeStringView(content));
     }
+
+    operator stringliteral_type () const NOEXCEPT { return MakeLiteral(); }
+    operator stringview_type () const NOEXCEPT { return MakeView(); }
 
     NODISCARD size_t size() const { return (_handle ? _handle->Length : 0); }
     NODISCARD bool empty() const { return (_handle == nullptr); }
@@ -248,12 +254,15 @@ public:
     NODISCARD friend bool operator > (const TToken& lhs, const TToken& rhs) NOEXCEPT { return rhs.Less(lhs); }
     NODISCARD friend bool operator <=(const TToken& lhs, const TToken& rhs) NOEXCEPT { return not operator > (lhs, rhs); }
 
+    NODISCARD friend bool operator ==(const TToken& lhs, const stringliteral_type& rhs) NOEXCEPT { return lhs.Equals(rhs.MakeView()); }
+    NODISCARD friend bool operator !=(const TToken& lhs, const stringliteral_type& rhs) NOEXCEPT { return not (lhs == rhs.MakeView()); }
+    NODISCARD friend bool operator ==(const stringliteral_type& lhs, const TToken& rhs) NOEXCEPT { return rhs.Equals(lhs.MakeView()); }
+    NODISCARD friend bool operator !=(const stringliteral_type& lhs, const TToken& rhs) NOEXCEPT { return not (lhs.MakeView() == rhs); }
+
     NODISCARD friend bool operator ==(const TToken& lhs, const stringview_type& rhs) NOEXCEPT { return lhs.Equals(rhs); }
     NODISCARD friend bool operator !=(const TToken& lhs, const stringview_type& rhs) NOEXCEPT { return not (lhs == rhs); }
     NODISCARD friend bool operator ==(const stringview_type& lhs, const TToken& rhs) NOEXCEPT { return rhs.Equals(lhs); }
     NODISCARD friend bool operator !=(const stringview_type& lhs, const TToken& rhs) NOEXCEPT { return not (lhs == rhs); }
-
-    operator stringview_type () const NOEXCEPT { return MakeView(); }
 
     static void Start() { token_traits::CreateFactory(); }
     static void Shutdown() { token_traits::DestroyFactory(); }
@@ -266,6 +275,9 @@ public:
         PPE::SanitizeToken<token_traits>(str);
     }
 
+    NODISCARD static hash_t HashValue(stringliteral_type literal) NOEXCEPT {
+        return hasher_type{}(literal.MakeView());
+    }
     NODISCARD static hash_t HashValue(const stringview_type& str) NOEXCEPT {
         return hasher_type{}(str);
     }

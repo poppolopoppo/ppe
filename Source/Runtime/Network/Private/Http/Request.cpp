@@ -42,9 +42,9 @@ FHttpRequest::FHttpRequest(EHttpMethod method, FUri&& uri, FBody&& body)
 //----------------------------------------------------------------------------
 bool FHttpRequest::AskToKeepAlive() const NOEXCEPT {
     const FStringView connection = HTTP_Connection();
-    if (EqualsI(connection, "close"))
+    if (EqualsI(connection, "close"_view))
         return false;
-    if (EqualsI(connection, "keep-alive"))
+    if (EqualsI(connection, "keep-alive"_view))
         return true;
     //  Having a persistent connection is the default on HTTP/1.1 requests
     return true; // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Connection
@@ -88,7 +88,7 @@ bool FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
         RequestReadUntil_(&oss, socket);
 
         const FStringView protocol = Strip(oss.Written());
-        if (not EqualsI(protocol, FHttpHeader::ProtocolVersion()) )
+        if (not EqualsI(protocol, FHttpHeader::ProtocolVersion().MakeView()) )
             PPE_THROW_IT(FHttpException(EHttpStatus::HTTPVersionNotSupported, "HTTP invalid protocol version, expected HTTP/1.1"));
 
         oss.Reset();

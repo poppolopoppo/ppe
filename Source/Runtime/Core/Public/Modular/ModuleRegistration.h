@@ -41,7 +41,7 @@ public:
 
     template <typename _StaticModule>
     NODISCARD static CONSTEXPR FModuleInfo MakeInfo(
-        const FStringView& name,
+        FStringLiteral name,
         EModulePhase phase,
         EModuleUsage usage,
         EModuleSource source,
@@ -76,7 +76,7 @@ public:
     bool UnloadIFP(const FStringView& name) NOEXCEPT;
 
     void RegisterLibrary(
-        const FStringView& name,
+        FStringLiteral name,
         const char* anchor,
         const wchar_t* path );
     void UnregisterLibrary(const FStringView& name);

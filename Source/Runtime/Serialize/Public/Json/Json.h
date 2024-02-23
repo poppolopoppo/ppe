@@ -139,6 +139,7 @@ public:
 
     NODISCARD static bool Append(FJson* json, const FWStringView& filename, IBufferedStreamReader* input);
     NODISCARD static bool Append(FJson* json, const FWStringView& filename, const FStringView& content);
+    NODISCARD static bool Append(FJson* json, const FWStringView& filename, FStringLiteral literal) { return Append(json, filename, literal.MakeView()); }
 
 private:
     FHeapRef _alloc;
@@ -160,7 +161,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline Serialize::FJson::FText operator "" _json (const char* str, size_t len) {
+inline Serialize::FJson::FText operator ""_json (const char* str, size_t len) {
     Unused(len);
     FStringLiteral literal;
     literal.Data = str;

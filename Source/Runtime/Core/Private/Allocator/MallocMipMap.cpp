@@ -145,7 +145,7 @@ void DumpMipsFragmentation_(
         << L" (" << Fmt::CountOfElements(info.Pages.size()) << L" pages)"
         << Eol << hr << Eol;
 
-    CONSTEXPR const FWStringView AllocationTags = L"◇◈"; //L"◉○";// L"►◄"; // L"▬▭";// L"▪▫";// L"▮▯"; // L"▼▲";// L"○●";
+    CONSTEXPR const FWStringView AllocationTags = L"◇◈"_view; //L"◉○";// L"►◄"; // L"▬▭";// L"▪▫";// L"▮▯"; // L"▼▲";// L"○●";
 
     forrange(p, 0, info.Pages.size()) {
         const FMallocMipMap::FMipmapInfo::FPage& page = info.Pages[p];
@@ -354,8 +354,8 @@ u32 FMallocMipMap::FetchLargeMipsInfo(FMipmapInfo* pinfo) NOEXCEPT {
     return FetchMipmapInfos_(pinfo, LargeMips_());
 }
 void FMallocMipMap::DumpMemoryInfo(FWTextWriter& oss) {
-    DumpMipsFragmentation_(oss, L"MediumMips", &FetchMediumMipsInfo);
-    DumpMipsFragmentation_(oss, L"LargeMips", &FetchLargeMipsInfo);
+    DumpMipsFragmentation_(oss, L"MediumMips"_view, &FetchMediumMipsInfo);
+    DumpMipsFragmentation_(oss, L"LargeMips"_view, &FetchLargeMipsInfo);
 }
 #endif //!USE_PPE_FINAL_RELEASE
 //----------------------------------------------------------------------------

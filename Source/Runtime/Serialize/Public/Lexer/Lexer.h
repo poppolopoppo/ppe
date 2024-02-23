@@ -53,11 +53,13 @@ public:
     bool ReadUntil(FMatch& match, const char ch);
     bool SkipUntil(const char ch);
     bool SkipUntil(const FStringView& str);
+    bool SkipUntil(FStringLiteral literal) { return SkipUntil(literal.MakeView()); }
 
     bool ReadIFN(char ch, ECase cmp = ECase::Insensitive);
     bool ReadIFN(const FStringView& str, ECase cmp = ECase::Insensitive);
     bool ReadIFN(const PPE::Lexer::FSymbol* expected);
     bool ReadIFN(FMatch& match, const PPE::Lexer::FSymbol* expected);
+    bool ReadIFN(FStringLiteral literal, ECase cmp = ECase::Insensitive) { return ReadIFN(literal.MakeView(), cmp); }
 
     void EatWhiteSpaces();
 

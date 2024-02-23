@@ -22,7 +22,7 @@ enum class EHttpMethod {
     Patch,
 };
 //----------------------------------------------------------------------------
-PPE_NETWORK_API FStringView HttpMethodToCStr(EHttpMethod method);
+PPE_NETWORK_API FStringLiteral HttpMethodToCStr(EHttpMethod method);
 PPE_NETWORK_API bool HttpMethodFromCStr(EHttpMethod* method, const FStringView& str);
 //----------------------------------------------------------------------------
 PPE_NETWORK_API FTextWriter& operator <<(FTextWriter& oss, EHttpMethod httpMethod);

@@ -8,6 +8,7 @@
 #include "HAL/PlatformMemory.h"
 #include "IO/FormatHelpers.h"
 #include "IO/FileSystem.h"
+#include "Memory/SharedBuffer.h"
 #include "VirtualFileSystem.h"
 #include "Maths/RandomGenerator.h"
 
@@ -86,10 +87,10 @@ static void Test_VFSFrontend_() {
     VerifyRelease(VFS_FileStats(&stat, filename));
     AssertRelease(stat.SizeInBytes == TestSizeInBytes);
 
-    FRawStorage readData;
-    VerifyRelease(VFS_ReadAll(&readData, filename, EAccessPolicy::Binary));
-    AssertRelease(readData.SizeInBytes() == TestSizeInBytes);
-    AssertRelease(FPlatformMemory::Memcmp(readData.data(), writeData.data(), writeData.SizeInBytes()) == 0);
+    const Meta::TOptional<FUniqueBuffer> readData = VFS_ReadAll(filename, EAccessPolicy::Binary);
+    AssertRelease(readData);
+    AssertRelease(readData->SizeInBytes() == TestSizeInBytes);
+    AssertRelease(FPlatformMemory::Memcmp(readData->Data(), writeData.data(), writeData.SizeInBytes()) == 0);
 
     VerifyRelease(VFS_RemoveFile(filename));
     VerifyRelease(VFS_FileExists(filename) == false);
@@ -98,7 +99,7 @@ static void Test_VFSFrontend_() {
     HASHSET(FileSystem, FFilename) bmpFiles;
     HASHSET(FileSystem, FFilename) generatedFiles;
 
-    const FWStringView subDirs[] = {
+    const FWStringLiteral subDirs[] = {
         L"a",
         L"a/0",
         L"a/1",
@@ -115,7 +116,7 @@ static void Test_VFSFrontend_() {
     HASHSET(FileSystem, FFilename) subDirFilenames[lengthof(subDirs)];
 
     forrange(s, 0, lengthof(subDirs)) {
-        const FWStringView& subDir = subDirs[s];
+        const FWStringLiteral& subDir = subDirs[s];
         FDirpath subPath = testpath;
         subPath.Concat(subDir);
         VerifyRelease(VFS_CreateDirectory(subPath));
@@ -170,7 +171,7 @@ static void Test_VFSFrontend_() {
     }
 
     forrange(s, 0, lengthof(subDirs)) {
-        const FWStringView& subDir = subDirs[s];
+        const FWStringLiteral& subDir = subDirs[s];
         FDirpath subPath = testpath;
         subPath.Concat(subDir);
         VerifyRelease(VFS_DirectoryExists(subPath));
@@ -187,7 +188,7 @@ static void Test_VFSFrontend_() {
 
     {
         HASHSET(FileSystem, FFilename) txtGlobs;
-        const size_t numGlobTxtFiles = VFS_GlobFiles(testpath, L"*.txt", true/* recursive */, [&txtGlobs](const FFilename& fname) {
+        const size_t numGlobTxtFiles = VFS_GlobFiles(testpath, L"*.txt"_view, true/* recursive */, [&txtGlobs](const FFilename& fname) {
             txtGlobs.emplace_AssertUnique(fname);
         });
         AssertRelease(numGlobTxtFiles == txtGlobs.size());
@@ -196,7 +197,7 @@ static void Test_VFSFrontend_() {
         AssertRelease(txtGlobs == txtFiles);
 
         HASHSET(FileSystem, FFilename) bmpGlobs;
-        const size_t numGlobBmpFiles = VFS_GlobFiles(testpath, L"*.bmp", true/* recursive */, [&bmpGlobs](const FFilename& fname) {
+        const size_t numGlobBmpFiles = VFS_GlobFiles(testpath, L"*.bmp"_view, true/* recursive */, [&bmpGlobs](const FFilename& fname) {
             bmpGlobs.emplace_AssertUnique(fname);
         });
         AssertRelease(numGlobBmpFiles == bmpGlobs.size());

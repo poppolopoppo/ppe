@@ -61,9 +61,9 @@ static constexpr size_t GSlidingWindow_ = 150;
 #endif
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static NO_INLINE void Test_Allocator_ST_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static NO_INLINE void Test_Allocator_ST_(const FWStringLiteral& category, const FWStringLiteral& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     Unused(category); Unused(name);
-    BENCHMARK_SCOPE(category, name);
+    BENCHMARK_SCOPE(category, name.MakeView());
 
     using allocator_traits = TAllocatorTraits<_Alloc>;
 
@@ -79,9 +79,9 @@ static NO_INLINE void Test_Allocator_ST_(const FWStringView& category, const FWS
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static NO_INLINE void Test_Allocator_MT_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static NO_INLINE void Test_Allocator_MT_(const FWStringLiteral& category, const FWStringLiteral& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     Unused(category); Unused(name);
-    BENCHMARK_SCOPE(category, name);
+    BENCHMARK_SCOPE(category, name.MakeView());
 
     using allocator_traits = TAllocatorTraits<_Alloc>;
 
@@ -98,9 +98,9 @@ static NO_INLINE void Test_Allocator_MT_(const FWStringView& category, const FWS
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static NO_INLINE void Test_Allocator_Sliding_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes, size_t window) {
+static NO_INLINE void Test_Allocator_Sliding_(const FWStringLiteral& category, const FWStringLiteral& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes, size_t window) {
     Unused(category); Unused(name);
-    BENCHMARK_SCOPE(category, name);
+    BENCHMARK_SCOPE(category, name.MakeView());
 
     const size_t numDeallocs = Max(size_t(1), window / 10);
 
@@ -133,9 +133,9 @@ static NO_INLINE void Test_Allocator_Sliding_(const FWStringView& category, cons
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static NO_INLINE void Test_Allocator_Trashing_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static NO_INLINE void Test_Allocator_Trashing_(const FWStringLiteral& category, const FWStringLiteral& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     Unused(category); Unused(name);
-    BENCHMARK_SCOPE(category, name);
+    BENCHMARK_SCOPE(category, name.MakeView());
 
     using allocator_traits = TAllocatorTraits<_Alloc>;
     STACKLOCAL_POD_ARRAY(FAllocatorBlock, blockAddrs, blockSizes.size());
@@ -152,7 +152,7 @@ static NO_INLINE void Test_Allocator_Trashing_(const FWStringView& category, con
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static NO_INLINE void Test_Allocator_Dangling_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static NO_INLINE void Test_Allocator_Dangling_(const FWStringLiteral& category, const FWStringLiteral& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     FTaskManager& threadPool = FHighPriorityThreadPool::Get();
 
     const size_t numWorkers = threadPool.WorkerCount();
@@ -197,7 +197,7 @@ static NO_INLINE void Test_Allocator_Dangling_(const FWStringView& category, con
     std::mt19937 rand(rdevice());
 
     Unused(category); Unused(name);
-    BENCHMARK_SCOPE(category, name);
+    BENCHMARK_SCOPE(category, name.MakeView());
 
     // tries to free blocks from another thread from which they were allocated initially
     // this is the worst case for many allocators and can be *VERY* slow
@@ -212,9 +212,9 @@ static NO_INLINE void Test_Allocator_Dangling_(const FWStringView& category, con
 }
 //----------------------------------------------------------------------------
 template <typename _Alloc>
-static NO_INLINE void Test_Allocator_Realloc_(const FWStringView& category, const FWStringView& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
+static NO_INLINE void Test_Allocator_Realloc_(const FWStringLiteral& category, const FWStringLiteral& name, _Alloc&& allocator, const TMemoryView<const size_t>& blockSizes) {
     Unused(category); Unused(name);
-    BENCHMARK_SCOPE(category, name);
+    BENCHMARK_SCOPE(category, name.MakeView());
 
     using allocator_traits = TAllocatorTraits<_Alloc>;
 
@@ -235,51 +235,51 @@ static NO_INLINE void Test_Allocator_Realloc_(const FWStringView& category, cons
 //----------------------------------------------------------------------------
 template <typename _Alloc>
 static NO_INLINE void Test_Allocator_(
-    const FWStringView& name, _Alloc&& allocator,
+    const FWStringLiteral& name, _Alloc&& allocator,
     const TMemoryView<const size_t>& smallBlocks,
     const TMemoryView<const size_t>& largeBlocks,
     const TMemoryView<const size_t>& mixedBlocks ) {
     STATIC_ASSERT(is_allocator_v<_Alloc>);
     PPE_LOG(Test_Allocators, Emphasis, "benchmarking <{0}>", name);
 
-    BENCHMARK_SCOPE(name, L"Global");
+    BENCHMARK_SCOPE(name, L"Global"_view);
     {
-        BENCHMARK_SCOPE(name, L"Single-Thread");
+        BENCHMARK_SCOPE(name, L"Single-Thread"_view);
 
         Test_Allocator_ST_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks);
         Test_Allocator_ST_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
         Test_Allocator_ST_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks);
     }
     {
-        BENCHMARK_SCOPE(name, L"Multi-Thread");
+        BENCHMARK_SCOPE(name, L"Multi-Thread"_view);
 
         Test_Allocator_MT_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks);
         Test_Allocator_MT_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
         Test_Allocator_MT_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks);
     }
     {
-        BENCHMARK_SCOPE(name, L"Sliding");
+        BENCHMARK_SCOPE(name, L"Sliding"_view);
 
         Test_Allocator_Sliding_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks, GSlidingWindow_);
         Test_Allocator_Sliding_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks, GSlidingWindow_);
         Test_Allocator_Sliding_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks, GSlidingWindow_);
     }
     {
-        BENCHMARK_SCOPE(name, L"Trashing");
+        BENCHMARK_SCOPE(name, L"Trashing"_view);
 
         Test_Allocator_Trashing_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks);
         Test_Allocator_Trashing_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
         Test_Allocator_Trashing_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks);
     }
     {
-        BENCHMARK_SCOPE(name, L"Dangling");
+        BENCHMARK_SCOPE(name, L"Dangling"_view);
 
         Test_Allocator_Dangling_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks);
         Test_Allocator_Dangling_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
         Test_Allocator_Dangling_(name, L"mixed blocks", std::forward<_Alloc>(allocator), mixedBlocks);
     }
     {
-        BENCHMARK_SCOPE(name, L"Realloc");
+        BENCHMARK_SCOPE(name, L"Realloc"_view);
 
         Test_Allocator_Realloc_(name, L"small blocks", std::forward<_Alloc>(allocator), smallBlocks);
         Test_Allocator_Realloc_(name, L"large blocks", std::forward<_Alloc>(allocator), largeBlocks);
@@ -302,10 +302,10 @@ static NO_INLINE void Test_CompressedRadixTrie_() {
 
     forrange(loop, 0, 30) {
         {
-            const size_t numBlocks = 2000;
+            constexpr size_t numBlocks = 2000;
             blocks.reserve(numBlocks);
             forrange(i, 0, numBlocks)
-                blocks.emplace_back(uintptr_t(i) << 10, rng.NextU32(1, 8192) << 1);
+                blocks.emplace_back(static_cast<uintptr_t>(i) << 10u, rng.NextU32(1, 8192) << 1);
 
             rng.Shuffle(blocks.MakeView());
         }
@@ -385,7 +385,7 @@ static NO_INLINE void Test_CompressedRadixTrie_() {
 }
 //----------------------------------------------------------------------------
 template <typename _Word>
-static NO_INLINE void Test_BitTree_Impl_(FWStringView name, TMemoryView<const u32> sizes) {
+static NO_INLINE void Test_BitTree_Impl_(FWStringLiteral name, TMemoryView<const u32> sizes) {
     Unused(name);
     TAllocaBlock<_Word> alloc;
     TBitTree<_Word, false> tree;
@@ -500,7 +500,7 @@ struct FDummyForPool_ {
 static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* context) {
     PPE_LOG(Test_Allocators, Emphasis, "testing TAtomicPool<>");
 
-    BENCHMARK_SCOPE(L"Pool", L"TAtomicPool<>");
+    BENCHMARK_SCOPE(L"Pool", L"TAtomicPool<>"_view);
 
     using pool_type = TAtomicPool<FDummyForPool_, 32>;
     //using index_type = pool_type::index_type;
@@ -556,11 +556,11 @@ static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* con
 }
 //----------------------------------------------------------------------------
 template <typename _MemoryPool>
-static NO_INLINE void Test_MemoryPool_Impl_(FWStringView name, ETaskPriority priority, ITaskContext* context) {
+static NO_INLINE void Test_MemoryPool_Impl_(FWStringLiteral name, ETaskPriority priority, ITaskContext* context) {
     Unused(name);
     PPE_LOG(Test_Allocators, Emphasis, "testing {0}", name);
 
-    BENCHMARK_SCOPE(L"Pool", name);
+    BENCHMARK_SCOPE(L"Pool", name.MakeView());
 
     using pool_type = _MemoryPool;
     using index_type = typename pool_type::index_type;
@@ -625,7 +625,7 @@ static NO_INLINE void Test_MemoryPools_(ETaskPriority priority, ITaskContext* co
 //----------------------------------------------------------------------------
 template <typename _CachedMemoryPool>
 static NO_INLINE void Test_CachedMemoryPool_Impl_(
-    FWStringView name,
+    FWStringLiteral name,
     const FRandomGenerator& seed,
     TMemoryView<const FDummyForPool_> uniq,
     TMemoryView<const FDummyForPool_> shuf,
@@ -656,7 +656,7 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
 
     pool_type pool;
 
-    BENCHMARK_SCOPE(L"Pool", name);
+    BENCHMARK_SCOPE(L"Pool", name.MakeView());
 
     forrange(loop, 0, numLoops) {
         AssertRelease(0 == pool.NumCachedBlocks());

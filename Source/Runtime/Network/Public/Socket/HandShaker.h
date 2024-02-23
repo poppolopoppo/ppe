@@ -22,7 +22,7 @@ FWD_REFPTR(HandShaker);
 class PPE_NETWORK_API FHandShaker : public FRefCountable {
 public:
     FHandShaker(
-        const FStringView& name,
+        FStringLiteral name,
         size_t workerCount,
         FListener&& rlistener,
         FServicingTask&& rdispatch,

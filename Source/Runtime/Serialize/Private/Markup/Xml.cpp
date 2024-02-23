@@ -29,11 +29,11 @@ bool FXml::ReadHeaders(Lexer::FLexer& lexer) {
                 AssertNotReached();
 
             FString* pdst;
-            if (EqualsI("version", id.MakeView()))
+            if (EqualsI("version"_view, id.MakeView()))
                 pdst = &_version;
-            else if (EqualsI("encoding", id.MakeView()))
+            else if (EqualsI("encoding"_view, id.MakeView()))
                 pdst = &_encoding;
-            else if (EqualsI("standalone", id.MakeView()))
+            else if (EqualsI("standalone"_view, id.MakeView()))
                 pdst = &_standalone;
             else
                 pdst = nullptr;

@@ -71,8 +71,8 @@ void FTestApp::Shutdown() {
 
     FAppNotify::NotifySystray(
         FAppNotify::ENotificationIcon::Warning,
-        L"Shutting down TestApp",
-        L"Oh yeah");
+        L"Shutting down TestApp"_view,
+        L"Oh yeah"_view);
 
     FAppNotify::SetTaskbarState(FAppNotify::ETaskbarState::Normal);
 

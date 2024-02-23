@@ -40,6 +40,7 @@ template <typename _Char>
 class TBasicRegexp {
 public:
     using regex_type = std::basic_regex<_Char, TRegexTraits<_Char>>;
+    using stringliteral_type = TBasicStringLiteral<_Char>;
     using stringview_type = TBasicStringView<_Char>;
 
     using FMatches = std::match_results<
@@ -51,6 +52,9 @@ public:
     TBasicRegexp(const stringview_type& expr) : TBasicRegexp(expr, ECase::Sensitive) {}
     TBasicRegexp(const stringview_type& expr, ECase sensitive);
 
+    TBasicRegexp(stringliteral_type expr) : TBasicRegexp(expr.MakeView()) {}
+    TBasicRegexp(stringliteral_type expr, ECase sensitive) : TBasicRegexp(expr.MakeView(), sensitive) {}
+
     explicit TBasicRegexp(regex_type&& re) NOEXCEPT : _re(std::move(re)) {}
 
     TBasicRegexp(const TBasicRegexp& ) = delete;
@@ -60,6 +64,8 @@ public:
     TBasicRegexp& operator =(TBasicRegexp&& ) = default;
 
     void Compile(const stringview_type& expr, ECase sensitive = ECase::Sensitive);
+    void Compile(const stringliteral_type& expr, ECase sensitive = ECase::Sensitive) { Compile(expr.MakeView(), sensitive); }
+
     bool Match(const stringview_type& str) const;
 
     bool Capture(FMatches* outMatch, const stringview_type& str) const;
@@ -67,7 +73,12 @@ public:
     template <typename... _Args>
     bool Capture(const stringview_type& str, _Args*... pDst) const;
     template <typename... _Args>
+    bool Capture(FStringLiteral str, _Args*... pDst) const { return Capture(str.MakeView(), std::forward<_Args*>(pDst)...); }
+
+    template <typename... _Args>
     bool Capture(TTuple<_Args...>* outArgs, const stringview_type& str) const;
+    template <typename... _Args>
+    bool Capture(TTuple<_Args...>* outArgs, FStringLiteral str) const { return Capture(outArgs, str.MakeView()); }
 
     void Swap(TBasicRegexp& other) NOEXCEPT;
 

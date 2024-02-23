@@ -21,7 +21,7 @@ static THREAD_LOCAL FBenchmarkScope* GBenchmarkLastScopeTLS_ = nullptr;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBenchmarkScope::FBenchmarkScope(const FWStringView& category, const FWStringView& message)
+FBenchmarkScope::FBenchmarkScope(FWStringLiteral category, const FWStringView& message)
     : _category(category)
     , _message(message)
     , _parentIFP(GBenchmarkLastScopeTLS_)
@@ -48,7 +48,7 @@ FBenchmarkScope::~FBenchmarkScope() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FIOBenchmarkScope::FIOBenchmarkScope(const FWStringView& category, const FWStringView& message, const std::streamsize* pSizeInBytes)
+FIOBenchmarkScope::FIOBenchmarkScope(FWStringLiteral category, const FWStringView& message, const std::streamsize* pSizeInBytes)
     : _category(category)
     , _message(message)
     , _pSizeInBytes(pSizeInBytes) {

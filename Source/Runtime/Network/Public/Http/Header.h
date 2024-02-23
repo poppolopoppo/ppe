@@ -54,7 +54,7 @@ public:
     NODISCARD static bool PackPost(FHttpHeader* pheader, const FPostMap& post);
     NODISCARD static bool UnpackPost(FPostMap* ppost, const FHttpHeader& header);
 
-    static FStringView ProtocolVersion();
+    static FStringLiteral ProtocolVersion();
 
 public:
     FStringView HTTP_Accept() const NOEXCEPT;

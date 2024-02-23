@@ -48,21 +48,21 @@ static int StatusShutdownPhase_(int phaseStatus, EModulePhase phase) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FModularDomain::FModularDomain(const FStringView& name, EModuleUsage usage) NOEXCEPT
+FModularDomain::FModularDomain(FStringLiteral name, EModuleUsage usage) NOEXCEPT
 :   _name(name)
 ,   _usage(usage)
 ,   _parent(nullptr)
 ,   _phaseStatus(0)
-,   _services(name) {
+,   _services(name.MakeView()) {
     Assert_NoAssume(not _name.empty());
 }
 //----------------------------------------------------------------------------
-FModularDomain::FModularDomain(const FStringView& name, EModuleUsage usage, FModularDomain& parent) NOEXCEPT
+FModularDomain::FModularDomain(FStringLiteral name, EModuleUsage usage, FModularDomain& parent) NOEXCEPT
 :   _name(name)
 ,   _usage(usage)
 ,   _parent(&parent)
 ,   _phaseStatus(0)
-,   _services(name, &parent._services) {
+,   _services(name.MakeView(), &parent._services) {
     Assert_NoAssume(not _name.empty());
 }
 //----------------------------------------------------------------------------

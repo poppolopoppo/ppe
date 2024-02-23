@@ -225,7 +225,7 @@ size_t FWindowsPlatformMisc::NumCoresWithSMT() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 FString FWindowsPlatformMisc::OSName() {
-    FStringView osname;
+    FStringLiteral osname;
     if (::IsWindowsXPOrGreater())
         osname = "Windows XP";
     if (::IsWindowsXPSP1OrGreater())
@@ -251,23 +251,23 @@ FString FWindowsPlatformMisc::OSName() {
     if (::IsWindows10OrGreater())
         osname = "Windows 10 or greater";
 
-    const FStringView arch = (Is64bitOperatingSystem()
-        ? MakeStringView("64 bit")
-        : MakeStringView("32 bit") );
+    const FStringLiteral arch = (Is64bitOperatingSystem()
+        ? "64 bit"_literal
+        : "32 bit"_literal );
 
-    const FStringView clientOrServer = (::IsWindowsServer()
-        ? MakeStringView("Server")
-        : MakeStringView("Client") );
+    const FStringLiteral clientOrServer = (::IsWindowsServer()
+        ? "Server"_literal
+        : "Client"_literal );
 
     // build version number
     // https://docs.microsoft.com/fr-fr/windows/desktop/SysInfo/getting-the-system-version
-    const wchar_t* systemDLL = L"kernel32.dll";
+    const FWStringLiteral systemDLL = L"kernel32.dll";
 
     ::DWORD dummy = 0;
-    const ::DWORD cbInfo = ::GetFileVersionInfoSizeExW(FILE_VER_GET_NEUTRAL, systemDLL, &dummy);
+    const ::DWORD cbInfo = ::GetFileVersionInfoSizeExW(FILE_VER_GET_NEUTRAL, *systemDLL, &dummy);
 
     STACKLOCAL_POD_ARRAY(u8, buffer, checked_cast<size_t>(cbInfo));
-    ::GetFileVersionInfoExW(FILE_VER_GET_NEUTRAL, systemDLL, 0, checked_cast<::DWORD>(buffer.size()), buffer.data());
+    ::GetFileVersionInfoExW(FILE_VER_GET_NEUTRAL, *systemDLL, 0, checked_cast<::DWORD>(buffer.size()), buffer.data());
 
     void *p = nullptr;
     ::UINT size = 0;
@@ -510,8 +510,12 @@ bool FWindowsPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t li
 
     CONSTEXPR const FWStringLiteral editors[] = {
         // visual studio code (appdata)
-        L"\"%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\bin\\code.cmd\" -g \"{0}:{1}:{2}\"",
+        L"\"%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\bin\\code\" -g \"{0}:{1}:{2}\"",
         // visual studio code (classic program files)
+        L"\"%ProgramFiles%\\Microsoft VS Code\\bin\\code\" -g \"{0}:{1}:{2}\"",
+        // visual studio code (batch file in appdata)
+        L"\"%LOCALAPPDATA%\\Programs\\Microsoft VS Code\\bin\\code.cmd\" -g \"{0}:{1}:{2}\"",
+        // visual studio code (batch file in classic program files)
         L"\"%ProgramFiles%\\Microsoft VS Code\\bin\\code.cmd\" -g \"{0}:{1}:{2}\"",
         // sublime text 3
         L"\"%ProgramFiles%\\Sublime Text 3\\sublime_text.exe\" \"{0}:{1}:{2}\"",

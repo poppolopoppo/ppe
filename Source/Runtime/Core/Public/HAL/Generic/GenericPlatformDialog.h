@@ -53,18 +53,19 @@ public: // must be defined for every platform
         kIgnoreOnceAlwaysAbortRetry = size_t(kIgnoreOnceAlwaysAbort) | size_t(EResult::Retry),
     };
 
-    static EResult Show(const FWStringView &text, const FWStringView &caption, EType dialogType, EIcon iconType) = delete;
+    static EResult Show(const FWStringView& text, const FWStringView& caption, EType dialogType, EIcon iconType) = delete;
+    static EResult FileDialog(const FConstWChar& sourceFile, u32 sourceLine, const FWStringView& text, const FWStringView& caption, EType dialogType, EIcon iconType) = delete;
 
 public: // generic helpers
-    static EResult Notify(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Information);
-    static EResult OkCancel(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Question);
-    static EResult AbortRetryIgnore(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Error);
-    static EResult YesNoCancel(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Question);
-    static EResult YesNo(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Question);
-    static EResult RetryCancel(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Exclamation);
-    static EResult CancelTryContinue(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Exclamation);
-    static EResult IgnoreOnceAlwaysAbort(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Error);
-    static EResult IgnoreOnceAlwaysAbortRetry(const FWStringView &text, const FWStringView &caption, EIcon iconType = EIcon::Error);
+    static EResult Notify(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Information);
+    static EResult OkCancel(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Question);
+    static EResult AbortRetryIgnore(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Error);
+    static EResult YesNoCancel(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Question);
+    static EResult YesNo(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Question);
+    static EResult RetryCancel(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Exclamation);
+    static EResult CancelTryContinue(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Exclamation);
+    static EResult IgnoreOnceAlwaysAbort(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Error);
+    static EResult IgnoreOnceAlwaysAbortRetry(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Error);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -17,6 +17,7 @@ public:
     using FGenericPlatformDialog::EType;
 
     static EResult Show(const FWStringView& text, const FWStringView& caption, EType dialogType, EIcon iconType);
+    static EResult FileDialog(const FConstWChar& sourceFile, u32 sourceLine, const FWStringView& text, const FWStringView& caption, EType dialogType, EIcon iconType);
 
 };
 //----------------------------------------------------------------------------

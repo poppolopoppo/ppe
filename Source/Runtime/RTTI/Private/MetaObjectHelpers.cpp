@@ -488,7 +488,7 @@ private:
                 else
                     oss << " --- ";
 
-                CONSTEXPR const FStringView typenames[] = {
+                CONSTEXPR const FStringLiteral typenames[] = {
                     "OBJECT   ",
                     "PROPERTY ",
                     "CONTAINER",

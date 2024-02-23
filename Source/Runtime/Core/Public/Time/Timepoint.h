@@ -60,7 +60,7 @@ private:
     value_type _value;
 };
 //----------------------------------------------------------------------------
-CONSTEXPR FTimespan operator "" _hz(unsigned long long value) {
+CONSTEXPR FTimespan operator ""_hz(unsigned long long value) {
     Assert(value > 0);
     return (1000.0 / value);
 }

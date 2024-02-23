@@ -64,53 +64,53 @@ static void Test_Format_() {
         PPE_LOG(Test_Format, Info, "Format: {0}", oss.ToString());
     }
 
-    TestFormat_("722556564 -1465266736 -1246678562 414408744",
+    TestFormat_("722556564 -1465266736 -1246678562 414408744"_view,
         "{0} {1} {2} {3}",
         int(722556564), int(-1465266736), int(-1246678562), int(414408744));
-    TestFormat_("722556564 -1465266736 -1246678562 414408744",
+    TestFormat_("722556564 -1465266736 -1246678562 414408744"_view,
         "{} {} {} {}",
         int(722556564), int(-1465266736), int(-1246678562), int(414408744));
-    TestFormat_("-0.002351284 0.0027836573 -0.0017139912 0.0020291738 0.0028858185 -0.0034164863 -0.0035932064 0.004253954",
+    TestFormat_("-0.002351284 0.0027836573 -0.0017139912 0.0020291738 0.0028858185 -0.0034164863 -0.0035932064 0.004253954"_view,
         "{0} {1} {2} {3} {4} {5} {6} {7}",
         -0.002351284, 0.0027836573, -0.0017139912, 0.0020291738, 0.0028858185, -0.0034164863, -0.0035932064, 0.004253954);
-        TestFormat_("-0.002351284 0.0027836573 -0.0017139912 0.0020291738 0.0028858185 -0.0034164863 -0.0035932064 0.004253954",
+        TestFormat_("-0.002351284 0.0027836573 -0.0017139912 0.0020291738 0.0028858185 -0.0034164863 -0.0035932064 0.004253954"_view,
         "{} {} {} {} {} {} {} {}",
         -0.002351284, 0.0027836573, -0.0017139912, 0.0020291738, 0.0028858185, -0.0034164863, -0.0035932064, 0.004253954);
-    TestFormat_("----------------",
+    TestFormat_("----------------"_view,
         "{0:*16}", '-');
-    TestFormat_("000000000000test",
+    TestFormat_("000000000000test"_view,
         "{0:#16}", MakeStringView("test"));
-    TestFormat_("test000000000000",
+    TestFormat_("test000000000000"_view,
         "{0:#-16}", MakeStringView("test"));
-    TestFormat_("0042004200420042",
+    TestFormat_("0042004200420042"_view,
         "{0:#4*4}", 42);
-    TestFormat_("true true true ",
+    TestFormat_("true true true "_view,
         "{0:a-5*3}", true);
-    TestFormat_("string =       TEST TEST      , decimal =  BADCAFE 0badcafe, float = -0.123    -0.1235",
+    TestFormat_("string =       TEST TEST      , decimal =  BADCAFE 0badcafe, float = -0.123    -0.1235"_view,
         "string = {0:10U} {0:-10U}, decimal = {1:8X} {1:#8x}, float = {2:f3} {2:10f4}", MakeStringView("test"), 0xBADCAFE, -0.123456f);
-    TestFormat_("This a neg test 0042004200420042 = test aligned                   ( 1.23)",
+    TestFormat_("This a neg test 0042004200420042 = test aligned                   ( 1.23)"_view,
         "This a neg test {0:#4*4} = {1:-30} ({2:5f2})", 42, MakeStringView("test aligned"), 1.23456f);
-    TestFormat_("000000000000test",
+    TestFormat_("000000000000test"_view,
         "{0:#16}", "test");
-    TestFormat_("test000000000000",
+    TestFormat_("test000000000000"_view,
         "{0:#-16}", "test");
-    TestFormat_("\"000000000000test\"",
+    TestFormat_("\"000000000000test\""_view,
         "{0:q#16}", "test");
-    TestFormat_("1",
+    TestFormat_("1"_view,
         "{0:<1}", "123456789");
-    TestFormat_("1234",
+    TestFormat_("1234"_view,
         "{0:<4}", "123456789");
-    TestFormat_("1234567",
+    TestFormat_("1234567"_view,
         "{0:<7}", "123456789");
-    TestFormat_("123456789",
+    TestFormat_("123456789"_view,
         "{0:<9}", "123456789");
-    TestFormat_("                       123456789",
+    TestFormat_("                       123456789"_view,
         "{0:<32}", "123456789");
-    TestFormat_("123456789                       ",
+    TestFormat_("123456789                       "_view,
         "{0:<-32}", "123456789");
-    TestFormat_("\"                       123456789\"",
+    TestFormat_("\"                       123456789\""_view,
         "{0:q<32}", "123456789");
-    TestFormat_("\"123456789                       \"",
+    TestFormat_("\"123456789                       \""_view,
         "{0:q<-32}", "123456789");
 }
 //----------------------------------------------------------------------------
@@ -295,14 +295,14 @@ static void Test_Regexp_() {
     reI.Compile(R"(int:([+-]?\d+),\s+float:([+-]?[0-9]*[.]?[0-9]+),\s+word:(\w+)\s+end)", ECase::Insensitive);
 
     FRegexp::FMatches matches;
-    VerifyRelease(re.Capture(&matches, "int:42, float:123.456, word:PoPpolLoPpOpo42 end"));
+    VerifyRelease(re.Capture(&matches, "int:42, float:123.456, word:PoPpolLoPpOpo42 end"_view));
 
     PPE_LOG(Test_Format, Info, "int:{0}, float:{1}, word:{2} end",
         FStringConversion(matches[1]).ConvertTo<int>(),
         FStringConversion(matches[2]).ConvertTo<float>(),
         FStringView(matches[3]) );
 
-    VerifyRelease(reI.Capture(&matches, "iNt:42, FLoat:123.456, WORD:PoPpolLoPpOpo42 End"));
+    VerifyRelease(reI.Capture(&matches, "iNt:42, FLoat:123.456, WORD:PoPpolLoPpOpo42 End"_view));
 
     PPE_LOG(Test_Format, Info, "int:{0}, float:{1}, word:{2} end",
         FStringConversion(matches[1]).ConvertTo<int>(),

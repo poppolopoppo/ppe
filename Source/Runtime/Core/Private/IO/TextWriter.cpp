@@ -382,6 +382,9 @@ void FBaseTextWriter::BasePut(TBasicTextWriter<wchar_t>* oss, wchar_t v) { oss->
 void FBaseTextWriter::BasePut(TBasicTextWriter<char>* oss, const TBasicStringView<char>& str) { oss->Stream().WriteView(str); }
 void FBaseTextWriter::BasePut(TBasicTextWriter<wchar_t>* oss, const TBasicStringView<wchar_t>& str) { oss->Stream().WriteView(str); }
 //----------------------------------------------------------------------------
+void FBaseTextWriter::BasePut(TBasicTextWriter<char>* oss, const TBasicStringLiteral<char>& str) { oss->Stream().WriteView(str.MakeView()); }
+void FBaseTextWriter::BasePut(TBasicTextWriter<wchar_t>* oss, const TBasicStringLiteral<wchar_t>& str) { oss->Stream().WriteView(str.MakeView()); }
+//----------------------------------------------------------------------------
 void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, bool v) { TextWrite_(Meta::Type<char>, *oss, v); }
 void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, i8 v) { TextWriteItoaSigned_(*oss, i64(v)); }
 void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, i16 v) { TextWriteItoaSigned_(*oss, i64(v)); }
@@ -396,6 +399,7 @@ void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, double v) { TextWri
 void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, const void* v) { TextWrite_(Meta::Type<char>, *oss, v); }
 void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, const char* v) { TextWriteWFormat_(*oss, MakeCStringView(v)); }
 void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, const TBasicStringView<char>& v) { TextWriteWFormat_(*oss, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<char>* oss, const TBasicStringLiteral<char>& v) { TextWriteWFormat_(*oss, v.MakeView()); }
 //----------------------------------------------------------------------------
 void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, bool v) { TextWrite_(Meta::Type<wchar_t>, *oss, v); }
 void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, i8 v) { TextWriteItoaSigned_(*oss, i64(v)); }
@@ -411,6 +415,7 @@ void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, double v) { Text
 void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, const void* v) { TextWrite_(Meta::Type<wchar_t>, *oss, v); }
 void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, const wchar_t* v) { TextWriteWFormat_(*oss, MakeCStringView(v)); }
 void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, const TBasicStringView<wchar_t>& v) { TextWriteWFormat_(*oss, v); }
+void FBaseTextWriter::BaseWrite(TBasicTextWriter<wchar_t>* oss, const TBasicStringLiteral<wchar_t>& v) { TextWriteWFormat_(*oss, v.MakeView()); }
 //----------------------------------------------------------------------------
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicTextWriter<char>;
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TBasicTextWriter<wchar_t>;

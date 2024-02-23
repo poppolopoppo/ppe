@@ -25,7 +25,7 @@ FModularServices::FModularServices(const FStringView& name, const FModularServic
 FModularServices::~FModularServices() = default;
 //----------------------------------------------------------------------------
 void FModularServices::Clear() {
-    PPE_SLOG(Modular, Verbose, "clearing modular services ", {{"domain", _name}});
+    PPE_SLOG(Modular, Verbose, "clearing modular services", {{"domain", _name}});
 
     _services.Clear();
 }

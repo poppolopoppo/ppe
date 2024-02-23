@@ -51,7 +51,7 @@ public:
                 if (fname.Extname() == _extname) {
                     FTimestamp cacheDate;
                     if (VFS_FileCreatedAt(&cacheDate, fname) && cacheDate < _cacheExpiration)
-                        VFS_RemoveFile(fname);
+                        Unused(VFS_RemoveFile(fname));
                 }
             });
         }

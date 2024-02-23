@@ -86,9 +86,9 @@ static bool ParseUri_(const FStringView& str) {
 }
 //----------------------------------------------------------------------------
 static void Test_ParseUri_() {
-    if (not ParseUri_("http://jquery.com/?s=toto+slip+123"))
+    if (not ParseUri_("http://jquery.com/?s=toto+slip+123"_view))
         AssertNotReached();
-    if (not ParseUri_("https://bek@www.google.fr/search?num=20&safe=off&site=&source=hp&q=mangeur+de+pingouin&oq=mangeur+de+pingouin&gs_l=hp.3..0i22i30k1.1022.5665.0.5988.22.19.1.2.3.0.112.1214.16j3.19.0....0...1c.1.64.hp..0.19.1065.0..0j35i39k1j0i67k1j0i131k1j0i13i30k1.lOSTdUm6eCQ#anchor"))
+    if (not ParseUri_("https://bek@www.google.fr/search?num=20&safe=off&site=&source=hp&q=mangeur+de+pingouin&oq=mangeur+de+pingouin&gs_l=hp.3..0i22i30k1.1022.5665.0.5988.22.19.1.2.3.0.112.1214.16j3.19.0....0...1c.1.64.hp..0.19.1065.0..0j35i39k1j0i67k1j0i131k1j0i13i30k1.lOSTdUm6eCQ#anchor"_view))
         AssertNotReached();
 }
 //----------------------------------------------------------------------------
@@ -169,7 +169,7 @@ static void Test_SocketAccept_() {
 
                 FHttpResponse response;
 
-                if (EndsWithI(request.Uri().Path(), "favicon.ico")) {
+                if (EndsWithI(request.Uri().Path(), "favicon.ico"_view)) {
                     response.SetStatus(EHttpStatus::NotFound);
                 }
                 else {
@@ -177,7 +177,7 @@ static void Test_SocketAccept_() {
                     response.Body().WriteView("<marquee width='100%'>");
                     response.Body().WriteView(ToString(FDateTime::Now()));
                     response.Body().WriteView("</marquee>");
-                    response.UpdateContentHeaders("text/html; charset=UTF-8");
+                    response.UpdateContentHeaders("text/html; charset=UTF-8"_view);
                 }
 
                 LogResponse_(response);

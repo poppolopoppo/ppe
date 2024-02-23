@@ -24,30 +24,30 @@ namespace Remoting {
 // Annotations used by automatic RTTI function binding
 //----------------------------------------------------------------------------
 struct PPE_REMOTING_API FOperationFacet : RTTI::FGenericUserFacet {
-    VECTORINSITU(Remoting, FStringView, 3) Path;
+    VECTORINSITU(Remoting, FStringLiteral, 3) Path;
     Network::FName Prefix;
     Network::EHttpMethod Method;
 
     FOperationFacet(
         Network::EHttpMethod method,
-        const FStringView& prefix,
-        std::initializer_list<FStringView> path )
+        FStringLiteral prefix,
+        std::initializer_list<FStringLiteral> path )
     :   Path(path)
     ,   Prefix(prefix)
     ,   Method(method) {
         Assert(not Prefix.empty());
     }
 
-    static FOperationFacet Get(FStringView prefix, std::initializer_list<FStringView> path) {
+    static FOperationFacet Get(FStringLiteral prefix, std::initializer_list<FStringLiteral> path) {
         return FOperationFacet{ Network::EHttpMethod::Get, prefix, path };
     }
-    static FOperationFacet Post(FStringView prefix, std::initializer_list<FStringView> path) {
+    static FOperationFacet Post(FStringLiteral prefix, std::initializer_list<FStringLiteral> path) {
         return FOperationFacet{ Network::EHttpMethod::Post, prefix, path };
     }
-    static FOperationFacet Put(FStringView prefix, std::initializer_list<FStringView> path) {
+    static FOperationFacet Put(FStringLiteral prefix, std::initializer_list<FStringLiteral> path) {
         return FOperationFacet{ Network::EHttpMethod::Put, prefix, path };
     }
-    static FOperationFacet Delete(FStringView prefix, std::initializer_list<FStringView> path) {
+    static FOperationFacet Delete(FStringLiteral prefix, std::initializer_list<FStringLiteral> path) {
         return FOperationFacet{ Network::EHttpMethod::Delete, prefix, path };
     }
 };
@@ -121,7 +121,7 @@ protected:
     void RegisterOperation(
         Network::EHttpMethod method,
         const Network::FName& prefix,
-        const TMemoryView<const FStringView>& path,
+        const TMemoryView<const FStringLiteral>& path,
         const RTTI::FMetaFunction& func );
 
     bool DispatchOperations(const FRemotingContext& ctx, FStringView relativePath);

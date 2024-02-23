@@ -63,6 +63,9 @@ public: // must be defined for every platform
     static void Write(const FStringView& text, EAttribute attrs = Default) = delete;
     static void Write(const FWStringView& text, EAttribute attrs = Default) = delete;
 
+    static void Write(FStringLiteral text, EAttribute attrs = Default) = delete;
+    static void Write(FWStringLiteral text, EAttribute attrs = Default) = delete;
+
     static void Flush() = delete;
 
 public: // generic helpers

@@ -98,6 +98,9 @@ public: // helpers
     void WriteView(const FStringView& str);
     void WriteView(const FWStringView& wstr);
 
+    void WriteView(FStringLiteral str) { WriteView(str.MakeView()); }
+    void WriteView(FWStringLiteral wstr) { WriteView(wstr.MakeView()); }
+
     template <typename T>
     void WriteView(const TMemoryView<T>& data);
 };

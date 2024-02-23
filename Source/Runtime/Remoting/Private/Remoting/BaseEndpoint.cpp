@@ -137,7 +137,7 @@ struct FMetaEndpointCall_ {
         const auto jsonParser = [this](Serialize::FJson* dst, const FStringView& src, const IRemotingEndpoint::FParameter& prm) NOEXCEPT -> bool {
             Unused(prm);
             PPE_TRY {
-                if (Serialize::FJson::Append(dst, L"remoting:/arguments", src))
+                if (Serialize::FJson::Append(dst, L"remoting:/arguments"_view, src))
                     return true;
 
                 PPE_LOG(Remoting, Error, "failed to parse Json argument for '{0}':\n{1}",
@@ -377,9 +377,9 @@ void FBaseEndpoint::ExportAPI(
 void FBaseEndpoint::RegisterOperation(
     Network::EHttpMethod method,
     const Network::FName& prefix,
-    const TMemoryView<const FStringView>& path,
+    const TMemoryView<const FStringLiteral>& path,
     const RTTI::FMetaFunction& func) {
-    Assert(not MakeIterable(path).Any([](const FStringView& x) { return x.empty(); }));
+    Assert(not MakeIterable(path).Any([](const FStringLiteral& x) { return x.empty(); }));
 
     FOperation op;
     op.Method = method;
@@ -404,12 +404,13 @@ void FBaseEndpoint::RegisterOperation(
         wrapper.In = Query; // look in query by default
         if (const FParameterLocationFacet* pFacet = RTTI::UserFacetIFP<FParameterLocationFacet>(prm))
             wrapper.In = pFacet->In;
-        else if (path.Any([&wrapper](FStringView p) {
-            if (p.StartsWith('{') && p.EndsWith('}')) {
-                p = p.ShiftFront().ShiftBack();
-                if (p.EndsWith('*'))
-                    p = p.ShiftBack();
-                return wrapper.Name.Equals(p);
+        else if (path.Any([&wrapper](const FStringLiteral& p) {
+            FStringView v = p.MakeView();
+            if (v.StartsWith('{') && v.EndsWith('}')) {
+                v = v.ShiftFront().ShiftBack();
+                if (v.EndsWith('*'))
+                    v = v.ShiftBack();
+                return wrapper.Name.Equals(v);
             }
             return false;
         })) {

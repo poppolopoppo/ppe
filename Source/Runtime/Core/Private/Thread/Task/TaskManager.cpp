@@ -549,8 +549,8 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTaskManager::FTaskManager(const FStringView& name, size_t threadTag, size_t workerCount, EThreadPriority priority)
-:   _name(name)
+FTaskManager::FTaskManager(FStringLiteral name, size_t threadTag, size_t workerCount, EThreadPriority priority)
+:   _name(std::move(name))
 ,   _threadTag(threadTag)
 ,   _workerCount(workerCount)
 ,   _priority(priority) {

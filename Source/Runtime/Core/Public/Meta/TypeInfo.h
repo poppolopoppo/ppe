@@ -80,7 +80,7 @@ struct type_info_t {
 };
 //----------------------------------------------------------------------------
 template <typename T>
-constexpr type_info_t type_info{
+inline constexpr type_info_t type_info{
     details::type_info_parser_t<T>::type_uid(),
     details::type_info_parser_t<T>::static_name
 };

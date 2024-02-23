@@ -61,9 +61,9 @@ class PPE_RTTI_API FMetaModule : Meta::FThreadResource {
 public:
 #if USE_PPE_MEMORYDOMAINS
     FMemoryTracking& TrackingData() const { return _trackingData; }
-    FMetaModule(const FStringView& name, FMemoryTracking& domain);
+    FMetaModule(FStringLiteral name, FMemoryTracking& domain);
 #else
-    explicit FMetaModule(const FStringView& name);
+    explicit FMetaModule(FStringLiteral name);
 #endif
     ~FMetaModule();
 
@@ -87,7 +87,7 @@ public:
 
     const FMetaClass& Class(const FName& name) const;
     const FMetaClass* ClassIFP(const FName& name) const;
-    const FMetaClass* ClassIFP(const FStringView& name) const;
+    const FMetaClass* ClassIFP(FStringLiteral name) const;
 
     auto Classes() const {
         Assert(IsStarted());
@@ -100,7 +100,7 @@ public:
 
     const FMetaEnum& Enum(const FName& name) const;
     const FMetaEnum* EnumIFP(const FName& name) const;
-    const FMetaEnum* EnumIFP(const FStringView& name) const;
+    const FMetaEnum* EnumIFP(FStringLiteral name) const;
 
     auto Enums() const {
         Assert(IsStarted());
@@ -118,7 +118,7 @@ private:
     size_t _classCount;
     size_t _enumCount;
 
-    const FStringView _nameCStr;
+    const FStringLiteral _nameCStr;
 
     INTRUSIVESINGLELIST(&FMetaClassHandle::_node) _classHandles;
     INTRUSIVESINGLELIST(&FMetaEnumHandle::_node) _enumHandles;

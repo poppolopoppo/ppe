@@ -128,7 +128,7 @@ public:
         return FFloat{ flt, precision };
     }
 
-    friend CONSTEXPR EBase operator "" _base (unsigned long long value) {
+    friend CONSTEXPR EBase operator ""_base (unsigned long long value) {
         switch (value) {
         case 2: return Binary;
         case 8: return Octal;
@@ -168,6 +168,7 @@ public:
 protected:
     static void BasePut(FTextWriter* oss, char ch);
     static void BasePut(FTextWriter* oss, const FStringView& str);
+    static void BasePut(FTextWriter* oss, const FStringLiteral& str);
     static void BaseWrite(FTextWriter* oss, bool v);
     static void BaseWrite(FTextWriter* oss, i8 v);
     static void BaseWrite(FTextWriter* oss, i16 v);
@@ -182,9 +183,11 @@ protected:
     static void BaseWrite(FTextWriter* oss, const void* v);
     static void BaseWrite(FTextWriter* oss, const char* v);
     static void BaseWrite(FTextWriter* oss, const FStringView& v);
+    static void BaseWrite(FTextWriter* oss, const FStringLiteral& v);
 
     static void BasePut(FWTextWriter* oss, wchar_t ch);
     static void BasePut(FWTextWriter* oss, const FWStringView& str);
+    static void BasePut(FWTextWriter* oss, const FWStringLiteral& str);
     static void BaseWrite(FWTextWriter* oss, bool v);
     static void BaseWrite(FWTextWriter* oss, i8 v);
     static void BaseWrite(FWTextWriter* oss, i16 v);
@@ -199,6 +202,7 @@ protected:
     static void BaseWrite(FWTextWriter* oss, const void* v);
     static void BaseWrite(FWTextWriter* oss, const wchar_t* v);
     static void BaseWrite(FWTextWriter* oss, const FWStringView& v);
+    static void BaseWrite(FWTextWriter* oss, const FWStringLiteral& v);
 
     TPtrRef<IStreamWriter> _ostream;
     FTextFormat _format;
@@ -229,6 +233,7 @@ public:
     // won't format the text :
     void Put(_Char ch) { return FBaseTextWriter::BasePut(this, ch); }
     void Put(const TBasicStringView<_Char>& str) { return FBaseTextWriter::BasePut(this, str); }
+    void Put(const TBasicStringLiteral<_Char>& str) { return FBaseTextWriter::BasePut(this, str.MakeView()); }
 
     // will be formated using FTextFormat :
     void Write(bool v) { return FBaseTextWriter::BaseWrite(this, v); }
@@ -245,6 +250,7 @@ public:
     void Write(const void* v) { return FBaseTextWriter::BaseWrite(this, v); }
     void Write(const _Char* v) { return FBaseTextWriter::BaseWrite(this, v); }
     void Write(const TBasicStringView<_Char>& v) { return FBaseTextWriter::BaseWrite(this, v); }
+    void Write(const TBasicStringLiteral<_Char>& v) { return FBaseTextWriter::BaseWrite(this, v.MakeView()); }
 
     inline friend void swap(TBasicTextWriter& lhs, TBasicTextWriter& rhs) NOEXCEPT {
         using std::swap;
@@ -327,6 +333,9 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const void* v) 
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const TBasicStringView<_Char>& v) { w.Write(v); return w; }
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const TBasicStringLiteral<_Char>& v) { w.Write(v); return w; }
 //----------------------------------------------------------------------------
 #ifdef PLATFORM_WINDOWS
 template <typename _Char>

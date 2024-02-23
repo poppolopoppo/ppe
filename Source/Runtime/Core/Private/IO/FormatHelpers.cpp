@@ -235,7 +235,7 @@ constexpr _Char Base64_padding = STRING_LITERAL(_Char, '=');
 //----------------------------------------------------------------------------
 template <typename _Char>
 static void Base64Encode_(const FRawMemoryConst& src, const TAppendable<_Char>& dst) NOEXCEPT {
-    constexpr TBasicStringView<_Char> lookup{
+    constexpr TBasicStringLiteral<_Char> lookup{
         STRING_LITERAL(_Char, "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/") };
 
     u32 tmp;

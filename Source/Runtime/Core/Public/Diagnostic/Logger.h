@@ -126,9 +126,9 @@ struct FLoggerMessage {
     FLoggerMessage(
         const FLoggerCategory& category, FLoggerSiteInfo&& site,
         FConstChar text, bool isTextAllocated,
-        const Opaq::object_view& data) NOEXCEPT
+        TPtrRef<const Opaq::object_view>&& pOptionalData) NOEXCEPT
     :   Category(category)
-    ,   Data(data)
+    ,   Data(std::move(pOptionalData))
     ,   Text(std::move(text))
     ,   Site(std::move(site)) {
         Site.IsTextAllocated = isTextAllocated;
@@ -163,6 +163,7 @@ public:
     static PPE_CORE_API void Log(const FCategory& category, FSiteInfo&& site, FStringLiteral text);
     static PPE_CORE_API void LogFmt(const FCategory& category, FSiteInfo&& site, FStringLiteral format, const FFormatArgList& args);
     static PPE_CORE_API void LogStructured(const FCategory& category, FSiteInfo&& site, FStringLiteral text, Opaq::object_init&& object);
+    static PPE_CORE_API void LogStructured(const FCategory& category, FSiteInfo&& site, FStringView textToCopy, Opaq::object_init&& object);
     static PPE_CORE_API void Printf(const FCategory& category, FSiteInfo&& site, FStringLiteral format, va_list args);
     static PPE_CORE_API void LogDirect(const FCategory& category, FSiteInfo&& site, const TFunction<void(FTextWriter&)>& direct);
     static PPE_CORE_API void RecordArgs(const FCategory& category, FSiteInfo&& site, const FFormatArgList& record);
@@ -177,10 +178,6 @@ public:
             MakeFormatArg<char>(std::forward<_Arg0>(arg0)),
             MakeFormatArg<char>(std::forward<_Args>(args))... });
     }
-
-    //static void Printf(const FCategory& category, FSiteInfo&& site, FStringLiteral text) {
-    //    Log(category, std::move(site), text);
-    //}
 
     static void Printf(const FCategory& category, FSiteInfo&& site, FStringLiteral format, .../* va_list */) {
         va_list args;

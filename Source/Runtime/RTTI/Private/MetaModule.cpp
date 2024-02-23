@@ -49,16 +49,16 @@ FMetaEnumHandle::~FMetaEnumHandle() NOEXCEPT {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #if USE_PPE_MEMORYDOMAINS
-FMetaModule::FMetaModule(const FStringView& name, FMemoryTracking& domain)
+FMetaModule::FMetaModule(FStringLiteral name, FMemoryTracking& domain)
 #else
-FMetaModule::FMetaModule(const FStringView& name)
+FMetaModule::FMetaModule(FStringLiteral name)
 #endif
 :   _classIdOffset(INDEX_NONE)
 ,   _classCount(0)
 ,   _enumCount(0)
 ,   _nameCStr(name)
 #if USE_PPE_MEMORYDOMAINS
-    , _trackingData(_nameCStr.data(), &domain) {
+,   _trackingData(_nameCStr.c_str(), &domain) {
     RegisterTrackingData(&_trackingData);
 #else
     {
@@ -219,7 +219,7 @@ const FMetaClass* FMetaModule::ClassIFP(const FName& name) const {
     return (_classes.end() == it ? nullptr : it->second);
 }
 //----------------------------------------------------------------------------
-const FMetaClass* FMetaModule::ClassIFP(const FStringView& name) const {
+const FMetaClass* FMetaModule::ClassIFP(FStringLiteral name) const {
     Assert(IsStarted());
 
     const hash_t h = FName::HashValue(name);
@@ -255,7 +255,7 @@ const FMetaEnum* FMetaModule::EnumIFP(const FName& name) const {
     return (_enums.end() == it ? nullptr : it->second);
 }
 //----------------------------------------------------------------------------
-const FMetaEnum* FMetaModule::EnumIFP(const FStringView& name) const {
+const FMetaEnum* FMetaModule::EnumIFP(FStringLiteral name) const {
     Assert(IsStarted());
 
     const hash_t h = FName::HashValue(name);

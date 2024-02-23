@@ -19,11 +19,11 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_CORE_API FModularDomain : Meta::FNonCopyableNorMovable {
 public:
-    FModularDomain(const FStringView& name, EModuleUsage usage) NOEXCEPT;
-    FModularDomain(const FStringView& name, EModuleUsage usage, FModularDomain& parent) NOEXCEPT;
+    FModularDomain(FStringLiteral name, EModuleUsage usage) NOEXCEPT;
+    FModularDomain(FStringLiteral name, EModuleUsage usage, FModularDomain& parent) NOEXCEPT;
     ~FModularDomain();
 
-    const FStringView& Name() const { return _name; }
+    FStringLiteral Name() const { return _name; }
     EModuleUsage Usage() const { return _usage; }
 
     const FModularDomain* Parent() const { return _parent; }
@@ -32,17 +32,27 @@ public:
     const FModularServices& Services() const { return _services; }
 
     bool IsModuleLoaded(const FStringView& name) const NOEXCEPT;
+    bool IsModuleLoaded(FStringLiteral name) const NOEXCEPT { return IsModuleLoaded(name.MakeView()); }
 
     IModuleInterface& Module(const FStringView& name) const NOEXCEPT;
+    IModuleInterface& Module(FStringLiteral name) const NOEXCEPT { return Module(name.MakeView()); }
+
     IModuleInterface* ModuleIFP(const FStringView& name) const NOEXCEPT;
+    IModuleInterface* ModuleIFP(FStringLiteral name) const NOEXCEPT { return ModuleIFP(name.MakeView()); }
 
     IModuleInterface& LoadModule(const FStringView& name);
+    IModuleInterface& LoadModule(FStringLiteral name) { return LoadModule(name.MakeView()); }
+
     IModuleInterface* LoadModuleIFP(const FStringView& name);
+    IModuleInterface* LoadModuleIFP(FStringLiteral name) { return LoadModuleIFP(name.MakeView()); }
 
     void LoadDependencyList(FModuleDependencyList dependencyList); // comma separated module name list
 
     void UnloadModule(const FStringView& name);
+    void UnloadModule(FStringLiteral name) { UnloadModule(name.MakeView()); }
+
     bool UnloadModuleIFP(const FStringView& name);
+    bool UnloadModuleIFP(FStringLiteral name) { return UnloadModuleIFP(name.MakeView()); }
 
     bool HasPhaseStarted(EModulePhase) const NOEXCEPT;
 
@@ -62,6 +72,10 @@ public: // typed module interface
     template <typename _Module, class = Meta::TEnableIf<std::is_base_of_v<IModuleInterface, _Module>> >
     _Module& ModuleChecked(const FStringView& name) const NOEXCEPT {
         return (*checked_cast<_Module*>(&Module(name)));
+    }
+    template <typename _Module, class = Meta::TEnableIf<std::is_base_of_v<IModuleInterface, _Module>> >
+    _Module& ModuleChecked(FStringLiteral name) const NOEXCEPT {
+        return ModuleChecked<_Module>(name.MakeView());
     }
 
 public: // events
@@ -93,7 +107,7 @@ public: // events
     PUBLIC_EVENT(OnPostReleaseMemory, FDomainDelegate)
 
 private:
-    const FStringView _name;
+    const FStringLiteral _name;
     const EModuleUsage _usage;
     FModularDomain* const _parent;
 
