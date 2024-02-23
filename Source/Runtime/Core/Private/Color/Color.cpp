@@ -472,6 +472,35 @@ float3 OKLab_to_RGB(const float3& oklab) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+template <typename _Char>
+static TBasicTextWriter<_Char>& EnumToString_(TBasicTextWriter<_Char>& oss, EGammaSpace value) {
+    switch (value) {
+    case EGammaSpace::ACES:
+        return oss << STRING_LITERAL(_Char, "ACES");
+    case EGammaSpace::Linear:
+        return oss << STRING_LITERAL(_Char, "Linear");
+    case EGammaSpace::Pow22:
+        return oss << STRING_LITERAL(_Char, "Pow22");
+    case EGammaSpace::sRGB:
+        return oss << STRING_LITERAL(_Char, "sRGB");
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, EGammaSpace value) {
+    return EnumToString_(oss, value);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, EGammaSpace value) {
+    return EnumToString_(oss, value);
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FLinearColor FLinearColor::AliceBlue() { return FLinearColor(0.871f, 0.939f, 1.000f, 1.0f); }
 FLinearColor FLinearColor::AntiqueWhite() { return FLinearColor(0.956f, 0.831f, 0.680f, 1.0f); }
 FLinearColor FLinearColor::Aqua() { return FLinearColor(0.000f, 1.000f, 1.000f, 1.0f); }

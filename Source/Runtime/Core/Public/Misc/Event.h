@@ -82,6 +82,14 @@ public:
         VerifyRelease(delegatesRW->Remove(handle.Forget()));
     }
 
+    size_t RemoveAll(const FDelegate& func) {
+        Assert(func);
+        const auto delegatesRW = _delegates.LockExclusive();
+        return delegatesRW->RemoveIf([&func](const FDelegate& registered) {
+            return (registered == func);
+        });
+    }
+
 protected:
     TThreadSafe<FInvocationList, (!!_ThreadSafe
         ? EThreadBarrier::RWLock
@@ -116,6 +124,7 @@ public:
     using public_event_t::Add;
     using public_event_t::Emplace;
     using public_event_t::Remove;
+    using public_event_t::RemoveAll;
 
     public_event_t& Public() NOEXCEPT { return *this; }
 
@@ -167,6 +176,7 @@ public:
     using public_event_t::Add;
     using public_event_t::Emplace;
     using public_event_t::Remove;
+    using public_event_t::RemoveAll;
 
     public_event_t& Public() NOEXCEPT { return *this; }
 

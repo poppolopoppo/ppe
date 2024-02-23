@@ -154,6 +154,7 @@ NODISCARD static FTextureImporterResult STBImageLoadFromStream_(
         flags += ETextureSourceFlags::HDR;
         format = ETextureSourceFormat::RGBA32f;
 
+        input.SeekI(0);
         stbi_data = ::stbi_loadf_from_callbacks(&GSTBStreamReaderIOCallbacks_, &input,
             &dimensions.x, &dimensions.y, &components, components);
     }
@@ -167,6 +168,7 @@ NODISCARD static FTextureImporterResult STBImageLoadFromStream_(
             format = ETextureSourceFormat::RGBA16;
         }
 
+        input.SeekI(0);
         stbi_data = ::stbi_load_16_from_callbacks(&GSTBStreamReaderIOCallbacks_, &input, &dimensions.x, &dimensions.y, &components, components);
     }
     else {
@@ -178,6 +180,7 @@ NODISCARD static FTextureImporterResult STBImageLoadFromStream_(
             format = ETextureSourceFormat::RGBA8;
         }
 
+        input.SeekI(0);
         stbi_data = ::stbi_load_from_callbacks(&GSTBStreamReaderIOCallbacks_, &input, &dimensions.x, &dimensions.y, &components, components);
     }
 

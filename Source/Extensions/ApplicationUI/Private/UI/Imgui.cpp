@@ -3,7 +3,7 @@
 #include "UI/Imgui.h"
 
 #ifdef _WIN32
-//  workaround static inline definition with header units
+//  #TODO: remove workaround for static inline definition with header units
 #   if _USE_32BIT_TIME_T
 #       define mktime(_Tm) _mktime32(_Tm)
 #       define _mkgmtime(_Tm) _mkgmtime32(_Tm)

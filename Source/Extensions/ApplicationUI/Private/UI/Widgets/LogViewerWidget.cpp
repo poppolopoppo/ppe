@@ -383,7 +383,7 @@ bool FLogViewerWidget::Show() {
     if (not ImGui::Begin(*Title, &WindowVisible, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar)) {
         ImGui::End();
 
-        if (LoggerWasRegistered) {
+        if (LoggerWasRegistered and not LoggerKeepRegistered) {
             LoggerWasRegistered = false;
             FLogger::UnregisterLogger(*Logger);
         }
@@ -392,14 +392,7 @@ bool FLogViewerWidget::Show() {
     }
     DEFERRED{ ImGui::End(); };
 
-    if (not LoggerWasRegistered) {
-        LoggerWasRegistered = true;
-        if (not Logger)
-            Logger.create<FHistoryLogger>();
-        FLogger::RegisterLogger(*Logger);
-
-        FlushVisibleMessages();
-    }
+    RegisterLogger(LoggerKeepRegistered);
 
     if (NeedRefreshVisibleMessages)
         RefreshVisibleMessages();
@@ -468,6 +461,18 @@ bool FLogViewerWidget::Show() {
     }
 
     return false;
+}
+//----------------------------------------------------------------------------
+void FLogViewerWidget::RegisterLogger(bool keepRegistered) {
+    if (not LoggerWasRegistered) {
+        LoggerWasRegistered = true;
+        if (not Logger)
+            Logger.create<FHistoryLogger>();
+        FLogger::RegisterLogger(*Logger);
+
+        FlushVisibleMessages();
+    }
+    LoggerKeepRegistered = keepRegistered;
 }
 //----------------------------------------------------------------------------
 void FLogViewerWidget::FlushVisibleMessages() {

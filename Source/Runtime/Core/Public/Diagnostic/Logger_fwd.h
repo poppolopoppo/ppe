@@ -8,23 +8,23 @@
 #define _PPE_LOG_STRINGIZE(...) STRINGIZE(__VA_ARGS__)
 
 #if USE_PPE_LOGGER
-
-#define LOG_CATEGORY_GET(_NAME) CONCAT(LogCategory_, _NAME)()
-#define EXTERN_LOG_CATEGORY(_API, _NAME) \
+#   define LOG_CATEGORY_GET(_NAME) CONCAT(LogCategory_, _NAME)()
+#   define EXTERN_LOG_CATEGORY(_API, _NAME) \
     _API extern ::PPE::FLoggerCategory& LOG_CATEGORY_GET(_NAME);
+#else
+#   define EXTERN_LOG_CATEGORY(...)
+#endif //!#if USE_PPE_LOGGER
 
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class ELoggerVerbosity : u8;
+//----------------------------------------------------------------------------
+#if USE_PPE_LOGGER
 struct FLoggerCategory;
+#endif //!#if USE_PPE_LOGGER
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-
-#else
-
-#define EXTERN_LOG_CATEGORY(...)
-
-#endif //!#if USE_PPE_LOGGER

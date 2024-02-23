@@ -2,6 +2,7 @@
 
 #include "TextureService.h"
 
+#include "Texture/EnumToString.h"
 #include "Texture/TextureCompression.h"
 #include "Texture/TextureEnums.h"
 #include "Texture/TextureSource.h"
@@ -13,6 +14,8 @@
 #include "Container/MultiMap.h"
 #include "Diagnostic/Logger.h"
 #include "IO/BufferedStream.h"
+#include "IO/Format.h"
+#include "IO/StringBuilder.h"
 #include "Thread/ThreadSafe.h"
 #include "VirtualFileSystem_fwd.h"
 
@@ -132,6 +135,14 @@ static Meta::TOptional<FTextureSource> ImportTextureSourceFromFile_(const ITextu
 
     FTextureSource sourceData;
     sourceData.Construct(sourceProperties, std::move(importerResult));
+
+    PPE_SLOG(Texture, Info, "imported texture source from file", {
+        {"Width", sourceData.Width()},
+        {"Height", sourceData.Height()},
+        {"Format", ToString(sourceData.Format())},
+        {"GammaSpace", ToString(sourceData.GammaSpace())},
+        {"SourceFile", ToString(sourceFile)},
+    });
 
     return Meta::MakeOptional(std::move(sourceData));
 }

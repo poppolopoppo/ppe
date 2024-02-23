@@ -24,6 +24,7 @@ public:
     FString Title{ ICON_CI_OUTPUT " Log viewer" };
 
     bool AutoScroll{ true };
+    bool LoggerKeepRegistered{ false };
     bool LoggerWasRegistered{ false };
     bool NeedRefreshVisibleMessages{ true };
     bool ShowCategoriesPanel{ true };
@@ -69,6 +70,7 @@ public:
 
     NODISCARD PPE_APPLICATIONUI_API bool Show();
 
+    PPE_APPLICATIONUI_API void RegisterLogger(bool keepRegistered);
     PPE_APPLICATIONUI_API void FlushVisibleMessages();
     PPE_APPLICATIONUI_API void RefreshVisibleMessages();
 };

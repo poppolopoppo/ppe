@@ -445,10 +445,12 @@ void FTextureSource::Construct(
     if (ETextureSourceFormat_CanHoldHDR(_properties.Format))
         _properties.Flags += ETextureSourceFlags::HDR;
 
+#if 0 // #TODO: store image as PNG or JPEG instead of raw RGBA8 to save space
     if (ETextureSourceFormat_CanCompressWithJPEG(_properties.Format))
         _compression = ETextureSourceCompression::JPG;
     else if (ETextureSourceFormat_CanCompressWithPNG(_properties.Format))
         _compression = ETextureSourceCompression::PNG;
+#endif
 
     const size_t decompressedSizeInBytes = _properties.SizeInBytes();
     if (_compression == ETextureSourceCompression::None) {
@@ -462,8 +464,6 @@ void FTextureSource::Construct(
     }
     else {
         AssertReleaseMessage("can't suppy optional data to copy when compression is enabled", not optionalBuffer.has_value());
-
-        AssertNotImplemented(); // #TODO: handle jpeg/png compression, and all logic for lazy decompression
     }
 }
 //----------------------------------------------------------------------------

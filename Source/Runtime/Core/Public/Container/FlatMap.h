@@ -117,14 +117,15 @@ public:
     void clear();
     void clear_ReleaseMemory();
 
-    iterator find(const _Key& key);
-    const_iterator find(const _Key& key) const;
+    iterator find(const _Key& key) NOEXCEPT;
+    const_iterator find(const _Key& key) const NOEXCEPT ;
 
     iterator FindOrAdd(const _Key& key, bool* pAdded);
     iterator FindAfter(const _Key& key, const iterator& previous);
     const_iterator FindAfter(const _Key& key, const const_iterator& previous) const;
 
-    bool Find(const _Key& key, _Value *pvalue) const;
+    bool Contains(const _Key& key) const NOEXCEPT { return (find(key) != end()); }
+    bool Find(const _Key& key, _Value *pvalue) const NOEXCEPT ;
 
     template <class... _Args>
     bool Emplace_ReturnIfExists(_Key&& key, _Args&&... args);
@@ -142,7 +143,7 @@ public:
     template <class... _Args>
     void Emplace_AssertUnique(const _Key& key, _Args&&... args) { Emplace_AssertUnique(_Key(key), std::forward<_Args>(args)...); }
     template <typename... _Args>
-    bool Emplace_Overwrite(const _Key& key, _Args&&... args) { return Emplace_Overwrite(_Key(key), std::forward<_Args>(args)...); }
+    void Emplace_Overwrite(const _Key& key, _Args&&... args) { Emplace_Overwrite(_Key(key), std::forward<_Args>(args)...); }
 
     bool Insert_ReturnIfExists(_Key&& key, _Value&& rvalue);
     void Insert_KeepOldIFN(_Key&& key, _Value&& rvalue);
@@ -172,6 +173,8 @@ public:
 
     template <typename _It>
     void insert(_It&& begin, _It&& end);
+    void insert(const_reference value) { Insert_AssertUnique(value.first, value.second); }
+    void insert(value_type&& rvalue) { Insert_AssertUnique(std::move(rvalue.first), std::move(rvalue.second)); }
 
     void shrink_to_fit() { _vector.shrink_to_fit(); }
 

@@ -56,11 +56,13 @@ PRAGMA_MSVC_WARNING_DISABLE(4702) // unreachable code
 #define IM_VEC2_CLASS_EXTRA \
     inline CONSTEXPR ImVec2(const ::PPE::float2& f) : x(f.x), y(f.y) {} \
     template <typename _Expr> inline CONSTEXPR ImVec2(const ::PPE::details::TScalarVectorExpr<float, 2, _Expr>& f) : x(f[0]), y(f[1]) {} \
-    inline CONSTEXPR operator ::PPE::float2 () const { return { x, y }; }
+    inline CONSTEXPR operator ::PPE::float2 () const { return { x, y }; } \
+    NODISCARD inline CONSTEXPR ::PPE::float2 ToFloat2() const { return { x, y }; }
 #define IM_VEC4_CLASS_EXTRA \
     inline CONSTEXPR ImVec4(const ::PPE::float4& f) : x(f.x), y(f.y), z(f.z), w(f.w) {} \
     template <typename _Expr> inline CONSTEXPR ImVec4(const ::PPE::details::TScalarVectorExpr<float, 4, _Expr>& f) : x(f[0]), y(f[1]), z(f[2]), w(f[3]) {} \
-    inline CONSTEXPR operator ::PPE::float4 () const { return { x, y, z, w }; }
+    inline CONSTEXPR operator ::PPE::float4 () const { return { x, y, z, w }; } \
+    NODISCARD inline CONSTEXPR ::PPE::float4 ToFloat4() const { return { x, y, z, w }; }
 
 // You can use '#define IMGUI_DEFINE_MATH_OPERATORS' to import our operators, provided as a courtesy.
 // #define IMGUI_DEFINE_MATH_OPERATORS
@@ -72,11 +74,10 @@ PPE_STRONGLYTYPED_NUMERIC_DEF(u64, FImTexturePackedID);
 #define ImTextureID ::PPE::FImTexturePackedID
 
 // #define IMGUI_DISABLE_DEMO_WINDOWS
-#if USE_PPE_PROFILING || !USE_PPE_FINAL_RELEASE
+#if USE_PPE_PROFILING || USE_PPE_FINAL_RELEASE
 #   define IMGUI_DISABLE_DEBUG_TOOLS
-#   if USE_PPE_DEBUG
-#       define IMGUI_DEBUG_PARANOID
-#   endif
+#elif USE_PPE_DEBUG
+#   define IMGUI_DEBUG_PARANOID
 #endif
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS

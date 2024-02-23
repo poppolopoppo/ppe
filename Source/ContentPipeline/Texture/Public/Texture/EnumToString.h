@@ -2,6 +2,8 @@
 
 #include "Texture_fwd.h"
 
+#include "Texture/TextureEnums.h"
+
 #include "IO/TextReader_fwd.h"
 
 namespace PPE {

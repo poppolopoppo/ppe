@@ -8,6 +8,8 @@
 #include "Memory/RefPtr.h"
 #include "Time/Timestamp.h"
 
+#define USE_PPE_LOGCHECK_ENSURE (0) // trigger an ensure when PPE_LOG_CHECK() fails %_NOCOMMIT%
+
 // structured logging without allocation:
 // https://godbolt.org/z/xh3P8GvP4
 
@@ -339,9 +341,14 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
     } while (0)
 #endif
 
+#if USE_PPE_LOGCHECK_ENSURE
+#   define PPE_LOG_ENSURE(...) (Ensure(__VA_ARGS__))
+#else
+#   define PPE_LOG_ENSURE(...) (Likely(__VA_ARGS__))
+#endif
+
 #define PPE_LOG_CHECKEX( _CATEGORY, _RETURN, ... ) do {\
-    if (Ensure(__VA_ARGS__)) {} \
-    else { \
+    if (not PPE_LOG_ENSURE(__VA_ARGS__)) { \
         PPE_LOG( _CATEGORY, Error, _PPE_LOG_STRING("failed expr: '{0}', at: {1}:{2}"), _PPE_LOG_STRINGIZE(__VA_ARGS__), _PPE_LOG_STRING(__FILE__), _PPE_LOG_STRINGIZE(__LINE__) ); \
         return (_RETURN); \
     }} while (0)

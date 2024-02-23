@@ -185,6 +185,10 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(VkCache,                  Vulkan)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(VkDevice,                 Vulkan)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(VkInstance,               Vulkan)
 //------------------------------------------------------------------------------
+// User Domain
+//------------------------------------------------------------------------------
+MEMORYDOMAIN_IMPL(UserDomain,                           UsedMemory)
+//------------------------------------------------------------------------------
 // Pooled memory
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_COLLAPSABLE_IMPL(AtomicPool,               PooledMemory)

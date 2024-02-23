@@ -7,6 +7,7 @@
 #include "IO/String.h"
 #include "Modular/ModularDomain.h"
 #include "Modular/ModularServices.h"
+#include "Time/Timeline.h"
 #include "Time/Timepoint.h"
 
 namespace PPE {
@@ -29,9 +30,9 @@ public: // application service
 
     virtual const FModularDomain& Domain() const NOEXCEPT override final { return _domain; }
     virtual const FString& Name() const NOEXCEPT override final { return _name; }
-    virtual FTimespan DeltaTime() const NOEXCEPT override final { return _deltaTime; }
-    virtual FTimespan ElapsedTime() const NOEXCEPT override final { return _elapsed; }
     virtual bool HasFocus() const NOEXCEPT override final { return _hasFocus; }
+
+    virtual FTimeline RealTime() const NOEXCEPT override final { return _realTime; }
 
     virtual void SetLowerTickRateInBackground(bool enabled) NOEXCEPT override final;
     virtual bool LowerTickRateInBackground() const NOEXCEPT override final { return _lowerTickRateInBackground; }
@@ -57,8 +58,7 @@ private:
     FString _name;
     FModularServices _services;
 
-    FTimespan _deltaTime;
-    FTimespan _elapsed;
+    FTimeline _realTime;
     FTimespan _tickRate;
 
     bool _hasFocus : 1;

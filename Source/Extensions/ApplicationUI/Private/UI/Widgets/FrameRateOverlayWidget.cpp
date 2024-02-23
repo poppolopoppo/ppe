@@ -76,7 +76,7 @@ bool FFrameRateOverlayWidget::Show() {
             ImGui::TextColored(color, fmt.c_str(), value);
         };
 
-        const FSeconds dt = Application->DeltaTime();
+        const FSeconds dt = Application->RealTime().Elapsed();
 
         printCounter("FPS", "%.2f", 1.0 / dt.Value(), FLinearColor::Yellow());
         printCounter("DT", "%.3fms", FMilliseconds(dt).Value(), FLinearColor::LightYellow());

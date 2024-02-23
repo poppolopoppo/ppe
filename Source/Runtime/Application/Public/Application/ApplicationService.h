@@ -18,9 +18,9 @@ public:
 
     virtual const FModularDomain& Domain() const NOEXCEPT = 0;
     virtual const FString& Name() const NOEXCEPT = 0;
-    virtual FTimespan DeltaTime() const NOEXCEPT = 0;
-    virtual FTimespan ElapsedTime() const NOEXCEPT = 0;
     virtual bool HasFocus() const NOEXCEPT = 0;
+
+    virtual FTimeline RealTime() const NOEXCEPT = 0;
 
     virtual void SetLowerTickRateInBackground(bool enabled) NOEXCEPT = 0;
     virtual bool LowerTickRateInBackground() const NOEXCEPT = 0;

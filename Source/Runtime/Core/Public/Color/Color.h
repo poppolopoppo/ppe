@@ -3,6 +3,7 @@
 #include "Core.h"
 
 #include "Color/Color_fwd.h"
+#include "IO/TextWriter_fwd.h"
 #include "Maths/ScalarVector_fwd.h"
 
 namespace PPE {
@@ -19,6 +20,9 @@ enum class EGammaSpace : u8 {
     /** Use the new ACES standard for HDR values. */
     ACES,
 };
+//----------------------------------------------------------------------------
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, EGammaSpace value);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, EGammaSpace value);
 //----------------------------------------------------------------------------
 NODISCARD PPE_CORE_API float3 ACESFitted(float3 linear);
 //----------------------------------------------------------------------------

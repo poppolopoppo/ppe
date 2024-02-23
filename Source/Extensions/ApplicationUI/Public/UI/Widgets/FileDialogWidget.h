@@ -2,7 +2,7 @@
 
 #include "UI/Imgui.h"
 
-#include "Container/RingBuffer.h"
+#include "Container/FlatSet.h"
 #include "Container/Vector.h"
 #include "IO/Filename.h"
 #include "IO/Dirpath.h"
@@ -53,7 +53,7 @@ public:
 
     ImGuiTextFilter NameFilter;
 
-    VECTORINSITU(UI, FFilename, 1) SelectedFiles;
+    FLATSET_INSITU(UI, u32, 1) SelectedEntries;
 
     struct FEntry {
         FFilename Name;
@@ -61,6 +61,7 @@ public:
         u64 FileSize : 62;
         u64 IsFile : 1;
         u64 IsReadOnly : 1;
+        bool IsSelected{ false };
 
         FEntry(const FDirpath& directory) NOEXCEPT
             : Name{ directory, FBasename{} }, FileSize(0)

@@ -29,7 +29,7 @@ static FLinearColor FileColorFromExtname_(const FExtname& ext) NOEXCEPT {
     return FLinearColor::FromHash(ext.HashValue()).SetLuminance(1.f);
 }
 //----------------------------------------------------------------------------
-static FConstChar FileIconFromExtaname_(const FExtname& ext) NOEXCEPT {
+static FConstChar FileIconFromExtname_(const FExtname& ext) NOEXCEPT {
     if (ext == FFS::Bin()) return ICON_FK_FILES_O;
     if (ext == FFS::Bnx()) return ICON_FK_FILES_O;
     if (ext == FFS::Raw()) return ICON_FK_FILES_O;
@@ -70,15 +70,29 @@ static FConstChar FileIconFromExtaname_(const FExtname& ext) NOEXCEPT {
     return ICON_FK_FILE;
 }
 //----------------------------------------------------------------------------
+static void FileDialog_Select_(FFileDialogWidget& dialog, u32 entryIndex) {
+    FFileDialogWidget::FEntry& entry = dialog.VisibleEntries[entryIndex];
+    if (entry.IsSelected) {
+        if (not dialog.Multiselect) {
+            for (u32 id : dialog.SelectedEntries)
+                dialog.VisibleEntries[id].IsSelected = false;
+            dialog.SelectedEntries.clear();
+        }
+        dialog.SelectedEntries.Insert_AssertUnique(entryIndex);
+    }
+    else {
+        dialog.SelectedEntries.Remove_AssertExists(entryIndex);
+    }
+}
+//----------------------------------------------------------------------------
 static void FileDialog_ShowDetailsView_(FFileDialogWidget& dialog) {
-    char tmpStringBuf[MAX_PATH];
+    char tmpStringBuf[MAX_PATH] = {};
     FFixedSizeTextWriter tmp(tmpStringBuf);
 
     if (not ImGui::BeginTable("##FileDialog::Details", 5,
         ImGuiTableFlags_Hideable |
         ImGuiTableFlags_NoBordersInBody |
         ImGuiTableFlags_ScrollY |
-        ImGuiTableFlags_RowBg |
         ImGuiTableFlags_Reorderable |
         ImGuiTableFlags_Resizable |
         ImGuiTableFlags_SizingFixedFit ))
@@ -162,7 +176,7 @@ static void FileDialog_ShowDetailsView_(FFileDialogWidget& dialog) {
 
     while (imgui_clipper.Step()) {
         forrange(i, imgui_clipper.DisplayStart, imgui_clipper.DisplayEnd) {
-            const FFileDialogWidget::FEntry& entry = dialog.VisibleEntries[i];
+            FFileDialogWidget::FEntry& entry = dialog.VisibleEntries[i];
 
             tmp.Reset();
             if (entry.IsFile) {
@@ -185,7 +199,7 @@ static void FileDialog_ShowDetailsView_(FFileDialogWidget& dialog) {
 
                 if (entry.IsFile) {
                     ImGui::PushStyleColor(ImGuiCol_Text, float4(FileColorFromExtname_(entry.Name.Extname())));
-                    ImGui::TextUnformatted(FileIconFromExtaname_(entry.Name.Extname()));
+                    ImGui::TextUnformatted(FileIconFromExtname_(entry.Name.Extname()));
                     ImGui::PopStyleColor();
                 }
                 else
@@ -194,7 +208,8 @@ static void FileDialog_ShowDetailsView_(FFileDialogWidget& dialog) {
 
             if (ImGui::TableNextColumn()) {
                 ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, { 0.f, .5f });
-                if (ImGui::Button(tmpStringBuf)) {
+                if (ImGui::Selectable(tmpStringBuf, &entry.IsSelected, ImGuiSelectableFlags_SpanAllColumns)) {
+                    FileDialog_Select_(dialog, checked_cast<u32>(i));
                     if (not entry.IsFile)
                         dialog.ChangeDirectory(entry.Name.Directory());
                 }
@@ -243,7 +258,7 @@ static void FileDialog_ShowDetailsView_(FFileDialogWidget& dialog) {
 }
 //----------------------------------------------------------------------------
 static void FileDialog_ShowListView_(FFileDialogWidget& dialog) {
-    const float2 child_sz = float2{ 230, ImGui::GetFrameHeightWithSpacing() };
+    const float2 child_sz = float2{ 230, 0 };
 
     const int entriesPerRow = Max(1,
         FPlatformMaths::RoundToInt(ImGui::GetContentRegionAvail().x / (
@@ -257,7 +272,7 @@ static void FileDialog_ShowListView_(FFileDialogWidget& dialog) {
     imgui_clipper.Begin(checked_cast<int>(dialog.VisibleEntries.size() + entriesPerRow - 1) / entriesPerRow);
     DEFERRED{ imgui_clipper.End(); };
 
-    char tmpStringBuf[MAX_PATH];
+    char tmpStringBuf[MAX_PATH] = {};
 
     while (imgui_clipper.Step()) {
         forrange(row, imgui_clipper.DisplayStart, imgui_clipper.DisplayEnd) {
@@ -265,7 +280,11 @@ static void FileDialog_ShowListView_(FFileDialogWidget& dialog) {
                 if (static_cast<size_t>(row * entriesPerRow + col) >= dialog.VisibleEntries.size())
                     break;
 
-                const FFileDialogWidget::FEntry& entry = dialog.VisibleEntries[row * entriesPerRow + col];
+                const u32 entryIndex = checked_cast<u32>(row * entriesPerRow + col);
+                FFileDialogWidget::FEntry& entry = dialog.VisibleEntries[entryIndex];
+
+                ImGui::PushID(&entry);
+                DEFERRED{ ImGui::PopID(); };
 
                 if (col > 0)
                     ImGui::SameLine();
@@ -286,7 +305,7 @@ static void FileDialog_ShowListView_(FFileDialogWidget& dialog) {
                 ImGui::AlignTextToFramePadding();
                 if (entry.IsFile) {
                     ImGui::PushStyleColor(ImGuiCol_Text, float4(FileColorFromExtname_(entry.Name.Extname())));
-                    ImGui::TextUnformatted(FileIconFromExtaname_(entry.Name.Extname()));
+                    ImGui::TextUnformatted(FileIconFromExtname_(entry.Name.Extname()));
                     ImGui::PopStyleColor();
                 }
                 else {
@@ -298,7 +317,8 @@ static void FileDialog_ShowListView_(FFileDialogWidget& dialog) {
                 ImGui::AlignTextToFramePadding();
 
                 ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, { 0.f, .5f });
-                if (ImGui::Button(tmpStringBuf, child_sz)) {
+                if (ImGui::Selectable(tmpStringBuf, &entry.IsSelected, ImGuiSelectableFlags_SelectOnClick, child_sz)) {
+                    FileDialog_Select_(dialog, entryIndex);
                     if (not entry.IsFile)
                         dialog.ChangeDirectory(entry.Name.Directory());
                 }
@@ -348,7 +368,11 @@ static void FileDialog_ShowLargeView_(FFileDialogWidget& dialog) {
                 if (static_cast<size_t>(row * entriesPerRow + col) >= dialog.VisibleEntries.size())
                     break;
 
-                const FFileDialogWidget::FEntry& entry = dialog.VisibleEntries[row * entriesPerRow + col];
+                const u32 entryIndex = checked_cast<u32>(row * entriesPerRow + col);
+                FFileDialogWidget::FEntry& entry = dialog.VisibleEntries[entryIndex];
+
+                ImGui::PushID(&entry);
+                DEFERRED{ ImGui::PopID(); };
 
                 if (col > 0)
                     ImGui::SameLine();
@@ -377,8 +401,18 @@ static void FileDialog_ShowLargeView_(FFileDialogWidget& dialog) {
                     imgui_font->Scale = 1.5f;
                     ImGui::PushFont(imgui_font);
 
-                    if (entry.IsFile)
-                        ImGui::Button(FileIconFromExtaname_(entry.Name.Extname()), float2(child_sz.xx));
+                    if (entry.IsFile) {
+                        ImGui::PushStyleColor(ImGuiCol_Button, {0,0,0,0});
+                        DEFERRED{ ImGui::PopStyleColor(); };
+
+                        const ImVec2 cursorPos = ImGui::GetCursorPos();
+                        if (ImGui::Selectable("##Selectable", &entry.IsSelected, ImGuiSelectableFlags_SelectOnClick, float2(child_sz.xx)))
+                            FileDialog_Select_(dialog, entryIndex);
+
+                        ImGui::SetCursorPos(cursorPos);
+                        if (ImGui::Button(FileIconFromExtname_(entry.Name.Extname()), float2(child_sz.xx)))
+                            entry.IsSelected = !entry.IsSelected;
+                    }
                     else if (ImGui::Button(ICON_FK_FOLDER, float2(child_sz.xx)))
                         dialog.ChangeDirectory(entry.Name.Directory());
 
@@ -429,7 +463,7 @@ static void FileDialog_ShowDirectoryBreadCrumbs_(FFileDialogWidget& dialog, cons
     const TMemoryView<const FFileSystemToken> entries = path.ExpandTokens();
     Assert(not entries.empty());
 
-    char tmpStringBuf[MAX_PATH];
+    char tmpStringBuf[MAX_PATH] = {};
     FFixedSizeTextWriter tmp(tmpStringBuf);
 
     forrange(i, 0, entries.size()) {
@@ -528,9 +562,16 @@ bool FFileDialogWidget::GoForwardInHistory() {
 //----------------------------------------------------------------------------
 void FFileDialogWidget::RefreshVisibleEntries() {
     NeedRefresh = false;
+
+    FLATSET_INSITU(UI, FFilename, 1) previouslySelectedFiles;
+    previouslySelectedFiles.reserve(SelectedEntries.size());
+    for (u32 entryIndex : SelectedEntries)
+        previouslySelectedFiles.Insert_AssertUnique(VisibleEntries[entryIndex].Name);
+
+    SelectedEntries.clear();
     VisibleEntries.clear();
 
-    char tmpStringBuf[MAX_PATH];
+    char tmpStringBuf[MAX_PATH] = {};
 
     VFS_EnumerateDir(InitialDirectory, false,
         [&](const FDirectory& directory) {
@@ -564,6 +605,11 @@ void FFileDialogWidget::RefreshVisibleEntries() {
                 if (not ShowReadonlyFiles)
                     return;
                 entry.IsReadOnly = true;
+            }
+
+            if (previouslySelectedFiles.find(entry.Name) != previouslySelectedFiles.end()) {
+                entry.IsSelected = true;
+                SelectedEntries.Insert_AssertUnique(checked_cast<u32>(VisibleEntries.size()));
             }
 
             VisibleEntries.push_back(std::move(entry));

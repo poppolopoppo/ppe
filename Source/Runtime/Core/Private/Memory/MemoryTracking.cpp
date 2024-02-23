@@ -56,6 +56,7 @@ static bool CONSTF PPE_DEBUG_SECTION CheckMemoryPredicates2_(const FMemoryTracki
             return true;
     }
 
+    Assert_NoAssume(false);
     return false;
 }
 FORCE_INLINE static bool CONSTF CheckMemoryPredicates_(const FMemoryTracking::FCounters& user, const FMemoryTracking::FCounters& system) NOEXCEPT {

@@ -24,7 +24,7 @@ public:
 
     FString Title{ ICON_CI_GRAPH_LINE " Frame-rate" };
 
-    EOverlayLocation Location{ EOverlayLocation::BottomRight };
+    EOverlayLocation Location{ EOverlayLocation::TopRight };
 
     bool WindowVisible{ true };
 

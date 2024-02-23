@@ -233,7 +233,7 @@ CONSTEXPR auto MinimalPerfectHashMap(const TStaticArray<TPair<_Key, _Value>, N>&
         std::move(hasher),
         std::move(equalTo) );
     mph.Build(values);
-    return mph;
+    return std::move(mph);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

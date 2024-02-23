@@ -39,15 +39,16 @@ public:
 
 protected:
     virtual void Update(FTimespan dt);
-    virtual void Render(FTimespan dt);
-
-    virtual void OnWindowShow(bool visible) NOEXCEPT override;
-    virtual void OnWindowFocus(bool enabled) NOEXCEPT override;
-    virtual void OnWindowMove(const int2& pos) NOEXCEPT override;
-    virtual void OnWindowResize(const uint2& size) NOEXCEPT override;
-    virtual void OnWindowClose() NOEXCEPT override;
+    virtual void Render(RHI::IFrameGraph& fg, FTimespan dt);
+    virtual void ViewportResized(const FRHISurfaceCreateInfo& surface);
 
 private:
+    virtual void OnWindowShow(bool visible) NOEXCEPT override final;
+    virtual void OnWindowFocus(bool enabled) NOEXCEPT override final;
+    virtual void OnWindowMove(const int2& pos) NOEXCEPT override final;
+    virtual void OnWindowResize(const uint2& size) NOEXCEPT override final;
+    virtual void OnWindowClose() NOEXCEPT override final;
+
     void UpdateTickRateFromRefreshRate_();
 
     const TPtrRef<const ITargetRHI> _targetRHI;
@@ -59,6 +60,8 @@ private:
 
     FMovingAverageTimer _messageTime;
     FMovingAverageTimer _tickTime;
+
+    FEventHandle _onViewportResized;
 
     bool _windowWasResized{ false };
 };

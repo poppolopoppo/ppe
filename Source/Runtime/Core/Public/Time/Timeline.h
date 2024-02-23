@@ -27,8 +27,10 @@ public:
     FTimespan Total() const { return FTimepoint::Duration(_start, _now); }
 
     void Reset();
+    void ResetToZero();
 
     void Tick();
+    void Tick(FTimespan dt);
     void Tick(const FTimeline& other);
     void Tick(const FTimeline& other, float speed);
 

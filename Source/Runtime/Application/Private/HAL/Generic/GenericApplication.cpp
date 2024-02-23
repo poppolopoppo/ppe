@@ -42,7 +42,7 @@ void FGenericApplication::Start() {
 
     FPlatformTime::EnterHighResolutionTimer();
 
-    _elapsed = 0.;
+    _realTime.ResetToZero();
     _requestedExit = false;
 }
 //----------------------------------------------------------------------------
@@ -51,8 +51,7 @@ bool FGenericApplication::PumpMessages() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::Tick(FTimespan dt) {
-    _deltaTime = dt;
-    _elapsed += dt;
+    _realTime.Tick(dt);
 
     _OnApplicationTick.Invoke(*this, dt);
 }

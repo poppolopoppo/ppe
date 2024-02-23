@@ -82,7 +82,7 @@ void TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::clear_ReleaseMemory() {
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::find(const _Key& key) -> iterator {
+auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::find(const _Key& key) NOEXCEPT -> iterator {
     const iterator end = _vector.end();
     const iterator it = std::lower_bound(_vector.begin(), end, key, FKeyLess_());
     return ((it != end && FKeyEqual_()(*it, key)) ? it : end);
@@ -105,7 +105,7 @@ auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::FindOrAdd(const _Key& key
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::find(const _Key& key) const -> const_iterator {
+auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::find(const _Key& key) const NOEXCEPT  -> const_iterator {
     const const_iterator end = _vector.end();
     const const_iterator it = std::lower_bound(_vector.begin(), end, key, FKeyLess_());
     return ((it != end && FKeyEqual_()(*it, key)) ? it : end);
@@ -128,7 +128,7 @@ auto TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::FindAfter(const _Key& key
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _Value, typename _EqualTo, typename _Less, typename _Vector>
-bool TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Find(const _Key& key, _Value *pvalue) const {
+bool TFlatMap<_Key, _Value, _EqualTo, _Less, _Vector>::Find(const _Key& key, _Value *pvalue) const NOEXCEPT  {
     const const_iterator it = find(key);
     if (end() == it)
         return false;

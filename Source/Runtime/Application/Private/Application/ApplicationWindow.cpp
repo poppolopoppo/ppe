@@ -8,6 +8,7 @@
 #include "Window/MainWindow.h"
 
 #include "RHIModule.h"
+#include "RHI/FrameGraph.h"
 #include "HAL/RHIService.h"
 #include "HAL/TargetRHI.h"
 
@@ -127,6 +128,10 @@ void FApplicationWindow::Start() {
 #endif
 
         services.Add<IRHIService>(_rhi.get());
+
+        _onViewportResized = _rhi->OnWindowResized().Add([this](const IRHIService& , const FRHISurfaceCreateInfo& surface) {
+            ViewportResized(surface);
+        });
     }
 
     if (_rhi->Features() & ERHIFeature::HighDPIAwareness)
@@ -154,6 +159,8 @@ void FApplicationWindow::Shutdown() {
 
     FModularServices& services = Services_();
     if (_rhi) {
+        _rhi->OnWindowResized().Remove(_onViewportResized);
+
         Assert(&services.Get<IRHIService>() == _rhi.get());
         services.Remove<IRHIService>();
 
@@ -209,7 +216,7 @@ void FApplicationWindow::Tick(FTimespan dt) {
         return;
 
     if (_rhi->BeginFrame(dt)) {
-        Render(dt);
+        Render(*_rhi->FrameGraph(), dt);
 
         _rhi->EndFrame();
     }
@@ -219,8 +226,12 @@ void FApplicationWindow::Update(FTimespan dt) {
     Unused(dt);
 }
 //----------------------------------------------------------------------------
-void FApplicationWindow::Render(FTimespan dt) {
-    Unused(dt);
+void FApplicationWindow::Render(RHI::IFrameGraph& fg, FTimespan dt) {
+    Unused(fg, dt);
+}
+//----------------------------------------------------------------------------
+void FApplicationWindow::ViewportResized(const FRHISurfaceCreateInfo& surface) {
+    Unused(surface);
 }
 //----------------------------------------------------------------------------
 void FApplicationWindow::OnWindowFocus(bool enabled) NOEXCEPT {

@@ -162,7 +162,7 @@ struct TScalarVectorExpr<T, _Dim, TScalarVectorAssignable<T, _Dim, _Expr>> : TSc
     using assignable_type::Assign;
 
     using base_type = TScalarVectorExprBase<T, _Dim, assignable_type>;
-    using base_type::TScalarVectorExprBase;
+    using base_type::base_type;
     using base_type::Get;
     using base_type::operator [];
 

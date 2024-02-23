@@ -78,6 +78,7 @@ private:
 };
 
 PPE_CORE_API NO_INLINE void PPE_DEBUG_SECTION AssertionFailed(const char* msg, const char *file, unsigned line);
+PPE_CORE_API NO_INLINE void PPE_DEBUG_SECTION EnsureFailed(const char* msg, const char *file, unsigned line);
 PPE_CORE_API FAssertionHandler SetAssertionHandler(FAssertionHandler handler) NOEXCEPT;
 PPE_CORE_API FAssertionHandler SetAssertionHandlerForCurrentThread(FAssertionHandler handler) NOEXCEPT;
 
@@ -93,7 +94,7 @@ PPE_CORE_API FAssertionHandler SetAssertionHandlerForCurrentThread(FAssertionHan
     ( Likely(!!(__VA_ARGS__)) ? void(0) : PPE_ASSERT_LIGHTWEIGHT_CRASH() ) // when we need to break immediately
 #   define AssertMessage_NoAssume(_Message, ...) AssertMessage(_Message, COMMA_PROTECT(__VA_ARGS__))
 #   define EnsureMessage(_Message, ...) \
-    ( Likely(!!(__VA_ARGS__)) ? true : (PPE_ASSERT_LAMBDA_WRAPPER(::PPE::AssertionFailed(_Message, __FILE__, __LINE__)), false) )
+    ( Likely(!!(__VA_ARGS__)) ? true : (PPE_ASSERT_LAMBDA_WRAPPER(::PPE::EnsureFailed(_Message, __FILE__, __LINE__)), false) )
 #endif
 
 #   define Verify(...) AssertMessage(STRINGIZE(__VA_ARGS__), COMMA_PROTECT(__VA_ARGS__))

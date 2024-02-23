@@ -30,9 +30,18 @@ void FTimeline::Reset() {
     _now = _last =_start = FTimepoint::Now();
 }
 //----------------------------------------------------------------------------
+void FTimeline::ResetToZero() {
+    _now = _last =_start = Zero;
+}
+//----------------------------------------------------------------------------
 void FTimeline::Tick() {
     _last = _now;
     _now = FTimepoint::Now();
+}
+//----------------------------------------------------------------------------
+void FTimeline::Tick(FTimespan dt) {
+    _last = _now;
+    _now = _now + dt;
 }
 //----------------------------------------------------------------------------
 void FTimeline::Tick(const FTimeline& other) {
@@ -41,14 +50,8 @@ void FTimeline::Tick(const FTimeline& other) {
 }
 //----------------------------------------------------------------------------
 void FTimeline::Tick(const FTimeline& other, float speed) {
-    if (1.0f == speed) {
-        Tick(other);
-    }
-    else {
-        const FTimepoint last(_last);
-        _last = _now;
-        _now = last.Value() + static_cast<FTimepoint::value_type>((other._now.Value() - other._last.Value()) * speed);
-    }
+    if (speed != 0.0f)
+        Tick({ other.Elapsed().Value() * speed });
 }
 //----------------------------------------------------------------------------
 bool FTimeline::Tick_Every(const FTimespan& target, FTimespan& elapsed) {
