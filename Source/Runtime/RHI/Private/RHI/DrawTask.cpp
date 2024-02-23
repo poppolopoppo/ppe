@@ -263,12 +263,12 @@ FCustomDraw::FCustomDraw(FCallback&& rcallback, void* userParam/* = nullptr */) 
     UserParam = userParam;
 }
 //----------------------------------------------------------------------------
-FCustomDraw& FCustomDraw::AddImage(FRawImageID image, EResourceState state/* = EResourceState::ShaderSample */) {
+FCustomDraw& FCustomDraw::AddImage(FRawImageID image, EResourceState state/* = EResourceState_ShaderSample */) {
     Images.Push(image, state);
     return (*this);
 }
 //----------------------------------------------------------------------------
-FCustomDraw& FCustomDraw::AddBuffer(FRawBufferID buffer, EResourceState state/* = EResourceState::ShaderSample */) {
+FCustomDraw& FCustomDraw::AddBuffer(FRawBufferID buffer, EResourceState state/* = EResourceState_ShaderSample */) {
     Buffers.Push(buffer, state);
     return (*this);
 }

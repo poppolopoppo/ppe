@@ -384,7 +384,7 @@ static void CreateDebugUtilsMessengerIFP_(
             for (const VkDebugUtilsObjectNameInfoEXT& obj : objects) {
                 oss << Eol;
 
-                FStringView objectTypeName;
+                FStringLiteral objectTypeName;
                 switch (obj.objectType) {
                 case VK_OBJECT_TYPE_UNKNOWN: objectTypeName = "UNKNOWN"; break;
                 case VK_OBJECT_TYPE_INSTANCE: objectTypeName = "INSTANCE"; break;
@@ -1290,7 +1290,7 @@ auto FVulkanInstance::PickPhysicalDeviceByName(FStringView deviceName) const NOE
 
     return _physicalDevices.MakeConstView().Any([deviceName](const FPhysicalDeviceInfo& pdi) NOEXCEPT -> bool{
         return (HasSubStringI(MakeCStringView(pdi.Properties.deviceName), deviceName) or
-                HasSubStringI(EVulkanVendor_Name(pdi.VendorID()), deviceName));
+                HasSubStringI(EVulkanVendor_Name(pdi.VendorID()).MakeView(), deviceName));
     });
 }
 //----------------------------------------------------------------------------

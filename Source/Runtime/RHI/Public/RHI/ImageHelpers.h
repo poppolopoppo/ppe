@@ -11,13 +11,13 @@ namespace RHI {
 //----------------------------------------------------------------------------
 // FImageLayer user-literal : 0_layer
 //----------------------------------------------------------------------------
-CONSTEXPR FImageLayer operator "" _layer (unsigned long long value) {
+CONSTEXPR FImageLayer operator ""_layer (unsigned long long value) {
     return FImageLayer(checked_cast<u32>(value));
 }
 //----------------------------------------------------------------------------
 // FImageSwizzle user-literal: "RGBA"_swizzle
 //----------------------------------------------------------------------------
-CONSTEXPR FImageSwizzle operator "" _swizzle (const char* str, size_t len) {
+CONSTEXPR FImageSwizzle operator ""_swizzle (const char* str, size_t len) {
     Assert(len <= 4);
 
     u16 value = 0;
@@ -56,7 +56,7 @@ CONSTEXPR uint4 Unswizzle(FImageSwizzle swizzle) {
         (swizzle.Value >>  0u) & 0xFu };
 }
 //----------------------------------------------------------------------------
-CONSTEXPR FImageSwizzle operator "" _swizzle (unsigned long long value) {
+CONSTEXPR FImageSwizzle operator ""_swizzle (unsigned long long value) {
     const FImageSwizzle res(checked_cast<u16>(value));
     Assert_NoAssume(Swizzle(Unswizzle(res)) == res);
     return res;
@@ -64,7 +64,7 @@ CONSTEXPR FImageSwizzle operator "" _swizzle (unsigned long long value) {
 //----------------------------------------------------------------------------
 // FMipmapLevel
 //----------------------------------------------------------------------------
-CONSTEXPR FMipmapLevel operator "" _mipmap (unsigned long long value) {
+CONSTEXPR FMipmapLevel operator ""_mipmap (unsigned long long value) {
     return FMipmapLevel(checked_cast<u32>(value));
 }
 //----------------------------------------------------------------------------
@@ -100,7 +100,7 @@ struct FMultiSamples {
 };
 PPE_ASSUME_TYPE_AS_POD(FMultiSamples)
 //----------------------------------------------------------------------------
-CONSTEXPR FMultiSamples operator "" _samples (unsigned long long value) {
+CONSTEXPR FMultiSamples operator ""_samples (unsigned long long value) {
     return FMultiSamples(checked_cast<u32>(value));
 }
 //----------------------------------------------------------------------------

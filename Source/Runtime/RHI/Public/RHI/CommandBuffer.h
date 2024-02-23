@@ -21,14 +21,14 @@ namespace RHI {
 struct FCommandBufferDesc {
     EQueueType      QueueType{ EQueueType::Graphics };
     EDebugFlags     DebugFlags{ Default };
-    FStringView     Name;
+    FStringLiteral  Name;
 
     FCommandBufferDesc() = default;
     explicit FCommandBufferDesc(EQueueType queueType) : QueueType(queueType) {}
 
     FCommandBufferDesc& SetQueueType(EQueueType value) { QueueType = value; return *this; }
     FCommandBufferDesc& SetDebugFlags(EDebugFlags value) { DebugFlags = value; return *this; }
-    FCommandBufferDesc& SetName(FStringView value) { Name = value; return *this; }
+    FCommandBufferDesc& SetName(FStringLiteral value) { Name = value; return *this; }
 };
 PPE_ASSUME_TYPE_AS_POD(FCommandBufferDesc)
 //----------------------------------------------------------------------------

@@ -109,7 +109,7 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
         dst.Samples = VkCast(sharedImg->Desc.Samples);
         dst.LoadOp = VkCast(src.LoadOp, cmd.Device());
         dst.StoreOp = VkCast(src.StoreOp, cmd.Device());
-        dst.State = EResourceState::Unknown;
+        dst.State = EResourceState_Unknown;
         dst.Index = checked_cast<u32>(i);
         dst.ImageHash = hash_tuple(dst.ImageId, dst.Desc);
 
@@ -132,10 +132,10 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
 
             if (src.LoadOp == EAttachmentLoadOp::Clear or
                 src.LoadOp == EAttachmentLoadOp::Invalidate )
-                dst.State |= EResourceState::InvalidateBefore;
+                dst.State |= EResourceFlags::InvalidateBefore;
 
             if (src.StoreOp == EAttachmentStoreOp::Invalidate)
-                dst.State |= EResourceState::InvalidateAfter;
+                dst.State |= EResourceFlags::InvalidateAfter;
         }
 
         // add color or depth-stencil render target
@@ -144,14 +144,16 @@ bool FVulkanLogicalRenderPass::Construct(FVulkanCommandBuffer& cmd, const FRende
             Assert_NoAssume(static_cast<ERenderTargetID>(i) == ERenderTargetID::DepthStencil);
             Assert_NoAssume(sharedImg->Desc.Usage & EImageUsage::DepthStencilAttachment);
 
-            dst.State |= EResourceState::DepthStencilAttachmentReadWrite; // #TODO: add support for other layouts
+            dst.State.MemoryAccess = EResourceAccess::DepthStencilAttachment;
+            dst.State.Flags = dst.State.Flags | EResourceFlags_ReadWrite; // #TODO: add support for other layouts
 
             _depthStencilTarget = FDepthStencilTarget{ dst };
         }
         else {
             Assert_NoAssume(sharedImg->Desc.Usage ^ (EImageUsage::ColorAttachment|EImageUsage::ColorAttachmentBlend));
 
-            dst.State |= EResourceState::ColorAttachmentReadWrite; // #TODO: remove 'Read' state if blending disabled or 'loadOp' is 'Clear'
+            dst.State.MemoryAccess = EResourceAccess::ColorAttachment;
+            dst.State.Flags = dst.State.Flags | EResourceFlags_ReadWrite; // #TODO: remove 'Read' state if blending disabled or 'loadOp' is 'Clear'
 
             _colorTargets.Push(dst);
         }

@@ -26,10 +26,9 @@ enum class EQueueUsage : u8 {
     Graphics            = u32(1) << u32(EQueueType::Graphics),
     AsyncCompute        = u32(1) << u32(EQueueType::AsyncCompute),
     AsyncTransfer       = u32(1) << u32(EQueueType::AsyncTransfer),
-    _Last,
-    All                 = ((_Last-1) << 1) - 1,
 };
 ENUM_FLAGS(EQueueUsage);
+inline CONSTEXPR EQueueUsage EQueueUsage_All{ EQueueUsage::Graphics | EQueueUsage::AsyncCompute | EQueueUsage::AsyncTransfer };
 //----------------------------------------------------------------------------
 // Device Memory
 //----------------------------------------------------------------------------
@@ -38,9 +37,10 @@ enum class EMemoryType : u8 {
     HostRead            = 1 << 0,
     HostWrite           = 1 << 1,
     Dedicated           = 1 << 2, // force to use dedicated allocation
-    _Last
 };
 ENUM_FLAGS(EMemoryType);
+inline CONSTEXPR u8 EMemoryType_Last{ u8(EMemoryType::Dedicated) };
+inline CONSTEXPR EMemoryType EMemoryType_All{ EMemoryType::HostRead | EMemoryType::HostWrite | EMemoryType::Dedicated };
 //----------------------------------------------------------------------------
 // Device Buffer
 //----------------------------------------------------------------------------
@@ -61,13 +61,21 @@ enum class EBufferUsage : u32 {
     VertexPplnStore     = 1 << 11,  // same as 'Storage', storage buffer store and atomic operations in vertex, geometry, tessellation shaders
     FragmentPplnStore   = 1 << 12,  // same as 'Storage', storage buffer store and atomic operations in fragment shader
     StorageTexelAtomic  = 1 << 13,  // same as 'StorageTexel', atomic ops on imageBuffer
-    _Last,
 
-    All                 = ((_Last-1) << 1) - 1,
-    Transfer            = TransferDst | TransferSrc,
     Unknown             = 0,
 };
 ENUM_FLAGS(EBufferUsage);
+inline CONSTEXPR EBufferUsage EBufferUsage_All{
+    EBufferUsage::TransferDst | EBufferUsage::TransferSrc |
+    EBufferUsage::UniformTexel | EBufferUsage::StorageTexel |
+    EBufferUsage::Uniform | EBufferUsage::Storage |
+    EBufferUsage::Index | EBufferUsage::Vertex |
+    EBufferUsage::Indirect |
+    EBufferUsage::RayTracing |
+    EBufferUsage::VertexPplnStore |
+    EBufferUsage::FragmentPplnStore |
+    EBufferUsage::StorageTexelAtomic };
+inline CONSTEXPR EBufferUsage EBufferUsage_Transfer{ EBufferUsage::TransferDst | EBufferUsage::TransferSrc };
 //----------------------------------------------------------------------------
 // Device attachment
 //----------------------------------------------------------------------------
@@ -76,6 +84,7 @@ enum class EAttachmentLoadOp : u8 {
     Load,
     Clear,
     Keep,
+
     Unknown = UINT8_MAX,
 };
 //----------------------------------------------------------------------------
@@ -83,9 +92,9 @@ enum class EAttachmentStoreOp : u8 {
     Invalidate,
     Store,
     Keep,
+
     Unknown = UINT8_MAX,
 };
-
 //----------------------------------------------------------------------------
 enum class ERenderTargetID : u32 {
     Color0              = 0,
@@ -113,6 +122,7 @@ enum class EShadingRatePalette : u8 {
     Block_4x2_1         = 9,
     Block_2x4_1         = 10,
     Block_4x4_1         = 11,
+
     _Count
 };
 //----------------------------------------------------------------------------
@@ -319,7 +329,6 @@ enum class EImageFlags : u8 {
     Array2DCompatible           = 1 << 1,   // allows to create 2D Array view from 3D image
     BlockTexelViewCompatible    = 1 << 2,   // allows to create view with uncompressed format for compressed image
     CubeCompatible              = 1 << 3,   // allows to create CubeMap and CubeMapArray from 2D Array
-    _Last,
 
     Unknown                     = 0,
 };
@@ -341,13 +350,11 @@ enum class EImageUsage : u32 {
     StorageAtomic               = 1 << 10,  // same as 'Storage', atomic operations on image
     ColorAttachmentBlend        = 1 << 11,  // same as 'ColorAttachment', blend operations on render target
     SampledMinMax               = 1 << 13,  // same as 'Sampled'
-    _Last,
 
-    All                         = ((_Last-1) << 1) - 1,
-    Transfer                    = TransferDst | TransferSrc,
     Unknown                     = 0,
 };
 ENUM_FLAGS(EImageUsage);
+inline CONSTEXPR EImageUsage EImageUsage_Transfer{ EImageUsage::TransferDst | EImageUsage::TransferSrc };
 //----------------------------------------------------------------------------
 enum class EImageAspect : u32 {
     Color                       = 1 << 0,
@@ -355,88 +362,107 @@ enum class EImageAspect : u32 {
     Stencil                     = 1 << 2,
     Metadata                    = 1 << 3,
 
-    DepthStencil                = Depth | Stencil,
-    Auto                        = ~0u,
     Unknown                     = 0,
 };
 ENUM_FLAGS(EImageAspect);
+inline CONSTEXPR EImageAspect EImageAspect_Auto{~0u};
+inline CONSTEXPR EImageAspect EImageAspect_DepthStencil{EImageAspect::Depth | EImageAspect::Stencil};
 //----------------------------------------------------------------------------
-enum class EImageSampler : u32 {
-    // dimension
-    _DimOffset                  = FGenericPlatformMaths::FloorLog2(static_cast<u32>(EPixelFormat::_Count)) + 1,
-    _DimMask                    = 0xF << _DimOffset,
-    _1D                         = 1 << _DimOffset,
-    _1DArray                    = 2 << _DimOffset,
-    _2D                         = 3 << _DimOffset,
-    _2DArray                    = 4 << _DimOffset,
-    _2DMS                       = 5 << _DimOffset,
-    _2DMSArray                  = 6 << _DimOffset,
-    _Cube                       = 7 << _DimOffset,
-    _CubeArray                  = 8 << _DimOffset,
-    _3D                         = 9 << _DimOffset,
+struct EImageSampler {
+    enum EDimension : u8 {
+        _1D = 1,
+        _1DArray,
+        _2D,
+        _2DArray,
+        _2DMS,
+        _2DMSArray,
+        _Cube,
+        _CubeArray,
+        _3D,
+    };
 
-    // type
-    _TypeOffset                 = _DimOffset + 4,
-    _TypeMask                   = 0xF << _TypeOffset,
-    _Float                      = 1 << _TypeOffset,
-    _Int                        = 2 << _TypeOffset,
-    _UInt                       = 3 << _TypeOffset,
+    enum EType : u8 {
+        _Float = 1,
+        _Int,
+        _UInt,
+    };
 
-    // flags
-    _FlagsOffset                = _TypeOffset + 4,
-    _FlagsMask                  = 0xF << _FlagsOffset,
-    _Shadow                     = 1 << _FlagsOffset,
+    enum EFlags : u8 {
+        _Shadow = 1 << 0,
+    };
+    ENUM_FLAGS_FRIEND(EFlags);
 
-    // format
-    _FormatMask                 = (1u << _DimOffset) - 1,
+    EPixelFormat    Format{ Default };
+    EDimension      Dimension{ Zero };
+    EType           Type{ Zero };
+    EFlags          Flags{ Zero };
 
-    // default
-    Float1D                     = _Float | _1D,
-    Float1DArray                = _Float | _1DArray,
-    Float2D                     = _Float | _2D,
-    Float2DArray                = _Float | _2DArray,
-    Float2DMS                   = _Float | _2DMS,
-    Float2DMSArray              = _Float | _2DMSArray,
-    FloatCube                   = _Float | _Cube,
-    FloatCubeArray              = _Float | _CubeArray,
-    Float3D                     = _Float | _3D,
+    CONSTEXPR EImageSampler() = default;
 
-    Int1D                       = _Int | _1D,
-    Int1DArray                  = _Int | _1DArray,
-    Int2D                       = _Int | _2D,
-    Int2DArray                  = _Int | _2DArray,
-    Int2DMS                     = _Int | _2DMS,
-    Int2DMSArray                = _Int | _2DMSArray,
-    IntCube                     = _Int | _Cube,
-    IntCubeArray                = _Int | _CubeArray,
-    Int3D                       = _Int | _3D,
+    CONSTEXPR EImageSampler(EType type, EDimension dim)
+    :   EImageSampler(Zero, dim, type, Zero)
+    {}
 
-    UInt1D                      = _UInt | _1D,
-    UInt1DArray                 = _UInt | _1DArray,
-    UInt2D                      = _UInt | _2D,
-    UInt2DArray                 = _UInt | _2DArray,
-    UInt2DMS                    = _UInt | _2DMS,
-    UInt2DMSArray               = _UInt | _2DMSArray,
-    UIntCube                    = _UInt | _Cube,
-    UIntCubeArray               = _UInt | _CubeArray,
-    UInt3D                      = _UInt | _3D,
+    CONSTEXPR EImageSampler(EPixelFormat format, EDimension dim, EType type, EFlags flags) {
+        Format = format;
+        Dimension = dim;
+        Type = type;
+        Flags = flags;
+    }
 
-    Unknown                     = ~0u,
+    CONSTEXPR u32 TypeDim() const {
+        return {u32(Type) | (u32(Dimension) << 8u)};
+    }
+
+    friend hash_t hash_value(EImageSampler value) NOEXCEPT {
+        return hash_as_pod(value);
+    }
+
+    CONSTEXPR EImageSampler operator +(EFlags flag) const { return {Format, Dimension, Type, Flags + flag}; }
+    CONSTEXPR EImageSampler operator -(EFlags flag) const { return {Format, Dimension, Type, Flags - flag}; }
+    CONSTEXPR EImageSampler operator |(EFlags flag) const { return {Format, Dimension, Type, Flags | flag}; }
+
+    CONSTEXPR EImageSampler& operator +=(EFlags flag) { Flags = (Flags + flag); return (*this); }
+    CONSTEXPR EImageSampler& operator -=(EFlags flag) { Flags = (Flags - flag); return (*this); }
+    CONSTEXPR EImageSampler& operator |=(EFlags flag) { Flags = (Flags | flag); return (*this); }
+
+    CONSTEXPR bool operator &(EFlags flag) const { return (Flags & flag); }
+    CONSTEXPR bool operator ^(EFlags flag) const { return (Flags ^ flag); }
+
+    CONSTEXPR bool operator ==(EImageSampler o) const { return (Format == o.Format && Dimension == o.Dimension && Type == o.Type && Flags == o.Flags); }
+    CONSTEXPR bool operator !=(EImageSampler o) const { return (not operator ==(o)); }
 };
-ENUM_FLAGS(EImageSampler);
+STATIC_ASSERT(sizeof(u32) == sizeof(EImageSampler));
+inline CONSTEXPR EImageSampler EImageSampler_Float1D        { EImageSampler::_Float, EImageSampler::_1D };
+inline CONSTEXPR EImageSampler EImageSampler_Float1DArray   { EImageSampler::_Float, EImageSampler::_1DArray };
+inline CONSTEXPR EImageSampler EImageSampler_Float2D        { EImageSampler::_Float, EImageSampler::_2D };
+inline CONSTEXPR EImageSampler EImageSampler_Float2DArray   { EImageSampler::_Float, EImageSampler::_2DArray };
+inline CONSTEXPR EImageSampler EImageSampler_Float2DMS      { EImageSampler::_Float, EImageSampler::_2DMS };
+inline CONSTEXPR EImageSampler EImageSampler_Float2DMSArray { EImageSampler::_Float, EImageSampler::_2DMSArray };
+inline CONSTEXPR EImageSampler EImageSampler_FloatCube      { EImageSampler::_Float, EImageSampler::_Cube };
+inline CONSTEXPR EImageSampler EImageSampler_FloatCubeArray { EImageSampler::_Float, EImageSampler::_CubeArray };
+inline CONSTEXPR EImageSampler EImageSampler_Float3D        { EImageSampler::_Float, EImageSampler::_3D };
+inline CONSTEXPR EImageSampler EImageSampler_Int1D          { EImageSampler::_Int, EImageSampler::_1D };
+inline CONSTEXPR EImageSampler EImageSampler_Int1DArray     { EImageSampler::_Int, EImageSampler::_1DArray };
+inline CONSTEXPR EImageSampler EImageSampler_Int2D          { EImageSampler::_Int, EImageSampler::_2D };
+inline CONSTEXPR EImageSampler EImageSampler_Int2DArray     { EImageSampler::_Int, EImageSampler::_2DArray };
+inline CONSTEXPR EImageSampler EImageSampler_Int2DMS        { EImageSampler::_Int, EImageSampler::_2DMS };
+inline CONSTEXPR EImageSampler EImageSampler_Int2DMSArray   { EImageSampler::_Int, EImageSampler::_2DMSArray };
+inline CONSTEXPR EImageSampler EImageSampler_IntCube        { EImageSampler::_Int, EImageSampler::_Cube };
+inline CONSTEXPR EImageSampler EImageSampler_IntCubeArray   { EImageSampler::_Int, EImageSampler::_CubeArray };
+inline CONSTEXPR EImageSampler EImageSampler_Int3D          { EImageSampler::_Int, EImageSampler::_3D };
+inline CONSTEXPR EImageSampler EImageSampler_UInt1D         { EImageSampler::_UInt, EImageSampler::_1D };
+inline CONSTEXPR EImageSampler EImageSampler_UInt1DArray    { EImageSampler::_UInt, EImageSampler::_1DArray };
+inline CONSTEXPR EImageSampler EImageSampler_UInt2D         { EImageSampler::_UInt, EImageSampler::_2D };
+inline CONSTEXPR EImageSampler EImageSampler_UInt2DArray    { EImageSampler::_UInt, EImageSampler::_2DArray };
+inline CONSTEXPR EImageSampler EImageSampler_UInt2DMS       { EImageSampler::_UInt, EImageSampler::_2DMS };
+inline CONSTEXPR EImageSampler EImageSampler_UInt2DMSArray  { EImageSampler::_UInt, EImageSampler::_2DMSArray };
+inline CONSTEXPR EImageSampler EImageSampler_UIntCube       { EImageSampler::_UInt, EImageSampler::_Cube };
+inline CONSTEXPR EImageSampler EImageSampler_UIntCubeArray  { EImageSampler::_UInt, EImageSampler::_CubeArray };
+inline CONSTEXPR EImageSampler EImageSampler_UInt3D         { EImageSampler::_UInt, EImageSampler::_3D };
 //----------------------------------------------------------------------------
-CONSTEXPR EImageSampler EImageSampler_FromPixelFormat(EPixelFormat fmt) {
-    Assert_NoAssume(Meta::EnumAnd(static_cast<EImageSampler>(Meta::EnumOrd(fmt)), EImageSampler::_FormatMask) ==
-        static_cast<EImageSampler>(Meta::EnumOrd(fmt)));
-    return static_cast<EImageSampler>(Meta::EnumOrd(fmt));
-}
-//----------------------------------------------------------------------------
-CONSTEXPR EImageSampler operator |(EImageSampler sampler, EPixelFormat fmt) {
-    return (sampler | EImageSampler_FromPixelFormat(fmt));
-}
-//----------------------------------------------------------------------------
-CONSTEXPR EPixelFormat EPixelFormat_FromImageSampler(EImageSampler sampler) {
-    return static_cast<EPixelFormat>(Meta::EnumAnd(sampler, EImageSampler::_FormatMask));
+inline CONSTEXPR EImageSampler EImageSampler_FromPixelFormat(EPixelFormat fmt) {
+    return {fmt, Zero, Zero, Zero};
 }
 //----------------------------------------------------------------------------
 // Fragment output
@@ -466,17 +492,22 @@ enum class EDebugFlags : u32 {
     QueueSync                   = 1u << 31,	// after each submit wait until queue complete execution
 
     Unknown                     = 0,
-
-    Verbose                     = LogTasks | LogBarriers | LogResourceUsage |
-                                  VisTasks | VisDrawTasks | VisResources | VisBarriers,
-
-#if USE_PPE_RHIDEBUG
-    Default                     = Verbose,
-#else
-    Default                     = Unknown,
-#endif
 };
 ENUM_FLAGS(EDebugFlags);
+inline CONSTEXPR EDebugFlags EDebugFlags_Verbose{
+    EDebugFlags::LogTasks |
+    EDebugFlags::LogBarriers |
+    EDebugFlags::LogResourceUsage |
+    EDebugFlags::VisTasks |
+    EDebugFlags::VisDrawTasks |
+    EDebugFlags::VisResources |
+    EDebugFlags::VisBarriers
+};
+#if USE_PPE_RHIDEBUG
+inline CONSTEXPR EDebugFlags EDebugFlags_Default = EDebugFlags_Verbose;
+#else
+inline CONSTEXPR EDebugFlags EDebugFlags_Default = EDebugFlags_Unknown;
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

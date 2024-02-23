@@ -959,7 +959,7 @@ bool FVulkanCommandBatch::AllocStorageForDebug_(FDebugMode& debugMode, size_t si
         sb.Stages = stages;
 
         sb.ShaderTraceBuffer = _frameGraph->CreateBuffer(
-            FBufferDesc{ sb.Capacity, EBufferUsage::Storage | EBufferUsage::Transfer },
+            FBufferDesc{ sb.Capacity, EBufferUsage::Storage | EBufferUsage_Transfer },
             Default, "DebugOutputStorage" );
         PPE_LOG_CHECK( RHI, sb.ShaderTraceBuffer );
 

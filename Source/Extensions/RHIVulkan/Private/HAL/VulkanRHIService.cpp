@@ -285,7 +285,7 @@ void FVulkanRHIService::EndFrame() {
 
     _OnRenderFrame.Invoke(*this, _dt);
 
-    PPE_LOG_CHECKVOID(RHI, _frameGraph->Flush(EQueueUsage::All));
+    PPE_LOG_CHECKVOID(RHI, _frameGraph->Flush(EQueueUsage_All));
     PPE_LOG_CHECKVOID(RHI, _frameGraph->WaitIdle(IFrameGraph::MaxTimeout));
 
     _OnEndFrame.Invoke(*this, _currentFrame);

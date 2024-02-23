@@ -55,7 +55,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
 
             _processor.AddBuffer_(
                 task.VertexBuffers[i],
-                EResourceState::VertexBuffer,
+                EResourceState_VertexBuffer,
                 cmdOffset, cmdSize );
         }
     }
@@ -75,7 +75,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
     forrange(i, 0, task.VertexBuffers.size()) {
         _processor.AddBuffer_(
             task.VertexBuffers[i],
-            EResourceState::VertexBuffer,
+            EResourceState_VertexBuffer,
             task.VertexOffsets[i],
             VK_WHOLE_SIZE );
     }
@@ -90,7 +90,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
 
         _processor.AddBuffer_(
             task.IndexBuffer,
-            EResourceState::IndexBuffer,
+            EResourceState_IndexBuffer,
             ibOffset, cmdSize );
     }
 
@@ -108,7 +108,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
     forrange(i, 0, task.VertexBuffers.size()) {
         _processor.AddBuffer_(
             task.VertexBuffers[i],
-            EResourceState::VertexBuffer,
+            EResourceState_VertexBuffer,
             task.VertexOffsets[i],
             VK_WHOLE_SIZE );
     }
@@ -118,7 +118,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
     for (const auto& cmd : task.Commands) {
         _processor.AddBuffer_(
             task.IndirectBuffer,
-            EResourceState::IndirectBuffer,
+            EResourceState_IndirectBuffer,
             static_cast<VkDeviceSize>(cmd.IndirectBufferOffset),
             static_cast<VkDeviceSize>(cmd.IndirectBufferStride) * cmd.DrawCount );
     }
@@ -137,7 +137,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
     forrange(i, 0, task.VertexBuffers.size()) {
         _processor.AddBuffer_(
             task.VertexBuffers[i],
-            EResourceState::VertexBuffer,
+            EResourceState_VertexBuffer,
             task.VertexOffsets[i],
             VK_WHOLE_SIZE );
     }
@@ -146,7 +146,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
 
     _processor.AddBuffer_(
         task.IndexBuffer,
-        EResourceState::IndexBuffer,
+        EResourceState_IndexBuffer,
         static_cast<VkDeviceSize>(task.IndexBufferOffset),
         VK_WHOLE_SIZE );
 
@@ -155,7 +155,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
     for (const auto& cmd : task.Commands) {
         _processor.AddBuffer_(
             task.IndirectBuffer,
-            EResourceState::IndirectBuffer,
+            EResourceState_IndirectBuffer,
             static_cast<VkDeviceSize>(cmd.IndirectBufferOffset),
             static_cast<VkDeviceSize>(cmd.IndirectBufferStride) * cmd.DrawCount );
     }
@@ -174,7 +174,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
     forrange(i, 0, task.VertexBuffers.size()) {
         _processor.AddBuffer_(
             task.VertexBuffers[i],
-            EResourceState::VertexBuffer,
+            EResourceState_VertexBuffer,
             task.VertexOffsets[i],
             VK_WHOLE_SIZE );
     }
@@ -184,12 +184,12 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
     for (const auto& cmd : task.Commands) {
         _processor.AddBuffer_(
             task.IndirectBuffer,
-            EResourceState::IndirectBuffer,
+            EResourceState_IndirectBuffer,
             static_cast<VkDeviceSize>(cmd.IndirectBufferOffset),
             static_cast<VkDeviceSize>(cmd.IndirectBufferStride) * cmd.MaxDrawCount );
         _processor.AddBuffer_(
             task.CountBuffer,
-            EResourceState::IndirectBuffer,
+            EResourceState_IndirectBuffer,
             static_cast<VkDeviceSize>(cmd.CountBufferOffset),
             sizeof(u32) );
     }
@@ -208,7 +208,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
     forrange(i, 0, task.VertexBuffers.size()) {
         _processor.AddBuffer_(
             task.VertexBuffers[i],
-            EResourceState::VertexBuffer,
+            EResourceState_VertexBuffer,
             task.VertexOffsets[i],
             VK_WHOLE_SIZE );
     }
@@ -217,7 +217,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
 
     _processor.AddBuffer_(
         task.IndexBuffer,
-        EResourceState::IndexBuffer,
+        EResourceState_IndexBuffer,
         static_cast<VkDeviceSize>(task.IndexBufferOffset),
         VK_WHOLE_SIZE );
 
@@ -226,12 +226,12 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
     for (const auto& cmd : task.Commands) {
         _processor.AddBuffer_(
             task.IndirectBuffer,
-            EResourceState::IndirectBuffer,
+            EResourceState_IndirectBuffer,
             static_cast<VkDeviceSize>(cmd.IndirectBufferOffset),
             static_cast<VkDeviceSize>(cmd.IndirectBufferStride) * cmd.MaxDrawCount );
         _processor.AddBuffer_(
             task.CountBuffer,
-            EResourceState::IndirectBuffer,
+            EResourceState_IndirectBuffer,
             static_cast<VkDeviceSize>(cmd.CountBufferOffset),
             sizeof(u32) );
     }
@@ -257,7 +257,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
     for (const auto& cmd : task.Commands) {
         _processor.AddBuffer_(
             task.IndirectBuffer,
-            EResourceState::IndirectBuffer,
+            EResourceState_IndirectBuffer,
             static_cast<VkDeviceSize>(cmd.IndirectBufferOffset),
             static_cast<VkDeviceSize>(cmd.IndirectBufferStride) * cmd.DrawCount );
     }
@@ -274,12 +274,12 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
     for (const auto& cmd : task.Commands) {
         _processor.AddBuffer_(
             task.IndirectBuffer,
-            EResourceState::IndirectBuffer,
+            EResourceState_IndirectBuffer,
             static_cast<VkDeviceSize>(cmd.IndirectBufferOffset),
             static_cast<VkDeviceSize>(cmd.IndirectBufferStride) * cmd.MaxDrawCount );
         _processor.AddBuffer_(
             task.CountBuffer,
-            EResourceState::IndirectBuffer,
+            EResourceState_IndirectBuffer,
             static_cast<VkDeviceSize>(cmd.CountBufferOffset),
             sizeof(u32) );
     }
@@ -288,7 +288,7 @@ inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask
 }
 //----------------------------------------------------------------------------
 inline void FVulkanTaskProcessor::FDrawTaskBarriers::Visit(const TVulkanDrawTask<FCustomDraw>& task) {
-    const EResourceState stages = _processor._workerCmd->Device().GraphicsShaderStages();
+    const EResourceShaderStages stages = _processor._workerCmd->Device().GraphicsShaderStages();
 
     for (const auto& it : task.Images) {
         const auto sharedImg = it.first->Read();

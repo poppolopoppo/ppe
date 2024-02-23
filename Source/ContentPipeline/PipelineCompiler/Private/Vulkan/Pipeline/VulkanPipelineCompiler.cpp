@@ -12,6 +12,7 @@
 
 #include "Meta/Functor.h"
 #include "IO/Format.h"
+#include "Memory/SharedBuffer.h"
 
 namespace PPE {
 namespace RHI {
@@ -54,11 +55,18 @@ CONSTEXPR void MergeShaderAccess_(EResourceState* dstAccess, const EResourceStat
     if (*dstAccess == srcAccess)
         return;
 
-    *dstAccess |= srcAccess;
+    dstAccess->Flags = dstAccess->Flags | srcAccess.Flags;
+    dstAccess->ShaderStages = dstAccess->ShaderStages | srcAccess.ShaderStages;
 
-    if ((*dstAccess & EResourceState::InvalidateBefore) and
-        (*dstAccess & EResourceState::ShaderRead)) {
-        *dstAccess -= EResourceState::InvalidateBefore;
+    if (srcAccess.MemoryAccess != EResourceAccess::Unknown) {
+        Assert(dstAccess->MemoryAccess == EResourceAccess::Unknown ||
+            dstAccess->MemoryAccess == srcAccess.MemoryAccess);
+        dstAccess->MemoryAccess = srcAccess.MemoryAccess;
+    }
+
+    if ((dstAccess->Flags & (EResourceFlags::InvalidateBefore | EResourceFlags::Read)) &&
+        (dstAccess->MemoryAccess == EResourceAccess::ShaderStorage)) {
+        dstAccess->Flags = dstAccess->Flags - EResourceFlags::InvalidateBefore;
     }
 }
 //----------------------------------------------------------------------------
@@ -69,7 +77,7 @@ NODISCARD static bool MergeUniformData_(FPipelineDesc::FVariantUniform* dst, con
             if (auto* const rhs = std::get_if<FPipelineDesc::FTexture>(&dst->Data)) {
                 if (Ensure(lhs.Type == rhs->Type and src.Index == dst->Index)) {
                     dst->StageFlags |= src.StageFlags;
-                    rhs->State |= EResourceState_FromShaders(dst->StageFlags);
+                    rhs->State |= EResourceShaderStages_FromShaders(dst->StageFlags);
                     return true;
                 }
             }
@@ -89,7 +97,7 @@ NODISCARD static bool MergeUniformData_(FPipelineDesc::FVariantUniform* dst, con
             if (auto* const rhs = std::get_if<FPipelineDesc::FSubpassInput>(&dst->Data)) {
                 if (Ensure(lhs.AttachmentIndex == rhs->AttachmentIndex and lhs.IsMultiSample == rhs->IsMultiSample and src.Index == dst->Index)) {
                     dst->StageFlags |= src.StageFlags;
-                    rhs->State |= EResourceState_FromShaders(dst->StageFlags);
+                    rhs->State |= EResourceShaderStages_FromShaders(dst->StageFlags);
                     return true;
                 }
             }
@@ -101,7 +109,7 @@ NODISCARD static bool MergeUniformData_(FPipelineDesc::FVariantUniform* dst, con
                     MergeShaderAccess_(&rhs->State, lhs.State);
 
                     dst->StageFlags |= src.StageFlags;
-                    rhs->State |= EResourceState_FromShaders(dst->StageFlags);
+                    rhs->State |= EResourceShaderStages_FromShaders(dst->StageFlags);
                     return true;
                 }
             }
@@ -111,7 +119,7 @@ NODISCARD static bool MergeUniformData_(FPipelineDesc::FVariantUniform* dst, con
             if (auto* const rhs = std::get_if<FPipelineDesc::FUniformBuffer>(&dst->Data)) {
                 if (Ensure(lhs.Size == rhs->Size and src.Index == dst->Index)) {
                     dst->StageFlags |= src.StageFlags;
-                    rhs->State |= EResourceState_FromShaders(dst->StageFlags);
+                    rhs->State |= EResourceShaderStages_FromShaders(dst->StageFlags);
                     return true;
                 }
             }
@@ -123,7 +131,7 @@ NODISCARD static bool MergeUniformData_(FPipelineDesc::FVariantUniform* dst, con
                     MergeShaderAccess_(&rhs->State, lhs.State);
 
                     dst->StageFlags |= src.StageFlags;
-                    rhs->State |= EResourceState_FromShaders(dst->StageFlags);
+                    rhs->State |= EResourceShaderStages_FromShaders(dst->StageFlags);
                     return true;
                 }
             }
@@ -169,7 +177,7 @@ NODISCARD static bool MergeUniformMap_(
                 FUniformID id{ FStringView(uniqueName, len) };
                 if (not dst->Contains(id) and not src.Contains(id)) {
                     found = true;
-                    dst->Add_Overwrite({ std::move(id), un.second });
+                    dst->Emplace_Overwrite(std::move(id), un.second);
                     break;
                 }
             }
@@ -309,12 +317,12 @@ static void UpdateBufferDynamicOffsets_(FPipelineDesc::FDescriptorSets* descript
     for (FPipelineDesc::FDescriptorSet& dsLayout : *descriptorSets) {
         for (auto& un : *dsLayout.Uniforms) {
             if (auto* const ubuf = std::get_if<FPipelineDesc::FUniformBuffer>(&un.second.Data);
-                ubuf and ubuf->State & EResourceState::_BufferDynamicOffset ) {
+                ubuf and ubuf->State & EResourceFlags::BufferDynamicOffset ) {
                 sorted.Push(&un.second);
             }
             else
             if (auto* const sbuf = std::get_if<FPipelineDesc::FStorageBuffer>(&un.second.Data);
-                sbuf and sbuf->State & EResourceState::_BufferDynamicOffset ) {
+                sbuf and sbuf->State & EResourceFlags::BufferDynamicOffset ) {
                 sorted.Push(&un.second);
             }
         }
@@ -610,7 +618,7 @@ bool FVulkanPipelineCompiler::IsSupported(const FComputePipelineDesc& desc, ESha
 //----------------------------------------------------------------------------
 // Compile
 //----------------------------------------------------------------------------
-bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat fmt) {
+bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) {
     Assert_NoAssume(IsSupported(desc, fmt));
 
     const auto exclusiveData = _data.LockExclusive();
@@ -624,34 +632,69 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
 
         const auto it = HighestPriorityShaderFormat_(sh.second.Data, spirvFormat);
         if (sh.second.Data.end() == it) {
-            PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "mesh pipeline: no suitable shader format found!");
+            logger(ELoggerVerbosity::Error, "@unknown", 0, "no suitable shader format found!"_view, {
+                {"Pipeline", "Mesh"},
+                {"ShaderType", Meta::EnumOrd(sh.first)},
+                {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+            });
             return false;
         }
 
         // compile GLSL
         if (auto* const pShaderSourceRef = std::get_if<PShaderSource>(&it->second)) {
-            FStringBuilder log;
             FMeshPipelineDesc::FShader shader;
             FVulkanSpirvCompiler::FShaderReflection reflection;
+
+            FSharedBuffer content{ (*pShaderSourceRef)->Data()->LoadShaderSource() };
+            if (not content) {
+                FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+                sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+                logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
+                    {"Pipeline", "Mesh"},
+                    {"ShaderType", Meta::EnumOrd(sh.first)},
+                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                });
+                return false;
+            }
+            content.Materialize();
+
             if (not exclusiveData->SpirvCompiler->Compile(
-                &shader, &reflection, &log,
+                &shader, &reflection, logger,
                 sh.first, it->first, spirvFormat,
                 (*pShaderSourceRef)->EntryPoint(),
-                (*pShaderSourceRef)->Data()->c_str()
+                content
                 ARGS_IF_RHIDEBUG(INLINE_FORMAT(512, "{0}::{1}", (*pShaderSourceRef)->DebugName(), (*pShaderSourceRef)->EntryPoint())) )) {
-                if (not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet)) {
-                    PPE_LOG_DIRECT(PipelineCompiler, Error, [&](FTextWriter& oss) { oss << log.Written(); }); // #TODO: export the log when logger is disabled?
-                }
                 return false;
             }
 
-            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache)) {
-                PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "mesh pipeline: failed to create vulkan shader module!");
+            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache, logger)) {
+                FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+                sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+                logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
+                    {"Pipeline", "Mesh"},
+                    {"ShaderType", Meta::EnumOrd(sh.first)},
+                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                });
                 return false;
             }
 
             if (not MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout, exclusiveData->CompilationFlags)) {
-                PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "mesh pipeline: failed to merge vulkan pipeline layout!");
+                FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+                sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+                logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to merge vulkan pipeline layout!"_view, {
+                    {"Pipeline", "Mesh"},
+                    {"ShaderType", Meta::EnumOrd(sh.first)},
+                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                });
                 return false;
             }
 
@@ -678,7 +721,13 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
             ppln.Shaders.Insert_Overwrite(EShaderType{ sh.first }, std::move(shader));
         }
         else {
-            PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "mesh pipeline: invalid shader data type, expected a source!");
+            logger(ELoggerVerbosity::Error, "@unknown", 0, "invalid shader data type, expected a source!"_view, {
+                {"Pipeline", "Mesh"},
+                {"ShaderType", Meta::EnumOrd(sh.first)},
+                {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+                {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                {"ShaderDataType", it->second.index()},
+            });
             return false;
         }
     }
@@ -691,7 +740,7 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLangFormat fmt) {
+bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) {
     Assert_NoAssume(IsSupported(desc, fmt));
 
     const auto exclusiveData = _data.LockExclusive();
@@ -705,34 +754,69 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
 
         const auto it = HighestPriorityShaderFormat_(sh.second.Data, spirvFormat);
         if (sh.second.Data.end() == it) {
-            PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "ray-tracing pipeline: no suitable shader format found!");
+            logger(ELoggerVerbosity::Error, "@unknown", 0, "no suitable shader format found!"_view, {
+                {"Pipeline", "RayTracing"},
+                {"ShaderName", sh.first.MakeView()},
+                {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+            });
             return false;
         }
 
         // compile GLSL
         if (auto* const pShaderSourceRef = std::get_if<PShaderSource>(&it->second)) {
-            FStringBuilder log;
+
+            FSharedBuffer content{ (*pShaderSourceRef)->Data()->LoadShaderSource() };
+            if (not content) {
+                FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+                sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+                logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
+                    {"Pipeline", "RayTracing"},
+                    {"ShaderName", sh.first.MakeView()},
+                    {"ShaderType", Meta::EnumOrd(it->first)},
+                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                });
+                return false;
+            }
+            content.Materialize();
+
             FRayTracingPipelineDesc::FRTShader shader;
             FVulkanSpirvCompiler::FShaderReflection reflection;
             if (not exclusiveData->SpirvCompiler->Compile(
-                &shader, &reflection, &log,
+                &shader, &reflection, logger,
                 sh.second.Type, it->first, spirvFormat,
                 (*pShaderSourceRef)->EntryPoint(),
-                (*pShaderSourceRef)->Data()->c_str()
+                content
                 ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()) )) {
-                if (not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet)) {
-                    PPE_LOG_DIRECT(PipelineCompiler, Error, [&](FTextWriter& oss) { oss << log.Written(); }); // #TODO: export the log when logger is disabled?
-                }
                 return false;
             }
 
-            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache)) {
-                PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "ray-tracing pipeline: failed to create vulkan shader module!");
+            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache, logger)) {
+                FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+                sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+                logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
+                    {"Pipeline", "RayTracing"},
+                    {"ShaderName", sh.first.MakeView()},
+                    {"ShaderType", Meta::EnumOrd(it->first)},
+                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                });
                 return false;
             }
 
             if (not MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout, exclusiveData->CompilationFlags)) {
-                PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "ray-tracing pipeline: failed to merge vulkan pipeline layout!");
+                FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+                sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+                logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to merge vulkan pipeline layout!"_view, {
+                    {"Pipeline", "RayTracing"},
+                    {"ShaderName", sh.first.MakeView()},
+                    {"ShaderType", Meta::EnumOrd(it->first)},
+                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                });
                 return false;
             }
 
@@ -752,7 +836,13 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
             ppln.Shaders.Insert_Overwrite(FRTShaderID{ sh.first }, std::move(shader));
         }
         else {
-            PPE_LOG(PipelineCompiler, Error, "ray-tracing pipeline: invalid shader data type, expected a source!");
+            logger(ELoggerVerbosity::Error, "@unknown", 0, "invalid shader data type, expected a source!"_view, {
+                {"Pipeline", "RayTracing"},
+                {"ShaderName", sh.first.MakeView()},
+                {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+                {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                {"ShaderDataType", it->second.index()},
+            });
             return false;
         }
     }
@@ -765,7 +855,7 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFormat fmt) {
+bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) {
     Assert_NoAssume(IsSupported(desc, fmt));
 
     const auto exclusiveData = _data.LockExclusive();
@@ -779,34 +869,69 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
 
         const auto it = HighestPriorityShaderFormat_(sh.second.Data, spirvFormat);
         if (sh.second.Data.end() == it) {
-            PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "graphics pipeline: no suitable shader format found!");
+            logger(ELoggerVerbosity::Error, "@unknown", 0, "no suitable shader format found!"_view, {
+                {"Pipeline", "Graphics"},
+                {"ShaderType", Meta::EnumOrd(sh.first)},
+                {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+            });
             return false;
         }
 
         // compile GLSL
         if (auto* const pShaderSourceRef = std::get_if<PShaderSource>(&it->second)) {
-            FStringBuilder log;
+
+            FSharedBuffer content{ (*pShaderSourceRef)->Data()->LoadShaderSource() };
+            if (not content) {
+                FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+                sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+                logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
+                    {"Pipeline", "Graphics"},
+                    {"ShaderType", Meta::EnumOrd(sh.first)},
+                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                });
+                return false;
+            }
+            content.Materialize();
+
             FGraphicsPipelineDesc::FShader shader;
             FVulkanSpirvCompiler::FShaderReflection reflection;
             if (not exclusiveData->SpirvCompiler->Compile(
-                &shader, &reflection, &log,
+                &shader, &reflection, logger,
                 sh.first, it->first, spirvFormat,
                 (*pShaderSourceRef)->EntryPoint(),
-                (*pShaderSourceRef)->Data()->c_str()
+                content
                 ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()))) {
-                if (not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet)) {
-                    PPE_LOG_DIRECT(PipelineCompiler, Error, [&](FTextWriter& oss) { oss << log.Written(); }); // #TODO: export the log when logger is disabled?
-                }
                 return false;
             }
 
-            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache)) {
-                PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "graphics pipeline: failed to create vulkan shader module!");
+            if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache, logger)) {
+                FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+                sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+                logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
+                    {"Pipeline", "Graphics"},
+                    {"ShaderType", Meta::EnumOrd(sh.first)},
+                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                });
                 return false;
             }
 
             if (not MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout, exclusiveData->CompilationFlags)) {
-                PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "graphics pipeline: failed to merge vulkan pipeline layout!");
+                FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+                sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+                logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to merge vulkan pipeline layout!"_view, {
+                    {"Pipeline", "Graphics"},
+                    {"ShaderType", Meta::EnumOrd(sh.first)},
+                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                });
                 return false;
             }
 
@@ -834,7 +959,13 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
             ppln.Shaders.Insert_Overwrite(EShaderType{ sh.first }, std::move(shader));
         }
         else {
-            PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "graphics pipeline: invalid shader data type, expected a source!");
+            logger(ELoggerVerbosity::Error, "@unknown", 0, "invalid shader data type, expected a source!"_view, {
+                {"Pipeline", "Graphics"},
+                {"ShaderType", Meta::EnumOrd(sh.first)},
+                {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+                {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                {"ShaderDataType", it->second.index()},
+            });
             return false;
         }
     }
@@ -848,7 +979,7 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFormat fmt) {
+bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) {
     Assert_NoAssume(IsSupported(desc, fmt));
 
     const auto exclusiveData = _data.LockExclusive();
@@ -861,28 +992,51 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
 
     const auto it = HighestPriorityShaderFormat_(desc.Shader.Data, spirvFormat);
     if (desc.Shader.Data.cend() == it) {
-        PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "compute pipeline: no suitable shader format found!");
+        logger(ELoggerVerbosity::Error, "@unknown", 0, "no suitable shader format found!"_view, {
+            {"Pipeline", "Compute"},
+            {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+        });
         return false;
     }
 
     // compile GLSL
     if (auto* const pShaderSourceRef = std::get_if<PShaderSource>(&it->second)) {
-        FStringBuilder log;
+
+        FSharedBuffer content{ (*pShaderSourceRef)->Data()->LoadShaderSource() };
+        if (not content) {
+            FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+            sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+            logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
+                {"Pipeline", "Comptue"},
+                {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+                {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+            });
+            return false;
+        }
+        content.Materialize();
+
         FVulkanSpirvCompiler::FShaderReflection reflection;
         if (not exclusiveData->SpirvCompiler->Compile(
-            &ppln.Shader, &reflection, &log,
+            &ppln.Shader, &reflection, logger,
             EShaderType::Compute, it->first, spirvFormat,
             (*pShaderSourceRef)->EntryPoint(),
-            (*pShaderSourceRef)->Data()->c_str()
+            content
             ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()) )) {
-            if (not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet)) {
-                PPE_LOG_DIRECT(PipelineCompiler, Error, [&](FTextWriter& oss) { oss << log.Written(); }); // #TODO: export the log when logger is disabled?
-            }
             return false;
         }
 
-        if (createModule && not CreateVulkanShader_(&ppln.Shader, exclusiveData->ShaderCache)) {
-            PPE_CLOG(not (exclusiveData->CompilationFlags & EShaderCompilationFlags::Quiet), PipelineCompiler, Error, "compute pipeline: failed to create vulkan shader module!");
+        if (createModule && not CreateVulkanShader_(&ppln.Shader, exclusiveData->ShaderCache, logger)) {
+            FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+            sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+            logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
+                {"Pipeline", "Comptue"},
+                {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+                {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+            });
             return false;
         }
 
@@ -891,7 +1045,12 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
         ppln.PipelineLayout = std::move(reflection.Layout);
     }
     else {
-        PPE_LOG(PipelineCompiler, Error, "compute pipeline: invalid shader data type, expected a source!");
+        logger(ELoggerVerbosity::Error, "@unknown", 0, "invalid shader data type, expected a source!"_view, {
+            {"Pipeline", "Compute"},
+            {"ShaderLangFormat", Meta::EnumOrd(it->first)},
+            {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+            {"ShaderDataType", it->second.index()},
+        });
         return false;
     }
 
@@ -903,7 +1062,7 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader, FShaderCompiledModuleCache& shaderCache) const {
+bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader, FShaderCompiledModuleCache& shaderCache, const FLogger& logger) const {
     Assert(shader);
     Assert(_device);
 
@@ -979,7 +1138,10 @@ bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader
             break;
         // remove unknown shader data
         default:
-            PPE_LOG(PipelineCompiler, Verbose, "removing unknown shader data");
+            logger(ELoggerVerbosity::Warning, "@unknown", 0, "removing unknown shader data"_view, {
+                {"ShaderLangFormat", Meta::EnumOrd(sh->first)},
+                {"ShaderDataType", sh->second.index()}
+            });
             sh = shader->Data.Vector().erase(sh);
             break;
         }
@@ -988,7 +1150,7 @@ bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader
     if (Likely(numSpirvData > 0))
         return true;
 
-    PPE_LOG(PipelineCompiler, Error, "did not find any SPIRV shader data!");
+    logger(ELoggerVerbosity::Error, "@unknown", 0, "did not find any SPIRV shader data!"_view, {});
     return false;
 }
 //----------------------------------------------------------------------------

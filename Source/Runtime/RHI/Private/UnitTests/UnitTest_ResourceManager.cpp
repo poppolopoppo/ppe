@@ -41,7 +41,7 @@ NO_INLINE static void Test_PipelineResources_(IFrameGraph& fg) {
         {},
         {},
         {},
-        {{FUniformID("un_OutImage"), EImageSampler::Float2D, EShaderAccess::WriteOnly, FBindingIndex{UMax, 0u}, 1, EShaderStages::Compute }},
+        {{FUniformID("un_OutImage"), EImageSampler_Float2D, EShaderAccess::WriteOnly, FBindingIndex{UMax, 0u}, 1, EShaderStages::Compute }},
         {},
         {{FUniformID("un_SSBO"), 16, 0, EShaderAccess::ReadOnly, FBindingIndex{UMax, 1u}, 1, EShaderStages::Compute, false }});
 

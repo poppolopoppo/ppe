@@ -1379,7 +1379,7 @@ template <u32 _Uid, typename _Resource, typename _MainPool, size_t _MaxChunks>
 _Resource* FVulkanCommandBuffer::ToLocal_(
     details::TResourceId<_Uid> id,
     TLocalPool<_Resource, _MainPool, _MaxChunks>& localResources
-    ARGS_IF_RHIDEBUG(FWStringView debugMessage) ) {
+    ARGS_IF_RHIDEBUG(FStringLiteral debugMessage) ) {
     Assert(id);
     Assert_NoAssume(EState::Recording == _data.Value_Unsafe().State ||
                     EState::Compiling == _data.Value_Unsafe().State );
@@ -1419,22 +1419,22 @@ _Resource* FVulkanCommandBuffer::ToLocal_(
 //----------------------------------------------------------------------------
 FVulkanLocalBuffer* FVulkanCommandBuffer::ToLocal(FRawBufferID id) {
     return ToLocal_(id, Write()->RM.Buffers
-        ARGS_IF_RHIDEBUG(L"failed when creating local buffer"));
+        ARGS_IF_RHIDEBUG("failed when creating local buffer"));
 }
 //----------------------------------------------------------------------------
 FVulkanLocalImage* FVulkanCommandBuffer::ToLocal(FRawImageID id) {
     return ToLocal_(id, Write()->RM.Images
-        ARGS_IF_RHIDEBUG(L"failed when creating local image"));
+        ARGS_IF_RHIDEBUG("failed when creating local image"));
 }
 //----------------------------------------------------------------------------
 FVulkanRayTracingLocalGeometry* FVulkanCommandBuffer::ToLocal(FRawRTGeometryID id) {
     return ToLocal_(id, Write()->RM.RTGeometries
-        ARGS_IF_RHIDEBUG(L"failed when creating local ray tracing geometry"));
+        ARGS_IF_RHIDEBUG("failed when creating local ray tracing geometry"));
 }
 //----------------------------------------------------------------------------
 FVulkanRayTracingLocalScene* FVulkanCommandBuffer::ToLocal(FRawRTSceneID id) {
     return ToLocal_(id, Write()->RM.RTScenes
-        ARGS_IF_RHIDEBUG(L"failed when creating local ray tracing scene"));
+        ARGS_IF_RHIDEBUG("failed when creating local ray tracing scene"));
 }
 //----------------------------------------------------------------------------
 FVulkanLogicalRenderPass* FVulkanCommandBuffer::ToLocal(FLogicalPassID id) {

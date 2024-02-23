@@ -74,7 +74,7 @@ struct FImageDataRange {
 PPE_ASSUME_TYPE_AS_POD(FImageDataRange);
 //----------------------------------------------------------------------------
 struct FImageSubresourceRange {
-    EImageAspect AspectMask{ EImageAspect::Auto };
+    EImageAspect AspectMask{ EImageAspect_Auto };
     FMipmapLevel MipLevel;
     FImageLayer BaseLayer;
     u32 LayerCount{ 1 };
@@ -84,7 +84,7 @@ struct FImageSubresourceRange {
         FMipmapLevel mipLevel,
         FImageLayer baseLayer = Default,
         u32 layerCount = 1,
-        EImageAspect aspectMask = EImageAspect::Auto) NOEXCEPT
+        EImageAspect aspectMask = EImageAspect_Auto) NOEXCEPT
     :   AspectMask(aspectMask)
     ,   MipLevel(mipLevel)
     ,   BaseLayer(baseLayer)

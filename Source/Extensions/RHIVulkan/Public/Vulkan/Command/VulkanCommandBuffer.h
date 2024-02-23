@@ -283,7 +283,7 @@ private:
     NODISCARD _Resource* ToLocal_(
         details::TResourceId<_Uid> id,
         TLocalPool<_Resource, _MainPool, _MaxChunks>& localResources
-        ARGS_IF_RHIDEBUG(FWStringView debugMessage));
+        ARGS_IF_RHIDEBUG(FStringLiteral debugMessage));
 
     void FlushLocalResourceStates_(FInternalData& data, EVulkanExecutionOrder, FVulkanBarrierManager& ARGS_IF_RHIDEBUG(FVulkanLocalDebugger*));
     void ResetLocalRemapping_(FInternalData& data);

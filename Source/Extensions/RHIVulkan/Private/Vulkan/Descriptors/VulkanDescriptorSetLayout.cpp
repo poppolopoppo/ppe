@@ -288,7 +288,7 @@ void FVulkanDescriptorSetLayout::AddUniform_(FBindings* pBinding, FInternalPool&
         ub.State,
         arraySize );
 
-    const bool isDynamic = (ub.State & EResourceState::_BufferDynamicOffset);
+    const bool isDynamic = (ub.State & EResourceFlags::BufferDynamicOffset);
 
     BindDescriptor_(pBinding, pool,
         (isDynamic
@@ -309,7 +309,7 @@ void FVulkanDescriptorSetLayout::AddUniform_(FBindings* pBinding, FInternalPool&
         sb.State,
         arraySize );
 
-    const bool isDynamic = (sb.State & EResourceState::_BufferDynamicOffset);
+    const bool isDynamic = (sb.State & EResourceFlags::BufferDynamicOffset);
 
     BindDescriptor_(pBinding, pool,
         (isDynamic

@@ -429,10 +429,8 @@ bool FVulkanImage::IsSupported(const FVulkanDevice& device, const FImageDesc& de
                     return false;
                 break;
 
-            case EImageUsage::_Last:
-            case EImageUsage::All:
-            case EImageUsage::Transfer:
-            case EImageUsage::Unknown: AssertNotReached();
+            case EImageUsage::Unknown:
+            default: AssertNotReached();
             }
         }
 

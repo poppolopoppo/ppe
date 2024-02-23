@@ -54,11 +54,12 @@ struct TFrameTaskDesc {
     FTaskName TaskName;
     FLinearColor DebugColor;
 
-    TFrameTaskDesc(FStringView name, const FLinearColor& color) NOEXCEPT
+    TFrameTaskDesc(FStringLiteral name, const FLinearColor& color) NOEXCEPT
     :   TaskName(name)
     ,   DebugColor(color) {
     }
 
+    self_type& SetName(FStringLiteral value) { TaskName.Assign(value); return static_cast<self_type&>(*this); }
     self_type& SetName(const FStringView& value) { TaskName.Assign(value); return static_cast<self_type&>(*this); }
     self_type& SetDebugColor(const FRgba8u& value) { DebugColor = FColor(value).ToLinear(); return static_cast<self_type&>(*this); }
     self_type& SetDebugColor(const FColor& value) { DebugColor = value.ToLinear(); return static_cast<self_type&>(*this); }
@@ -85,8 +86,8 @@ struct FSubmitRenderPass : details::TFrameTaskDesc<FSubmitRenderPass> {
     PPE_RHI_API explicit FSubmitRenderPass(FLogicalPassID renderPassId) NOEXCEPT;
     PPE_RHI_API ~FSubmitRenderPass();
 
-    PPE_RHI_API FSubmitRenderPass& AddImage(FRawImageID id, EResourceState state = EResourceState::ShaderSample);
-    PPE_RHI_API FSubmitRenderPass& AddBuffer(FRawBufferID id, EResourceState state = EResourceState::UniformRead);
+    PPE_RHI_API FSubmitRenderPass& AddImage(FRawImageID id, EResourceState state = EResourceState_ShaderSample);
+    PPE_RHI_API FSubmitRenderPass& AddBuffer(FRawBufferID id, EResourceState state = EResourceState_UniformRead);
 };
 //----------------------------------------------------------------------------
 // FDispatchCompute
@@ -371,7 +372,7 @@ struct FGenerateMipmaps : details::TFrameTaskDesc<FGenerateMipmaps> {
     FMipmapLevel BaseLevel; // 0 - src level, mipmap generation will start from baseMipLevel + 1
     u32 LevelCount{ 0 };
     FImageLayer BaseLayer; // specify array layers that will be used
-    u32 LayerCount{ 0 };
+    u32 LayerCount{ 1 };
 
     PPE_RHI_API FGenerateMipmaps() NOEXCEPT;
     PPE_RHI_API ~FGenerateMipmaps();

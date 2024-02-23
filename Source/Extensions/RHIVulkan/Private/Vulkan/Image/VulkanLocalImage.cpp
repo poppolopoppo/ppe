@@ -87,8 +87,8 @@ void FVulkanLocalImage::AddPendingState(const FImageState& st) const {
     FImageAccess pending;
     pending.IsReadable = EResourceState_IsReadable(st.State);
     pending.IsWritable = EResourceState_IsWritable(st.State);
-    pending.InvalidateBefore = (st.State & EResourceState::InvalidateBefore);
-    pending.InvalidateAfter = (st.State & EResourceState::InvalidateAfter);
+    pending.InvalidateBefore = (st.State & EResourceFlags::InvalidateBefore);
+    pending.InvalidateAfter = (st.State & EResourceFlags::InvalidateAfter);
     pending.Stages = EResourceState_ToPipelineStages(st.State);
     pending.Access = EResourceState_ToAccess(st.State);
     pending.Layout = st.Layout;

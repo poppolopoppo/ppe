@@ -48,7 +48,7 @@ inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FU
             checked_cast<size_t>(limits.minUniformBufferOffsetAlignment),
             checked_cast<size_t>(offset)));
 
-        if (Meta::EnumAnd(buffer.State, EResourceState::_StateMask) == EResourceState::UniformRead) {
+        if (buffer.State.OnlyState() == EResourceState_UniformRead) {
             Assert_NoAssume(size == buffer.StaticSize);
             Assert_NoAssume(size <= limits.maxUniformBufferRange);
         }
@@ -110,14 +110,14 @@ inline void FVulkanTaskProcessor::FPipelineResourceBarriers::operator()(const FU
         if (not Ensure(pLocalScene))
             continue;
 
-        _processor.AddRTScene_(pLocalScene, EResourceState::RayTracingShaderRead);
+        _processor.AddRTScene_(pLocalScene, EResourceState_RayTracingShaderRead);
 
         const auto sharedData = pLocalScene->GlobalData()->SharedData();
         Assert_NoAssume(not sharedData->GeometryInstances.empty());
 
         for (auto& instance : sharedData->GeometryInstances) {
             if (const FVulkanRTLocalGeometry* pLocalGeom = _processor.ToLocal_(*instance.GeometryId))
-                _processor.AddRTGeometry_(pLocalGeom, EResourceState::RayTracingShaderRead);
+                _processor.AddRTGeometry_(pLocalGeom, EResourceState_RayTracingShaderRead);
         }
     }
 }

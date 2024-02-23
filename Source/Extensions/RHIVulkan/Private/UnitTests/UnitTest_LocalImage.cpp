@@ -60,14 +60,14 @@ NO_INLINE static void Test_LocalImage1_() {
     CreateUnitTestImage_(&globalImage, FImageDesc{}
         .SetDimension({ 64, 64 })
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::ColorAttachment|EImageUsage::Transfer|EImageUsage::Storage|EImageUsage::Sampled)
+        .SetUsage(EImageUsage::ColorAttachment|EImageUsage_Transfer|EImageUsage::Storage|EImageUsage::Sampled)
         .SetMaxMipmaps(11) );
 
     VerifyRelease( localImage.Construct(&globalImage) );
 
     { // pass 1
         pImage->AddPendingState(
-            EResourceState::TransferDst,
+            EResourceState_TransferDst,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             FImageDataRange{ 0_layer, 1, 0_mipmap, 1 },
             VK_IMAGE_ASPECT_COLOR_BIT, (taskIt++)->get() );
@@ -119,7 +119,7 @@ NO_INLINE static void Test_LocalImage2_() {
     CreateUnitTestImage_(&globalImage, FImageDesc{}
         .SetDimension({ 64, 64 })
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::ColorAttachment|EImageUsage::Transfer|EImageUsage::Storage|EImageUsage::Sampled)
+        .SetUsage(EImageUsage::ColorAttachment|EImageUsage_Transfer|EImageUsage::Storage|EImageUsage::Sampled)
         .SetMaxMipmaps(11)
         .SetArrayLayers(8) );
 
@@ -127,7 +127,7 @@ NO_INLINE static void Test_LocalImage2_() {
 
     { // pass 1
         pImage->AddPendingState(
-            EResourceState::TransferDst,
+            EResourceState_TransferDst,
             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
             FImageDataRange{ 0_layer, 2, 0_mipmap, pImage->Read()->MipmapLevels() },
             VK_IMAGE_ASPECT_COLOR_BIT,
@@ -167,7 +167,7 @@ NO_INLINE static void Test_LocalImage2_() {
     }
     { // pass 2
         pImage->AddPendingState(
-            EResourceState::ShaderSample | EResourceState::_FragmentShader,
+            EResourceState_ShaderSample | EResourceShaderStages::FragmentShader,
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
             FImageDataRange{ 0_layer, pImage->Read()->ArrayLayers(), 0_mipmap, 2 },
             VK_IMAGE_ASPECT_COLOR_BIT,
@@ -222,7 +222,7 @@ NO_INLINE static void Test_LocalImage2_() {
     }
     { // pass 3
         pImage->AddPendingState(
-            EResourceState::ShaderWrite | EResourceState::_ComputeShader,
+            EResourceState_ShaderWrite | EResourceShaderStages::ComputeShader,
             VK_IMAGE_LAYOUT_GENERAL,
             FImageDataRange{ 0_layer, pImage->Read()->ArrayLayers(), 0_mipmap, pImage->Read()->MipmapLevels() },
             VK_IMAGE_ASPECT_COLOR_BIT,

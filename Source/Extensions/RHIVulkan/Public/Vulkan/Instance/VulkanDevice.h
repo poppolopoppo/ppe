@@ -110,7 +110,7 @@ public:
 
     struct FDeviceFlags {
         EVulkanQueueFamilyMask AvailableQueues{ Default };
-        EResourceState GraphicsShaderStages{ Default };
+        EResourceShaderStages GraphicsShaderStages{ Default };
         VkPipelineStageFlagBits AllWritableStages{ VK_PIPELINE_STAGE_NONE_KHR };
         VkPipelineStageFlagBits AllReadableStages{ VK_PIPELINE_STAGE_NONE_KHR };
         VkImageCreateFlagBits ImageCreateFlags{ static_cast<VkImageCreateFlagBits>(0) };
@@ -197,7 +197,7 @@ public:
     const FDeviceFlags& Flags() const NOEXCEPT { return _flags; }
 
     EVulkanQueueFamilyMask AvailableQueues() const { return _flags.AvailableQueues; }
-    EResourceState GraphicsShaderStages() const { return _flags.GraphicsShaderStages; }
+    EResourceShaderStages GraphicsShaderStages() const { return _flags.GraphicsShaderStages; }
     VkPipelineStageFlagBits AllWritableStages() const { return _flags.AllWritableStages; }
     VkPipelineStageFlagBits AllReadableStages() const { return _flags.AllReadableStages; }
 

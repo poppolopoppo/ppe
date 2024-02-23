@@ -35,15 +35,15 @@ struct FVulkanPipelineResources::FUpdateDescriptors {
         return wds;
     }
 
-    bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value);
-    bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value);
+    bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FBuffer& value);
+    bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FTexelBuffer& value);
     bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value);
     bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value);
     bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value);
     bool AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value);
 };
 //----------------------------------------------------------------------------
-bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FBuffer& value) {
+bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FBuffer& value) {
     Unused(id);
     const auto infos = AllocateT<VkDescriptorBufferInfo>(value.Elements.Count);
 
@@ -64,8 +64,8 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
         CheckBufferUsage(*pBuffer, value.State);
     }
 
-    const bool isUniform{ Meta::EnumAnd(value.State, EResourceState::_StateMask) == EResourceState::UniformRead };
-    const bool isDynamic{ value.State & EResourceState::_BufferDynamicOffset };
+    const bool isUniform{ value.State.OnlyState() == EResourceState_UniformRead };
+    const bool isDynamic{ value.State & EResourceFlags::BufferDynamicOffset };
 
     VkWriteDescriptorSet& wds = NextDescriptorWrite();
     wds.descriptorType = (isUniform
@@ -80,7 +80,7 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexelBuffer& value) {
+bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FTexelBuffer& value) {
     Unused(id);
     const auto infos = AllocateT<VkBufferView>(value.Elements.Count);
 
@@ -104,7 +104,7 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
         CheckBufferUsage(*pBuffer, value.State);
     }
 
-    const bool isUniform{ Meta::EnumAnd(value.State, EResourceState::_StateMask) == EResourceState::UniformRead };
+    const bool isUniform{ value.State.OnlyState() == EResourceState_UniformRead };
 
     VkWriteDescriptorSet& wds = NextDescriptorWrite();
     wds.descriptorType = (isUniform
@@ -147,7 +147,7 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
         CheckImageUsage(*pImage, value.State);
     }
 
-    const bool isInputAttachment{ Meta::EnumAnd(value.State, EResourceState::_StateMask) == EResourceState::InputAttachment };
+    const bool isInputAttachment{ value.State.OnlyState() == EResourceState_InputAttachment };
 
     VkWriteDescriptorSet& wds = NextDescriptorWrite();
     wds.descriptorType = (isInputAttachment
@@ -269,15 +269,15 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVulkanPipelineResources::FInternalResources::FInternalResources(
-    FDynamicData&& rdynamicData,
+    FDynamicData&& signatureData,
     FRawDescriptorSetLayoutID layoutId,
     bool allowEmptyResources ) NOEXCEPT
 :   LayoutId(layoutId)
-,   DynamicData(std::move(rdynamicData))
+,   SignatureData(std::move(signatureData))
 ,   AllowEmptyResources(allowEmptyResources) {
     Assert_NoAssume(LayoutId.Valid());
     HashValue = hash_tuple(LayoutId,
-        FPipelineResources::ComputeDynamicDataHash(DynamicData) );
+        FPipelineResources::ComputeDynamicDataHash(SignatureData) );
 }
 //----------------------------------------------------------------------------
 FVulkanPipelineResources::FVulkanPipelineResources(const FPipelineResources& desc)
@@ -351,6 +351,7 @@ bool FVulkanPipelineResources::Construct(FVulkanResourceManager& manager) {
         heap.AllocateT<VkWriteDescriptorSet>(pDsLayout->Read()->MaxIndex + 1),
         0 };
 
+    exclusiveRes->DynamicData = exclusiveRes->SignatureData;
     exclusiveRes->DynamicData.EachUniform([&](const FUniformID& id, auto& data) {
         Assert_NoAssume(id.Valid());
         update.AddResource(*exclusiveRes, manager, id, data);
@@ -430,7 +431,7 @@ bool FVulkanPipelineResources::operator ==(const FVulkanPipelineResources& other
 
     return (lhs->HashValue == rhs->HashValue and
             lhs->LayoutId == rhs->LayoutId and
-            FPipelineResources::CompareDynamicData(lhs->DynamicData, rhs->DynamicData) );
+            FPipelineResources::CompareDynamicData(lhs->SignatureData, rhs->SignatureData) );
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
@@ -447,9 +448,9 @@ void FVulkanPipelineResources::CheckBufferUsage(const FVulkanBuffer& buffer, ERe
 #if USE_PPE_RHIDEBUG
     const EBufferUsage usage = buffer.Read()->Desc.Usage;
 
-    switch (Meta::EnumAnd(state, EResourceState::_AccessMask)) {
-    case EResourceState::_Access_ShaderStorage: AssertRelease(usage & EBufferUsage::Storage); break;
-    case EResourceState::_Access_Uniform: AssertRelease(usage & EBufferUsage::Uniform); break;
+    switch (state.MemoryAccess) {
+    case EResourceAccess::ShaderStorage: AssertRelease(usage & EBufferUsage::Storage); break;
+    case EResourceAccess::Uniform: AssertRelease(usage & EBufferUsage::Uniform); break;
     default: AssertReleaseFailed("unknown resource state");
     }
 #else
@@ -462,9 +463,9 @@ void FVulkanPipelineResources::CheckTexelBufferUsage(const FVulkanBuffer& buffer
 #if USE_PPE_RHIDEBUG
     const EBufferUsage usage = buffer.Read()->Desc.Usage;
 
-    switch (Meta::EnumAnd(state, EResourceState::_AccessMask)) {
-    case EResourceState::_Access_ShaderStorage: AssertRelease((usage & EBufferUsage::StorageTexel) || (usage & EBufferUsage::StorageTexelAtomic)); break;
-    case EResourceState::_Access_Uniform: AssertRelease(usage & EBufferUsage::UniformTexel); break;
+    switch (state.MemoryAccess) {
+    case EResourceAccess::ShaderStorage: AssertRelease((usage & EBufferUsage::StorageTexel) || (usage & EBufferUsage::StorageTexelAtomic)); break;
+    case EResourceAccess::Uniform: AssertRelease(usage & EBufferUsage::UniformTexel); break;
     default: AssertReleaseFailed("unknown resource state");
     }
 #else
@@ -477,9 +478,9 @@ void FVulkanPipelineResources::CheckImageUsage(const FVulkanImage& image, EResou
 #if USE_PPE_RHIDEBUG
     const EImageUsage usage = image.Read()->Desc.Usage;
 
-    switch (Meta::EnumAnd(state, EResourceState::_AccessMask)) {
-    case EResourceState::_Access_ShaderStorage: AssertRelease((usage & EImageUsage::Storage) || (usage & EImageUsage::StorageAtomic)); break;
-    case EResourceState::_Access_ShaderSample: AssertRelease(usage & EImageUsage::Sampled); break;
+    switch (state.MemoryAccess) {
+    case EResourceAccess::ShaderStorage: AssertRelease((usage & EImageUsage::Storage) || (usage & EImageUsage::StorageAtomic)); break;
+    case EResourceAccess::ShaderSample: AssertRelease(usage & EImageUsage::Sampled); break;
     default: AssertReleaseFailed("unknown resource state");
     }
 #else
@@ -503,7 +504,7 @@ void FVulkanPipelineResources::CheckImageType(const FUniformID& id, u32 index, c
             img.DebugName());
     }
 
-    CheckTextureType(id, index, img, desc, shaderType - EImageSampler::_FormatMask);
+    CheckTextureType(id, index, img, desc, shaderType);
 #else
     Unused(id);
     Unused(index);
@@ -516,20 +517,19 @@ void FVulkanPipelineResources::CheckImageType(const FUniformID& id, u32 index, c
 void FVulkanPipelineResources::CheckTextureType(const FUniformID& id, u32 index, const FVulkanImage& img, const FImageViewDesc& desc, EImageSampler shaderType) {
 #if USE_PPE_RHIDEBUG
     Assert(id.Valid());
-    Assert(not (shaderType ^ EImageSampler::_FormatMask));
     Unused(img);
     Unused(index);
 
-    EImageSampler imageType = static_cast<EImageSampler>(0);
+    EImageSampler image{};
 
     switch (desc.View) {
-    case EImageView::_1D: imageType = EImageSampler::_1D; break;
-    case EImageView::_2D: imageType = EImageSampler::_2D; break;
-    case EImageView::_3D: imageType = EImageSampler::_3D; break;
-    case EImageView::_1DArray: imageType = EImageSampler::_1DArray; break;
-    case EImageView::_2DArray: imageType = EImageSampler::_2DArray; break;
-    case EImageView::_Cube: imageType = EImageSampler::_Cube; break;
-    case EImageView::_CubeArray: imageType = EImageSampler::_CubeArray; break;
+    case EImageView::_1D: image.Dimension = EImageSampler::_1D; break;
+    case EImageView::_2D: image.Dimension = EImageSampler::_2D; break;
+    case EImageView::_3D: image.Dimension = EImageSampler::_3D; break;
+    case EImageView::_1DArray: image.Dimension = EImageSampler::_1DArray; break;
+    case EImageView::_2DArray: image.Dimension = EImageSampler::_2DArray; break;
+    case EImageView::_Cube: image.Dimension = EImageSampler::_Cube; break;
+    case EImageView::_CubeArray: image.Dimension = EImageSampler::_CubeArray; break;
     case EImageView::Unknown: AssertNotReached();
     }
 
@@ -538,37 +538,37 @@ void FVulkanPipelineResources::CheckTextureType(const FUniformID& id, u32 index,
     if (desc.AspectMask == EImageAspect::Stencil) {
         Assert((info.ValueType & EPixelValueType::Stencil) ||
             (info.ValueType & EPixelValueType::DepthStencil));
-        imageType |= EImageSampler::_Int;
+        image.Type = EImageSampler::_Int;
     }
     else
     if (desc.AspectMask == EImageAspect::Depth) {
         Assert((info.ValueType & EPixelValueType::Depth) ||
             (info.ValueType & EPixelValueType::DepthStencil));
-        imageType |= EImageSampler::_Float;
+        image.Type = EImageSampler::_Float;
     }
     else
     if (info.ValueType & EPixelValueType::Int) {
-        imageType |= EImageSampler::_Int;
+        image.Type = EImageSampler::_Int;
     }
     else
     if (info.ValueType & EPixelValueType::UInt) {
-        imageType |= EImageSampler::_UInt;
+        image.Type = EImageSampler::_UInt;
     }
     else
     if (info.ValueType ^ EPixelValueType::AnyFloat) {
-        imageType |= EImageSampler::_Float;
+        image.Type = EImageSampler::_Float;
     }
     else {
         AssertReleaseFailed("unknown pixel value type");
     }
 
-    if (imageType != shaderType) {
+    if (image.TypeDim() != shaderType.TypeDim()) {
         RHI_LOG(Error,
             "Incompatible image formats in uniform {0}[{1}]:\n"
             "  in shader: {2}\n"
             "  in image : {3}, name: {4}\n",
             id.MakeView(), index,
-            shaderType, imageType,
+            shaderType, image,
             img.DebugName());
     }
 

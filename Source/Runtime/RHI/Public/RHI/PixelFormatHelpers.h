@@ -11,25 +11,61 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum class EPixelValueType : u32 {
-    SFloat          = 1 << 0,
-    UFloat          = 1 << 1,
-    UNorm           = 1 << 2,
-    SNorm           = 1 << 3,
-    AnyFloat        = SFloat|UFloat|UNorm|SNorm,
-    Int             = 1 << 4,
-    UInt            = 1 << 5,
-    Depth           = 1 << 6,
-    Stencil         = 1 << 7,
-    DepthStencil    = Depth | Stencil,
-    _ValueMask      = 0xFFFF,
+struct EPixelValueType {
+    enum ETypes : u8 {
+        SFloat          = 1 << 0,
+        UFloat          = 1 << 1,
+        UNorm           = 1 << 2,
+        SNorm           = 1 << 3,
+        Int             = 1 << 4,
+        UInt            = 1 << 5,
+        Depth           = 1 << 6,
+        Stencil         = 1 << 7,
+    };
+    ENUM_FLAGS_FRIEND(ETypes);
 
-    // flags
-    sRGB            = 1 << 16,
+    static CONSTEXPR ETypes AnyFloat{ u8(SFloat)|u8(UFloat)|u8(UNorm)|u8(SNorm) };
+    static CONSTEXPR ETypes DepthStencil{ u8(Depth)|u8(Stencil) };
 
-    Unknown         = 0
+    enum EFlags : u8 {
+        sRGB            = 1 << 0,
+    };
+    ENUM_FLAGS_FRIEND(EFlags);
+
+    ETypes Types{ Zero };
+    EFlags Flags{ Zero };
+
+    friend hash_t hash_value(EPixelValueType value) NOEXCEPT {
+        return hash_as_pod(value);
+    }
+
+    CONSTEXPR EPixelValueType operator +(ETypes type) const { return {Types + type, Flags}; }
+    CONSTEXPR EPixelValueType operator -(ETypes type) const { return {Types - type, Flags}; }
+    CONSTEXPR EPixelValueType operator |(ETypes type) const { return {Types | type, Flags}; }
+
+    CONSTEXPR EPixelValueType& operator +=(ETypes type) { Types = (Types + type); return (*this); }
+    CONSTEXPR EPixelValueType& operator -=(ETypes type) { Types = (Types - type); return (*this); }
+    CONSTEXPR EPixelValueType& operator |=(ETypes type) { Types = (Types | type); return (*this); }
+
+    CONSTEXPR bool operator &(ETypes type) const { return (Types & type); }
+    CONSTEXPR bool operator ^(ETypes type) const { return (Types ^ type); }
+
+    CONSTEXPR EPixelValueType operator +(EFlags flag) const { return {Types, Flags + flag}; }
+    CONSTEXPR EPixelValueType operator -(EFlags flag) const { return {Types, Flags - flag}; }
+    CONSTEXPR EPixelValueType operator |(EFlags flag) const { return {Types, Flags | flag}; }
+
+    CONSTEXPR EPixelValueType& operator +=(EFlags flag) { Flags = (Flags + flag); return (*this); }
+    CONSTEXPR EPixelValueType& operator -=(EFlags flag) { Flags = (Flags - flag); return (*this); }
+    CONSTEXPR EPixelValueType& operator |=(EFlags flag) { Flags = (Flags | flag); return (*this); }
+
+    CONSTEXPR bool operator &(EFlags flag) const { return (Flags & flag); }
+    CONSTEXPR bool operator ^(EFlags flag) const { return (Flags ^ flag); }
+
+    CONSTEXPR bool operator ==(EPixelValueType o) const { return (Types == o.Types && Flags == o.Flags); }
+    CONSTEXPR bool operator !=(EPixelValueType o) const { return (not operator ==(o)); }
 };
-ENUM_FLAGS(EPixelValueType);
+STATIC_ASSERT(sizeof(EPixelValueType) == sizeof(u16));
+inline CONSTEXPR EPixelValueType EPixelValueType_DepthStencil{ EPixelValueType::DepthStencil, Zero } ;
 //----------------------------------------------------------------------------
 struct FPixelFormatInfo {
     EPixelFormat Format{ Default };
@@ -50,7 +86,7 @@ struct FPixelFormatInfo {
         : Format(fmt), AspectMask(aspect), ValueType(type), BlockDim(dim), BitsPerBlock0(bpp), Channels(channels)
     {}
 
-    CONSTEXPR FPixelFormatInfo(EPixelFormat fmt, const uint2& bppDepthStencil, EPixelValueType type = EPixelValueType::DepthStencil, EImageAspect aspect = EImageAspect::DepthStencil) NOEXCEPT
+    CONSTEXPR FPixelFormatInfo(EPixelFormat fmt, const uint2& bppDepthStencil, EPixelValueType type = EPixelValueType_DepthStencil, EImageAspect aspect = EImageAspect_DepthStencil) NOEXCEPT
         : Format(fmt), AspectMask(aspect), ValueType(type), BitsPerBlock0(bppDepthStencil.x), BitsPerBlock1(bppDepthStencil.y)
     {}
 };
@@ -76,19 +112,19 @@ inline EImageAspect EPixelFormat_ToImageAspect(EPixelFormat fmt) {
 // IsXXX
 //----------------------------------------------------------------------------
 inline bool EPixelFormat_IsDepth(EPixelFormat fmt) {
-    return (EPixelFormat_Infos(fmt).ValueType == EPixelValueType::Depth);
+    return (EPixelFormat_Infos(fmt).ValueType.Types == EPixelValueType::Depth);
 }
 //----------------------------------------------------------------------------
 inline bool EPixelFormat_IsStencil(EPixelFormat fmt) {
-    return (EPixelFormat_Infos(fmt).ValueType == EPixelValueType::Stencil);
+    return (EPixelFormat_Infos(fmt).ValueType.Types == EPixelValueType::Stencil);
 }
 //----------------------------------------------------------------------------
 inline bool EPixelFormat_IsDepthStencil(EPixelFormat fmt) {
-    return (EPixelFormat_Infos(fmt).ValueType == EPixelValueType::DepthStencil);
+    return (EPixelFormat_Infos(fmt).ValueType.Types == EPixelValueType::DepthStencil);
 }
 //----------------------------------------------------------------------------
 inline bool EPixelFormat_IsColor(EPixelFormat fmt) {
-    return not (EPixelFormat_Infos(fmt).ValueType ^ EPixelValueType::DepthStencil);
+    return not (EPixelFormat_Infos(fmt).ValueType.Types ^ EPixelValueType::DepthStencil);
 }
 //----------------------------------------------------------------------------
 // HasXXX

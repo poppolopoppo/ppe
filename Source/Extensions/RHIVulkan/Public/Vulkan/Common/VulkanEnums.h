@@ -38,22 +38,23 @@ enum class EVulkanMemoryType : u32 {
     HostRead        = u32(EMemoryType::HostRead),
     HostWrite       = u32(EMemoryType::HostWrite),
     Dedicated       = u32(EMemoryType::Dedicated),
-    //AllowAliasing = u32(EMemoryType::AllowAliasing),
-    //Sparse        = u32(EMemoryType::Sparse),
-    _Offset         = u32(EMemoryType::_Last)-1,
+    //AllowAliasing = u32(EMemoryType::AllowAliasing),  // #TODO: memory aliasing
+    //Sparse        = u32(EMemoryType::Sparse),         // #TODO: sparse resource
 
-    LocalInGPU      = _Offset << 1,
-    HostCoherent    = _Offset << 2,
-    HostCached      = _Offset << 3,
-    ForBuffer       = _Offset << 4,
-    ForImage        = _Offset << 5,
-    Virtual         = _Offset << 6,
+    LocalInGPU      = EMemoryType_Last << 1,
+    HostCoherent    = EMemoryType_Last << 2,
+    HostCached      = EMemoryType_Last << 3,
+    ForBuffer       = EMemoryType_Last << 4,
+    ForImage        = EMemoryType_Last << 5,
+    Virtual         = EMemoryType_Last << 6,
     _Last,
 
     All             = ((_Last-1) << 1) - 1,
     HostVisible     = HostRead | HostWrite,
 };
 ENUM_FLAGS(EVulkanMemoryType);
+inline CONSTEXPR EVulkanMemoryType EVulkanMemoryType_All{ (u32(EVulkanMemoryType::Virtual) << 1_u32) - 1_u32 };
+inline CONSTEXPR EVulkanMemoryType EVulkanMemoryType_HostVisible{ EVulkanMemoryType::HostRead | EVulkanMemoryType::HostWrite };
 //----------------------------------------------------------------------------
 // Execution ordering
 //----------------------------------------------------------------------------
@@ -64,7 +65,7 @@ enum class EVulkanExecutionOrder : u32 {
     Unknown         = ~0u,
 };
 //----------------------------------------------------------------------------
-CONSTEXPR EVulkanExecutionOrder operator "" _execution_order (unsigned long long value) {
+CONSTEXPR EVulkanExecutionOrder operator ""_execution_order (unsigned long long value) {
     return static_cast<EVulkanExecutionOrder>(static_cast<u32>(value));
 }
 //----------------------------------------------------------------------------

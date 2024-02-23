@@ -127,8 +127,8 @@ public:
 private:
     PVulkanFrameTask Task_(EVulkanExecutionOrder idx) const;
     FString TaskName_(EVulkanExecutionOrder idx) const;
-    FString TaskName_(const PVulkanFrameTask& task) const;
-    FStringView QueueName_(const FVulkanDevice& device, u32 queueFamilyIndex) const;
+    static FString TaskName_(const PVulkanFrameTask& task);
+    static FStringLiteral QueueName_(const FVulkanDevice& device, u32 queueFamilyIndex);
 
     struct FRawTextDump_;
     struct FGraphVizDump_;

@@ -2,9 +2,14 @@
 
 #include "RHI/PipelineDesc.h"
 
+#include "VirtualFileSystem_fwd.h"
+
+#include "IO/Filename.h"
+#include "IO/String.h"
 #include "RHI/EnumHelpers.h"
 
 #include "IO/StaticString.h"
+#include "Memory/SharedBuffer.h"
 
 namespace PPE {
 namespace RHI {
@@ -14,7 +19,7 @@ namespace RHI {
 namespace {
 //----------------------------------------------------------------------------
 template <typename T>
-class TShaderDataImpl_ final : public IShaderData<T> {
+class TShaderDataImpl_ : public IShaderData<T> {
 public:
     using typename IShaderData<T>::FDataRef;
     using typename IShaderData<T>::FFingerprint;
@@ -23,16 +28,16 @@ public:
     :   _data(std::move(rdata))
     ,   _entryPoint(entryPoint)
     ,   _fingerprint(fingerprint)
-    ARGS_IF_RHIDEBUG(_debugName(debugName))
+    ARGS_IF_RHIDEBUG(_debugName(debugName.c_str()))
     {}
 
-    virtual FDataRef Data() const NOEXCEPT override { return std::addressof(_data); }
-    virtual FConstChar EntryPoint() const NOEXCEPT override { return _entryPoint; }
-    virtual FFingerprint Fingerprint() const NOEXCEPT override { return _fingerprint; }
+    virtual FDataRef Data() const NOEXCEPT override final { return std::addressof(_data); }
+    virtual FConstChar EntryPoint() const NOEXCEPT override final { return _entryPoint; }
+    virtual FFingerprint Fingerprint() const NOEXCEPT override final { return _fingerprint; }
 
 #if USE_PPE_RHIDEBUG
-    virtual FConstChar DebugName() const NOEXCEPT override { return _debugName; }
-    virtual bool ParseDebugOutput(TAppendable<FString> , EShaderDebugMode , FRawMemoryConst ) override {
+    virtual FConstChar DebugName() const NOEXCEPT override final { return _debugName; }
+    virtual bool ParseDebugOutput(TAppendable<FString> , EShaderDebugMode , FRawMemoryConst ) override final {
         return false;
     }
 #endif
@@ -44,6 +49,68 @@ private:
 #if USE_PPE_RHIDEBUG
     TStaticString<64> _debugName;
 #endif
+};
+//----------------------------------------------------------------------------
+template <>
+class TShaderDataImpl_<IShaderSource> : public IShaderData<IShaderSource>, private IShaderSource {
+public:
+    using typename IShaderData<IShaderSource>::FDataRef;
+    using typename IShaderData<IShaderSource>::FFingerprint;
+
+    TShaderDataImpl_(FConstChar entryPoint, FFingerprint fingerprint ARGS_IF_RHIDEBUG(FString&& debugName)) NOEXCEPT
+    :   _entryPoint(entryPoint)
+    ,   _fingerprint(fingerprint)
+    ARGS_IF_RHIDEBUG(_debugName(std::move(debugName)))
+    {}
+
+    virtual FDataRef Data() const NOEXCEPT override final { return this; }
+    virtual FConstChar EntryPoint() const NOEXCEPT override final { return _entryPoint; }
+    virtual FFingerprint Fingerprint() const NOEXCEPT override final { return _fingerprint; }
+
+#if USE_PPE_RHIDEBUG
+    virtual FConstChar DebugName() const NOEXCEPT override final { return _debugName.c_str(); }
+    virtual bool ParseDebugOutput(TAppendable<FString> , EShaderDebugMode , FRawMemoryConst ) override final {
+        return false;
+    }
+#endif
+
+private:
+    TStaticString<64> _entryPoint;
+    FFingerprint _fingerprint;
+#if USE_PPE_RHIDEBUG
+    FString _debugName;
+#endif
+};
+//----------------------------------------------------------------------------
+class FStringShaderSource_ final : public TShaderDataImpl_<IShaderSource> {
+public:
+    FString Content;
+
+    FStringShaderSource_(FString&& content, FConstChar entryPoint, FFingerprint fingerprint ARGS_IF_RHIDEBUG(FString&& debugName)) NOEXCEPT
+    :   TShaderDataImpl_(entryPoint, fingerprint ARGS_IF_RHIDEBUG(std::move(debugName)))
+    ,   Content(std::move(content)) {
+        Assert_NoAssume(not Content.empty());
+    }
+
+    FSharedBuffer LoadShaderSource() const NOEXCEPT override {
+        return FSharedBuffer::MakeView(Content.data(), Content.SizeInBytes());
+    }
+};
+//----------------------------------------------------------------------------
+class FFileShaderSource_ final : public TShaderDataImpl_<IShaderSource> {
+public:
+    FFilename Filename;
+
+    FFileShaderSource_(const FFilename& filename, FConstChar entryPoint, FFingerprint fingerprint) NOEXCEPT
+    :   TShaderDataImpl_(entryPoint, fingerprint ARGS_IF_RHIDEBUG(ToString(VFS_Unalias(filename))))
+    ,   Filename(filename) {
+        Assert_NoAssume(not Filename.empty());
+    }
+
+    FSharedBuffer LoadShaderSource() const NOEXCEPT override {
+        FUniqueBuffer content = VFS_ReadAll(Filename, EAccessPolicy::Binary);
+        return content.MoveToShared();
+    }
 };
 //----------------------------------------------------------------------------
 void CopySpecializationConstants_(FPipelineDesc::FSpecializationConstants *pDst, TMemoryView<const FPipelineDesc::FSpecializationConstant> src) {
@@ -71,6 +138,14 @@ void AddShaderData_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
 }
 //----------------------------------------------------------------------------
 void AddShaderData_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
+    EShaderLangFormat lang, FConstChar entry, const FFilename& sourceFile) {
+    Assert(pShaderMap);
+    FPipelineDesc::FShader& shader = pShaderMap->FindOrAdd(shaderType);
+    Assert_NoAssume(shader.Data.end() == shader.Data.find(lang));
+    shader.AddShader(lang, entry, sourceFile);
+}
+//----------------------------------------------------------------------------
+void AddShaderData_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
     EShaderLangFormat lang, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(pShaderMap);
     FPipelineDesc::FShader& shader = pShaderMap->FindOrAdd(shaderType);
@@ -94,6 +169,12 @@ void AddShaderData_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
     shader.AddShader(lang, std::move(rdata));
 }
 //----------------------------------------------------------------------------
+void AddShaderData_(FPipelineDesc::FShaders* pShaderMap, EShaderType shaderType,
+    const FPipelineDesc::FShader& shader ) {
+    Assert(pShaderMap);
+    pShaderMap->Emplace_AssertUnique(shaderType, shader);
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -113,8 +194,18 @@ void FPipelineDesc::FShader::AddShader(EShaderLangFormat fmt, FConstChar entry, 
     Assert(entry);
     Assert(not rsource.empty());
     const auto fingerprint = Fingerprint128(rsource.MakeView());
-    PShaderSource shader = NEW_REF(RHIPipeline, TShaderDataImpl_<FString>,
-        std::move(rsource), entry, fingerprint ARGS_IF_RHIDEBUG(debugName) );
+    PShaderSource shader = NEW_REF(RHIPipeline, FStringShaderSource_,
+        std::move(rsource), entry, fingerprint ARGS_IF_RHIDEBUG(FString(debugName.MakeView())) );
+    Data.GetOrAdd(fmt) = std::move(shader);
+}
+//----------------------------------------------------------------------------
+void FPipelineDesc::FShader::AddShader(EShaderLangFormat fmt, FConstChar entry, const FFilename& filename) {
+    Assert(entry);
+    Assert(not filename.empty());
+    FileSystem::char_type tmp[FileSystem::MaxPathLength];
+    const auto fingerprint = Fingerprint128(filename.ToWCStr(tmp)); // use filename as seed, but content is always hashed by compiler itself
+    PShaderSource shader = NEW_REF(RHIPipeline, FFileShaderSource_,
+        filename, entry, fingerprint );
     Data.GetOrAdd(fmt) = std::move(shader);
 }
 //----------------------------------------------------------------------------
@@ -234,6 +325,12 @@ FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShade
     return (*this);
 }
 //----------------------------------------------------------------------------
+FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, const FFilename& sourceFile) {
+    AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
+    AddShaderData_(&Shaders, type, fmt, entry, sourceFile);
+    return (*this);
+}
+//----------------------------------------------------------------------------
 FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
     AddShaderData_(&Shaders, type, fmt, entry, std::move(rbinary), fingerprint ARGS_IF_RHIDEBUG(debugName));
@@ -243,6 +340,12 @@ FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShade
 FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FShaderDataVariant&& rdata) {
     AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
     AddShaderData_(&Shaders, type, fmt, std::move(rdata));
+    return (*this);
+}
+//----------------------------------------------------------------------------
+FGraphicsPipelineDesc& FGraphicsPipelineDesc::AddShader(EShaderType type, const FShader& shader) {
+    AssertRelease_NoAssume(EShaderType_IsGraphicsShader(type));
+    AddShaderData_(&Shaders, type, shader);
     return (*this);
 }
 //----------------------------------------------------------------------------
@@ -279,6 +382,12 @@ FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, con
 FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert_NoAssume(Shader.Data.end() == Shader.Data.find(fmt));
     Shader.AddShader(fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
+    return (*this);
+}
+//----------------------------------------------------------------------------
+FComputePipelineDesc& FComputePipelineDesc::AddShader(EShaderLangFormat fmt, FConstChar entry, const FFilename& sourceFile) {
+    Assert_NoAssume(Shader.Data.end() == Shader.Data.find(fmt));
+    Shader.AddShader(fmt, entry, sourceFile);
     return (*this);
 }
 //----------------------------------------------------------------------------
@@ -320,6 +429,12 @@ FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFor
 FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     AssertRelease_NoAssume(EShaderType_IsMeshProcessingShader(type));
     AddShaderData_(&Shaders, type, fmt, entry, std::move(rsource) ARGS_IF_RHIDEBUG(debugName));
+    return (*this);
+}
+//----------------------------------------------------------------------------
+FMeshPipelineDesc& FMeshPipelineDesc::AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, const FFilename& sourceFile) {
+    AssertRelease_NoAssume(EShaderType_IsMeshProcessingShader(type));
+    AddShaderData_(&Shaders, type, fmt, entry, sourceFile);
     return (*this);
 }
 //----------------------------------------------------------------------------
@@ -373,6 +488,17 @@ FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& i
     return (*this);
 }
 //----------------------------------------------------------------------------
+FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FConstChar entry, const FFilename& sourceFile) {
+    Assert(id.Valid());
+    AssertRelease_NoAssume(EShaderType_IsRayTracingShader(type));
+
+    FRTShader& rtShader = Shaders.FindOrAdd(id);
+    rtShader.Type = type;
+    rtShader.AddShader(fmt, entry, sourceFile);
+
+    return (*this);
+}
+//----------------------------------------------------------------------------
 FRayTracingPipelineDesc& FRayTracingPipelineDesc::AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(id.Valid());
     AssertRelease_NoAssume(EShaderType_IsRayTracingShader(type));
@@ -410,7 +536,7 @@ FRayTracingPipelineDesc& FRayTracingPipelineDesc::SetSpecializationConstants(con
 //----------------------------------------------------------------------------
 FTextureUniform::FTextureUniform(const FUniformID& id, EImageSampler textureType, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags) NOEXCEPT
 :   base_type(id, index, arraySize, stageFlags, FPipelineDesc::FTexture{
-        EResourceState::ShaderSample | EResourceState_FromShaders(stageFlags),
+        EResourceState_ShaderSample | EResourceShaderStages_FromShaders(stageFlags),
         textureType
     })
 {}
@@ -421,41 +547,41 @@ FSamplerUniform::FSamplerUniform(const FUniformID& id, const FBindingIndex& inde
 //----------------------------------------------------------------------------
 FSubpassInputUniform::FSubpassInputUniform(const FUniformID& id, u32 attachmentIndex, bool isMultisample, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags) NOEXCEPT
 :   base_type(id, index, arraySize, stageFlags, FPipelineDesc::FSubpassInput{
-        EResourceState::InputAttachment | EResourceState_FromShaders(stageFlags),
+        EResourceState_InputAttachment | EResourceShaderStages_FromShaders(stageFlags),
         attachmentIndex, isMultisample
     })
 {}
 //----------------------------------------------------------------------------
 FImageUniform::FImageUniform(const FUniformID& id, EImageSampler imageType, EShaderAccess access, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags) NOEXCEPT
 :   base_type(id, index, arraySize, stageFlags, FPipelineDesc::FImage{
-        EResourceState_FromShaders(stageFlags) | EResourceState_FromShaderAccess(access),
+        EResourceState_FromShaderAccess(access) | EResourceShaderStages_FromShaders(stageFlags),
         imageType
     })
 {}
 //----------------------------------------------------------------------------
 FBufferUniform::FBufferUniform(const FUniformID& id, u32 size, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags, u32 dynamicOffsetIndex) NOEXCEPT
 :   base_type(id, index, arraySize, stageFlags, FPipelineDesc::FUniformBuffer{
-        EResourceState::UniformRead | EResourceState_FromShaders(stageFlags) |
+        EResourceState_UniformRead | EResourceShaderStages_FromShaders(stageFlags) |
             (dynamicOffsetIndex != FPipelineDesc::StaticOffset
-                ? EResourceState::_BufferDynamicOffset
-                : EResourceState::Unknown ),
+                ? EResourceFlags::BufferDynamicOffset
+                : EResourceFlags::Unknown ),
         dynamicOffsetIndex, size
     })
 {}
 //----------------------------------------------------------------------------
 FStorageBufferUniform::FStorageBufferUniform(const FUniformID& id, u32 staticSize, u32 arrayStride, EShaderAccess access, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags, u32 dynamicOffsetIndex) NOEXCEPT
 :   base_type(id, index, arraySize, stageFlags, FPipelineDesc::FStorageBuffer{
-        EResourceState_FromShaders(stageFlags) | EResourceState_FromShaderAccess(access) |
+        EResourceState_FromShaderAccess(access) | EResourceShaderStages_FromShaders(stageFlags) |
             (dynamicOffsetIndex != FPipelineDesc::StaticOffset
-                ? EResourceState::_BufferDynamicOffset
-                : EResourceState::Unknown ),
+                ? EResourceFlags::BufferDynamicOffset
+                : EResourceFlags::Unknown ),
         dynamicOffsetIndex, staticSize, arrayStride
     })
 {}
 //----------------------------------------------------------------------------
 FRayTracingSceneUniform::FRayTracingSceneUniform(const FUniformID& id, const FBindingIndex& index, u32 arraySize, EShaderStages stageFlags) NOEXCEPT
 :   base_type(id, index, arraySize, stageFlags, FPipelineDesc::FRayTracingScene{
-        EResourceState::_RayTracingShader | EResourceState::_Access_ShaderStorage
+        EResourceState_RayTracingShaderStorage
     })
 {}
 //----------------------------------------------------------------------------

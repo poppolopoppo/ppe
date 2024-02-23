@@ -74,14 +74,17 @@ enum class EImageView : u8;
 enum class EImageFlags : u8;
 enum class EImageUsage : u32;
 enum class EImageAspect : u32;
-enum class EImageSampler : u32;
+struct EImageSampler;
 enum class EAttachmentLoadOp : u8;
 enum class EAttachmentStoreOp : u8;
 enum class EShadingRatePalette : u8;
 enum class EPixelFormat : u8;
 enum class EColorSpace : u8;
 enum class EFragmentOutput : u8;
-enum class EResourceState : u32;
+enum class EResourceAccess : u32;
+enum class EResourceShaderStages : u32;
+enum class EResourceFlags : u32;
+struct EResourceState;
 enum class EDebugFlags : u32;
 //----------------------------------------------------------------------------
 enum class EBlendFactor : u8;
@@ -121,7 +124,7 @@ enum class EIndexFormat : u8;
 enum class EVertexFormat : u32;
 enum class EVertexInputRate : u8;
 //----------------------------------------------------------------------------
-enum class EPixelValueType : u32;
+struct EPixelValueType;
 //----------------------------------------------------------------------------
 enum class ECompositeAlpha : u8;
 enum class EPresentMode : u8;
@@ -256,7 +259,8 @@ using FShaderDataFingerprint = u128;
 template <typename T>
 using PShaderData = TRefPtr< IShaderData<T> >;
 PPE_STRONGLYTYPED_NUMERIC_DEF(void*, FShaderModule);
-using PShaderSource = PShaderData< FString >;
+class IShaderSource;
+using PShaderSource = PShaderData< IShaderSource >;
 using PShaderBinaryData = PShaderData< FRawData >;
 using PShaderModule = PShaderData< FShaderModule >;
 using FShaderDataVariant = std::variant<

@@ -28,7 +28,7 @@ inline bool TestTextureUniform(const RHI::FDescriptorSet& ds, const RHI::FUnifor
     u32 bindingIndex, RHI::EShaderStages stageFlags, u32 arraySize = 1) {
     using namespace RHI;
     if (auto [un, ptr] = ds.Uniform<FPipelineDesc::FTexture>(id); !!ptr) {
-        const EResourceState state = (EResourceState::ShaderSample | EResourceState_FromShaders(stageFlags));
+        const EResourceState state = (EResourceState_ShaderSample | EResourceState_FromShaders(stageFlags));
         return (ptr->Type == textureType &&
                 ptr->State == state &&
                 un->Index.VKBinding() == bindingIndex &&
@@ -69,7 +69,7 @@ inline bool TestSubpassInputUniform(const RHI::FDescriptorSet& ds, const RHI::FU
     u32 bindingIndex, RHI::EShaderStages stageFlags, u32 arraySize = 1) {
     using namespace RHI;
     if (auto [un, ptr] = ds.Uniform<FPipelineDesc::FSubpassInput>(id); !!ptr) {
-        const EResourceState state = (EResourceState::InputAttachment | EResourceState_FromShaders(stageFlags));
+        const EResourceState state = (EResourceState_InputAttachment | EResourceState_FromShaders(stageFlags));
         return (ptr->AttachmentIndex == attachmentIndex &&
                 ptr->IsMultiSample == isMultisample &&
                 ptr->State == state &&
@@ -86,8 +86,8 @@ inline bool TestBufferUniform(const RHI::FDescriptorSet& ds, const RHI::FUniform
     u32 dynamicOffsetIndex = RHI::FPipelineDesc::StaticOffset ) {
     using namespace RHI;
     if (auto [un, ptr] = ds.Uniform<FPipelineDesc::FUniformBuffer>(id); !!ptr) {
-        const EResourceState state = (EResourceState::UniformRead | EResourceState_FromShaders(stageFlags) |
-            (dynamicOffsetIndex == RHI::FPipelineDesc::StaticOffset ? EResourceState::Unknown : EResourceState::_BufferDynamicOffset));
+        const EResourceState state = (EResourceState_UniformRead | EResourceState_FromShaders(stageFlags) |
+            (dynamicOffsetIndex == RHI::FPipelineDesc::StaticOffset ? EResourceState_Unknown : EResourceFlags::BufferDynamicOffset));
         return (ptr->Size == size &&
                 ptr->DynamicOffsetIndex == dynamicOffsetIndex &&
                 ptr->State == state &&
@@ -105,7 +105,7 @@ inline bool TestStorageBuffer(const RHI::FDescriptorSet& ds, const RHI::FUniform
     using namespace RHI;
     if (auto [un, ptr] = ds.Uniform<FPipelineDesc::FStorageBuffer>(id); !!ptr) {
         const EResourceState state = (EResourceState_FromShaderAccess(access) | EResourceState_FromShaders(stageFlags) |
-            (dynamicOffsetIndex == RHI::FPipelineDesc::StaticOffset ? EResourceState::Unknown : EResourceState::_BufferDynamicOffset));
+            (dynamicOffsetIndex == RHI::FPipelineDesc::StaticOffset ? EResourceState_Unknown : EResourceFlags::BufferDynamicOffset));
         return (ptr->StaticSize == staticSize &&
                 ptr->ArrayStride == arrayStride &&
                 ptr->DynamicOffsetIndex == dynamicOffsetIndex &&
@@ -121,7 +121,7 @@ inline bool TestRaytracingScene(const RHI::FDescriptorSet& ds, const RHI::FUnifo
     u32 bindingIndex, RHI::EShaderStages stageFlags, u32 arraySize = 1 ) {
     using namespace RHI;
     if (auto [un, ptr] = ds.Uniform<FPipelineDesc::FRayTracingScene>(id); !!ptr) {
-        const EResourceState state = (EResourceState::_RayTracingShader | EResourceState::ShaderRead);
+        const EResourceState state = (EResourceFlags::RayTracingShader | EResourceState_ShaderRead);
         return (ptr->State == state &&
                 un->Index.VKBinding() == bindingIndex &&
                 un->StageFlags == stageFlags &&

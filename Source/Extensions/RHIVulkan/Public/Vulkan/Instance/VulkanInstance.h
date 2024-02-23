@@ -18,14 +18,14 @@ public:
         VkQueueFlags Flags{ 0 };
         float Priority{ 0.0f };
 #if USE_PPE_RHIDEBUG
-        FVulkanDebugName DebugName;
+        FStringLiteral DebugName;
 #endif
 
         FQueueCreateInfo() = default;
         FQueueCreateInfo(
             VkQueueFlags flags,
             float priority = 0.0f
-            ARGS_IF_RHIDEBUG(FStringView debugName = Default) ) NOEXCEPT
+            ARGS_IF_RHIDEBUG(FStringLiteral debugName = Default) ) NOEXCEPT
         :   Flags(flags), Priority(priority)
 #if USE_PPE_RHIDEBUG
         ,   DebugName(debugName)

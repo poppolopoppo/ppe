@@ -28,10 +28,11 @@ public:
         hash_t HashValue;
         FRawDescriptorSetLayoutID LayoutId;
         FVulkanDescriptorSet DescriptorSet;
+        FDynamicData SignatureData;
         FDynamicData DynamicData;
         bool AllowEmptyResources;
 
-        explicit FInternalResources(FDynamicData&& rdynamicData, FRawDescriptorSetLayoutID layoutId, bool allowEmptyResources) NOEXCEPT;
+        explicit FInternalResources(FDynamicData&& staticData, FRawDescriptorSetLayoutID layoutId, bool allowEmptyResources) NOEXCEPT;
     };
 
     explicit FVulkanPipelineResources(FPipelineResources&& rdesc) NOEXCEPT;

@@ -65,9 +65,9 @@ private:
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIVULKAN_CHECKS
 PPE_RHIVULKAN_API void VulkanCheckNoErrors( VkResult result,
-    const FConstChar& call, const FConstChar& func, const FWStringView& file, u32 line );
+    const FConstChar& call, const FConstChar& func, FWStringLiteral file, u32 line );
 NODISCARD PPE_RHIVULKAN_API bool VulkanCheckIfErrors( VkResult result,
-    const FConstChar& call, const FConstChar& func, const FWStringView& file, u32 line ) NOEXCEPT;
+    const FConstChar& call, const FConstChar& func, FWStringLiteral file, u32 line ) NOEXCEPT;
 #endif
 //----------------------------------------------------------------------------
 PPE_RHIVULKAN_API FTextWriter& operator <<(FTextWriter& oss, const FVulkanError& error);

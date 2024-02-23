@@ -12,7 +12,9 @@
 #include "Container/BitMask.h"
 #include "Container/HashMap.h"
 #include "Container/Vector.h"
+#include "IO/FileSystemProperties.h"
 #include "IO/Filename.h"
+#include "IO/FormatHelpers.h"
 #include "Memory/PtrRef.h"
 #include "Memory/UniquePtr.h"
 #include "Meta/Functor.h"
@@ -36,6 +38,8 @@
 #include "spirv-tools/libspirv.h"
 
 #include <string>
+
+#include "Memory/SharedBuffer.h"
 
 namespace PPE {
 namespace RHI {
@@ -93,7 +97,7 @@ NODISCARD EShLanguage EShaderType_ToShLanguage(EShaderType shaderType) {
 }
 //----------------------------------------------------------------------------
 struct FGLSLangError {
-    FStringView Filename;
+    TStaticString<FileSystem::MaxPathLength> Filename;
     FStringView Description;
     u32 SourceIndex{ 0 };
     u32 Line{ 0 };
@@ -122,19 +126,24 @@ struct FGLSLangError {
             return false;
         in = in.ShiftFront();
 
-        EatSpaces(in);
+        in = Strip(in);
+        if (not TryParseSite(in))
+            Description = in;
 
-        const FStringView id = EatAlnums(in);
-        if (in.front() != ':')
+        return true;
+    }
+
+    bool TryParseSite(FStringView in) {
+        FStringView id = EatUntil(in, ':');
+        if (in.empty() || in.front() != ':')
             return false;
         in = in.ShiftFront();
 
         if (IsDigit(id)) {
             if (not Atoi(&SourceIndex, id, 10))
                 return false;
+            id = FStringView{};
         }
-        else
-            Filename = id;
 
         const FStringView line = EatDigits(in);
         if (line.empty())
@@ -143,6 +152,7 @@ struct FGLSLangError {
         if (not Atoi(&Line, line, 10))
             return false;
 
+        Filename = id;
         Description = Strip(in);
         return true;
     }
@@ -155,13 +165,15 @@ struct FGLSLangError {
 // FVulkanSpirvCompiler::FCompilationContext
 //----------------------------------------------------------------------------
 struct FVulkanSpirvCompiler::FCompilationContext {
-    TPtrRef<FStringBuilder> Log;
+    TPtrRef<const FCompilationLogger> Log;
     TPtrRef<FGLSLangResult> Glslang;
     TPtrRef<FIncludeResolver> Resolver;
     TPtrRef<FShaderReflection> Reflection;
     TPtrRef<glslang::TIntermediate> Intermediate;
     EShaderStages CurrentStage{ Default };
     spv_target_env SpirvTargetEnvironment{ SPV_ENV_MAX };
+    FConstChar SourceFile;
+    int SourceLine{ 0 };
     bool TargetVulkan{ true };
 };
 //----------------------------------------------------------------------------
@@ -170,9 +182,9 @@ struct FVulkanSpirvCompiler::FCompilationContext {
 class FVulkanSpirvCompiler::FIncludeResolver final : public glslang::TShader::Includer {
 public:
     struct FIncludeResultImpl final : public IncludeResult {
-        const FRawStorage RawData;
+        const FSharedBuffer RawData;
 
-        FIncludeResultImpl(FRawStorage&& rawData, const std::string& headerName_, void* userData_ = nullptr) NOEXCEPT
+        FIncludeResultImpl(FSharedBuffer&& rawData, const std::string& headerName_, void* userData_ = nullptr) NOEXCEPT
         :   IncludeResult{ headerName_, nullptr, 0, userData_ }
         ,   RawData(std::move(rawData)) {
             const auto source = Source();
@@ -181,7 +193,7 @@ public:
         }
 
         FStringView Source() const {
-            return RawData.MakeConstView().Cast<const char>();
+            return RawData.MakeView().Cast<const char>();
         }
     };
 
@@ -208,21 +220,21 @@ public: // glslang::TShader::Includer
         Unused(includerName);
         Unused(inclusionDepth);
 
-        FRawStorage headerData;
         FWString relativeName = ToWString(MakeCStringView(headerName));
         for (const FDirpath& path : _directories) {
             FFilename absolute{ path, relativeName.MakeView() };
 
             if (_includedFiles.Contains(absolute)) {
-                headerData.CopyFrom("// skipped recursive header include\n"_view.Cast<const u8>());
                 _results.emplace_back(MakeUnique<FIncludeResultImpl>(
-                    std::move(headerData), headerName ));
+                    FSharedBuffer::MakeView("// skipped recursive header include\n"_view.Cast<const u8>()),
+                    headerName ));
                 return _results.back().get();
             }
 
-            if (VFS_ReadAll(&headerData, absolute, EAccessPolicy::Text)) {
+            if (FUniqueBuffer headerData = VFS_ReadAll(absolute, EAccessPolicy::Text)) {
                 _results.emplace_back(MakeUnique<FIncludeResultImpl>(
-                    std::move(headerData), headerName ));
+                    headerData.MoveToShared(),
+                    headerName ));
                 _includedFiles.insert_or_assign({ absolute, _results.back().get() });
                 return _results.back().get();
             }
@@ -234,9 +246,9 @@ public: // glslang::TShader::Includer
     void releaseInclude(IncludeResult*) override {}
 
 private:
+    const FDirectories& _directories;
     FIncludeResults _results;
     FIncludedFiles _includedFiles;
-    const FDirectories& _directories;
 };
 //----------------------------------------------------------------------------
 // FGLSLangResult
@@ -319,24 +331,26 @@ bool FVulkanSpirvCompiler::CheckShaderFeatures_(EShaderType shaderType) const {
 bool FVulkanSpirvCompiler::Compile(
     FPipelineDesc::FShader* outShader,
     FShaderReflection* outReflection,
-    FStringBuilder* outLog,
+    const FCompilationLogger& log,
     EShaderType shaderType,
     EShaderLangFormat srcShaderFormat,
     EShaderLangFormat dstShaderFormat,
     FConstChar entry,
-    FConstChar source
-    ARGS_IF_RHIDEBUG(FConstChar debugName) ) const {
-    outLog->clear();
+    const FSharedBuffer& content,
+    FConstChar sourceFile ) const {
     PPE_LOG_CHECK(PipelineCompiler, Meta::EnumAnd(dstShaderFormat, EShaderLangFormat::_StorageFormatMask) == EShaderLangFormat::SPIRV);
 
     dstShaderFormat -= EShaderLangFormat::_DebugModeMask;
 
     FCompilationContext compilationContext;
-    compilationContext.Log = outLog;
+    compilationContext.Log = log;
     compilationContext.CurrentStage = EShaderStages_FromShader(shaderType);
     compilationContext.Reflection = outReflection;
+    compilationContext.SourceFile = sourceFile;
 
-    const FShaderDataFingerprint sourceFingerprint = Fingerprint128(source.MakeView(),
+    const FStringView sourceData = content.MakeView().Cast<const char>();
+
+    const FShaderDataFingerprint sourceFingerprint = Fingerprint128(sourceData,
         Fingerprint128(entry.MakeView(), _glslangFingerprint));
 
     // compiler shader without debug info
@@ -350,7 +364,8 @@ bool FVulkanSpirvCompiler::Compile(
         PPE_LOG_CHECK(PipelineCompiler, ParseGLSL_(
             compilationContext,
             shaderType, srcShaderFormat, dstShaderFormat,
-            entry, source, resolver ));
+            entry, content, sourceFile,
+            resolver ));
 
         FShaderDataFingerprint shaderFingerprint = MakeShaderFingerprint_(
             sourceFingerprint,
@@ -374,14 +389,14 @@ bool FVulkanSpirvCompiler::Compile(
         PPE_LOG_CHECK(PipelineCompiler, BuildReflection_(compilationContext));
 
         if (_compilationFlags & EShaderCompilationFlags::ParseAnnotations) {
-            PPE_LOG_CHECK(PipelineCompiler, ParseAnnotations_(compilationContext, source.MakeView()));
+            PPE_LOG_CHECK(PipelineCompiler, ParseAnnotations_(compilationContext, sourceData, sourceFile));
 
             for (const auto& file : resolver.Results())
-                 PPE_LOG_CHECK(PipelineCompiler, ParseAnnotations_(compilationContext, file->Source()));
+                PPE_LOG_CHECK(PipelineCompiler, ParseAnnotations_(compilationContext, file->Source(), file->headerName.c_str()));
         }
 
         outShader->Specializations = outReflection->Specializations;
-        outShader->AddShader(dstShaderFormat, entry, std::move(spirv), shaderFingerprint ARGS_IF_RHIDEBUG(debugName));
+        outShader->AddShader(dstShaderFormat, entry, std::move(spirv), shaderFingerprint ARGS_IF_RHIDEBUG(sourceFile));
     }
 
 #if USE_PPE_RHIDEBUG
@@ -403,7 +418,7 @@ bool FVulkanSpirvCompiler::Compile(
             PPE_LOG_CHECK(PipelineCompiler, ParseGLSL_(
                 compilationContext,
                 shaderType, srcShaderFormat, dstShaderFormat,
-                entry, source,
+                entry, content, sourceFile,
                 resolver ));
 
             PVulkanSharedDebugUtils debugUtils = NEW_REF(PipelineCompiler, FVulkanSharedDebugUtils, std::in_place_type_t<ShaderTrace>{});
@@ -412,7 +427,7 @@ bool FVulkanSpirvCompiler::Compile(
             ShaderTrace& trace = std::get<ShaderTrace>(*debugUtils);
             glslang::TIntermediate& interm = *glslang.Program.getIntermediate(stage);
 
-            trace.SetSource(source.c_str(), source.length());
+            trace.SetSource(sourceData.data(), sourceData.size());
 
             for (const auto& it : resolver.IncludedFiles())
                 trace.IncludeSource(it.second->headerName.data(), it.second->Source().data(), it.second->Source().size());
@@ -429,7 +444,9 @@ bool FVulkanSpirvCompiler::Compile(
                 break;
 
             default:
-                PPE_LOG(PipelineCompiler, Error, "unsupported shader debug mode: 0x{0:#8X}", Meta::EnumOrd(mode));
+                compilationContext.Log->Invoke(ELoggerVerbosity::Error, compilationContext.SourceFile, 0, "unsupported shader debug mode"_view, {
+                    {"DebugMode", Meta::EnumOrd(mode)}
+                });
                 break;
             }
 
@@ -455,7 +472,7 @@ bool FVulkanSpirvCompiler::Compile(
 
             PShaderBinaryData debugShader{
                 NEW_REF(PipelineCompiler, FVulkanDebuggableShaderSPIRV,
-                    entry.MakeView(), std::move(debugSpirv), debugFingerprint, debugName.MakeView(), std::move(debugUtils))};
+                    entry.MakeView(), std::move(debugSpirv), debugFingerprint, sourceFile.MakeView(), std::move(debugUtils))};
 
             outShader->AddShader(dstShaderFormat | mode, FShaderDataVariant{ std::move(debugShader) });
         }
@@ -471,7 +488,8 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
     EShaderLangFormat srcShaderFormat,
     EShaderLangFormat dstShaderFormat,
     FConstChar entry,
-    const FConstChar source,
+    const FSharedBuffer& content,
+    FConstChar sourceFile,
     FIncludeResolver& resolver ) const {
     Assert(ctx.Log);
     Assert(ctx.Glslang);
@@ -511,7 +529,9 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
         shProfile = ECoreProfile;
         break;
     default:
-        PPE_LOG(PipelineCompiler, Error, "unsupported source shader format");
+        ctx.Log->Invoke(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported source shader format"_view, {
+            {"Format", Meta::EnumOrd(Meta::EnumAnd(srcShaderFormat, EShaderLangFormat::_ApiMask))}
+        });
         return false;
     }
 
@@ -544,7 +564,9 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
             ctx.SpirvTargetEnvironment = SPV_ENV_VULKAN_1_3;
             break;
         default:
-            PPE_LOG(PipelineCompiler, Error, "unsupported vulkan version: {0}", dstVersion);
+            ctx.Log->Invoke(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported vulkan version"_view, {
+                {"Version", dstVersion}
+            });
             return false;
         }
         break;
@@ -558,7 +580,9 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
         break;
     }
     default:
-        PPE_LOG(PipelineCompiler, Error, "unsupported source shader format");
+        ctx.Log->Invoke(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported source shader format"_view, {
+            {"Format", Meta::EnumOrd(Meta::EnumAnd(srcShaderFormat, EShaderLangFormat::_ApiMask))}
+        });
         return false;
     }
 
@@ -568,8 +592,12 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
     EShLanguage stage = EShaderType_ToShLanguage(shaderType);
     auto& shader = ctx.Glslang->Shader;
 
+    const FStringView stringData = content.MakeView().Cast<const char>();
+    const char* strings[] = { stringData.data() };
+    const int lengths[] = { checked_cast<int>(stringData.size()) };
+
     shader.create<TShader>(stage);
-    shader->setStrings(&source.Data, 1_i32);
+    shader->setStringsWithLengths(strings, lengths, 1);
     shader->setEntryPoint(entry.c_str());
     shader->setEnvInput(shSource, stage, client, version);
     shader->setEnvClient(client, clientVersion);
@@ -577,16 +605,16 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
     // shader->setPreamble(); // #TODO: use to pass optional macro definitions with a generated header
 
     if (not shader->parse(&_builtInResources, shVersion, shProfile, false, true, messages, resolver)) {
-        *ctx.Log << MakeCStringView(shader->getInfoLog());
-        OnCompilationFailed_(ctx, { &source, 1 });
+        OnCompilationFailed_(ctx, shader->getInfoLog(), { sourceFile });
+        OnCompilationFailed_(ctx, shader->getInfoDebugLog(), { sourceFile });
         return false;
     }
 
     ctx.Glslang->Program.addShader(shader.get());
 
     if (not ctx.Glslang->Program.link(messages)) {
-        *ctx.Log << MakeCStringView(shader->getInfoLog());
-        OnCompilationFailed_(ctx, { &source, 1 });
+        OnCompilationFailed_(ctx, shader->getInfoLog(), { sourceFile });
+        OnCompilationFailed_(ctx, shader->getInfoDebugLog(), { sourceFile });
         return false;
     }
 
@@ -673,8 +701,25 @@ bool FVulkanSpirvCompiler::CompileSPIRV_(FRawData* outSPIRV, const FCompilationC
     std::vector<unsigned> spirvTmp;
     GlslangToSpv(*intermediate, spirvTmp, &logger, &spvOptions);
 
-    const auto allMessages = logger.getAllMessages();
-    *ctx.Log << FStringView{ allMessages.c_str(), allMessages.size() };
+    // Poor interface, have to parse log messages...
+    // https://github.com/KhronosGroup/glslang/blob/main/SPIRV/Logger.cpp#L55
+    const std::string allMessages = logger.getAllMessages();
+
+    FStringView messageLine;
+    FStringView allMessagesView{ allMessages.c_str(), allMessages.size() };
+    while (Split(allMessagesView, '\n', messageLine)) {
+        ELoggerVerbosity verbosity = ELoggerVerbosity::Error;
+
+        if (messageLine.Eat("warning: "_view)) {
+            verbosity = ELoggerVerbosity::Warning;
+        }
+        else
+        if (messageLine.Eat("error: "_view)) {
+            verbosity = ELoggerVerbosity::Error;
+        }
+
+        ctx.Log->Invoke(verbosity, ctx.SourceFile, 0, messageLine, {});
+    }
 
 #ifdef INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_
     if (_compilationFlags & EShaderCompilationFlags::StrongOptimization)
@@ -687,53 +732,36 @@ bool FVulkanSpirvCompiler::CompileSPIRV_(FRawData* outSPIRV, const FCompilationC
 //----------------------------------------------------------------------------
 void FVulkanSpirvCompiler::OnCompilationFailed_(
     const FCompilationContext& ctx,
-    TMemoryView<const FConstChar> source ) const {
+    const FConstChar compilerLog,
+    const TMemoryView<const FConstChar> sourceFiles) const {
     // glslang errors format:
     // pattern: <error/warning>: <number>:<line>: <description>
     // pattern: <error/warning>: <file>:<line>: <description>
 
     FStringView line;
-    FStringView log{ ctx.Log->Written() };
-
-    u32 prevErrorLine{ 0 };
-
-    FWStringBuilder parsedLog;
-    parsedLog.reserve(ctx.Log->capacity());
+    FStringView log{ compilerLog.MakeView() };
 
     while (Split(log, '\n', line)) {
+        line = Strip(Chomp(line));
         EatSpaces(line);
         if (line.empty())
             continue;
 
-        bool parsed = false;
-
         FGLSLangError error;
         if (error.Parse(line)) {
-            if (error.Line == prevErrorLine) {
-                parsedLog << line << Eol;
-                continue;
-            }
+            FConstChar sourceFile = error.Filename;
+            if (error.Filename.empty() and error.SourceIndex < sourceFiles.size())
+                sourceFile = sourceFiles[error.SourceIndex];
 
-            prevErrorLine = error.Line;
-
-            if (error.Filename.empty()) {
-                FStringView sourceLine;
-                FStringView in{ error.SourceIndex < source.size() ? source[error.SourceIndex].MakeView() : "" };
-
-                if (SplitNth(in, '\n', sourceLine, error.Line - 1)) {
-                    parsed = true;
-                    parsedLog << "in source (" << error.SourceIndex << ':' << error.Line << "): " << Strip(sourceLine) << Eol;
-                }
-            }
+            ctx.Log->Invoke(
+                error.IsError ? ELoggerVerbosity::Error : ELoggerVerbosity::Warning,
+                sourceFile, error.Line,
+                error.Description, {});
         }
-
-        if (not parsed)
-            parsedLog << ARG0_IF_ASSERT("<unknown> " <<) line << Eol;
+        else {
+            ctx.Log->Invoke(ELoggerVerbosity::Info, sourceFiles[0], 0, line, {});
+        }
     }
-
-    size_t len;
-    FAllocatorBlock blk = parsedLog.StealDataUnsafe(&len);
-    Verify( ctx.Log->AcquireDataUnsafe(blk, len) );
 }
 //----------------------------------------------------------------------------
 // Reflection
@@ -759,49 +787,64 @@ bool FVulkanSpirvCompiler::BuildReflection_(FCompilationContext& ctx) const {
     return true;
 }
 //----------------------------------------------------------------------------
-bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FStringView source) const {
+bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FStringView content, FConstChar sourceFile) const {
     Assert(ctx.Log);
     Assert(ctx.Glslang);
     Assert(ctx.Reflection);
 
+    int sourceLine = 1;
     bool commentSingleLine{ false };
     bool commentMultiLine{ false };
     EShaderAnnotation annotations{ Default };
 
     const auto parseSet = [&]() -> bool {
-        FStringView it{ source };
+        FStringView it{ content };
         EatSpaces(it);
 
         const FStringView id = EatDigits(it);
-        if (id.empty() || EatSpaces(it).empty())
+        if (id.empty() || EatSpaces(it).empty()) {
+            ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "expected a set index"_view, {});
             return false;
+        }
 
         FStringView name;
         if (it.StartsWith('"')) { // identifiers can be quoted
             it.Eat(1);
             name = EatUntil(it, '"');
-            if (name.empty() || not Equals(it.Eat(1), "\""))
+            if (name.empty() || not Equals(it.Eat(1), "\"")) {
+                ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "unterminated string quote found in set identifier"_view, {});
                 return false;
+            }
         }
         else {
             name = EatIdentifier(it);
-            if (name.empty())
+            if (name.empty()) {
+                ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "empty set identifier"_view, {});
                 return false;
+            }
         }
 
         u32 index{ INDEX_NONE };
-        if (not Atoi(&index, id, 10))
+        if (not Atoi(&index, id, 10)) {
+            ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "invalid number for set index"_view, {
+                {"Index", id}
+            });
             return false;
+        }
 
         const TPtrRef<FPipelineDesc::FDescriptorSet> ds =
             ctx.Reflection->Layout.DescriptorSets.MakeView().Any(
                 [index](const FPipelineDesc::FDescriptorSet& ds) NOEXCEPT -> bool {
                     return (ds.BindingIndex == index);
                 });
-        if (not ds)
+        if (not ds) {
+            ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "no descriptor set description found with this binding index"_view, {
+                {"Index", index},
+            });
             return false;
+        }
 
-        source = it;
+        content = it;
         ds->Id = FDescriptorSetID{ name };
         return true;
     };
@@ -812,15 +855,17 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         //  uniform <UBO> { ...
         //  uniform image* <name> ...
 
-        FStringView it{ source };
+        FStringView it{ content };
 
         while (not it.empty()) {
             EatSpaces(it);
 
             const FStringView word = EatIdentifier(it);
             if (word.empty()) {
-                if (Equals(it.Eat(1), "}"))
+                if (Equals(it.Eat(1), "}")) {
+                    ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "unterminated uniform declaration scope, expected '}'"_view, {});
                     return false;
+                }
                 continue;
             }
 
@@ -840,8 +885,8 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
             if (Equals(word, "uniform")) {
                 isUniform = true;
                 EatSpaces(it);
-                isUniformImage = it.StartsWith("image"); // optional
-                isUniformSampler = it.StartsWith("sampler"); // optional
+                isUniformImage = it.StartsWith("image"_view); // optional
+                isUniformSampler = it.StartsWith("sampler"_view); // optional
                 if (isUniformImage || isUniformSampler)
                     EatIdentifier(it);
 
@@ -852,8 +897,10 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                 name = word;
             }
 
-            if (name.empty())
+            if (name.empty()) {
+                ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "found an empty uniform name"_view, {});
                 return false;
+            }
 
             EatSpaces(it);
             if (not (it.Eat("{") || it.Eat(";")))
@@ -871,39 +918,55 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                     found = Meta::Visit(jt->second.Data,
                         [&](FPipelineDesc::FImage& image) {
                             if (annotations & EShaderAnnotation::DynamicOffset)
-                                *ctx.Log << "@dynamic-offset is only supported on buffers, but found on image <" << name << ">" << Eol;
+                                ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "@dynamic-offset is only supported on buffers, but found on image"_view, {
+                                    {"ResourceName", name},
+                                });
                             if (annotations & EShaderAnnotation::WriteDiscard)
-                                image.State |= EResourceState::InvalidateBefore;
+                                image.State |= EResourceFlags::InvalidateBefore;
                             return true;
                         },
                         [&](FPipelineDesc::FUniformBuffer& ubo) {
                             if (annotations & EShaderAnnotation::DynamicOffset)
-                                ubo.State |= EResourceState::_BufferDynamicOffset;
+                                ubo.State |= EResourceFlags::BufferDynamicOffset;
                             if (annotations & EShaderAnnotation::WriteDiscard)
-                                *ctx.Log << "@write-discard is only supported on images or storage buffers, but found on uniform buffer <" << name << ">" << Eol;
+                                ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "@write-discard is only supported on images or storage buffers, but found on uniform buffer"_view, {
+                                    {"ResourceName", name},
+                                });
                             return true;
                         },
                         [&](FPipelineDesc::FStorageBuffer& ssbo) {
                             if (annotations & EShaderAnnotation::DynamicOffset)
-                                ssbo.State |= EResourceState::_BufferDynamicOffset;
+                                ssbo.State |= EResourceFlags::BufferDynamicOffset;
                             if (annotations & EShaderAnnotation::WriteDiscard)
-                                ssbo.State |= EResourceState::InvalidateBefore;
+                                ssbo.State |= EResourceFlags::InvalidateBefore;
                             return true;
                         },
                         [&](FPipelineDesc::FTexture&) {
-                            *ctx.Log << "unsupported annotation found on texture <" << name << ">" << Eol;
+                            ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on texture"_view, {
+                                {"ResourceName", name},
+                                {"Annotations", ToString(annotations)},
+                            });
                             return false;
                         },
                         [&](FPipelineDesc::FSampler&) {
-                            *ctx.Log << "unsupported annotation found on sampler <" << name << ">" << Eol;
+                            ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on sampler"_view, {
+                                {"ResourceName", name},
+                                {"Annotations", ToString(annotations)},
+                            });
                             return false;
                         },
                         [&](FPipelineDesc::FSubpassInput&) {
-                            *ctx.Log << "unsupported annotation found on subpass input <" << name << ">" << Eol;
+                            ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on sub-pass input"_view, {
+                                {"ResourceName", name},
+                                {"Annotations", ToString(annotations)},
+                            });
                             return false;
                         },
                         [&](FPipelineDesc::FRayTracingScene&) {
-                            *ctx.Log << "unsupported annotation found on raytracing scene input <" << name << ">" << Eol;
+                            ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on ray-tracing scene"_view, {
+                                {"ResourceName", name},
+                                {"Annotations", ToString(annotations)},
+                            });
                             return false;
                         },
                         [](std::monostate&) {
@@ -913,7 +976,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                     break;
                 }
 
-                source = it;
+                content = it;
                 return found;
             }
         }
@@ -921,16 +984,18 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         return false;
     };
 
-    while (not source.empty()) {
-        const char c = source.front();
-        const char n = (source.size() > 1 ? source[1] : 0_i8);
-        source.Eat(1);
+    while (not content.empty()) {
+        const char c = content.front();
+        const char n = (content.size() > 1 ? content[1] : 0_i8);
+        content.Eat(1);
 
         const bool newLine1 = (c == '\r') && (n == '\n'); // windows
         const bool newLine2 = (c == '\n') || (c == '\r'); // linux | mac
         if (newLine1 || newLine2) {
+            sourceLine++;
+
             if (newLine1)
-                source.Eat(1);
+                content.Eat(1);
             commentSingleLine = false;
 
             if ((annotations ^ (EShaderAnnotation::DynamicOffset | EShaderAnnotation::WriteDiscard)) && not commentMultiLine) {
@@ -954,7 +1019,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         if (not ((commentSingleLine || commentMultiLine) && (c == '@')))
             continue;
 
-        const FStringView id = EatWhile(source, [](char ch) {
+        const FStringView id = EatWhile(content, [](char ch) {
             return (IsIdentifier(ch) || ch == '-');
         });
 
@@ -969,11 +1034,13 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         if (Equals(id, "dynamic-offset"))
             annotations |= EShaderAnnotation::DynamicOffset;
         else {
-            PPE_LOG(PipelineCompiler, Error, "unsupported annotation: @{0}", id);
+            ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "unknown shader annotation"_view, {
+                {"Annotation", id},
+            });
             return false;
         }
 
-        source.Eat(",");
+        content.Eat(",");
     }
 
     return true;
@@ -1038,7 +1105,7 @@ FStringView FVulkanSpirvCompiler::ExtractNodeName_(const TIntermNode* node) {
 
     const glslang::TString& str = node->getAsSymbolNode()->getName();
     const FStringView result{ str.c_str(), str.size() };
-    return StartsWith(result, "anon@") ? Default : result;
+    return StartsWith(result, "anon@"_view) ? Default : result;
 }
 //----------------------------------------------------------------------------
 FUniformID FVulkanSpirvCompiler::ExtractBufferUniformID_(const glslang::TType& type) {
@@ -1046,55 +1113,55 @@ FUniformID FVulkanSpirvCompiler::ExtractBufferUniformID_(const glslang::TType& t
     return FUniformID{ FStringView{ name.c_str(), name.size() } };
 }
 //----------------------------------------------------------------------------
-EImageSampler FVulkanSpirvCompiler::ExtractImageSampler_(const glslang::TType& type) {
+EImageSampler FVulkanSpirvCompiler::ExtractImageSampler_(const FCompilationContext& ctx, const glslang::TType& type) {
     using namespace glslang;
 
     if (type.getBasicType() == TBasicType::EbtSampler and not type.isSubpass()) {
-        EImageSampler resource = Zero;
         const TSampler& sampler = type.getSampler();
 
-        if (sampler.isImage()) {
+        EPixelFormat pixelFormat{ Zero };
 
+        if (sampler.isImage()) {
             switch (type.getQualifier().layoutFormat) {
-            case TLayoutFormat::ElfRgba32f: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA32f); break;
-            case TLayoutFormat::ElfRgba16f: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA16f); break;
-            case TLayoutFormat::ElfR32f: resource = EImageSampler_FromPixelFormat(EPixelFormat::R32f); break;
-            case TLayoutFormat::ElfRgba8: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA8_UNorm); break;
-            case TLayoutFormat::ElfRgba8Snorm: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA8_SNorm); break;
-            case TLayoutFormat::ElfRg32f: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG32f); break;
-            case TLayoutFormat::ElfRg16f: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG16f); break;
-            case TLayoutFormat::ElfR11fG11fB10f: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGB_11_11_10f); break;
-            case TLayoutFormat::ElfR16f: resource = EImageSampler_FromPixelFormat(EPixelFormat::R16f); break;
-            case TLayoutFormat::ElfRgba16: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA16_UNorm); break;
-            case TLayoutFormat::ElfRgb10A2: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGB10_A2_UNorm); break;
-            case TLayoutFormat::ElfRg16: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG16_UNorm); break;
-            case TLayoutFormat::ElfRg8: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG8_UNorm); break;
-            case TLayoutFormat::ElfR16: resource = EImageSampler_FromPixelFormat(EPixelFormat::R16_UNorm); break;
-            case TLayoutFormat::ElfR8: resource = EImageSampler_FromPixelFormat(EPixelFormat::R8_UNorm); break;
-            case TLayoutFormat::ElfRgba16Snorm: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA16_SNorm); break;
-            case TLayoutFormat::ElfRg16Snorm: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG16_SNorm); break;
-            case TLayoutFormat::ElfRg8Snorm: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG8_SNorm); break;
-            case TLayoutFormat::ElfR16Snorm: resource = EImageSampler_FromPixelFormat(EPixelFormat::R16_SNorm); break;
-            case TLayoutFormat::ElfR8Snorm: resource = EImageSampler_FromPixelFormat(EPixelFormat::R8_SNorm); break;
-            case TLayoutFormat::ElfRgba32i: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA32i); break;
-            case TLayoutFormat::ElfRgba16i: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA16i); break;
-            case TLayoutFormat::ElfRgba8i: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA8i); break;
-            case TLayoutFormat::ElfR32i: resource = EImageSampler_FromPixelFormat(EPixelFormat::R32i); break;
-            case TLayoutFormat::ElfRg32i: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG32i); break;
-            case TLayoutFormat::ElfRg16i: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG16i); break;
-            case TLayoutFormat::ElfRg8i: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG8i); break;
-            case TLayoutFormat::ElfR16i: resource = EImageSampler_FromPixelFormat(EPixelFormat::R16i); break;
-            case TLayoutFormat::ElfR8i: resource = EImageSampler_FromPixelFormat(EPixelFormat::R8i); break;
-            case TLayoutFormat::ElfRgba32ui: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA32u); break;
-            case TLayoutFormat::ElfRgba16ui: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA16u); break;
-            case TLayoutFormat::ElfRgba8ui: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGBA8_UNorm); break;
-            case TLayoutFormat::ElfR32ui: resource = EImageSampler_FromPixelFormat(EPixelFormat::R32u); break;
-            case TLayoutFormat::ElfRg32ui: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG32u); break;
-            case TLayoutFormat::ElfRg16ui: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG16u); break;
-            case TLayoutFormat::ElfRgb10a2ui: resource = EImageSampler_FromPixelFormat(EPixelFormat::RGB10_A2u); break;
-            case TLayoutFormat::ElfRg8ui: resource = EImageSampler_FromPixelFormat(EPixelFormat::RG8u); break;
-            case TLayoutFormat::ElfR16ui: resource = EImageSampler_FromPixelFormat(EPixelFormat::R16u); break;
-            case TLayoutFormat::ElfR8ui: resource = EImageSampler_FromPixelFormat(EPixelFormat::R8u); break;
+            case TLayoutFormat::ElfRgba32f: pixelFormat = EPixelFormat::RGBA32f; break;
+            case TLayoutFormat::ElfRgba16f: pixelFormat = EPixelFormat::RGBA16f; break;
+            case TLayoutFormat::ElfR32f: pixelFormat = EPixelFormat::R32f; break;
+            case TLayoutFormat::ElfRgba8: pixelFormat = EPixelFormat::RGBA8_UNorm; break;
+            case TLayoutFormat::ElfRgba8Snorm: pixelFormat = EPixelFormat::RGBA8_SNorm; break;
+            case TLayoutFormat::ElfRg32f: pixelFormat = EPixelFormat::RG32f; break;
+            case TLayoutFormat::ElfRg16f: pixelFormat = EPixelFormat::RG16f; break;
+            case TLayoutFormat::ElfR11fG11fB10f: pixelFormat = EPixelFormat::RGB_11_11_10f; break;
+            case TLayoutFormat::ElfR16f: pixelFormat = EPixelFormat::R16f; break;
+            case TLayoutFormat::ElfRgba16: pixelFormat = EPixelFormat::RGBA16_UNorm; break;
+            case TLayoutFormat::ElfRgb10A2: pixelFormat = EPixelFormat::RGB10_A2_UNorm; break;
+            case TLayoutFormat::ElfRg16: pixelFormat = EPixelFormat::RG16_UNorm; break;
+            case TLayoutFormat::ElfRg8: pixelFormat = EPixelFormat::RG8_UNorm; break;
+            case TLayoutFormat::ElfR16: pixelFormat = EPixelFormat::R16_UNorm; break;
+            case TLayoutFormat::ElfR8: pixelFormat = EPixelFormat::R8_UNorm; break;
+            case TLayoutFormat::ElfRgba16Snorm: pixelFormat = EPixelFormat::RGBA16_SNorm; break;
+            case TLayoutFormat::ElfRg16Snorm: pixelFormat = EPixelFormat::RG16_SNorm; break;
+            case TLayoutFormat::ElfRg8Snorm: pixelFormat = EPixelFormat::RG8_SNorm; break;
+            case TLayoutFormat::ElfR16Snorm: pixelFormat = EPixelFormat::R16_SNorm; break;
+            case TLayoutFormat::ElfR8Snorm: pixelFormat = EPixelFormat::R8_SNorm; break;
+            case TLayoutFormat::ElfRgba32i: pixelFormat = EPixelFormat::RGBA32i; break;
+            case TLayoutFormat::ElfRgba16i: pixelFormat = EPixelFormat::RGBA16i; break;
+            case TLayoutFormat::ElfRgba8i: pixelFormat = EPixelFormat::RGBA8i; break;
+            case TLayoutFormat::ElfR32i: pixelFormat = EPixelFormat::R32i; break;
+            case TLayoutFormat::ElfRg32i: pixelFormat = EPixelFormat::RG32i; break;
+            case TLayoutFormat::ElfRg16i: pixelFormat = EPixelFormat::RG16i; break;
+            case TLayoutFormat::ElfRg8i: pixelFormat = EPixelFormat::RG8i; break;
+            case TLayoutFormat::ElfR16i: pixelFormat = EPixelFormat::R16i; break;
+            case TLayoutFormat::ElfR8i: pixelFormat = EPixelFormat::R8i; break;
+            case TLayoutFormat::ElfRgba32ui: pixelFormat = EPixelFormat::RGBA32u; break;
+            case TLayoutFormat::ElfRgba16ui: pixelFormat = EPixelFormat::RGBA16u; break;
+            case TLayoutFormat::ElfRgba8ui: pixelFormat = EPixelFormat::RGBA8_UNorm; break;
+            case TLayoutFormat::ElfR32ui: pixelFormat = EPixelFormat::R32u; break;
+            case TLayoutFormat::ElfRg32ui: pixelFormat = EPixelFormat::RG32u; break;
+            case TLayoutFormat::ElfRg16ui: pixelFormat = EPixelFormat::RG16u; break;
+            case TLayoutFormat::ElfRgb10a2ui: pixelFormat = EPixelFormat::RGB10_A2u; break;
+            case TLayoutFormat::ElfRg8ui: pixelFormat = EPixelFormat::RG8u; break;
+            case TLayoutFormat::ElfR16ui: pixelFormat = EPixelFormat::R16u; break;
+            case TLayoutFormat::ElfR8ui: pixelFormat = EPixelFormat::R8u; break;
 
             case TLayoutFormat::ElfNone: break;
 
@@ -1108,54 +1175,58 @@ EImageSampler FVulkanSpirvCompiler::ExtractImageSampler_(const glslang::TType& t
             }
         }
 
+        EImageSampler::EType resourceType{ Zero };
         if (sampler.type == TBasicType::EbtFloat) {
-            resource |= EImageSampler::_Float;
+            resourceType = EImageSampler::_Float;
         }
         else
         if (sampler.type == TBasicType::EbtUint) {
-            resource |= EImageSampler::_UInt;
+            resourceType = EImageSampler::_UInt;
         }
         else
         if (sampler.type == TBasicType::EbtInt) {
-            resource |= EImageSampler::_Int;
+            resourceType = EImageSampler::_Int;
         }
         else {
-            PPE_LOG(PipelineCompiler, Error, "unsupported image value type");
-            return Zero;
+            const TString samplerDesc = sampler.getString();
+            ctx.Log->Invoke(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported image value type"_view, {
+                {"Sampler", FStringView{ samplerDesc.c_str(), samplerDesc.size() }}
+            });
+            return Default;
         }
 
         switch (sampler.dim) {
         case TSamplerDim::Esd1D :
             if (sampler.isShadow() and sampler.isArrayed())
-                return resource | EImageSampler::_1DArray | EImageSampler::_Shadow;
+                return { pixelFormat, EImageSampler::_1DArray, resourceType, EImageSampler::_Shadow };
             if (sampler.isShadow())
-                return resource | EImageSampler::_1D | EImageSampler::_Shadow;
+                return { pixelFormat, EImageSampler::_1D, resourceType, EImageSampler::_Shadow };
             if (sampler.isArrayed())
-                return resource | EImageSampler::_1DArray;
-            return resource | EImageSampler::_1D;
+                return { pixelFormat, EImageSampler::_1DArray, resourceType, Zero };
+            return { pixelFormat, EImageSampler::_1D, resourceType, Zero };
 
         case TSamplerDim::Esd2D :
             if (sampler.isShadow() and sampler.isArrayed() )
-                return resource | EImageSampler::_2DArray | EImageSampler::_Shadow;
+                return { pixelFormat, EImageSampler::_2DArray, resourceType, EImageSampler::_Shadow };
             if (sampler.isShadow())
-                return resource | EImageSampler::_2D | EImageSampler::_Shadow;
+                return { pixelFormat, EImageSampler::_2D, resourceType, EImageSampler::_Shadow };
             if (sampler.isMultiSample() and sampler.isArrayed() )
-                return resource | EImageSampler::_2DMSArray;
+                return { pixelFormat, EImageSampler::_2DMSArray, resourceType, Zero };
             if (sampler.isArrayed())
-                return resource | EImageSampler::_2DArray;
+                return { pixelFormat, EImageSampler::_2DArray, resourceType, Zero };
             if (sampler.isMultiSample())
-                return resource | EImageSampler::_2DMS;
-            return resource | EImageSampler::_2D;
+                return { pixelFormat, EImageSampler::_2DMS, resourceType, Zero };
+            return { pixelFormat, EImageSampler::_2D, resourceType, Zero };
 
         case TSamplerDim::Esd3D :
-            return resource | EImageSampler::_3D;
+            return { pixelFormat, EImageSampler::_3D, resourceType, Zero };
 
         case TSamplerDim::EsdCube :
             if (sampler.isShadow())
-                return resource | EImageSampler::_Cube | EImageSampler::_Shadow;
+                return { pixelFormat, EImageSampler::_Cube, resourceType, EImageSampler::_Shadow };
             if (sampler.isArrayed())
-                return resource | EImageSampler::_CubeArray;
-            return resource | EImageSampler::_Cube;
+                return { pixelFormat, EImageSampler::_CubeArray, resourceType, Zero };
+            return { pixelFormat, EImageSampler::_Cube, resourceType, Zero };
 
         case TSamplerDim::EsdBuffer:
         case TSamplerDim::EsdNone: // to shutup warnings
@@ -1171,10 +1242,10 @@ EImageSampler FVulkanSpirvCompiler::ExtractImageSampler_(const glslang::TType& t
 //----------------------------------------------------------------------------
 EResourceState FVulkanSpirvCompiler::ExtractShaderAccessType_(const glslang::TQualifier& q) {
     if (q.isWriteOnly())
-        return EResourceState::ShaderWrite;
+        return EResourceState_ShaderWrite;
 
     if (q.isReadOnly())
-        return EResourceState::ShaderRead;
+        return EResourceState_ShaderRead;
 
     if (q.coherent or
         q.devicecoherent or
@@ -1183,9 +1254,9 @@ EResourceState FVulkanSpirvCompiler::ExtractShaderAccessType_(const glslang::TQu
         q.subgroupcoherent or
         q.volatil or
         q.restrict )
-        return EResourceState::ShaderReadWrite;
+        return EResourceState_ShaderReadWrite;
 
-    return EResourceState::ShaderReadWrite;
+    return EResourceState_ShaderReadWrite;
 }
 //----------------------------------------------------------------------------
 EVertexFormat FVulkanSpirvCompiler::ExtractVertexFormat_(const glslang::TType& type) {
@@ -1375,15 +1446,15 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
         un.Data = std::move(resource);
         un.ArraySize = GLSLangArraySize_(type);
 
-        uniforms.insert({ uniformId, std::move(un) });
+        uniforms.insert({ std::move(uniformId), std::move(un) });
     };
 
     if (type.getBasicType() == TBasicType::EbtSampler) {
         // image
         if (type.getSampler().isImage()) {
             FPipelineDesc::FImage image{};
-            image.Type = ExtractImageSampler_(type);
-            image.State = ExtractShaderAccessType_(qualifier) | EResourceState_FromShaders(ctx.CurrentStage);
+            image.Type = ExtractImageSampler_(ctx, type);
+            image.State = ExtractShaderAccessType_(qualifier) | EResourceShaderStages_FromShaders(ctx.CurrentStage);
 
             insertUniform(ExtractUniformID_(&node), std::move(image));
             return true;
@@ -1394,7 +1465,7 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
             FPipelineDesc::FSubpassInput subpass{};
             subpass.AttachmentIndex = (qualifier.hasAttachment() ? checked_cast<u32>(qualifier.layoutAttachment) : UMax);
             subpass.IsMultiSample = false; // #TODO
-            subpass.State = EResourceState::InputAttachment | EResourceState_FromShaders(ctx.CurrentStage);
+            subpass.State = EResourceState_InputAttachment | EResourceShaderStages_FromShaders(ctx.CurrentStage);
 
             insertUniform(ExtractUniformID_(&node), std::move(subpass));
             return true;
@@ -1409,8 +1480,8 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
         // texture
         {
             FPipelineDesc::FTexture texture{};
-            texture.Type = ExtractImageSampler_(type);
-            texture.State = EResourceState::ShaderSample | EResourceState_FromShaders(ctx.CurrentStage);
+            texture.Type = ExtractImageSampler_(ctx, type);
+            texture.State = EResourceState_ShaderSample | EResourceShaderStages_FromShaders(ctx.CurrentStage);
 
             insertUniform(ExtractUniformID_(&node), std::move(texture));
             return true;
@@ -1445,7 +1516,7 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
         // uniform block
         if (qualifier.storage == TStorageQualifier::EvqUniform) {
             FPipelineDesc::FUniformBuffer ubuf{};
-            ubuf.State = EResourceState::UniformRead | EResourceState_FromShaders(ctx.CurrentStage);
+            ubuf.State = EResourceState_UniformRead | EResourceShaderStages_FromShaders(ctx.CurrentStage);
 
             u32 stride{}, offset{};
             PPE_LOG_CHECK(PipelineCompiler, CalculateStructSize_(&ubuf.Size, &stride, &offset, ctx, type));
@@ -1458,7 +1529,7 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
         // storage block
         if (qualifier.storage == TStorageQualifier::EvqBuffer) {
             FPipelineDesc::FStorageBuffer sbuf{};
-            sbuf.State = ExtractShaderAccessType_(qualifier) | EResourceState_FromShaders(ctx.CurrentStage);
+            sbuf.State = ExtractShaderAccessType_(qualifier) | EResourceShaderStages_FromShaders(ctx.CurrentStage);
 
             u32 offset{};
             PPE_LOG_CHECK(PipelineCompiler, CalculateStructSize_(&sbuf.StaticSize, &sbuf.ArrayStride, &offset, ctx, type));
@@ -1472,7 +1543,7 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
     // acceleration structure
     if (type.getBasicType() == TBasicType::EbtAccStruct) {
         FPipelineDesc::FRayTracingScene rtScene{};
-        rtScene.State = EResourceState::_RayTracingShader | EResourceState::ShaderRead;
+        rtScene.State = EResourceState_RayTracingShaderRead;
 
         insertUniform(ExtractUniformID_(&node), std::move(rtScene));
         return true;
@@ -1497,6 +1568,7 @@ bool FVulkanSpirvCompiler::DeserializeExternalObjects_(const FCompilationContext
 }
 //----------------------------------------------------------------------------
 void FVulkanSpirvCompiler::MergeWithGeometryInputPrimitive_(
+    const FCompilationContext& ctx,
     FShaderReflection::FTopologyBits* inoutTopology,
     glslang::TLayoutGeometry geometryType ) const {
     Assert(inoutTopology);
@@ -1529,7 +1601,9 @@ void FVulkanSpirvCompiler::MergeWithGeometryInputPrimitive_(
     case TLayoutGeometry::ElgQuads:
     case TLayoutGeometry::ElgIsolines:
     case TLayoutGeometry::ElgNone:
-        PPE_LOG(PipelineCompiler, Error, "invalid geometry input primitive type!");
+        ctx.Log->Invoke(ELoggerVerbosity::Error, ctx.SourceFile, 0, "invalid geometry input primitive type!"_view, {
+            {"GeometryType", Meta::EnumOrd(geometryType)},
+        });
         break;
     }
 }
@@ -1547,7 +1621,7 @@ bool FVulkanSpirvCompiler::ProcessShaderInfos_(const FCompilationContext& ctx) c
         break;
     case EShLangTessEvaluation: break;
     case EShLangGeometry:
-        MergeWithGeometryInputPrimitive_(&ctx.Reflection->Vertex.SupportedTopology, ctx.Intermediate->getInputPrimitive());
+        MergeWithGeometryInputPrimitive_(ctx, &ctx.Reflection->Vertex.SupportedTopology, ctx.Intermediate->getInputPrimitive());
         break;
     case EShLangFragment:
         ctx.Reflection->Fragment.EarlyFragmentTests = (
@@ -1827,6 +1901,36 @@ void FVulkanSpirvCompiler::SetCurrentResourceLimits(const FVulkanDevice& device)
         _builtInResources.maxMeshViewCountNV = checked_cast<int>(meshShaderProperties.maxMeshMultiviewViewCount);
     }
 #endif
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace {
+//----------------------------------------------------------------------------
+template <typename _Char>
+TBasicTextWriter<_Char>& WriteShaderAnnotations_(
+    TBasicTextWriter<_Char>& oss,
+    FVulkanSpirvCompiler::EShaderAnnotation annotations) {
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    if (annotations == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
+
+    if (annotations & FVulkanSpirvCompiler::DynamicOffset) oss << sep << STRING_LITERAL(_Char, "DynamicOffset");
+    if (annotations & FVulkanSpirvCompiler::Set) oss << sep << STRING_LITERAL(_Char, "Set");
+    if (annotations & FVulkanSpirvCompiler::WriteDiscard) oss << sep << STRING_LITERAL(_Char, "WriteDiscard");
+
+    return oss;
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, FVulkanSpirvCompiler::EShaderAnnotation annotations) {
+    return WriteShaderAnnotations_(oss, annotations);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, FVulkanSpirvCompiler::EShaderAnnotation annotations) {
+    return WriteShaderAnnotations_(oss, annotations);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

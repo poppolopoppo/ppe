@@ -75,7 +75,6 @@ public:
         friend hash_t hash_value(const TElementArray& arr) NOEXCEPT {
             return hash_range(arr.Data, arr.Count);
         }
-
     };
 
     struct FBuffer {
@@ -175,16 +174,16 @@ public:
     struct FUniform {
         FUniformID Id;
         EDescriptorType Type{ Default };
-        u16 Offset{ 0 };
+        u16 RelativeOffset{ 0 };
 
         template <typename T>
-        NODISCARD T& Get(void* p) const NOEXCEPT {
+        NODISCARD T& Get() NOEXCEPT {
             Assert(T::TypeId == Type);
-            return *reinterpret_cast<T*>(static_cast<u8*>(p) + Offset);
+            return *bit_cast<T*>(bit_cast<intptr_t>(this) + RelativeOffset);
         }
         template <typename T>
-        NODISCARD const T& Get(const void* p) const NOEXCEPT {
-            return Get<T>(const_cast<void*>(p));
+        NODISCARD const T& Get() const NOEXCEPT {
+            return const_cast<FUniform*>(this)->Get<T>();
         }
 
         bool operator ==(const FUniformID& id) const NOEXCEPT { return (id == Id); }
@@ -320,18 +319,16 @@ using FPipelineResourceSet = TFixedSizeAssociativeVector<
 //----------------------------------------------------------------------------
 template <typename _Each>
 void FPipelineResources::FDynamicData::EachUniform(_Each&& each) {
-    for (const FUniform& uni : Uniforms()) {
-        FRawMemory rawData = Storage.MakeView().CutStartingAt(uni.Offset);
-
+    for (FUniform& uni : Uniforms()) {
         switch (uni.Type) {
         case EDescriptorType::Unknown: break;
-        case EDescriptorType::Buffer: each(uni.Id, *rawData.Peek<FBuffer>()); break;
-        case EDescriptorType::TexelBuffer: each(uni.Id, *rawData.Peek<FTexelBuffer>()); break;
+        case EDescriptorType::Buffer: each(uni.Id, uni.Get<FBuffer>()); break;
+        case EDescriptorType::TexelBuffer: each(uni.Id, uni.Get<FTexelBuffer>()); break;
         case EDescriptorType::SubpassInput:
-        case EDescriptorType::Image: each(uni.Id, *rawData.Peek<FImage>()); break;
-        case EDescriptorType::Texture: each(uni.Id, *rawData.Peek<FTexture>()); break;
-        case EDescriptorType::Sampler: each(uni.Id, *rawData.Peek<FSampler>()); break;
-        case EDescriptorType::RayTracingScene: each(uni.Id, *rawData.Peek<FRayTracingScene>()); break;
+        case EDescriptorType::Image: each(uni.Id, uni.Get<FImage>()); break;
+        case EDescriptorType::Texture: each(uni.Id, uni.Get<FTexture>()); break;
+        case EDescriptorType::Sampler: each(uni.Id, uni.Get<FSampler>()); break;
+        case EDescriptorType::RayTracingScene: each(uni.Id, uni.Get<FRayTracingScene>()); break;
         default: AssertNotImplemented();
         }
     }
@@ -339,18 +336,16 @@ void FPipelineResources::FDynamicData::EachUniform(_Each&& each) {
 //----------------------------------------------------------------------------
 template <typename _Pred>
 bool FPipelineResources::FDynamicData::UniformByPred(_Pred&& pred) {
-    for (const FUniform& uni : Uniforms()) {
-        FRawMemory rawData = Storage.MakeView().CutStartingAt(uni.Offset);
-
+    for (FUniform& uni : Uniforms()) {
         switch (uni.Type) {
         case EDescriptorType::Unknown: break;
-        case EDescriptorType::Buffer: if (pred(uni.Id, *rawData.Peek<FBuffer>())) return true; break;
-        case EDescriptorType::TexelBuffer: if (pred(uni.Id, *rawData.Peek<FTexelBuffer>())) return true; break;
+        case EDescriptorType::Buffer: if (pred(uni.Id, uni.Get<FBuffer>())) return true; break;
+        case EDescriptorType::TexelBuffer: if (pred(uni.Id, uni.Get<FTexelBuffer>())) return true; break;
         case EDescriptorType::SubpassInput:
-        case EDescriptorType::Image: if (pred(uni.Id, *rawData.Peek<FImage>())) return true; break;
-        case EDescriptorType::Texture: if (pred(uni.Id, *rawData.Peek<FTexture>())) return true; break;
-        case EDescriptorType::Sampler: if (pred(uni.Id, *rawData.Peek<FSampler>())) return true; break;
-        case EDescriptorType::RayTracingScene: if (pred(uni.Id, *rawData.Peek<FRayTracingScene>())) return true; break;
+        case EDescriptorType::Image: if (pred(uni.Id, uni.Get<FImage>())) return true; break;
+        case EDescriptorType::Texture: if (pred(uni.Id, uni.Get<FTexture>())) return true; break;
+        case EDescriptorType::Sampler: if (pred(uni.Id, uni.Get<FSampler>())) return true; break;
+        case EDescriptorType::RayTracingScene: if (pred(uni.Id, uni.Get<FRayTracingScene>())) return true; break;
         default: AssertNotImplemented();
         }
     }

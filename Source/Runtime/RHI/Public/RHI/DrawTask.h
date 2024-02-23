@@ -396,8 +396,8 @@ struct FCustomDraw final : details::TDrawTaskDesc<FCustomDraw> {
     PPE_RHI_API explicit FCustomDraw(FCallback&& rcallback, void* userParam = nullptr) NOEXCEPT;
     PPE_RHI_API ~FCustomDraw();
 
-    PPE_RHI_API FCustomDraw& AddImage(FRawImageID image, EResourceState state = EResourceState::ShaderSample);
-    PPE_RHI_API FCustomDraw& AddBuffer(FRawBufferID buffer, EResourceState state = EResourceState::ShaderSample);
+    PPE_RHI_API FCustomDraw& AddImage(FRawImageID image, EResourceState state = EResourceState_ShaderSample);
+    PPE_RHI_API FCustomDraw& AddBuffer(FRawBufferID buffer, EResourceState state = EResourceState_UniformRead);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

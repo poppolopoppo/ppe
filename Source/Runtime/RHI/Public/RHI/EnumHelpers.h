@@ -26,35 +26,35 @@ inline CONSTEXPR u32 EIndexFormat_SizeOf(EIndexFormat fmt) {
 // Resources
 //----------------------------------------------------------------------------
 inline bool CONSTEXPR EResourceState_IsReadable(EResourceState value) {
-    return (value & EResourceState::_Read);
+    return (value & EResourceFlags::Read);
 }
 //----------------------------------------------------------------------------
 inline bool CONSTEXPR EResourceState_IsWritable(EResourceState value) {
-    return (value & EResourceState::_Write);
+    return (value & EResourceFlags::Write);
 }
 //----------------------------------------------------------------------------
-inline EResourceState CONSTEXPR EResourceState_FromShaders(EShaderStages stages) {
-    EResourceState result =  EResourceState::Unknown;
+inline EResourceShaderStages CONSTEXPR EResourceShaderStages_FromShaders(EShaderStages stages) {
+    EResourceShaderStages result = Zero;
 
     for (u32 st = 1; st < static_cast<u32>(EShaderStages::_Last); st <<= 1) {
         if (not Meta::EnumHas(stages, st))
             continue;
 
         switch (static_cast<EShaderStages>(st)) {
-        case EShaderStages::Vertex: result |= EResourceState::_VertexShader; break;
-        case EShaderStages::TessControl: result |= EResourceState::_TessControlShader; break;
-        case EShaderStages::TessEvaluation: result |= EResourceState::_TessEvaluationShader; break;
-        case EShaderStages::Geometry: result |= EResourceState::_GeometryShader; break;
-        case EShaderStages::Fragment: result |= EResourceState::_FragmentShader; break;
-        case EShaderStages::Compute: result |= EResourceState::_ComputeShader; break;
-        case EShaderStages::MeshTask: result |= EResourceState::_MeshTaskShader; break;
-        case EShaderStages::Mesh: result |= EResourceState::_MeshShader; break;
+        case EShaderStages::Vertex: result |= EResourceShaderStages::VertexShader; break;
+        case EShaderStages::TessControl: result |= EResourceShaderStages::TessControlShader; break;
+        case EShaderStages::TessEvaluation: result |= EResourceShaderStages::TessEvaluationShader; break;
+        case EShaderStages::Geometry: result |= EResourceShaderStages::GeometryShader; break;
+        case EShaderStages::Fragment: result |= EResourceShaderStages::FragmentShader; break;
+        case EShaderStages::Compute: result |= EResourceShaderStages::ComputeShader; break;
+        case EShaderStages::MeshTask: result |= EResourceShaderStages::MeshTaskShader; break;
+        case EShaderStages::Mesh: result |= EResourceShaderStages::MeshShader; break;
         case EShaderStages::RayGen:
         case EShaderStages::RayAnyHit:
         case EShaderStages::RayClosestHit:
         case EShaderStages::RayMiss:
         case EShaderStages::RayIntersection:
-        case EShaderStages::RayCallable: result |= EResourceState::_RayTracingShader; break;
+        case EShaderStages::RayCallable: result |= EResourceShaderStages::RayTracingShader; break;
 
         case EShaderStages::_Last:
         case EShaderStages::All:
@@ -69,23 +69,23 @@ inline EResourceState CONSTEXPR EResourceState_FromShaders(EShaderStages stages)
 }
 //----------------------------------------------------------------------------
 CONSTEXPR EShaderAccess EResourceState_ToShaderAccess(EResourceState state) {
-    if (state & EResourceState::ShaderReadWrite)
+    if (state & EResourceState_ShaderReadWrite)
         return EShaderAccess::ReadWrite;
-    if (state & (EResourceState::ShaderWrite + EResourceState::InvalidateBefore))
+    if (state & (EResourceState_ShaderWrite + EResourceFlags::InvalidateBefore))
         return EShaderAccess::WriteDiscard;
-    if (state & EResourceState::ShaderWrite)
+    if (state & EResourceState_ShaderWrite)
         return EShaderAccess::WriteOnly;
-    if (state & EResourceState::ShaderRead)
+    if (state & EResourceState_ShaderRead)
         return EShaderAccess::ReadOnly;
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 CONSTEXPR EResourceState EResourceState_FromShaderAccess(EShaderAccess access) {
     switch (access) {
-    case EShaderAccess::ReadOnly: return EResourceState::ShaderRead;
-    case EShaderAccess::WriteOnly: return EResourceState::ShaderWrite;
-    case EShaderAccess::WriteDiscard: return EResourceState::ShaderWrite | EResourceState::InvalidateBefore;
-    case EShaderAccess::ReadWrite: return EResourceState::ShaderReadWrite;
+    case EShaderAccess::ReadOnly: return EResourceState_ShaderRead;
+    case EShaderAccess::WriteOnly: return EResourceState_ShaderWrite;
+    case EShaderAccess::WriteDiscard: return EResourceState_ShaderWrite | EResourceFlags::InvalidateBefore;
+    case EShaderAccess::ReadWrite: return EResourceState_ShaderReadWrite;
     default: AssertNotImplemented();
     }
 }

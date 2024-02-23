@@ -422,7 +422,6 @@ VkImageCreateFlagBits VkCast(EImageFlags value) {
         case EImageFlags::CubeCompatible: result |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT; break;
         case EImageFlags::MutableFormat: result |= VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT; break;
 
-        case EImageFlags::_Last:
         case EImageFlags::Unknown: AssertNotReached();
         }
     }
@@ -465,11 +464,8 @@ VkImageUsageFlagBits VkCast(EImageUsage values) {
         case EImageUsage::InputAttachment: flags |= VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT; break;
         case EImageUsage::ShadingRate: flags |= VK_IMAGE_USAGE_SHADING_RATE_IMAGE_BIT_NV; break;
 
-        case EImageUsage::_Last:
-        case EImageUsage::All:
-        case EImageUsage::Transfer:
         case EImageUsage::Unknown:
-            AssertNotImplemented();
+        default: AssertNotImplemented();
         }
     }
     return flags;
@@ -487,9 +483,6 @@ VkImageAspectFlagBits VkCast(EImageAspect values) {
         case EImageAspect::Stencil: flags |= VK_IMAGE_ASPECT_STENCIL_BIT; break;
         case EImageAspect::Metadata: flags |= VK_IMAGE_ASPECT_METADATA_BIT; break;
 
-        case EImageAspect::Auto:
-        case EImageAspect::DepthStencil:
-
         default: AssertNotImplemented();
         }
     }
@@ -497,7 +490,7 @@ VkImageAspectFlagBits VkCast(EImageAspect values) {
 }
 //----------------------------------------------------------------------------
 VkImageAspectFlagBits VkCast(EImageAspect values, EPixelFormat format) {
-    if (values == EImageAspect::Auto) {
+    if (values == EImageAspect_Auto) {
         if (EPixelFormat_HasDepth(format))
             return VK_IMAGE_ASPECT_DEPTH_BIT;
         if (EPixelFormat_HasStencil(format))
@@ -871,57 +864,57 @@ EColorSpace RHICast(VkColorSpaceKHR value) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 VkPipelineStageFlagBits EResourceState_ToPipelineStages(EResourceState value) {
-    switch (Meta::EnumAnd(value, EResourceState::_AccessMask)) {
-    case EResourceState::Unknown: return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    switch (value.MemoryAccess) {
+    case EResourceAccess::Unknown: return VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
-    case EResourceState::_Access_InputAttachment: return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-    case EResourceState::_Access_Transfer: return VK_PIPELINE_STAGE_TRANSFER_BIT;
-    case EResourceState::_Access_ColorAttachment: return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    case EResourceState::_Access_Present: return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-    case EResourceState::_Access_Host: return VK_PIPELINE_STAGE_HOST_BIT;
-    case EResourceState::_Access_IndirectBuffer: return VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
-    case EResourceState::_Access_IndexBuffer: return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
-    case EResourceState::_Access_VertexBuffer: return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
-    case EResourceState::_Access_ConditionalRendering: return VK_PIPELINE_STAGE_CONDITIONAL_RENDERING_BIT_EXT;
+    case EResourceAccess::InputAttachment: return VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    case EResourceAccess::Transfer: return VK_PIPELINE_STAGE_TRANSFER_BIT;
+    case EResourceAccess::ColorAttachment: return VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    case EResourceAccess::Present: return VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    case EResourceAccess::Host: return VK_PIPELINE_STAGE_HOST_BIT;
+    case EResourceAccess::IndirectBuffer: return VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT;
+    case EResourceAccess::IndexBuffer: return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+    case EResourceAccess::VertexBuffer: return VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
+    case EResourceAccess::ConditionalRendering: return VK_PIPELINE_STAGE_CONDITIONAL_RENDERING_BIT_EXT;
 #ifdef VK_NV_device_generated_commands
-    case EResourceState::_Access_CommandProcess: return VK_PIPELINE_STAGE_COMMAND_PREPROCESS_BIT_NV;
+    case EResourceAccess::CommandProcess: return VK_PIPELINE_STAGE_COMMAND_PREPROCESS_BIT_NV;
 #elif defined(VK_NVX_device_generated_commands)
-    case EResourceState::_Access_CommandProcess: return VK_PIPELINE_STAGE_COMMAND_PROCESS_BIT_NVX;
+    case EResourceAccess::CommandProcess: return VK_PIPELINE_STAGE_COMMAND_PROCESS_BIT_NVX;
 #endif
 #ifdef VK_NV_shading_rate_image
-    case EResourceState::_Access_ShadingRateImage: return VK_PIPELINE_STAGE_SHADING_RATE_IMAGE_BIT_NV;
+    case EResourceAccess::ShadingRateImage: return VK_PIPELINE_STAGE_SHADING_RATE_IMAGE_BIT_NV;
 #endif
 #ifdef VK_NV_ray_tracing
-    case EResourceState::_Access_BuildRayTracingAS:
-    case EResourceState::_Access_RTASBuildingBuffer: return VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV;
+    case EResourceAccess::BuildRayTracingAS:
+    case EResourceAccess::RTASBuildingBuffer: return VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_NV;
 #endif
 
-    case EResourceState::_Access_ShaderStorage:
-    case EResourceState::_Access_Uniform:
-    case EResourceState::_Access_ShaderSample: {
-        Assert(value ^ EResourceState::_ShaderMask);
+    case EResourceAccess::ShaderStorage:
+    case EResourceAccess::Uniform:
+    case EResourceAccess::ShaderSample: {
+        Assert(value.ShaderStages != Zero);
         VkPipelineStageFlagBits result = Zero;
-        if (value & EResourceState::_VertexShader) result |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
-        if (value & EResourceState::_TessControlShader) result |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
-        if (value & EResourceState::_TessEvaluationShader) result |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
-        if (value & EResourceState::_GeometryShader) result |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
-        if (value & EResourceState::_FragmentShader) result |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-        if (value & EResourceState::_ComputeShader) result |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+        if (value & EResourceShaderStages::VertexShader) result |= VK_PIPELINE_STAGE_VERTEX_SHADER_BIT;
+        if (value & EResourceShaderStages::TessControlShader) result |= VK_PIPELINE_STAGE_TESSELLATION_CONTROL_SHADER_BIT;
+        if (value & EResourceShaderStages::TessEvaluationShader) result |= VK_PIPELINE_STAGE_TESSELLATION_EVALUATION_SHADER_BIT;
+        if (value & EResourceShaderStages::GeometryShader) result |= VK_PIPELINE_STAGE_GEOMETRY_SHADER_BIT;
+        if (value & EResourceShaderStages::FragmentShader) result |= VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+        if (value & EResourceShaderStages::ComputeShader) result |= VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 #ifdef VK_NV_mesh_shader
-        if (value & EResourceState::_MeshTaskShader) result |= VK_PIPELINE_STAGE_TASK_SHADER_BIT_NV;
-        if (value & EResourceState::_MeshShader) result |= VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV;
+        if (value & EResourceShaderStages::MeshTaskShader) result |= VK_PIPELINE_STAGE_TASK_SHADER_BIT_NV;
+        if (value & EResourceShaderStages::MeshShader) result |= VK_PIPELINE_STAGE_MESH_SHADER_BIT_NV;
 #endif
 #ifdef VK_NV_ray_tracing
-        if (value & EResourceState::_RayTracingShader) result |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV;
+        if (value & EResourceShaderStages::RayTracingShader) result |= VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_NV;
 #endif
         return result;
     }
 
-    case EResourceState::_Access_DepthStencilAttachment: {
-        Assert(value ^ (EResourceState::EarlyFragmentTests | EResourceState::LateFragmentTests));
+    case EResourceAccess::DepthStencilAttachment: {
+        Assert(value ^ (EResourceFlags::EarlyFragmentTests | EResourceFlags::LateFragmentTests));
         VkPipelineStageFlagBits result = Zero;
-        if (value & EResourceState::EarlyFragmentTests) result |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-        if (value & EResourceState::LateFragmentTests) result |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+        if (value & EResourceFlags::EarlyFragmentTests) result |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+        if (value & EResourceFlags::LateFragmentTests) result |= VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
         return result;
     }
 
@@ -931,80 +924,80 @@ VkPipelineStageFlagBits EResourceState_ToPipelineStages(EResourceState value) {
 }
 //----------------------------------------------------------------------------
 VkAccessFlagBits EResourceState_ToAccess(EResourceState value) {
-    switch (Meta::EnumAnd(value, EResourceState::_StateMask)) {
-    case EResourceState::Unknown: return Zero;
+    switch (value.OnlyState().Ord()) {
+    case EResourceState_Unknown.Ord(): return Zero;
 
-    case EResourceState::UniformRead: return VK_ACCESS_UNIFORM_READ_BIT;
-    case EResourceState::ShaderSample:
-    case EResourceState::ShaderRead: return VK_ACCESS_SHADER_READ_BIT;
-    case EResourceState::ShaderWrite: return VK_ACCESS_SHADER_WRITE_BIT;
-    case EResourceState::ShaderReadWrite: return (VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
-    case EResourceState::InputAttachment: return VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-    case EResourceState::TransferSrc: return VK_ACCESS_TRANSFER_READ_BIT;
-    case EResourceState::TransferDst: return VK_ACCESS_TRANSFER_WRITE_BIT;
-    case EResourceState::ColorAttachmentRead: return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
-    case EResourceState::ColorAttachmentWrite: return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    case EResourceState::ColorAttachmentReadWrite: return (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
-    case EResourceState::DepthStencilAttachmentRead: return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-    case EResourceState::DepthStencilAttachmentWrite: return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-    case EResourceState::DepthStencilAttachmentReadWrite: return (VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
-    case EResourceState::HostRead: return VK_ACCESS_HOST_READ_BIT;
-    case EResourceState::HostWrite: return VK_ACCESS_HOST_WRITE_BIT;
-    case EResourceState::HostReadWrite: return (VK_ACCESS_HOST_READ_BIT | VK_ACCESS_HOST_WRITE_BIT);
-    case EResourceState::IndirectBuffer: return VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
-    case EResourceState::IndexBuffer: return VK_ACCESS_INDEX_READ_BIT;
-    case EResourceState::VertexBuffer: return VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-    case EResourceState::PresentImage: return Zero;
-
-#ifdef VK_NV_ray_tracing
-    case EResourceState::BuildRayTracingStructRead: return VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV;
-    case EResourceState::BuildRayTracingStructWrite: return VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV;
-    case EResourceState::BuildRayTracingStructReadWrite: return (VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV);
-#endif
-
-    case EResourceState::RTASBuildingBufferRead: // cache invalidation is not needed for buffers
-    case EResourceState::RTASBuildingBufferReadWrite:
-    case EResourceState::RayTracingShaderRead: return Zero;
+    case EResourceState_UniformRead.Ord(): return VK_ACCESS_UNIFORM_READ_BIT;
+    case EResourceState_ShaderSample.Ord():
+    case EResourceState_ShaderRead.Ord(): return VK_ACCESS_SHADER_READ_BIT;
+    case EResourceState_ShaderWrite.Ord(): return VK_ACCESS_SHADER_WRITE_BIT;
+    case EResourceState_ShaderReadWrite.Ord(): return (VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT);
+    case EResourceState_InputAttachment.Ord(): return VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+    case EResourceState_TransferSrc.Ord(): return VK_ACCESS_TRANSFER_READ_BIT;
+    case EResourceState_TransferDst.Ord(): return VK_ACCESS_TRANSFER_WRITE_BIT;
+    case EResourceState_ColorAttachmentRead.Ord(): return VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+    case EResourceState_ColorAttachmentWrite.Ord(): return VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    case EResourceState_ColorAttachmentReadWrite.Ord(): return (VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT);
+    case EResourceState_DepthStencilAttachmentRead.Ord(): return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+    case EResourceState_DepthStencilAttachmentWrite.Ord(): return VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+    case EResourceState_DepthStencilAttachmentReadWrite.Ord(): return (VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT);
+    case EResourceState_HostRead.Ord(): return VK_ACCESS_HOST_READ_BIT;
+    case EResourceState_HostWrite.Ord(): return VK_ACCESS_HOST_WRITE_BIT;
+    case EResourceState_HostReadWrite.Ord(): return (VK_ACCESS_HOST_READ_BIT | VK_ACCESS_HOST_WRITE_BIT);
+    case EResourceState_IndirectBuffer.Ord(): return VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
+    case EResourceState_IndexBuffer.Ord(): return VK_ACCESS_INDEX_READ_BIT;
+    case EResourceState_VertexBuffer.Ord(): return VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+    case EResourceState_PresentImage.Ord(): return Zero;
 
 #ifdef VK_NV_shading_rate_image
-    case EResourceState::ShadingRateImageRead: return VK_ACCESS_SHADING_RATE_IMAGE_READ_BIT_NV;
+    case EResourceState_ShadingRateImageRead.Ord(): return VK_ACCESS_SHADING_RATE_IMAGE_READ_BIT_NV;
 #endif
-    default: break;
+#ifdef VK_NV_ray_tracing
+    case EResourceState_BuildRayTracingStructRead.Ord(): return VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV;
+    case EResourceState_BuildRayTracingStructWrite.Ord(): return VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV;
+    case EResourceState_BuildRayTracingStructReadWrite.Ord(): return (VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_NV | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_NV);
+#endif
+
+    case EResourceState_RTASBuildingBufferRead.Ord(): // cache invalidation is not needed for buffers
+    case EResourceState_RTASBuildingBufferReadWrite.Ord(): return Zero;
+    default:
+        if (value == EResourceState_RayTracingShaderRead) return Zero;
+        break;
     }
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
 VkImageLayout EResourceState_ToImageLayout(EResourceState value, VkImageAspectFlags aspect) {
-    switch (Meta::EnumAnd(value, EResourceState::_StateMask)) {
-    case EResourceState::Unknown: return VK_IMAGE_LAYOUT_UNDEFINED;
+    switch (value.OnlyState().Ord()) {
+    case EResourceState_Unknown.Ord(): return VK_IMAGE_LAYOUT_UNDEFINED;
 
-    case EResourceState::ShaderSample:
-    case EResourceState::InputAttachment: return (aspect & VK_IMAGE_ASPECT_COLOR_BIT
+    case EResourceState_ShaderSample.Ord():
+    case EResourceState_InputAttachment.Ord(): return (aspect & VK_IMAGE_ASPECT_COLOR_BIT
         ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         : VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL );
 
-    case EResourceState::ShaderRead:
-    case EResourceState::ShaderWrite:
-    case EResourceState::ShaderReadWrite: return VK_IMAGE_LAYOUT_GENERAL;
+    case EResourceState_ShaderRead.Ord():
+    case EResourceState_ShaderWrite.Ord():
+    case EResourceState_ShaderReadWrite.Ord(): return VK_IMAGE_LAYOUT_GENERAL;
 
-    case EResourceState::TransferSrc: return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-    case EResourceState::TransferDst: return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    case EResourceState_TransferSrc.Ord(): return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+    case EResourceState_TransferDst.Ord(): return VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
-    case EResourceState::ColorAttachmentRead: return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    case EResourceState_ColorAttachmentRead.Ord(): return VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-    case EResourceState::ColorAttachmentWrite:
-    case EResourceState::ColorAttachmentReadWrite: return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    case EResourceState_ColorAttachmentWrite.Ord():
+    case EResourceState_ColorAttachmentReadWrite.Ord(): return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    case EResourceState::DepthStencilAttachmentRead: return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
+    case EResourceState_DepthStencilAttachmentRead.Ord(): return VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
-    case EResourceState::DepthStencilAttachmentWrite:
-    case EResourceState::DepthStencilAttachmentReadWrite: return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL; // TODO: use other layouts too
+    case EResourceState_DepthStencilAttachmentWrite.Ord():
+    case EResourceState_DepthStencilAttachmentReadWrite.Ord(): return VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL; // TODO: use other layouts too
 
-    case EResourceState::HostRead:
-    case EResourceState::HostWrite:
-    case EResourceState::HostReadWrite: return VK_IMAGE_LAYOUT_GENERAL;
+    case EResourceState_HostRead.Ord():
+    case EResourceState_HostWrite.Ord():
+    case EResourceState_HostReadWrite.Ord(): return VK_IMAGE_LAYOUT_GENERAL;
 
-    case EResourceState::PresentImage: return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    case EResourceState_PresentImage.Ord(): return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     default: break;
     }

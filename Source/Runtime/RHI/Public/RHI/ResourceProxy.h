@@ -103,7 +103,7 @@ public:
     }
 
 #if USE_PPE_RHIDEBUG
-    auto DebugName() const {
+    FConstChar DebugName() const {
         IF_CONSTEXPR(Meta::has_defined_v< if_has_debugname_, T>) {
             return _data.DebugName();
         } else {

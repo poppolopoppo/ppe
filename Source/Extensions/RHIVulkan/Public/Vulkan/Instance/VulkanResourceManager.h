@@ -34,6 +34,8 @@
 #include "Memory/MemoryPool.h"
 #include "Thread/AtomicPool.h"
 
+#define USE_PPE_VULKAN_RESOURCETRACKING (USE_PPE_RHIDEBUG || USE_PPE_MEMORY_DEBUGGING)
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -236,6 +238,18 @@ private:
         const auto& PoolConst(details::TResourceId<_Uid> id) const {
             return const_cast<FResources_&>(*this).Pool(id);
         }
+
+#if USE_PPE_VULKAN_RESOURCETRACKING
+        using FResourcesAlive = HASHSET(RHIDebug, FResourceHandle);
+        TThreadSafe<FResourcesAlive, EThreadBarrier::CriticalSection> PooledResourcesAlive_ForDebug;
+
+        void TrackPooledResource_ForDebug(FResourceHandle resource) {
+            PooledResourcesAlive_ForDebug.LockExclusive()->emplace_AssertUnique(resource);
+        }
+        void UntrackPooledResource_ForDebug(FResourceHandle resource) {
+            PooledResourcesAlive_ForDebug.LockExclusive()->erase_AssertExists(resource);
+        }
+#endif
     };
 
     template <u32 _Uid>
@@ -246,7 +260,7 @@ private:
     const auto& ResourcePoolConst_(details::TResourceId<_Uid> id) const { return _resources.PoolConst(id); }
 
     template <u32 _Uid, typename _Desc>
-    NODISCARD bool CreateDevicePipeline_(details::TResourceId<_Uid>* pId, _Desc& desc ARGS_IF_RHIDEBUG(FStringView pipelineType, FConstChar debugName));
+    NODISCARD bool CreateDevicePipeline_(details::TResourceId<_Uid>* pId, _Desc& desc ARGS_IF_RHIDEBUG(FStringLiteral pipelineType, FConstChar debugName));
 
     template <u32 _Uid, typename... _Args>
     NODISCARD TPooledResource_<_Uid>* CreatePooledResource_(details::TResourceId<_Uid>* pId, _Args&&... args);
@@ -254,9 +268,9 @@ private:
     NODISCARD TPair<TPooledResource_<_Uid>*, bool> CreateCachedResource_(details::TResourceId<_Uid>* pId, TPooledResource_<_Uid>&& rkey, _Args&&... args);
 
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-    NODISCARD bool ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, FIndex index, u32 refCount);
+    NODISCARD bool ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, FResourceHandle resource, u32 refCount);
     template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-    NODISCARD bool ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FIndex index, u32 refCount);
+    NODISCARD bool ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FResourceHandle resource, u32 refCount);
 
     NODISCARD bool CreateMemory_(FRawMemoryID* pId, TResourceProxy<FVulkanMemoryObject>** pMemory, const FMemoryDesc& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
     NODISCARD bool CreatePipelineLayout_(FRawPipelineLayoutID* pId, const TResourceProxy<FVulkanPipelineLayout>** pLayout, const FPipelineDesc::FPipelineLayout& desc ARGS_IF_RHIDEBUG(FConstChar debugName));
@@ -266,8 +280,8 @@ private:
     NODISCARD bool CreateDescriptorSetLayout_(FRawDescriptorSetLayoutID* pId, TResourceProxy<FVulkanDescriptorSetLayout>** pDSLayout, FPipelineDesc::PUniformMap&& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
 
     template <typename _Desc>
-    NODISCARD bool CompileShaders_(_Desc& desc);
-    NODISCARD bool CompileShaders_(FComputePipelineDesc& desc);
+    NODISCARD bool CompileShaders_(_Desc& desc ARGS_IF_RHIDEBUG(FStringLiteral pipelineType, FConstChar debugName));
+    NODISCARD bool CompileShaders_(FComputePipelineDesc& desc ARGS_IF_RHIDEBUG(FStringLiteral pipelineType, FConstChar debugName));
     NODISCARD bool CompileShaderSPIRV_(PVulkanShaderModule* pShaderModule, const FShaderDataVariant& spirv);
 
     NODISCARD bool CheckHostVisibleMemory_();
@@ -394,23 +408,27 @@ bool FVulkanResourceManager::ReleaseResource(details::TResourceId<_Uid> id, u32 
 
     if (const proxy_type* const proxyPtr = pool[id.Index]) {
         if (proxyPtr->IsCreated() && proxyPtr->InstanceID() == id.InstanceID)
-            return ReleaseResource_(pool, const_cast<proxy_type*>(proxyPtr), id.Index, refCount);
+            return ReleaseResource_(pool, const_cast<proxy_type*>(proxyPtr), id.Pack(), refCount);
     }
 
     return false;
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-bool FVulkanResourceManager::ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, FIndex index, u32 refCount) {
+bool FVulkanResourceManager::ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& pool, T* pdata, FResourceHandle resource, u32 refCount) {
     Assert(pdata);
     Assert(refCount > 0);
 
     if (pdata->RemoveRef(refCount)) {
+#if USE_PPE_VULKAN_RESOURCETRACKING
+        _resources.UntrackPooledResource_ForDebug(resource);
+#endif
+
         if (pdata->IsCreated())
             pdata->TearDown(*this);
 
         Meta::Destroy(pdata);
-        pool.Deallocate(index);
+        pool.Deallocate(resource.Index);
         return true;
     }
 
@@ -418,11 +436,11 @@ bool FVulkanResourceManager::ReleaseResource_(TPool<T, _ChunkSize, _MaxChunks>& 
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _ChunkSize, size_t _MaxChunks>
-bool FVulkanResourceManager::ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FIndex index, u32 refCount) {
+bool FVulkanResourceManager::ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>& cache, T* pdata, FResourceHandle resource, u32 refCount) {
     Assert(pdata);
     Assert(refCount > 0);
 
-    return cache.RemoveIf(index, [this, pdata, refCount](T* inCache) {
+    return cache.RemoveIf(resource.Index, [this, pdata, refCount](T* inCache) {
         Unused(pdata);
         Assert_NoAssume(inCache == pdata);
 

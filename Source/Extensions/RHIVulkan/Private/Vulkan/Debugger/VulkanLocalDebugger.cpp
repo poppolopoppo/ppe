@@ -210,17 +210,22 @@ FString FVulkanLocalDebugger::TaskName_(EVulkanExecutionOrder idx) const {
     return "<unknown>";
 }
 //----------------------------------------------------------------------------
-FString FVulkanLocalDebugger::TaskName_(const PVulkanFrameTask& task) const {
+FString FVulkanLocalDebugger::TaskName_(const PVulkanFrameTask& task) {
     Assert(task);
     return StringFormat("{0} (#{1})", task->TaskName, static_cast<u32>(task->ExecutionOrder));
 }
 //----------------------------------------------------------------------------
-FStringView FVulkanLocalDebugger::QueueName_(const FVulkanDevice& device, u32 queueFamilyIndex) const {
+FStringLiteral FVulkanLocalDebugger::QueueName_(const FVulkanDevice& device, u32 queueFamilyIndex) {
     switch (queueFamilyIndex) {
     case static_cast<u32>(EVulkanQueueFamily::External): return "External";
     case static_cast<u32>(EVulkanQueueFamily::Foreign): return "Foreign";
     case static_cast<u32>(EVulkanQueueFamily::Ignored): return "Ignored";
-    default: return device.DeviceQueue(queueFamilyIndex).DebugName;
+    default:
+        auto& queueName = device.DeviceQueue(queueFamilyIndex).DebugName;
+        FStringLiteral result;
+        result.Data = queueName.Data;
+        result.Length = queueName.Len;
+        return result;
     }
 }
 //----------------------------------------------------------------------------

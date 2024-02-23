@@ -19,13 +19,13 @@ FSubmitRenderPass::FSubmitRenderPass(FLogicalPassID renderPassId) NOEXCEPT :
 //----------------------------------------------------------------------------
 FSubmitRenderPass::~FSubmitRenderPass() = default;
 //----------------------------------------------------------------------------
-FSubmitRenderPass& FSubmitRenderPass::AddImage(FRawImageID id, EResourceState state/* = EResourceState::ShaderSample */) {
+FSubmitRenderPass& FSubmitRenderPass::AddImage(FRawImageID id, EResourceState state/* = EResourceState_ShaderSample */) {
     Assert(id);
     Images.Push(id, state);
     return (*this);
 }
 //----------------------------------------------------------------------------
-FSubmitRenderPass& FSubmitRenderPass::AddBuffer(FRawBufferID id, EResourceState state/* = EResourceState::UniformRead */) {
+FSubmitRenderPass& FSubmitRenderPass::AddBuffer(FRawBufferID id, EResourceState state/* = EResourceState_UniformRead */) {
     Assert(id);
     Buffers.Push(id, state);
     return (*this);
@@ -108,7 +108,7 @@ FCopyImage::FCopyImage() NOEXCEPT = default;
 FCopyImage::~FCopyImage() = default;
 //----------------------------------------------------------------------------
 FCopyImage& FCopyImage::AddRegion(
-    const FImageSubresourceRange& srcSubresource, const int2& srcOffset,
+    const FImageSubresourceRange & srcSubresource, const int2& srcOffset,
     const FImageSubresourceRange& dstSubresource, const int2& dstOffset,
     const uint2& size ) {
     return AddRegion(srcSubresource, int3(srcOffset, 0), dstSubresource, int3(dstOffset, 0), uint3(size, 1));
@@ -297,14 +297,15 @@ FClearDepthStencilImage::~FClearDepthStencilImage() = default;
 FClearDepthStencilImage& FClearDepthStencilImage::AddRange(FMipmapLevel baseMipLevel, u32 levelCount, FImageLayer baseLayer, u32 layerCount) {
     Assert(levelCount > 0);
     Assert(layerCount > 0);
-    Emplace_Back(Ranges, EImageAspect::DepthStencil, baseMipLevel, levelCount, baseLayer, layerCount);
+    Emplace_Back(Ranges, EImageAspect_DepthStencil, baseMipLevel, levelCount, baseLayer, layerCount);
     return (*this);
 }
 //----------------------------------------------------------------------------
 // FUpdateBuffer
 //----------------------------------------------------------------------------
 #if USE_PPE_RHITASKNAME
-FUpdateBuffer::FUpdateBuffer() NOEXCEPT : TFrameTaskDesc<FUpdateBuffer>("UpdateBuffer", FDebugColorScheme::Get().HostToDeviceTransfer) {}
+FUpdateBuffer::FUpdateBuffer() NOEXCEPT : TFrameTaskDesc<FUpdateBuffer>("UpdateBuffer", FDebugColorScheme::Get().HostToDeviceTransfer)
+{}
 #else
 FUpdateBuffer::FUpdateBuffer() NOEXCEPT = default;
 #endif

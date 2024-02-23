@@ -533,6 +533,10 @@ bool FVulkanFrameGraph::MapBufferRange(FRawBufferID id, size_t offset, size_t& s
 //----------------------------------------------------------------------------
 // PrepareNewFrame
 //----------------------------------------------------------------------------
+FFrameIndex FVulkanFrameGraph::CurrentFrameIndex() const {
+    return FFrameIndex{ _frameIndex.load(std::memory_order_relaxed) };
+}
+//----------------------------------------------------------------------------
 FFrameIndex FVulkanFrameGraph::PrepareNewFrame() {
     const u32 currentFrame{ _frameIndex.fetch_add(1, std::memory_order_acquire) + 1 };
 
@@ -909,7 +913,7 @@ bool FVulkanFrameGraph::WaitIdle(FNanoseconds timeout) {
 
         const FCriticalScope queueLock(&_queueCS);
 
-        FlushAll_(EQueueUsage::All, PPE_RHIVK__FLUSH_ITERATIONS);
+        FlushAll_(EQueueUsage_All, PPE_RHIVK__FLUSH_ITERATIONS);
 
         for (FQueueData& q : _queueMap) {
             Assert_NoAssume(q.Pending.empty());

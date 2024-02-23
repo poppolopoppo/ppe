@@ -412,7 +412,7 @@ NO_INLINE static void Test_ImageView2_() {
         FImageViewDesc view;
         view.Validate(desc);
 
-        AssertRelease(view.AspectMask == EImageAspect::DepthStencil);
+        AssertRelease(view.AspectMask == EImageAspect_DepthStencil);
     }
 }
 //----------------------------------------------------------------------------

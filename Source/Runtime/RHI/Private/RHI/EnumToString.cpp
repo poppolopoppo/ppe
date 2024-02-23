@@ -14,6 +14,7 @@
 #include "RHI/VertexEnums.h"
 
 #include "Container/BitMask.h"
+#include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/TextWriter.h"
 
@@ -39,6 +40,9 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     STATIC_ASSERT(Meta::enum_is_flags_v<EQueueUsage>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
+
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<EQueueUsage>(1u << mask.PopFront_AssumeNotEmpty());
 
@@ -50,15 +54,15 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         }
     }
 
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
-
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EMemoryType value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EMemoryType>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<EMemoryType>(1u << mask.PopFront_AssumeNotEmpty());
@@ -71,15 +75,15 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         }
     }
 
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
-
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EBufferUsage value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EBufferUsage>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<EBufferUsage>(1u << mask.PopFront_AssumeNotEmpty());
@@ -101,9 +105,6 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         default: AssertNotImplemented();
         }
     }
-
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -138,6 +139,9 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     STATIC_ASSERT(Meta::enum_is_flags_v<EImageFlags>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
+
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<EImageFlags>(1u << mask.PopFront_AssumeNotEmpty());
 
@@ -149,9 +153,6 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         default: AssertNotImplemented();
         }
     }
-
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -190,6 +191,9 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     STATIC_ASSERT(Meta::enum_is_flags_v<EImageAspect>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
+
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<EImageAspect>(1u << mask.PopFront_AssumeNotEmpty());
 
@@ -198,49 +202,42 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         case EImageAspect::Depth: oss << sep << STRING_LITERAL(_Char, "Depth"); break;
         case EImageAspect::Stencil: oss << sep << STRING_LITERAL(_Char, "Stencil"); break;
         case EImageAspect::Metadata: oss << sep << STRING_LITERAL(_Char, "Metadata"); break;
-        case EImageAspect::DepthStencil: oss << sep << STRING_LITERAL(_Char, "DepthStencil"); break;
         default: AssertNotImplemented();
         }
     }
-
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageSampler value) {
-    STATIC_ASSERT(Meta::enum_is_flags_v<EImageSampler>); // still treat as a regular enum
-
-    switch (value) {
-    case EImageSampler::Float1D: return oss << STRING_LITERAL(_Char, "Float1D");
-    case EImageSampler::Float1DArray: return oss << STRING_LITERAL(_Char, "Float1DArray");
-    case EImageSampler::Float2D: return oss << STRING_LITERAL(_Char, "Float2D");
-    case EImageSampler::Float2DArray: return oss << STRING_LITERAL(_Char, "Float2DArray");
-    case EImageSampler::Float2DMS: return oss << STRING_LITERAL(_Char, "Float2DMS");
-    case EImageSampler::Float2DMSArray: return oss << STRING_LITERAL(_Char, "Float2DMSArray");
-    case EImageSampler::FloatCube: return oss << STRING_LITERAL(_Char, "FloatCube");
-    case EImageSampler::FloatCubeArray: return oss << STRING_LITERAL(_Char, "FloatCubeArray");
-    case EImageSampler::Float3D: return oss << STRING_LITERAL(_Char, "Float3D");
-    case EImageSampler::Int1D: return oss << STRING_LITERAL(_Char, "Int1D");
-    case EImageSampler::Int1DArray: return oss << STRING_LITERAL(_Char, "Int1DArray");
-    case EImageSampler::Int2D: return oss << STRING_LITERAL(_Char, "Int2D");
-    case EImageSampler::Int2DArray: return oss << STRING_LITERAL(_Char, "Int2DArray");
-    case EImageSampler::Int2DMS: return oss << STRING_LITERAL(_Char, "Int2DMS");
-    case EImageSampler::Int2DMSArray: return oss << STRING_LITERAL(_Char, "Int2DMSArray");
-    case EImageSampler::IntCube: return oss << STRING_LITERAL(_Char, "IntCube");
-    case EImageSampler::IntCubeArray: return oss << STRING_LITERAL(_Char, "IntCubeArray");
-    case EImageSampler::Int3D: return oss << STRING_LITERAL(_Char, "Int3D");
-    case EImageSampler::UInt1D: return oss << STRING_LITERAL(_Char, "UInt1D");
-    case EImageSampler::UInt1DArray: return oss << STRING_LITERAL(_Char, "UInt1DArray");
-    case EImageSampler::UInt2D: return oss << STRING_LITERAL(_Char, "UInt2D");
-    case EImageSampler::UInt2DArray: return oss << STRING_LITERAL(_Char, "UInt2DArray");
-    case EImageSampler::UInt2DMS: return oss << STRING_LITERAL(_Char, "UInt2DMS");
-    case EImageSampler::UInt2DMSArray: return oss << STRING_LITERAL(_Char, "UInt2DMSArray");
-    case EImageSampler::UIntCube: return oss << STRING_LITERAL(_Char, "UIntCube");
-    case EImageSampler::UIntCubeArray: return oss << STRING_LITERAL(_Char, "UIntCubeArray");
-    case EImageSampler::UInt3D: return oss << STRING_LITERAL(_Char, "UInt3D");
-    case EImageSampler::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
+    switch (value.TypeDim()) {
+    case EImageSampler_Float1D.TypeDim(): return oss << STRING_LITERAL(_Char, "Float1D");
+    case EImageSampler_Float1DArray.TypeDim(): return oss << STRING_LITERAL(_Char, "Float1DArray");
+    case EImageSampler_Float2D.TypeDim(): return oss << STRING_LITERAL(_Char, "Float2D");
+    case EImageSampler_Float2DArray.TypeDim(): return oss << STRING_LITERAL(_Char, "Float2DArray");
+    case EImageSampler_Float2DMS.TypeDim(): return oss << STRING_LITERAL(_Char, "Float2DMS");
+    case EImageSampler_Float2DMSArray.TypeDim(): return oss << STRING_LITERAL(_Char, "Float2DMSArray");
+    case EImageSampler_FloatCube.TypeDim(): return oss << STRING_LITERAL(_Char, "FloatCube");
+    case EImageSampler_FloatCubeArray.TypeDim(): return oss << STRING_LITERAL(_Char, "FloatCubeArray");
+    case EImageSampler_Float3D.TypeDim(): return oss << STRING_LITERAL(_Char, "Float3D");
+    case EImageSampler_Int1D.TypeDim(): return oss << STRING_LITERAL(_Char, "Int1D");
+    case EImageSampler_Int1DArray.TypeDim(): return oss << STRING_LITERAL(_Char, "Int1DArray");
+    case EImageSampler_Int2D.TypeDim(): return oss << STRING_LITERAL(_Char, "Int2D");
+    case EImageSampler_Int2DArray.TypeDim(): return oss << STRING_LITERAL(_Char, "Int2DArray");
+    case EImageSampler_Int2DMS.TypeDim(): return oss << STRING_LITERAL(_Char, "Int2DMS");
+    case EImageSampler_Int2DMSArray.TypeDim(): return oss << STRING_LITERAL(_Char, "Int2DMSArray");
+    case EImageSampler_IntCube.TypeDim(): return oss << STRING_LITERAL(_Char, "IntCube");
+    case EImageSampler_IntCubeArray.TypeDim(): return oss << STRING_LITERAL(_Char, "IntCubeArray");
+    case EImageSampler_Int3D.TypeDim(): return oss << STRING_LITERAL(_Char, "Int3D");
+    case EImageSampler_UInt1D.TypeDim(): return oss << STRING_LITERAL(_Char, "UInt1D");
+    case EImageSampler_UInt1DArray.TypeDim(): return oss << STRING_LITERAL(_Char, "UInt1DArray");
+    case EImageSampler_UInt2D.TypeDim(): return oss << STRING_LITERAL(_Char, "UInt2D");
+    case EImageSampler_UInt2DArray.TypeDim(): return oss << STRING_LITERAL(_Char, "UInt2DArray");
+    case EImageSampler_UInt2DMS.TypeDim(): return oss << STRING_LITERAL(_Char, "UInt2DMS");
+    case EImageSampler_UInt2DMSArray.TypeDim(): return oss << STRING_LITERAL(_Char, "UInt2DMSArray");
+    case EImageSampler_UIntCube.TypeDim(): return oss << STRING_LITERAL(_Char, "UIntCube");
+    case EImageSampler_UIntCubeArray.TypeDim(): return oss << STRING_LITERAL(_Char, "UIntCubeArray");
+    case EImageSampler_UInt3D.TypeDim(): return oss << STRING_LITERAL(_Char, "UInt3D");
     default: AssertNotImplemented();
     }
 }
@@ -454,6 +451,9 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     STATIC_ASSERT(Meta::enum_is_flags_v<EDebugFlags>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
+
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<EDebugFlags>(1u << mask.PopFront_AssumeNotEmpty());
 
@@ -472,9 +472,6 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         default: AssertNotImplemented();
         }
     }
-
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -547,6 +544,9 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EColorMask value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EColorMask>);
 
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
+
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<EColorMask>(1u << mask.PopFront_AssumeNotEmpty());
 
@@ -558,9 +558,6 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         default: AssertNotImplemented();
         }
     }
-
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -641,6 +638,9 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     STATIC_ASSERT(Meta::enum_is_flags_v<EPipelineDynamicState>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
+
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<EPipelineDynamicState>(1u << mask.PopFront_AssumeNotEmpty());
 
@@ -656,15 +656,15 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         }
     }
 
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
-
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ERayTracingGeometryFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ERayTracingGeometryFlags>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<ERayTracingGeometryFlags>(1u << mask.PopFront_AssumeNotEmpty());
@@ -676,15 +676,15 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         }
     }
 
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
-
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ERayTracingInstanceFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ERayTracingInstanceFlags>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<ERayTracingInstanceFlags>(1u << mask.PopFront_AssumeNotEmpty());
@@ -698,15 +698,15 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         }
     }
 
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
-
     return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ERayTracingBuildFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ERayTracingBuildFlags>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<ERayTracingBuildFlags>(1u << mask.PopFront_AssumeNotEmpty());
@@ -720,9 +720,6 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         default: AssertNotImplemented();
         }
     }
-
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -753,6 +750,9 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     STATIC_ASSERT(Meta::enum_is_flags_v<EShaderStages>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
+
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<EShaderStages>(1u << mask.PopFront_AssumeNotEmpty());
 
@@ -775,9 +775,6 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         }
     }
 
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
-
     return oss;
 }
 //----------------------------------------------------------------------------
@@ -795,6 +792,9 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EShaderLangFormat value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EShaderLangFormat>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
 
     if (value & EShaderLangFormat::Vulkan) oss << sep << STRING_LITERAL(_Char, "Vulkan");
     if (value & EShaderLangFormat::OpenGL) oss << sep << STRING_LITERAL(_Char, "OpenGL");
@@ -991,21 +991,25 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EPixelValueType value) {
-    STATIC_ASSERT(Meta::enum_is_flags_v<EPixelValueType>);
-    switch (value) {
-    case EPixelValueType::SFloat: return oss << STRING_LITERAL(_Char, "SFloat");
-    case EPixelValueType::UFloat: return oss << STRING_LITERAL(_Char, "UFloat");
-    case EPixelValueType::UNorm: return oss << STRING_LITERAL(_Char, "UNorm");
-    case EPixelValueType::SNorm: return oss << STRING_LITERAL(_Char, "SNorm");
-    case EPixelValueType::Int: return oss << STRING_LITERAL(_Char, "Int");
-    case EPixelValueType::UInt: return oss << STRING_LITERAL(_Char, "UInt");
-    case EPixelValueType::Depth: return oss << STRING_LITERAL(_Char, "Depth");
-    case EPixelValueType::Stencil: return oss << STRING_LITERAL(_Char, "Stencil");
-    case EPixelValueType::DepthStencil: return oss << STRING_LITERAL(_Char, "DepthStencil");
-    case EPixelValueType::sRGB: return oss << STRING_LITERAL(_Char, "sRGB");
-    case EPixelValueType::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
-    default: AssertNotImplemented();
+    switch (value.Types) {
+    case EPixelValueType::SFloat: oss << STRING_LITERAL(_Char, "SFloat"); break;
+    case EPixelValueType::UFloat: oss << STRING_LITERAL(_Char, "UFloat"); break;
+    case EPixelValueType::UNorm: oss << STRING_LITERAL(_Char, "UNorm"); break;
+    case EPixelValueType::SNorm: oss << STRING_LITERAL(_Char, "SNorm"); break;
+    case EPixelValueType::Int: oss << STRING_LITERAL(_Char, "Int"); break;
+    case EPixelValueType::UInt: oss << STRING_LITERAL(_Char, "UInt"); break;
+    case EPixelValueType::Depth: oss << STRING_LITERAL(_Char, "Depth"); break;
+    case EPixelValueType::Stencil: oss << STRING_LITERAL(_Char, "Stencil"); break;
+    default:
+        if (value.Types == EPixelValueType::DepthStencil)
+            oss << STRING_LITERAL(_Char, "DepthStencil");
+        else
+            AssertNotImplemented();
     }
+
+    if (value.Flags & EPixelValueType::sRGB)
+        oss << STRING_LITERAL(_Char, "_sRGB");
+    return oss;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EPresentMode value) {
@@ -1035,67 +1039,82 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     }
 }
 //----------------------------------------------------------------------------
-template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EResourceState value) {
-    switch (Meta::EnumAnd(value, EResourceState::_StateMask)) {
-    case EResourceState::Unknown: oss << STRING_LITERAL(_Char, "Unknown"); break;
-    case EResourceState::ShaderRead: oss << STRING_LITERAL(_Char, "Storage-R"); break;
-    case EResourceState::ShaderWrite: oss << STRING_LITERAL(_Char, "Storage-W"); break;
-    case EResourceState::ShaderReadWrite: oss << STRING_LITERAL(_Char, "Storage-RW"); break;
-    case EResourceState::UniformRead: oss << STRING_LITERAL(_Char, "Uniform"); break;
-    case EResourceState::ShaderSample: oss << STRING_LITERAL(_Char, "ShaderSample"); break;
-    case EResourceState::InputAttachment: oss << STRING_LITERAL(_Char, "SubpassInput"); break;
-    case EResourceState::TransferSrc: oss << STRING_LITERAL(_Char, "Transfer-R"); break;
-    case EResourceState::TransferDst: oss << STRING_LITERAL(_Char, "Transfer-W"); break;
-    case EResourceState::ColorAttachmentRead: oss << STRING_LITERAL(_Char, "Color-R"); break;
-    case EResourceState::ColorAttachmentWrite: oss << STRING_LITERAL(_Char, "Color-W"); break;
-    case EResourceState::ColorAttachmentReadWrite: oss << STRING_LITERAL(_Char, "Color-RW"); break;
-    case EResourceState::DepthStencilAttachmentRead: oss << STRING_LITERAL(_Char, "DepthStencil-R"); break;
-    case EResourceState::DepthStencilAttachmentWrite: oss << STRING_LITERAL(_Char, "DepthStencil-W"); break;
-    case EResourceState::DepthStencilAttachmentReadWrite: oss << STRING_LITERAL(_Char, "DepthStencil-RW"); break;
-    case EResourceState::HostRead: oss << STRING_LITERAL(_Char, "Host-R"); break;
-    case EResourceState::HostWrite: oss << STRING_LITERAL(_Char, "Host-W"); break;
-    case EResourceState::HostReadWrite: oss << STRING_LITERAL(_Char, "Host-RW"); break;
-    case EResourceState::PresentImage: oss << STRING_LITERAL(_Char, "PresentImage"); break;
-    case EResourceState::IndirectBuffer: oss << STRING_LITERAL(_Char, "IndirectBuffer"); break;
-    case EResourceState::IndexBuffer: oss << STRING_LITERAL(_Char, "IndexBuffer"); break;
-    case EResourceState::VertexBuffer: oss << STRING_LITERAL(_Char, "VertexBuffer"); break;
-    case EResourceState::BuildRayTracingStructRead: oss << STRING_LITERAL(_Char, "BuildRTAS-R"); break;
-    case EResourceState::BuildRayTracingStructWrite: oss << STRING_LITERAL(_Char, "BuildRTAS-W"); break;
-    case EResourceState::BuildRayTracingStructReadWrite: oss << STRING_LITERAL(_Char, "BuildRTAS-RW"); break;
-    case EResourceState::RTASBuildingBufferRead: oss << STRING_LITERAL(_Char, "RTASBuild-Buffer-R"); break;
-    case EResourceState::RTASBuildingBufferReadWrite: oss << STRING_LITERAL(_Char, "RTASBuild-Buffer-RW"); break;
-    case EResourceState::RayTracingShaderRead: oss << STRING_LITERAL(_Char, "RayTracingShader-R"); break;
-    case EResourceState::ShadingRateImageRead: oss << STRING_LITERAL(_Char, "ShadingRate"); break;
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EResourceAccess value) {
+    STATIC_ASSERT(not Meta::enum_is_flags_v<EResourceAccess>);
+    switch (value) {
+    case EResourceAccess::Unknown: return oss << STRING_LITERAL(_Char, "Unknown");
+    case EResourceAccess::ShaderStorage: return oss << STRING_LITERAL(_Char, "ShaderStorage");
+    case EResourceAccess::Uniform: return oss << STRING_LITERAL(_Char, "Uniform");
+    case EResourceAccess::ShaderSample: return oss << STRING_LITERAL(_Char, "ShaderSample");
+    case EResourceAccess::InputAttachment: return oss << STRING_LITERAL(_Char, "InputAttachment");
+    case EResourceAccess::Transfer: return oss << STRING_LITERAL(_Char, "Transfer");
+    case EResourceAccess::ColorAttachment: return oss << STRING_LITERAL(_Char, "ColorAttachment");
+    case EResourceAccess::DepthStencilAttachment: return oss << STRING_LITERAL(_Char, "DepthStencilAttachment");
+    case EResourceAccess::Host: return oss << STRING_LITERAL(_Char, "Host");
+    case EResourceAccess::Present: return oss << STRING_LITERAL(_Char, "Present");
+    case EResourceAccess::IndirectBuffer: return oss << STRING_LITERAL(_Char, "IndirectBuffer");
+    case EResourceAccess::IndexBuffer: return oss << STRING_LITERAL(_Char, "IndexBuffer");
+    case EResourceAccess::VertexBuffer: return oss << STRING_LITERAL(_Char, "VertexBuffer");
+    case EResourceAccess::ConditionalRendering: return oss << STRING_LITERAL(_Char, "ConditionalRendering");
+    case EResourceAccess::CommandProcess: return oss << STRING_LITERAL(_Char, "CommandProcess");
+    case EResourceAccess::ShadingRateImage: return oss << STRING_LITERAL(_Char, "ShadingRateImage");
+    case EResourceAccess::BuildRayTracingAS: return oss << STRING_LITERAL(_Char, "BuildRayTracingAS");
+    case EResourceAccess::RTASBuildingBuffer: return oss << STRING_LITERAL(_Char, "RTASBuildingBuffer");
     default: AssertNotImplemented();
     }
-
-    if (value & EResourceState::_VertexShader) oss << STRING_LITERAL(_Char, ", VS");
-    if (value & EResourceState::_TessControlShader) oss << STRING_LITERAL(_Char, ", TCS");
-    if (value & EResourceState::_TessEvaluationShader) oss << STRING_LITERAL(_Char, ", TES");
-    if (value & EResourceState::_GeometryShader) oss << STRING_LITERAL(_Char, ", GS");
-    if (value & EResourceState::_FragmentShader) oss << STRING_LITERAL(_Char, ", FS");
-    if (value & EResourceState::_ComputeShader) oss << STRING_LITERAL(_Char, ", CS");
-    if (value & EResourceState::_MeshTaskShader) oss << STRING_LITERAL(_Char, ", MTS");
-    if (value & EResourceState::_MeshShader) oss << STRING_LITERAL(_Char, ", MS");
-    if (value & EResourceState::_RayTracingShader) oss << STRING_LITERAL(_Char, ", RTS");
-    if (value & EResourceState::InvalidateBefore) oss << STRING_LITERAL(_Char, ", InvalidateBefore");
-    if (value & EResourceState::InvalidateAfter) oss << STRING_LITERAL(_Char, ", InvalidateAfter");
-    if (value & EResourceState::_BufferDynamicOffset) oss << STRING_LITERAL(_Char, ", Dynamic");
-
-    if (not (value & (EResourceState::EarlyFragmentTests | EResourceState::LateFragmentTests))) {
-        if (value & EResourceState::EarlyFragmentTests) oss << STRING_LITERAL(_Char, ", EarlyTests");
-        if (value & EResourceState::LateFragmentTests)	oss << STRING_LITERAL(_Char, ", LateTests");
-    }
+}
+//----------------------------------------------------------------------------
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EResourceFlags value) {
+    STATIC_ASSERT(Meta::enum_is_flags_v<EResourceFlags>);
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
 
     if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
+        return oss << STRING_LITERAL(_Char, "0");
+
+    if (value & EResourceFlags::BufferDynamicOffset) oss << sep << STRING_LITERAL(_Char, "BufferDynamicOffset");
+    if (value & EResourceFlags::InvalidateBefore) oss << sep << STRING_LITERAL(_Char, "InvalidateBefore");
+    if (value & EResourceFlags::InvalidateAfter) oss << sep << STRING_LITERAL(_Char, "InvalidateAfter");
+    if (value & EResourceFlags::EarlyFragmentTests) oss << sep << STRING_LITERAL(_Char, "EarlyFragmentTests");
+    if (value & EResourceFlags::LateFragmentTests) oss << sep << STRING_LITERAL(_Char, "LateFragmentTests");
+    if (value & EResourceFlags::Read) oss << sep << STRING_LITERAL(_Char, "Read");
+    if (value & EResourceFlags::Write) oss << sep << STRING_LITERAL(_Char, "Write");
 
     return oss;
+}
+//----------------------------------------------------------------------------
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EResourceShaderStages value) {
+    STATIC_ASSERT(Meta::enum_is_flags_v<EResourceShaderStages>);
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
+
+    if (value & EResourceShaderStages::VertexShader) oss << sep << STRING_LITERAL(_Char, "VertexShader");
+    if (value & EResourceShaderStages::TessControlShader) oss << sep << STRING_LITERAL(_Char, "TessControlShader");
+    if (value & EResourceShaderStages::TessEvaluationShader) oss << sep << STRING_LITERAL(_Char, "TessEvaluationShader");
+    if (value & EResourceShaderStages::GeometryShader) oss << sep << STRING_LITERAL(_Char, "GeometryShader");
+    if (value & EResourceShaderStages::FragmentShader) oss << sep << STRING_LITERAL(_Char, "FragmentShader");
+    if (value & EResourceShaderStages::ComputeShader) oss << sep << STRING_LITERAL(_Char, "ComputeShader");
+    if (value & EResourceShaderStages::MeshTaskShader) oss << sep << STRING_LITERAL(_Char, "MeshTaskShader");
+    if (value & EResourceShaderStages::MeshShader) oss << sep << STRING_LITERAL(_Char, "MeshShader");
+    if (value & EResourceShaderStages::RayTracingShader) oss << sep << STRING_LITERAL(_Char, "RayTracingShader");
+
+    return oss;
+}
+//----------------------------------------------------------------------------
+template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EResourceState value) {
+    return oss
+        << STRING_LITERAL(_Char, "Access:") << value.Flags
+        << STRING_LITERAL(_Char, ", Stages:") << value.ShaderStages
+        << STRING_LITERAL(_Char, ", Flags:") << value.Flags;
 }
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EShaderCompilationFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EShaderCompilationFlags>);
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+
+    if (value == Zero)
+        return oss << STRING_LITERAL(_Char, "0");
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<EShaderCompilationFlags>(1u << mask.PopFront_AssumeNotEmpty());
@@ -1112,9 +1131,6 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         default: AssertNotImplemented();
         }
     }
-
-    if (value == Zero)
-        oss << STRING_LITERAL(_Char, "0");
 
     return oss;
 }
@@ -1170,6 +1186,9 @@ PPE_RHI_ENUMTOSTRING_DEF(EVertexFormat);
 PPE_RHI_ENUMTOSTRING_DEF(EPixelValueType);
 PPE_RHI_ENUMTOSTRING_DEF(EPresentMode);
 PPE_RHI_ENUMTOSTRING_DEF(ESurfaceTransform);
+PPE_RHI_ENUMTOSTRING_DEF(EResourceAccess);
+PPE_RHI_ENUMTOSTRING_DEF(EResourceFlags);
+PPE_RHI_ENUMTOSTRING_DEF(EResourceShaderStages);
 PPE_RHI_ENUMTOSTRING_DEF(EResourceState);
 PPE_RHI_ENUMTOSTRING_DEF(EShaderCompilationFlags);
 //----------------------------------------------------------------------------

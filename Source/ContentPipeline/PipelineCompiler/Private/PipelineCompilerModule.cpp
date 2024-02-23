@@ -14,6 +14,7 @@
 
 #include "BuildModules.generated.h"
 #include "Diagnostic/BuildVersion.h"
+#include "Diagnostic/CurrentProcess.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -23,25 +24,45 @@ namespace RHI {
 //----------------------------------------------------------------------------
 LOG_CATEGORY(PPE_PIPELINECOMPILER_API, PipelineCompiler)
 //----------------------------------------------------------------------------
-CONSTEXPR const EShaderLangFormat GVulkanPipelineFormat_ =
+inline CONSTEXPR const EShaderLangFormat GVulkanPipelineFormat_ =
     EShaderLangFormat::SPIRV |
     EShaderLangFormat::ShaderModule;
 //----------------------------------------------------------------------------
 static void CreateVulkanDeviceCompiler_(const FVulkanDevice& device, ERHIFeature features) {
     EShaderCompilationFlags compilationFlags = (
-        EShaderCompilationFlags::Quiet |
         EShaderCompilationFlags::Optimize |
         EShaderCompilationFlags::ParseAnnotations |
         EShaderCompilationFlags::UseCurrentDeviceLimits );
 
 #if USE_PPE_FINAL_RELEASE
     Unused(features);
+    compilationFlags += EShaderCompilationFlags::Quiet;
+
 #else
     if (features & ERHIFeature::Debugging)
-        compilationFlags += EShaderCompilationFlags::Validate | EShaderCompilationFlags::GenerateDebug;
+        compilationFlags += EShaderCompilationFlags::GenerateDebug | EShaderCompilationFlags::Validate;
+
+    const FCurrentProcess& proc = FCurrentProcess::Get();
+    if (proc.HasArgument(L"-SPIRVDebug"))
+        compilationFlags += EShaderCompilationFlags::GenerateDebug;
+    if (proc.HasArgument(L"-SPIRVNoDebug"))
+        compilationFlags -= EShaderCompilationFlags::GenerateDebug;
+    if (proc.HasArgument(L"-SPIRVOptimize"))
+        compilationFlags += EShaderCompilationFlags::Optimize;
+    if (proc.HasArgument(L"-SPIRVNoOptimize"))
+        compilationFlags -= EShaderCompilationFlags::Optimize;
+    if (proc.HasArgument(L"-SPIRVQuiet"))
+        compilationFlags += EShaderCompilationFlags::Quiet;
+    if (proc.HasArgument(L"-SPIRVNoQuiet"))
+        compilationFlags -= EShaderCompilationFlags::Quiet;
+    if (proc.HasArgument(L"-SPIRVValidate"))
+        compilationFlags += EShaderCompilationFlags::Validate;
+    if (proc.HasArgument(L"-SPIRVNoValidate"))
+        compilationFlags -= EShaderCompilationFlags::Validate;
+
 #endif
 
-    TRefPtr<FVulkanPipelineCompiler> compiler{ NEW_REF(PipelineCompiler, FVulkanPipelineCompiler, device) };
+    TRefPtr compiler{ NEW_REF(PipelineCompiler, FVulkanPipelineCompiler, device) };
     compiler->SetCompilationFlags(compilationFlags);
 
     auto& rhiModule = FRHIModule::Get(FModularDomain::Get());
@@ -53,7 +74,7 @@ static void TearDownVulkanDeviceCompiler_(const FVulkanDevice& ) {
     auto& rhiModule = FRHIModule::Get(FModularDomain::Get());
     rhiModule.UnregisterCompiler(GVulkanPipelineFormat_);
 }
-//----------------------------------------------------------------------------
+//------------------------------------------------------------;/----------------
 } //!namespace RHI
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -453,16 +453,16 @@ void FVulkanDevice::SetupDeviceFeatures_() {
 //----------------------------------------------------------------------------
 void FVulkanDevice::SetupDeviceFlags_() {
     // add shader stages
-    _flags.GraphicsShaderStages = EResourceState::_VertexShader | EResourceState::_FragmentShader;
+    _flags.GraphicsShaderStages = EResourceShaderStages::VertexShader | EResourceShaderStages::FragmentShader;
 
     if (_caps.Features.tessellationShader)
-        _flags.GraphicsShaderStages |= (EResourceState::_TessControlShader | EResourceState::_TessEvaluationShader);
+        _flags.GraphicsShaderStages |= (EResourceShaderStages::TessControlShader | EResourceShaderStages::TessEvaluationShader);
 
     if (_caps.Features.geometryShader)
-        _flags.GraphicsShaderStages |= (EResourceState::_GeometryShader);
+        _flags.GraphicsShaderStages |= (EResourceShaderStages::GeometryShader);
 
     if (_enabled.MeshShaderNV)
-        _flags.GraphicsShaderStages |= (EResourceState::_MeshTaskShader | EResourceState::_MeshShader);
+        _flags.GraphicsShaderStages |= (EResourceShaderStages::MeshTaskShader | EResourceShaderStages::MeshShader);
 
     // pipeline stages
     _flags.AllWritableStages = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;

@@ -82,6 +82,9 @@ struct TNamedId {
 #endif
     {}
 
+    CONSTEXPR explicit TNamedId(FStringLiteral name, size_t index = 0) NOEXCEPT
+    :   TNamedId(name.MakeView(), index)
+    {}
     CONSTEXPR explicit TNamedId(FStringView name, size_t index = 0) NOEXCEPT
         : HashValue(1|hash_size_t_constexpr(index, hash_mem_constexpr(name.data(), name.size())))
         , Index(index)
@@ -129,6 +132,9 @@ struct TNamedId<_Uid, false> {
 
     CONSTEXPR TNamedId(const TNamedId<_Uid, true>& keepName) NOEXCEPT : HashValue(keepName.HashValue) {}
 
+    CONSTEXPR explicit TNamedId(FStringLiteral name, size_t index = 0) NOEXCEPT
+        : TNamedId(name.MakeView(), index)
+    {}
     CONSTEXPR explicit TNamedId(FStringView name, size_t index = 0) NOEXCEPT
         : HashValue(1|hash_size_t_constexpr(index, hash_mem_constexpr(name.data(), name.size())))
     {}

@@ -78,6 +78,16 @@
       <Item Name="SBO">!!!_large.IsLarge</Item>
     </Expand>
   </Type>
+  <Type Name="PPE::TBasicStaticString&lt;char, *&gt;">
+    <DisplayString Condition="Len == 0">empty</DisplayString>
+    <DisplayString>{Data,[Len]s}</DisplayString>
+    <StringView>Data,[Len]s</StringView>
+  </Type>
+  <Type Name="PPE::TBasicStaticString&lt;wchar_t, *&gt;">
+    <DisplayString Condition="Len == 0">empty</DisplayString>
+    <DisplayString>{Data,[Len]su}</DisplayString>
+    <StringView>Data,[Len]su</StringView>
+  </Type>
   <Type Name="PPE::TBasicStringView&lt;char&gt;">
     <DisplayString Condition="_size == 0">empty</DisplayString>
     <DisplayString>{_storage,[_size]s} [{_size}]</DisplayString>
@@ -1388,11 +1398,87 @@
     </Expand>
   </Type>
   <!--
+    RHI
+    ================================================================================
+  -->
+  <Type Name="PPE::RHI::details::TNamedId&lt;*, 1 &gt;">
+    <DisplayString>{Name,s}_{Index}</DisplayString>
+    <Expand>
+        <Item Name="Index">Index</Item>
+        <Item Name="Name">Name</Item>
+        <Item Name="HashValue">HashValue</Item>
+    </Expand>
+  </Type>
+  <Type Name="PPE::RHI::FPipelineResources::TElementArray&lt;*&gt;">
+    <DisplayString Condition="Count == 0">empty</DisplayString>
+    <DisplayString Condition="Count == 1">1 element</DisplayString>
+    <DisplayString Condition="Count > 0">{Count} elements</DisplayString>
+    <Expand>
+      <ArrayItems>
+        <Size>Count</Size>
+        <ValuePointer>Data</ValuePointer>
+      </ArrayItems>
+    </Expand>
+  </Type>
+  <Type Name="PPE::RHI::FPipelineResources::FUniform">
+    <DisplayString>{Id} &lt;{Type}&gt;</DisplayString>
+    <Expand>
+        <Item Name="Id">Id</Item>
+        <ExpandedItem Condition="Type == PPE::RHI::FPipelineResources::Buffer">
+          (PPE::RHI::FPipelineResources::FBuffer*)((char*)this + RelativeOffset)
+        </ExpandedItem>
+        <ExpandedItem Condition="Type == PPE::RHI::FPipelineResources::TexelBuffer">
+          (PPE::RHI::FPipelineResources::FTexelBuffer*)((char*)this + RelativeOffset)
+        </ExpandedItem>
+        <ExpandedItem Condition="Type == PPE::RHI::FPipelineResources::SubpassInput">
+          (PPE::RHI::FPipelineResources::FImage*)((char*)this + RelativeOffset)
+        </ExpandedItem>
+        <ExpandedItem Condition="Type == PPE::RHI::FPipelineResources::Image">
+          (PPE::RHI::FPipelineResources::FImage*)((char*)this + RelativeOffset)
+        </ExpandedItem>
+        <ExpandedItem Condition="Type == PPE::RHI::FPipelineResources::Texture">
+          (PPE::RHI::FPipelineResources::FTexture*)((char*)this + RelativeOffset)
+        </ExpandedItem>
+        <ExpandedItem Condition="Type == PPE::RHI::FPipelineResources::Sampler">
+          (PPE::RHI::FPipelineResources::FSampler*)((char*)this + RelativeOffset)
+        </ExpandedItem>
+        <ExpandedItem Condition="Type == PPE::RHI::FPipelineResources::RayTracingScene">
+          (PPE::RHI::FPipelineResources::FRayTracingScene*)((char*)this + RelativeOffset)
+        </ExpandedItem>
+    </Expand>
+  </Type>
+  <Type Name="PPE::RHI::FPipelineResources::FDynamicData">
+    <DisplayString>Layout:{LayoutId}, Uniforms:{UniformsCount}, DynamicOffsets:{DynamicOffsetsCount}</DisplayString>
+    <Expand>
+      <Item Name="[LayoutId]">LayoutId</Item>
+      <Synthetic Name="[DynamicOffsets]">
+        <DisplayString Condition="DynamicOffsetsCount == 0">empty</DisplayString>
+        <DisplayString Condition="DynamicOffsetsCount > 0">[{DynamicOffsetsCount}]</DisplayString>
+        <Expand>
+          <ArrayItems>
+            <Size>DynamicOffsetsCount</Size>
+            <ValuePointer>(u32*)((char*)Storage._storage + DynamicOffsetsOffset)</ValuePointer>
+          </ArrayItems>
+        </Expand>
+      </Synthetic>
+      <Synthetic Name="[Uniforms]">
+        <DisplayString Condition="UniformsCount == 0">empty</DisplayString>
+        <DisplayString Condition="UniformsCount > 0">[{UniformsCount}]</DisplayString>
+        <Expand>
+          <ArrayItems>
+            <Size>UniformsCount</Size>
+            <ValuePointer>(PPE::RHI::FPipelineResources::FUniform*)((char*)Storage._storage + UniformsOffset)</ValuePointer>
+          </ArrayItems>
+        </Expand>
+      </Synthetic>
+    </Expand>
+  </Type>
+  <!--
     TEMPORARY WORKAROUND FOR :
     https://developercommunity.visualstudio.com/content/problem/605247/stlnatvis-fails-to-evaluate-stdatomic-in-vs2019.html
     ================================================================================
   -->
-  <Type Name="std::atomic&lt;*&gt;">
+  <!--<Type Name="std::atomic&lt;*&gt;">
     <DisplayString>{*($T1 *)&amp;_Storage._Value}</DisplayString>
     <Expand>
       <Item Name="[value]">*($T1 *)&amp;_Storage._Value</Item>
@@ -1401,5 +1487,5 @@
   <Type Name="std::atomic_flag">
     <DisplayString>{(bool)(_Storage._Storage._Value &amp; 1)}</DisplayString>
     <Expand />
-  </Type>
+  </Type>-->
 </AutoVisualizer>

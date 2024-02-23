@@ -47,7 +47,7 @@ T& FPipelineResources::Resource_(const FUniformID& id) {
     const auto it = Meta::LowerBound(uniforms.begin(), uniforms.end(), id);
     if (Likely(uniforms.end() != it && *it == id)) {
         Assert_NoAssume(it->Type == T::TypeId);
-        return *exclusiveData->Storage.MakeView().CutStartingAt(it->Offset).Peek<T>();
+        return it->template Get<T>();
     }
 
     PPE_LOG(RHI, Error, "failed to find uniform in pipeline resource with id: {0}", id);
@@ -96,17 +96,15 @@ void FPipelineResources::Reset(const FUniformID& uniform) {
     Assert(uniforms.end() != it);
     Assert(*it == uniform);
 
-    const FRawMemory rawData{ exclusiveData->Storage.MakeView().CutStartingAt(it->Offset) };
-
     switch (it->Type) {
     case EDescriptorType::Unknown: break;
-    case EDescriptorType::Buffer: rawData.Peek<FBuffer>()->Elements.Count = 0; break;
-    case EDescriptorType::TexelBuffer: rawData.Peek<FTexelBuffer>()->Elements.Count = 0; break;
+    case EDescriptorType::Buffer: it->Get<FBuffer>().Elements.Count = 0; break;
+    case EDescriptorType::TexelBuffer: it->Get<FTexelBuffer>().Elements.Count = 0; break;
     case EDescriptorType::SubpassInput:
-    case EDescriptorType::Image: rawData.Peek<FImage>()->Elements.Count = 0; break;
-    case EDescriptorType::Texture: rawData.Peek<FTexture>()->Elements.Count = 0; break;
-    case EDescriptorType::Sampler: rawData.Peek<FSampler>()->Elements.Count = 0; break;
-    case EDescriptorType::RayTracingScene: rawData.Peek<FRayTracingScene>()->Elements.Count = 0; break;
+    case EDescriptorType::Image: it->Get<FImage>().Elements.Count = 0; break;
+    case EDescriptorType::Texture: it->Get<FTexture>().Elements.Count = 0; break;
+    case EDescriptorType::Sampler: it->Get<FSampler>().Elements.Count = 0; break;
+    case EDescriptorType::RayTracingScene: it->Get<FRayTracingScene>().Elements.Count = 0; break;
     }
 
     ResetCachedId_();
@@ -199,7 +197,9 @@ FPipelineResources& FPipelineResources::BindTexture(const FUniformID& id, FRawIm
     Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
-    if (element.ImageId != image || element.SamplerId != sampler || element.Desc.has_value() || resource.Elements.Count <= elementIndex )
+    if (element.ImageId != image || element.SamplerId != sampler ||
+        element.Desc.has_value() ||
+        resource.Elements.Count <= elementIndex )
         ResetCachedId_();
 
     resource.Elements.Count = Max(checked_cast<u16>(elementIndex + 1), resource.Elements.Count);
@@ -219,7 +219,10 @@ FPipelineResources& FPipelineResources::BindTexture(const FUniformID& id, FRawIm
     Assert(elementIndex < resource.Elements.Capacity);
     auto& element = resource.Elements[elementIndex];
 
-    if (element.ImageId != image || element.SamplerId != sampler || element.Desc != desc || resource.Elements.Count <= elementIndex )
+    if (element.ImageId != image || element.SamplerId != sampler ||
+        not element.Desc.has_value() ||
+        element.Desc.value() != desc ||
+        resource.Elements.Count <= elementIndex )
         ResetCachedId_();
 
     resource.Elements.Count = Max(checked_cast<u16>(elementIndex + 1), resource.Elements.Count);
@@ -520,13 +523,12 @@ void FPipelineResources::CreateDynamicData(
         const u16 elementCount = checked_cast<u16>(it.second.ArraySize);
         Assert(elementCapacity);
 
-        FUniform& current = uniformData.Eat(1).front();
-        current.Id = it.first;
+        FUniform* const pUniform = INPLACE_NEW(uniformData.Eat(1).data(), FUniform) { .Id = it.first };
+        pUniform->RelativeOffset = checked_cast<u16>(rawData.data() - bit_cast<u8*>(pUniform));
 
         Meta::Visit(it.second.Data,
             [&](const FPipelineDesc::FTexture& tex) {
-                current.Type = FTexture::TypeId;
-                current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
+                pUniform->Type = FTexture::TypeId;
                 const auto block = rawData.Eat(sizeof(FTexture) + sizeof(FTexture::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FTexture) {
                     it.second.Index,
@@ -536,8 +538,7 @@ void FPipelineResources::CreateDynamicData(
                 };
             },
             [&](const FPipelineDesc::FSampler& ) {
-                current.Type = FSampler::TypeId;
-                current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
+                pUniform->Type = FSampler::TypeId;
                 const auto block = rawData.Eat(sizeof(FSampler) + sizeof(FSampler::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FSampler) {
                     it.second.Index,
@@ -545,8 +546,7 @@ void FPipelineResources::CreateDynamicData(
                 };
             },
             [&](const FPipelineDesc::FSubpassInput& spi) {
-                current.Type = FImage::TypeId;
-                current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
+                pUniform->Type = FImage::TypeId;
                 const auto block = rawData.Eat(sizeof(FImage) + sizeof(FImage::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FImage) {
                     it.second.Index,
@@ -556,8 +556,7 @@ void FPipelineResources::CreateDynamicData(
                 };
             },
             [&](const FPipelineDesc::FImage& img) {
-                current.Type = FImage::TypeId;
-                current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
+                pUniform->Type = FImage::TypeId;
                 const auto block = rawData.Eat(sizeof(FImage) + sizeof(FImage::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FImage) {
                     it.second.Index,
@@ -567,8 +566,7 @@ void FPipelineResources::CreateDynamicData(
                 };
             },
             [&](const FPipelineDesc::FUniformBuffer& ubuf) {
-                current.Type = FBuffer::TypeId;
-                current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
+                pUniform->Type = FBuffer::TypeId;
                 const auto block = rawData.Eat(sizeof(FBuffer) + sizeof(FBuffer::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FBuffer) {
                     it.second.Index,
@@ -582,8 +580,7 @@ void FPipelineResources::CreateDynamicData(
                     numDBO += elementCapacity;
             },
             [&](const FPipelineDesc::FStorageBuffer& sbuf) {
-                current.Type = FBuffer::TypeId;
-                current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
+                pUniform->Type = FBuffer::TypeId;
                 const auto block = rawData.Eat(sizeof(FBuffer) + sizeof(FBuffer::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FBuffer) {
                     it.second.Index,
@@ -597,8 +594,7 @@ void FPipelineResources::CreateDynamicData(
                     numDBO += elementCapacity;
             },
             [&](const FPipelineDesc::FRayTracingScene& ) {
-                current.Type = FRayTracingScene::TypeId;
-                current.Offset = checked_cast<u16>(rawData.data() - pDynamicData->Storage.data());
+                pUniform->Type = FRayTracingScene::TypeId;
                 const auto block = rawData.Eat(sizeof(FRayTracingScene) + sizeof(FRayTracingScene::FElement) * (elementCapacity - 1));
                 INPLACE_NEW(block.data(), FRayTracingScene) {
                     it.second.Index,
@@ -609,36 +605,31 @@ void FPipelineResources::CreateDynamicData(
     Assert_NoAssume(uniformData.empty());
     AssertRelease(numDBO == bufferDynamicOffsetCount);
     Unused(numDBO);
-
-    const auto writtenUniforms = pDynamicData->Storage.MakeView().SubRange(pDynamicData->UniformsOffset, pDynamicData->UniformsCount * sizeof(FUniform)).Cast<FUniform>();
-    Meta::BubbleSort(writtenUniforms.begin(),  writtenUniforms.end(), [](const FUniform& lhs, const FUniform& rhs) {
-        return (lhs.Id < rhs.Id); // for binary search later (Meta::LowerBound)
-    });
 }
 //----------------------------------------------------------------------------
 bool FPipelineResources::CompareDynamicData(const FDynamicData& lhs, const FDynamicData& rhs) NOEXCEPT {
     if (lhs.LayoutId != rhs.LayoutId || lhs.UniformsCount != rhs.UniformsCount)
         return false;
 
+    const TMemoryView<const FUniform> lhsUniforms = lhs.Uniforms();
+    const TMemoryView<const FUniform> rhsUniforms = rhs.Uniforms();
+
     forrange(i, 0, lhs.UniformsCount) {
-        const auto& lhsUni = lhs.Uniforms()[i];
-        const auto& rhsUni = rhs.Uniforms()[i];
-        if (lhsUni.Id != rhsUni.Id || lhsUni.Type != rhsUni.Type)
+        const FUniform& a = lhsUniforms[i];
+        const FUniform& b = rhsUniforms[i];
+        if (a.Id != b.Id || a.Type != b.Type)
             return false;
 
-        const FRawMemoryConst lhsData{ lhs.Storage.MakeView().CutStartingAt(lhsUni.Offset) };
-        const FRawMemoryConst rhsData{ rhs.Storage.MakeView().CutStartingAt(rhsUni.Offset) };
-
         bool equals = true;
-        switch (lhsUni.Type) {
+        switch (a.Type) {
         case EDescriptorType::Unknown: break;
-        case EDescriptorType::Buffer: equals = (*lhsData.Peek<FBuffer>() == *rhsData.Peek<FBuffer>()); break;
-        case EDescriptorType::TexelBuffer: equals = (*lhsData.Peek<FTexelBuffer>() == *rhsData.Peek<FTexelBuffer>()); break;
+        case EDescriptorType::Buffer: equals = (a.Get<FBuffer>() == b.Get<FBuffer>()); break;
+        case EDescriptorType::TexelBuffer: equals = (a.Get<FTexelBuffer>() == b.Get<FTexelBuffer>()); break;
         case EDescriptorType::SubpassInput:
-        case EDescriptorType::Image: equals = (*lhsData.Peek<FImage>() == *rhsData.Peek<FImage>()); break;
-        case EDescriptorType::Texture: equals = (*lhsData.Peek<FTexture>() == *rhsData.Peek<FTexture>()); break;
-        case EDescriptorType::Sampler: equals = (*lhsData.Peek<FSampler>() == *rhsData.Peek<FSampler>()); break;
-        case EDescriptorType::RayTracingScene: equals = (*lhsData.Peek<FRayTracingScene>() == *rhsData.Peek<FRayTracingScene>()); break;
+        case EDescriptorType::Image: equals = (a.Get<FImage>() == b.Get<FImage>()); break;
+        case EDescriptorType::Texture: equals = (a.Get<FTexture>() == b.Get<FTexture>()); break;
+        case EDescriptorType::Sampler: equals = (a.Get<FSampler>() == b.Get<FSampler>()); break;
+        case EDescriptorType::RayTracingScene: equals = (a.Get<FRayTracingScene>() == b.Get<FRayTracingScene>()); break;
         }
 
         if (not equals)

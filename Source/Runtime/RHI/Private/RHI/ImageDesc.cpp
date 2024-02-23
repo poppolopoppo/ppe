@@ -15,8 +15,8 @@ namespace RHI {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static u32 NumMipmaps_(const uint3& dim) {
-    return (FPlatformMaths::FloorLog2(dim.MaxComponent()) + 1);
+static u32 NumMipmaps_(unsigned minComponent) {
+    return (FPlatformMaths::FloorLog2(minComponent) + 1);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -80,6 +80,8 @@ void FImageDesc::Validate() {
     Dimensions = Max(Dimensions, uint3::One);
     ArrayLayers = Max(ArrayLayers, 1_layer);
 
+    u32 numMipMaps;
+
     switch (Type) {
     case EImageDim::_1D:
         Assert_NoAssume(not Samples.Enabled());
@@ -90,6 +92,7 @@ void FImageDesc::Validate() {
         Flags -= (EImageFlags::Array2DCompatible | EImageFlags::CubeCompatible);
         Dimensions = uint3(Dimensions.x, uint2::One);
         Samples = 1_samples;
+        numMipMaps = NumMipmaps_(Dimensions.x);
         break;
 
     case EImageDim::_2D:
@@ -98,6 +101,7 @@ void FImageDesc::Validate() {
             Flags -= EImageFlags::CubeCompatible;
 
         Dimensions.z = 1;
+        numMipMaps = NumMipmaps_(Dimensions.xy.MinComponent());
         break;
 
     case EImageDim::_3D:
@@ -108,6 +112,7 @@ void FImageDesc::Validate() {
         Flags -= EImageFlags::CubeCompatible;
         Samples = 1_samples;
         ArrayLayers = 1_layer;
+        numMipMaps = NumMipmaps_(Dimensions.MinComponent());
         break;
 
     case EImageDim::Unknown:
@@ -121,7 +126,7 @@ void FImageDesc::Validate() {
     }
     else {
         Samples = 1_samples;
-        MaxLevel = FMipmapLevel(Clamp(*MaxLevel, 1u, NumMipmaps_(Dimensions)));
+        MaxLevel = FMipmapLevel(Clamp(*MaxLevel, 1u, numMipMaps));
     }
 
     // set default view

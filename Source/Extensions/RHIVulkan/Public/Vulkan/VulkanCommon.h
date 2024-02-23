@@ -62,7 +62,7 @@ enum class EVulkanVendor : u32 {
 
     Unknown     = 0,
 };
-PPE_RHIVULKAN_API FStringView EVulkanVendor_Name(EVulkanVendor vendor);
+PPE_RHIVULKAN_API FStringLiteral EVulkanVendor_Name(EVulkanVendor vendor);
 PPE_RHIVULKAN_API FTextWriter& operator <<(FTextWriter& oss, EVulkanVendor vendor);
 PPE_RHIVULKAN_API FWTextWriter& operator <<(FWTextWriter& oss, EVulkanVendor vendor);
 //----------------------------------------------------------------------------

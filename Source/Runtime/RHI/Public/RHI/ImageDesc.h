@@ -74,7 +74,7 @@ struct FImageViewDesc {
     FImageLayer BaseLayer;
     u32 LayerCount{ UMax };
     FImageSwizzle Swizzle;
-    EImageAspect AspectMask{ EImageAspect::Auto };
+    EImageAspect AspectMask{ EImageAspect_Auto };
 
     FImageViewDesc() = default;
     FImageViewDesc(

@@ -1,7 +1,11 @@
 #pragma once
 
 #include "RHI_fwd.h"
+
 #include "HAL/TargetRHI.h"
+#include "Misc/Event.h"
+#include "Misc/Function_fwd.h"
+#include "Misc/Opaque_fwd.h"
 
 namespace PPE {
 namespace RHI {
@@ -32,7 +36,13 @@ class PPE_RHI_API IPipelineCompiler : public FRefCountable {
 public:
     virtual ~IPipelineCompiler() = default;
 
-    virtual FString DisplayName() const NOEXCEPT = 0;
+    using FLogger = TFunction<void(
+        ELoggerVerbosity verbosity,
+        const FConstChar& source, u32 line,
+        const FStringView& text,
+        Opaq::object_init&& object)>;
+
+    virtual FStringLiteral DisplayName() const NOEXCEPT = 0;
     virtual ETargetRHI TargetRHI() const NOEXCEPT = 0;
 
     virtual EShaderCompilationFlags CompilationFlags() const NOEXCEPT = 0;
@@ -43,13 +53,18 @@ public:
     virtual bool IsSupported(const FGraphicsPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
     virtual bool IsSupported(const FComputePipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
 
-    virtual bool Compile(FMeshPipelineDesc& desc, EShaderLangFormat fmt) = 0;
-    virtual bool Compile(FRayTracingPipelineDesc& desc, EShaderLangFormat fmt) = 0;
-    virtual bool Compile(FGraphicsPipelineDesc& desc, EShaderLangFormat fmt) = 0;
-    virtual bool Compile(FComputePipelineDesc& desc, EShaderLangFormat fmt) = 0;
+    virtual bool Compile(FMeshPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
+    virtual bool Compile(FRayTracingPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
+    virtual bool Compile(FGraphicsPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
+    virtual bool Compile(FComputePipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
 
     virtual void ReleaseUnusedMemory() = 0;
 
+    enum ECompilationResult : u8 {
+        Success = 0,
+        Failed,
+        NotSupported
+    };
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -194,7 +194,7 @@ public:
 //----------------------------------------------------------------------------
 template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FCopyImage> final : public IVulkanFrameTask {
-    public:
+public:
     using FRegion = FCopyImage::FRegion;
 
     const TPtrRef<const FVulkanLocalImage> SrcImage;

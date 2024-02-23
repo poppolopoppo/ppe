@@ -162,6 +162,9 @@ public: // interface
 
     // --- Frame execution ---
 
+    // Return current frame index
+    NODISCARD virtual FFrameIndex CurrentFrameIndex() const = 0;
+
     // Must be called before every frame for duty cycle
     virtual FFrameIndex PrepareNewFrame() = 0;
 
@@ -175,7 +178,7 @@ public: // interface
     virtual bool Wait(TMemoryView<const SCommandBatch> commands, FNanoseconds timeout = MaxTimeout) = 0;
 
     // Submit all pending command buffers and present all pending swapchain images.
-    virtual bool Flush(EQueueUsage queues = EQueueUsage::All) = 0;
+    virtual bool Flush(EQueueUsage queues = EQueueUsage_All) = 0;
 
     // Wait until all commands will complete their work on GPU, trigger events for 'FReadImage' and 'FReadBuffer' tasks.
     virtual bool WaitIdle(FNanoseconds timeout = MaxTimeout) = 0;
@@ -218,9 +221,6 @@ class TAutoResource< details::TResourceWrappedId<_RawId> > {
 public:
     TAutoResource() = default;
 
-    TAutoResource(TAutoResource&&) = default;
-    TAutoResource& operator =(TAutoResource&&) = default;
-
     TAutoResource(const TAutoResource&) = delete;
     TAutoResource& operator =(const TAutoResource&) = delete;
 
@@ -229,9 +229,20 @@ public:
     ,   _resource(std::move(resource)) {
     }
 
+    TAutoResource(TAutoResource&&) = default;
+    TAutoResource& operator =(TAutoResource&& rvalue) NOEXCEPT {
+        if (rvalue._frameGraph) {
+            Reset(*rvalue._frameGraph, std::move(rvalue._resource));
+            rvalue._frameGraph.reset();
+        } else {
+            Reset();
+        }
+        Assert_NoAssume(not rvalue._resource.Valid());
+        return (*this);
+    }
+
     ~TAutoResource() {
-        if (_resource.Valid())
-            Unused(_frameGraph->ReleaseResource(_resource));
+        Reset();
     }
 
     bool Valid() const { return _resource.Valid(); }
@@ -249,6 +260,20 @@ public:
 
     const details::TResourceWrappedId<_RawId>& operator *() const { return _resource; }
     const details::TResourceWrappedId<_RawId>* operator ->() const { return &_resource; }
+
+    void Reset() {
+        if (_resource.Valid())
+            Unused(_frameGraph->ReleaseResource(_resource));
+
+        _frameGraph.reset();
+    }
+
+    void Reset(IFrameGraph& fg, details::TResourceWrappedId<_RawId>&& resource) {
+        Reset();
+
+        _frameGraph.reset(&fg);
+        _resource = std::move(resource);
+    }
 
 private:
     SFrameGraph _frameGraph;

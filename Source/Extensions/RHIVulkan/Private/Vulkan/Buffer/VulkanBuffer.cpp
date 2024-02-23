@@ -383,12 +383,12 @@ bool FVulkanBuffer::IsSupported(const FVulkanDevice& device, const FBufferViewDe
         case EBufferUsage::RayTracing: break;
         case EBufferUsage::VertexPplnStore: break;
         case EBufferUsage::FragmentPplnStore: break;
-        case EBufferUsage::_Last: break;
-        case EBufferUsage::All: break;
-        case EBufferUsage::Transfer: break;
         case EBufferUsage::Unknown: break;
 
-        default: AssertNotImplemented();
+        default:
+            if (static_cast<EBufferUsage>(t) == EBufferUsage_Transfer)
+                break;
+            AssertNotImplemented();
         }
     }
 

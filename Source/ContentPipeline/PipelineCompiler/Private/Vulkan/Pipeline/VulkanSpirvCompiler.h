@@ -4,12 +4,15 @@
 
 #include "RHIVulkan_fwd.h"
 
+#include "RHI/PipelineCompiler.h"
 #include "RHI/PipelineDesc.h"
 #include "RHI/ShaderEnums.h"
 
 #include "Container/Vector.h"
 #include "IO/Dirpath.h"
 #include "IO/StringBuilder.h"
+#include "Misc/Function.h"
+#include "Misc/Opaque.h"
 
 #include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan_core.h"
 
@@ -98,16 +101,18 @@ public:
     void SetShaderDebugFlags(EShaderLangFormat flags);
 #endif
 
+    using FCompilationLogger = IPipelineCompiler::FLogger;
+
     NODISCARD bool Compile(
         FPipelineDesc::FShader* outShader,
         FShaderReflection* outReflection,
-        FStringBuilder* outLog,
+        const FCompilationLogger& log,
         EShaderType shaderType,
         EShaderLangFormat srcShaderFormat,
         EShaderLangFormat dstShaderFormat,
         FConstChar entry,
-        FConstChar source
-        ARGS_IF_RHIDEBUG(FConstChar debugName) ) const;
+        const FSharedBuffer& content,
+        FConstChar sourceFile ) const;
 
 private:
     struct FGLSLangResult;
@@ -120,15 +125,19 @@ private:
         EShaderLangFormat srcShaderFormat,
         EShaderLangFormat dstShaderFormat,
         FConstChar entry,
-        const FConstChar source,
+        const FSharedBuffer& content,
+        FConstChar sourceFile,
         FIncludeResolver& resolver ) const;
 
     NODISCARD bool CompileSPIRV_(FRawData* outSPIRV, const FCompilationContext& ctx) const;
 
     NODISCARD bool BuildReflection_(FCompilationContext& ctx) const;
-    NODISCARD bool ParseAnnotations_(const FCompilationContext& ctx, FStringView source) const;
+    NODISCARD bool ParseAnnotations_(const FCompilationContext& ctx, FStringView content, FConstChar sourceFile) const;
 
-    void OnCompilationFailed_(const FCompilationContext& ctx, TMemoryView<const FConstChar> source) const;
+    void OnCompilationFailed_(
+        const FCompilationContext& ctx,
+        const FConstChar compilerLog,
+        const TMemoryView<const FConstChar> sourceFiles) const;
     NODISCARD bool CheckShaderFeatures_(EShaderType shaderType) const;
 
     static void GenerateDefaultResources_(TBuiltInResource* outResources) NOEXCEPT;
@@ -139,7 +148,7 @@ private: // GLSL deserializer
     NODISCARD bool ProcessShaderInfos_(const FCompilationContext& ctx) const;
     NODISCARD bool CalculateStructSize_(u32* outStaticSize, u32* outArrayStride, u32* outMinOffset, const FCompilationContext& ctx, const glslang::TType& bufferType) const;
 
-    void MergeWithGeometryInputPrimitive_(FShaderReflection::FTopologyBits* inoutTopology, glslang::TLayoutGeometry geometryType) const;
+    void MergeWithGeometryInputPrimitive_(const FCompilationContext& ctx, FShaderReflection::FTopologyBits* inoutTopology, glslang::TLayoutGeometry geometryType) const;
 
     NODISCARD static FBindingIndex ToBindingIndex_(const FCompilationContext& ctx, u32 index);
     NODISCARD static FPipelineDesc::FDescriptorSet& ToDescriptorSet_(const FCompilationContext& ctx, u32 index);
@@ -150,7 +159,7 @@ private: // GLSL deserializer
     NODISCARD static FSpecializationID ExtractSpecializationID_(const TIntermNode* node) { return FSpecializationID{ ExtractNodeName_(node) }; }
 
     NODISCARD static FUniformID ExtractBufferUniformID_(const glslang::TType& type);
-    NODISCARD static EImageSampler ExtractImageSampler_(const glslang::TType& type);
+    NODISCARD static EImageSampler ExtractImageSampler_(const FCompilationContext& ctx, const glslang::TType& type);
     NODISCARD static EVertexFormat ExtractVertexFormat_(const glslang::TType& type);
     NODISCARD static EFragmentOutput ExtractFragmentOutput_(const glslang::TType& type);
     NODISCARD static EResourceState ExtractShaderAccessType_(const glslang::TQualifier& q);
@@ -174,6 +183,9 @@ private:
     }   _features{};
 
 };
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, FVulkanSpirvCompiler::EShaderAnnotation annotations);
+FWTextWriter& operator <<(FWTextWriter& oss, FVulkanSpirvCompiler::EShaderAnnotation annotations);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

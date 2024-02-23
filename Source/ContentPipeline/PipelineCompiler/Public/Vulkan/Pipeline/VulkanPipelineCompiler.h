@@ -40,7 +40,7 @@ public:
     void ReleaseUnusedShaders();
 
 public: // IPipelineCompiler
-    FString DisplayName() const NOEXCEPT override { return "VulkanPipelineCompiler"; }
+    FStringLiteral DisplayName() const NOEXCEPT override { return "VulkanPipelineCompiler"; }
     ETargetRHI TargetRHI() const NOEXCEPT override { return ETargetRHI::Vulkan; }
 
     bool IsSupported(const FMeshPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT override;
@@ -48,10 +48,10 @@ public: // IPipelineCompiler
     bool IsSupported(const FGraphicsPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT override;
     bool IsSupported(const FComputePipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT override;
 
-    bool Compile(FMeshPipelineDesc& desc, EShaderLangFormat fmt) override;
-    bool Compile(FRayTracingPipelineDesc& desc, EShaderLangFormat fmt) override;
-    bool Compile(FGraphicsPipelineDesc& desc, EShaderLangFormat fmt) override;
-    bool Compile(FComputePipelineDesc& desc, EShaderLangFormat fmt) override;
+    bool Compile(FMeshPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) override;
+    bool Compile(FRayTracingPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) override;
+    bool Compile(FGraphicsPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) override;
+    bool Compile(FComputePipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) override;
 
     void ReleaseUnusedMemory() override { ReleaseUnusedShaders(); }
 
@@ -80,7 +80,8 @@ private:
 
     NODISCARD bool CreateVulkanShader_(
         FPipelineDesc::FShader* shader,
-        FShaderCompiledModuleCache& shaderCache ) const;
+        FShaderCompiledModuleCache& shaderCache,
+        const FLogger& logger ) const;
 
     const TPtrRef<const FVulkanDevice> _device;
 

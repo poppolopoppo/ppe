@@ -18,7 +18,7 @@ STATIC_ASSERT(has_tie_as_tuple_v<VkDescriptorBufferInfo>);
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
-static TBasicStringView<_Char> EVulkanVendor_Name_(EVulkanVendor vendor) {
+static TBasicStringLiteral<_Char> EVulkanVendor_Name_(EVulkanVendor vendor) {
     switch (vendor) {
     case EVulkanVendor::AMD: return STRING_LITERAL(_Char, "AMD");
     case EVulkanVendor::ImgTec: return STRING_LITERAL(_Char, "ImgTec");
@@ -34,7 +34,7 @@ static TBasicStringView<_Char> EVulkanVendor_Name_(EVulkanVendor vendor) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FStringView EVulkanVendor_Name(EVulkanVendor vendor) {
+FStringLiteral EVulkanVendor_Name(EVulkanVendor vendor) {
     return EVulkanVendor_Name_<char>(vendor);
 }
 //----------------------------------------------------------------------------

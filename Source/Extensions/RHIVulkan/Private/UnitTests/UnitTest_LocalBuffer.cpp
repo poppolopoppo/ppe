@@ -28,12 +28,12 @@ NO_INLINE static void Test_LocalBuffer1_() {
     FVulkanLocalBuffer localBuffer;
     FVulkanLocalBuffer* const pBuffer = &localBuffer;
 
-    globalBuffer.Write_ForDebug()->Desc = FBufferDesc{ 1024, EBufferUsage::All };
+    globalBuffer.Write_ForDebug()->Desc = FBufferDesc{ 1024, EBufferUsage_All };
 
     VerifyRelease( localBuffer.Construct(&globalBuffer) );
 
     { // pass 1
-        pBuffer->AddPendingState(EResourceState::TransferDst, 0, 512, (taskIt++)->get());
+        pBuffer->AddPendingState(EResourceState_TransferDst, 0, 512, (taskIt++)->get());
         pBuffer->CommitBarrier(barriers ARGS_IF_RHIDEBUG(nullptr));
 
         auto writeBarriers = pBuffer->WriteAccess_ForDebug();
@@ -47,7 +47,7 @@ NO_INLINE static void Test_LocalBuffer1_() {
         AssertRelease(writeBarriers.back().IsWritable == true);
     }
     { // pass 2
-        pBuffer->AddPendingState(EResourceState::TransferSrc, 0, 64, (taskIt++)->get());
+        pBuffer->AddPendingState(EResourceState_TransferSrc, 0, 64, (taskIt++)->get());
         pBuffer->CommitBarrier(barriers ARGS_IF_RHIDEBUG(nullptr));
 
         auto readBarriers = pBuffer->ReadAccess_ForDebug();
@@ -61,7 +61,7 @@ NO_INLINE static void Test_LocalBuffer1_() {
         AssertRelease(readBarriers.back().IsWritable == false);
     }
     { // pass 3
-        pBuffer->AddPendingState(EResourceState::UniformRead | EResourceState::_VertexShader, 64, 64+64, (taskIt++)->get());
+        pBuffer->AddPendingState(EResourceState_UniformRead | EResourceShaderStages::VertexShader, 64, 64+64, (taskIt++)->get());
         pBuffer->CommitBarrier(barriers ARGS_IF_RHIDEBUG(nullptr));
 
         auto readBarriers = pBuffer->ReadAccess_ForDebug();
@@ -75,7 +75,7 @@ NO_INLINE static void Test_LocalBuffer1_() {
         AssertRelease(readBarriers.back().IsWritable == false);
     }
     { // pass 4
-        pBuffer->AddPendingState(EResourceState::UniformRead | EResourceState::_FragmentShader, 256, 256+64, (taskIt++)->get());
+        pBuffer->AddPendingState(EResourceState_UniformRead | EResourceShaderStages::FragmentShader, 256, 256+64, (taskIt++)->get());
         pBuffer->CommitBarrier(barriers ARGS_IF_RHIDEBUG(nullptr));
 
         auto readBarriers = pBuffer->ReadAccess_ForDebug();
@@ -89,7 +89,7 @@ NO_INLINE static void Test_LocalBuffer1_() {
         AssertRelease(readBarriers.back().IsWritable == false);
     }
     { // pass 5
-        pBuffer->AddPendingState(EResourceState::ShaderWrite | EResourceState::_ComputeShader, 512, 512+64, (taskIt++)->get());
+        pBuffer->AddPendingState(EResourceState_ShaderWrite | EResourceShaderStages::ComputeShader, 512, 512+64, (taskIt++)->get());
         pBuffer->CommitBarrier(barriers ARGS_IF_RHIDEBUG(nullptr));
 
         auto readBarriers = pBuffer->ReadAccess_ForDebug();
@@ -106,7 +106,7 @@ NO_INLINE static void Test_LocalBuffer1_() {
         AssertRelease(writeBarriers.back().IsWritable == true);
     }
     { // pass 6
-        pBuffer->AddPendingState(EResourceState::UniformRead | EResourceState::_VertexShader, 256+32, 256+64, (taskIt++)->get());
+        pBuffer->AddPendingState(EResourceState_UniformRead | EResourceShaderStages::VertexShader, 256+32, 256+64, (taskIt++)->get());
         pBuffer->CommitBarrier(barriers ARGS_IF_RHIDEBUG(nullptr));
 
         auto readBarriers = pBuffer->ReadAccess_ForDebug();
@@ -130,7 +130,7 @@ NO_INLINE static void Test_LocalBuffer1_() {
         AssertRelease(readBarriers[3].Index == 6_execution_order);
     }
     { // pass 7
-        pBuffer->AddPendingState(EResourceState::UniformRead | EResourceState::_GeometryShader, 256+16, 256+16+32, (taskIt++)->get());
+        pBuffer->AddPendingState(EResourceState_UniformRead | EResourceShaderStages::GeometryShader, 256+16, 256+16+32, (taskIt++)->get());
         pBuffer->CommitBarrier(barriers ARGS_IF_RHIDEBUG(nullptr));
 
         auto readBarriers = pBuffer->ReadAccess_ForDebug();
@@ -162,7 +162,7 @@ NO_INLINE static void Test_LocalBuffer1_() {
         AssertRelease(readBarriers[4].Index == 6_execution_order);
     }
     { // pass 8
-        pBuffer->AddPendingState(EResourceState::UniformRead | EResourceState::_GeometryShader, 16, 32, (taskIt++)->get());
+        pBuffer->AddPendingState(EResourceState_UniformRead | EResourceShaderStages::GeometryShader, 16, 32, (taskIt++)->get());
         pBuffer->CommitBarrier(barriers ARGS_IF_RHIDEBUG(nullptr));
 
         auto readBarriers = pBuffer->ReadAccess_ForDebug();
@@ -202,7 +202,7 @@ NO_INLINE static void Test_LocalBuffer1_() {
         AssertRelease(readBarriers[3].Index == 3_execution_order);
     }
     { // pass 9
-        pBuffer->AddPendingState(EResourceState::ShaderRead | EResourceState::_ComputeShader, 0, 256+32, (taskIt++)->get());
+        pBuffer->AddPendingState(EResourceState_ShaderRead | EResourceShaderStages::ComputeShader, 0, 256+32, (taskIt++)->get());
         pBuffer->CommitBarrier(barriers ARGS_IF_RHIDEBUG(nullptr));
 
         auto readBarriers = pBuffer->ReadAccess_ForDebug();
@@ -234,7 +234,7 @@ NO_INLINE static void Test_LocalBuffer1_() {
         AssertRelease(readBarriers[2].Index == 6_execution_order);
     }
     { // pass 10
-        pBuffer->AddPendingState(EResourceState::TransferDst, 64, 512, (taskIt++)->get());
+        pBuffer->AddPendingState(EResourceState_TransferDst, 64, 512, (taskIt++)->get());
         pBuffer->CommitBarrier(barriers ARGS_IF_RHIDEBUG(nullptr));
 
         auto readBarriers = pBuffer->ReadAccess_ForDebug();

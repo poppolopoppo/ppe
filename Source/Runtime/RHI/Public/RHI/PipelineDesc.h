@@ -12,9 +12,11 @@
 
 #include "Container/Appendable.h"
 #include "Container/AssociativeVector.h"
-#include "Container/FixedSizeHashTable.h"
+#include "Container/FlatMap.h"
 #include "Container/HashMap.h"
 #include "Container/Stack.h"
+#include "Memory/SharedBuffer_fwd.h"
+#include "IO/Filename.h"
 #include "IO/String.h"
 #include "Meta/AutoStruct.h"
 
@@ -105,6 +107,13 @@ struct FImageUniform;
 struct FBufferUniform;
 struct FStorageBufferUniform;
 struct FRayTracingSceneUniform;
+//----------------------------------------------------------------------------
+class PPE_RHI_API IShaderSource {
+public:
+    virtual ~IShaderSource() = default;
+
+    virtual FSharedBuffer LoadShaderSource() const NOEXCEPT = 0;
+};
 //----------------------------------------------------------------------------
 template <typename T>
 class IShaderData : public FRefCountable {
@@ -228,7 +237,7 @@ struct FPipelineDesc {
     PPE_ASSUME_FRIEND_AS_POD(FVariantResource)
 
     using FVariantUniform = details::TPipelineDescUniform<FVariantResource>;
-    using FUniformMap = TRefCountable<TFixedSizeHashMap<FUniformID, FVariantUniform, MaxUniforms>>;
+    using FUniformMap = TRefCountable<TFixedSizeFlatMap<FUniformID, FVariantUniform, MaxUniforms>>;
     using PUniformMap = TRefPtr<FUniformMap>;
 
     struct FDescriptorSet {
@@ -252,14 +261,14 @@ struct FPipelineDesc {
     };
 
     using FDescriptorSets = TFixedSizeStack<FDescriptorSet, MaxDescriptorSets>;
-    using FPushConstants = TFixedSizeHashMap<FPushConstantID, FPushConstant, MaxPushConstantsCount>;
+    using FPushConstants = TFixedSizeFlatMap<FPushConstantID, FPushConstant, MaxPushConstantsCount>;
 
     PPE_DEFINE_AUTOSTRUCT(FPipelineLayout,
         (FDescriptorSets, DescriptorSets),
         (FPushConstants, PushConstants))
 
     using FShaderDataMap = ASSOCIATIVE_VECTORINSITU(RHIPipeline, EShaderLangFormat, FShaderDataVariant, 2);
-    using FSpecializationConstants = TFixedSizeHashMap<FSpecializationID, u32, MaxSpecializationConstants>;
+    using FSpecializationConstants = TFixedSizeFlatMap<FSpecializationID, u32, MaxSpecializationConstants>;
 
     struct FShader {
         FShaderDataMap Data;
@@ -269,6 +278,7 @@ struct FPipelineDesc {
         PPE_RHI_API ~FShader();
 
         PPE_RHI_API void AddShader(EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName));
+        PPE_RHI_API void AddShader(EShaderLangFormat fmt, FConstChar entry, const FFilename& sourceFile);
         PPE_RHI_API void AddShader(EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName));
         PPE_RHI_API void AddShader(EShaderLangFormat fmt, PShaderModule&& rmodule);
         PPE_RHI_API void AddShader(EShaderLangFormat fmt, FShaderDataVariant&& rdata);
@@ -381,7 +391,6 @@ struct FRayTracingSceneUniform : details::TPipelineDescUniform<FPipelineDesc::FR
 // Graphics
 //----------------------------------------------------------------------------
 struct FGraphicsPipelineDesc final : FPipelineDesc {
-
     FShaders Shaders;
     FTopologyBits SupportedTopology;
     FFragmentOutputs FragmentOutputs;
@@ -399,9 +408,11 @@ struct FGraphicsPipelineDesc final : FPipelineDesc {
     PPE_RHI_API FGraphicsPipelineDesc& operator =(FGraphicsPipelineDesc&&) NOEXCEPT;
 
     PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, const FFilename& sourceFile);
     PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName));
     PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module);
     PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FShaderDataVariant&& rdata);
+    PPE_RHI_API FGraphicsPipelineDesc& AddShader(EShaderType type, const FShader& shader);
 
     FGraphicsPipelineDesc& AddTopology(EPrimitiveTopology topology) { SupportedTopology.SetTrue(static_cast<u32>(topology)); return (*this); }
 
@@ -448,6 +459,7 @@ struct FComputePipelineDesc final : FPipelineDesc {
     PPE_RHI_API FComputePipelineDesc& operator =(FComputePipelineDesc&&) NOEXCEPT;
 
     PPE_RHI_API FComputePipelineDesc& AddShader(EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FComputePipelineDesc& AddShader(EShaderLangFormat fmt, FConstChar entry, const FFilename& sourceFile);
     PPE_RHI_API FComputePipelineDesc& AddShader(EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName));
     PPE_RHI_API FComputePipelineDesc& AddShader(EShaderLangFormat fmt, const PShaderModule& module);
     PPE_RHI_API FComputePipelineDesc& AddShader(EShaderLangFormat fmt, FShaderDataVariant&& rdata);
@@ -499,6 +511,7 @@ struct FMeshPipelineDesc final : FPipelineDesc {
     PPE_RHI_API FMeshPipelineDesc& operator =(FMeshPipelineDesc&&) NOEXCEPT;
 
     PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, const FFilename& sourceFile);
     PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName));
     PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, const PShaderModule& module);
     PPE_RHI_API FMeshPipelineDesc& AddShader(EShaderType type, EShaderLangFormat fmt, FShaderDataVariant&& rdata);
@@ -546,6 +559,7 @@ struct FRayTracingPipelineDesc final : FPipelineDesc {
     PPE_RHI_API FRayTracingPipelineDesc& operator =(FRayTracingPipelineDesc&&) NOEXCEPT;
 
     PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FConstChar entry, FString&& rsource ARGS_IF_RHIDEBUG(FConstChar debugName));
+    PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FConstChar entry, const FFilename& sourceFile);
     PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FConstChar entry, FRawData&& rbinary, FShaderDataFingerprint fingerprint ARGS_IF_RHIDEBUG(FConstChar debugName));
     PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, const PShaderModule& module);
     PPE_RHI_API FRayTracingPipelineDesc& AddShader(const FRTShaderID& id, EShaderType type, EShaderLangFormat fmt, FShaderDataVariant&& rdata);

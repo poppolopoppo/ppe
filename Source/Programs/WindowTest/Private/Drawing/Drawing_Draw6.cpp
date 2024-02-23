@@ -170,7 +170,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     };
 
     cmd->Task(renderPass, FCustomDraw{ customDrawFunc_, &customPayload }
-        .AddImage(texture, EResourceState::ShaderSample));
+        .AddImage(texture, EResourceState_ShaderSample));
 
     auto tClear = cmd->Task(FClearColorImage{}
         .SetImage(texture)

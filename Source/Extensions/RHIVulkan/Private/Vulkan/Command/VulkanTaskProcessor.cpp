@@ -575,11 +575,11 @@ void FVulkanTaskProcessor::AddRenderTargetBarriers_(const FVulkanLogicalRenderPa
 
         EResourceState state = rt.State;
         if (info.EnableEarlyFragmentTests())
-            state += EResourceState::EarlyFragmentTests;
+            state += EResourceFlags::EarlyFragmentTests;
         if (info.EnableLateFragmentTests())
-            state += EResourceState::LateFragmentTests;
+            state += EResourceFlags::LateFragmentTests;
         if (not (info.EnableDepthWrite() || needClear))
-            state -= EResourceState::_Write;
+            state -= EResourceFlags::Write;
 
         rt.Layout = EResourceState_ToImageLayout(state, rt.LocalImage->Read()->AspectMask);
 
@@ -629,7 +629,7 @@ void FVulkanTaskProcessor::SetShadingRateImage_(VkImageView* pView, const FVulka
 
     AddImage_(
         pLocalImage,
-        EResourceState::ShadingRateImageRead,
+        EResourceState_ShadingRateImageRead,
         VK_IMAGE_LAYOUT_SHADING_RATE_OPTIMAL_NV,
         desc );
 }
@@ -727,7 +727,7 @@ void FVulkanTaskProcessor::BeginRenderPass_(const TVulkanFrameTask<FSubmitRender
     // add barriers
     Assert(not logicalRenderPasses.empty());
     FDrawTaskBarriers barriers(*this, *logicalRenderPasses[0]);
-    const EResourceState stages = _workerCmd->Device().GraphicsShaderStages();
+    const EResourceShaderStages stages = _workerCmd->Device().GraphicsShaderStages();
 
     for (FVulkanLogicalRenderPass* pLogicalRenderPass : logicalRenderPasses) {
 
@@ -1226,7 +1226,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanDispatchComputeIndirectTask& task)
     for (auto& cmd : task.Commands) {
         AddBuffer_(
             task.IndirectBuffer,
-            EResourceState::IndirectBuffer,
+            EResourceState_IndirectBuffer,
             static_cast<VkDeviceSize>(cmd.IndirectBufferOffset),
             sizeof(FDispatchComputeIndirect::FIndirectCommand) );
     }
@@ -1272,8 +1272,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanCopyBufferTask& task) {
             range_t(dst.srcOffset, dst.srcOffset + dst.size)
                 .Overlaps(range_t(dst.dstOffset, dst.dstOffset + dst.size )) );
 
-        AddBuffer_(task.SrcBuffer, EResourceState::TransferSrc, dst.srcOffset, dst.size);
-        AddBuffer_(task.DstBuffer, EResourceState::TransferDst, dst.dstOffset, dst.size);
+        AddBuffer_(task.SrcBuffer, EResourceState_TransferSrc, dst.srcOffset, dst.size);
+        AddBuffer_(task.DstBuffer, EResourceState_TransferDst, dst.dstOffset, dst.size);
     }
 
     CommitBarriers_();
@@ -1323,8 +1323,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanCopyImageTask& task) {
         Assert_NoAssume(src.DstSubresource.MipLevel < dstImage->Desc.MaxLevel);
         Assert_NoAssume(src.DstSubresource.BaseLayer + src.DstSubresource.LayerCount <= dstImage->ArrayLayers());
 
-        AddImage_(task.SrcImage, EResourceState::TransferSrc, task.SrcLayout, dst.srcSubresource);
-        AddImage_(task.DstImage, EResourceState::TransferDst, task.DstLayout, dst.dstSubresource);
+        AddImage_(task.SrcImage, EResourceState_TransferSrc, task.SrcLayout, dst.srcSubresource);
+        AddImage_(task.DstImage, EResourceState_TransferDst, task.DstLayout, dst.dstSubresource);
     }
 
     CommitBarriers_();
@@ -1369,8 +1369,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanCopyBufferToImageTask& task) {
         dst.imageOffset = VkOffset3D{ imageOffset.x, imageOffset.y, imageOffset.z };
         dst.imageExtent = VkExtent3D{ imageSize.x, imageSize.y, imageSize.z };
 
-        AddBuffer_(task.SrcBuffer, EResourceState::TransferSrc, dst, task.DstImage);
-        AddImage_(task.DstImage, EResourceState::TransferDst, task.DstLayout, dst.imageSubresource);
+        AddBuffer_(task.SrcBuffer, EResourceState_TransferSrc, dst, task.DstImage);
+        AddImage_(task.DstImage, EResourceState_TransferDst, task.DstLayout, dst.imageSubresource);
     }
 
     CommitBarriers_();
@@ -1414,8 +1414,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanCopyImageToBufferTask& task) {
         dst.imageOffset = VkOffset3D{ imageOffset.x, imageOffset.y, imageOffset.z };
         dst.imageExtent = VkExtent3D{ imageSize.x, imageSize.y, imageSize.z };
 
-        AddImage_(task.SrcImage, EResourceState::TransferSrc, task.SrcLayout, dst.imageSubresource);
-        AddBuffer_(task.DstBuffer, EResourceState::TransferDst, dst, task.SrcImage);
+        AddImage_(task.SrcImage, EResourceState_TransferSrc, task.SrcLayout, dst.imageSubresource);
+        AddBuffer_(task.DstBuffer, EResourceState_TransferDst, dst, task.SrcImage);
     }
 
     CommitBarriers_();
@@ -1460,8 +1460,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanBlitImageTask& task) {
         dst.dstOffsets[0] = VkOffset3D{ src.DstOffset0.x, src.SrcOffset0.y, src.SrcOffset0.z };
         dst.dstOffsets[1] = VkOffset3D{ src.DstOffset1.x, src.DstOffset1.y, src.DstOffset1.z };
 
-        AddImage_(task.SrcImage, EResourceState::TransferSrc, task.SrcLayout, dst.srcSubresource);
-        AddImage_(task.DstImage, EResourceState::TransferDst, task.DstLayout, dst.dstSubresource);
+        AddImage_(task.SrcImage, EResourceState_TransferSrc, task.SrcLayout, dst.srcSubresource);
+        AddImage_(task.DstImage, EResourceState_TransferDst, task.DstLayout, dst.dstSubresource);
     }
 
     CommitBarriers_();
@@ -1509,8 +1509,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanResolveImageTask& task) {
 
         dst.extent = VkExtent3D{ imageSize.x, imageSize.y, imageSize.z };
 
-        AddImage_(task.SrcImage, EResourceState::TransferSrc, task.SrcLayout, dst.srcSubresource);
-        AddImage_(task.DstImage, EResourceState::TransferDst, task.DstLayout, dst.dstSubresource);
+        AddImage_(task.SrcImage, EResourceState_TransferSrc, task.SrcLayout, dst.srcSubresource);
+        AddImage_(task.DstImage, EResourceState_TransferDst, task.DstLayout, dst.dstSubresource);
     }
 
     CommitBarriers_();
@@ -1545,7 +1545,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanGenerateMipmapsTask& task) {
     if (subresourceRange.levelCount == 1)
         return;
 
-    AddImage_(task.Image, EResourceState::TransferSrc, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
+    AddImage_(task.Image, EResourceState_TransferSrc, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresourceRange);
     CommitBarriers_();
 
     VkImageMemoryBarrier barrier{};
@@ -1590,7 +1590,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanGenerateMipmapsTask& task) {
         region.dstOffsets[1] = { dstSize.x, dstSize.y, dstSize.z };
         region.dstSubresource = {
             subresourceRange.aspectMask,
-            (subresourceRange.baseMipLevel + i - 1),
+            (subresourceRange.baseMipLevel + i),
             subresourceRange.baseArrayLayer,
             subresourceRange.layerCount };
 
@@ -1615,7 +1615,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanGenerateMipmapsTask& task) {
         barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
         barrier.subresourceRange = {
             subresourceRange.aspectMask,
-            (subresourceRange.baseMipLevel + 1),
+            (subresourceRange.baseMipLevel + i),
             1,
             subresourceRange.baseArrayLayer,
             subresourceRange.layerCount };
@@ -1634,7 +1634,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanGenerateMipmapsTask& task) {
 void FVulkanTaskProcessor::Visit(const FVulkanFillBufferTask& task) {
     ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
-    AddBuffer_(task.DstBuffer, EResourceState::TransferDst, task.DstOffset, task.Size);
+    AddBuffer_(task.DstBuffer, EResourceState_TransferDst, task.DstOffset, task.Size);
     CommitBarriers_();
 
     vkCmdFillBuffer(
@@ -1667,7 +1667,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanClearColorImageTask& task) {
         dst.baseArrayLayer = *src.BaseLayer;
         dst.layerCount = src.LayerCount;
 
-        AddImage_(task.DstImage, EResourceState::TransferDst, task.DstLayout, dst);
+        AddImage_(task.DstImage, EResourceState_TransferDst, task.DstLayout, dst);
     }
 
     CommitBarriers_();
@@ -1703,7 +1703,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanClearDepthStencilImageTask& task) 
         dst.baseArrayLayer = *src.BaseLayer;
         dst.layerCount = src.LayerCount;
 
-        AddImage_(task.DstImage, EResourceState::TransferDst, task.DstLayout, dst);
+        AddImage_(task.DstImage, EResourceState_TransferDst, task.DstLayout, dst);
     }
 
     CommitBarriers_();
@@ -1727,7 +1727,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanUpdateBufferTask& task) {
     const auto dstBuffer = task.DstBuffer->Read();
 
     for (const auto& region : task.Regions) {
-        AddBuffer_(task.DstBuffer, EResourceState::TransferDst, region.BufferOffset, region.DataSize);
+        AddBuffer_(task.DstBuffer, EResourceState_TransferDst, region.BufferOffset, region.DataSize);
     }
 
     CommitBarriers_();
@@ -1779,8 +1779,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanPresentTask& task) {
     region.dstOffsets[0] = VkOffset3D{ 0, 0, 0 };
     region.dstOffsets[1] = VkOffset3D{ dstDim.x, dstDim.y, 1 };
 
-    AddImage_(task.SrcImage, EResourceState::TransferSrc, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, region.srcSubresource);
-    AddImage_(pDstImage, EResourceState::TransferDst | EResourceState::InvalidateBefore, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, region.dstSubresource);
+    AddImage_(task.SrcImage, EResourceState_TransferSrc, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, region.srcSubresource);
+    AddImage_(pDstImage, EResourceState_TransferDst | EResourceFlags::InvalidateBefore, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, region.dstSubresource);
 
     CommitBarriers_();
 
@@ -1817,8 +1817,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanUpdateRayTracingShaderTableTask& t
         Assert_NoAssume(copy.SrcBuffer->Read()->Desc.Usage & EBufferUsage::TransferSrc);
         Assert_NoAssume(copy.DstBuffer->Read()->Desc.Usage & EBufferUsage::TransferDst);
 
-        AddBuffer_(copy.SrcBuffer, EResourceState::TransferSrc, copy.Region.srcOffset, copy.Region.size);
-        AddBuffer_(copy.DstBuffer, EResourceState::TransferDst, copy.Region.dstOffset, copy.Region.size);
+        AddBuffer_(copy.SrcBuffer, EResourceState_TransferSrc, copy.Region.srcOffset, copy.Region.size);
+        AddBuffer_(copy.DstBuffer, EResourceState_TransferDst, copy.Region.dstOffset, copy.Region.size);
     }
 
     CommitBarriers_();
@@ -1842,13 +1842,13 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingGeometryTask& task)
 
     ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
-    AddRTGeometry_(task.RTGeometry, EResourceState::BuildRayTracingStructWrite);
-    AddBuffer_(task.ScratchBuffer, EResourceState::RTASBuildingBufferReadWrite, 0, VK_WHOLE_SIZE);
+    AddRTGeometry_(task.RTGeometry, EResourceState_BuildRayTracingStructWrite);
+    AddBuffer_(task.ScratchBuffer, EResourceState_RTASBuildingBufferReadWrite, 0, VK_WHOLE_SIZE);
 
     for (const FVulkanLocalBuffer* pLocalBuffer : task.UsableBuffers) {
         Assert(pLocalBuffer);
         // resource state doesn't matter here
-        AddBuffer_(pLocalBuffer, EResourceState::TransferSrc, 0, VK_WHOLE_SIZE);
+        AddBuffer_(pLocalBuffer, EResourceState_TransferSrc, 0, VK_WHOLE_SIZE);
     }
 
     CommitBarriers_();
@@ -1876,8 +1876,8 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingSceneTask& task) {
     ONLY_IF_RHIDEBUG(CmdDebugMarker_(task.TaskName, task.DebugColor));
 
     // copy instance data to GPU memory
-    AddBuffer_(task.InstanceStagingBuffer, EResourceState::TransferSrc, task.InstanceStagingBufferOffset, task.InstanceBufferSizeInBytes());
-    AddBuffer_(task.InstanceBuffer, EResourceState::TransferDst, task.InstanceBufferOffset, task.InstanceBufferSizeInBytes());
+    AddBuffer_(task.InstanceStagingBuffer, EResourceState_TransferSrc, task.InstanceStagingBufferOffset, task.InstanceBufferSizeInBytes());
+    AddBuffer_(task.InstanceBuffer, EResourceState_TransferDst, task.InstanceBufferOffset, task.InstanceBufferSizeInBytes());
 
     CommitBarriers_();
 
@@ -1898,12 +1898,12 @@ void FVulkanTaskProcessor::Visit(const FVulkanBuildRayTracingSceneTask& task) {
         task.Instances, task.NumInstances,
         task.HitShadersPerInstance, task.MaxHitShaderCount );
 
-    AddRTScene_(task.RTScene, EResourceState::BuildRayTracingStructWrite);
-    AddBuffer_(task.ScratchBuffer, EResourceState::RTASBuildingBufferReadWrite, task.ScratchBufferOffset(), task.ScratchBufferSizeInBytes());
-    AddBuffer_(task.InstanceBuffer, EResourceState::RTASBuildingBufferRead, task.InstanceBufferOffset, task.InstanceBufferSizeInBytes());
+    AddRTScene_(task.RTScene, EResourceState_BuildRayTracingStructWrite);
+    AddBuffer_(task.ScratchBuffer, EResourceState_RTASBuildingBufferReadWrite, task.ScratchBufferOffset(), task.ScratchBufferSizeInBytes());
+    AddBuffer_(task.InstanceBuffer, EResourceState_RTASBuildingBufferRead, task.InstanceBufferOffset, task.InstanceBufferSizeInBytes());
 
     for (const TPtrRef<const FVulkanRayTracingLocalGeometry>& blas : task.RTGeometries)
-        AddRTGeometry_(blas, EResourceState::BuildRayTracingStructRead);
+        AddRTGeometry_(blas, EResourceState_BuildRayTracingStructRead);
 
     CommitBarriers_();
 
@@ -1995,7 +1995,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanTraceRaysTask& task) {
 
     Assert(pShaderTableBuffer->Desc().Usage & EBufferUsage::RayTracing);
 
-    AddBuffer_(pShaderTableBuffer, EResourceState::ShaderRead | EResourceState::_RayTracingShader, raygenOffset, blockSize);
+    AddBuffer_(pShaderTableBuffer, EResourceState_RayTracingShaderRead, raygenOffset, blockSize);
     CommitBarriers_();
 
     vkCmdTraceRaysNV(
@@ -2015,7 +2015,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanTraceRaysTask& task) {
 void FVulkanTaskProcessor::Visit(const FVulkanCustomTaskTask& task) {
     ONLY_IF_RHIDEBUG( CmdDebugMarker_(task.TaskName, task.DebugColor) );
 
-    EResourceState stages = _workerCmd->Device().GraphicsShaderStages();
+    const EResourceShaderStages stages = _workerCmd->Device().GraphicsShaderStages();
 
     for (auto& it : task.Images) {
         const auto sharedImg = it.first->Read();
