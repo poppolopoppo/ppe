@@ -70,6 +70,9 @@
 - [ ] Media Mollecule CSG > DF > Point-Clouds
     - https://advances.realtimerendering.com/s2015/AlexEvans_SIGGRAPH-2015-sml.pdf
     - https://www.youtube.com/watch?v=u9KNtnCZDMI
+- [ ] Max-Norm distance field
+    - Efficient Max-Norm Distance Computation and Reliable Voxelization. http://gamma.cs.unc.edu/RECONS/maxnorm.pdf
+    - Max norm signed distance field for ellipsoid shape. https://www.shadertoy.com/view/Mt2XWG
 
 - [ ] Volumetric clouds
     - https://gist.github.com/pxv8270/e3904c49cbd8ff52cb53d95ceda3980e
