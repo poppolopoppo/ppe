@@ -12,6 +12,7 @@
 #include "Time/TimedScope.h"
 
 #include "lz4-external.h"
+#include "Memory/SharedBuffer.h"
 
 #define WITH_PPE_COMPRESSION_FINGERPRINT 1 //%_NOCOMMTI%
 
@@ -194,6 +195,15 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
 
         return true;
     }
+}
+//----------------------------------------------------------------------------
+FUniqueBuffer DecompressBuffer(const FSharedBuffer& src) {
+    FUniqueBuffer decompressed = FUniqueBuffer::Allocate(DecompressedSize(src.MakeView()));
+
+    if (DecompressMemory(decompressed.MakeView(), src.MakeView()))
+        return std::move(decompressed);
+
+    return Meta::Default;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

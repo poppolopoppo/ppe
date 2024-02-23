@@ -2,16 +2,20 @@
 
 #include "VirtualFileSystem.h"
 
+#include "VFSModule.h"
 #include "VirtualFileSystemComponent.h"
 #include "VirtualFileSystemNativeComponent.h"
 #include "VirtualFileSystemTrie.h"
 
 #include "Container/RawStorage.h"
+#include "Diagnostic/Logger.h"
 #include "HAL/PlatformTime.h"
 #include "IO/FileSystem.h"
 #include "IO/Format.h"
 #include "IO/StringBuilder.h"
 #include "IO/StringView.h"
+#include "Memory/Compression.h"
+#include "Memory/SharedBuffer.h"
 #include "Time/DateTime.h"
 
 namespace PPE {
@@ -175,6 +179,32 @@ bool FVirtualFileSystem::Decompress(const FFilename& dst, const FFilename& src, 
     }
 
     return true;
+}
+//----------------------------------------------------------------------------
+FUniqueBuffer FVirtualFileSystem::ReadAll(const FFilename& filename, EAccessPolicy policy) {
+    bool needDecompress = false;
+    if (policy ^ EAccessPolicy::Compress) {
+        needDecompress = true;
+        policy = policy - EAccessPolicy::Compress + EAccessPolicy::Binary;
+    }
+
+    policy = policy
+        + EAccessPolicy::Sequential // we're going to make one read only, fully sequential
+        ;
+
+    const UStreamReader reader = Get().OpenReadable(filename, policy);
+
+    if (reader) {
+        FUniqueBuffer content = FUniqueBuffer::Allocate(reader->SizeInBytes());
+        PPE_LOG_CHECK(VFS, reader->ReadView(content.MakeView()) && reader->Eof());
+
+        if (Likely(not needDecompress))
+            return std::move(content);
+
+        return Compression::DecompressBuffer(content.MoveToShared());
+    }
+
+    return Default;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

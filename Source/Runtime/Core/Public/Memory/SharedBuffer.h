@@ -2,6 +2,8 @@
 
 #include "Core_fwd.h"
 
+#include "Memory/SharedBuffer_fwd.h"
+
 #include "Memory/MemoryView.h"
 #include "Memory/RefPtr.h"
 #include "Memory/WeakPtr.h"
@@ -10,13 +12,6 @@
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-FWD_REFPTR(BufferOwner);
-FWD_WEAKPTR(BufferOwner);
-//----------------------------------------------------------------------------
-class FUniqueBuffer;
-class FSharedBuffer;
-class FWeakSharedBuffer;
 //----------------------------------------------------------------------------
 enum class EBufferOwnerFlags : u8 {
     Owned           = 1 << 0,

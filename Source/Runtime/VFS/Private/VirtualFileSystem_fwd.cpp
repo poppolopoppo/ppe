@@ -2,17 +2,20 @@
 
 #include "VirtualFileSystem_fwd.h"
 
+#include "VFSModule.h"
 #include "VirtualFileSystem.h"
 
 #include "Container/RawStorage.h"
+#include "Diagnostic/Logger.h"
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
 #include "IO/FileStream.h"
 #include "IO/Format.h"
-#include "IO/TextWriter.h"
+#include "IO/String.h"
+#include "IO/StringBuilder.h"
 #include "HAL/PlatformFile.h"
+#include "Memory/SharedBuffer.h"
 #include "Misc/Function.h"
-#include "Time/DateTime.h"
 #include "Time/Timestamp.h"
 
 namespace PPE {
@@ -49,6 +52,10 @@ size_t VFS_EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunction
 //----------------------------------------------------------------------------
 size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
     return VFS().EnumerateFiles(dirpath, recursive, foreach);
+}
+//----------------------------------------------------------------------------
+size_t VFS_GlobFiles(const FDirpath& dirpath, FWStringLiteral pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
+    return VFS().GlobFiles(dirpath, pattern, recursive, foreach);
 }
 //----------------------------------------------------------------------------
 size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
@@ -108,8 +115,22 @@ UStreamWriter VFS_RollFile(const FFilename& filename, EAccessPolicy policy/* = E
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 STATIC_ASSERT(std::is_same<RAWSTORAGE(FileSystem, u8), FRawStorage>::value);
-bool VFS_ReadAll(FRawStorage* pcontent, const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
-    return FVirtualFileSystem::ReadAll(filename, *pcontent, policy);
+//----------------------------------------------------------------------------
+FUniqueBuffer VFS_ReadAll(const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
+    return FVirtualFileSystem::ReadAll(filename, policy);
+}
+//----------------------------------------------------------------------------
+bool VFS_ReadAnsiString(FString* pstring, const FFilename& filename, EAccessPolicy policy/* = EAccessPolicy::None */) {
+    const UStreamReader reader = FVirtualFileSystem::Get().OpenReadable(filename, policy + EAccessPolicy::Binary);
+    PPE_LOG_CHECK(VFS, reader.valid());
+
+    FStringBuilder sb;
+    sb.reserve(reader->SizeInBytes() + sizeof(char)/* null terminated */);
+
+    PPE_LOG_CHECK(VFS, reader->ReadView(sb.AppendUninitialized(reader->SizeInBytes())));
+
+    sb.ToString(*pstring);
+    return true;
 }
 //----------------------------------------------------------------------------
 bool VFS_WriteAll(const FFilename& filename, const TMemoryView<const u8>& content, EAccessPolicy policy/* = EAccessPolicy::None */) {

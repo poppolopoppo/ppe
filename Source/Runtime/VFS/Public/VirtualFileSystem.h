@@ -3,11 +3,8 @@
 #include "VirtualFileSystem_fwd.h"
 #include "VirtualFileSystemTrie.h"
 
-#include "Memory/UniquePtr.h"
+#include "Memory/SharedBuffer_fwd.h"
 #include "Meta/Singleton.h"
-#include "Thread/ReadWriteLock.h"
-
-#include <mutex>
 
 namespace PPE {
 template <typename T, typename _Allocator>
@@ -31,10 +28,7 @@ public:
     static FBasename TemporaryBasename(const FWStringView& prefix, const FWStringView& ext);
     static FFilename TemporaryFilename(const FWStringView& prefix, const FWStringView& ext);
 
-    template <typename T, typename _Allocator>
-    static bool ReadAll(const FFilename& filename, TRawStorage<T, _Allocator>& storage, EAccessPolicy policy = EAccessPolicy::None);
-    template <typename T, typename _Allocator>
-    static bool WriteAll(const FFilename& filename, const TRawStorage<T, _Allocator>& storage, EAccessPolicy policy = EAccessPolicy::None);
+    static FUniqueBuffer ReadAll(const FFilename& filename, EAccessPolicy policy = EAccessPolicy::None);
     static bool WriteAll(const FFilename& filename, const TMemoryView<const u8>& storage, EAccessPolicy policy = EAccessPolicy::None);
 
     static bool Copy(const FFilename& dst, const FFilename& src, EAccessPolicy policy = EAccessPolicy::None);
@@ -45,5 +39,3 @@ public:
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-
-#include "VirtualFileSystem-inl.h"
