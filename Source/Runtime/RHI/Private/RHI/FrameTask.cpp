@@ -371,10 +371,10 @@ FUpdateImage& FUpdateImage::SetImage(FRawImageID image, const int3& offset/* = D
     return (*this);
 }
 //----------------------------------------------------------------------------
-FUpdateImage& FUpdateImage::SetImage(FRawImageID image, const int2& offset, FImageLayer layer, FMipmapLevel mipmap) {
+FUpdateImage& FUpdateImage::SetImage(FRawImageID image, const int3& offset, FImageLayer layer, FMipmapLevel mipmap) {
     Assert(image);
     DstImage = image;
-    ImageOffset = int3(offset, 0);
+    ImageOffset = offset;
     ArrayLayer = layer;
     MipmapLevel = mipmap;
     return (*this);

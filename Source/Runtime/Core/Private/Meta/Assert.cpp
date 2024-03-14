@@ -53,10 +53,7 @@ static bool ReportAssertionForDebug_(
         return true;
     }
 #else
-    Unused(level);
-    Unused(msg);
-    Unused(file);
-    Unused(line);
+    Unused(level, msg, file, line);
 #endif
     return false;
 }
@@ -128,7 +125,7 @@ static void PPE_DEBUG_SECTION DebugPredicateFailed_(const char* msg, const char 
         return;
 
     if (GIsInAssertion)
-        PPE_THROW_IT(FAssertException(isEnsure ? "Ensure reentrancy !" : "Assert reentrancy !", file, line));
+        PPE_THROW_IT(FAssertException(isEnsure ? "Ensure reentrant !" : "Assert reentrant !", file, line));
 
     GIsInAssertion = true;
 
@@ -268,7 +265,7 @@ NO_INLINE void PPE_DEBUG_SECTION AssertionReleaseFailed(const char* msg, const c
         return;
 
     if (GIsInAssertion)
-        PPE_THROW_IT(FAssertReleaseException("Assert release reentrancy !", file, line));
+        PPE_THROW_IT(FAssertReleaseException("Assert release reentrant !", file, line));
 
     GIsInAssertion = true;
 

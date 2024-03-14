@@ -219,7 +219,7 @@ enum class EPixelFormat : u8 {
     BC2_RGBA8_UNorm,
     BC2_sRGB8_A8,
     BC3_RGBA8_UNorm,
-    BC3_sRGB8,
+    BC3_sRGB8_A8,
     BC4_R8_SNorm,
     BC4_R8_UNorm,
     BC5_RG8_SNorm,
@@ -335,26 +335,32 @@ enum class EImageFlags : u8 {
 ENUM_FLAGS(EImageFlags);
 //----------------------------------------------------------------------------
 enum class EImageUsage : u32 {
-    TransferSrc                 = 1 << 0,   // for all copy operations
-    TransferDst                 = 1 << 1,   // for all copy operations
-    Sampled                     = 1 << 2,   // access in shader as texture
-    Storage                     = 1 << 3,   // access in shader as image
-    ColorAttachment             = 1 << 4,   // color or resolve attachment
-    DepthStencilAttachment      = 1 << 5,   // depth/stencil attachment
-    TransientAttachment         = 1 << 6,   // color, resolve, depth/stencil, input attachment
-    InputAttachment             = 1 << 7,   // input attachment in shader
-    ShadingRate                 = 1 << 8,
-    //FragmentDensityMap        = 1 << 9,   // #TODO: not supported yet
+    BlitSrc                     = 1 << 0,   // for all bliting operations
+    BlitDst                     = 1 << 1,   // for all bliting operations
+    TransferSrc                 = 1 << 2,   // for all transfer operations
+    TransferDst                 = 1 << 3,   // for all transfer operations
+    Sampled                     = 1 << 4,   // access in shader as texture
+    Storage                     = 1 << 5,   // access in shader as image
+    ColorAttachment             = 1 << 6,   // color or resolve attachment
+    DepthStencilAttachment      = 1 << 7,   // depth/stencil attachment
+    TransientAttachment         = 1 << 8,   // color, resolve, depth/stencil, input attachment
+    InputAttachment             = 1 << 9,   // input attachment in shader
+    ShadingRate                 = 1 << 10,
+    //FragmentDensityMap        = 1 << 11,   // #TODO: not supported yet
 
     // special flags for IsSupported() method
-    StorageAtomic               = 1 << 10,  // same as 'Storage', atomic operations on image
-    ColorAttachmentBlend        = 1 << 11,  // same as 'ColorAttachment', blend operations on render target
+    StorageAtomic               = 1 << 11,  // same as 'Storage', atomic operations on image
+    ColorAttachmentBlend        = 1 << 12,  // same as 'ColorAttachment', blend operations on render target
     SampledMinMax               = 1 << 13,  // same as 'Sampled'
 
     Unknown                     = 0,
 };
 ENUM_FLAGS(EImageUsage);
+inline CONSTEXPR EImageUsage EImageUsage_Blit{ EImageUsage::BlitDst | EImageUsage::BlitSrc };
 inline CONSTEXPR EImageUsage EImageUsage_Transfer{ EImageUsage::TransferDst | EImageUsage::TransferSrc };
+inline CONSTEXPR EImageUsage EImageUsage_BlitTransfer{ EImageUsage_Blit | EImageUsage_Transfer };
+inline CONSTEXPR EImageUsage EImageUsage_BlitTransferSrc{ EImageUsage::BlitSrc | EImageUsage::TransferSrc };
+inline CONSTEXPR EImageUsage EImageUsage_BlitTransferDst{ EImageUsage::BlitDst | EImageUsage::TransferDst };
 //----------------------------------------------------------------------------
 enum class EImageAspect : u32 {
     Color                       = 1 << 0,
@@ -506,7 +512,7 @@ inline CONSTEXPR EDebugFlags EDebugFlags_Verbose{
 #if USE_PPE_RHIDEBUG
 inline CONSTEXPR EDebugFlags EDebugFlags_Default = EDebugFlags_Verbose;
 #else
-inline CONSTEXPR EDebugFlags EDebugFlags_Default = EDebugFlags_Unknown;
+inline CONSTEXPR EDebugFlags EDebugFlags_Default = EDebugFlags::Unknown;
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

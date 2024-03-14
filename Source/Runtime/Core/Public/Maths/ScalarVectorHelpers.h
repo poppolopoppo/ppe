@@ -379,10 +379,12 @@ CONSTEXPR auto BilateralLerp(
     const details::TScalarVectorExpr<T, _Dim, D>& p01,
     float f0, float f1) NOEXCEPT {
     return Meta::static_for<_Dim>([&](auto... idx) {
-        return TScalarVector<T, _Dim>(Lerp(
-            Lerp(p00.template Get<idx>(), p01.template Get<idx>(), f1),
-            Lerp(p10.template Get<idx>(), p11.template Get<idx>(), f1),
-            f0)...);
+        return TScalarVector<T, _Dim>(BilateralLerp(
+            p00.template Get<idx>(),
+            p10.template Get<idx>(),
+            p11.template Get<idx>(),
+            p01.template Get<idx>(),
+            f0, f1)...);
     });
 }
 //----------------------------------------------------------------------------

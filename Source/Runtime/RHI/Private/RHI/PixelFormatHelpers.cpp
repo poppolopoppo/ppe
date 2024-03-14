@@ -269,6 +269,64 @@ void EncodeFloatVector_(FRawMemory outp, const FRgba32f& value) NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+size_t FPixelFormatInfo::NumBlocks(const uint3& dimensions) const NOEXCEPT {
+    Assert(AllGreater(dimensions, uint3::Zero));
+
+    const uint2 numBlocks = IntDivCeil(dimensions.xy, BlockDim);
+    return ((static_cast<size_t>(numBlocks.x) * numBlocks.y) * dimensions.z);
+}
+//----------------------------------------------------------------------------
+size_t FPixelFormatInfo::NumBlocks(const uint3& dimensions, u32 numMips, u32 numSlices/* = 1 */) const NOEXCEPT {
+    Assert(numMips > 0);
+    Assert(numSlices > 0);
+    size_t numBlocks = 0;
+
+    for (uint3 mipDim{ dimensions }; numMips > 0; --numMips) {
+        numBlocks += NumBlocks(mipDim);
+        mipDim = NextMipDimensions(mipDim);
+    }
+
+    return (numBlocks * numSlices);
+}
+//----------------------------------------------------------------------------
+FBytesRange FPixelFormatInfo::MipRange(const uint3& dimensions, u32 mipBias, u32 numMips/* = 1 */) const NOEXCEPT {
+    Assert(numMips > 0);
+    FBytesRange mipRange = FBytesRange::Zero();
+
+    uint3 mipDimensions{ dimensions };
+    forrange(mipLevel, 0, mipBias + numMips) {
+        const size_t mipSizeInBytes = SizeInBytes(EImageAspect::Color, mipDimensions);
+
+        if (mipLevel < mipBias)
+            mipRange.First += mipSizeInBytes;
+        else
+            mipRange.Last += mipSizeInBytes;
+
+        mipDimensions = NextMipDimensions(mipDimensions);
+    }
+
+    mipRange.Last += mipRange.First;
+    return mipRange;
+}
+//----------------------------------------------------------------------------
+uint3 FPixelFormatInfo::NextMipDimensions(const uint3& dimensions) NOEXCEPT {
+    Assert_NoAssume(Meta::IsPow2(dimensions.x));
+    Assert_NoAssume(Meta::IsPow2(dimensions.y));
+    Assert_NoAssume(Meta::IsPow2(dimensions.z));
+
+    return Max(dimensions / 2_u32, uint3::One);
+}
+//----------------------------------------------------------------------------
+u32 FPixelFormatInfo::FullMipCount(const uint3& dimensions, const uint2& blockDim) NOEXCEPT {
+    Assert_NoAssume(AllGreater(dimensions, uint3::Zero));
+    Assert_NoAssume(AllGreater(blockDim, uint2::Zero));
+
+    return (FPlatformMaths::FloorLog2(blockDim == uint2::One
+        ? dimensions.MaxComponent()
+        : Max((dimensions.xy / blockDim).MinComponent(), dimensions.z)
+    ) + 1);
+}
+//----------------------------------------------------------------------------
 FPixelFormatEncoding EPixelFormat_Encoding(EPixelFormat format, EImageAspect aspect) NOEXCEPT {
     Unused(aspect);
     switch (format) {
@@ -725,7 +783,7 @@ FPixelFormatEncoding EPixelFormat_Encoding(EPixelFormat format, EImageAspect asp
     case EPixelFormat::BC2_RGBA8_UNorm:
     case EPixelFormat::BC2_sRGB8_A8:
     case EPixelFormat::BC3_RGBA8_UNorm:
-    case EPixelFormat::BC3_sRGB8:
+    case EPixelFormat::BC3_sRGB8_A8:
     case EPixelFormat::BC4_R8_SNorm:
     case EPixelFormat::BC4_R8_UNorm:
     case EPixelFormat::BC5_RG8_SNorm:
@@ -859,7 +917,7 @@ FPixelFormatInfo EPixelFormat_Infos(EPixelFormat fmt) NOEXCEPT {
     case EPixelFormat::BC2_RGBA8_UNorm:             return { fmt,128,   {4,4},  4, { EType::UNorm, Zero } };
     case EPixelFormat::BC2_sRGB8_A8:                return { fmt,128,   {4,4},  4, { EType::UNorm, EType::sRGB } };
     case EPixelFormat::BC3_RGBA8_UNorm:             return { fmt,128,   {4,4},  4, { EType::UNorm, Zero } };
-    case EPixelFormat::BC3_sRGB8:                   return { fmt,128,   {4,4},  3, { EType::UNorm, EType::sRGB } };
+    case EPixelFormat::BC3_sRGB8_A8:                return { fmt,128,   {4,4},  4, { EType::UNorm, EType::sRGB } };
     case EPixelFormat::BC4_R8_SNorm:                return { fmt,64,    {4,4},  1, { EType::SNorm, Zero } };
     case EPixelFormat::BC4_R8_UNorm:                return { fmt,64,    {4,4},  1, { EType::UNorm, Zero } };
     case EPixelFormat::BC5_RG8_SNorm:               return { fmt,128,   {4,4},  2, { EType::SNorm, Zero } };

@@ -7,20 +7,26 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class ETextureCompressionQuality : u8 {
+    High    = 0,
+    Medium,
+    Low,
+
+    Unknown = High,
+};
+//----------------------------------------------------------------------------
 class FTextureCompressionSettings {
 public:
-
+    ETextureCompressionQuality Quality{ Default };
 };
 //----------------------------------------------------------------------------
 class ITextureCompression : Meta::FNonCopyableNorMovable {
 public:
     virtual ~ITextureCompression() = default;
 
-    NODISCARD virtual RHI::EPixelFormat PixelFormat() const NOEXCEPT = 0;
+    NODISCARD virtual RHI::EPixelFormat Format() const NOEXCEPT = 0;
 
-    NODISCARD virtual bool SupportsImageView(RHI::EImageView view) const NOEXCEPT = 0;
-    NODISCARD virtual bool SupportsTextureFormat(ETextureSourceFormat fmt) const NOEXCEPT = 0;
-    NODISCARD virtual bool SupportsTextureSource(const FTextureSourceProperties& properties, const FTextureCompressionSettings& settings) const NOEXCEPT = 0;
+    NODISCARD virtual bool SupportsTextureSource(const FTextureSourceProperties& src, const FTextureCompressionSettings& settings) const NOEXCEPT = 0;
 
     NODISCARD virtual bool CompressTexture(FTexture2D& dst, const FTextureSource& src, const FTextureCompressionSettings& settings) const = 0;
     NODISCARD virtual bool CompressTexture(FTexture2DArray& dst, const FTextureSource& src, const FTextureCompressionSettings& settings) const = 0;

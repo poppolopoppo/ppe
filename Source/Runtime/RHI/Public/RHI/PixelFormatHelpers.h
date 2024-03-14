@@ -4,6 +4,7 @@
 
 #include "RHI/ResourceEnums.h"
 
+#include "Maths/Range.h"
 #include "Meta/Enum.h"
 
 namespace PPE {
@@ -72,7 +73,7 @@ struct FPixelFormatInfo {
     EImageAspect AspectMask{ Default };
     EPixelValueType ValueType{ Default };
     uint2 BlockDim{ 1 };
-    u32 BitsPerBlock0{ 0 }; // color / depth
+    u32 BitsPerBlock0{ 0 }; // color / depth / etc.
     u32 BitsPerBlock1{ 0 }; // stencil
     u32 Channels{ 0 };
 
@@ -89,16 +90,55 @@ struct FPixelFormatInfo {
     CONSTEXPR FPixelFormatInfo(EPixelFormat fmt, const uint2& bppDepthStencil, EPixelValueType type = EPixelValueType_DepthStencil, EImageAspect aspect = EImageAspect_DepthStencil) NOEXCEPT
         : Format(fmt), AspectMask(aspect), ValueType(type), BitsPerBlock0(bppDepthStencil.x), BitsPerBlock1(bppDepthStencil.y)
     {}
+
+    CONSTEXPR bool IsColor() const { return not (ValueType.Types ^ EPixelValueType::DepthStencil); }
+    CONSTEXPR bool IsDepth() const { return (ValueType.Types == EPixelValueType::Depth); }
+    CONSTEXPR bool IsDepthStencil() const { return (ValueType.Types == EPixelValueType::DepthStencil); }
+    CONSTEXPR bool IsStencil() const { return (ValueType.Types == EPixelValueType::Stencil); }
+    CONSTEXPR bool IsSRGB() const { return ValueType.Flags ^ EPixelValueType::sRGB; }
+
+    CONSTEXPR u32 BitsPerBlock(EImageAspect aspect) const {
+        Assert(AspectMask ^ aspect);
+        return (aspect != EImageAspect::Stencil ? BitsPerBlock0 : BitsPerBlock1);
+    }
+    CONSTEXPR u32 BitsPerPixel(EImageAspect aspect) const {
+        return (BitsPerBlock(aspect) / (BlockDim.x * BlockDim.y));
+    }
+
+    PPE_RHI_API size_t NumBlocks(const uint3& dimensions) const NOEXCEPT;
+    PPE_RHI_API size_t NumBlocks(const uint3& dimensions, u32 numMips, u32 numSlices = 1) const NOEXCEPT;
+
+    inline size_t SizeInBytes(EImageAspect aspect, const uint3& dimensions) const {
+        return ((NumBlocks(dimensions) * BitsPerBlock(aspect)) / 8);
+    }
+    inline size_t SizeInBytes(EImageAspect aspect, const uint3& dimensions, u32 numMips, u32 numSlices = 1) const {
+        return ((NumBlocks(dimensions, numMips, numSlices) * BitsPerBlock(aspect)) / 8);
+    }
+
+    PPE_RHI_API FBytesRange MipRange(const uint3& dimensions, u32 mipBias, u32 numMips = 1) const NOEXCEPT;
+
+    inline size_t RowPitch(EImageAspect aspect, const uint3& dimensions) const NOEXCEPT {
+        return SizeInBytes(aspect, { dimensions.x, BlockDim.y, 1 }, 1);
+    }
+    inline size_t SlicePitch(EImageAspect aspect, const uint3& dimensions, u32 numMips) const NOEXCEPT {
+        return SizeInBytes(aspect, dimensions, numMips);
+    }
+
+    inline FBytesRange SliceRange(EImageAspect aspect, const uint3& dimensions, u32 numMips, u32 sliceIndex) const NOEXCEPT {
+        const size_t pitch = SlicePitch(aspect, dimensions, numMips);
+        return { pitch * sliceIndex, pitch * (sliceIndex + 1) };
+    }
+
+    PPE_RHI_API static uint3 NextMipDimensions(const uint3& dimensions) NOEXCEPT;
+    PPE_RHI_API static u32 FullMipCount(const uint3& dimensions, const uint2& blockDim) NOEXCEPT;
+
+    inline u32 FullMipCount(const uint3& dimensions) const { return FullMipCount(dimensions, BlockDim); }
 };
 //----------------------------------------------------------------------------
 PPE_RHI_API FPixelFormatInfo EPixelFormat_Infos(EPixelFormat fmt) NOEXCEPT;
 //----------------------------------------------------------------------------
 inline u32 EPixelFormat_BitsPerPixel(EPixelFormat fmt, EImageAspect aspect) {
-    const auto info = EPixelFormat_Infos(fmt);
-    Assert(info.AspectMask ^ aspect);
-    return (aspect != EImageAspect::Stencil
-        ? info.BitsPerBlock0 / (info.BlockDim.x * info.BlockDim.y)
-        : info.BitsPerBlock1 / (info.BlockDim.x * info.BlockDim.y) );
+    return EPixelFormat_Infos(fmt).BitsPerPixel(aspect);
 }
 //----------------------------------------------------------------------------
 inline EImageAspect EPixelFormat_ToImageAspect(EPixelFormat fmt) {
@@ -112,19 +152,19 @@ inline EImageAspect EPixelFormat_ToImageAspect(EPixelFormat fmt) {
 // IsXXX
 //----------------------------------------------------------------------------
 inline bool EPixelFormat_IsDepth(EPixelFormat fmt) {
-    return (EPixelFormat_Infos(fmt).ValueType.Types == EPixelValueType::Depth);
+    return EPixelFormat_Infos(fmt).IsDepth();
 }
 //----------------------------------------------------------------------------
 inline bool EPixelFormat_IsStencil(EPixelFormat fmt) {
-    return (EPixelFormat_Infos(fmt).ValueType.Types == EPixelValueType::Stencil);
+    return EPixelFormat_Infos(fmt).IsStencil();
 }
 //----------------------------------------------------------------------------
 inline bool EPixelFormat_IsDepthStencil(EPixelFormat fmt) {
-    return (EPixelFormat_Infos(fmt).ValueType.Types == EPixelValueType::DepthStencil);
+    return EPixelFormat_Infos(fmt).IsDepthStencil();
 }
 //----------------------------------------------------------------------------
 inline bool EPixelFormat_IsColor(EPixelFormat fmt) {
-    return not (EPixelFormat_Infos(fmt).ValueType.Types ^ EPixelValueType::DepthStencil);
+    return EPixelFormat_Infos(fmt).IsColor();
 }
 //----------------------------------------------------------------------------
 // HasXXX

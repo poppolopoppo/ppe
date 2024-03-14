@@ -268,6 +268,11 @@ public:
         _frameGraph.reset();
     }
 
+    details::TResourceWrappedId<_RawId> Release() {
+        _frameGraph.reset();
+        return std::move(_resource);
+    }
+
     void Reset(IFrameGraph& fg, details::TResourceWrappedId<_RawId>&& resource) {
         Reset();
 

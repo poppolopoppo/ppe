@@ -30,7 +30,13 @@ public:
         *_internal.LockExclusive() = std::move(*rvalue._internal.LockExclusive());
     }
 
+    FBulkData& operator =(FBulkData&& rvalue) NOEXCEPT {
+        *_internal.LockExclusive() = std::move(*rvalue._internal.LockExclusive());
+        return (*this);
+    }
+
     NODISCARD const u128& Fingerprint() const { return _internal.LockShared()->Fingerprint; }
+    NODISCARD size_t SizeInBytes() const { return _internal.LockShared()->Data.SizeInBytes(); }
     NODISCARD const Meta::TOptional<FFilename>& SourceFile() const { return _internal.LockShared()->SourceFile; }
 
     NODISCARD bool HasPayloads() const { return (not _internal.LockShared()->Payloads.empty()); }
@@ -38,42 +44,19 @@ public:
     NODISCARD PPE_CORE_API FBytesRange RetrievePayload(u32 payloadIndex) const;
 
     PPE_CORE_API void AttachSourceFile(const FFilename& sourceFile);
+    PPE_CORE_API void AttachSourceFile(const Meta::TOptional<FFilename>& optionalSourceFile);
 
-    PPE_CORE_API void Resize_DiscardData(u64 sizeInBytes);
     PPE_CORE_API void Reset();
     PPE_CORE_API void Reset(FBulkData&& rvalue);
+
+    PPE_CORE_API void Resize_DiscardData(u64 sizeInBytes);
+    PPE_CORE_API void TakeOwn(FUniqueBuffer&& data) NOEXCEPT;
 
     NODISCARD PPE_CORE_API FSharedBuffer LockRead() const NOEXCEPT;
     PPE_CORE_API void UnlockRead(FSharedBuffer&& data) const NOEXCEPT;
 
     NODISCARD PPE_CORE_API FUniqueBuffer LockWrite() NOEXCEPT;
     PPE_CORE_API void UnlockWrite(FUniqueBuffer&& data) NOEXCEPT;
-
-    struct FReadScope : Meta::FNonCopyableNorMovable {
-        explicit FReadScope(const FBulkData& bulk)  NOEXCEPT : Bulk(bulk) {
-            Buffer = Bulk.LockRead();
-        }
-
-        ~FReadScope() NOEXCEPT {
-            Bulk.UnlockRead(std::move(Buffer));
-        }
-
-        const FBulkData& Bulk;
-        FSharedBuffer Buffer;
-    };
-
-    struct FWriteScope : Meta::FNonCopyableNorMovable {
-        explicit FWriteScope(FBulkData& bulk) NOEXCEPT : Bulk(bulk) {
-            Buffer = Bulk.LockWrite();
-        }
-
-        ~FWriteScope() NOEXCEPT {
-            Bulk.UnlockWrite(std::move(Buffer));
-        }
-
-        FBulkData& Bulk;
-        FUniqueBuffer Buffer;
-    };
 
 private:
     TThreadSafe<FInternalData, EThreadBarrier::RWDataRaceCheck> _internal;

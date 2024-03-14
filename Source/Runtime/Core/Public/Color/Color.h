@@ -64,9 +64,10 @@ struct FLinearColor {
     CONSTEXPR explicit FLinearColor(Meta::FNoInit) NOEXCEPT {}
     CONSTEXPR FLinearColor(float r, float g, float b, float a = 1.0f) NOEXCEPT : R(r), G(g), B(b), A(a) {}
 
-    PPE_CORE_API FLinearColor(const FColor& color);
-    PPE_CORE_API FLinearColor(const float3& rgb, float a = 1.0f);
-    PPE_CORE_API FLinearColor(const float4& rgba);
+    PPE_CORE_API FLinearColor(const FColor& color) NOEXCEPT;
+    PPE_CORE_API FLinearColor(const float3& rgb, float a = 1.0f) NOEXCEPT;
+    PPE_CORE_API FLinearColor(const float4& rgba) NOEXCEPT;
+    PPE_CORE_API FLinearColor(const float4& rgba, EGammaSpace gamma) NOEXCEPT;
 
     NODISCARD operator const float3&() const { return *reinterpret_cast<const float3*>(this); }
     NODISCARD operator const float4&() const { return *reinterpret_cast<const float4*>(this); }
@@ -74,7 +75,10 @@ struct FLinearColor {
     NODISCARD float& operator [](size_t index) { Assert(index < 4); return (&R)[index]; }
     NODISCARD float operator [](size_t index) const { Assert(index < 4); return (&R)[index]; }
 
-    NODISCARD PPE_CORE_API  FLinearColor Desaturate(float desaturation) const;
+    NODISCARD PPE_CORE_API FLinearColor GammaToLinear(EGammaSpace gamma) const;
+    NODISCARD PPE_CORE_API FLinearColor LinearToGamma(EGammaSpace gamma) const;
+
+    NODISCARD PPE_CORE_API FLinearColor Desaturate(float desaturation) const;
     NODISCARD CONSTEXPR FLinearColor Fade(float alpha) const { return FLinearColor(R, G, B, alpha); }
 
     NODISCARD CONSTEXPR float Luminance() const { return (0.2126f * R + 0.7152f * G + 0.0722f * B); }

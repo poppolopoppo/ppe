@@ -188,11 +188,11 @@ ITaskContext* ImmediateTaskContext() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 ITaskContext* GlobalTaskContext() NOEXCEPT {
-    return FIOThreadPool::Get().GlobalContext();
+    return FGlobalThreadPool::Get().GlobalContext();
 }
 //----------------------------------------------------------------------------
 ITaskContext* IOTaskContext() NOEXCEPT {
-    return FGlobalThreadPool::Get().GlobalContext();
+    return FIOThreadPool::Get().GlobalContext();
 }
 //----------------------------------------------------------------------------
 ITaskContext* HighPriorityTaskContext() NOEXCEPT {

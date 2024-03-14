@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Maths/MathHelpers.h"
+#include "Memory/MemoryView.h"
 #include "Meta/Iterator.h"
 
 namespace PPE {
@@ -92,6 +93,11 @@ struct TRange {
 
     CONSTEXPR static bool Overlaps(T firstA, T lastA, T firstB, T lastB) {
         return TRange{ firstA, lastA }.Overlaps({ firstB, lastB });
+    }
+
+    template <typename U, Meta::TEnableIf<std::is_integral_v<T>>* = nullptr>
+    CONSTEXPR TMemoryView<U> MakeView(TMemoryView<U> view) const {
+        return view.SubRange(checked_cast<size_t>(First), checked_cast<size_t>(Extent()));
     }
 
     CONSTEXPR bool operator ==(const TRange& other) const { return (All((First == other.First) && (Last == other.Last))); }

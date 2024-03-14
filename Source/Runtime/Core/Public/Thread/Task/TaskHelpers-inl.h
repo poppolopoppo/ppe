@@ -5,6 +5,7 @@
 #include "Container/Stack.h"
 #include "HAL/PlatformMisc.h"
 #include "HAL/PlatformProcess.h"
+#include "Maths/RandomGenerator.h"
 #include "Thread/AtomicSpinLock.h"
 #include "Thread/Task/CompletionPort.h"
 
@@ -88,7 +89,7 @@ static void ParallelForEach_(
 
     // fall back to high priority thread pool by default, since we're blocking the current thread
     if (nullptr == context)
-        context = HighPriorityTaskContext();
+        context = GlobalTaskContext();
 
     // less space needed to pass arguments to TFunction<> (debug iterators can be huge)
     const struct loop_t_ {
@@ -114,7 +115,7 @@ static void ParallelForEach_(
     Assert(tasks_remain < worker_count);
 
     // creates tasks for multi-threaded completion
-    STACKLOCAL_STACK(FTaskFunc, tasks, worker_count);
+    VECTORINSITU(Task, FTaskFunc, 32) tasks;
 
     u32 tasks_offset = 0;
     forrange(i, 0, worker_count - 1) {
@@ -122,12 +123,16 @@ static void ParallelForEach_(
         const u32 work_slice = (worker_tasks + (i < tasks_remain ? 1 : 0));
 
         // push a new task for this slice of the loop
-        tasks.Push(FTaskFunc::Bind<&loop_t_::Task>(&loop, tasks_offset, work_slice));
+        tasks.push_back(FTaskFunc::Bind<&loop_t_::Task>(&loop, tasks_offset, work_slice));
         tasks_offset += work_slice;
     }
 
     Assert(tasks_offset + worker_tasks == range_dist);
     FTaskFunc lastTask = FTaskFunc::Bind<&loop_t_::Task>(&loop, tasks_offset, worker_tasks);
+
+    // shuffle tasks to hopefully avoid false-sharing between threads
+    if (tasks.size() > 2)
+        FRandomGenerator{}.Shuffle(tasks.MakeView());
 
     // decide if it's worth to process part of load on the current thread
     if (worker_count < FPlatformMisc::NumCoresWithSMT()) {
@@ -136,7 +141,7 @@ static void ParallelForEach_(
     }
     else {
         // push last slice since we don't busy wait
-        tasks.Push(std::move(lastTask));
+        tasks.push_back(std::move(lastTask));
 
         // blocking wait for end of the loop
         Assert(tasks.size() == tasks.capacity());
@@ -150,7 +155,7 @@ void ParallelForEach(
     _It first, _It last,
     const TFunction<void(_It)>& foreach_it,
     ETaskPriority priority/* = ETaskPriority::Normal */,
-    ITaskContext* context/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    ITaskContext* context/* = nullptr *//* uses FGlobalThreadPool by default */) {
     details::ParallelForEach_(first, last, foreach_it, priority, context);
 }
 //----------------------------------------------------------------------------
@@ -159,7 +164,7 @@ void ParallelForEachValue(
     _It first, _It last,
     const TFunction<void(typename Meta::TIteratorTraits<_It>::value_type)>& foreach_value,
     ETaskPriority priority/* = ETaskPriority::Normal */,
-    ITaskContext* context/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    ITaskContext* context/* = nullptr *//* uses FGlobalThreadPool by default */) {
     details::ParallelForEach_(first, last, foreach_value, priority, context);
 }
 //----------------------------------------------------------------------------
@@ -168,7 +173,7 @@ void ParallelForEachRef(
     _It first, _It last,
     const TFunction<void(typename Meta::TIteratorTraits<_It>::reference)>& foreach_ref,
     ETaskPriority priority/* = ETaskPriority::Normal */,
-    ITaskContext* context/* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    ITaskContext* context/* = nullptr *//* uses FGlobalThreadPool by default */) {
     details::ParallelForEach_(first, last, foreach_ref, priority, context);
 }
 //----------------------------------------------------------------------------

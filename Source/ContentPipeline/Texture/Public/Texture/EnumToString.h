@@ -14,6 +14,9 @@ namespace ContentPipeline {
 PPE_TEXTURE_API FTextWriter& operator <<(FTextWriter& oss, EImageFormat value);
 PPE_TEXTURE_API FWTextWriter& operator <<(FWTextWriter& oss, EImageFormat value);
 //----------------------------------------------------------------------------
+PPE_TEXTURE_API FTextWriter& operator <<(FTextWriter& oss, ETextureMipGeneration value);
+PPE_TEXTURE_API FWTextWriter& operator <<(FWTextWriter& oss, ETextureMipGeneration value);
+//----------------------------------------------------------------------------
 PPE_TEXTURE_API FTextWriter& operator <<(FTextWriter& oss, ETextureSourceCompression value);
 PPE_TEXTURE_API FWTextWriter& operator <<(FWTextWriter& oss, ETextureSourceCompression value);
 //----------------------------------------------------------------------------
@@ -22,6 +25,9 @@ PPE_TEXTURE_API FWTextWriter& operator <<(FWTextWriter& oss, ETextureSourceFlags
 //----------------------------------------------------------------------------
 PPE_TEXTURE_API FTextWriter& operator <<(FTextWriter& oss, ETextureSourceFormat value);
 PPE_TEXTURE_API FWTextWriter& operator <<(FWTextWriter& oss, ETextureSourceFormat value);
+//----------------------------------------------------------------------------
+PPE_TEXTURE_API FTextWriter& operator <<(FTextWriter& oss, ETextureCompressionQuality value);
+PPE_TEXTURE_API FWTextWriter& operator <<(FWTextWriter& oss, ETextureCompressionQuality value);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

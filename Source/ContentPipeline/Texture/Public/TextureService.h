@@ -32,9 +32,9 @@ public: // Interface:
     virtual void RegisterTextureCompression(RHI::EPixelFormat format, ContentPipeline::UTextureCompression&& impl) NOEXCEPT = 0;
 
     NODISCARD virtual ContentPipeline::UTextureCompression TextureCompression(RHI::EPixelFormat format) const NOEXCEPT = 0;
-    NODISCARD virtual ContentPipeline::UTextureCompression TextureCompression(
-        RHI::EPixelFormat format,
-        const ContentPipeline::FTextureSourceProperties& properties,
+    virtual bool TextureCompression(
+        TAppendable<ContentPipeline::UTextureCompression> outTextureCompressions,
+        const ContentPipeline::FTextureSourceProperties& src,
         const ContentPipeline::FTextureCompressionSettings& settings) const NOEXCEPT = 0;
 
 public: // Public helpers:

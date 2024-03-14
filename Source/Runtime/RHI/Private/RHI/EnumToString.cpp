@@ -165,6 +165,8 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
         const auto it = static_cast<EImageUsage>(1u << mask.PopFront_AssumeNotEmpty());
 
         switch (it) {
+        case EImageUsage::BlitSrc: oss << sep << STRING_LITERAL(_Char, "BlitSrc"); break;
+        case EImageUsage::BlitDst: oss << sep << STRING_LITERAL(_Char, "BlitDst"); break;
         case EImageUsage::TransferSrc: oss << sep << STRING_LITERAL(_Char, "TransferSrc"); break;
         case EImageUsage::TransferDst: oss << sep << STRING_LITERAL(_Char, "TransferDst"); break;
         case EImageUsage::Sampled: oss << sep << STRING_LITERAL(_Char, "Sampled"); break;
@@ -360,7 +362,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
     case EPixelFormat::BC2_RGBA8_UNorm: return oss << STRING_LITERAL(_Char, "BC2_RGBA8_UNorm");
     case EPixelFormat::BC2_sRGB8_A8: return oss << STRING_LITERAL(_Char, "BC2_sRGB8_A8");
     case EPixelFormat::BC3_RGBA8_UNorm: return oss << STRING_LITERAL(_Char, "BC3_RGBA8_UNorm");
-    case EPixelFormat::BC3_sRGB8: return oss << STRING_LITERAL(_Char, "BC3_sRGB8");
+    case EPixelFormat::BC3_sRGB8_A8: return oss << STRING_LITERAL(_Char, "BC3_sRGB8_A8");
     case EPixelFormat::BC4_R8_SNorm: return oss << STRING_LITERAL(_Char, "BC4_R8_SNorm");
     case EPixelFormat::BC4_R8_UNorm: return oss << STRING_LITERAL(_Char, "BC4_R8_UNorm");
     case EPixelFormat::BC5_RG8_SNorm: return oss << STRING_LITERAL(_Char, "BC5_RG8_SNorm");

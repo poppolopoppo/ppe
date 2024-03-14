@@ -35,7 +35,7 @@ void ParallelFor(
     size_t first, size_t last,
     const TFunction<void(size_t)>& foreach,
     ETaskPriority priority /* = ETaskPriority::Normal */,
-    ITaskContext* context /* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    ITaskContext* context /* = nullptr *//* uses FGlobalThreadPool by default */) {
     return ParallelForEachValue(
         MakeCountingIterator(first),
         MakeCountingIterator(last),
@@ -46,7 +46,7 @@ int ParallelSum(
     size_t first, size_t last,
     const TFunction<int(size_t)>& sum,
     ETaskPriority priority /* = ETaskPriority::Normal */,
-    ITaskContext* context /* = nullptr *//* uses FHighPriorityThreadPool by default */) {
+    ITaskContext* context /* = nullptr *//* uses FGlobalThreadPool by default */) {
     std::atomic<int> total{ 0 };
     ParallelForEachValue(
         MakeCountingIterator(first),

@@ -54,11 +54,11 @@ enum class ETextureSourceCompression : u8 {
 // RTTI_ENUM_HEADER(PPE_TEXTURE_API, ETextureSourceCompression);
 //----------------------------------------------------------------------------
 enum class ETextureSourceFlags : u8 {
-    HDR                 = 1 << 0,
-    LongLatCubemap      = 1 << 1,
-    PreMultipliedAlpha  = 1 << 2,
-    SRGB                = 1 << 3,
-    Tiling              = 1 << 4,
+    HDR                     = 1 << 0,
+    LongLatCubemap          = 1 << 1,
+    MaskedAlpha             = 1 << 2,
+    PreMultipliedAlpha      = 1 << 3,
+    Tilable                 = 1 << 4,
 
     Unknown = 0,
 };
@@ -86,7 +86,7 @@ enum class ETextureSourceFormat : u8 {
 };
 // RTTI_ENUM_HEADER(PPE_TEXTURE_API, ETextureSourceFormat);
 //----------------------------------------------------------------------------
-CONSTEXPR u32 ETextureSourceFormat_BytesPerPixel(ETextureSourceFormat fmt) {
+NODISCARD CONSTEXPR u32 ETextureSourceFormat_BytesPerPixel(ETextureSourceFormat fmt) {
     Assert(fmt < ETextureSourceFormat::_Last);
     switch (fmt) {
     case ETextureSourceFormat::G8:      return 1;
@@ -111,23 +111,23 @@ CONSTEXPR u32 ETextureSourceFormat_BytesPerPixel(ETextureSourceFormat fmt) {
     return 0;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR size_t ETextureSourceFormat_SizeInBytes(ETextureSourceFormat fmt, const uint3& dimensions) {
+NODISCARD inline CONSTEXPR size_t ETextureSourceFormat_SizeInBytes(ETextureSourceFormat fmt, const uint3& dimensions) {
     const u32 bytesPerPixel = ETextureSourceFormat_BytesPerPixel(fmt);
     return (bytesPerPixel * static_cast<size_t>(dimensions.x) * static_cast<size_t>(dimensions.y) * static_cast<size_t>(dimensions.z));
 }
 //----------------------------------------------------------------------------
-PPE_TEXTURE_API size_t ETextureSourceFormat_SizeInBytes(
+NODISCARD PPE_TEXTURE_API size_t ETextureSourceFormat_SizeInBytes(
     ETextureSourceFormat fmt,
     const uint3& dimensions,
     u32 numMips,
     u32 numSlices = 1) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_TEXTURE_API FBytesRange ETextureSourceFormat_MipRange(
+NODISCARD PPE_TEXTURE_API FBytesRange ETextureSourceFormat_MipRange(
     ETextureSourceFormat fmt,
     const uint3& dimensions,
     u32 mipBias, u32 numMips = 1) NOEXCEPT;
 //----------------------------------------------------------------------------
-inline FBytesRange ETextureSourceFormat_SliceRange(
+NODISCARD inline FBytesRange ETextureSourceFormat_SliceRange(
     ETextureSourceFormat fmt,
     const uint3& dimensions,
     u32 numMips,
@@ -136,7 +136,9 @@ inline FBytesRange ETextureSourceFormat_SliceRange(
     return { strideInBytes * sliceIndex, strideInBytes * (sliceIndex + 1) };
 }
 //----------------------------------------------------------------------------
-CONSTEXPR u32 ETextureSourceFormat_Components(ETextureSourceFormat fmt) {
+NODISCARD PPE_TEXTURE_API ETextureColorMask ETextureSourceFormat_ColorMask(ETextureSourceFormat fmt) NOEXCEPT;
+//----------------------------------------------------------------------------
+NODISCARD inline CONSTEXPR u32 ETextureSourceFormat_Components(ETextureSourceFormat fmt) {
     Assert(fmt < ETextureSourceFormat::_Last);
     switch (fmt) {
     case ETextureSourceFormat::G8:      return 1;
@@ -161,7 +163,57 @@ CONSTEXPR u32 ETextureSourceFormat_Components(ETextureSourceFormat fmt) {
     return 0;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR bool ETextureSourceCompression_IsFloat(ETextureSourceFormat fmt) {
+NODISCARD inline CONSTEXPR bool ETextureSourceCompression_IsNorm8(ETextureSourceFormat fmt) {
+    Assert(fmt < ETextureSourceFormat::_Last);
+    switch (fmt) {
+    case ETextureSourceFormat::G8:      return true;
+    case ETextureSourceFormat::G16:     return false;
+    case ETextureSourceFormat::RA8:     return true;
+    case ETextureSourceFormat::RG8:     return true;
+    case ETextureSourceFormat::R16f:    return false;
+    case ETextureSourceFormat::RA16:    return false;
+    case ETextureSourceFormat::RG16:    return false;
+    case ETextureSourceFormat::RGBA8:   return true;
+    case ETextureSourceFormat::BGRA8:   return true;
+    case ETextureSourceFormat::BGRE8:   return false;
+    case ETextureSourceFormat::RGBA16:  return false;
+    case ETextureSourceFormat::RGBA16f: return false;
+    case ETextureSourceFormat::RGBA32f: return false;
+
+    case ETextureSourceFormat::Unknown:
+    case ETextureSourceFormat::_Last:
+        AssertNotReached();
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+NODISCARD inline CONSTEXPR bool ETextureSourceCompression_IsShortInt(ETextureSourceFormat fmt) {
+    Assert(fmt < ETextureSourceFormat::_Last);
+    switch (fmt) {
+    case ETextureSourceFormat::G8:      return false;
+    case ETextureSourceFormat::G16:     return true;
+    case ETextureSourceFormat::RA8:     return false;
+    case ETextureSourceFormat::RG8:     return false;
+    case ETextureSourceFormat::R16f:    return false;
+    case ETextureSourceFormat::RA16:    return true;
+    case ETextureSourceFormat::RG16:    return true;
+    case ETextureSourceFormat::RGBA8:   return false;
+    case ETextureSourceFormat::BGRA8:   return false;
+    case ETextureSourceFormat::BGRE8:   return false;
+    case ETextureSourceFormat::RGBA16:  return true;
+    case ETextureSourceFormat::RGBA16f: return false;
+    case ETextureSourceFormat::RGBA32f: return false;
+
+    case ETextureSourceFormat::Unknown:
+    case ETextureSourceFormat::_Last:
+        AssertNotReached();
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
+NODISCARD inline CONSTEXPR bool ETextureSourceCompression_IsFloat(ETextureSourceFormat fmt) {
     Assert(fmt < ETextureSourceFormat::_Last);
     switch (fmt) {
     case ETextureSourceFormat::G8:      return false;
@@ -175,7 +227,7 @@ CONSTEXPR bool ETextureSourceCompression_IsFloat(ETextureSourceFormat fmt) {
     case ETextureSourceFormat::BGRA8:   return false;
     case ETextureSourceFormat::BGRE8:   return false;
     case ETextureSourceFormat::RGBA16:  return false;
-    case ETextureSourceFormat::RGBA16f: return false;
+    case ETextureSourceFormat::RGBA16f: return true;
     case ETextureSourceFormat::RGBA32f: return true;
 
     case ETextureSourceFormat::Unknown:
@@ -186,7 +238,7 @@ CONSTEXPR bool ETextureSourceCompression_IsFloat(ETextureSourceFormat fmt) {
     return false;
 }
 //----------------------------------------------------------------------------
-CONSTEXPR bool ETextureSourceFormat_CanCompressWithJPEG(ETextureSourceFormat fmt) {
+NODISCARD inline CONSTEXPR bool ETextureSourceFormat_CanCompressWithJPEG(ETextureSourceFormat fmt) {
     switch (fmt) {
     case ETextureSourceFormat::BGRA8:
         return true;
@@ -195,7 +247,7 @@ CONSTEXPR bool ETextureSourceFormat_CanCompressWithJPEG(ETextureSourceFormat fmt
     }
 }
 //----------------------------------------------------------------------------
-CONSTEXPR bool ETextureSourceFormat_CanCompressWithPNG(ETextureSourceFormat fmt) {
+NODISCARD inline CONSTEXPR bool ETextureSourceFormat_CanCompressWithPNG(ETextureSourceFormat fmt) {
     switch (fmt) {
     case ETextureSourceFormat::G8:
     case ETextureSourceFormat::G16:
@@ -212,7 +264,7 @@ CONSTEXPR bool ETextureSourceFormat_CanCompressWithPNG(ETextureSourceFormat fmt)
     }
 }
 //----------------------------------------------------------------------------
-CONSTEXPR bool ETextureSourceFormat_CanHoldHDR(ETextureSourceFormat fmt) {
+NODISCARD inline CONSTEXPR bool ETextureSourceFormat_CanHoldHDR(ETextureSourceFormat fmt) {
     switch (fmt) {
     case ETextureSourceFormat::BGRE8:
     case ETextureSourceFormat::RGBA16f:

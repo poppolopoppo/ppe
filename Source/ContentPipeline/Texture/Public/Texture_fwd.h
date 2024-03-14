@@ -16,6 +16,7 @@
 #include "Memory/InSituPtr.h"
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
+#include "Meta/StronglyTyped.h"
 
 namespace PPE {
 FWD_INTEFARCE_UNIQUEPTR(TextureService);
@@ -34,10 +35,14 @@ enum class ETextureSourceFormat : u8;
 class FTextureSourceProperties;
 FWD_REFPTR(TextureSource);
 //----------------------------------------------------------------------------
+enum class ETextureCompressionQuality : u8;
 class FTextureCompressionSettings;
 FWD_INTEFARCE_INSITUPTR(TextureCompression);
 //----------------------------------------------------------------------------
-using FTextureGroupGuid = u128;
+enum class ETextureMipGeneration : u8;
+class FTextureGeneration;
+//----------------------------------------------------------------------------
+PPE_STRONGLYTYPED_NUMERIC_DEF(u8, FTextureGroupId);
 //----------------------------------------------------------------------------
 FWD_REFPTR(Texture);
 FWD_REFPTR(Texture2D);

@@ -8,12 +8,12 @@
 #include "Meta/Optional.h"
 
 namespace PPE {
-class FUniqueBuffer;
+class FBulkData;
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using FTextureImporterResult = Meta::TOptional<FUniqueBuffer>;
+using FTextureImporterResult = Meta::TOptional<FBulkData>;
 //----------------------------------------------------------------------------
 // Should be state-less
 class IImageFormat : Meta::FNonCopyableNorMovable {

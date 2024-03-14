@@ -2,6 +2,8 @@
 
 #include "Texture/EnumToString.h"
 
+#include "Texture/TextureCompression.h"
+#include "Texture/TextureGeneration.h"
 #include "Texture/TextureEnums.h"
 
 #include "IO/TextWriter.h"
@@ -33,6 +35,51 @@ static TBasicTextWriter<_Char>& EnumToString_(TBasicTextWriter<_Char>& oss, EIma
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
+static TBasicTextWriter<_Char>& EnumToString_(TBasicTextWriter<_Char>& oss, ETextureMipGeneration value) {
+    switch (value) {
+    case ETextureMipGeneration::Default:
+        return oss << STRING_LITERAL(_Char, "Default");
+    case ETextureMipGeneration::Box:
+        return oss << STRING_LITERAL(_Char, "Box");
+    case ETextureMipGeneration::CubicSpine:
+        return oss << STRING_LITERAL(_Char, "CubicSpine");
+    case ETextureMipGeneration::CatmullRom:
+        return oss << STRING_LITERAL(_Char, "CatmullRom");
+    case ETextureMipGeneration::MitchellNetrevalli:
+        return oss << STRING_LITERAL(_Char, "MitchellNetrevalli");
+    case ETextureMipGeneration::PointSample:
+        return oss << STRING_LITERAL(_Char, "PointSample");
+    case ETextureMipGeneration::GaussianBlur3:
+        return oss << STRING_LITERAL(_Char, "GaussianBlur3");
+    case ETextureMipGeneration::GaussianBlur5:
+        return oss << STRING_LITERAL(_Char, "GaussianBlur5");
+    case ETextureMipGeneration::GaussianBlur7:
+        return oss << STRING_LITERAL(_Char, "GaussianBlur7");
+    case ETextureMipGeneration::GaussianBlur9:
+        return oss << STRING_LITERAL(_Char, "GaussianBlur9");
+    case ETextureMipGeneration::ContrastAdaptiveSharpen1:
+        return oss << STRING_LITERAL(_Char, "ContrastAdaptiveSharpen1");
+    case ETextureMipGeneration::ContrastAdaptiveSharpen2:
+        return oss << STRING_LITERAL(_Char, "ContrastAdaptiveSharpen2");
+    case ETextureMipGeneration::ContrastAdaptiveSharpen3:
+        return oss << STRING_LITERAL(_Char, "ContrastAdaptiveSharpen3");
+    case ETextureMipGeneration::ContrastAdaptiveSharpen4:
+        return oss << STRING_LITERAL(_Char, "ContrastAdaptiveSharpen4");
+    case ETextureMipGeneration::ContrastAdaptiveSharpen5:
+        return oss << STRING_LITERAL(_Char, "ContrastAdaptiveSharpen5");
+    case ETextureMipGeneration::ContrastAdaptiveSharpen6:
+        return oss << STRING_LITERAL(_Char, "ContrastAdaptiveSharpen6");
+    case ETextureMipGeneration::ContrastAdaptiveSharpen7:
+        return oss << STRING_LITERAL(_Char, "ContrastAdaptiveSharpen7");
+    case ETextureMipGeneration::ContrastAdaptiveSharpen8:
+        return oss << STRING_LITERAL(_Char, "ContrastAdaptiveSharpen8");
+    case ETextureMipGeneration::ContrastAdaptiveSharpen9:
+        return oss << STRING_LITERAL(_Char, "ContrastAdaptiveSharpen9");
+    }
+    return oss;
+}
+//----------------------------------------------------------------------------
+template <typename _Char>
 static TBasicTextWriter<_Char>& EnumToString_(TBasicTextWriter<_Char>& oss, ETextureSourceCompression value) {
     switch (value) {
     case ETextureSourceCompression::None:
@@ -51,12 +98,12 @@ static TBasicTextWriter<_Char>& EnumToString_(TBasicTextWriter<_Char>& oss, ETex
         oss << STRING_LITERAL(_Char, "HDR");
     if (value ^ ETextureSourceFlags::LongLatCubemap)
         oss << STRING_LITERAL(_Char, "LongLatCubemap");
+    if (value ^ ETextureSourceFlags::MaskedAlpha)
+        oss << STRING_LITERAL(_Char, "MaskedAlpha");
     if (value ^ ETextureSourceFlags::PreMultipliedAlpha)
         oss << STRING_LITERAL(_Char, "PreMultipliedAlpha");
-    if (value ^ ETextureSourceFlags::SRGB)
-        oss << STRING_LITERAL(_Char, "sRGB");
-    if (value ^ ETextureSourceFlags::Tiling)
-        oss << STRING_LITERAL(_Char, "Tiling");
+    if (value ^ ETextureSourceFlags::Tilable)
+        oss << STRING_LITERAL(_Char, "Tilable");
     if (value == ETextureSourceFlags::Unknown)
         oss << STRING_LITERAL(_Char, "UNKNOWN");
     return oss;
@@ -100,6 +147,19 @@ static TBasicTextWriter<_Char>& EnumToString_(TBasicTextWriter<_Char>& oss, ETex
     return oss;
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+static TBasicTextWriter<_Char>& EnumToString_(TBasicTextWriter<_Char>& oss, ETextureCompressionQuality value) {
+    switch (value) {
+    case ETextureCompressionQuality::High:
+        return oss << STRING_LITERAL(_Char, "High");
+    case ETextureCompressionQuality::Medium:
+        return oss << STRING_LITERAL(_Char, "Medium");
+    case ETextureCompressionQuality::Low:
+        return oss << STRING_LITERAL(_Char, "Low");
+    }
+    AssertNotReached();
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -109,6 +169,14 @@ FTextWriter& operator <<(FTextWriter& oss, EImageFormat value) {
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, EImageFormat value) {
+    return EnumToString_(oss, value);
+}
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, ETextureMipGeneration value) {
+    return EnumToString_(oss, value);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, ETextureMipGeneration value) {
     return EnumToString_(oss, value);
 }
 //----------------------------------------------------------------------------
@@ -133,6 +201,14 @@ FTextWriter& operator <<(FTextWriter& oss, ETextureSourceFormat value) {
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, ETextureSourceFormat value) {
+    return EnumToString_(oss, value);
+}
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, ETextureCompressionQuality value) {
+    return EnumToString_(oss, value);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& oss, ETextureCompressionQuality value) {
     return EnumToString_(oss, value);
 }
 //----------------------------------------------------------------------------

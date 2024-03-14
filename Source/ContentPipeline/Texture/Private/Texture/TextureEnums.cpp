@@ -41,7 +41,7 @@ namespace ContentPipeline {
 // RTTI_ENUM_VALUE(LongLatCubemap)
 // RTTI_ENUM_VALUE(PreMultipliedAlpha)
 // RTTI_ENUM_VALUE(SRGB)
-// RTTI_ENUM_VALUE(Tiling)
+// RTTI_ENUM_VALUE(Tilable)
 // RTTI_ENUM_VALUE(Unknown)
 // RTTI_ENUM_END()
 //----------------------------------------------------------------------------
@@ -85,6 +85,31 @@ EImageFormat EImageFormat_FromExtname(const FExtname& value) NOEXCEPT {
     if (value == FFS::Hdr()) return EImageFormat::HDR;
 
     return EImageFormat::Unknown;
+}
+//----------------------------------------------------------------------------
+ETextureColorMask ETextureSourceFormat_ColorMask(ETextureSourceFormat fmt) NOEXCEPT {
+    Assert(fmt < ETextureSourceFormat::_Last);
+    switch (fmt) {
+    case ETextureSourceFormat::G8:      return ETextureColorMask::G;
+    case ETextureSourceFormat::G16:     return ETextureColorMask::G;
+    case ETextureSourceFormat::R16f:    return ETextureColorMask::R;
+    case ETextureSourceFormat::RA8:     return ETextureColorMask::RA;
+    case ETextureSourceFormat::RG8:     return ETextureColorMask::R|ETextureColorMask::G;
+    case ETextureSourceFormat::RA16:    return ETextureColorMask::RA;
+    case ETextureSourceFormat::RG16:    return ETextureColorMask::R|ETextureColorMask::G;
+    case ETextureSourceFormat::RGBA8:   return ETextureColorMask::RGB;
+    case ETextureSourceFormat::BGRA8:   return ETextureColorMask::RGBA;
+    case ETextureSourceFormat::BGRE8:   return ETextureColorMask::RGBA;
+    case ETextureSourceFormat::RGBA16:  return ETextureColorMask::RGBA;
+    case ETextureSourceFormat::RGBA16f: return ETextureColorMask::RGBA;
+    case ETextureSourceFormat::RGBA32f: return ETextureColorMask::RGBA;
+
+    case ETextureSourceFormat::Unknown:
+    case ETextureSourceFormat::_Last:
+        AssertNotReached();
+    }
+
+    return ETextureColorMask::Unknown;
 }
 //----------------------------------------------------------------------------
 FBytesRange ETextureSourceFormat_MipRange(

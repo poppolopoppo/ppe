@@ -6,6 +6,11 @@
 #include "Texture/TextureCompression.h"
 #include "Texture/TextureEnums.h"
 #include "Texture/TextureSource.h"
+
+#include "Texture/Texture.h"
+
+#include "Texture/Compression/PassthroughCompression.h"
+#include "Texture/Compression/STBDxtCompression.h"
 #include "Texture/Image/STBImageFormat.h"
 
 #include "RHI/ResourceEnums.h"
@@ -30,11 +35,35 @@ public:
     FDefaultTextureService_()
     // register default image formats here:
     :   _imageFormats({
-            { EImageFormat::PNG, UImageFormat::Make<FSTBImagePNG>() },
-            { EImageFormat::BMP, UImageFormat::Make<FSTBImageBMP>() },
-            { EImageFormat::TGA, UImageFormat::Make<FSTBImageTGA>() },
-            { EImageFormat::JPG, UImageFormat::Make<FSTBImageJPG>() },
-            { EImageFormat::HDR, UImageFormat::Make<FSTBImageHDR>() },
+            // common DCC image formats
+            { EImageFormat::PNG, UImageFormat::Make<FSTBImage_PNG>() },
+            { EImageFormat::BMP, UImageFormat::Make<FSTBImage_BMP>() },
+            { EImageFormat::TGA, UImageFormat::Make<FSTBImage_TGA>() },
+            { EImageFormat::JPG, UImageFormat::Make<FSTBImage_JPG>() },
+            { EImageFormat::HDR, UImageFormat::Make<FSTBImage_HDR>() },
+        })
+    // register default texture compressions here:
+    ,   _textureCompressions({
+        // DXT block compression
+            { RHI::EPixelFormat::BC1_RGB8_UNorm,    UTextureCompression::Make<FSTBDxtCompression_BC1_RGB8_UNorm>() },
+            { RHI::EPixelFormat::BC1_sRGB8,         UTextureCompression::Make<FSTBDxtCompression_BC1_sRGB8>() },
+            { RHI::EPixelFormat::BC3_RGBA8_UNorm,   UTextureCompression::Make<FSTBDxtCompression_BC3_RGBA8_UNorm>() },
+            { RHI::EPixelFormat::BC3_sRGB8_A8,      UTextureCompression::Make<FSTBDxtCompression_BC3_sRGB8_A8>() },
+            { RHI::EPixelFormat::BC4_R8_UNorm,      UTextureCompression::Make<FSTBDxtCompression_BC4_R8_UNorm>() },
+            { RHI::EPixelFormat::BC5_RG8_SNorm,     UTextureCompression::Make<FSTBDxtCompression_BC5_RG8_SNorm>() },
+            // uncompressed
+            { RHI::EPixelFormat::BGRA8_UNorm,       UTextureCompression::Make<FPassthroughCompression_BGRA8_UNorm>() },
+            { RHI::EPixelFormat::sBGR8_A8,          UTextureCompression::Make<FPassthroughCompression_sBGR8_A8>() },
+            { RHI::EPixelFormat::R16_UNorm,         UTextureCompression::Make<FPassthroughCompression_R16_UNorm>() },
+            { RHI::EPixelFormat::R8_UNorm,          UTextureCompression::Make<FPassthroughCompression_R8_UNorm>() },
+            { RHI::EPixelFormat::R16f,              UTextureCompression::Make<FPassthroughCompression_R16f>() },
+            { RHI::EPixelFormat::RG16_UNorm,        UTextureCompression::Make<FPassthroughCompression_RG16_UNorm>() },
+            { RHI::EPixelFormat::RG8_UNorm,         UTextureCompression::Make<FPassthroughCompression_RG8_UNorm>() },
+            { RHI::EPixelFormat::RGBA16_UNorm,      UTextureCompression::Make<FPassthroughCompression_RGBA16_UNorm>() },
+            { RHI::EPixelFormat::RGBA16f,           UTextureCompression::Make<FPassthroughCompression_RGBA16f>() },
+            { RHI::EPixelFormat::RGBA32f,           UTextureCompression::Make<FPassthroughCompression_RGBA32f>() },
+            { RHI::EPixelFormat::RGBA8_UNorm,       UTextureCompression::Make<FPassthroughCompression_RGBA8_UNorm>() },
+            { RHI::EPixelFormat::sRGB8_A8,          UTextureCompression::Make<FPassthroughCompression_sRGB8_A8>() },
         })
     {}
 
@@ -88,7 +117,7 @@ public: // ITextureService
 
     virtual void RegisterTextureCompression(RHI::EPixelFormat format, UTextureCompression&& impl) NOEXCEPT override {
         Assert_NoAssume(format != RHI::EPixelFormat::Unknown);
-        Assert_NoAssume(impl->PixelFormat() == format);
+        Assert_NoAssume(impl->Format() == format);
         _textureCompressions.LockExclusive()->insert({ format, std::move(impl) });
     }
 
@@ -101,17 +130,21 @@ public: // ITextureService
         return Default;
     }
 
-    NODISCARD virtual UTextureCompression TextureCompression(
-        RHI::EPixelFormat format,
-        const FTextureSourceProperties& properties,
+    NODISCARD virtual bool TextureCompression(
+        TAppendable<UTextureCompression> outTextureCompressions,
+        const FTextureSourceProperties& src,
         const FTextureCompressionSettings& settings) const NOEXCEPT override {
         const auto shared = _textureCompressions.LockShared();
 
-        forrange(it, shared->find(format), shared->end())
-            if (it->second->SupportsTextureSource(properties, settings))
-                return it->second;
+        bool found = false;
+        for (const auto& it : *shared) {
+            if (it.second->SupportsTextureSource(src, settings)) {
+                found = true;
+                outTextureCompressions.emplace_back(it.second);
+            }
+        }
 
-        return Default;
+        return found;
     }
 
 private:
@@ -121,6 +154,8 @@ private:
 //----------------------------------------------------------------------------
 template <FTextureImporterResult (IImageFormat::*_ImportTexture)(FTextureSourceProperties*, IStreamReader&) const>
 static Meta::TOptional<FTextureSource> ImportTextureSourceFromFile_(const ITextureService& textures, const FFilename& sourceFile) {
+    MEMORYDOMAIN_THREAD_SCOPE(Texture);
+
     const UImageFormat imageFormat = textures.ImageFormat(sourceFile.Extname());
     PPE_LOG_CHECKEX(Texture, Meta::TOptional<FTextureSource>{}, imageFormat.Valid());
 
@@ -129,9 +164,10 @@ static Meta::TOptional<FTextureSource> ImportTextureSourceFromFile_(const ITextu
 
     FTextureSourceProperties sourceProperties;
     FTextureImporterResult importerResult = (*imageFormat.*_ImportTexture)(&sourceProperties, *input);
-
     if (not importerResult)
         return Meta::TOptional<FTextureSource>{};
+
+    importerResult->AttachSourceFile(sourceFile);
 
     FTextureSource sourceData;
     sourceData.Construct(sourceProperties, std::move(importerResult));
@@ -140,7 +176,7 @@ static Meta::TOptional<FTextureSource> ImportTextureSourceFromFile_(const ITextu
         {"Width", sourceData.Width()},
         {"Height", sourceData.Height()},
         {"Format", ToString(sourceData.Format())},
-        {"GammaSpace", ToString(sourceData.GammaSpace())},
+        {"Gamma", ToString(sourceData.Gamma())},
         {"SourceFile", ToString(sourceFile)},
     });
 
@@ -149,6 +185,8 @@ static Meta::TOptional<FTextureSource> ImportTextureSourceFromFile_(const ITextu
 //----------------------------------------------------------------------------
 template <bool (IImageFormat::* _ExportTexture)(IStreamWriter*, const FTextureSourceProperties&, const FRawMemoryConst&) const>
 static bool ExportTextureToFile_(const ITextureService& textures, const FFilename& sourceFile, const FTextureSourceProperties& properties, const FRawMemoryConst& bulk) {
+    MEMORYDOMAIN_THREAD_SCOPE(Texture);
+
     const UImageFormat imageFormat = textures.ImageFormat(sourceFile.Extname());
     PPE_LOG_CHECK(Texture, imageFormat.Valid());
 

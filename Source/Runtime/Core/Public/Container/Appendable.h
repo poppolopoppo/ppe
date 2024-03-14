@@ -2,6 +2,8 @@
 
 #include "Core_fwd.h"
 
+#include "Misc/Function_fwd.h"
+
 namespace PPE {
 template <typename T, bool _IsPod>
 class TStack;
@@ -91,6 +93,22 @@ template <typename T, typename _Allocator>
 TAppendable<T> MakeAppendable(TVector<T, _Allocator>& vector) {
     return { &vector, [](void* userData, T&& rvalue) NOEXCEPT {
         static_cast<TVector<T, _Allocator>*>(userData)->push_back(std::move(rvalue));
+    } };
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Lambda,
+    decltype(std::declval<_Lambda&>()(std::declval<T&&>()))* = nullptr >
+TAppendable<T> MakeAppendable(_Lambda& lambda) {
+    return { &lambda, [](void* userData, T&& rvalue) NOEXCEPT {
+        (*static_cast<_Lambda*>(userData))(std::move(rvalue));
+    } };
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Lambda,
+    decltype(std::declval<const _Lambda&>()(std::declval<T&&>()))* = nullptr >
+TAppendable<T> MakeAppendable(const _Lambda& lambda) {
+    return { const_cast<_Lambda*>(&lambda), [](void* userData, T&& rvalue) NOEXCEPT {
+        (*static_cast<const _Lambda*>(userData))(std::move(rvalue));
     } };
 }
 //----------------------------------------------------------------------------

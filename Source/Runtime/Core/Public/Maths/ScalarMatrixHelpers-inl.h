@@ -575,7 +575,7 @@ TScalarMatrix<T, _Height, _Width> InvertTranspose(const TScalarMatrix<T, _Width,
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-TScalarMatrix<T, 4, 4> MakeBillboardMatrix(  const TScalarVector<T, 3>& objectPosition,
+TScalarMatrix<T, 4, 4> MakeBillboardMatrix( const TScalarVector<T, 3>& objectPosition,
                                             const TScalarVector<T, 3>& cameraPosition,
                                             const TScalarVector<T, 3>& cameraUpVector,
                                             const TScalarVector<T, 3>& cemaraForward) {
@@ -833,7 +833,7 @@ TScalarMatrix<T, 4, 4> MakeReflectionMatrix(const FPlane& plane) {
 /// W component is 1, the light is a point light.
 template <typename T>
 TScalarMatrix<T, 4, 4> MakeShadowMatrix(const TScalarVector<T, 4>& light, const FPlane& plane) {
-    T dot = (plane.Normal().x * light.x) + (plane.Normal().y * light.y) + (plane.Normal().z * light.z) + (plane.D() * light.W);
+    T dot = (plane.Normal().x * light.x) + (plane.Normal().y * light.y) + (plane.Normal().z * light.z) + (plane.D() * light.w);
     T x = -plane.Normal().x;
     T y = -plane.Normal().y;
     T z = -plane.Normal().z;
@@ -852,10 +852,10 @@ TScalarMatrix<T, 4, 4> MakeShadowMatrix(const TScalarVector<T, 4>& light, const 
     result._23() = y * light.z;
     result._33() = (z * light.z) + dot;
     result._43() = d * light.z;
-    result._14() = x * light.W;
-    result._24() = y * light.W;
-    result._34() = z * light.W;
-    result._44() = (d * light.W) + dot;
+    result._14() = x * light.w;
+    result._24() = y * light.w;
+    result._34() = z * light.w;
+    result._44() = (d * light.w) + dot;
 
     return result;
 }

@@ -63,12 +63,7 @@ NODISCARD static bool STBImageInitSourceProperties_(
     outProperties->Format = format;
     outProperties->ImageView = imageView;
     outProperties->ColorMask = colorMask;
-    outProperties->GammaSpace = EGammaSpace::sRGB;
-
-    if (outProperties->IsHDR())
-        outProperties->GammaSpace = EGammaSpace::Linear;
-    else
-        outProperties->Flags |= ETextureSourceFlags::SRGB;
+    outProperties->Gamma = outProperties->IsHDR() ? EGammaSpace::Linear : EGammaSpace::sRGB;
 
     const auto fillNumberOfVerticalSlices = [&](u32* outSlices) -> bool {
         PPE_LOG_CHECK(Texture, (dimensions.y % dimensions.x) == 0);
@@ -194,7 +189,10 @@ NODISCARD static FTextureImporterResult STBImageLoadFromStream_(
         return FTextureImporterResult{};
     }
 
-    return FUniqueBuffer::TakeOwn(stbi_data, outProperties->SizeInBytes(), &stbi_image_free);
+    FUniqueBuffer textureBuffer = FUniqueBuffer::TakeOwn(stbi_data, outProperties->SizeInBytes(), &stbi_image_free);
+    FBulkData textureData;
+    textureData.TakeOwn(std::move(textureBuffer));
+    return std::make_optional(std::move(textureData));
 }
 //----------------------------------------------------------------------------
 NODISCARD static FTextureImporterResult STBImageLoadFromMemory_(
@@ -259,7 +257,10 @@ NODISCARD static FTextureImporterResult STBImageLoadFromMemory_(
         return FTextureImporterResult{};
     }
 
-    return FUniqueBuffer::TakeOwn(stbi_data, outProperties->SizeInBytes(), &stbi_image_free);
+    FUniqueBuffer textureBuffer = FUniqueBuffer::TakeOwn(stbi_data, outProperties->SizeInBytes(), &stbi_image_free);
+    FBulkData textureData;
+    textureData.TakeOwn(std::move(textureBuffer));
+    return std::make_optional(std::move(textureData));
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -718,11 +719,16 @@ bool TSTBImageFormat<EImageFormat::HDR>::ExportTexture2D(IStreamWriter* output, 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template class TSTBImageFormat<EImageFormat::PNG>;
-template class TSTBImageFormat<EImageFormat::BMP>;
-template class TSTBImageFormat<EImageFormat::TGA>;
-template class TSTBImageFormat<EImageFormat::JPG>;
-template class TSTBImageFormat<EImageFormat::HDR>;
+#define PPE_STB_IMAGE_FORMAT_DEF(_IMAGE_FORMAT) \
+    template class TSTBImageFormat<EImageFormat::_IMAGE_FORMAT>;
+//----------------------------------------------------------------------------
+PPE_STB_IMAGE_FORMAT_DEF(PNG)
+PPE_STB_IMAGE_FORMAT_DEF(BMP)
+PPE_STB_IMAGE_FORMAT_DEF(TGA)
+PPE_STB_IMAGE_FORMAT_DEF(JPG)
+PPE_STB_IMAGE_FORMAT_DEF(HDR)
+//----------------------------------------------------------------------------
+#undef PPE_STB_IMAGE_FORMAT_DEF
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

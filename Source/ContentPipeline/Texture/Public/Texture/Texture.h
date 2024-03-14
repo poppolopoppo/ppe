@@ -11,49 +11,65 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_TEXTURE_API FTexture {
+class FTextureProperties {
+public:
+    FTextureGroupId TextureGroup{ Default };
+
+    ETextureGammaSpace Gamma{ Default };
+    ETextureImageView ImageView{ Default };
+    ETexturePixelFormat Format{ Default };
+
+    ETextureMipmapFilter MipmapFilter{ Default };
+    ETextureSampleFilter MagFilter{ Default };
+    ETextureSampleFilter MinFilter{ Default };
+
+    u8 NumMips{ 1 };
+
+    bool AllowAnisotropy{ true };
+};
+//----------------------------------------------------------------------------
+class PPE_TEXTURE_API FTexture : public FRefCountable {
 public:
     virtual ~FTexture() = default;
 
-    NODISCARD const FBulkData& BulkData() const { return _bulkData; }
+    NODISCARD const FBulkData& Data() const { return _data; }
 
-    NODISCARD FTextureGroupGuid TextureGroupGuid() const { return _textureGroupGuid; }
+    NODISCARD FTextureGroupId TextureGroup() const { return _properties.TextureGroup; }
 
-    NODISCARD ETextureGammaSpace GammaSpace() const { return _gammaSpace; }
-    NODISCARD ETextureImageView ImageView() const { return _imageView; }
-    NODISCARD ETexturePixelFormat PixelFormat() const { return _pixelFormat; }
+    NODISCARD ETextureGammaSpace Gamma() const { return _properties.Gamma; }
+    NODISCARD ETextureImageView ImageView() const { return _properties.ImageView; }
+    NODISCARD ETexturePixelFormat Format() const { return _properties.Format; }
 
-    NODISCARD ETextureMipmapFilter MipmapFilter() const { return _mipmapFilter; }
-    NODISCARD ETextureSampleFilter MinFilter() const { return _minFilter; }
-    NODISCARD ETextureSampleFilter MagFilter() const { return _magFilter; }
+    NODISCARD ETextureMipmapFilter MipmapFilter() const { return _properties.MipmapFilter; }
+    NODISCARD ETextureSampleFilter MinFilter() const { return _properties.MinFilter; }
+    NODISCARD ETextureSampleFilter MagFilter() const { return _properties.MagFilter; }
 
-    NODISCARD bool AllowAnisotropy() const { return _allowAnisotropy; }
+    NODISCARD u32 NumMips() const { return _properties.NumMips; }
+
+    NODISCARD bool AllowAnisotropy() const { return _properties.AllowAnisotropy; }
+
+    NODISCARD uint3 Dimensions() const { return { SurfaceWidth(), SurfaceHeight(), SurfaceDepth() }; }
 
     virtual u32 SurfaceWidth() const NOEXCEPT = 0;
     virtual u32 SurfaceHeight() const NOEXCEPT = 0;
     virtual u32 SurfaceDepth() const NOEXCEPT = 0;
-    virtual u32 SurfaceArraySize() const NOEXCEPT = 0;
+    virtual u32 ArraySize() const NOEXCEPT = 0;
 
     virtual RHI::EAddressMode AddressModeU() const NOEXCEPT = 0;
     virtual RHI::EAddressMode AddressModeV() const NOEXCEPT = 0;
     virtual RHI::EAddressMode AddressModeW() const NOEXCEPT = 0;
 
+    NODISCARD RHI::FImageID CreateTextureRHI(RHI::IFrameGraph& fg) const;
+
 protected:
     FTexture() NOEXCEPT;
+    FTexture(const FTextureProperties& properties, FBulkData&& data) NOEXCEPT;
 
-    FBulkData _bulkData;
+    FTexture(FTexture&& ) = default;
+    FTexture& operator =(FTexture&& ) = default;
 
-    FTextureGroupGuid _textureGroupGuid;
-
-    ETextureGammaSpace _gammaSpace;
-    ETextureImageView _imageView;
-    ETexturePixelFormat _pixelFormat;
-
-    ETextureMipmapFilter _mipmapFilter;
-    ETextureSampleFilter _magFilter;
-    ETextureSampleFilter _minFilter;
-
-    bool _allowAnisotropy{ false };
+    FBulkData _data;
+    FTextureProperties _properties;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

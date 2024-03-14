@@ -21,6 +21,10 @@ void FBulkData::AttachSourceFile(const FFilename& sourceFile) {
     _internal.LockExclusive()->SourceFile = sourceFile;
 }
 //----------------------------------------------------------------------------
+void FBulkData::AttachSourceFile(const Meta::TOptional<FFilename>& optionalSourceFile) {
+    _internal.LockExclusive()->SourceFile = optionalSourceFile;
+}
+//----------------------------------------------------------------------------
 u32 FBulkData::AttachPayload(FBytesRange range) {
     const auto exclusive = _internal.LockExclusive();
 
@@ -36,6 +40,10 @@ FBytesRange FBulkData::RetrievePayload(u32 payloadIndex) const {
 void FBulkData::Resize_DiscardData(u64 sizeInBytes) {
     MEMORYDOMAIN_THREAD_SCOPE(BulkData);
     _internal.LockExclusive()->Data = FUniqueBuffer::Allocate(sizeInBytes);
+}
+//----------------------------------------------------------------------------
+void FBulkData::TakeOwn(FUniqueBuffer&& data) NOEXCEPT {
+    _internal.LockExclusive()->Data = std::move(data);
 }
 //----------------------------------------------------------------------------
 void FBulkData::Reset() {
@@ -78,7 +86,7 @@ FUniqueBuffer FBulkData::LockWrite() NOEXCEPT {
 void FBulkData::UnlockWrite(FUniqueBuffer&& data) NOEXCEPT {
     FInternalData& unsafe = _internal.Value_Unsafe();
 
-    unsafe.Data = std::move(data); // restore write buffer with given buffer, could be differente than one returned by LockWrite()
+    unsafe.Data = std::move(data); // restore write buffer with given buffer, could be different from one returned by LockWrite()
 
     if (unsafe.Payloads.empty())
         unsafe.Payloads.emplace_back(0_size_t, unsafe.Data.SizeInBytes());

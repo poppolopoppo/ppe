@@ -553,7 +553,8 @@ struct FUpdateImage final : details::TFrameTaskDesc<FUpdateImage> {
 
     FUpdateImage& SetImage(FRawImageID image, const int2& offset, FMipmapLevel mipmap = Default) { return SetImage(image, int3(offset, 0), mipmap); }
     PPE_RHI_API FUpdateImage& SetImage(FRawImageID image, const int3& offset = Default, FMipmapLevel mipmap = Default);
-    PPE_RHI_API FUpdateImage& SetImage(FRawImageID image, const int2& offset, FImageLayer layer, FMipmapLevel mipmap);
+    FUpdateImage& SetImage(FRawImageID image, const int2& offset, FImageLayer layer, FMipmapLevel mipmap) { return SetImage(image, int3(offset, 0), layer, mipmap); }
+    PPE_RHI_API FUpdateImage& SetImage(FRawImageID image, const int3& offset, FImageLayer layer, FMipmapLevel mipmap);
 
     FUpdateImage& SetData(FRawMemoryConst data, const uint2& dimension, size_t rowPitch = 0) { return SetData(data, uint3(dimension, 0), rowPitch); }
     PPE_RHI_API FUpdateImage& SetData(FRawMemoryConst data, const uint3& dimension, size_t rowPitch = 0, size_t slicePitch = 0);

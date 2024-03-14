@@ -21,18 +21,73 @@ namespace PPE {
 PPE_ASSERT_TYPE_IS_POD(FColor);
 PPE_ASSERT_TYPE_IS_POD(FLinearColor);
 //----------------------------------------------------------------------------
-FLinearColor::FLinearColor(const FColor& color)
+FLinearColor::FLinearColor(const FColor& color) NOEXCEPT
     : FLinearColor(
         UByte0255_to_Float01(color.R),
         UByte0255_to_Float01(color.G),
         UByte0255_to_Float01(color.B),
         UByte0255_to_Float01(color.A) ) {}
 //----------------------------------------------------------------------------
-FLinearColor::FLinearColor(const float3& rgb, float a/* = 1.0f */)
+FLinearColor::FLinearColor(const float3& rgb, float a/* = 1.0f */) NOEXCEPT
     : FLinearColor(rgb.x, rgb.y, rgb.z, a) {}
 //----------------------------------------------------------------------------
-FLinearColor::FLinearColor(const float4& rgba)
+FLinearColor::FLinearColor(const float4& rgba) NOEXCEPT
     : FLinearColor(rgba.x, rgba.y, rgba.z, rgba.w) {}
+//----------------------------------------------------------------------------
+FLinearColor::FLinearColor(const float4& rgba, EGammaSpace gamma) NOEXCEPT
+    : FLinearColor(rgba) {
+    *this = GammaToLinear(gamma);
+}
+//----------------------------------------------------------------------------
+FLinearColor FLinearColor::GammaToLinear(EGammaSpace gamma) const {
+    switch (gamma) {
+    case EGammaSpace::Linear:
+        break;
+
+    case EGammaSpace::Pow22:
+        return FLinearColor(
+            Pow22_to_Linear(R),
+            Pow22_to_Linear(G),
+            Pow22_to_Linear(B),
+            A);
+
+    case EGammaSpace::sRGB:
+        return FLinearColor(
+            SRGB_to_Linear(R),
+            SRGB_to_Linear(G),
+            SRGB_to_Linear(B),
+            A);
+
+    case EGammaSpace::ACES:
+        AssertNotImplemented(); // missing inverted ACES
+    }
+    return (*this);
+}
+//----------------------------------------------------------------------------
+FLinearColor FLinearColor::LinearToGamma(EGammaSpace gamma) const {
+    switch (gamma) {
+    case EGammaSpace::Linear:
+        break;
+
+    case EGammaSpace::Pow22:
+        return FLinearColor(
+            Linear_to_Pow22(R),
+            Linear_to_Pow22(G),
+            Linear_to_Pow22(B),
+            A);
+
+    case EGammaSpace::sRGB:
+        return FLinearColor(
+            Linear_to_SRGB(R),
+            Linear_to_SRGB(G),
+            Linear_to_SRGB(B),
+            A);
+
+    case EGammaSpace::ACES:
+        return {ACESFitted({R,G,B}), A};
+    }
+    return (*this);
+}
 //----------------------------------------------------------------------------
 FLinearColor FLinearColor::Desaturate(float desaturation) const {
     const float luma = Luminance();

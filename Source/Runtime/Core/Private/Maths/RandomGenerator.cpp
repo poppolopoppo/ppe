@@ -74,7 +74,7 @@ u64 MakeSeed(u64 salt/* = 0 */) {
     }   seed{
         {
             salt,
-            hash_value(FPlatformMisc::CPUInfo().Ordinal()),
+            hash_tuple(FPlatformMisc::CPUInfo().Ordinal(), std::hash<std::thread::id>{}(std::this_thread::get_id())),
             hash_value(FPlatformTime::NetworkTime()),
             hash_value(FCoreModule::StaticInfo.BuildVersion.Timestamp.Value()),
         },

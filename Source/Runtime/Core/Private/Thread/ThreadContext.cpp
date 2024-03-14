@@ -2,6 +2,8 @@
 
 #include "Thread/ThreadContext.h"
 
+#include "Thread/Fiber.h"
+
 #include "Allocator/Alloca.h"
 #include "Allocator/Malloc.h"
 #include "Diagnostic/Logger.h"
@@ -218,11 +220,18 @@ size_t FThreadContext::NumThreads() {
     return GNumThreadContext_;
 }
 //----------------------------------------------------------------------------
-size_t FThreadContext::GetThreadHash(std::thread::id thread_id) {
+hash_t FThreadContext::ThreadOrFiberToken() NOEXCEPT {
+    if (void* const fiber = FFiber::RunningFiberIFP())
+        return hash_ptr(fiber);
+    else
+        return GetThreadHash_(std::this_thread::get_id());
+}
+//----------------------------------------------------------------------------
+size_t FThreadContext::GetThreadHash(std::thread::id thread_id) NOEXCEPT {
     return checked_cast<size_t>(GetThreadHash_(thread_id));
 }
 //----------------------------------------------------------------------------
-const char* FThreadContext::GetThreadName(std::thread::id thread_id) {
+const char* FThreadContext::GetThreadName(std::thread::id thread_id) NOEXCEPT {
 #ifdef WITH_PPE_THREADCONTEXT_NAME
     return GetThreadName_(thread_id).data();
 #else

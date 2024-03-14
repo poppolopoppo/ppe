@@ -87,14 +87,14 @@ PPE_CONSTANTNUMBER_DEF(SqrtHalf, Sqrt2OO);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CONSTEXPR bool Any(bool value) { return value; }
-CONSTEXPR bool All(bool value) { return value; }
+inline CONSTEXPR bool Any(bool value) { return value; }
+inline CONSTEXPR bool All(bool value) { return value; }
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
-CONSTEXPR bool Any(T value) { return (!!value); }
+inline CONSTEXPR bool Any(T value) { return (!!value); }
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
-CONSTEXPR bool All(T value) { return (value == UMax); }
+inline CONSTEXPR bool All(T value) { return (value == UMax); }
 //----------------------------------------------------------------------------
 inline CONSTEXPR i8 Abs(i8 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
 inline CONSTEXPR i16 Abs(i16 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
@@ -105,6 +105,9 @@ inline CONSTEXPR double Abs(double v) NOEXCEPT { return FPlatformMaths::Abs(v); 
 //----------------------------------------------------------------------------
 template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T>&& std::is_arithmetic_v<U>>* = nullptr >
 CONSTEXPR auto BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T>&& std::is_arithmetic_v<U>>* = nullptr >
+CONSTEXPR auto BilateralLerp(T v00, T v10, T v11, T v01, U f0, U f1) NOEXCEPT;
 //----------------------------------------------------------------------------
 inline CONSTEXPR auto BiasScale(float x, float bias, float scale) NOEXCEPT { return ((x + bias) * scale); }
 inline CONSTEXPR auto BiasScale(double x, double bias, double scale) NOEXCEPT { return ((x + bias) * scale); }
@@ -175,28 +178,28 @@ inline CONSTEXPR float Sign(float value) NOEXCEPT { return FPlatformMaths::Sign(
 inline CONSTEXPR double Sign(double value) NOEXCEPT { return FPlatformMaths::Sign(value); }
 //----------------------------------------------------------------------------
 template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* = nullptr >
-CONSTEXPR auto SLerp(T v0, Meta::TDontDeduce<T> v1, U f) NOEXCEPT;
-//----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR T Sqr(T x) NOEXCEPT;
+inline CONSTEXPR auto SLerp(T v0, Meta::TDontDeduce<T> v1, U f) NOEXCEPT;
 //----------------------------------------------------------------------------
 inline float Sqrt(float f) NOEXCEPT { return FPlatformMaths::Sqrt(f); }
 inline double Sqrt(double f) NOEXCEPT { return FPlatformMaths::Sqrt(f); }
 //----------------------------------------------------------------------------
-template <typename T, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
-CONSTEXPR T Step(T y, Meta::TDontDeduce<T> x) NOEXCEPT;
+template <typename T>
+inline CONSTEXPR T Sqr(T x) NOEXCEPT { return x * x; }
 //----------------------------------------------------------------------------
-CONSTEXPR float SStep(float x) NOEXCEPT;
-CONSTEXPR double SStep(double x) NOEXCEPT;
+template <typename T, Meta::TEnableIf<std::is_arithmetic_v<T>>* = nullptr >
+inline CONSTEXPR T Step(T y, Meta::TDontDeduce<T> x) NOEXCEPT { return (x >= y) ? T(1) : T(0); }
 //----------------------------------------------------------------------------
-template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* = nullptr>
-CONSTEXPR auto SMin(T a, Meta::TDontDeduce<T> b, U k) NOEXCEPT;
-//----------------------------------------------------------------------------
-template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* = nullptr>
-CONSTEXPR auto Smoothstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
+inline CONSTEXPR float SStep(float x) NOEXCEPT;
+inline CONSTEXPR double SStep(double x) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* = nullptr>
-CONSTEXPR auto Smootherstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
+inline CONSTEXPR auto SMin(T a, Meta::TDontDeduce<T> b, U k) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* = nullptr>
+inline CONSTEXPR auto Smoothstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* = nullptr>
+inline CONSTEXPR auto Smootherstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
 //----------------------------------------------------------------------------
 inline float CeilToFloat(float f) NOEXCEPT { return FPlatformMaths::CeilToFloat(f); }
 inline double CeilToFloat(double d) NOEXCEPT { return FPlatformMaths::CeilToDouble(d); }
@@ -219,11 +222,11 @@ inline int TruncToInt(float f) NOEXCEPT { return FPlatformMaths::TruncToInt(f); 
 inline unsigned TruncToUnsigned(float f) NOEXCEPT { return FPlatformMaths::TruncToUnsigned(f); }
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
-CONSTEXPR T IntDivCeil(T x, T divider) { return (x + divider - 1) / divider; }
+inline CONSTEXPR T IntDivCeil(T x, T divider) { return (x + divider - 1) / divider; }
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
-CONSTEXPR T IntDivFloor(T x, T divider) { return x / divider; }
+inline CONSTEXPR T IntDivFloor(T x, T divider) { return x / divider; }
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
-CONSTEXPR T IntDivRound(T x, T divider) { return (x + divider / 2 - 1) / divider; }
+inline CONSTEXPR T IntDivRound(T x, T divider) { return (x + divider / 2 - 1) / divider; }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -259,6 +262,9 @@ float NormalizeAngle(float degrees) NOEXCEPT;
 u32 CubeMapFaceID(float x, float y, float z) NOEXCEPT;
 //----------------------------------------------------------------------------
 float GridSnap(float location, float grid) NOEXCEPT;
+//----------------------------------------------------------------------------
+float NormPDF(float x, float sigma) NOEXCEPT;
+double NormPDF(double x, double sigma) NOEXCEPT;
 //----------------------------------------------------------------------------
 // http://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
 // https://github.com/lemire/fastrange/blob/master/fastrange.h

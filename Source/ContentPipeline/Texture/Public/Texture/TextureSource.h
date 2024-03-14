@@ -23,7 +23,7 @@ public:
     u32 NumMips{ 0 };
     u32 NumSlices{ 0 };
 
-    ETextureGammaSpace GammaSpace{ Default };
+    ETextureGammaSpace Gamma{ Default };
     ETextureSourceFlags Flags{ Default };
     ETextureSourceFormat Format{ Default };
 
@@ -34,16 +34,19 @@ public:
     NODISCARD u32 Height() const { return Dimensions.y; }
     NODISCARD u32 Depth() const { return Dimensions.z; }
 
+    NODISCARD PPE_TEXTURE_API  u32 NumComponents() const NOEXCEPT;
+
     NODISCARD PPE_TEXTURE_API bool HasAlpha() const NOEXCEPT;
+    NODISCARD PPE_TEXTURE_API bool HasMaskedAlpha() const NOEXCEPT;
     NODISCARD PPE_TEXTURE_API bool HasPreMultipliedAlpha() const NOEXCEPT;
 
     NODISCARD PPE_TEXTURE_API bool IsHDR() const NOEXCEPT;
     NODISCARD PPE_TEXTURE_API bool IsLongLatCubemap() const NOEXCEPT;
-    NODISCARD PPE_TEXTURE_API bool IsSRGB() const NOEXCEPT;
-    NODISCARD PPE_TEXTURE_API bool IsTiling() const NOEXCEPT;
+    NODISCARD PPE_TEXTURE_API bool IsTilable() const NOEXCEPT;
 
     NODISCARD PPE_TEXTURE_API size_t SizeInBytes() const NOEXCEPT;
 
+    NODISCARD PPE_TEXTURE_API uint3 MipDimensions(u32 mipBias) const NOEXCEPT;
     NODISCARD PPE_TEXTURE_API FBytesRange MipRange(u32 mipBias, u32 numMips = 1, u32 sliceIndex = 0) const NOEXCEPT;
     NODISCARD PPE_TEXTURE_API FRawMemory MipView(const FRawMemory& textureData, u32 mipBias, u32 numMips = 1, u32 sliceIndex = 0) const NOEXCEPT;
     NODISCARD PPE_TEXTURE_API FRawMemoryConst MipView(const FRawMemoryConst& textureData, u32 mipBias, u32 numMips = 1, u32 sliceIndex = 0) const NOEXCEPT;
@@ -51,6 +54,8 @@ public:
     NODISCARD PPE_TEXTURE_API FBytesRange SliceRange(u32 sliceIndex) const NOEXCEPT;
     NODISCARD PPE_TEXTURE_API FRawMemory SliceView(const FRawMemory& textureData, u32 sliceIndex) const NOEXCEPT;
     NODISCARD PPE_TEXTURE_API FRawMemoryConst SliceView(const FRawMemoryConst& textureData, u32 sliceIndex) const NOEXCEPT;
+
+    NODISCARD PPE_TEXTURE_API static RHI::EPixelFormat PixelFormat(const FTextureSourceProperties& properties) NOEXCEPT;
 
     NODISCARD PPE_TEXTURE_API static FTextureSourceProperties Texture2D(
         u32 width, u32 height,
@@ -92,26 +97,6 @@ public:
 
     NODISCARD PPE_TEXTURE_API static uint3 NextMipDimensions(const uint3& dimensions) NOEXCEPT;
     NODISCARD PPE_TEXTURE_API static u32 FullMipCount(const uint3& dimensions) NOEXCEPT;
-
-    NODISCARD PPE_TEXTURE_API static bool ResizeMip2D(
-        const uint2& outputDimensions,
-        ETextureSourceFormat outputFormat,
-        ETextureSourceFlags outputFlags,
-        const FRawMemory& outputData,
-        const uint2& inputDimensions,
-        ETextureSourceFormat inputFormat,
-        ETextureSourceFlags inputFlags,
-        const FRawMemoryConst& inputData);
-
-    NODISCARD PPE_TEXTURE_API static bool GenerateMipChain2D(
-        const FTextureSourceProperties& properties,
-        const FRawMemory& sliceData );
-
-    NODISCARD PPE_TEXTURE_API static bool ResizeWithMipChain(
-        const FTextureSourceProperties& outputProperties,
-        const FRawMemory& outputData,
-        const FTextureSourceProperties& inputProperties,
-        const FRawMemoryConst& inputData);
 };
 //----------------------------------------------------------------------------
 class FTextureSource final : public FRefCountable {
@@ -125,7 +110,7 @@ public:
     NODISCARD u32 NumMips() const { return _properties.NumMips; }
     NODISCARD u32 NumSlices() const { return _properties.NumSlices; }
 
-    NODISCARD ETextureGammaSpace GammaSpace() const { return _properties.GammaSpace; }
+    NODISCARD ETextureGammaSpace Gamma() const { return _properties.Gamma; }
     NODISCARD ETextureSourceFlags Flags() const { return _properties.Flags; }
     NODISCARD ETextureSourceFormat Format() const { return _properties.Format; }
 
@@ -137,18 +122,24 @@ public:
     NODISCARD u32 Depth() const { return _properties.Depth(); }
 
     NODISCARD bool HasAlpha() const { return _properties.HasAlpha(); }
+    NODISCARD bool HasMaskedAlpha() const { return _properties.HasMaskedAlpha(); }
     NODISCARD bool HasPreMultipliedAlpha() const { return _properties.HasPreMultipliedAlpha(); }
+
+    NODISCARD PPE_TEXTURE_API bool HasFullMipChain2D() const NOEXCEPT;
 
     NODISCARD bool IsHDR() const { return _properties.IsHDR(); }
     NODISCARD bool IsLongLatCubemap() const { return _properties.IsLongLatCubemap(); }
-    NODISCARD bool IsSRGB() const { return _properties.IsSRGB(); }
+    NODISCARD bool IsTilable() const { return _properties.IsTilable(); }
 
     NODISCARD ETextureSourceCompression Compression() const { return _compression; }
     NODISCARD const FTextureSourceProperties& Properties() const { return _properties; }
 
+    void SetColorMask(ETextureColorMask value) { _properties.ColorMask = Meta::EnumAnd(value, ETextureSourceFormat_ColorMask(_properties.Format)); }
+    void SetFlags(ETextureSourceFlags value) { _properties.Flags = value; }
+
     PPE_TEXTURE_API void Construct(
         const FTextureSourceProperties& properties,
-        Meta::TOptional<FUniqueBuffer>&& optionalBuffer = {});
+        Meta::TOptional<FBulkData>&& optionalData = std::nullopt);
 
     void Construct(
         ETextureImageView imageView,
@@ -159,17 +150,17 @@ public:
         ETextureGammaSpace gammaSpace,
         ETextureSourceFlags flags,
         ETextureSourceFormat format,
-        Meta::TOptional<FUniqueBuffer>&& optionalBuffer = {}) {
+        Meta::TOptional<FBulkData>&& optionalData = {}) {
         return Construct(FTextureSourceProperties{
             .Dimensions = {width, height, depth},
             .NumMips = numMips,
             .NumSlices = numSlices,
-            .GammaSpace = gammaSpace,
+            .Gamma = gammaSpace,
             .Flags = flags,
             .Format = format,
             .ColorMask = colorMask,
             .ImageView = imageView,
-        }, std::move(optionalBuffer));
+        }, std::move(optionalData));
     }
 
     void Construct2D(
@@ -178,8 +169,8 @@ public:
         ETextureColorMask colorMask,
         ETextureGammaSpace gammaSpace,
         ETextureSourceFormat format,
-        Meta::TOptional<FUniqueBuffer>&& optionalBuffer = {}) {
-        Construct(FTextureSourceProperties::Texture2D(width, height, numMips, colorMask, gammaSpace, format), std::move(optionalBuffer));
+        Meta::TOptional<FBulkData>&& optionalData = {}) {
+        Construct(FTextureSourceProperties::Texture2D(width, height, numMips, colorMask, gammaSpace, format), std::move(optionalData));
     }
 
     void Construct2DArray(
@@ -189,8 +180,8 @@ public:
         ETextureColorMask colorMask,
         ETextureGammaSpace gammaSpace,
         ETextureSourceFormat format,
-        Meta::TOptional<FUniqueBuffer>&& optionalBuffer = {}) {
-        Construct(FTextureSourceProperties::Texture2DArray(width, height, numMips, numSlices, colorMask, gammaSpace, format), std::move(optionalBuffer));
+        Meta::TOptional<FBulkData>&& optionalData = {}) {
+        Construct(FTextureSourceProperties::Texture2DArray(width, height, numMips, numSlices, colorMask, gammaSpace, format), std::move(optionalData));
     }
 
     void Construct2DWithMipChain(
@@ -229,15 +220,6 @@ public:
     PPE_TEXTURE_API void TearDown();
 
     void AttachSourceFile(const FFilename& sourceFile) { _bulkData.AttachSourceFile(sourceFile); }
-
-    NODISCARD PPE_TEXTURE_API bool GenerateMipChain2D();
-
-    NODISCARD PPE_TEXTURE_API FTextureSource Resize(const uint3& dimensions, u32 numMips = 1) const;
-    NODISCARD PPE_TEXTURE_API Meta::TOptional<FTextureSource> Resize(
-        const uint3& dimensions,
-        u32 numMips = 0,
-        ETextureSourceFormat format = Default,
-        ETextureSourceFlags flags = Default) const;
 
     NODISCARD PPE_TEXTURE_API FSharedBuffer LockRead() const;
     PPE_TEXTURE_API void UnlockRead(FSharedBuffer&& data) const;
@@ -292,6 +274,8 @@ public:
     };
 
 private:
+    friend class FTextureGeneration;
+
     FBulkData _bulkData;
 
     FTextureSourceProperties _properties = Default;

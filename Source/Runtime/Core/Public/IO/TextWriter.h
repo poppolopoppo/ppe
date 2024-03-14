@@ -163,7 +163,6 @@ public:
     FTextFormat ResetFormat();
 
     void Flush();
-    void Reset();
 
 protected:
     static void BasePut(FTextWriter* oss, char ch);
