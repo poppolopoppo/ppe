@@ -8,6 +8,8 @@
 
 // Those helpers are for debugging purposes, don't use them as a regular lock!
 
+#include "Thread/ThreadContext.h"
+
 #include <atomic>
 #include <mutex>
 #include <thread>
@@ -22,8 +24,8 @@ class FDataRaceCheck : Meta::FNonCopyableNorMovable {
 public:
     FDataRaceCheck() = default;
 
-    static size_t Token() NOEXCEPT {
-        return std::hash<std::thread::id>{}(std::this_thread::get_id());
+    static hash_t Token() NOEXCEPT {
+        return FThreadContext::ThreadOrFiberToken();
     }
 
     NODISCARD bool Lock() const {
@@ -69,9 +71,13 @@ class FRWDataRaceCheck : Meta::FNonCopyableNorMovable {
 public:
     FRWDataRaceCheck() = default;
 
+    static hash_t Token() NOEXCEPT {
+        return FThreadContext::ThreadOrFiberToken();
+    }
+
     NODISCARD bool LockExclusive() {
-        const bool locked = _lockWrite.try_lock();
-        AssertReleaseMessage("Locked by another thread!", locked); // race condition detected
+        const ELockResult_ lock = TryLockWrite_();
+        AssertReleaseMessage("Locked by another thread!", lock != LOCK_BUSY); // race condition detected
 
         int expected = _readCounter.load(std::memory_order_acquire);
         AssertReleaseMessage("Has read lock(s)!", expected <= 0); // race condition detected
@@ -83,8 +89,8 @@ public:
     }
 
     void UnlockExclusive() {
-        _readCounter.fetch_add(1, std::memory_order_relaxed);
-        _lockWrite.unlock();
+        if (_readCounter.fetch_add(1, std::memory_order_relaxed) == -1)
+            UnlockWrite_();
     }
 
     NODISCARD bool LockShared() const {
@@ -94,9 +100,18 @@ public:
             locked = _readCounter.compare_exchange_weak(expected, expected + 1, std::memory_order_relaxed);
 
             // if has exclusive lock in current thread
-            if (expected < 0 && _lockWrite.try_lock()) {
-                _lockWrite.unlock();
-                return false; // don't call UnlockShared()
+            if (expected < 0) {
+                Assert_NoAssume(not locked);
+
+                const ELockResult_ lock = TryLockWrite_();
+                if (lock == LOCK_ACQUIRED) {
+                    expected = 0;
+                    UnlockWrite_();
+                    continue;
+                }
+                else if (lock == LOCK_RECURSIVE) {
+                    return false; // don't call UnlockShared()
+                }
             }
 
             AssertReleaseMessage("Has write lock(s)", expected >= 0);
@@ -108,9 +123,12 @@ public:
 
     void UnlockShared() const {
         // if has exclusive lock in current thread
-        if (_readCounter.load(std::memory_order_acquire) < 0 && _lockWrite.try_lock()) {
-            _lockWrite.unlock();
-            return;
+        if (_readCounter.load(std::memory_order_acquire) < 0) {
+            const ELockResult_ lock = TryLockWrite_();
+            if (lock == LOCK_ACQUIRED)
+                UnlockWrite_();
+            else if (lock == LOCK_RECURSIVE)
+                AssertNotReached(); // LockShared() returned false when recursively locking
         }
 
         _readCounter.fetch_sub(1, std::memory_order_relaxed);
@@ -143,7 +161,26 @@ public:
     };
 
 private:
-    mutable std::recursive_mutex _lockWrite;
+    enum ELockResult_ {
+        LOCK_BUSY       = 0,
+        LOCK_ACQUIRED   = 1,
+        LOCK_RECURSIVE  = 2,
+    };
+    ELockResult_ TryLockWrite_() const {
+        const size_t desired = Token();
+        size_t expected = 0;
+        if (_lockWrite.compare_exchange_strong(expected, desired))
+            return LOCK_ACQUIRED;
+        if (expected == desired)
+            return LOCK_RECURSIVE;
+        return LOCK_BUSY;
+    }
+    void UnlockWrite_() const {
+        size_t expected = Token();
+        VerifyRelease(_lockWrite.compare_exchange_strong(expected, 0));
+    }
+
+    mutable std::atomic<size_t> _lockWrite{ 0 };
     mutable std::atomic<int> _readCounter{ 0 };
 };
 //----------------------------------------------------------------------------

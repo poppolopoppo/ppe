@@ -30,25 +30,26 @@ public:
     FThreadContext(const FThreadContext&) = delete;
     FThreadContext& operator =(const FThreadContext&) = delete;
 
-    const char *Name() const { return _name; }
-    size_t Tag() const { return _tag; }
-    size_t ThreadIndex() const { return _threadIndex; }
-    std::thread::id ThreadId() const { return _threadId; }
+    NODISCARD const char *Name() const { return _name; }
+    NODISCARD size_t Tag() const { return _tag; }
+    NODISCARD size_t ThreadIndex() const { return _threadIndex; }
+    NODISCARD std::thread::id ThreadId() const { return _threadId; }
 
-    u64 AffinityMask() const;
+    NODISCARD u64 AffinityMask() const;
     void SetAffinityMask(u64 mask) const;
 
-    EThreadPriority Priority() const;
+    NODISCARD EThreadPriority Priority() const;
     void SetPriority(EThreadPriority priority) const;
 
     void DutyCycle() const;
 
-    static size_t NumThreads();
+    NODISCARD static size_t NumThreads();
 
-    static size_t GetThreadHash(std::thread::id thread_id);
-    static const char* GetThreadName(std::thread::id thread_id);
+    NODISCARD static hash_t ThreadOrFiberToken() NOEXCEPT;
+    NODISCARD static size_t GetThreadHash(std::thread::id thread_id) NOEXCEPT;
+    NODISCARD static const char* GetThreadName(std::thread::id thread_id) NOEXCEPT;
 
-    static size_t MaxThreadIndex();
+    NODISCARD static size_t MaxThreadIndex();
 
 private:
     const size_t _tag;
