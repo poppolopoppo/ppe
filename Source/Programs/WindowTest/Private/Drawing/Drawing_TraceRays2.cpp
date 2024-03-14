@@ -134,7 +134,7 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays2_RayClosestHit"));
 
     const TAutoResource<FImageID> dstImage{ fg.ScopedResource(fg.CreateImage(
         FImageDesc{}.SetDimension(viewSize).SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::Storage | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("OutputImage"))) };
     PPE_LOG_CHECK(WindowTest, dstImage.Valid());
 
@@ -142,7 +142,7 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays2_RayClosestHit"));
     {
         FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
             .SetName("Drawing_TraceRays2-Frame1")
-            .SetDebugFlags(EDebugFlags::Default)) };
+            .SetDebugFlags(EDebugFlags_Default)) };
         PPE_LOG_CHECK(WindowTest, !!cmd);
 
         resources->BindImage("un_Output"_uniform, dstImage);
@@ -173,7 +173,7 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays2_RayClosestHit"));
     {
         FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
             .SetName("Drawing_TraceRays2-Frame2")
-            .SetDebugFlags(EDebugFlags::Default)) };
+            .SetDebugFlags(EDebugFlags_Default)) };
         PPE_LOG_CHECK(WindowTest, !!cmd);
 
         PFrameTask tBuildGeom = cmd->Task(FBuildRayTracingGeometry{}.SetTarget(rtGeometry).Add(trianglesData));
@@ -193,7 +193,7 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays2_RayClosestHit"));
     {
         FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
             .SetName("Drawing_TraceRays2-Frame3")
-            .SetDebugFlags(EDebugFlags::Default)) };
+            .SetDebugFlags(EDebugFlags_Default)) };
         PPE_LOG_CHECK(WindowTest, !!cmd);
 
         PFrameTask tBuildGeom = cmd->Task(FBuildRayTracingGeometry{}.SetTarget(rtGeometry).Add(trianglesData));

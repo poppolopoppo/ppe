@@ -129,14 +129,14 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays3_RayClosestHit"));
 
     const TAutoResource<FImageID> dstImage{ fg.ScopedResource(fg.CreateImage(
         FImageDesc{}.SetDimension(viewSize).SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::Storage | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("OutputImage"))) };
     PPE_LOG_CHECK(WindowTest, dstImage.Valid());
 
     // frame 1
     FCommandBufferBatch cmd1{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_TraceRays3-Frame1")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd1);
     {
         FBuildRayTracingGeometry::FTriangles trianglesData;
@@ -169,7 +169,7 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays3_RayClosestHit"));
     // frame 2
     FCommandBufferBatch cmd2{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_TraceRays3-Frame2")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd2);
     {
         resources->BindImage("un_Output"_uniform, dstImage);

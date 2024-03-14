@@ -61,7 +61,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_Draw2")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FRawImageID image = cmd->SwapchainImage(*app.RHI().Swapchain());

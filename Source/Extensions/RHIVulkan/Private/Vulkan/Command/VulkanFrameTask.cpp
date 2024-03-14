@@ -244,7 +244,7 @@ TVulkanFrameTask<FGenerateMipmaps>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, 
 ,   LevelCount(desc.LevelCount)
 ,   BaseLayer(*desc.BaseLayer)
 ,   LayerCount(desc.LayerCount) {
-    Assert_NoAssume(Image and Image->Read()->Desc.Usage & (EImageUsage::TransferSrc + EImageUsage::TransferDst));
+    Assert_NoAssume(Image and Image->Read()->Desc.Usage & EImageUsage_BlitTransfer);
 }
 //----------------------------------------------------------------------------
 TVulkanFrameTask<FGenerateMipmaps>::~TVulkanFrameTask() = default;

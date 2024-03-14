@@ -20,14 +20,14 @@ bool Queue_CopyImage3_(FWindowTestApp& app) {
     auto srcImage = fg.ScopedResource(fg.CreateImage(FImageDesc{}
         .SetDimension(srcDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Transfer),
+        .SetUsage(EImageUsage_BlitTransfer),
         Default ARGS_IF_RHIDEBUG("SrcImage")));
     PPE_LOG_CHECK(WindowTest, srcImage.Valid());
 
     auto dstImage = fg.ScopedResource(fg.CreateImage(FImageDesc{}
         .SetDimension(dstDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Transfer),
+        .SetUsage(EImageUsage_BlitTransfer),
         Default ARGS_IF_RHIDEBUG("DstImage")));
     PPE_LOG_CHECK(WindowTest, dstImage.Valid());
 

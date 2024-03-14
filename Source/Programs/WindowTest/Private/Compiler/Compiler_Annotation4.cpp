@@ -3,6 +3,8 @@
 #include "Test_Includes.h"
 #include "Test_Uniforms.h"
 
+#include "RHI/PipelineCompiler.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -43,7 +45,7 @@ ARGS_IF_RHIDEBUG("Compiler_Annotation4_CS"));
     const EShaderCompilationFlags flags = compiler->CompilationFlags();
     compiler->SetCompilationFlags(flags | EShaderCompilationFlags::ParseAnnotations);
 
-    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100, logger));
 
     compiler->SetCompilationFlags(flags);
 

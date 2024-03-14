@@ -86,7 +86,7 @@ ARGS_IF_RHIDEBUG("Compute_PushConstant1_CS"));
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Compute_PushConstant1")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->BindBuffer(FUniformID{ "SSB" }, dstBuffer);

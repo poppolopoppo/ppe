@@ -5,6 +5,8 @@
 #include "Vulkan/Instance/VulkanDevice.h"
 #include "Vulkan/Instance/VulkanResourceManager.h"
 
+#include "RHI/PixelFormatHelpers.h"
+
 #include "Diagnostic/Logger.h"
 #include "Maths/ScalarVectorHelpers.h"
 
@@ -378,7 +380,7 @@ VkImageView FVulkanImage::MakeView(const FVulkanDevice& device, Meta::TOptional<
 //----------------------------------------------------------------------------
 bool FVulkanImage::FInternalData::IsReadOnly() const {
     return (not (Desc.Usage ^ (
-        EImageUsage::TransferDst | EImageUsage::ColorAttachment | EImageUsage::Storage |
+        EImageUsage_BlitTransferDst | EImageUsage::ColorAttachment | EImageUsage::Storage |
         EImageUsage::DepthStencilAttachment | EImageUsage::TransientAttachment |
         EImageUsage::ColorAttachmentBlend | EImageUsage::StorageAtomic )) );
 }
@@ -411,8 +413,10 @@ bool FVulkanImage::IsSupported(const FVulkanDevice& device, const FImageDesc& de
                 continue;
 
             switch (static_cast<EImageUsage>(t)) {
-            case EImageUsage::TransferSrc: required |= VK_FORMAT_FEATURE_TRANSFER_SRC_BIT | VK_FORMAT_FEATURE_BLIT_SRC_BIT; break;
-            case EImageUsage::TransferDst: required |= VK_FORMAT_FEATURE_TRANSFER_DST_BIT | VK_FORMAT_FEATURE_BLIT_DST_BIT; break;
+            case EImageUsage::BlitSrc: required |= VK_FORMAT_FEATURE_BLIT_SRC_BIT; break;
+            case EImageUsage::BlitDst: required |= VK_FORMAT_FEATURE_BLIT_DST_BIT; break;
+            case EImageUsage::TransferSrc: required |= VK_FORMAT_FEATURE_TRANSFER_SRC_BIT; break;
+            case EImageUsage::TransferDst: required |= VK_FORMAT_FEATURE_TRANSFER_DST_BIT; break;
             case EImageUsage::Sampled: required |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT;break;
             case EImageUsage::Storage: required |= VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT; break;
             case EImageUsage::SampledMinMax: required |= VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_MINMAX_BIT_EXT; break;

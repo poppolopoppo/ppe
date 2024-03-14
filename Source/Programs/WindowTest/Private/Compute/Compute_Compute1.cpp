@@ -37,21 +37,21 @@ ARGS_IF_RHIDEBUG("Compute_Compute1_CS"));
     TAutoResource<FImageID> image0{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::Storage | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("Image0")) };
     PPE_LOG_CHECK(WindowTest, image0.Valid());
 
     TAutoResource<FImageID> image1{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::Storage | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("Image1")) };
     PPE_LOG_CHECK(WindowTest, image1.Valid());
 
     TAutoResource<FImageID> image2{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::Storage | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("Image2")) };
     PPE_LOG_CHECK(WindowTest, image2.Valid());
 
@@ -94,7 +94,7 @@ ARGS_IF_RHIDEBUG("Compute_Compute1_CS"));
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Compute_Compute1")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->BindImage(FUniformID{ "un_OutImage" }, image0);

@@ -151,13 +151,13 @@ ARGS_IF_RHIDEBUG("Impl_Scene1_Ppln2_PS"));
     TAutoResource<FImageID> texture1{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension({ 512, 512 })
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
+        .SetUsage(EImageUsage::Sampled | EImageUsage_BlitTransferDst),
         Default ARGS_IF_RHIDEBUG("Texture1")) };
     PPE_LOG_CHECK(WindowTest, !!texture1);
     TAutoResource<FImageID> texture2{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension({ 256, 512 })
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
+        .SetUsage(EImageUsage::Sampled | EImageUsage_BlitTransferDst),
         Default ARGS_IF_RHIDEBUG("Texture2")) };
     PPE_LOG_CHECK(WindowTest, !!texture2);
     TAutoResource<FSamplerID> sampler1{ fg, fg.CreateSampler(Default ARGS_IF_RHIDEBUG("Sampler1")) };
@@ -179,13 +179,13 @@ ARGS_IF_RHIDEBUG("Impl_Scene1_Ppln2_PS"));
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Impl_Scene1")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     TAutoResource<FImageID> colorTarget{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::ColorAttachment | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("ColorTarget")) };
     PPE_LOG_CHECK(WindowTest, colorTarget.Valid());
 

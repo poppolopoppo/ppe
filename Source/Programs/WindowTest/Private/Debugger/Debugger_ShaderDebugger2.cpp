@@ -74,7 +74,7 @@ ARGS_IF_RHIDEBUG("Debugger_ShaderDebugger2_PS"));
     TAutoResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::ColorAttachment | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget")) };
     PPE_LOG_CHECK(WindowTest, image.Valid());
 
@@ -179,7 +179,7 @@ no source
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Debugger_ShaderDebugger2")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }

@@ -49,7 +49,7 @@ RHI::FImageID FTexture::CreateTextureRHI(RHI::IFrameGraph& fg) const {
         .SetMaxMipmaps(NumMips())
         .SetArrayLayers(ArraySize())
         .SetView(ImageView())
-        .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst2);
+        .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst);
 
 #if USE_PPE_RHIDEBUG
     FString debugName = "@anon";

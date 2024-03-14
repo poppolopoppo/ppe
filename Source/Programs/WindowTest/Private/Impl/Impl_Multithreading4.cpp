@@ -29,7 +29,7 @@ struct FMultithreading4_ {
         Images[0] = Fg->CreateImage(RHI::FImageDesc{}
                     .SetDimension(viewSize)
                     .SetFormat(RHI::EPixelFormat::RGBA8_UNorm)
-                    .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage::TransferSrc)
+                    .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage_BlitTransferSrc)
                     .SetQueues(QueueUsage),
                     Default ARGS_IF_RHIDEBUG("RenderTarget1"));
         PPE_LOG_CHECK(WindowTest, !!Images[0]);
@@ -89,7 +89,7 @@ struct FMultithreading4_ {
         Images[1] = Fg->CreateImage(RHI::FImageDesc{}
            .SetDimension(viewSize)
            .SetFormat(RHI::EPixelFormat::RGBA8_UNorm)
-           .SetUsage(RHI::EImageUsage::Storage | RHI::EImageUsage::TransferSrc)
+           .SetUsage(RHI::EImageUsage::Storage | RHI::EImageUsage_BlitTransferSrc)
            .SetQueues(QueueUsage),
            Default ARGS_IF_RHIDEBUG("RenderTarget2"));
         PPE_LOG_CHECK(WindowTest, !!Images[1]);
@@ -141,7 +141,7 @@ struct FMultithreading4_ {
         Images[2] = Fg->CreateImage(RHI::FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(RHI::EPixelFormat::RGBA16_UNorm)
-            .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage::TransferSrc)
+            .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage_BlitTransferSrc)
             .SetQueues(QueueUsage),
             Default ARGS_IF_RHIDEBUG("RenderTarget3"));
         PPE_LOG_CHECK(WindowTest, !!Images[2]);
@@ -193,7 +193,7 @@ struct FMultithreading4_ {
         Images[3] = Fg->CreateImage(RHI::FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(RHI::EPixelFormat::RGBA8_UNorm)
-            .SetUsage(RHI::EImageUsage::TransferDst)
+            .SetUsage(RHI::EImageUsage_BlitTransferDst)
             .SetQueues(QueueUsage),
             Default ARGS_IF_RHIDEBUG("RenderTarget4"));
         PPE_LOG_CHECK(WindowTest, !!Images[3]);

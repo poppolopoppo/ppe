@@ -43,7 +43,7 @@ ARGS_IF_RHIDEBUG("Debugger_ShaderDebugger1_CS"));
     TAutoResource<FImageID> imageDst{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::R32f)
-        .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::Storage | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("Output")) };
     PPE_LOG_CHECK(WindowTest, imageDst.Valid());
 
@@ -103,7 +103,7 @@ no source
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Debugger_ShaderDebugger1")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->BindImage(FUniformID{ "un_OutImage" }, imageDst);

@@ -228,23 +228,22 @@ void FWindowTestApp::Shutdown() {
     parent_type::Shutdown();
 }
 //----------------------------------------------------------------------------
-void FWindowTestApp::Render(FTimespan dt) {
-    parent_type::Render(dt);
+void FWindowTestApp::Render(RHI::IFrameGraph& fg, FTimespan dt) {
+    parent_type::Render(fg, dt);
 
     // call present() once before exit for captures
     using namespace RHI;
-    IFrameGraph& fg = *RHI().FrameGraph();
 
     const TAutoResource<FImageID> colorTarget{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension({ 32, 32 })
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::ColorAttachment | EImageUsage::Transfer),
+        .SetUsage(EImageUsage::ColorAttachment | EImageUsage_BlitTransfer),
         Default ARGS_IF_RHIDEBUG("ColorTarget")) };
     PPE_LOG_CHECKVOID(WindowTest, !!colorTarget);
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("WindowTest")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
 
     const FLinearColor clearColor = HSV_to_RGB_smooth({
         Saturate(float(std::cos(*FSeconds(Timeline().Total())) * .5 + .5)), 1.f, 1.f });

@@ -451,7 +451,9 @@ VkImageUsageFlagBits VkCast(EImageUsage values) {
             continue;
 
         switch (st) {
+        case EImageUsage::BlitSrc: FALLTHROUGH();
         case EImageUsage::TransferSrc: flags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT; break;
+        case EImageUsage::BlitDst: FALLTHROUGH();
         case EImageUsage::TransferDst: flags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT; break;
         case EImageUsage::SampledMinMax:
         case EImageUsage::Sampled: flags |= VK_IMAGE_USAGE_SAMPLED_BIT; break;
@@ -780,8 +782,8 @@ EImageUsage RHICast(VkImageUsageFlagBits flags) {
             continue;
 
         switch (st) {
-        case VK_IMAGE_USAGE_TRANSFER_SRC_BIT: result |= EImageUsage::TransferSrc; break;
-        case VK_IMAGE_USAGE_TRANSFER_DST_BIT: result |= EImageUsage::TransferDst; break;
+        case VK_IMAGE_USAGE_TRANSFER_SRC_BIT: result |= EImageUsage_BlitTransferSrc; break;
+        case VK_IMAGE_USAGE_TRANSFER_DST_BIT: result |= EImageUsage_BlitTransferDst; break;
         case VK_IMAGE_USAGE_SAMPLED_BIT: result |= EImageUsage::Sampled; break;
         case VK_IMAGE_USAGE_STORAGE_BIT: result |= EImageUsage::Storage; break;
         case VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT: result |= EImageUsage::ColorAttachment; break;
@@ -1100,7 +1102,7 @@ VkShadingRatePaletteEntryNV VkCast(EShadingRatePalette value) {
     _EACH(EPixelFormat::BC2_RGBA8_UNorm, VK_FORMAT_BC2_UNORM_BLOCK) \
     _EACH(EPixelFormat::BC2_sRGB8_A8, VK_FORMAT_BC2_SRGB_BLOCK) \
     _EACH(EPixelFormat::BC3_RGBA8_UNorm, VK_FORMAT_BC3_UNORM_BLOCK) \
-    _EACH(EPixelFormat::BC3_sRGB8, VK_FORMAT_BC3_SRGB_BLOCK) \
+    _EACH(EPixelFormat::BC3_sRGB8_A8, VK_FORMAT_BC3_SRGB_BLOCK) \
     _EACH(EPixelFormat::BC4_R8_SNorm, VK_FORMAT_BC4_SNORM_BLOCK) \
     _EACH(EPixelFormat::BC4_R8_UNorm, VK_FORMAT_BC4_UNORM_BLOCK) \
     _EACH(EPixelFormat::BC5_RG8_SNorm, VK_FORMAT_BC5_SNORM_BLOCK) \

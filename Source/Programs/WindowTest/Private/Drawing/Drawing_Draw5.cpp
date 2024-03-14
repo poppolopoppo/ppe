@@ -56,7 +56,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     TAutoResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::ColorAttachment | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget")) };
     PPE_LOG_CHECK(WindowTest, image.Valid());
 
@@ -93,7 +93,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_Draw5")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }

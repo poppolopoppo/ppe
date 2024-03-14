@@ -69,7 +69,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         FImageDesc test;
         test.SetDimension(viewSize).SetFormat(fmt).SetUsage(
             EImageUsage::Sampled |
-            EImageUsage::TransferDst |
+            EImageUsage_BlitTransferDst |
             EImageUsage::DepthStencilAttachment );
 
         if (fg.IsSupported(test)) {
@@ -84,7 +84,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         fg.CreateImage(FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(EPixelFormat::RGBA8_UNorm)
-            .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
+            .SetUsage(EImageUsage::ColorAttachment | EImageUsage_BlitTransferSrc),
             Default ARGS_IF_RHIDEBUG("ColorTarget"))) };
     PPE_LOG_CHECK(WindowTest, !!colorImage);
 
@@ -92,7 +92,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         fg.CreateImage(FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(depthFormat)
-            .SetUsage(EImageUsage::DepthStencilAttachment | EImageUsage::TransferDst | EImageUsage::Sampled),
+            .SetUsage(EImageUsage::DepthStencilAttachment | EImageUsage_BlitTransferDst | EImageUsage::Sampled),
             Default ARGS_IF_RHIDEBUG("DepthTarget"))) };
     PPE_LOG_CHECK(WindowTest, !!depthImage);
 
@@ -133,7 +133,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Debugger_ReadAttachment1")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }

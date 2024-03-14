@@ -36,7 +36,7 @@ ARGS_IF_RHIDEBUG("Compute_Compute2_CS"));
     TAutoResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::Storage | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("Image")) };
     PPE_LOG_CHECK(WindowTest, image.Valid());
 
@@ -74,7 +74,7 @@ ARGS_IF_RHIDEBUG("Compute_Compute2_CS"));
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Compute_Compute2")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->BindImage(FUniformID{ "un_OutImage" }, image);

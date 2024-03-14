@@ -100,7 +100,7 @@ ARGS_IF_RHIDEBUG("Compute_DynamicOffset1_CS"));
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Compute_DynamicOffset1")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->SetBufferBase(FUniformID{ "UB" }, 0_b);

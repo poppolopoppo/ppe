@@ -88,7 +88,7 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute1_CS"));
     TAutoResource<FImageID> image{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::ColorAttachment | EImageUsage::Storage | EImageUsage::TransferSrc)
+        .SetUsage(EImageUsage::ColorAttachment | EImageUsage::Storage | EImageUsage_BlitTransferSrc)
         .SetQueues(EQueueUsage::Graphics | EQueueUsage::AsyncCompute),
         Default ARGS_IF_RHIDEBUG("RenderTarget")) };
     PPE_LOG_CHECK(WindowTest, image.Valid());
@@ -132,12 +132,12 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute1_CS"));
 
     FCommandBufferBatch cmd1{ fg.Begin(FCommandBufferDesc{ EQueueType::Graphics }
         .SetName("Graphics-1")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd1);
 
     FCommandBufferBatch cmd2{ fg.Begin(FCommandBufferDesc{ EQueueType::AsyncCompute }
         .SetName("Compute-1")
-        .SetDebugFlags(EDebugFlags::Default),
+        .SetDebugFlags(EDebugFlags_Default),
         { cmd1 }) };
     PPE_LOG_CHECK(WindowTest, !!cmd2);
 
@@ -183,13 +183,13 @@ ARGS_IF_RHIDEBUG("Compute_AsyncCompute1_CS"));
 
     FCommandBufferBatch cmd3{ fg.Begin(FCommandBufferDesc{ EQueueType::Graphics }
         .SetName("Graphics-2")
-        .SetDebugFlags(EDebugFlags::Default),
+        .SetDebugFlags(EDebugFlags_Default),
         { cmd2  }) };
     PPE_LOG_CHECK(WindowTest, !!cmd3);
 
     FCommandBufferBatch cmd4{ fg.Begin(FCommandBufferDesc{ EQueueType::AsyncCompute }
         .SetName("Compute-2")
-        .SetDebugFlags(EDebugFlags::Default),
+        .SetDebugFlags(EDebugFlags_Default),
         { cmd3 }) };
     PPE_LOG_CHECK(WindowTest, !!cmd4);
 

@@ -25,7 +25,7 @@ struct FMultithreading1_ {
         RHI::TAutoResource<RHI::FImageID> image{*Fg, Fg->CreateImage(RHI::FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(RHI::EPixelFormat::RGBA8_UNorm)
-            .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage::TransferSrc),
+            .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage_BlitTransferSrc),
             Default ARGS_IF_RHIDEBUG("RenderTarget1")) };
         PPE_LOG_CHECK(WindowTest, !!image);
 
@@ -72,7 +72,7 @@ struct FMultithreading1_ {
         RHI::TAutoResource<RHI::FImageID> image{ *Fg, Fg->CreateImage(RHI::FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(RHI::EPixelFormat::RGBA16_UNorm)
-            .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage::TransferSrc),
+            .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage_BlitTransferSrc),
             Default ARGS_IF_RHIDEBUG("RenderTarget2")) };
         PPE_LOG_CHECK(WindowTest, !!image);
 
@@ -115,7 +115,7 @@ struct FMultithreading1_ {
         RHI::TAutoResource<RHI::FImageID> image{ *Fg, Fg->CreateImage(RHI::FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(RHI::EPixelFormat::RGBA16_UNorm)
-            .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage::TransferSrc),
+            .SetUsage(RHI::EImageUsage::ColorAttachment | RHI::EImageUsage_BlitTransferSrc),
             Default ARGS_IF_RHIDEBUG("RenderTarget3")) };
         PPE_LOG_CHECK(WindowTest, !!image);
 

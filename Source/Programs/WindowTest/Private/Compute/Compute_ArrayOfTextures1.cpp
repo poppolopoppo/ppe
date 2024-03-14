@@ -41,7 +41,7 @@ ARGS_IF_RHIDEBUG("Compute_ArrayOfTextures1_CS"));
         textures[i] = fg.CreateImage(FImageDesc{}
             .SetDimension(textureDim)
             .SetFormat(EPixelFormat::RGBA8_UNorm)
-            .SetUsage(EImageUsage::Sampled | EImageUsage::TransferDst),
+            .SetUsage(EImageUsage::Sampled | EImageUsage_BlitTransferDst),
             Default ARGS_IF_RHIDEBUG(INLINE_FORMAT(16, "Texture-{0}", i)) );
         PPE_LOG_CHECK(WindowTest, textures[i].Valid());
     }
@@ -56,7 +56,7 @@ ARGS_IF_RHIDEBUG("Compute_ArrayOfTextures1_CS"));
     TAutoResource<FImageID> imageDst{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(imageDim)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::Storage | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("Output")) };
     PPE_LOG_CHECK(WindowTest, imageDst.Valid());
 
@@ -106,7 +106,7 @@ ARGS_IF_RHIDEBUG("Compute_ArrayOfTextures1_CS"));
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Compute_ArrayOfTextures1")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     resources->BindTextures(FUniformID{ "un_Textures" }, textures, sampler);

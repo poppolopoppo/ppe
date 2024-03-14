@@ -56,14 +56,14 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     TAutoResource<FImageID> image1{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::ColorAttachment | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget_1")) };
     PPE_LOG_CHECK(WindowTest, image1.Valid());
 
     TAutoResource<FImageID> image2{ fg, fg.CreateImage(FImageDesc{}
         .SetDimension(viewSize)
         .SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::ColorAttachment | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::ColorAttachment | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("RenderTarget_2")) };
     PPE_LOG_CHECK(WindowTest, image2.Valid());
 
@@ -108,7 +108,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_Draw7")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
     FLogicalPassID renderPass = cmd->CreateRenderPass(FRenderPassDesc{ viewSize }

@@ -376,7 +376,12 @@ RETRY_COMPILE_SHADERS:
     if (Unlikely(not compiler.Compile(desc, shaderFormat, logger))) {
         FPlatformDialog::EResult result = FPlatformDialog::Ignore;
         if (not (compiler.CompilationFlags() ^ EShaderCompilationFlags::Quiet)) {
-            result = FPlatformDialog::FileDialog(*sourceFile, sourceLine, text.Written(), StringFormat(L"Shader compilation failed: {:q}", debugName),
+            result = FPlatformDialog::FileDialog(*sourceFile, sourceLine, text.Written(),
+#if USE_PPE_RHIDEBUG
+                StringFormat(L"Shader compilation failed: {:q}", debugName),
+#else
+                L"Shader compilation failed"_view,
+#endif
                 FPlatformDialog::kAbortRetryIgnore, FPlatformDialog::Error);
         }
 
@@ -384,10 +389,12 @@ RETRY_COMPILE_SHADERS:
             PPE_THROW_IT(FVulkanException("shader compilation failed", VK_ERROR_UNKNOWN));
 
         if (result == FPlatformDialog::Retry) {
+#if USE_PPE_RHIDEBUG
             PPE_SLOG(RHI, Emphasis, "retrying shader compilation", {
                 {"Name", debugName.MakeView()},
                 {"Pipeline", pipelineType.MakeView()},
             });
+#endif
             text.clear();
             goto RETRY_COMPILE_SHADERS;
         }

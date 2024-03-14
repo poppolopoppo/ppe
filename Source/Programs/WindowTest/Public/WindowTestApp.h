@@ -16,7 +16,7 @@ public:
     virtual void Shutdown() override;
 
 protected:
-    virtual void Render(FTimespan dt) override;
+    virtual void Render(RHI::IFrameGraph& fg, FTimespan dt) override;
 
 };
 //----------------------------------------------------------------------------

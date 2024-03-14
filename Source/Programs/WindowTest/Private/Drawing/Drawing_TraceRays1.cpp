@@ -134,7 +134,7 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays1_RayClosestHit"));
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}
         .SetName("Drawing_TraceRays1")
-        .SetDebugFlags(EDebugFlags::Default)) };
+        .SetDebugFlags(EDebugFlags_Default)) };
     PPE_LOG_CHECK(WindowTest, !!cmd);
 
 #if 1
@@ -142,7 +142,7 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays1_RayClosestHit"));
 
     const TAutoResource<FImageID> dstImage{ fg.ScopedResource(fg.CreateImage(
         FImageDesc{}.SetDimension(viewSize).SetFormat(EPixelFormat::RGBA8_UNorm)
-        .SetUsage(EImageUsage::Storage | EImageUsage::TransferSrc),
+        .SetUsage(EImageUsage::Storage | EImageUsage_BlitTransferSrc),
         Default ARGS_IF_RHIDEBUG("OutputImage"))) };
     PPE_LOG_CHECK(WindowTest, dstImage.Valid());
 #else
