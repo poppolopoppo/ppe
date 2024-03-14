@@ -6,6 +6,10 @@
 #include "UI/Widgets/LogViewerWidget.h"
 #include "UI/Widgets/MemoryUsageWidget.h"
 
+#include "Widgets/ImportTextureWidget.h"
+
+#include "Texture_fwd.h"
+
 #include "Container/HashMap.h"
 #include "Container/Vector.h"
 #include "IO/Filename.h"
@@ -107,6 +111,8 @@ protected:
     FTimeline _refreshCooldown;
     bool _needRefresh{ true };
 
+    TUniquePtr<Application::FImportTextureWidget> _importTexture;
+
     TUniquePtr<Application::FFileDialogWidget> _fileDialog;
     TUniquePtr<Application::FMemoryUsageWidget> _memoryUsage;
 #if USE_PPE_LOGGER
@@ -127,9 +133,10 @@ protected:
 
     NODISCARD bool CreateDummySource_(RHI::IFrameGraph& fg, const uint2& size, RHI::EPixelFormat format);
     NODISCARD PCSource CreateTextureSource_(RHI::IFrameGraph& fg, const FFilename& texturePath);
+    NODISCARD PCSource CreateTextureSource_(RHI::IFrameGraph& fg, const ContentPipeline::PTexture& texture);
     NODISCARD bool RecreateRenderTargets_(RHI::IFrameGraph& fg, const uint2& viewportSize);
 
-    void StartDebugWidgets_();
+    void StartInterafaceWidgets_();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -10,6 +10,8 @@
 
 #include "Texture/TextureSource.h"
 
+#include "HAL/PlatformDialog.h"
+
 #include "UI/Imgui.h"
 #include "External/imgui/Public/imgui-internal.h"
 
@@ -89,7 +91,7 @@ void FShaderToyApp::Start() {
     _shaderTime.ResetToZero();
     _shaderTimeSpeed = 1.0f;
 
-    StartDebugWidgets_();
+    StartInterafaceWidgets_();
 
     ApplicationLoop();
 }
@@ -338,13 +340,13 @@ auto FShaderToyApp::CreateTextureSource_(RHI::IFrameGraph& fg, const FFilename& 
     EPixelFormat pixelFmt = Default;
     switch (img->Format()) {
     case ContentPipeline::ETextureSourceFormat::RGBA8:
-        if (img->GammaSpace() == EGammaSpace::sRGB)
+        if (img->Gamma() == EGammaSpace::sRGB)
             pixelFmt = EPixelFormat::sRGB8_A8;
         else
             pixelFmt = EPixelFormat::RGBA8_UNorm;
         break;
     case ContentPipeline::ETextureSourceFormat::BGRA8:
-        if (img->GammaSpace() == EGammaSpace::sRGB)
+        if (img->Gamma() == EGammaSpace::sRGB)
             pixelFmt = EPixelFormat::sBGR8_A8;
         else
             pixelFmt = EPixelFormat::BGR8_UNorm;
@@ -387,7 +389,7 @@ auto FShaderToyApp::CreateTextureSource_(RHI::IFrameGraph& fg, const FFilename& 
     }
 
     const RHI::TAutoResource<RHI::FImageID> stagingImg{ fg, fg.CreateImage(RHI::FImageDesc{}
-        .SetUsage(RHI::EImageUsage::TransferSrc | RHI::EImageUsage::TransferDst)
+        .SetUsage(RHI::EImageUsage_Transfer)
         .SetDimension(img->Dimensions().xy)
         .SetFormat(pixelFmt)
         .SetAllMipmaps(),
@@ -424,7 +426,7 @@ auto FShaderToyApp::CreateTextureSource_(RHI::IFrameGraph& fg, const FFilename& 
     PPE_LOG_CHECK(ShaderToy, tMipMaps.valid());
 
     RHI::PFrameTask tPrevious = tMipMaps;
-    uint2 mipDimensions = source->Desc.Dimensions.xy;
+    uint3 mipDimensions = source->Desc.Dimensions;
     for (RHI::FMipmapLevel mip{0}; mip < source->Desc.MaxLevel; ) {
         auto copyImage = RHI::FCopyImage{}
             .From(*stagingImg)
@@ -433,8 +435,8 @@ auto FShaderToyApp::CreateTextureSource_(RHI::IFrameGraph& fg, const FFilename& 
 
         const RHI::FMipmapLevel lastMip{Min(mip + (RHI::MaxCopyRegions), source->Desc.MaxLevel.Value)};
         for (; mip < lastMip; mip.Value++) {
-            copyImage.AddRegion({mip}, int2(0), {mip}, int2(0), mipDimensions);
-            mipDimensions /= 2;
+            copyImage.AddRegion({mip}, int2(0), {mip}, int2(0), mipDimensions.xy);
+            mipDimensions = RHI::FPixelFormatInfo::NextMipDimensions(mipDimensions);
         }
 
         const RHI::PFrameTask tCopy = cmd->Task(copyImage);
@@ -446,7 +448,23 @@ auto FShaderToyApp::CreateTextureSource_(RHI::IFrameGraph& fg, const FFilename& 
 
     PPE_LOG_CHECK(ShaderToy, fg.Execute(cmd));
 
-    _sources.insert_AssertUnique({ texturePath, source });
+    _sources.insert_or_assign({ texturePath, source });
+    return source;
+}
+//----------------------------------------------------------------------------
+auto FShaderToyApp::CreateTextureSource_(RHI::IFrameGraph& fg, const ContentPipeline::PTexture& texture) -> PCSource {
+    using namespace RHI;
+
+    PSource source = NEW_REF(UserDomain, FSource);
+    if (const Meta::TOptional<FFilename> sourceFile = texture->Data().SourceFile())
+        source->DebugName = sourceFile->Basename().ToString();
+
+    source->Image.Reset(fg, texture->CreateTextureRHI(fg));
+    PPE_LOG_CHECK(ShaderToy, source->Image.Valid());
+
+    source->Desc = fg.Description(source->Image);
+
+    _sources.insert_or_assign({ *texture->Data().SourceFile(), source });
     return source;
 }
 //----------------------------------------------------------------------------
@@ -459,7 +477,9 @@ bool FShaderToyApp::RecreateRenderTargets_(RHI::IFrameGraph& fg, const uint2& vi
     return _main.RecreateRenderTarget(fg, viewportSize);
 }
 //----------------------------------------------------------------------------
-void FShaderToyApp::StartDebugWidgets_() {
+void FShaderToyApp::StartInterafaceWidgets_() {
+    _importTexture = MakeUnique<Application::FImportTextureWidget>(Services().Get<ITextureService>());
+
     _fileDialog = MakeUnique<Application::FFileDialogWidget>();
     _fileDialog->InitialDirectory = L"Data:/Textures";
     _fileDialog->ViewMode = Application::FFileDialogWidget::EView::Details;
@@ -571,6 +591,8 @@ void FShaderToyApp::Update(FTimespan dt) {
 
     ImGui::End();
 
+    Unused(_importTexture->Show());
+
     Unused(_fileDialog->Show());
     Unused(_memoryUsage->Show());
 #if USE_PPE_LOGGER
@@ -601,24 +623,25 @@ void FShaderToyApp::FBuffer::RenderUI(FShaderToyApp& app, RHI::IFrameGraph& fg) 
         PPE_LOG_CHECKVOID(ShaderToy, RecreatePipeline(fg, app._vertexShader));
     }
     ImGui::SameLine();
+
+    ImGui::PushFont(ImGui::LargeFont());
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted(ansiText);
+    ImGui::PopFont();
 
     forrange(i, 0, lengthof(Inputs)) {
         FInput& in = Inputs[i];
 
-        if (not ImGui::CollapsingHeader(INLINE_FORMAT(64, "Input [{}]", GShaderToyApp_BufferLetters[i]), ImGuiTreeNodeFlags_DefaultOpen))
+        if (not ImGui::CollapsingHeader(INLINE_FORMAT(64, "Input {}", GShaderToyApp_BufferLetters[i]), ImGuiTreeNodeFlags_DefaultOpen))
             continue;
 
         ImGui::PushID(&in);
-        DEFERRED{
-            ImGui::PopID();
-        };
+        DEFERRED{ ImGui::PopID(); };
 
         if (ImGui::ImageButton(
             ICON_CI_BROWSER,
             FImTexturePackedID{ in.Source->Image->Pack().Packed },
-            ImVec2(4, 4) * ImGui::GetTextLineHeightWithSpacing() - ImGui::GetStyle().ItemSpacing * 2,
+            ImVec2(6, 6) * ImGui::GetTextLineHeightWithSpacing() - ImGui::GetStyle().ItemSpacing * 2,
             ImVec2(0, 0), ImVec2(1, 1),
             ImVec4(1, 1, 1, 1),
             ImGui::GetStyleColorVec4(ImGuiCol_Border))) {
@@ -655,13 +678,25 @@ void FShaderToyApp::FBuffer::RenderUI(FShaderToyApp& app, RHI::IFrameGraph& fg) 
                 ImGui::CloseCurrentPopup();
             }
             ImGui::SameLine();
+
+            ImGui::BeginDisabled(app._fileDialog->SelectedEntries.empty());
             if (ImGui::Button(ICON_CI_ADD)) {
                 for (u32 entryIndex : app._fileDialog->SelectedEntries) {
-                    const Application::FFileDialogWidget::FEntry& entry = app._fileDialog->VisibleEntries[entryIndex];
-                    in.Source = app.CreateTextureSource_(fg, entry.Name);
+                    app._importTexture->Import(app._fileDialog->VisibleEntries[entryIndex].Name,
+                        [&](const ContentPipeline::PTexture& texture) {
+                            in.Source = app.CreateTextureSource_(*app.RHI().FrameGraph(), texture);
+                        },
+                        [&, fname{app._fileDialog->VisibleEntries[entryIndex].Name}](FStringLiteral reason) {
+                            FPlatformDialog::Show(
+                                StringFormat(L"{}: {}", fname, reason),
+                                L"failed to import texture"_view,
+                                FPlatformDialog::kOkCancel,
+                                FPlatformDialog::Error);
+                        });
                 }
                 ImGui::CloseCurrentPopup();
             }
+            ImGui::EndDisabled();
         }
 
         ImGui::SameLine();
@@ -670,24 +705,46 @@ void FShaderToyApp::FBuffer::RenderUI(FShaderToyApp& app, RHI::IFrameGraph& fg) 
 
         const RHI::FImageDesc& desc = in.Source->Desc;
 
-        const u32 bpp = RHI::EPixelFormat_BitsPerPixel(desc.Format, RHI::EImageAspect::Color);
+        const RHI::FPixelFormatInfo pixelInfo = EPixelFormat_Infos(desc.Format);
 
         ImGui::BeginDisabled();
+
         ImGui::SmallButton(INLINE_FORMAT(16, "{}", desc.View));
-        ImGui::SameLine();
-        ImGui::SmallButton(INLINE_FORMAT(16, "{} bpp", bpp));
+
         ImGui::SameLine();
         ImGui::SmallButton(INLINE_FORMAT(16, "{}", desc.Format));
+
+        ImGui::SameLine();
+        ImGui::SmallButton(INLINE_FORMAT(16, "{} bpp", pixelInfo.BitsPerPixel(RHI::EImageAspect::Color)));
+
+        ImGui::SameLine();
+        ImGui::SmallButton(INLINE_FORMAT(16, "{}x{}", pixelInfo.BlockDim.x, pixelInfo.BlockDim.y));
+
+        if (pixelInfo.IsSRGB()) {
+            ImGui::SameLine();
+            ImGui::SmallButton("sRGB");
+        }
+
+        uint3 dimensions = desc.Dimensions;
+        ImGui::SetNextItemWidth(120);
+        ImGui::InputScalarN("Dimensions", ImGuiDataType_U32, &dimensions, 3);
+
+        u32 numMips = Min(pixelInfo.FullMipCount(desc.Dimensions), *desc.MaxLevel);
+        ImGui::SetNextItemWidth(120);
+        ImGui::InputScalar("Mips", ImGuiDataType_U32, &numMips);
+
+        u32 numSlices = *desc.ArrayLayers;
+        ImGui::SetNextItemWidth(120);
+        ImGui::InputScalar("Layers", ImGuiDataType_U32, &numSlices);
+
         ImGui::EndDisabled();
 
-        ImGui::TextUnformatted(*in.Source->DebugName);
-
-        ImGui::Text("%d x %d", desc.Dimensions.x, desc.Dimensions.y);
-
-        ImGui::TextUnformatted(INLINE_FORMAT(64, "{:2} mips | {:2} layers | {}",
-            desc.MaxLevel,
-            desc.ArrayLayers,
-            Fmt::SizeInBytes((bpp * desc.Dimensions.x * desc.Dimensions.y) / 8)));
+        ImGui::TextUnformatted(INLINE_FORMAT(32, "Memory size: {:f3}",
+            Fmt::SizeInBytes(pixelInfo.SizeInBytes(
+                RHI::EImageAspect::Color,
+                desc.Dimensions,
+                numMips,
+                *desc.ArrayLayers))));
 
         ImGui::EndGroup();
     }
@@ -700,9 +757,6 @@ void FShaderToyApp::Render(RHI::IFrameGraph& fg, FTimespan dt) {
     bool visible = true;
     if (not ImGui::Begin("ShaderToy", &visible, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse))
         return;
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 1, 1 });
-    DEFERRED{ ImGui::PopStyleVar(); };
 
     { // options
         ImGui::BeginChild("ShaderToy##Options", ImVec2(150, 0), ImGuiChildFlags_ResizeX);
