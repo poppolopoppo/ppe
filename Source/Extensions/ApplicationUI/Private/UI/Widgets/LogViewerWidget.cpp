@@ -262,9 +262,11 @@ static void LogViewer_ShowLogs_(FLogViewerWidget& widget) {
                     ImGui::OpenPopup("##LogViewer::TextPopup");
 
                 if (ImGui::BeginPopup("##LogViewer::TextPopup", ImGuiWindowFlags_AlwaysVerticalScrollbar)) {
+                    ImGui::PushFont(ImGui::MonospaceFont());
                     ImGui::PushTextWrapPos(400.0f);
                     ImGui::TextUnformatted(text.data(), text.data() + text.size());
                     ImGui::PopTextWrapPos();
+                    ImGui::PopFont();
 
                     ImGui::EndPopup();
                 }

@@ -37,6 +37,8 @@ public:
     void OnWindowResized(const IRHIService& rhi, const FRHISurfaceCreateInfo& surface) override;
 
 private:
+    void InitializeImGuiStyle_();
+
     NODISCARD RHI::PFrameTask CreateFontTexture_(const RHI::FCommandBufferBatch& cmd);
     NODISCARD RHI::PFrameTask RecreateBuffers_(const RHI::FCommandBufferBatch& cmd);
     NODISCARD RHI::PFrameTask UpdateUniformBuffer_(const RHI::FCommandBufferBatch& cmd);
