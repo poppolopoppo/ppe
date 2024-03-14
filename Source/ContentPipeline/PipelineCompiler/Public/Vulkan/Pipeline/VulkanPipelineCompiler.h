@@ -41,6 +41,7 @@ public:
 
 public: // IPipelineCompiler
     FStringLiteral DisplayName() const NOEXCEPT override { return "VulkanPipelineCompiler"; }
+    const FLogger& DefaultLogger() const NOEXCEPT override { return _defaultLogger; }
     ETargetRHI TargetRHI() const NOEXCEPT override { return ETargetRHI::Vulkan; }
 
     bool IsSupported(const FMeshPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT override;
@@ -74,6 +75,7 @@ private:
     struct FInternalData {
         VECTORINSITU(PipelineCompiler, FDirpath, 3) Directories;
         FShaderCompiledModuleCache ShaderCache;
+        FLogger DefaultLogger;
         TUniquePtr<FVulkanSpirvCompiler> SpirvCompiler;
         EShaderCompilationFlags CompilationFlags{ Default };
     };
@@ -86,6 +88,8 @@ private:
     const TPtrRef<const FVulkanDevice> _device;
 
     TThreadSafe<FInternalData, EThreadBarrier::CriticalSection> _data;
+
+    const FLogger _defaultLogger;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

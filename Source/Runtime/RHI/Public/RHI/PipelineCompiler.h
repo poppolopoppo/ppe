@@ -42,21 +42,27 @@ public:
         const FStringView& text,
         Opaq::object_init&& object)>;
 
-    virtual FStringLiteral DisplayName() const NOEXCEPT = 0;
-    virtual ETargetRHI TargetRHI() const NOEXCEPT = 0;
+    NODISCARD virtual FStringLiteral DisplayName() const NOEXCEPT = 0;
+    NODISCARD virtual const FLogger& DefaultLogger() const NOEXCEPT = 0;
+    NODISCARD virtual ETargetRHI TargetRHI() const NOEXCEPT = 0;
 
-    virtual EShaderCompilationFlags CompilationFlags() const NOEXCEPT = 0;
+    NODISCARD virtual EShaderCompilationFlags CompilationFlags() const NOEXCEPT = 0;
     virtual void SetCompilationFlags(EShaderCompilationFlags value) NOEXCEPT = 0;
 
-    virtual bool IsSupported(const FMeshPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
-    virtual bool IsSupported(const FRayTracingPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
-    virtual bool IsSupported(const FGraphicsPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
-    virtual bool IsSupported(const FComputePipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsSupported(const FMeshPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsSupported(const FRayTracingPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsSupported(const FGraphicsPipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
+    NODISCARD virtual bool IsSupported(const FComputePipelineDesc& desc, EShaderLangFormat fmt) const NOEXCEPT = 0;
 
-    virtual bool Compile(FMeshPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
-    virtual bool Compile(FRayTracingPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
-    virtual bool Compile(FGraphicsPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
-    virtual bool Compile(FComputePipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
+    NODISCARD virtual bool Compile(FMeshPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
+    NODISCARD virtual bool Compile(FRayTracingPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
+    NODISCARD virtual bool Compile(FGraphicsPipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
+    NODISCARD virtual bool Compile(FComputePipelineDesc& desc, EShaderLangFormat fmt, const FLogger& logger) = 0;
+
+    NODISCARD inline bool Compile(FMeshPipelineDesc& desc, EShaderLangFormat fmt) { return Compile(desc, fmt, DefaultLogger()); }
+    NODISCARD inline bool Compile(FRayTracingPipelineDesc& desc, EShaderLangFormat fmt) { return Compile(desc, fmt, DefaultLogger()); }
+    NODISCARD inline bool Compile(FGraphicsPipelineDesc& desc, EShaderLangFormat fmt) { return Compile(desc, fmt, DefaultLogger()); }
+    NODISCARD inline bool Compile(FComputePipelineDesc& desc, EShaderLangFormat fmt) { return Compile(desc, fmt, DefaultLogger()); }
 
     virtual void ReleaseUnusedMemory() = 0;
 

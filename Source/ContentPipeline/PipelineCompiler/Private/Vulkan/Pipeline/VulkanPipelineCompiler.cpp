@@ -10,16 +10,35 @@
 #   include "RHI/EnumToString.h"
 #endif
 
+#include "Diagnostic/Logger.h"
 #include "Meta/Functor.h"
 #include "IO/Format.h"
 #include "Memory/SharedBuffer.h"
 
 namespace PPE {
 namespace RHI {
+LOG_CATEGORY(, VulkanPipelineCompiler)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace {
+//----------------------------------------------------------------------------
+NODISCARD static IPipelineCompiler::FLogger VulkanPipelineCompilerLogger_() {
+#if USE_PPE_LOGGER
+    return [](
+        ELoggerVerbosity verbosity,
+        const FConstChar& source, u32 line,
+        const FStringView& text,
+        Opaq::object_init&& object) {
+        FLogger::LogStructured(
+            LogCategory_VulkanPipelineCompiler(),
+            FLoggerSiteInfo{verbosity, source, line},
+            text, std::move(object));
+    };
+#else
+    return NoFunction;
+#endif
+}
 //----------------------------------------------------------------------------
 NODISCARD CONSTEXPR bool IsSrcFormatSupported_(EShaderLangFormat src) {
     switch (Meta::EnumOrd(Meta::EnumAnd(src, EShaderLangFormat::_ApiStorageFormatMask))) {
@@ -440,7 +459,8 @@ hash_t FVulkanPipelineCompiler::FShaderBinaryDataTraits::operator ()(const PShad
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FVulkanPipelineCompiler::FVulkanPipelineCompiler(Meta::FForceInit) {
+FVulkanPipelineCompiler::FVulkanPipelineCompiler(Meta::FForceInit)
+:   _defaultLogger(VulkanPipelineCompilerLogger_()) {
     const auto exclusiveData = _data.LockExclusive();
     exclusiveData->SpirvCompiler.create<FVulkanSpirvCompiler>(
         exclusiveData->Directories );
@@ -450,7 +470,8 @@ FVulkanPipelineCompiler::FVulkanPipelineCompiler(Meta::FForceInit) {
 }
 //----------------------------------------------------------------------------
 FVulkanPipelineCompiler::FVulkanPipelineCompiler(const FVulkanDevice& device)
-:   _device(device) {
+:   _device(device)
+,   _defaultLogger(VulkanPipelineCompilerLogger_()) {
     Assert(_device->vkInstance());
     Assert(_device->vkPhysicalDevice());
     Assert(_device->vkDevice());
@@ -645,12 +666,13 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
             FMeshPipelineDesc::FShader shader;
             FVulkanSpirvCompiler::FShaderReflection reflection;
 
+            FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+            sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
+
             FSharedBuffer content{ (*pShaderSourceRef)->Data()->LoadShaderSource() };
             if (not content) {
-                FConstChar sourceFile = "@unknown";
-#if USE_PPE_RHIDEBUG
-                sourceFile = (*pShaderSourceRef)->DebugName();
-#endif
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
                     {"Pipeline", "Mesh"},
                     {"ShaderType", Meta::EnumOrd(sh.first)},
@@ -665,16 +687,11 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
                 &shader, &reflection, logger,
                 sh.first, it->first, spirvFormat,
                 (*pShaderSourceRef)->EntryPoint(),
-                content
-                ARGS_IF_RHIDEBUG(INLINE_FORMAT(512, "{0}::{1}", (*pShaderSourceRef)->DebugName(), (*pShaderSourceRef)->EntryPoint())) )) {
+                content, sourceFile )) {
                 return false;
             }
 
             if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache, logger)) {
-                FConstChar sourceFile = "@unknown";
-#if USE_PPE_RHIDEBUG
-                sourceFile = (*pShaderSourceRef)->DebugName();
-#endif
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
                     {"Pipeline", "Mesh"},
                     {"ShaderType", Meta::EnumOrd(sh.first)},
@@ -685,10 +702,6 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
             }
 
             if (not MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout, exclusiveData->CompilationFlags)) {
-                FConstChar sourceFile = "@unknown";
-#if USE_PPE_RHIDEBUG
-                sourceFile = (*pShaderSourceRef)->DebugName();
-#endif
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to merge vulkan pipeline layout!"_view, {
                     {"Pipeline", "Mesh"},
                     {"ShaderType", Meta::EnumOrd(sh.first)},
@@ -764,13 +777,13 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
 
         // compile GLSL
         if (auto* const pShaderSourceRef = std::get_if<PShaderSource>(&it->second)) {
+            FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+            sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
 
             FSharedBuffer content{ (*pShaderSourceRef)->Data()->LoadShaderSource() };
             if (not content) {
-                FConstChar sourceFile = "@unknown";
-#if USE_PPE_RHIDEBUG
-                sourceFile = (*pShaderSourceRef)->DebugName();
-#endif
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
                     {"Pipeline", "RayTracing"},
                     {"ShaderName", sh.first.MakeView()},
@@ -787,16 +800,11 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
                 &shader, &reflection, logger,
                 sh.second.Type, it->first, spirvFormat,
                 (*pShaderSourceRef)->EntryPoint(),
-                content
-                ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()) )) {
+                content, sourceFile)) {
                 return false;
             }
 
             if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache, logger)) {
-                FConstChar sourceFile = "@unknown";
-#if USE_PPE_RHIDEBUG
-                sourceFile = (*pShaderSourceRef)->DebugName();
-#endif
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
                     {"Pipeline", "RayTracing"},
                     {"ShaderName", sh.first.MakeView()},
@@ -807,10 +815,6 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
             }
 
             if (not MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout, exclusiveData->CompilationFlags)) {
-                FConstChar sourceFile = "@unknown";
-#if USE_PPE_RHIDEBUG
-                sourceFile = (*pShaderSourceRef)->DebugName();
-#endif
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to merge vulkan pipeline layout!"_view, {
                     {"Pipeline", "RayTracing"},
                     {"ShaderName", sh.first.MakeView()},
@@ -879,13 +883,13 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
 
         // compile GLSL
         if (auto* const pShaderSourceRef = std::get_if<PShaderSource>(&it->second)) {
+            FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+            sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
 
             FSharedBuffer content{ (*pShaderSourceRef)->Data()->LoadShaderSource() };
             if (not content) {
-                FConstChar sourceFile = "@unknown";
-#if USE_PPE_RHIDEBUG
-                sourceFile = (*pShaderSourceRef)->DebugName();
-#endif
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
                     {"Pipeline", "Graphics"},
                     {"ShaderType", Meta::EnumOrd(sh.first)},
@@ -902,16 +906,11 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
                 &shader, &reflection, logger,
                 sh.first, it->first, spirvFormat,
                 (*pShaderSourceRef)->EntryPoint(),
-                content
-                ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()))) {
+                content, sourceFile)) {
                 return false;
             }
 
             if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache, logger)) {
-                FConstChar sourceFile = "@unknown";
-#if USE_PPE_RHIDEBUG
-                sourceFile = (*pShaderSourceRef)->DebugName();
-#endif
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
                     {"Pipeline", "Graphics"},
                     {"ShaderType", Meta::EnumOrd(sh.first)},
@@ -922,10 +921,6 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
             }
 
             if (not MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout, exclusiveData->CompilationFlags)) {
-                FConstChar sourceFile = "@unknown";
-#if USE_PPE_RHIDEBUG
-                sourceFile = (*pShaderSourceRef)->DebugName();
-#endif
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to merge vulkan pipeline layout!"_view, {
                     {"Pipeline", "Graphics"},
                     {"ShaderType", Meta::EnumOrd(sh.first)},
@@ -1001,13 +996,13 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
 
     // compile GLSL
     if (auto* const pShaderSourceRef = std::get_if<PShaderSource>(&it->second)) {
+        FConstChar sourceFile = "@unknown";
+#if USE_PPE_RHIDEBUG
+        sourceFile = (*pShaderSourceRef)->DebugName();
+#endif
 
         FSharedBuffer content{ (*pShaderSourceRef)->Data()->LoadShaderSource() };
         if (not content) {
-            FConstChar sourceFile = "@unknown";
-#if USE_PPE_RHIDEBUG
-            sourceFile = (*pShaderSourceRef)->DebugName();
-#endif
             logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
                 {"Pipeline", "Comptue"},
                 {"ShaderLangFormat", Meta::EnumOrd(it->first)},
@@ -1022,16 +1017,11 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
             &ppln.Shader, &reflection, logger,
             EShaderType::Compute, it->first, spirvFormat,
             (*pShaderSourceRef)->EntryPoint(),
-            content
-            ARGS_IF_RHIDEBUG((*pShaderSourceRef)->DebugName().c_str()) )) {
+            content, sourceFile )) {
             return false;
         }
 
         if (createModule && not CreateVulkanShader_(&ppln.Shader, exclusiveData->ShaderCache, logger)) {
-            FConstChar sourceFile = "@unknown";
-#if USE_PPE_RHIDEBUG
-            sourceFile = (*pShaderSourceRef)->DebugName();
-#endif
             logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
                 {"Pipeline", "Comptue"},
                 {"ShaderLangFormat", Meta::EnumOrd(it->first)},
