@@ -1139,6 +1139,7 @@
       <ExpandedItem>(void*)(Data &amp; ~uintptr_t(0xF))</ExpandedItem>
     </Expand>
   </Type>
+  <!--
   <Type Name="PPE::FRefCountable">
     <DisplayString>{(void*)this} [Refs:{_refCount}]</DisplayString>
     <Expand>
@@ -1155,6 +1156,29 @@
       <Item Name="[WeakCount]" Condition="_cnt._ptr != nullptr">_cnt._ptr-&gt;_refCount</Item>
       <Item Name="[Deleter]" Condition="_cnt._ptr != nullptr">_cnt._ptr-&gt;_deleter</Item>
       <Item Name="[RefCount]" Condition="_cnt._ptr == nullptr">-1</Item>
+    </Expand>
+  </Type>
+  -->
+  <Type Name="PPE::TRefPtr&lt;* &gt;" Priority="Medium">
+    <DisplayString Condition="_ptr != nullptr &amp;&amp; _ptr-&gt;_cnt._ptr != nullptr">{(void*)_ptr} [Refs:{_ptr-&gt;_cnt._ptr-&gt;_strongRefCount}]</DisplayString>
+    <DisplayString Condition="_ptr != nullptr || _ptr-&gt;_cnt._ptr == nullptr">{(void*)_ptr} [Refs:0]</DisplayString>
+    <DisplayString Condition="_ptr == nullptr">nullptr</DisplayString>
+    <Expand>
+      <Item Name="[RefCount]" Condition="_ptr-&gt;_cnt._ptr != nullptr">_ptr-&gt;_cnt._ptr-&gt;_strongRefCount</Item>
+      <Item Name="[SafeCount]" Condition="_ptr-&gt;_cnt._ptr != nullptr">_ptr-&gt;_cnt._ptr-&gt;_safeRefCount</Item>
+      <Item Name="[WeakCount]" Condition="_ptr-&gt;_cnt._ptr != nullptr">_ptr-&gt;_cnt._ptr-&gt;_refCount</Item>
+      <Item Name="[Deleter]" Condition="_ptr-&gt;_cnt._ptr != nullptr">_ptr-&gt;_cnt._ptr-&gt;_deleter</Item>
+      <Item Name="[RefCount]" Condition="_ptr-&gt;_cnt._ptr == nullptr">-1</Item>
+      <ExpandedItem>_ptr</ExpandedItem>
+    </Expand>
+  </Type>
+  <Type Name="PPE::TRefPtr&lt;* &gt;" Priority="Low">
+    <DisplayString Condition="_ptr != nullptr">{(void*)_ptr} [{_ptr-&gt;_refCount}]</DisplayString>
+    <DisplayString Condition="_ptr == nullptr">nullptr</DisplayString>
+    <Expand>
+      <Item Name="[RefCount]" Condition="_ptr != nullptr">_ptr-&gt;_refCount</Item>
+      <Item Name="[SafeCount]" Condition="_ptr != nullptr">_ptr-&gt;_safeRefCount</Item>
+      <ExpandedItem>_ptr</ExpandedItem>
     </Expand>
   </Type>
   <!--<Type Name="PPE::TRefPtr&lt;* &gt;">
