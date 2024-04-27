@@ -19,13 +19,17 @@ public:
     virtual ~FApplicationBase() NOEXCEPT override;
 
     virtual void Start() override;
-    virtual void Tick(FTimespan dt) override;
+    virtual void Run() override;
     virtual void Shutdown() override;
 
     virtual void RequestExit() NOEXCEPT override;
 
     const FTimeline& Timeline() const { return _timeline; }
+
+protected:
     void ApplicationLoop();
+
+    virtual void Tick(FTimespan dt) override;
 
 private:
     NODISCARD bool ApplicationTick_(FTimespan dt);

@@ -79,13 +79,13 @@ CONSTEXPR TMemoryView<T>& TMemoryView<T>::operator =(const TMemoryView<U>& other
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto TMemoryView<T>::at(size_type index) const -> reference {
+CONSTEXPR auto TMemoryView<T>::at(size_type index) const -> reference {
     Assert(index < _size);
     return _storage[index];
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto TMemoryView<T>::FindSubRange(const TMemoryView<T>& subrange) const -> iterator {
+CONSTEXPR auto TMemoryView<T>::FindSubRange(const TMemoryView<T>& subrange) const -> iterator {
     const size_t n = subrange.size();
     Assert(0 != n);
     if (size() < n)
@@ -104,17 +104,17 @@ auto TMemoryView<T>::FindSubRange(const TMemoryView<T>& subrange) const -> itera
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool TMemoryView<T>::EndsWith(const T& suffix) const {
+CONSTEXPR bool TMemoryView<T>::EndsWith(const T& suffix) const {
     return (_size && back() == suffix);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool TMemoryView<T>::StartsWith(const T& prefix) const {
+CONSTEXPR bool TMemoryView<T>::StartsWith(const T& prefix) const {
     return (_size && front() == prefix);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool TMemoryView<T>::EndsWith(const TMemoryView<T>& suffix) const {
+CONSTEXPR bool TMemoryView<T>::EndsWith(const TMemoryView<T>& suffix) const {
     if (suffix.size() > _size)
         return false;
 
@@ -123,7 +123,7 @@ bool TMemoryView<T>::EndsWith(const TMemoryView<T>& suffix) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-bool TMemoryView<T>::StartsWith(const TMemoryView<T>& prefix) const {
+CONSTEXPR bool TMemoryView<T>::StartsWith(const TMemoryView<T>& prefix) const {
     if (prefix.size() > _size)
         return false;
 
@@ -132,7 +132,7 @@ bool TMemoryView<T>::StartsWith(const TMemoryView<T>& prefix) const {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-NODISCARD TMemoryView<T> TMemoryView<T>::Concat(const TMemoryView& other) const {
+NODISCARD CONSTEXPR TMemoryView<T> TMemoryView<T>::Concat(const TMemoryView& other) const {
     if (Likely(_storage && other._storage)) {
         Assert(_storage + _size == other._storage);
         return TMemoryView<T>{ _storage, _size + other._size };
@@ -146,7 +146,7 @@ NODISCARD TMemoryView<T> TMemoryView<T>::Concat(const TMemoryView& other) const 
 }
 //----------------------------------------------------------------------------
 template <typename T>
-NODISCARD TMemoryView<T> TMemoryView<T>::Concat_AssumeNotEmpty(const TMemoryView& other) const {
+NODISCARD CONSTEXPR TMemoryView<T> TMemoryView<T>::Concat_AssumeNotEmpty(const TMemoryView& other) const {
     Assert(_storage);
     Assert(other._storage);
     Assert_NoAssume(_storage + _size == other._storage);
@@ -154,27 +154,33 @@ NODISCARD TMemoryView<T> TMemoryView<T>::Concat_AssumeNotEmpty(const TMemoryView
 }
 //----------------------------------------------------------------------------
 template <typename T>
-void TMemoryView<T>::CopyTo(const TMemoryView<Meta::TRemoveConst<T>>& dst) const {
-    Assert(dst.size() == size());
-    std::copy(begin(), end(), dst.begin());
+CONSTEXPR void TMemoryView<T>::CopyTo(const TMemoryView<Meta::TRemoveConst<T>>& dst) const {
+    Assert(dst.size() == _size);
+    IF_CONSTEXPR(std::is_trivially_copyable_v<T>) {
+        //FPlatformMemory::Memcpy(dst.data(), _storage, _size);
+        std::memcpy(dst.data(), _storage, _size * sizeof(T));
+    }
+    else {
+        std::copy(begin(), end(), dst.begin());
+    }
 }
 //----------------------------------------------------------------------------
 template <typename T>
-NODISCARD TMemoryView<T> TMemoryView<T>::SubRange(size_t offset, size_t count) const {
+NODISCARD CONSTEXPR TMemoryView<T> TMemoryView<T>::SubRange(size_t offset, size_t count) const {
     Assert(offset <= _size);
     Assert(offset + count <= _size);
     return TMemoryView(_storage + offset, count);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-NODISCARD TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(size_t offset, size_t count) const {
+NODISCARD CONSTEXPR TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(size_t offset, size_t count) const {
     Assert(offset <= _size);
     Assert(offset + count <= _size);
     return TMemoryView< Meta::TAddConst<T> >(_storage + offset, count);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-NODISCARD TMemoryView<T> TMemoryView<T>::SubRange(iterator first, iterator last) const {
+NODISCARD CONSTEXPR TMemoryView<T> TMemoryView<T>::SubRange(iterator first, iterator last) const {
     Assert(AliasesToContainer(first));
     Assert(AliasesToContainer(last));
     Assert(first <= last);
@@ -182,7 +188,7 @@ NODISCARD TMemoryView<T> TMemoryView<T>::SubRange(iterator first, iterator last)
 }
 //----------------------------------------------------------------------------
 template <typename T>
-NODISCARD TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(iterator first, iterator last) const {
+NODISCARD CONSTEXPR TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(iterator first, iterator last) const {
     Assert(AliasesToContainer(first));
     Assert(AliasesToContainer(last));
     Assert(first <= last);
@@ -190,7 +196,7 @@ NODISCARD TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SubRangeConst(iterat
 }
 //----------------------------------------------------------------------------
 template <typename T>
-NODISCARD TMemoryView<T> TMemoryView<T>::Slice(size_t index, size_t stride) const {
+NODISCARD CONSTEXPR TMemoryView<T> TMemoryView<T>::Slice(size_t index, size_t stride) const {
     Assert(stride <= _size);
     Assert(index < (_size + stride - 1) / stride);
     const size_t offset = index * stride;
@@ -199,7 +205,7 @@ NODISCARD TMemoryView<T> TMemoryView<T>::Slice(size_t index, size_t stride) cons
 }
 //----------------------------------------------------------------------------
 template <typename T>
-NODISCARD TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SliceConst(size_t index, size_t stride) const {
+NODISCARD CONSTEXPR TMemoryView< Meta::TAddConst<T> > TMemoryView<T>::SliceConst(size_t index, size_t stride) const {
     return Slice(index, stride).template Cast< Meta::TAddConst<T> >();
 }
 //----------------------------------------------------------------------------

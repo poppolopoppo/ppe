@@ -100,9 +100,9 @@ private:
     VECTORINSITU(Task, FCompletionPort*, CODE3264(4,3)) _children;
 #endif
 
-    void QueueWaitingFiber_(const FInterruptedTask& waiting);
     void ResetToNotReady_AssumeFinished_();
 
+    static void QueueWaitingFiber_(FCompletionPort* port, const FInterruptedTask& waiting);
     static NO_INLINE void OnCountDownReachedZero_(FCompletionPort* port);
 };
 //----------------------------------------------------------------------------

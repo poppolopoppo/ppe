@@ -22,6 +22,7 @@ TConcurrentQueue<T, _Allocator>::TConcurrentQueue(size_t capacity)
 template <typename T, typename _Allocator >
 TConcurrentQueue<T, _Allocator>::TConcurrentQueue(size_t capacity, const _Allocator& allocator)
 :   _Allocator(allocator)
+,   _capacity(capacity)
 ,   _head(0)
 ,   _tail(0) {
     _queue = allocator_traits::template AllocateT<T>(*this, capacity);
@@ -114,7 +115,6 @@ void TConcurrentPriorityQueue<T, _Allocator>::Produce(u32 priority, T&& rvalue) 
     _queue.emplace_back(insertion_order_preserving_priority, std::move(rvalue));
     std::push_heap(_queue.begin(), _queue.end(), FPrioritySort_{});
 
-    scopeLock.unlock();  // unlock before notification to minimize mutex contention
     _empty.notify_one(); // notify one consumer thread
 }
 //----------------------------------------------------------------------------
@@ -147,7 +147,6 @@ void TConcurrentPriorityQueue<T, _Allocator>::Produce(u32 priority, size_t count
                 std::push_heap(_queue.begin(), _queue.end(), FPrioritySort_{});
             }
 
-            scopeLock.unlock();  // unlock before notification to minimize mutex contention
             _empty.notify_all(); // notify all consumer threads, assuming stride == worker thread count
         }
         batchIndex += batchCount;
@@ -179,7 +178,6 @@ void TConcurrentPriorityQueue<T, _Allocator>::Consume(T *pvalue) {
     if (_queue.empty())
         _counter = 0;
 
-    scopeLock.unlock();     // unlock before notification to minimize mutex contention
     _overflow.notify_all(); // always notifies all producer threads
 }
 //----------------------------------------------------------------------------
@@ -211,7 +209,6 @@ bool TConcurrentPriorityQueue<T, _Allocator>::TryConsume(T *pvalue) {
     if (_queue.empty())
         _counter = 0;
 
-    scopeLock.unlock();     // unlock before notification to minimize mutex contention
     _overflow.notify_all(); // always notifies all producer threads
 
     return true;

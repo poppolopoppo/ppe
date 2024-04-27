@@ -23,7 +23,6 @@ public:
     FApplicationWindow(FModularDomain& domain, FString&& name, bool needRHI);
     virtual ~FApplicationWindow() override;
 
-    FMainWindow& Main() const { return *_main; }
     IInputService& Input() const { return *_input; }
     IRHIService& RHI() const { return *_rhi; }
     IWindowService& Window() const { return *_window; }
@@ -32,12 +31,14 @@ public:
     const FMovingAverageTimer& TickTime() const { return _tickTime; }
 
     virtual void Start() override;
+    virtual void Run() override;
     virtual void Shutdown() override;
 
     virtual bool PumpMessages() NOEXCEPT override;
-    virtual void Tick(FTimespan dt) override;
 
 protected:
+    virtual void Tick(FTimespan dt) override;
+
     virtual void Update(FTimespan dt);
     virtual void Render(RHI::IFrameGraph& fg, FTimespan dt);
     virtual void ViewportResized(const FRHISurfaceCreateInfo& surface);

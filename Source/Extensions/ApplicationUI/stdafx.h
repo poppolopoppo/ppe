@@ -9,7 +9,7 @@
 
 #include "ApplicationUI_fwd.h"
 
-#include "UI/Imgui.h"
+#include "UI/ImGui.h"
 
 #include "RHIApi.h"
 

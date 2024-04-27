@@ -28,7 +28,7 @@ LOG_CATEGORY(, Window)
 namespace {
 //----------------------------------------------------------------------------
 static ::HINSTANCE AppHandleWin32_() {
-    return reinterpret_cast<::HINSTANCE>(FCurrentProcess::Get().AppHandle());
+    return static_cast<::HINSTANCE>(FCurrentProcess::Get().AppHandle());
 }
 //----------------------------------------------------------------------------
 static const FWStringLiteral GAppWindowClassName_{ L"PPE::MainWindow" };
@@ -180,6 +180,19 @@ bool FWindowsWindow::PumpMessages() {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     return (parent_type::PumpMessages() &&
         FPlatformMessageHandler::PumpMessages(*this));
+}
+//----------------------------------------------------------------------------
+bool FWindowsWindow::BringToFront() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+    Assert(NativeHandle());
+
+    if (::SetForegroundWindow(HandleWin32())) {
+        return parent_type::BringToFront();
+    }
+    else {
+        PPE_LOG_LASTERROR(Window, "SetForegroundWindow");
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 bool FWindowsWindow::Center() {

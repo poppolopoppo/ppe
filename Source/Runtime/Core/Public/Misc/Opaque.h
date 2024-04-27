@@ -23,8 +23,17 @@ namespace Opaq {
 //----------------------------------------------------------------------------
 // can provide a format function to generate non-trivial strings
 //----------------------------------------------------------------------------
-using string_format = TSmallFunction<void(FTextWriter&)>;
-using wstring_format = TSmallFunction<void(FWTextWriter&)>;
+using string_format = TTinyFunction<void(FTextWriter&)>;
+using wstring_format = TTinyFunction<void(FWTextWriter&)>;
+//----------------------------------------------------------------------------
+template <typename T>
+string_format Format(const T& value) {
+    return [&value](FTextWriter& oss) { oss << value; };
+}
+template <typename T>
+wstring_format FormatW(const T& value) {
+    return [&value](FWTextWriter& oss) { oss << value; };
+}
 //----------------------------------------------------------------------------
 // *_view variants are packed inside a single dynamically allocated block
 //----------------------------------------------------------------------------
@@ -144,15 +153,15 @@ PPE_ASSUME_TYPE_AS_POD(key_value_view);
 // Create a value_view from a value_init
 //----------------------------------------------------------------------------
 struct value_block {
-    FAllocatorBlock block;
+    FAllocatorBlock alloc;
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return !!block; }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return !!alloc; }
 
-    TPtrRef<value_view> Value() { return static_cast<value_view*>(block.Data); }
-    TPtrRef<const value_view> Value() const { return static_cast<const value_view*>(block.Data); }
+    TPtrRef<value_view> Value() { return static_cast<value_view*>(alloc.Data); }
+    TPtrRef<const value_view> Value() const { return static_cast<const value_view*>(alloc.Data); }
 
     NODISCARD FAllocatorBlock Reset() {
-        return std::move(block);
+        return std::move(alloc);
     }
 
     value_view& operator *() { return Value(); }
@@ -165,8 +174,8 @@ struct value_block {
 NODISCARD PPE_CORE_API size_t BlockSize(const value_init& init) NOEXCEPT;
 NODISCARD PPE_CORE_API size_t BlockSize(const value_view& view) NOEXCEPT;
 //----------------------------------------------------------------------------
-NODISCARD PPE_CORE_API value_block NewBlock(FAllocatorBlock block, const value_init& init);
-NODISCARD PPE_CORE_API value_block NewBlock(FAllocatorBlock block, const value_view& view);
+NODISCARD PPE_CORE_API value_block NewBlock(FAllocatorBlock alloc, const value_init& init);
+NODISCARD PPE_CORE_API value_block NewBlock(FAllocatorBlock alloc, const value_view& view);
 //----------------------------------------------------------------------------
 template <typename _Allocator = default_allocator>
 NODISCARD value_block NewBlock(const value_init& v) {
@@ -179,6 +188,11 @@ NODISCARD value_block NewBlock(_Allocator& allocator, const value_init& v) {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
+NODISCARD value_block NewBlock(_Allocator& allocator, const value_view& v) {
+    return NewBlock(TAllocatorTraits<_Allocator>::Allocate(allocator, BlockSize(v)), v);
+}
+//----------------------------------------------------------------------------
+template <typename _Allocator>
 NODISCARD value_block NewBlock(const _Allocator& allocator, const value_init& v) {
     return NewBlock(TAllocatorTraits<_Allocator>::Allocate(allocator, BlockSize(v)), v);
 }
@@ -186,14 +200,97 @@ NODISCARD value_block NewBlock(const _Allocator& allocator, const value_init& v)
 template <typename _Allocator = default_allocator>
 void DeleteBlock(const value_block& v) {
     STATIC_ASSERT(Meta::is_pod_v<value_view>);
-    TStaticAllocator<_Allocator>::Deallocate(v.block);
+    TStaticAllocator<_Allocator>::Deallocate(v.alloc);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
 void DeleteBlock(_Allocator& allocator, const value_block& v) {
     STATIC_ASSERT(Meta::is_pod_v<value_view>);
-    TAllocatorTraits<_Allocator>::Deallocate(allocator, v.block);
+    TAllocatorTraits<_Allocator>::Deallocate(allocator, v.alloc);
 }
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+void DeleteBlock(_Allocator& allocator, value_block& v) {
+    STATIC_ASSERT(Meta::is_pod_v<value_view>);
+    TAllocatorTraits<_Allocator>::Deallocate(allocator, v.Reset());
+}
+//----------------------------------------------------------------------------
+// Templated helper for value_block to associate a static allocator
+//----------------------------------------------------------------------------
+template <typename _Allocator>
+class TValueBlock : private _Allocator {
+public:
+    using allocator_type = _Allocator;
+    using allocator_traits = TAllocatorTraits<_Allocator>;
+
+    TValueBlock() = default;
+
+    ~TValueBlock() {
+        Reset();
+    }
+
+    explicit TValueBlock(allocator_type&& ralloc) : _Allocator(std::move(ralloc)) {}
+    explicit TValueBlock(const allocator_type& alloc) : _Allocator(alloc) {}
+
+    explicit TValueBlock(const value_init& v) : Block(NewBlock(Allocator(), v)) {}
+    explicit TValueBlock(const value_view& v) : Block(NewBlock(Allocator(), v)) {}
+
+    TValueBlock(const value_init& v, allocator_type&& ralloc) : _Allocator(std::move(ralloc)), Block(NewBlock(Allocator(), v)) {}
+    TValueBlock(const value_init& v, const allocator_type& alloc) : _Allocator(alloc), Block(NewBlock(Allocator(), v)) {}
+
+    TValueBlock(const value_view& v, allocator_type&& ralloc) : _Allocator(std::move(ralloc)), Block(NewBlock(Allocator(), v)) {}
+    TValueBlock(const value_view& v, const allocator_type& alloc) : _Allocator(alloc), Block(NewBlock(Allocator(), v)) {}
+
+    TValueBlock(TValueBlock&& rvalue) NOEXCEPT
+    :   _Allocator(std::move(rvalue.Allocator()))
+    ,   Block(std::move(rvalue.Block))
+    {}
+    TValueBlock& operator =(TValueBlock&& rvalue) NOEXCEPT {
+        if (MoveAllocatorBlock(&allocator_traits::Get(Allocator()), allocator_traits::Get(rvalue.Allocator()), rvalue.Block.alloc)) {
+            Reset();
+            Block.alloc = rvalue.Block.alloc.Reset();
+        }
+        else {
+            Assign(rvalue.Value());
+        }
+        return (*this);
+    }
+
+    TValueBlock(const TValueBlock& ) = delete;
+    TValueBlock& operator =(const TValueBlock& ) = delete;
+
+    value_block Block;
+
+    PPE_FAKEBOOL_OPERATOR_DECL() { return !!Block; }
+
+    _Allocator& Allocator() { return (*this); }
+    const _Allocator& Allocator() const { return (*this); }
+
+    TPtrRef<value_view> Value() { return Block.Value(); }
+    TPtrRef<const value_view> Value() const { return Block.Value(); }
+
+    void Assign(const value_init& v) {
+        Reset();
+        Block = NewBlock(Allocator(), v);
+    }
+
+    void Assign(const value_view& v) {
+        Reset();
+        Block = NewBlock(Allocator(), v);
+    }
+
+    void Reset() {
+        if (Block.alloc)
+            DeleteBlock(Allocator(), Block);
+        Assert_NoAssume(not Block.alloc);
+    }
+
+    value_view& operator *() { return Value(); }
+    const value_view& operator *() const { return Value(); }
+
+    value_view* operator ->() { return Value(); }
+    const value_view* operator ->() const { return Value(); }
+};
 //----------------------------------------------------------------------------
 // Lookup value_view for expected named properties
 //----------------------------------------------------------------------------

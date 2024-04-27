@@ -13,8 +13,12 @@
 PPE_COMPILER_ERROR("Windows", "unsupported compiler for this platform")
 #endif
 
+#define PRAGMA_CLANG_WARNING_PUSH() __pragma(clang diagnostics push)
+#define PRAGMA_CLANG_WARNING_IGNORE(_WARNING_ID) __pragma(clang diagnostics ignored #_WARNING_ID)
+#define PRAGMA_CLANG_WARNING_POP() __pragma(clang diagnostics pop)
+
 #define PRAGMA_MSVC_WARNING_PUSH() __pragma(warning(push))
-#define PRAGMA_MSVC_WARNING_DISABLE(_WARNING_CODE)  __pragma(warning(disable: _WARNING_CODE))
+#define PRAGMA_MSVC_WARNING_DISABLE(_WARNING_CODE) __pragma(warning(disable: _WARNING_CODE))
 #define PRAGMA_MSVC_WARNING_POP() __pragma(warning(pop))
 
 // /W3

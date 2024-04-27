@@ -167,15 +167,12 @@ PProcessMemoryTracking FProcessEndpoint::MemoryDomain(const FString& name) const
     auto result = NEW_RTTI(FProcessMemoryTracking);
     result->Domain = name;
 
-    AllTrackingData(result.get(), [](void* user, TMemoryView<const FMemoryTracking* const> domains) {
+    ForeachTrackingDataUnsorted(result.get(), [](void* user, const FMemoryTracking& domain) {
         auto* result = static_cast<FProcessMemoryTracking*>(user);
-        for (const FMemoryTracking* it : domains) {
-            if (EqualsI(MakeCStringView(it->Name()), result->Domain)) {
-                Assign_(result, *it);
-                return true;
-            }
+        if (EqualsI(MakeCStringView(domain.Name()), result->Domain)) {
+            Assign_(result, domain);
+            return true;
         }
-
         return false;
     });
 
@@ -185,7 +182,7 @@ PProcessMemoryTracking FProcessEndpoint::MemoryDomain(const FString& name) const
 FProcessMemoryTrackingList FProcessEndpoint::MemoryDomains() const {
     FProcessMemoryTrackingList results;
 
-    AllTrackingData(&results, [](void* user, TMemoryView<const FMemoryTracking* const> domains) {
+    AllTrackingDataSorted(&results, [](void* user, TMemoryView<const FMemoryTracking* const> domains) {
         auto& list = *static_cast<FProcessMemoryTrackingList*>(user);
 
         list.reserve(domains.size());

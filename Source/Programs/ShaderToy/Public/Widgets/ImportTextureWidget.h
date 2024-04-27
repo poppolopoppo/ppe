@@ -5,7 +5,7 @@
 #include "Texture/Texture.h"
 #include "Texture/TextureGeneration.h"
 
-#include "UI/Imgui.h"
+#include "UI/ImGui.h"
 
 #include "IO/Filename.h"
 #include "IO/String.h"

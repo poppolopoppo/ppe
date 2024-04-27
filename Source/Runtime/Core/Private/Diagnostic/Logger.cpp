@@ -552,25 +552,54 @@ public:
         return GStartedAt;
     }
 
-    static void Header(FTextWriter& oss, const FCategory& category, const FLogger::FSiteInfo& site) {
+    template <typename _Char>
+    CONSTEXPR static ELoggerVerbosity LevelEmoji(Meta::TType<_Char>, ELoggerVerbosity level) {
+        return level;
+    }
+    CONSTEXPR static FWStringLiteral LevelEmoji(Meta::TType<wchar_t>, ELoggerVerbosity level) {
+        switch (level) {
+        case ELoggerVerbosity::Debug:
+            return L"👾";
+        case ELoggerVerbosity::Verbose:
+            return L"👁️";
+        case ELoggerVerbosity::Info:
+            return L"ℹ️";
+        case ELoggerVerbosity::Profiling:
+            return L"⏱";
+        case ELoggerVerbosity::Emphasis:
+            return L"👉";
+        case ELoggerVerbosity::Warning:
+            return L"⚠️";
+        case ELoggerVerbosity::Error:
+            return L"❌";
+        case ELoggerVerbosity::Fatal:
+            return L"💀";
+        default:
+            AssertNotImplemented();
+        }
+    }
+
+    template <typename _Char>
+    static void Header(TBasicTextWriter<_Char>& oss, const FCategory& category, const FLogger::FSiteInfo& site) {
         const FSeconds elapsed = site.LogTime.ElapsedSince(StartedAt());
 #if PPE_DUMP_THREAD_ID
 #   if PPE_DUMP_THREAD_NAME
-        Format(oss, _PPE_LOG_STRING("[{0:#-10f4}][{1:20}][{3:-9}][{2}] ") elapsed.Value(), FThreadContext::GetThreadName(site.ThreadId), category.Name, site.Level());
+        Format(oss, STRING_LITERAL(_Char, "[{0:#-10f4}][{1:20}]  {3} - {2}: ") elapsed.Value(), FThreadContext::GetThreadName(site.ThreadId), category.Name, LevelEmoji(Meta::Type<_Char>, site.Level()));
 #   else // only thread hash :
-        Format(oss, _PPE_LOG_STRING("[{0:#-10f4}][{1:#5}][{3:-9}][{2}] "), elapsed.Value(), FThreadContext::GetThreadHash(site.ThreadId), category.Name, site.Level());
+        Format(oss, STRING_LITERAL(_Char, "[{0:#-10f4}][{1:#5}]  {3} - {2}: "), elapsed.Value(), FThreadContext::GetThreadHash(site.ThreadId), category.Name, LevelEmoji(Meta::Type<_Char>, site.Level()));
 #   endif
 #else
-        Format(oss, _PPE_LOG_STRING("[{0:#-10f4}][{2:-9}][{1}] "), elapsed.Value(), category.Name, site.Level());
+        Format(oss, STRING_LITERAL(_Char, "[{0:#-10f4}][{2:-9}][{1}] "), elapsed.Value(), category.Name, LevelEmoji(Meta::Type<_Char>, site.Level()));
 #endif
     }
 
-    static void Footer(FTextWriter& oss, const FCategory&, const FLogger::FSiteInfo& site) {
+    template <typename _Char>
+    static void Footer(TBasicTextWriter<_Char>& oss, const FCategory&, const FLogger::FSiteInfo& site) {
 #if PPE_DUMP_SITE_ON_LOG
-        Format(oss, _PPE_LOG_STRING("\n\tat {0}:{1}\n"), site.Filename, site.Line);
+        Format(oss, STRING_LITERAL(_Char, "\n\tat {0}:{1}\n"), site.Filename, site.Line);
 #elif PPE_DUMP_SITE_ON_ERROR
         if (Unlikely(site.Level() & (ELoggerVerbosity::Error|ELoggerVerbosity::Fatal)))
-            Format(oss, _PPE_LOG_STRING("\n\tat {0}:{1}"), site.SourceFile, site.SourceFile);
+            Format(oss, STRING_LITERAL(_Char, "\n\tat {0}:{1}"), site.SourceFile, site.SourceFile);
         oss << Eol;
 #else
         Unused(site);
@@ -578,12 +607,13 @@ public:
 #endif
     }
 
-    static void Print(FTextWriter& oss, const FCategory& category, const FLogger::FSiteInfo& site, FStringView text, const Meta::TOptionalReference<const Opaq::object_view>& data) {
+    template <typename _Char>
+    static void Print(TBasicTextWriter<_Char>& oss, const FCategory& category, const FLogger::FSiteInfo& site, const TBasicStringView<_Char>& text, const Meta::TOptionalReference<const Opaq::object_view>& data) {
         Header(oss, category, site);
         oss.Write(text);
         if (data) {
             Assert_NoAssume(not data->empty());
-            oss << ' ' << FTextFormat::Compact << *data;
+            oss << STRING_LITERAL(_Char, ' ') << FTextFormat::Compact << *data;
         }
         Footer(oss, category, site);
     }
@@ -626,7 +656,7 @@ public:
     }
 
     void AddToHistory(FMessage& msg) {
-        _history.LockExclusive()->Emplace(&msg);
+        _history.LockExclusive()->EmplaceIt(&msg);
     }
 
     void FlushAccumulatedLogs(ILowLevelLogger& other) {
@@ -844,8 +874,8 @@ struct FLowLevelLogger {
         return FDevNullLogger::Get();
     }
 
-    static TThreadSafe<TPtrRef<ILowLevelLogger>, EThreadBarrier::RWDataRaceCheck>& InternalGet_() {
-        static TThreadSafe<TPtrRef<ILowLevelLogger>, EThreadBarrier::RWDataRaceCheck> GLowerLevelLogger_{ BeforeMain() };
+    static auto& InternalGet_() {
+        static TThreadSafe<TPtrRef<ILowLevelLogger>, EThreadBarrier::AtomicSpinLock> GLowerLevelLogger_{ BeforeMain() };
         return GLowerLevelLogger_;
     }
 

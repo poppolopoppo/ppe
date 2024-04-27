@@ -48,62 +48,63 @@ struct FFrustumCameraParams {
 //----------------------------------------------------------------------------
 class FFrustum {
 public:
-    FFrustum();
-    explicit FFrustum(float4x4& viewProjection);
+    inline FFrustum();
+    inline explicit FFrustum(float4x4& viewProjection); // world space frustum RH
 
-    FFrustum(const FFrustum& other);
-    FFrustum& operator =(const FFrustum& other);
+    PPE_CORE_API FFrustum(const FFrustum& other);
+    PPE_CORE_API FFrustum& operator =(const FFrustum& other);
 
-    void SetMatrix(const float4x4& viewProjection);
-    const float4x4& Matrix() const { return _matrix; }
+    PPE_CORE_API void SetMatrixLH(const float4x4& viewProjection);
+    PPE_CORE_API void SetMatrixRH(const float4x4& viewProjection);
+    void SetMatrix(const float4x4& viewProjection) { SetMatrixRH(viewProjection); }
 
-    const FPlane& Near() const { return _planes[size_t(EFrustumPlane::Near)]; }
-    const FPlane& Far() const { return _planes[size_t(EFrustumPlane::Far)]; }
+    NODISCARD const float4x4& Matrix() const { return _matrix; }
 
-    const FPlane& Left() const { return _planes[size_t(EFrustumPlane::Left)]; }
-    const FPlane& Right() const { return _planes[size_t(EFrustumPlane::Right)]; }
+    NODISCARD const FPlane& Near() const { return _planes[static_cast<size_t>(EFrustumPlane::Near)]; }
+    NODISCARD const FPlane& Far() const { return _planes[static_cast<size_t>(EFrustumPlane::Far)]; }
 
-    const FPlane& Top() const { return _planes[size_t(EFrustumPlane::Top)]; }
-    const FPlane& Bottom() const { return _planes[size_t(EFrustumPlane::Bottom)]; }
+    NODISCARD const FPlane& Left() const { return _planes[static_cast<size_t>(EFrustumPlane::Left)]; }
+    NODISCARD const FPlane& Right() const { return _planes[static_cast<size_t>(EFrustumPlane::Right)]; }
 
-    bool IsOrthographic() const;
+    NODISCARD const FPlane& Top() const { return _planes[static_cast<size_t>(EFrustumPlane::Top)]; }
+    NODISCARD const FPlane& Bottom() const { return _planes[static_cast<size_t>(EFrustumPlane::Bottom)]; }
 
-    TMemoryView<const float3> MakeCorners() const { return MakeView(_corners); }
-    const FBoundingBox& GetBoundingBox() const { return _box; }
+    NODISCARD TMemoryView<const float3> MakeCorners() const { return MakeView(_corners); }
+    NODISCARD const FBoundingBox& GetBoundingBox() const { return _box; }
 
-    void GetCameraParams(FFrustumCameraParams& params) const;
+    PPE_CORE_API void GetCameraParams(FFrustumCameraParams& params) const;
 
-    EContainmentType Contains(const float3& point) const;
-    EContainmentType Contains(const TMemoryView<const float3>& points) const;
-    EContainmentType Contains(const FBoundingBox& box) const;
-    EContainmentType Contains(const FSphere& sphere) const;
-    EContainmentType Contains(const FFrustum& frustum) const;
+    NODISCARD PPE_CORE_API EContainmentType Contains(const float3& point) const;
+    NODISCARD PPE_CORE_API EContainmentType Contains(const TMemoryView<const float3>& points) const;
+    NODISCARD PPE_CORE_API EContainmentType Contains(const FBoundingBox& box) const;
+    NODISCARD PPE_CORE_API EContainmentType Contains(const FSphere& sphere) const;
+    NODISCARD PPE_CORE_API EContainmentType Contains(const FFrustum& frustum) const;
 
-    EContainmentType ContainsConvexCube(const float3 (&points)[8]) const;
+    NODISCARD PPE_CORE_API EContainmentType ContainsConvexCube(const float3 (&points)[8]) const;
 
-    EPlaneIntersectionType Intersects(const FPlane& plane) const;
-    bool Intersects(const FBoundingBox& box) const;
-    bool Intersects(const FSphere& sphere) const;
-    bool Intersects(const FFrustum& frustum) const;
+    NODISCARD PPE_CORE_API EPlaneIntersectionType Intersects(const FPlane& plane) const;
+    NODISCARD inline bool Intersects(const FBoundingBox& box) const;
+    NODISCARD inline bool Intersects(const FSphere& sphere) const;
+    NODISCARD inline bool Intersects(const FFrustum& frustum) const;
 
-    bool Intersects(const FRay& ray) const;
-    bool Intersects(const FRay& ray, float& in, float& out) const;
+    NODISCARD PPE_CORE_API bool Intersects(const FRay& ray) const;
+    NODISCARD PPE_CORE_API bool Intersects(const FRay& ray, float& in, float& out) const;
 
-    float GetWidthAtDepth(float depth) const;
-    float GetHeightAtDepth(float depth) const;
+    NODISCARD PPE_CORE_API float GetWidthAtDepth(float depth) const;
+    NODISCARD PPE_CORE_API float GetHeightAtDepth(float depth) const;
 
     // Get the distance which when added to camera position along the lookat direction will do the effect of zoom to extents (zoom to fit) operation,
     // so all the passed points will fit in the current view.
     // if the returned value is poistive, the camera will move toward the lookat direction (ZoomIn).
     // if the returned value is negative, the camera will move in the revers direction of the lookat direction (ZoomOut).
-    float GetZoomToExtentsShiftDistance(const TMemoryView<const float3>& points) const;
-    float GetZoomToExtentsShiftDistance(const FBoundingBox& box);
+    NODISCARD PPE_CORE_API float GetZoomToExtentsShiftDistance(const TMemoryView<const float3>& points) const;
+    NODISCARD PPE_CORE_API float GetZoomToExtentsShiftDistance(const FBoundingBox& box);
 
-    float3 GetZoomToExtentsShiftVector(const TMemoryView<const float3>& points);
-    float3 GetZoomToExtentsShiftVector(const FBoundingBox& box);
+    NODISCARD inline float3 GetZoomToExtentsShiftVector(const TMemoryView<const float3>& points);
+    NODISCARD inline float3 GetZoomToExtentsShiftVector(const FBoundingBox& box);
 
-    static FFrustum FromCameraParams(const FFrustumCameraParams& params);
-    static FFrustum FromCamera(const float3& cameraPos, const float3& lookDir, const float3& upDir, float fov, float znear, float zfar, float aspect);
+    NODISCARD inline static FFrustum FromCameraParams(const FFrustumCameraParams& params);
+    NODISCARD PPE_CORE_API static FFrustum FromCamera(const float3& cameraPos, const float3& lookDir, const float3& upDir, float fov, float znear, float zfar, float aspect);
 
 private:
     float4x4 _matrix;

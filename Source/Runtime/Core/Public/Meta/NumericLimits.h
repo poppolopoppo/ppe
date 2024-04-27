@@ -20,7 +20,6 @@ struct TNumericLimits {
 
     static constexpr T DefaultValue() { return T(); }
     static constexpr T Epsilon() { return limits_type::epsilon(); }
-    static constexpr T Inf() { return limits_type::infinity(); }
     static constexpr T MaxValue() { return limits_type::max(); }
     static constexpr T MinValue() { return limits_type::min(); }
     static constexpr T Lowest() { return limits_type::lowest(); }
@@ -38,7 +37,6 @@ struct TNumericLimits<u128> {
 
     static constexpr u128 DefaultValue() { return u128{ limits_type::DefaultValue(), limits_type::DefaultValue() }; }
     static constexpr u128 Epsilon() { return u128{ limits_type::Epsilon(), limits_type::Epsilon() }; }
-    static constexpr u128 Inf() { return u128{ limits_type::Inf(), limits_type::Inf() }; }
     static constexpr u128 MaxValue() { return u128{ limits_type::MaxValue(), limits_type::MaxValue() }; }
     static constexpr u128 MinValue() { return u128{ limits_type::MinValue(), limits_type::MinValue() }; }
     static constexpr u128 Lowest() { return u128{ limits_type::Lowest(), limits_type::Lowest() }; }
@@ -56,7 +54,6 @@ struct TNumericLimits<u256> {
 
     static constexpr u256 DefaultValue() { return u256{ limits_type::DefaultValue(), limits_type::DefaultValue() }; }
     static constexpr u256 Epsilon() { return u256{ limits_type::Epsilon(), limits_type::Epsilon() }; }
-    static constexpr u256 Inf() { return u256{ limits_type::Inf(), limits_type::Inf() }; }
     static constexpr u256 MaxValue() { return u256{ limits_type::MaxValue(), limits_type::MaxValue() }; }
     static constexpr u256 MinValue() { return u256{ limits_type::MinValue(), limits_type::MinValue() }; }
     static constexpr u256 Lowest() { return u256{ limits_type::Lowest(), limits_type::Lowest() }; }

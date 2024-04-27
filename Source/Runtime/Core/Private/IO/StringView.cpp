@@ -216,7 +216,9 @@ static const double_conversion::StringToDoubleConverter& DefaultStringToDoubleCo
         const double_conversion::StringToDoubleConverter,
         GStringToDoubleConverter_,
         double_conversion::StringToDoubleConverter::NO_FLAGS,
-        double(NAN), double(NAN), "Inf", "NaN" );
+        double_conversion::Double::Infinity(),
+        double_conversion::Double::NaN(),
+        nullptr, nullptr );
     return GStringToDoubleConverter_;
 }
 
@@ -607,6 +609,15 @@ FWStringView EatUntil(FWStringView& wstr, const FWStringView& wmultiple) NOEXCEP
 //----------------------------------------------------------------------------
 FStringView EatUntil(FStringView& str, bool (*is_not_a)(char)) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(str, is_not_a); }
 FWStringView EatUntil(FWStringView& wstr, bool (*is_not_a)(wchar_t)) NOEXCEPT { return SplitInplaceIf_ReturnEaten_(wstr, is_not_a); }
+//----------------------------------------------------------------------------
+FStringView EatLine(FStringView& str) NOEXCEPT { const FStringView line = Strip(EatUntil(str, '\n')); EatSpaces(str); return line; }
+FWStringView EatLine(FWStringView& wstr) NOEXCEPT { const FWStringView line = Strip(EatUntil(wstr, L'\n')); EatSpaces(wstr); return line; }
+//----------------------------------------------------------------------------
+bool EatExpect(FStringView& str, const FStringView& expected) NOEXCEPT { if (str.StartsWith(expected)) { str = str.CutStartingAt(expected.size()); return true; } return false; }
+bool EatExpect(FWStringView& wstr, const FWStringView& expected) NOEXCEPT { if (wstr.StartsWith(expected)) { wstr = wstr.CutStartingAt(expected.size()); return true; } return false; }
+//----------------------------------------------------------------------------
+bool EatExpectI(FStringView& str, const FStringView& expected) NOEXCEPT { if (StartsWithI(str, expected)) { str = str.CutStartingAt(expected.size()); return true; } return false; }
+bool EatExpectI(FWStringView& wstr, const FWStringView& expected) NOEXCEPT { if (StartsWithI(wstr, expected)) { wstr = wstr.CutStartingAt(expected.size()); return true; } return false; }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -104,7 +104,7 @@ public:
     FTextureSource() = default;
     FTextureSource(FTextureSource&& ) = default;
 
-    NODISCARD const FBulkData& BulkData() const { return _bulkData; }
+    NODISCARD const FBulkData& Data() const { return _bulkData; }
 
     NODISCARD const uint3& Dimensions() const { return _properties.Dimensions; }
     NODISCARD u32 NumMips() const { return _properties.NumMips; }

@@ -3,24 +3,45 @@
 #include "Mesh/GenericMesh.h"
 
 #include "Mesh/GenericMeshHelpers.h"
+#include "Mesh/MeshFormat.h"
 
 #include "RHI/EnumHelpers.h"
+#include "RHI/EnumToString.h"
 #include "RHI/VertexInputState.h"
 
 #include "Container/Hash.h"
+#include "Diagnostic/FeedbackContext.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformMemory.h"
 #include "Maths/ScalarBoundingBox.h"
+#include "Meta/Utility.h"
 
 namespace PPE {
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FGenericMesh::FGenericMesh() : _indexCount(0), _vertexCount(0) {}
-//----------------------------------------------------------------------------
 FGenericMesh::~FGenericMesh() {
     Clear();
+}
+//----------------------------------------------------------------------------
+FGenericMesh& FGenericMesh::operator =(FGenericMesh&& rvalue) NOEXCEPT {
+    Clear();
+
+    _vertices = std::move(rvalue._vertices);
+    _indices = std::move(rvalue._indices);
+    _sourceFile = std::move(rvalue._sourceFile);
+    _indexCount = std::move(rvalue._indexCount);
+    _vertexCount = std::move(rvalue._vertexCount);
+
+    rvalue._indexCount = rvalue._vertexCount = 0;
+
+    return (*this);
+}
+//----------------------------------------------------------------------------
+void FGenericMesh::AddIndex(size_t index) {
+    _indexCount++;
+    _indices.WritePOD(checked_cast<u32>(index));
 }
 //----------------------------------------------------------------------------
 void FGenericMesh::AddIndices(const TMemoryView<const u32>& indices) {
@@ -28,11 +49,33 @@ void FGenericMesh::AddIndices(const TMemoryView<const u32>& indices) {
     _indices.WriteView(indices);
 }
 //----------------------------------------------------------------------------
+void FGenericMesh::AddTriangle(const uint3& vertices, size_t offset/* = 0 */) {
+    AddTriangle(vertices.x, vertices.y, vertices.z, offset);
+}
+//----------------------------------------------------------------------------
 void FGenericMesh::AddTriangle(size_t i0, size_t i1, size_t i2, size_t offset/* = 0 */) {
     _indexCount += 3;
     _indices.WritePOD(checked_cast<u32>(offset + i0));
     _indices.WritePOD(checked_cast<u32>(offset + i1));
     _indices.WritePOD(checked_cast<u32>(offset + i2));
+}
+//----------------------------------------------------------------------------
+uint3 FGenericMesh::Triangle(size_t index) const NOEXCEPT {
+    Assert(index * 3 + 2 < _indexCount);
+    const TMemoryView<const u32> indices = Indices();
+    return {
+        indices[index * 3 + 0],
+        indices[index * 3 + 1],
+        indices[index * 3 + 2]
+    };
+}
+//----------------------------------------------------------------------------
+void FGenericMesh::SetTriangle(size_t index, const uint3& vertices) NOEXCEPT {
+    Assert(index * 3 + 2 < _indexCount);
+    const TMemoryView<u32> indices = Indices();
+    indices[index * 3 + 0] = vertices.x;
+    indices[index * 3 + 1] = vertices.y;
+    indices[index * 3 + 2] = vertices.z;
 }
 //----------------------------------------------------------------------------
 FGenericVertexData& FGenericMesh::VertexData(const RHI::FVertexID& semantic) const NOEXCEPT {
@@ -51,11 +94,23 @@ FGenericVertexData* FGenericMesh::VertexDataIFP(const RHI::FVertexID& semantic) 
     return nullptr;
 }
 //----------------------------------------------------------------------------
-FGenericVertexData& FGenericMesh::AddVertexData(const RHI::FVertexID& semantic, RHI::EVertexFormat format) {
-    Assert_NoAssume(nullptr == VertexDataIFP(semantic, format));
+FGenericVertexData* FGenericMesh::VertexDataIFP(const RHI::FVertexID& semantic, RHI::EVertexFormat format) const NOEXCEPT {
+    Assert(semantic.Valid());
 
-    UGenericVertexData vertex = MakeUnique<FGenericVertexData>(this, semantic, format);
-    FGenericVertexData& const result = *vertex;
+    auto it = _vertices.find(semantic);
+    if (_vertices.end() != it) {
+        if (format == it->second->Format())
+            return it->second.get();
+    }
+
+    return nullptr;
+}
+//----------------------------------------------------------------------------
+FGenericVertexData& FGenericMesh::AddVertexData(const RHI::FVertexID& semantic, RHI::EVertexFormat format) {
+    Assert_NoAssume(nullptr == VertexDataIFP(semantic));
+
+    UGenericVertexData vertex = MakeUnique<FGenericVertexData>(*this, semantic, format);
+    FGenericVertexData& result = *vertex;
 
     _vertices.Emplace_AssertUnique(RHI::FVertexID(semantic), std::move(vertex));
     return result;
@@ -73,13 +128,39 @@ FGenericVertexData& FGenericMesh::GetOrAddVertexData(const RHI::FVertexID& seman
 void FGenericMesh::RemoveVertexData(const FGenericVertexData* data) {
     Assert(data);
 
+#if USE_PPE_ASSERT
+    const auto it = _vertices.find(data->Semantic());
+    AssertRelease(_vertices.end() != it);
+    AssertRelease(it->second.get() == data);
+
+    _vertices.Erase(it);
+#else
     RemoveVertexData(data->Semantic());
+#endif
 }
 //----------------------------------------------------------------------------
 void FGenericMesh::RemoveVertexData(const RHI::FVertexID& semantic) {
     Assert(semantic.Valid());
 
     VerifyRelease(_vertices.Erase(semantic));
+}
+//----------------------------------------------------------------------------
+UGenericVertexData FGenericMesh::StealVertexData(const FGenericVertexData* data) {
+    Assert(data);
+
+    return StealVertexData(data->Semantic());
+}
+//----------------------------------------------------------------------------
+UGenericVertexData FGenericMesh::StealVertexData(const RHI::FVertexID& semantic) {
+    Assert(semantic.Valid());
+    UGenericVertexData result;
+
+    const auto it = _vertices.find(semantic);
+    if (_vertices.end() != it) {
+        result = std::move(it->second);
+        _vertices.Erase(it);
+    }
+    return result;
 }
 //----------------------------------------------------------------------------
 bool FGenericMesh::AreVertexEquals(size_t v0, size_t v1) const {
@@ -177,17 +258,13 @@ void FGenericMesh::IndexAndVertexSwap(size_t v0, size_t v1) {
 void FGenericMesh::Resize(size_t indexCount, size_t vertexCount, bool keepData/* = true */) {
     if (_indexCount != indexCount) {
         _indexCount = indexCount;
-        _indices.resize(indexCount, keepData);
+        _indices.resize(indexCount * sizeof(u32), keepData);
     }
     if (_vertexCount != vertexCount) {
         _vertexCount = vertexCount;
         for (const UGenericVertexData& vertices : _vertices.Values())
             vertices->Resize(vertexCount, keepData);
     }
-
-#if USE_PPE_ASSERT
-    Assert_NoAssume(Validate());
-#endif
 }
 //----------------------------------------------------------------------------
 void FGenericMesh::Reserve(size_t indexCount, size_t vertexCount, bool additional/* = false */) {
@@ -195,7 +272,7 @@ void FGenericMesh::Reserve(size_t indexCount, size_t vertexCount, bool additiona
         indexCount += _indexCount;
         vertexCount += _vertexCount;
     }
-    if (_indices.capacity() < indexCount) {
+    if (_indexCount < indexCount) {
         _indices.reserve(indexCount * sizeof(u32));
     }
     if (_vertexCount < vertexCount) {
@@ -204,37 +281,88 @@ void FGenericMesh::Reserve(size_t indexCount, size_t vertexCount, bool additiona
     }
 }
 //----------------------------------------------------------------------------
-void FGenericMesh::CleanAndOptimize(size_t index) {
+void FGenericMesh::CleanAndOptimize(const FMeshBuilderSettings& settings, size_t index) {
     if (!Position3f_IFP(index) && !Position4f_IFP(index))
         return;
 
-    const size_t duplicated = MergeDuplicateVertices(*this);
-    PPE_LOG(MeshBuilder, Info, "removed {0}/{1} duplicate vertices = {2:f2}%", duplicated, _vertexCount, duplicated * 100.f / _vertexCount);
+    Assert_NoAssume(Validate());
+    DEFERRED {
+        Assert_NoAssume(Validate());
+    };
 
-    const size_t unused = RemoveUnusedVertices(*this);
-    PPE_LOG(MeshBuilder, Info, "removed {0}/{1} unused vertices = {2:f2}%", unused, _vertexCount + unused, unused * 100.f / (_vertexCount + unused));
+    FFeedbackProgressBar pbar{"Clean and optimize mesh"_view};
 
+    if (settings.MergeDuplicateVertices) {
+        pbar.Print("Remove mesh duplicate vertices"_view);
+        const size_t duplicated = MergeDuplicateVertices(*this);
+        PPE_SLOG(MeshBuilder, Info, "remove duplicate vertices", {
+            {"Removed", duplicated},
+            {"Total", _vertexCount},
+            {"Percent", (duplicated * 100.f) / _vertexCount}
+        });
+    }
+
+    if (settings.Transform.has_value()) {
+        pbar.Print("Transform mesh"_view);
+        Transform(*this, index, *settings.Transform);
+    }
+
+    pbar.Print("Compute mesh bounds"_view);
     const FAabb3f bounds = ComputeBounds(*this, index);
     const float minDistance = bounds.Extents().MinComponent() * 0.001f; // 0.01%
-    const float minArea = minDistance * minDistance;
+    const float minArea = (minDistance * minDistance) / 2.f;
+    PPE_SLOG(MeshBuilder, Info, "computed mesh bounds", {
+        {"Min", Opaq::Format(bounds.Min())},
+        {"Max", Opaq::Format(bounds.Max())},
+    });
 
-#if 0 // May merge needed vertices for interpolation : can't be in the default path
-    const size_t close = MergeCloseVertices(*this, index, minDistance);
-    PPE_LOG(MeshBuilder, Info, "removed {0}/{1} close vertices (epsilon = {2}) = {3:f2}%", close, _vertexCount, minDistance, close * 100.f / _vertexCount);
-#endif
+    if (settings.MergeCloseVertices) {
+        pbar.Print("Merge mesh close vertices"_view);
+        const size_t close = MergeCloseVertices(*this, index, minDistance);
+        PPE_LOG(MeshBuilder, Info, "removed {0}/{1} close vertices (epsilon = {2}) = {3:f2}%", close, _vertexCount, minDistance, close * 100.f / _vertexCount);
+    }
 
-    const size_t zero = RemoveZeroAreaTriangles(*this, index, minArea);
-    PPE_LOG(MeshBuilder, Info, "removed {0}/{1} zero area triangle indices (epsilon = {2}) = {3:f2}%", zero, _indexCount + zero, minArea, zero * 100.f / (_indexCount + zero));
+    if (settings.RemoveZeroAreaTriangles) {
+        pbar.Print("Remove mesh zero area triangles"_view);
+        const size_t zero = RemoveZeroAreaTriangles(*this, index, minArea);
+        PPE_SLOG(MeshBuilder, Info, "remove zero area triangles", {
+            {"Removed", zero},
+            {"Total", _indexCount + zero},
+            {"Percent", (zero * 100.f) / (_indexCount + zero)},
+            {"MinArea", minArea},
+        });
+    }
 
-    const size_t unused2 = RemoveUnusedVertices(*this);
-    PPE_LOG(MeshBuilder, Info, "removed {0}/{1} unused vertices = {2:f2}%", unused2, _vertexCount + unused2, unused2 * 100.f / (_vertexCount + unused2));
+    if (settings.RemoveUnusedVertices) {
+        pbar.Print("Remove mesh unused vertices"_view);
+        const size_t unused = RemoveUnusedVertices(*this);
+        PPE_SLOG(MeshBuilder, Info, "remove unused vertices", {
+            {"Removed", unused},
+            {"Total", _vertexCount},
+            {"Percent", (unused * 100.f) / _vertexCount}
+        });
+    }
 
+    pbar.Print("Compute vertex average cache miss rate"_view);
     const float VACMR_Before = VertexAverageCacheMissRate(*this);
 
-    OptimizeIndicesAndVerticesOrder(*this);
+    if (settings.OptimizeIndicesOrder) {
+        pbar.Print("Optimize mesh indices order"_view);
+        OptimizeIndicesOrder(*this);
+    }
 
+    if (settings.OptimizeVerticesOrder) {
+        pbar.Print("Optimize mesh vertices order"_view);
+        OptimizeVerticesOrder(*this);
+    }
+
+    pbar.IncPrint("Compute vertex average cache miss rate"_view);
     const float VACMR_After = VertexAverageCacheMissRate(*this);
-    PPE_LOG(MeshBuilder, Info, "optimized vertex average cache miss rate from {0:f3} to {1:f3} = {2:f2}%", VACMR_Before, VACMR_After, VACMR_After * 100.f / VACMR_Before);
+    PPE_SLOG(MeshBuilder, Info, "optimize vertex average cache miss rate", {
+        {"Before", VACMR_Before},
+        {"After", VACMR_After},
+        {"Percent", VACMR_Before * 100.f / VACMR_After}
+    });
 }
 //----------------------------------------------------------------------------
 bool FGenericMesh::ExportIndices(const TMemoryView<u16>& dst) const {
@@ -255,6 +383,7 @@ bool FGenericMesh::ExportIndices(RHI::EIndexFormat format, const FRawMemory& dst
         break;
 
     case RHI::EIndexFormat::UShort:
+    {
         if (_vertexCount > TNumericLimits<u16>::MaxValue())
             return false;
 
@@ -264,10 +393,15 @@ bool FGenericMesh::ExportIndices(RHI::EIndexFormat format, const FRawMemory& dst
 
         while (pend != pdst)
             *pdst++ = checked_cast<u16>(*psrc++);
+
         break;
+    }
 
     default:
-        AssertNotImplemented();
+        PPE_SLOG(MeshBuilder, Error, "unexpected index format", {
+            {"IndexFormat", Opaq::Format(format)},
+            {"GenericIndex", Opaq::Format(RHI::EIndexFormat::UInt)},
+        });
         return false;
     }
 
@@ -276,38 +410,48 @@ bool FGenericMesh::ExportIndices(RHI::EIndexFormat format, const FRawMemory& dst
 //----------------------------------------------------------------------------
 bool FGenericMesh::ExportVertices(const RHI::FVertexInputState& vdecl, const RHI::FVertexBufferID& vertexBuffer, const FRawMemory& dst) const {
     Assert(vertexBuffer.Valid());
+    Assert_NoAssume(Validate());
 
     const RHI::FVertexBufferBinding& bufferBinding = vdecl.BufferBindings[vertexBuffer];
     Assert_NoAssume(dst.SizeInBytes() == bufferBinding.Stride * _vertexCount);
 
-    for (const TPair<const RHI::FVertexID, RHI::FVertexInput>& it : vdecl.Vertices) {
-        if (it.second.BufferBinding != bufferBinding.Index)
+    for (const auto& [vertexId, input] : vdecl.Vertices) {
+        if (input.BufferBinding != bufferBinding.Index)
             continue;
 
-        const FGenericVertexData* const pVertexData = VertexDataIFP(it.first);
-        if (not pVertexData)
+        const FGenericVertexData* const pVertexData = VertexDataIFP(vertexId);
+        if (Unlikely(not pVertexData)) {
+            PPE_SLOG(MeshBuilder, Error, "vertex semantic not found", {
+                {"BufferBinding", input.BufferBinding},
+                {"VertexID", Opaq::Format(vertexId)},
+            });
             return false;
+        }
 
-        const size_t vertexStride = pVertexData->StrideInBytes();
+        const size_t srcStride = pVertexData->StrideInBytes();
         Assert_NoAssume(pVertexData->VertexCount() == _vertexCount);
-        Assert_NoAssume(pVertexData->SizeInBytes() == vertexStride * _vertexCount);
+        Assert_NoAssume(pVertexData->SizeInBytes() == srcStride * _vertexCount);
 
         // same format => trivial copy, always succeed
-        if (pVertexData->Format() == it.second.Format) {
+        if (pVertexData->Format() == input.Format) {
             forrange(v, 0, _vertexCount) {
                 const FRawMemoryConst src = pVertexData->Vertex(v);
-                src.CopyTo(dst.SubRange(v * bufferBinding.Stride + it.second.Offset, vertexStride));
+                src.CopyTo(dst.SubRange(v * bufferBinding.Stride + input.Offset, srcStride));
             }
         }
         // different format => try promotion, can fail
-        else if (RHI::FVertexFormatPromote promote = RHI::EVertexFormat_Promote(it.second.Format, pVertexData->Format())) {
+        else if (RHI::FVertexFormatPromote promote = EVertexFormat_Promote(input.Format, pVertexData->Format())) {
+            const size_t dstStride = RHI::EVertexFormat_SizeOf(input.Format);
             forrange(v, 0, _vertexCount) {
                 const FRawMemoryConst src = pVertexData->Vertex(v);
-                if (not promote(dst.SubRange(v * bufferBinding.Stride + it.second.Offset, vertexStride), src))
-                    return false;
+                PPE_LOG_CHECK(MeshBuilder, promote(dst.SubRange(v * bufferBinding.Stride + input.Offset, dstStride), src));
             }
         }
         else {
+            PPE_SLOG(MeshBuilder, Error, "unexpected vertex format", {
+                {"VertexInput", Opaq::Format(input.Format)},
+                {"GenericVertex", Opaq::Format(pVertexData->Format())},
+            });
             return false;
         }
     }
@@ -316,26 +460,21 @@ bool FGenericMesh::ExportVertices(const RHI::FVertexInputState& vdecl, const RHI
 }
 //----------------------------------------------------------------------------
 bool FGenericMesh::Validate() const NOEXCEPT {
-    if (Indices().size() != _indexCount)
-        return false;
-
-    for (u32 index : Indices()) {
-        if (index >= _vertexCount)
-            return false;
-    }
+    PPE_LOG_CHECK(MeshBuilder, Indices().size() == _indexCount);
 
     for (const UGenericVertexData& vertices : _vertices.Values()) {
-        if (vertices->VertexCount() != _vertexCount)
-            return false;
-
-        if (vertices->SizeInBytes() / vertices->StrideInBytes() != _vertexCount)
-            return false;
+        PPE_LOG_CHECK(MeshBuilder, vertices->VertexCount() == _vertexCount);
+        PPE_LOG_CHECK(MeshBuilder, vertices->SizeInBytes() / vertices->StrideInBytes() == _vertexCount);
     }
+
+    for (u32 index : Indices()) {
+        PPE_LOG_CHECK(MeshBuilder, index < _vertexCount);
+    }
+
+    return true;
 }
 //----------------------------------------------------------------------------
 void FGenericMesh::Clear() {
-    Assert_NoAssume(Validate());
-
     ClearIndices();
     ClearVertices();
 }
@@ -357,7 +496,7 @@ FGenericVertexData::FGenericVertexData(FGenericMesh& owner, const RHI::FVertexID
     Assert(_format != Default);
 }
 //----------------------------------------------------------------------------
-FGenericVertexData::~FGenericVertexData() {}
+FGenericVertexData::~FGenericVertexData() = default;
 //----------------------------------------------------------------------------
 size_t FGenericVertexData::StrideInBytes() const NOEXCEPT {
     return RHI::EVertexFormat_SizeOf(_format);
@@ -412,21 +551,19 @@ FRawMemoryConst FGenericVertexData::SubRange(size_t start, size_t count) const {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-
-RHI::VertexID::
 #define GENERICVERTEX_SEMANTIC_DEF(_NAME, _DIM, _TYPE) \
     TGenericVertexSubPart< _TYPE > FGenericMesh::CONCAT(CONCAT(_NAME, _DIM), f)(size_t index) { \
-        return TGenericVertexSubPart< _TYPE >( GetOrAddVertexData(RHI::VertexID::_NAME(index), TGenericVertexSubPart< _TYPE >::Format) ); \
+        return TGenericVertexSubPart< _TYPE >( GetOrAddVertexData(VertexID(RHI::EVertexID::_NAME, index), TGenericVertexSubPart< _TYPE >::Format) ); \
     } \
     TGenericVertexSubPart< _TYPE > FGenericMesh::CONCAT(CONCAT(_NAME, _DIM), f_IFP)(size_t index) const { \
-        return TGenericVertexSubPart< _TYPE >( VertexDataIFP(RHI::VertexID::_NAME(index), TGenericVertexSubPart< _TYPE >::Format) ); \
+        return TGenericVertexSubPart< _TYPE >( VertexDataIFP(VertexID(RHI::EVertexID::_NAME, index), TGenericVertexSubPart< _TYPE >::Format) ); \
     }
 //----------------------------------------------------------------------------
 GENERICVERTEX_SEMANTIC_DEF(Position,    3, float3)
 GENERICVERTEX_SEMANTIC_DEF(Position,    4, float4)
-GENERICVERTEX_SEMANTIC_DEF(TexCoord,    2, float2)
-GENERICVERTEX_SEMANTIC_DEF(TexCoord,    3, float3)
-GENERICVERTEX_SEMANTIC_DEF(TexCoord,    4, float4)
+GENERICVERTEX_SEMANTIC_DEF(Texcoord,    2, float2)
+GENERICVERTEX_SEMANTIC_DEF(Texcoord,    3, float3)
+GENERICVERTEX_SEMANTIC_DEF(Texcoord,    4, float4)
 GENERICVERTEX_SEMANTIC_DEF(Color,       4, float4)
 GENERICVERTEX_SEMANTIC_DEF(Normal,      3, float3)
 GENERICVERTEX_SEMANTIC_DEF(Normal,      4, float4)

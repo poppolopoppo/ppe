@@ -35,3 +35,16 @@ UNITS_DECL(Storage,     tb, FTerabytes,     1024,   PPE::Units::Storage::FGigaby
 UNITS_DECL(Storage,     pb, FPetabytes,     1,      PPE::Units::Storage::FTerabytes)
 UNITS_END()
 //----------------------------------------------------------------------------
+UNITS_BEGIN(Angle)
+UNITS_DECL(Angle,      rad, FRadians,       1,   void)
+UNITS_END()
+//----------------------------------------------------8------------------------
+UNITS_BEGIN(Speed)
+UNITS_DECL(Speed,      m_s, FMeterSeconds,       1000,   void)
+UNITS_DECL(Speed,     km_s, FKilometerSeconds,      1,   PPE::Units::Speed::FMeterSeconds)
+UNITS_END()
+//----------------------------------------------------------------------------
+UNITS_BEGIN(AngularSpeed)
+UNITS_DECL(AngularSpeed, rad_s, FRadianSeconds,     1,   void)
+UNITS_END()
+//----------------------------------------------------------------------------

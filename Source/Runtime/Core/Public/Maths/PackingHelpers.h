@@ -116,8 +116,9 @@ PPE_CORE_API u16 FP32_to_FP16(float value);
 struct FHalfFloat {
     u16 _data;
 
-    FHalfFloat() {}
+    FHalfFloat() = default;
     explicit FHalfFloat(Meta::FForceInit) : _data(0) {}
+    explicit FHalfFloat(Meta::FNoInit) {}
     ~FHalfFloat() = default;
 
     FORCE_INLINE operator u16 () const { return _data; }
@@ -166,7 +167,6 @@ struct TNumericLimits< FHalfFloat > {
 
     static FHalfFloat DefaultValue() { return FHalfFloat::DefaultValue(); }
     static FHalfFloat Epsilon() { return FHalfFloat::Epsilon(); }
-    static FHalfFloat Inf() { return FHalfFloat::PositiveInf(); }
     static FHalfFloat MaxValue() { return FHalfFloat::MaxValue(); }
     static FHalfFloat MinValue() { return FHalfFloat::MinValue(); }
     static FHalfFloat Lowest() { return FHalfFloat::Lowest(); }
@@ -296,7 +296,6 @@ struct TNumericLimits< TBasicNorm<T, _Traits> > {
 
     static CONSTEXPR value_type DefaultValue() { return value_type{ scalar_type::DefaultValue() }; }
     static CONSTEXPR value_type Epsilon() { return value_type{ scalar_type::Epsilon() }; }
-    static CONSTEXPR value_type Inf() { return value_type{ scalar_type::Inf() }; }
     static CONSTEXPR value_type MaxValue() { return value_type{ scalar_type::MaxValue() }; }
     static CONSTEXPR value_type MinValue() { return value_type{ scalar_type::MinValue() }; }
     static CONSTEXPR value_type Lowest() { return value_type{ scalar_type::Lowest() }; }

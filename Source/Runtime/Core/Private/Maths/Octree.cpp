@@ -99,11 +99,7 @@ static bool RayIntersectsOctree_(
 
             OctreeNodeBounds_(x, y, z, int(halfExtent), voxelSize, &bounds);
 
-#if USE_PPE_ASSERT
-            float d = NAN;
-#else
-            float d;
-#endif
+            float d = FLT_MAX;
             if (ray.Intersects(bounds, &d)) {
                 Assert(not IsNANorINF(d));
                 Assert(d >= 0.f);

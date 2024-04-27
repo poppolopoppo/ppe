@@ -28,7 +28,7 @@ _Task& TDrawCallDesc<_Task>::AddResources(const FDescriptorSetID& id, const PCPi
 }
 //----------------------------------------------------------------------------
 template <typename _Task>
-_Task& TDrawCallDesc<_Task>::AddScissor(const FRectangleU& clip) {
+_Task& TDrawCallDesc<_Task>::AddScissor(const FRectangle2u& clip) {
     Assert(clip.HasPositiveExtents());
     Emplace_Back(Scissors, clip);
     return static_cast<_Task&>(*this);

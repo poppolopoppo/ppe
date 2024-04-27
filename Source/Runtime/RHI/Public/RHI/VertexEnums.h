@@ -2,6 +2,8 @@
 
 #include "RHI_fwd.h"
 
+#include "RHI/ResourceId.h"
+
 namespace PPE {
 namespace RHI {
 //----------------------------------------------------------------------------
@@ -13,6 +15,33 @@ enum class EIndexFormat : u8 {
 
     Unknown = UINT8_MAX,
 };
+//----------------------------------------------------------------------------
+enum class EVertexID : u8 {
+    Position = 0,
+    Color,
+    Texcoord,
+    Normal,
+    Tangent,
+    Binormal,
+};
+//----------------------------------------------------------------------------
+inline CONSTEXPR FVertexID VertexID(EVertexID id, size_t index = 0) {
+    switch (id) {
+    case EVertexID::Position:
+        return FVertexID("aPosition", index);
+    case EVertexID::Color:
+        return FVertexID("aColor", index);
+    case EVertexID::Texcoord:
+        return FVertexID("aTexcoord", index);
+    case EVertexID::Normal:
+        return FVertexID("aNormal", index);
+    case EVertexID::Tangent:
+        return FVertexID("aTangent", index);
+    case EVertexID::Binormal:
+        return FVertexID("aBinormal", index);
+    }
+    return Default;
+}
 //----------------------------------------------------------------------------
 enum class EVertexFormat : u32 {
     // vector size

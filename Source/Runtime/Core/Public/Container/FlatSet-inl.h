@@ -146,6 +146,16 @@ bool TFlatSet<_Key, _EqualTo, _Less, _Vector>::Insert_ReturnIfExists(_Key&& key)
 }
 //----------------------------------------------------------------------------
 template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
+void TFlatSet<_Key, _EqualTo, _Less, _Vector>::Insert_Overwrite(_Key&& key) {
+    const iterator end = _vector.end();
+    const iterator it = std::lower_bound(_vector.begin(), end, key, value_less());
+    if (it != end && value_equal()(*it, key))
+        *it = std::move(key);
+    else
+        _vector.insert(it, std::move(key));
+}
+//----------------------------------------------------------------------------
+template <typename _Key, typename _EqualTo, typename _Less, typename _Vector>
 void TFlatSet<_Key, _EqualTo, _Less, _Vector>::Insert_KeepOldIFN(_Key&& key) {
     Insert_ReturnIfExists(std::move(key));
 }

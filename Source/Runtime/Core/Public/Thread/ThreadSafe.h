@@ -35,6 +35,7 @@ public:
                 reinterpret_cast<const _Impl*>(_data.Get())->ReleaseReader();
         }
         const auto& Value() const { return _data->_value; }
+        auto* Get() const { return std::addressof(operator*()); }
         auto& operator *() const NOEXCEPT { return Meta::DerefPtr(_data->_value); }
         auto* operator ->() const NOEXCEPT { return std::addressof(operator*()); }
     };
@@ -51,7 +52,7 @@ public:
                 reinterpret_cast<_Impl*>(_data.Get())->ReleaseWriter();
         }
         auto& Value() const { return _data->_value; }
-        auto* Get() const { return std::addressof(Value()); }
+        auto* Get() const { return std::addressof(operator*()); }
         auto& operator *() const NOEXCEPT { return Meta::DerefPtr(_data->_value); }
         auto* operator ->() const NOEXCEPT { return std::addressof(operator*()); }
     };

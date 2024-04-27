@@ -12,11 +12,11 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class FEventHandle {
 public:
-    CONSTEXPR FEventHandle() NOEXCEPT : _id(0) {}
+    CONSTEXPR FEventHandle() NOEXCEPT : _id(Default) {}
 
     explicit FEventHandle(FSparseDataId id) NOEXCEPT
     :   _id(id) {
-        Assert(_id);
+        Assert_NoAssume(_id != FSparseDataId::Unknown);
     }
 
     FEventHandle(const FEventHandle&) = delete;
@@ -28,22 +28,22 @@ public:
     }
 
     FEventHandle& operator =(FEventHandle&& rvalue) NOEXCEPT {
-        Assert(0 == _id); // don't support assigning to initialized handle !
+        Assert(FSparseDataId::Unknown == _id); // don't support assigning to initialized handle !
         Swap(rvalue);
         return (*this);
     }
 
 #if USE_PPE_ASSERT
     ~FEventHandle() NOEXCEPT {
-        Assert_NoAssume(0 == _id);
+        Assert_NoAssume(FSparseDataId::Unknown == _id);
     }
 #endif
 
-    PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_id); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return (_id != FSparseDataId::Unknown); }
 
     FSparseDataId Forget() NOEXCEPT {
         const FSparseDataId result = _id;
-        _id = 0; // won't assert on destruction, use wisely ;O
+        _id = Default; // won't assert on destruction, use wisely ;O
         return result;
     }
 

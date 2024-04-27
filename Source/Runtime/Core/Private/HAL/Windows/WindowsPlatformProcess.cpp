@@ -4,6 +4,7 @@
 
 #ifdef PLATFORM_WINDOWS
 
+#include "Diagnostic/FeedbackContext.h"
 #include "Diagnostic/Logger.h"
 #include "Container/Vector.h"
 #include "IO/Format.h"
@@ -222,9 +223,12 @@ void FWindowsPlatformProcess::OnProcessStart(
 #if USE_PPE_WINDOWS_VSPERF
     FVSPerfWrapper::Create();
 #endif
+
+    FGlobalFeedbackContext::Start();
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::OnProcessShutdown() {
+    FGlobalFeedbackContext::Shutdown();
 
 #if USE_PPE_WINDOWS_VSPERF
     FVSPerfWrapper::Destroy();
@@ -676,10 +680,10 @@ size_t FWindowsPlatformProcess::WritePipe(FPipeHandle write, const FRawMemoryCon
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::ClosePipe(FPipeHandle read, FPipeHandle write) {
-    if (((read != NULL) & (read != INVALID_HANDLE_VALUE)) && not ::CloseHandle(read))
+    if (read != NULL && read != INVALID_HANDLE_VALUE && not ::CloseHandle(read))
         PPE_LOG_LASTERROR(HAL, "CloseHandle(read)");
 
-    if (((write != NULL) & (write != INVALID_HANDLE_VALUE)) && not ::CloseHandle(write))
+    if (write != NULL && write != INVALID_HANDLE_VALUE && not ::CloseHandle(write))
         PPE_LOG_LASTERROR(HAL, "CloseHandle(write)");
 }
 //----------------------------------------------------------------------------

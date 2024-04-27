@@ -30,10 +30,16 @@ void FModularServices::Clear() {
     _services.Clear();
 }
 //----------------------------------------------------------------------------
+void FModularServices::Run(const FModularDomain& domain) {
+    PPE_SLOG(Modular, Verbose, "running memory domain in modular services", {{"domain", _name}});
+
+    _services.Broadcast<run_f>(domain);
+}
+//----------------------------------------------------------------------------
 void FModularServices::ReleaseMemory() NOEXCEPT {
     PPE_SLOG(Modular, Verbose, "releasing memory in modular services", {{"domain", _name}});
 
-    _services.Broadcast<FReleaseMemoryFunc_>();
+    _services.Broadcast<release_memory_f>();
 }
 //----------------------------------------------------------------------------
 #if USE_PPE_LOGGER
@@ -42,6 +48,9 @@ void FModularServices::LogServiceAdd_(FStringView base, FStringView derived) con
 }
 void FModularServices::LogServiceRemove_(FStringView base) const NOEXCEPT {
     PPE_SLOG(Modular, Verbose, "remove modular service", {{"domain", _name}, {"service", base}});
+}
+void FModularServices::LogServiceRun_(FStringView base) NOEXCEPT {
+    PPE_SLOG(Modular, Verbose, "run memory domain in modular service", {{"service", base}});
 }
 void FModularServices::LogServiceReleaseMemory_(FStringView base) NOEXCEPT {
     PPE_SLOG(Modular, Verbose, "release memory in modular service", {{"service", base}});

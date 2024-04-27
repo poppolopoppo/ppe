@@ -72,8 +72,8 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Accept any number of args >= N, but expand to just the Nth one.
-// Here, N == 16.
-#define _GET_NTH_ARG(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, N, ...) N
+// Here, N == 26.
+#define _GET_NTH_ARG(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, _15, _16, _17, _18, _19, _20, _21, _22, _23, _24, _25, _26, N, ...) N
 #define _LPARENTHESIS (
 #define _RPARENTHESIS )
 //----------------------------------------------------------------------------
@@ -95,20 +95,34 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
 #define _PP_FE_ARGS_13(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_12(_call, ##__VA_ARGS__) )
 #define _PP_FE_ARGS_14(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_13(_call, ##__VA_ARGS__) )
 #define _PP_FE_ARGS_15(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_14(_call, ##__VA_ARGS__) )
+#define _PP_FE_ARGS_16(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_15(_call, ##__VA_ARGS__) )
+#define _PP_FE_ARGS_17(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_16(_call, ##__VA_ARGS__) )
+#define _PP_FE_ARGS_18(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_17(_call, ##__VA_ARGS__) )
+#define _PP_FE_ARGS_19(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_18(_call, ##__VA_ARGS__) )
+#define _PP_FE_ARGS_20(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_19(_call, ##__VA_ARGS__) )
+#define _PP_FE_ARGS_21(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_20(_call, ##__VA_ARGS__) )
+#define _PP_FE_ARGS_22(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_21(_call, ##__VA_ARGS__) )
+#define _PP_FE_ARGS_23(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_22(_call, ##__VA_ARGS__) )
+#define _PP_FE_ARGS_24(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_23(_call, ##__VA_ARGS__) )
+#define _PP_FE_ARGS_25(_call, x, ...) _call(x) , EXPAND( _PP_FE_ARGS_24(_call, ##__VA_ARGS__) )
 //----------------------------------------------------------------------------
 /**
  * Provide a for-each construct for variadic macros. Supports up
- * to 14 args.
+ * to 25 args.
  */
 #if PPE_VA_OPT_SUPPORTED
 #   define PP_FOREACH_ARGS(x, ...) \
     EXPAND( _GET_NTH_ARG(unused __VA_OPT__(,) __VA_ARGS__, \
+        _PP_FE_ARGS_25, _PP_FE_ARGS_24, _PP_FE_ARGS_23, \
+        _PP_FE_ARGS_22, _PP_FE_ARGS_21, _PP_FE_ARGS_20, _PP_FE_ARGS_19, _PP_FE_ARGS_18, _PP_FE_ARGS_17, _PP_FE_ARGS_16, \
         _PP_FE_ARGS_15, _PP_FE_ARGS_14, _PP_FE_ARGS_13, _PP_FE_ARGS_12, _PP_FE_ARGS_11, _PP_FE_ARGS_10, _PP_FE_ARGS_9, \
         _PP_FE_ARGS_8, _PP_FE_ARGS_7, _PP_FE_ARGS_6, _PP_FE_ARGS_5, _PP_FE_ARGS_4, _PP_FE_ARGS_3, _PP_FE_ARGS_2, _PP_FE_ARGS_1, _PP_FE_ARGS_0) \
             (x __VA_OPT__(,) __VA_ARGS__) )
 #else
 #   define PP_FOREACH_ARGS(x, ...) \
     EXPAND( _GET_NTH_ARG(unused , ## __VA_ARGS__, \
+        _PP_FE_ARGS_25, _PP_FE_ARGS_24, _PP_FE_ARGS_23, \
+        _PP_FE_ARGS_22, _PP_FE_ARGS_21, _PP_FE_ARGS_20, _PP_FE_ARGS_19, _PP_FE_ARGS_18, _PP_FE_ARGS_17, _PP_FE_ARGS_16, \
         _PP_FE_ARGS_15, _PP_FE_ARGS_14, _PP_FE_ARGS_13, _PP_FE_ARGS_12, _PP_FE_ARGS_11, _PP_FE_ARGS_10, _PP_FE_ARGS_9, \
         _PP_FE_ARGS_8, _PP_FE_ARGS_7, _PP_FE_ARGS_6, _PP_FE_ARGS_5, _PP_FE_ARGS_4, _PP_FE_ARGS_3, _PP_FE_ARGS_2, _PP_FE_ARGS_1, _PP_FE_ARGS_0) \
             (x , ## __VA_ARGS__) )
@@ -134,10 +148,20 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
 #define _PP_FE_TUPLE_13(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_12(_call, __VA_ARGS__) )
 #define _PP_FE_TUPLE_14(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_13(_call, __VA_ARGS__) )
 #define _PP_FE_TUPLE_15(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_14(_call, __VA_ARGS__) )
+#define _PP_FE_TUPLE_16(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_15(_call, __VA_ARGS__) )
+#define _PP_FE_TUPLE_17(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_16(_call, __VA_ARGS__) )
+#define _PP_FE_TUPLE_18(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_17(_call, __VA_ARGS__) )
+#define _PP_FE_TUPLE_19(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_18(_call, __VA_ARGS__) )
+#define _PP_FE_TUPLE_20(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_19(_call, __VA_ARGS__) )
+#define _PP_FE_TUPLE_21(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_20(_call, __VA_ARGS__) )
+#define _PP_FE_TUPLE_22(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_21(_call, __VA_ARGS__) )
+#define _PP_FE_TUPLE_23(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_22(_call, __VA_ARGS__) )
+#define _PP_FE_TUPLE_24(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_23(_call, __VA_ARGS__) )
+#define _PP_FE_TUPLE_25(_call, x, ...) EXPAND(_call EXPAND(x) ) EXPAND( _PP_FE_TUPLE_24(_call, __VA_ARGS__) )
 //----------------------------------------------------------------------------
 /**
  * Provide a for-each construct for variadic macros. Supports up
- * to 14 args.
+ * to 25 args.
  *
  * Example usage 1:
  *     #define FWD_DECLARE_CLASS(cls) class cls;
@@ -154,12 +178,16 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
 #if PPE_VA_OPT_SUPPORTED
 #   define PP_FOREACH_TUPLE(x, ...) \
     EXPAND( _GET_NTH_ARG(unused __VA_OPT__(,) __VA_ARGS__, \
+        _PP_FE_TUPLE_25, _PP_FE_TUPLE_24, _PP_FE_TUPLE_23, \
+        _PP_FE_TUPLE_22, _PP_FE_TUPLE_21, _PP_FE_TUPLE_20, _PP_FE_TUPLE_19, _PP_FE_TUPLE_18, _PP_FE_TUPLE_17, _PP_FE_TUPLE_16, \
         _PP_FE_TUPLE_15, _PP_FE_TUPLE_14, _PP_FE_TUPLE_13, _PP_FE_TUPLE_12, _PP_FE_TUPLE_11, _PP_FE_TUPLE_10, _PP_FE_TUPLE_9, \
         _PP_FE_TUPLE_8, _PP_FE_TUPLE_7, _PP_FE_TUPLE_6, _PP_FE_TUPLE_5, _PP_FE_TUPLE_4, _PP_FE_TUPLE_3, _PP_FE_TUPLE_2, _PP_FE_TUPLE_1, _PP_FE_TUPLE_0) \
             (x __VA_OPT__(,) __VA_ARGS__) )
 #else
 #   define PP_FOREACH_TUPLE(x, ...) \
     EXPAND( _GET_NTH_ARG(unused , ## __VA_ARGS__, \
+        _PP_FE_TUPLE_25, _PP_FE_TUPLE_24, _PP_FE_TUPLE_23, \
+        _PP_FE_TUPLE_22, _PP_FE_TUPLE_21, _PP_FE_TUPLE_20, _PP_FE_TUPLE_19, _PP_FE_TUPLE_18, _PP_FE_TUPLE_17, _PP_FE_TUPLE_16, \
         _PP_FE_TUPLE_15, _PP_FE_TUPLE_14, _PP_FE_TUPLE_13, _PP_FE_TUPLE_12, _PP_FE_TUPLE_11, _PP_FE_TUPLE_10, _PP_FE_TUPLE_9, \
         _PP_FE_TUPLE_8, _PP_FE_TUPLE_7, _PP_FE_TUPLE_6, _PP_FE_TUPLE_5, _PP_FE_TUPLE_4, _PP_FE_TUPLE_3, _PP_FE_TUPLE_2, _PP_FE_TUPLE_1, _PP_FE_TUPLE_0) \
             (x , ## __VA_ARGS__) )
@@ -185,10 +213,20 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
 #define _PP_FE_13(_call, x, ...) _call(x) EXPAND( _PP_FE_12(_call, __VA_ARGS__) )
 #define _PP_FE_14(_call, x, ...) _call(x) EXPAND( _PP_FE_13(_call, __VA_ARGS__) )
 #define _PP_FE_15(_call, x, ...) _call(x) EXPAND( _PP_FE_14(_call, __VA_ARGS__) )
+#define _PP_FE_16(_call, x, ...) _call(x) EXPAND( _PP_FE_15(_call, __VA_ARGS__) )
+#define _PP_FE_17(_call, x, ...) _call(x) EXPAND( _PP_FE_16(_call, __VA_ARGS__) )
+#define _PP_FE_18(_call, x, ...) _call(x) EXPAND( _PP_FE_17(_call, __VA_ARGS__) )
+#define _PP_FE_19(_call, x, ...) _call(x) EXPAND( _PP_FE_18(_call, __VA_ARGS__) )
+#define _PP_FE_20(_call, x, ...) _call(x) EXPAND( _PP_FE_19(_call, __VA_ARGS__) )
+#define _PP_FE_21(_call, x, ...) _call(x) EXPAND( _PP_FE_20(_call, __VA_ARGS__) )
+#define _PP_FE_22(_call, x, ...) _call(x) EXPAND( _PP_FE_21(_call, __VA_ARGS__) )
+#define _PP_FE_23(_call, x, ...) _call(x) EXPAND( _PP_FE_22(_call, __VA_ARGS__) )
+#define _PP_FE_24(_call, x, ...) _call(x) EXPAND( _PP_FE_23(_call, __VA_ARGS__) )
+#define _PP_FE_25(_call, x, ...) _call(x) EXPAND( _PP_FE_24(_call, __VA_ARGS__) )
 //----------------------------------------------------------------------------
 /**
  * Provide a for-each construct for variadic macros. Supports up
- * to 14 args.
+ * to 25 args.
  *
  * Example usage 1:
  *     #define FWD_DECLARE_CLASS(cls) class cls;
@@ -205,12 +243,16 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
 #if PPE_VA_OPT_SUPPORTED
 #   define PP_FOREACH(x, ...) \
     EXPAND( _GET_NTH_ARG(unused __VA_OPT__(,) __VA_ARGS__, \
+        _PP_FE_25, _PP_FE_24, _PP_FE_23, \
+        _PP_FE_22, _PP_FE_21, _PP_FE_20, _PP_FE_19, _PP_FE_18, _PP_FE_17, _PP_FE_16, \
         _PP_FE_15, _PP_FE_14, _PP_FE_13, _PP_FE_12, _PP_FE_11, _PP_FE_10, _PP_FE_9, \
         _PP_FE_8, _PP_FE_7, _PP_FE_6, _PP_FE_5, _PP_FE_4, _PP_FE_3, _PP_FE_2, _PP_FE_1, _PP_FE_0) \
             (x __VA_OPT__(,) __VA_ARGS__) )
 #else
 #   define PP_FOREACH(x, ...) \
     EXPAND( _GET_NTH_ARG(unused , ## __VA_ARGS__, \
+        _PP_FE_25, _PP_FE_24, _PP_FE_23, \
+        _PP_FE_22, _PP_FE_21, _PP_FE_20, _PP_FE_19, _PP_FE_18, _PP_FE_17, _PP_FE_16, \
         _PP_FE_15, _PP_FE_14, _PP_FE_13, _PP_FE_12, _PP_FE_11, _PP_FE_10, _PP_FE_9, \
         _PP_FE_8, _PP_FE_7, _PP_FE_6, _PP_FE_5, _PP_FE_4, _PP_FE_3, _PP_FE_2, _PP_FE_1, _PP_FE_0) \
             (x , ## __VA_ARGS__) )
@@ -220,7 +262,7 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
 //----------------------------------------------------------------------------
 /**
 * Return the number of arguments given to the macro. Supports up
-* to 14 args.
+* to 25 args.
 *
 * Example usage 1:
 *       PP_NUM_ARGS(a, b, c) // expanded as 3
@@ -231,13 +273,13 @@ using expand_indices_for = make_expand_indices<T, sizeof...(_Args)>;
 #if PPE_VA_OPT_SUPPORTED
 // should work with every compiler supporting C++20 thanks to new __VA_OPT__()
 #   define PP_NUM_ARGS(...) \
-    EXPAND( _GET_NTH_ARG(unused __VA_OPT__(,) __VA_ARGS__, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0) )
+    EXPAND( _GET_NTH_ARG(unused __VA_OPT__(,) __VA_ARGS__, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0) )
 #elif defined(_MSC_VER) && not defined(__clang__)
 #   define PP_NUM_ARGS(...) \
-    _GET_NTH_ARG _LPARENTHESIS EXPAND_VA(unused , ## __VA_ARGS__), 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 _RPARENTHESIS
+    _GET_NTH_ARG _LPARENTHESIS EXPAND_VA(unused , ## __VA_ARGS__), 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0 _RPARENTHESIS
 #else
 #   define PP_NUM_ARGS(...) \
-    EXPAND( _GET_NTH_ARG(unused , ## __VA_ARGS__, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, error) )
+    EXPAND( _GET_NTH_ARG(unused , ## __VA_ARGS__, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, error) )
 #endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

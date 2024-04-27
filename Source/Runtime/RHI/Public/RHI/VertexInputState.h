@@ -19,26 +19,6 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Vertex ID names
-//----------------------------------------------------------------------------
-namespace VertexID {
-//----------------------------------------------------------------------------
-CONSTEXPR FVertexID PositionN(size_t index) NOEXCEPT { return FVertexID("v_Position", index); }
-CONSTEXPR FVertexID NormalN(size_t index) NOEXCEPT { return FVertexID("v_Normal", index); }
-CONSTEXPR FVertexID TangentN(size_t index) NOEXCEPT { return FVertexID("v_Tangent", index); }
-CONSTEXPR FVertexID BinormalN(size_t index) NOEXCEPT { return FVertexID("v_Binormal", index); }
-CONSTEXPR FVertexID TexcoordN(size_t index) NOEXCEPT { return FVertexID("v_Texcoord", index); }
-CONSTEXPR FVertexID ColorN(size_t index) NOEXCEPT { return FVertexID("v_Color", index); }
-//----------------------------------------------------------------------------
-inline CONSTEXPR FVertexID Position{ PositionN(0) };
-inline CONSTEXPR FVertexID Normal{ NormalN(0) };
-inline CONSTEXPR FVertexID Tangent{ TangentN(0) };
-inline CONSTEXPR FVertexID Binormal{ BinormalN(0) };
-inline CONSTEXPR FVertexID Texcoord{ TexcoordN(0) };
-inline CONSTEXPR FVertexID Color{ ColorN(0) };
-//----------------------------------------------------------------------------
-} //!namespace VertexID
-//----------------------------------------------------------------------------
 struct FVertexAttribute {
     FVertexID Id;
     u32 Index{UMax};
@@ -122,6 +102,15 @@ struct FVertexInputState {
     FVertices Vertices;
 
     template <typename _Class, typename _Value>
+    FVertexInputState& Add(EVertexID vertexId, _Value _Class::* member, const FVertexBufferID& bufferId = Default, size_t index = 0) NOEXCEPT {
+        return Add(VertexID(vertexId, index), member, bufferId);
+    }
+    template <typename _Class, typename _Value>
+    FVertexInputState& Add(EVertexID vertexId, _Value _Class::* member, bool normalized, const FVertexBufferID& bufferId = Default, size_t index = 0) NOEXCEPT {
+        return Add(VertexID(vertexId, index), member, normalized, bufferId);
+    }
+
+    template <typename _Class, typename _Value>
     FVertexInputState& Add(const FVertexID& vertexId, _Value _Class::* member, const FVertexBufferID& bufferId = Default) NOEXCEPT {
         return Add(vertexId, VertexAttrib<_Value>(), checked_cast<u32>(Meta::StandardLayoutOffset(member)), bufferId);
     }
@@ -136,6 +125,8 @@ struct FVertexInputState {
     }
 
     PPE_RHI_API FVertexInputState& Add(const FVertexID& vertexId, EVertexFormat fmt, u32 offset, const FVertexBufferID& bufferId = Default) NOEXCEPT;
+    FVertexInputState& Add(EVertexID vertexId, EVertexFormat fmt, u32 offset, const FVertexBufferID& bufferId = Default, size_t index = 0) NOEXCEPT { return Add(VertexID(vertexId, index), fmt, offset, bufferId); }
+
     PPE_RHI_API FVertexInputState& Bind(const FVertexBufferID& bufferId, u32 stride, u32 index = AutoBindingIndex, EVertexInputRate rate = EVertexInputRate::Vertex) NOEXCEPT;
 
     PPE_RHI_API const FVertexBufferBinding* Binding(const FVertexInput& input) const NOEXCEPT;

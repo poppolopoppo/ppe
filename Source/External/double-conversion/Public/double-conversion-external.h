@@ -42,6 +42,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4505) // 'double_conversion::AssertTrimmedDigits': u
 
 #   pragma include_alias(<double-conversion/utils.h>, <External/double-conversion/git/double-conversion/utils.h>)
 #   include "External/double-conversion/double-conversion.git/double-conversion/double-conversion.h"
+#   include "External/double-conversion/double-conversion.git/double-conversion/ieee.h"
 
 // clean the mess done by xxHash-config.h :
 

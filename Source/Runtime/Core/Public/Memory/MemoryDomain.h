@@ -57,7 +57,8 @@ struct ITrackingDataObserver {
 PPE_CORE_API void RegisterTrackingDataObserver(ITrackingDataObserver* pObserver);
 PPE_CORE_API void UnregisterTrackingDataObserver(ITrackingDataObserver* pObserver);
 //----------------------------------------------------------------------------
-PPE_CORE_API bool AllTrackingData(void* user, bool (*each)(void*, TMemoryView<const FMemoryTracking* const>)) NOEXCEPT;
+PPE_CORE_API bool AllTrackingDataSorted(void* user, bool (*each)(void*, TMemoryView<const FMemoryTracking* const>)) NOEXCEPT;
+PPE_CORE_API bool ForeachTrackingDataUnsorted(void* user, bool (*each)(void*, const FMemoryTracking&)) NOEXCEPT;
 //----------------------------------------------------------------------------
 PPE_CORE_API void RegisterTrackingData(FMemoryTracking *pTrackingData);
 PPE_CORE_API void UnregisterTrackingData(FMemoryTracking *pTrackingData);

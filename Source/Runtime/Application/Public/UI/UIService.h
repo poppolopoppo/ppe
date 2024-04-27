@@ -18,14 +18,7 @@ class PPE_APPLICATION_API IUIService {
 public:
     virtual ~IUIService() = default;
 
-    virtual void OnBeginTick(const IApplicationService& app) = 0;
-    virtual void OnEndTick(const IApplicationService& app) = 0;
-
-    virtual void OnUpdateInput(IInputService& input, FTimespan dt) = 0;
-    virtual void OnWindowFocus(const IInputService& input, const Application::FGenericWindow* previous) = 0;
-
-    virtual void OnRenderFrame(const IRHIService& rhi, FTimespan dt) = 0;
-    virtual void OnWindowResized(const IRHIService& rhi, const FRHISurfaceCreateInfo& surface) = 0;
+    virtual void ToggleFocus(IInputService& inputs, bool selected, int priority = 0) = 0;
 
 };
 //----------------------------------------------------------------------------

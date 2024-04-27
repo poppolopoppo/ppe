@@ -30,6 +30,7 @@ public:
     ~FShaderToyApp() override;
 
     virtual void Start() override;
+    virtual void Run() override;
     virtual void Shutdown() override;
 
     struct FPushConstantData {

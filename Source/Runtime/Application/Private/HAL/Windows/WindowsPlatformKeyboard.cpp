@@ -4,8 +4,9 @@
 
 #include "HAL/Windows/WindowsPlatformKeyboard.h"
 
+#include "Input/Device/KeyboardState.h"
 #include "Input/KeyboardKey.h"
-#include "Input/KeyboardState.h"
+
 #include "HAL/Windows/WindowsPlatformMessageHandler.h"
 #include "HAL/Windows/WindowsWindow.h"
 
@@ -18,8 +19,12 @@ namespace {
 //----------------------------------------------------------------------------
 CONSTEXPR EKeyboardKey GInvalidKey_{0xFF};
 //----------------------------------------------------------------------------
-CONSTEXPR EKeyboardKey VirtualKeyToKeyboardKey_(u8 vkey) {
-    switch (vkey) {
+CONSTEXPR EKeyboardKey VirtualKeyToKeyboardKey_(const FWindowsPlatformMessageHandler::FMessage& msg) {
+    const WPARAM dwVirtualKey = msg.WParam;
+    UINT uScanCode = (msg.LParam & 0x00ff0000) >> 16;
+    const int iExtended = (msg.LParam & 0x01000000) != 0;
+
+    switch (dwVirtualKey) {
     case '0': return EKeyboardKey::_0;
     case '1': return EKeyboardKey::_1;
     case '2': return EKeyboardKey::_2;
@@ -66,10 +71,10 @@ CONSTEXPR EKeyboardKey VirtualKeyToKeyboardKey_(u8 vkey) {
     case VK_NUMPAD7: return EKeyboardKey::Numpad7;
     case VK_NUMPAD8: return EKeyboardKey::Numpad8;
     case VK_NUMPAD9: return EKeyboardKey::Numpad9;
-    case VK_ADD: return EKeyboardKey::Add;
-    case VK_SUBTRACT: return EKeyboardKey::Subtract;
-    case VK_MULTIPLY: return EKeyboardKey::Multiply;
-    case VK_DIVIDE: return EKeyboardKey::Divide;
+    case VK_ADD: return EKeyboardKey::Plus;
+    case VK_SUBTRACT: return EKeyboardKey::Minus;
+    case VK_MULTIPLY: return EKeyboardKey::Asterix;
+    case VK_DIVIDE: return EKeyboardKey::Slash;
     case VK_F1: return EKeyboardKey::F1;
     case VK_F2: return EKeyboardKey::F2;
     case VK_F3: return EKeyboardKey::F3;
@@ -82,10 +87,10 @@ CONSTEXPR EKeyboardKey VirtualKeyToKeyboardKey_(u8 vkey) {
     case VK_F10: return EKeyboardKey::F10;
     case VK_F11: return EKeyboardKey::F11;
     case VK_F12: return EKeyboardKey::F12;
-    case VK_UP: return EKeyboardKey::Up;
-    case VK_DOWN: return EKeyboardKey::Down;
-    case VK_LEFT: return EKeyboardKey::Left;
-    case VK_RIGHT: return EKeyboardKey::Right;
+    case VK_UP: return EKeyboardKey::UpArrow;
+    case VK_DOWN: return EKeyboardKey::DownArrow;
+    case VK_LEFT: return EKeyboardKey::LeftArrow;
+    case VK_RIGHT: return EKeyboardKey::RightArrow;
     case VK_ESCAPE: return EKeyboardKey::Escape;
     case VK_SPACE: return EKeyboardKey::Space;
     case VK_PAUSE: return EKeyboardKey::Pause;
@@ -101,29 +106,48 @@ CONSTEXPR EKeyboardKey VirtualKeyToKeyboardKey_(u8 vkey) {
     case VK_PRIOR: return EKeyboardKey::PageUp;
     case VK_NEXT: return EKeyboardKey::PageDown;
     case VK_OEM_COMMA: return EKeyboardKey::Comma;
+    case VK_OEM_PLUS: return EKeyboardKey::Plus;
     case VK_OEM_MINUS: return EKeyboardKey::Minus;
     case VK_OEM_PERIOD: return EKeyboardKey::Period;
     case VK_CAPITAL: return EKeyboardKey::CapsLock;
     case VK_NUMLOCK: return EKeyboardKey::NumLock;
-    case VK_MENU:
-        return EKeyboardKey::Alt;
+    case VK_LMENU: return EKeyboardKey::LeftAlt;
+    case VK_RMENU: return EKeyboardKey::RightAlt;
+    case VK_LSHIFT: return EKeyboardKey::LeftShift;
+    case VK_RSHIFT: return EKeyboardKey::RightShift;
+    case VK_LWIN: return EKeyboardKey::LeftSuper;
+    case VK_RWIN: return EKeyboardKey::RightSuper;
+    case VK_LCONTROL: return EKeyboardKey::LeftControl;
+    case VK_RCONTROL: return EKeyboardKey::RightControl;
+
     case VK_CONTROL:
-        return EKeyboardKey::Control;
+        return (iExtended ? EKeyboardKey::RightControl : EKeyboardKey::LeftControl);
+    case VK_MENU:
+        return (iExtended ? EKeyboardKey::RightAlt : EKeyboardKey::LeftAlt);
     case VK_SHIFT:
-        return EKeyboardKey::Shift;
-    case VK_APPS:
-        return EKeyboardKey::Menu;
-    case VK_LWIN:
-    case VK_RWIN:
-        return EKeyboardKey::Super;
+        uScanCode = ::MapVirtualKey(uScanCode, MAPVK_VSC_TO_VK_EX);
+        switch (uScanCode) {
+        case VK_LSHIFT: return EKeyboardKey::LeftShift;
+        case VK_RSHIFT: return EKeyboardKey::RightShift;
+        default: AssertNotReached();
+        }
+
+    case VK_OEM_1: return EKeyboardKey::Semicolon;
+    case VK_OEM_2: return EKeyboardKey::Slash;
+    case VK_OEM_3: return EKeyboardKey::Apostrophe;
+    case VK_OEM_4: return EKeyboardKey::LeftBracket;
+    case VK_OEM_5: return EKeyboardKey::Backslash;
+    case VK_OEM_6: return EKeyboardKey::RightBracket;
+    case VK_OEM_7: return EKeyboardKey::Quote;
+
     default:
         return GInvalidKey_;
     }
 }
 //----------------------------------------------------------------------------
-static bool KeyboarSetKeyDown_(FKeyboardState* keyboard, ::WPARAM vkey) {
-    if (vkey < 256) {
-        const EKeyboardKey key = VirtualKeyToKeyboardKey_(checked_cast<u8>(vkey));
+static bool KeyboarSetKeyDown_(FKeyboardState* keyboard, const FWindowsPlatformMessageHandler::FMessage& msg) {
+    if (msg.WParam < 256) {
+        const EKeyboardKey key = VirtualKeyToKeyboardKey_(msg);
 
         if (key != GInvalidKey_) {
             keyboard->SetKeyDown(key);
@@ -132,9 +156,9 @@ static bool KeyboarSetKeyDown_(FKeyboardState* keyboard, ::WPARAM vkey) {
     return false;
 }
 //----------------------------------------------------------------------------
-static bool KeyboarSetKeyUp_(FKeyboardState* keyboard, ::WPARAM vkey) {
-    if (vkey < 256) {
-        const EKeyboardKey key = VirtualKeyToKeyboardKey_(checked_cast<u8>(vkey));
+static bool KeyboarSetKeyUp_(FKeyboardState* keyboard, const FWindowsPlatformMessageHandler::FMessage& msg) {
+    if (msg.WParam < 256) {
+        const EKeyboardKey key = VirtualKeyToKeyboardKey_(msg);
 
         if (key != GInvalidKey_) {
             keyboard->SetKeyUp(key);
@@ -143,9 +167,9 @@ static bool KeyboarSetKeyUp_(FKeyboardState* keyboard, ::WPARAM vkey) {
     return false;
 }
 //----------------------------------------------------------------------------
-static bool KeyboarAddInputCharacter_(FKeyboardState* keyboard, ::WPARAM wParam) {
-    if (wParam > 0 && wParam < 0x10000) {
-        keyboard->AddCharacterInput(checked_cast<FKeyboardState::FCharacterInput>(wParam));
+static bool KeyboarAddInputCharacter_(FKeyboardState* keyboard, const FWindowsPlatformMessageHandler::FMessage& msg) {
+    if (msg.WParam > 0 && msg.WParam < 0x10000) {
+        keyboard->AddCharacterInput(checked_cast<FKeyboardState::FCharacterInput>(msg.WParam));
     }
     return false;
 }
@@ -156,14 +180,14 @@ static bool KeyboardMessageHandler_(FKeyboardState* keyboard, const FWindowsPlat
     switch (msg.Type) {
     case EWindowsMessageType::KeyDown:
     case EWindowsMessageType::SysKeyDown:
-        return KeyboarSetKeyDown_(keyboard, msg.WParam);
+        return KeyboarSetKeyDown_(keyboard, msg);
 
     case EWindowsMessageType::KeyUp:
     case EWindowsMessageType::SysKeyUp:
-        return KeyboarSetKeyUp_(keyboard, msg.WParam);
+        return KeyboarSetKeyUp_(keyboard, msg);
 
     case EWindowsMessageType::Char:
-        return KeyboarAddInputCharacter_(keyboard, msg.WParam);
+        return KeyboarAddInputCharacter_(keyboard, msg);
 
     default:
         return false; // unhandled

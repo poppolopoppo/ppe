@@ -2,6 +2,7 @@
 
 #include "Core.h"
 
+#include "IO/Stream_fwd.h"
 #include "IO/String_fwd.h"
 #include "IO/TextWriter_fwd.h"
 #include "Memory/MemoryView.h"
@@ -128,6 +129,9 @@ template <typename _Char, typename _Arg0, typename... _Args>
 TBasicTextWriter<_Char>& Format(TBasicTextWriter<_Char>& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args);
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
+size_t StreamFormat(IStreamWriter& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args);
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Arg0, typename... _Args>
 NODISCARD TBasicString<_Char> StringFormat(TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args) {
     TBasicString<_Char> result;
     Format(result, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
@@ -135,10 +139,12 @@ NODISCARD TBasicString<_Char> StringFormat(TBasicStringLiteral<_Char> format, _A
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>
-NODISCARD TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args) {
-    const size_t len = Format(dst, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-    dst[len] = _Char(0); // end-of-string: InlineFormat() always returns null-terminated strings
-    return dst.data();
+NODISCARD TBasicStringLiteral<_Char> InlineFormat(const TMemoryView<_Char>& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args) {
+    TBasicStringLiteral<_Char> result;
+    result.Data = dst.data();
+    result.Length = Format(dst, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+    dst[result.Length] = _Char(0); // end-of-string: InlineFormat() always returns null-terminated strings
+    return result;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -170,7 +176,7 @@ NODISCARD TBasicString<_Char> StringFormat(const _Char(&format)[_Dim], _Arg0&& a
 }
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim, typename _Arg0, typename... _Args>
-NODISCARD TBasicConstChar<_Char> InlineFormat(const TMemoryView<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
+NODISCARD TBasicStringLiteral<_Char> InlineFormat(const TMemoryView<_Char>& dst, const _Char(&format)[_Dim], _Arg0&& arg0, _Args&&... args) {
     return InlineFormat(dst, MakeStringLiteral(format), std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
 }
 //----------------------------------------------------------------------------

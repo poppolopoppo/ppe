@@ -76,7 +76,6 @@ FMetaModule::~FMetaModule() {
 }
 //----------------------------------------------------------------------------
 void FMetaModule::Start() {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(not IsStarted());
     Assert(_classes.empty());
 
@@ -147,7 +146,6 @@ void FMetaModule::Start() {
 }
 //----------------------------------------------------------------------------
 void FMetaModule::Shutdown() {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(IsStarted());
 
     {
@@ -229,7 +227,6 @@ const FMetaClass* FMetaModule::ClassIFP(FStringLiteral name) const {
 }
 //----------------------------------------------------------------------------
 void FMetaModule::RegisterClass(FMetaClassHandle& handle) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(not IsStarted());
     Assert(not _classHandles.Contains(&handle));
 
@@ -265,7 +262,6 @@ const FMetaEnum* FMetaModule::EnumIFP(FStringLiteral name) const {
 }
 //----------------------------------------------------------------------------
 void FMetaModule::RegisterEnum(FMetaEnumHandle& handle) {
-    THIS_THREADRESOURCE_CHECKACCESS();
     Assert(not IsStarted());
     Assert(not _enumHandles.Contains(&handle));
 

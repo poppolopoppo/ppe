@@ -8,6 +8,10 @@
 #include <shellapi.h>
 #include <tchar.h>
 
+// to get marquee progress bar working (see WindowsPlatformDialog.cpp)
+// https://stackoverflow.com/questions/5681467/pbs-marquee-progressbar-winapi
+#pragma comment(linker,"/manifestdependency:\"type='win32' name='Microsoft.Windows.Common-Controls' version='6.0.0.0' processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
+
 int APIENTRY wWinMain(
     _In_ HINSTANCE      hInstance,
     _In_opt_ HINSTANCE  hPrevInstance,

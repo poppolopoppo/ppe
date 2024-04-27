@@ -37,6 +37,10 @@ public:
         i64 SmallAllocs;
         i64 AccumulatedAllocs;
         i64 AccumulatedSize;
+        i64 PreviousAccumulatedAllocs;
+        i64 PreviousAccumulatedSize;
+        i64 IntraFrameTotalAllocs;
+        i64 IntraFrameTotalSize;
     };
 
     struct PPE_CORE_API FCounters {
@@ -49,6 +53,10 @@ public:
         counter_t SmallAllocs{ 0 };
         counter_t AccumulatedAllocs{ 0 };
         std::atomic<u64> AccumulatedSize{ 0 };
+        counter_t PreviousAccumulatedAllocs{ 0 };
+        std::atomic<u64> PreviousAccumulatedSize{ 0 };
+        counter_t IntraFrameTotalAllocs{ 0 };
+        std::atomic<u64> IntraFrameTotalSize{ 0 };
 
         FCounters() = default;
 
@@ -58,6 +66,8 @@ public:
 
         FSnapshot Snapshot() const;
         FSnapshot Difference(const FCounters& o) const;
+
+        void OnFrameFlip();
         void ResetAt(const FSnapshot& snapshot);
     };
 
@@ -113,6 +123,9 @@ public:
     static FMemoryTracking& PooledMemory() NOEXCEPT;
     static FMemoryTracking& VirtualMemory() NOEXCEPT;
     static FMemoryTracking& UnaccountedMemory() NOEXCEPT;
+
+    static void BeginFrame() NOEXCEPT;
+    static void EndFrame() NOEXCEPT;
 
     static FMemoryTracking* ThreadTrackingData() NOEXCEPT;
     static FMemoryTracking* SetThreadTrackingData(FMemoryTracking* trackingData) NOEXCEPT;

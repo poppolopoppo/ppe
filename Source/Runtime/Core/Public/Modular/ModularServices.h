@@ -11,8 +11,6 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PRAGMA_MSVC_WARNING_PUSH()
-PRAGMA_MSVC_WARNING_DISABLE(4702) // strange warning in MakeReleaseFunc_()...
 class PPE_CORE_API FModularServices : Meta::FNonCopyableNorMovable {
 public:
     explicit FModularServices(const FStringView& name) NOEXCEPT;
@@ -61,6 +59,7 @@ public:
 
     void Clear();
 
+    void Run(const FModularDomain& domain);
     void ReleaseMemory() NOEXCEPT;
 
 private:
@@ -68,40 +67,24 @@ private:
     const FModularServices* _parent;
 
     template <typename T>
-    using THasReleaseMemoryFunc_ = decltype(std::declval<T&>().ReleaseMemory());
-    using FReleaseMemoryFunc_ = void (*)(void*) NOEXCEPT;
-
+    using release_memory_t = Meta::TValue<&T::ReleaseMemory>;
     template <typename T>
-    static CONSTEXPR FReleaseMemoryFunc_ MakeReleaseFunc_(T*) NOEXCEPT {
-        IF_CONSTEXPR(Meta::has_defined_v<THasReleaseMemoryFunc_, T>) {
-            return [](void* p) NOEXCEPT {
-#if USE_PPE_LOGGER
-                LogServiceReleaseMemory_(Meta::type_info<T>.name.MakeView());
-#endif
-                static_cast<T*>(p)->ReleaseMemory();
-            };
-        }
-        return nullptr;
-    }
+    using run_t = Meta::TValue<&T::Run>;
 
-    struct FPolymorphicServiceTraits_ {
-        using type = TTuple<FReleaseMemoryFunc_>;
-        template <typename T>
-        static CONSTEXPR type BindCallbacks(T* p) NOEXCEPT {
-            return std::make_tuple(MakeReleaseFunc_(p));
-        }
-    };
+    using release_memory_f = TPolymorphicFunc<release_memory_t, void>;
+    using run_f = TPolymorphicFunc<run_t, void, const FModularDomain&>;
 
-    using FPolymorphicServices_ = TPolymorphicTuple<ALLOCATOR(Modular), FPolymorphicServiceTraits_>;
+    using FPolymorphicServices_ = TPolymorphicTuple<ALLOCATOR(Modular),
+        release_memory_f, run_f>;
     FPolymorphicServices_ _services;
 
 #if USE_PPE_LOGGER
     void LogServiceAdd_(FStringView base, FStringView derived) const NOEXCEPT;
     void LogServiceRemove_(FStringView base) const NOEXCEPT;
+    static void LogServiceRun_(FStringView base) NOEXCEPT;
     static void LogServiceReleaseMemory_(FStringView base) NOEXCEPT;
 #endif
 };
-PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

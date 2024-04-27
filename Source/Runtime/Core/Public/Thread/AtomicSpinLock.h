@@ -238,7 +238,7 @@ public: // Reader
             Assert(r > 0); // or we couldn't have locked reader
             if (Readers.compare_exchange_weak(r, r - 1,
                 std::memory_order_release, std::memory_order_relaxed))
-                return; // release read lock
+                break; // release read lock
 
             FPlatformProcess::SleepForSpinning(backoff);
         }

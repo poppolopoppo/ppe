@@ -65,11 +65,6 @@ enum class EKeyboardKey : u8 {
     Numpad8,
     Numpad9,
 
-    Add,
-    Subtract,
-    Multiply,
-    Divide,
-
     // Function
 
     F1,
@@ -84,13 +79,6 @@ enum class EKeyboardKey : u8 {
     F10,
     F11,
     F12,
-
-    // Direction
-
-    Up,
-    Down,
-    Left,
-    Right,
 
     // Specials
 
@@ -112,27 +100,63 @@ enum class EKeyboardKey : u8 {
     PageUp,
     PageDown,
 
-    Comma,             // ,
-    Plus,              // +
-    Minus,             // -
-    Period,            // .
+    Comma,              // ,
+    Equals,             // =
+    Plus,               // +
+    Minus,              // -
+    Period,             // .
+    Semicolon,          // ;
+    Underscore,         // _
+
+    Ampersand,          // &
+    Apostrophe,         // '
+    Asterix,            // *
+    Caret,              // ^
+    Colon,              // :
+    Dollar,             // $
+    Exclamation,        // !
+    Tilde,              // ~
+    Quote,              // "
+
+    Slash,              // /
+    Backslash,          //
+    LeftBracket,        // [
+    RightBracket,       // ]
+    LeftParantheses,    // (
+    RightParantheses,   // )
+
+    // Directions
+
+    LeftArrow,
+    RightArrow,
+    UpArrow,
+    DownArrow,
+
+    // Specials
 
     CapsLock,
     NumLock,
 
     // Modifiers
 
-    Alt,
-    Control,
-    Shift,
+    LeftAlt,
+    RightAlt,
+    LeftControl,
+    RightControl,
+    LeftShift,
+    RightShift,
 
-    Menu,           // Windows key
-    Super,
+    LeftSuper, // windows key / apple command
+    RightSuper,
 };
 //----------------------------------------------------------------------------
-FStringView KeyboardKeyToCStr(EKeyboardKey value);
+NODISCARD PPE_APPLICATION_API TMemoryView<const EKeyboardKey> EachKeyboardKeys() NOEXCEPT;
+NODISCARD PPE_APPLICATION_API FStringLiteral KeyboardKeyToCStr(EKeyboardKey value) NOEXCEPT;
 //----------------------------------------------------------------------------
-TMemoryView<const EKeyboardKey> EachKeyboardKeys();
+template <typename _Char>
+TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, EKeyboardKey value) {
+    return oss << KeyboardKeyToCStr(value);
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "HAL/TargetPlatform.h"
+
 #include "IO/String_fwd.h"
 
 namespace PPE
@@ -53,8 +54,19 @@ public: // must be defined for every platform
         kIgnoreOnceAlwaysAbortRetry = size_t(kIgnoreOnceAlwaysAbort) | size_t(EResult::Retry),
     };
 
+    using FDialogHandle = uintptr_t;
+
     static EResult Show(const FWStringView& text, const FWStringView& caption, EType dialogType, EIcon iconType) = delete;
     static EResult FileDialog(const FConstWChar& sourceFile, u32 sourceLine, const FWStringView& text, const FWStringView& caption, EType dialogType, EIcon iconType) = delete;
+
+    static bool PushSplashScreen_ReturnIfOpened() = delete;
+    static bool PopSplashScreen_ReturnIfOpened() = delete;
+
+    static FDialogHandle BeginProgress(const FWStringView& text, size_t total = 0) = delete;
+    static void IncProgressPos(FDialogHandle progress) = delete;
+    static void SetProgressPos(FDialogHandle progress, size_t amount) = delete;
+    static void SetProgressText(FDialogHandle progress, const FWStringView& message) = delete;
+    static void EndProgress(FDialogHandle progress) = delete;
 
 public: // generic helpers
     static EResult Notify(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Information);

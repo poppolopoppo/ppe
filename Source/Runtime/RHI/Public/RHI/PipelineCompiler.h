@@ -22,7 +22,7 @@ enum class EShaderCompilationFlags : u32
     GenerateDebug               = 1 << 15,
     Optimize                    = 1 << 16,
     OptimizeSize                = 1 << 17,
-    StrongOptimization          = 1 << 18, // very slow, may be usable for offline compilation
+    StrongOptimization          = 1 << 18, // very slow, may be usable for off-line compilation
     Validate                    = 1 << 19,
 
     ParseAnnotations            = 1 << 20,

@@ -72,7 +72,7 @@ void FBuildRobotApp::Start() {
     RTTI_MODULE(BuildRobot).Start();
 
     RTTI::FMetaTransaction transaction{ "BuildRobot"_rtti };
-    auto buildRobot = NEW_REF(UserLand, FBuildRobot);
+    auto buildRobot = NEW_REF(UserDomain, FBuildRobot);
     buildRobot->RTTI_Export("BuildRobot"_rtti);
     buildRobot->AppName = Name();
     transaction.Add(std::move(buildRobot));

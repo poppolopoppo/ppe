@@ -46,12 +46,25 @@ void FGenericApplication::Start() {
     _requestedExit = false;
 }
 //----------------------------------------------------------------------------
+void FGenericApplication::Run() {
+    PPE_SLOG(Application, Emphasis, "run application", {{"application", _name}});
+}
+//----------------------------------------------------------------------------
+void FGenericApplication::Shutdown() {
+    PPE_SLOG(Application, Emphasis, "shutdown application", {{"application", _name}});
+
+    _OnApplicationTick.Clear();
+
+    FPlatformTime::LeaveLowResolutionTimer();
+}
+//----------------------------------------------------------------------------
 bool FGenericApplication::PumpMessages() NOEXCEPT {
     return FPlatformMessageHandler::PumpGlobalMessages();
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::Tick(FTimespan dt) {
     _realTime.Tick(dt);
+    _applicationTime.Tick(_realTime, _applicationTimeDilation);
 
     _OnApplicationTick.Invoke(*this, dt);
 }
@@ -62,25 +75,21 @@ void FGenericApplication::ReleaseMemory() NOEXCEPT {
     _services.ReleaseMemory();
 }
 //----------------------------------------------------------------------------
+void FGenericApplication::SetApplicationTimeDilation(float speed) NOEXCEPT {
+    _applicationTimeDilation = speed;
+}
+//----------------------------------------------------------------------------
 void FGenericApplication::SetLowerTickRateInBackground(bool enabled) NOEXCEPT {
     _lowerTickRateInBackground = enabled;
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::SetTickRate(FTimespan period) NOEXCEPT {
     Assert(period > 0);
-    _tickRate = 1000 * Rcp(*period);
+    _tickRate = (1000.0 / *period);
 }
 //----------------------------------------------------------------------------
 void FGenericApplication::RequestExit() NOEXCEPT {
     _requestedExit = true;
-}
-//----------------------------------------------------------------------------
-void FGenericApplication::Shutdown() {
-    PPE_SLOG(Application, Emphasis, "shutdown application", {{"application", _name}});
-
-    _OnApplicationTick.Clear();
-
-    FPlatformTime::LeaveLowResolutionTimer();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

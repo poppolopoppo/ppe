@@ -14,6 +14,7 @@ public:
     ~FTestApp() override;
 
     virtual void Start() override;
+    virtual void Run() override;
     virtual void Shutdown() override;
 };
 //----------------------------------------------------------------------------

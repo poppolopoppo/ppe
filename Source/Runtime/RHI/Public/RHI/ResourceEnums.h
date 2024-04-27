@@ -417,7 +417,7 @@ struct EImageSampler {
     }
 
     CONSTEXPR u32 TypeDim() const {
-        return {u32(Type) | (u32(Dimension) << 8u)};
+        return (u32(Type) | (u32(Dimension) << 8u));
     }
 
     friend hash_t hash_value(EImageSampler value) NOEXCEPT {

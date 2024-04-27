@@ -21,9 +21,8 @@ public: // must be defined for every platform
     virtual ~FGenericApplication() override;
 
     virtual void Start();
+    virtual void Run();
     virtual void Shutdown();
-
-    virtual void Tick(FTimespan dt);
 
 public: // application service
     virtual const FModularServices& Services() const NOEXCEPT final override { return _services; }
@@ -32,7 +31,11 @@ public: // application service
     virtual const FString& Name() const NOEXCEPT override final { return _name; }
     virtual bool HasFocus() const NOEXCEPT override final { return _hasFocus; }
 
-    virtual FTimeline RealTime() const NOEXCEPT override final { return _realTime; }
+    virtual const FTimeline& RealTime() const NOEXCEPT override final { return _realTime; }
+    virtual const FTimeline& ApplicationTime() const NOEXCEPT override final { return _applicationTime; }
+
+    virtual void SetApplicationTimeDilation(float speed) NOEXCEPT override final;
+    virtual float ApplicationTimeDilation() const NOEXCEPT  override final { return _applicationTimeDilation; }
 
     virtual void SetLowerTickRateInBackground(bool enabled) NOEXCEPT override final;
     virtual bool LowerTickRateInBackground() const NOEXCEPT override final { return _lowerTickRateInBackground; }
@@ -49,9 +52,12 @@ public: // application service
 protected:
     explicit FGenericApplication(FModularDomain& domain, FString&& name);
 
+    FModularDomain& Domain_() { return _domain; }
     FModularServices& Services_() { return _services; }
 
     void SetFocus(bool value) { _hasFocus = value; }
+
+    virtual void Tick(FTimespan dt);
 
 private:
     FModularDomain& _domain;
@@ -59,7 +65,10 @@ private:
     FModularServices _services;
 
     FTimeline _realTime;
+    FTimeline _applicationTime;
     FTimespan _tickRate;
+
+    float _applicationTimeDilation{ 1.0 };
 
     bool _hasFocus : 1;
     bool _requestedExit : 1;

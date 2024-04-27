@@ -25,7 +25,7 @@ public:
         not std::is_same_v<Meta::TDecay<T>, FAny>
     >;
 
-    FAny() NOEXCEPT {}
+    FAny() = default;
     ~FAny();
 
     FAny(const FAny& other);
@@ -143,7 +143,7 @@ private:
     Meta::TPointerWFlags<const ITypeTraits> _traitsWFlags{};
     union {
         mutable insitu_type _inSitu;
-        FAllocatorBlock _allocatorBlock;
+        FAllocatorBlock _allocatorBlock{};
     };
 
     bool IsFittingInSitu_() const { return _traitsWFlags.Flag0(); }

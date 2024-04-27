@@ -8,9 +8,15 @@
 #define USE_PPE_BENCHMARK (!USE_PPE_FINAL_RELEASE && USE_PPE_LOGGER)
 
 #if USE_PPE_BENCHMARK
+#   include "Diagnostic/Logger.h"
 #   include "IO/StringView.h"
+#   include "Misc/Opaque.h"
 #   define BENCHMARK_SCOPE(_CATEGORY, _MSG) \
         const ::PPE::FBenchmarkScope ANONYMIZE(_benchmarkScope)((_CATEGORY), (_MSG))
+#   define BENCHMARK_SCOPE_ARGS(_CATEGORY, _MSG, ...) \
+        const ::PPE::TBenchmarkScopeLambda ANONYMIZE(_benchmarkScope)([&](::PPE::FMilliseconds elapsed) { \
+            PPE_SLOG(_CATEGORY, Profiling, _MSG, {{"Milliseconds", *elapsed}, __VA_ARGS__ }); \
+        })
 #   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR) \
         const ::PPE::FIOBenchmarkScope ANONYMIZE(_IObenchmarkScope)((_CATEGORY), (_MSG), (_SIZE_IN_BYTES_PTR))
 #else
@@ -108,6 +114,22 @@ private:
     FTimespan _accumulated;
 };
 #endif //!USE_PPE_BENCHMARK
+//----------------------------------------------------------------------------
+#if USE_PPE_BENCHMARK
+template <typename _Lambda>
+class TBenchmarkScopeLambda {
+public:
+    TBenchmarkScopeLambda(_Lambda&& lambda) NOEXCEPT
+    :   _lambda(std::move(lambda))
+    {}
+    ~TBenchmarkScopeLambda() {
+        _lambda(_timedScope.Elapsed());
+    }
+private:
+    _Lambda _lambda;
+    FTimedScope _timedScope;
+};
+#endif
 //----------------------------------------------------------------------------
 #if USE_PPE_BENCHMARK
 class PPE_CORE_API FIOBenchmarkScope : public FTimedScope {

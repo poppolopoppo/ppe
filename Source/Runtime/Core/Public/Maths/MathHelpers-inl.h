@@ -111,14 +111,14 @@ inline CONSTEXPR float SStep(float x) NOEXCEPT {
     Assert_NoAssume(Saturate(x) == x);
     const float ix = (1 - x);
     x = x * x;
-    return x / (x + ix * ix); ;
+    return x / (x + ix * ix);
 }
 //----------------------------------------------------------------------------
 inline CONSTEXPR double SStep(double x) NOEXCEPT {
     Assert_NoAssume(Saturate(x) == x);
     const double ix = (1 - x);
     x = x * x;
-    return x / (x + ix * ix); ;
+    return x / (x + ix * ix);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T>&& std::is_arithmetic_v<U>>* >
@@ -202,6 +202,10 @@ inline float NormalizeAngle(float degrees) NOEXCEPT { // (-180,180]
     degrees = ClampAngle(degrees);
     degrees = (degrees > 180.f ? degrees - 360.f : degrees);
     return degrees;
+}
+//----------------------------------------------------------------------------
+inline float NormalizeRadian(float radians) NOEXCEPT { // (-180,180]
+    return Radians(NormalizeAngle(Degrees(radians)));
 }
 //----------------------------------------------------------------------------
 inline u32 CubeMapFaceID(float x, float y, float z) NOEXCEPT {

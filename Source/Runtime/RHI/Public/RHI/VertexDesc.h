@@ -116,7 +116,7 @@ struct TVertexDesc<const T&> : TVertexDesc<T> {};
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-using FVertexFormatPromote = bool (*)(const FRawMemory&, const FRawMemoryConst&) NOEXCEPT;
+using FVertexFormatPromote = bool (*)(const FRawMemory& dst, const FRawMemoryConst& src) NOEXCEPT;
 NODISCARD PPE_RHI_API FVertexFormatPromote EVertexFormat_Promote(EVertexFormat dst, EVertexFormat src) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

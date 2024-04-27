@@ -20,9 +20,11 @@ PPE_SCALARVECTOR_UNARYOP_FUNC(Frac)
 PPE_SCALARVECTOR_UNARYOP_FUNC(Fractional)
 PPE_SCALARVECTOR_UNARYOP_FUNC(Saturate)
 PPE_SCALARVECTOR_UNARYOP_FUNC(Sign)
+PPE_SCALARVECTOR_UNARYOP_FUNC(SignNotZero)
 PPE_SCALARVECTOR_UNARYOP_FUNC(Rcp)
 PPE_SCALARVECTOR_UNARYOP_FUNC(RSqrt)
 PPE_SCALARVECTOR_UNARYOP_FUNC(RSqrt_Low)
+PPE_SCALARVECTOR_UNARYOP_FUNC(Sqr)
 PPE_SCALARVECTOR_UNARYOP_FUNC(Sqrt)
 PPE_SCALARVECTOR_UNARYOP_FUNC(SStep)
 PPE_SCALARVECTOR_UNARYOP_FUNC(CeilToFloat)
@@ -41,6 +43,7 @@ PPE_SCALARVECTOR_UNARYOP_FUNC(Degrees)
 PPE_SCALARVECTOR_UNARYOP_FUNC(Radians)
 PPE_SCALARVECTOR_UNARYOP_FUNC(ClampAngle)
 PPE_SCALARVECTOR_UNARYOP_FUNC(NormalizeAngle)
+PPE_SCALARVECTOR_UNARYOP_FUNC(NormalizeRadian)
 PPE_SCALARVECTOR_UNARYOP_FUNC(Float01_to_FloatM11)
 PPE_SCALARVECTOR_UNARYOP_FUNC(FloatM11_to_Float01)
 //----------------------------------------------------------------------------
@@ -167,7 +170,7 @@ NODISCARD CONSTEXPR T Dot(const details::TScalarVectorExpr<T, _Dim, _Lhs>& lhs, 
 //----------------------------------------------------------------------------
 template <typename T, u32 _Dim, typename _Expr>
 NODISCARD CONSTEXPR T Dot2(const details::TScalarVectorExpr<T, _Dim, _Expr>& v) {
-    return Dot(v, v);
+    return Sqr(v).HSum();
 }
 //----------------------------------------------------------------------------
 // Length
@@ -227,18 +230,21 @@ bool NearlyEquals(const details::TScalarVectorExpr<float, _Dim, _A>& a, const de
 //----------------------------------------------------------------------------
 // Det
 //----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR T Det(const TScalarVector<T, 2>& a, const TScalarVector<T, 2>& b) NOEXCEPT {
-    return (a.x * b.y - a.y * b.x);
+template <typename T, typename _Lhs, typename _Rhs>
+CONSTEXPR T Det(const details::TScalarVectorExpr<T, 2, _Lhs>& a, const details::TScalarVectorExpr<T, 2, _Rhs>& b) NOEXCEPT {
+    //return (a.x * b.y - a.y * b.x);
+    return (a.template Get<0>() * b.template Get<1>() - a.template Get<1>() * b.template Get<0>());
 }
 //----------------------------------------------------------------------------
 // Cross
 //----------------------------------------------------------------------------
-template <typename T>
-CONSTEXPR T Cross(const TScalarVector<T, 2>& o, const TScalarVector<T, 2>& a, const TScalarVector<T, 2>& b) NOEXCEPT {
+template <typename T, typename _A, typename _B>
+CONSTEXPR T Cross(const TScalarVector<T, 2>& o, const details::TScalarVectorExpr<T, 2, _A>& a, const details::TScalarVectorExpr<T, 2, _B>& b) NOEXCEPT {
     // Det(a - o, b - o) <=> Twiced signed area of the triangle
-    return (((a.x - o.x) * (b.y - o.y)) -
-            ((a.y - o.y) * (b.x - o.x)) );
+    //return (((a.x - o.x) * (b.y - o.y)) -
+    //        ((a.y - o.y) * (b.x - o.x)) );
+    return (((a.template Get<0>() - o.x) * (b.template Get<1>() - o.y)) -
+            ((a.template Get<1>() - o.y) * (b.template Get<0>() - o.x)) );
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -246,6 +252,14 @@ CONSTEXPR TScalarVector<T, 3> Cross(const TScalarVector<T, 3>& a, const TScalarV
     return {a.y * b.z - a.z * b.y,
             a.z * b.x - a.x * b.z,
             a.x * b.y - a.y * b.x };
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Lhs, typename _Rhs>
+CONSTEXPR TScalarVector<T, 3> Cross(const details::TScalarVectorExpr<T, 3, _Lhs>& a, const details::TScalarVectorExpr<T, 3, _Rhs>& b) NOEXCEPT {
+    //return {a.y * b.z - a.z * b.y,
+    //        a.z * b.x - a.x * b.z,
+    //        a.x * b.y - a.y * b.x };
+    return Cross(TScalarVector<T, 3>(a), TScalarVector<T, 3>(b));
 }
 //----------------------------------------------------------------------------
 // Reflect / Refract
@@ -402,6 +416,11 @@ CONSTEXPR auto BilateralLerp(
 //----------------------------------------------------------------------------
 TScalarVector<float, 2> SinCos(float angle) NOEXCEPT;
 TScalarVector<double, 2> SinCos(double angle) NOEXCEPT;
+//----------------------------------------------------------------------------
+template <typename _Expr>
+TScalarVector<float, 2> OctahedralNormalEncode(const details::TScalarVectorExpr<float, 3, _Expr>& n/* [-1,1], should be normalized */) NOEXCEPT;
+template <typename _Expr>
+TScalarVector<float, 3> OctahedralNormalDecode(const details::TScalarVectorExpr<float, 2, _Expr>& v/* [-1,1] */) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

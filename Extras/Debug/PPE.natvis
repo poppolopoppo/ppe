@@ -1084,16 +1084,17 @@
     ================================================================================
   -->
   <Type Name="PPE::FFileSystemNode">
-    <DisplayString>{_token}</DisplayString>
+    <DisplayString>{reinterpret_cast&lt;const PPE::FFileSystemToken*&gt;(this + 1), [_depth]}</DisplayString>
     <Expand>
+      <Item Name="[Path]">reinterpret_cast&lt;const PPE::FFileSystemToken*&gt;(this + 1), [_depth]</Item>
+      <Item Name="[HasMountingPoint]">!!_hasMountingPoint</Item>
       <Item Name="[Depth]">_depth</Item>
       <Item Name="[Hash]">_hashValue</Item>
-      <Item Name="[Sort]">_sortValue</Item>
       <Item Name="[Genealogy]">_genealogy._value</Item>
       <LinkedListItems>
         <Size>_depth</Size>
         <HeadPointer>this</HeadPointer>
-        <NextPointer>_parent</NextPointer>
+        <NextPointer>_parent.Ptr</NextPointer>
         <ValueNode>*this</ValueNode>
       </LinkedListItems>
     </Expand>

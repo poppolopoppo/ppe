@@ -12,6 +12,7 @@
 #include "IO/TextWriter.h"
 #include "Memory/RefPtr.h"
 #include "Meta/ThreadResource.h"
+#include "Meta/Utility.h"
 
 #if USE_PPE_LOGGER
 #   include "IO/FormatHelpers.h"
@@ -251,16 +252,16 @@ public:
     {}
 
     NO_INLINE void Run(ITaskContext& ctx) {
-        Task(ctx);
-        {
+        DEFERRED{
             const Meta::FLockGuard scopeLock(Barrier);
             Assert_NoAssume(not ActuallyReady);
             ActuallyReady = true;
-        }
-#if USE_PPE_SAFEPTR
-        RemoveSafeRef(this);
-#endif
-        OnFinished.notify_one();
+    #if USE_PPE_SAFEPTR
+            RemoveSafeRef(this);
+    #endif
+            OnFinished.notify_one();
+        };
+        Task(ctx);
     }
 
     static void DoNothing(ITaskContext&) { NOOP(); }

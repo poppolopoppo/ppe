@@ -76,7 +76,9 @@ void* TSlabHeap<_Allocator>::Allocate(size_t size) {
     Assert_NoAssume(CheckInvariants());
 
     void* newp = nullptr;
-    if (FBlockHeader* const upperBound = _freeBlocks.UpperBound(FBlockHeader{ .BlockSize = checked_cast<u32>(size) }); upperBound) {
+    FBlockHeader upperBlock{};
+    upperBlock.BlockSize = checked_cast<u32>(size);
+    if (FBlockHeader* const upperBound = _freeBlocks.UpperBound(upperBlock); upperBound) {
         Assert(upperBound);
         newp = FSlab::Allocate(*this, upperBound, size);
     }

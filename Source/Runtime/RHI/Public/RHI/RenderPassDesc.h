@@ -36,7 +36,7 @@ struct FRenderTarget {
 struct FRenderViewport {
     using FShadingRatePalette = TFixedSizeStack<EShadingRatePalette, u32(EShadingRatePalette::_Count)>;
 
-    FRectangleF Rect;
+    FRectangle2f Rect;
     float MinDepth{ 0.0f };
     float MaxDepth{ 1.0f };
     FShadingRatePalette ShadingRate;
@@ -65,13 +65,14 @@ struct FRenderPassDesc {
     FShadingRate ShadingRate;
     FRenderTargets RenderTargets;
     FViewports Viewports;
-    FRectangleU Area;
+    FRectangle2u Area;
 
     FPipelineResourceSet PerPassResources;
 
     FRenderPassDesc() = default;
-    explicit FRenderPassDesc(const FRectangleU& area) : Area(area) { Assert(Area.HasPositiveExtentsStrict()); }
-    explicit FRenderPassDesc(const uint2& extent) : FRenderPassDesc(FRectangleU{ extent }) {}
+    explicit FRenderPassDesc(const FRectangle2u& area) : Area(area) { Assert(Area.HasPositiveExtentsStrict()); }
+    explicit FRenderPassDesc(const FRectangle2i& area) : Area(area) { Assert(Area.HasPositiveExtentsStrict()); }
+    explicit FRenderPassDesc(const uint2& extent) : FRenderPassDesc(FRectangle2u{ extent }) {}
 
     FRenderPassDesc& AddTarget(ERenderTargetID id, FRawImageID image);
     FRenderPassDesc& AddTarget(ERenderTargetID id, FRawImageID image, EAttachmentLoadOp loadOp, EAttachmentStoreOp storeOp);
@@ -81,7 +82,7 @@ struct FRenderPassDesc {
 
     FRenderPassDesc& AddViewport(const uint2& extent, float minDepth = 0.0f, float maxDepth = 1.0f, TMemoryView<const EShadingRatePalette> shadingRate = Default);
     FRenderPassDesc& AddViewport(const float2& extent, float minDepth = 0.0f, float maxDepth = 1.0f, TMemoryView<const EShadingRatePalette> shadingRate = Default);
-    FRenderPassDesc& AddViewport(const FRectangleF& rect, float minDepth = 0.0f, float maxDepth = 1.0f, TMemoryView<const EShadingRatePalette> shadingRate = Default);
+    FRenderPassDesc& AddViewport(const FRectangle2f& rect, float minDepth = 0.0f, float maxDepth = 1.0f, TMemoryView<const EShadingRatePalette> shadingRate = Default);
 
     FRenderPassDesc& AddColorBuffer(ERenderTargetID id, EColorMask colorMask = EColorMask::RGBA);
     FRenderPassDesc& AddColorBuffer(ERenderTargetID id, EBlendFactor srcBlendFactor, EBlendFactor dstBlendFactor, EBlendOp blendOp, EColorMask colorMask = EColorMask::RGBA);
@@ -199,14 +200,14 @@ inline FRenderPassDesc& FRenderPassDesc::AddTarget(ERenderTargetID id, FRawImage
 }
 //----------------------------------------------------------------------------
 inline FRenderPassDesc& FRenderPassDesc::AddViewport(const uint2& extent, float minDepth, float maxDepth, TMemoryView<const EShadingRatePalette> shadingRate) {
-    return AddViewport(FRectangleF(float2::Zero, float2(extent)), minDepth, maxDepth, shadingRate);
+    return AddViewport(FRectangle2f(float2(extent)), minDepth, maxDepth, shadingRate);
 }
 //----------------------------------------------------------------------------
 inline FRenderPassDesc& FRenderPassDesc::AddViewport(const float2& extent, float minDepth, float maxDepth, TMemoryView<const EShadingRatePalette> shadingRate) {
-    return AddViewport(FRectangleF(float2::Zero, extent), minDepth, maxDepth, shadingRate);
+    return AddViewport(FRectangle2f(extent), minDepth, maxDepth, shadingRate);
 }
 //----------------------------------------------------------------------------
-inline FRenderPassDesc& FRenderPassDesc::AddViewport(const FRectangleF& rect, float minDepth, float maxDepth, TMemoryView<const EShadingRatePalette> shadingRate) {
+inline FRenderPassDesc& FRenderPassDesc::AddViewport(const FRectangle2f& rect, float minDepth, float maxDepth, TMemoryView<const EShadingRatePalette> shadingRate) {
     Assert(rect.HasPositiveExtentsStrict());
     Viewports.Push(rect, minDepth, maxDepth, shadingRate);
     return (*this);

@@ -201,7 +201,7 @@ FUniqueBuffer DecompressBuffer(const FSharedBuffer& src) {
     FUniqueBuffer decompressed = FUniqueBuffer::Allocate(DecompressedSize(src.MakeView()));
 
     if (DecompressMemory(decompressed.MakeView(), src.MakeView()))
-        return std::move(decompressed);
+        return decompressed;
 
     return Meta::Default;
 }

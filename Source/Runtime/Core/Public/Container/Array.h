@@ -97,7 +97,7 @@ CONSTEXPR u32 lengthof(const TStaticArray<T, _Dim>& arr) { return static_cast<u3
 //----------------------------------------------------------------------------
 template <typename T, typename ..._Args>
 CONSTEXPR auto MakeStaticArray(_Args&&... args) {
-    return TStaticArray<T, sizeof...(args)>{{ args... }};
+    return TStaticArray<T, sizeof...(args)>{{ T{std::forward<_Args>(args)}... }};
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

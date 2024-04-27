@@ -205,6 +205,12 @@ public: // helpers
     NODISCARD PPipelineResources CreatePipelineResources(FRawMPipelineID pipeline, const FDescriptorSetID& id) const;
     NODISCARD PPipelineResources CreatePipelineResources(FRawRTPipelineID pipeline, const FDescriptorSetID& id) const;
 
+    bool RecreateResourceIFN(FBufferID& id, const FBufferDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default));
+    bool RecreateResourceIFN(TAutoResource<FBufferID>& resource, const FBufferDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default));
+
+    bool RecreateResourceIFN(FImageID& id, FImageDesc&& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default));
+    bool RecreateResourceIFN(TAutoResource<FImageID>& resource, FImageDesc&& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default));
+
     template <typename _Id0, typename... _Ids>
     void ReleaseResources(_Id0& resource0, _Ids&... resources) {
         (void)ReleaseResource(resource0);

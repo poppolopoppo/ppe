@@ -12,9 +12,9 @@ namespace PPE {
 #define UNITS_BEGIN(NAME)
 #define UNITS_END()
 #define UNITS_DECL(TAG, SYMBOL, NAME, RATIO, SMALLER) \
-    EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >; \
+    EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_UnitTag, RATIO, SMALLER> >; \
     FTextWriter& operator <<(FTextWriter& oss, \
-        const PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >& unit) { \
+        const PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_UnitTag, RATIO, SMALLER> >& unit) { \
             if (oss.Format().Width() > 2) \
                 oss.Format().SetWidth(oss.Format().Width() - 3); \
             oss << unit.Value(); \
@@ -23,7 +23,7 @@ namespace PPE {
                 << MakeStringView(" " STRINGIZE(SYMBOL)); \
     } \
     FWTextWriter& operator <<(FWTextWriter& oss, \
-        const PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_Tag, RATIO, SMALLER> >& unit) { \
+        const PPE::Units::TUnit< PPE::Units::TUnitTraits<PPE::Units::TAG::_UnitTag, RATIO, SMALLER> >& unit) { \
             if (oss.Format().Width() > 2) \
                 oss.Format().SetWidth(oss.Format().Width() - 3); \
             oss << unit.Value(); \

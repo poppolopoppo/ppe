@@ -84,6 +84,12 @@ struct TType final { using type = T; };
 template <typename T>
 inline CONSTEXPR const TType<T> Type{};
 //----------------------------------------------------------------------------
+template <auto V>
+struct TValue final { static constexpr auto value = V; };
+//----------------------------------------------------------------------------
+template <auto V>
+inline CONSTEXPR const TValue<V> Value{};
+//----------------------------------------------------------------------------
 // Tricking the compiler to make implicit conversion with template argument deduction
 // https://stackoverflow.com/questions/45765205/template-function-argument-deduction-with-an-implicit-conversion
 //----------------------------------------------------------------------------
@@ -377,7 +383,7 @@ template <typename T>
 void Construct(T* p, T&& rvalue) {
     Assume(p);
     PoisonConstruct(p);
-    INPLACE_NEW(p, T)(std::forward<T>(rvalue));
+    INPLACE_NEW(p, T)(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename T>

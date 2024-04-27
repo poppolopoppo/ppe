@@ -564,7 +564,8 @@ bool FVulkanSwapchain::Acquire(
 //----------------------------------------------------------------------------
 bool FVulkanSwapchain::Present(const FVulkanDevice& device) const {
     const auto exclusiveData = _data.LockExclusive();
-    PPE_LOG_CHECK(RHI, exclusiveData->IsImageAcquired_());
+    if (not exclusiveData->IsImageAcquired_())
+        return true;
 
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

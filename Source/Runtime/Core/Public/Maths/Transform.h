@@ -12,18 +12,18 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_CORE_API FTransform {
 public:
-    FORCE_INLINE FTransform()
+    FTransform() NOEXCEPT
+        : _rotation(FQuaternion::Identity)
+        , _translation(0.f)
+        , _scale(1.f)
+    {}
+
+    explicit FTransform(Meta::FNoInit) NOEXCEPT
 #if USE_PPE_ASSERT
         : _rotation(NAN, NAN, NAN, NAN)
         , _translation(NAN)
         , _scale(NAN)
 #endif
-    {}
-
-    explicit FTransform(Meta::FForceInit)
-        : _rotation(0.f, 0.f, 0.f, 1.f)
-        , _translation(0.f)
-        , _scale(1.f)
     {}
 
     explicit FTransform(const float3& translation)

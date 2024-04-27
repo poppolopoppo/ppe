@@ -2,11 +2,16 @@
 
 #include "Modular/ModularDomain.h"
 
+#include "Diagnostic/FeedbackContext.h"
+
 #include "Modular/ModuleEnums.h"
 #include "Modular/ModuleInterface.h"
 #include "Modular/ModuleRegistration.h"
 
 #include "Diagnostic/Logger.h"
+#include "HAL/PlatformDialog.h"
+
+#include "Meta/Utility.h"
 
 namespace PPE {
 LOG_CATEGORY(, Modular)
@@ -159,13 +164,19 @@ bool FModularDomain::HasPhaseStarted(EModulePhase phase) const NOEXCEPT {
 void FModularDomain::StartPhase(EModulePhase phase) {
     PPE_LOG(Modular, Emphasis, "start application domain <{0}> phase {1}", _name, phase);
 
+    FFeedbackProgressBar pbar(INLINE_FORMAT(100, "Start {} module phase", phase).MakeView(), static_cast<i32>(_modules.size()));
+
     _OnPrePhaseStart(*this, phase);
 
     _phaseStatus = StatusStartPhase_(_phaseStatus, phase);
 
     foreachitem(it, _modules) { // normal order for start, reversed for shutdown
-        if (it->second->Phase() == phase)
+        if (it->second->Phase() == phase) {
+            pbar.Print(it->first);
             StartModule_(*it->second);
+        }
+
+        pbar.Inc();
     }
 
     _OnPostPhaseStart(*this, phase);
@@ -174,13 +185,19 @@ void FModularDomain::StartPhase(EModulePhase phase) {
 void FModularDomain::ShutdownPhase(EModulePhase phase) {
     PPE_LOG(Modular, Emphasis, "shutdown application domain <{0}> phase {1}", _name, phase);
 
+    FFeedbackProgressBar pbar(INLINE_FORMAT(100, "Shutdown {} module phase", phase).MakeView(), static_cast<i32>(_modules.size()));
+
     _OnPrePhaseShutdown(*this, phase);
 
     _phaseStatus = StatusShutdownPhase_(_phaseStatus, phase);
 
     reverseforeachitem(it, _modules) { // reversed for shutdown, normal order for start
-        if (it->second->Phase() == phase)
+        if (it->second->Phase() == phase) {
+            pbar.Print(it->first);
             ShutdownModule_(*it->second);
+        }
+
+        pbar.Inc();
     }
 
     _OnPostPhaseShutdown(*this, phase);
@@ -195,8 +212,18 @@ void FModularDomain::Start(FModularDomain& domain) {
     Assert(nullptr == GAppDomainRef_);
     GAppDomainRef_ = &domain;
 
-    foreachitem(phase, GApplicationPhases_)
+    FPlatformDialog::PushSplashScreen_ReturnIfOpened();
+
+    FFeedbackProgressBar pbar("Start modular domains"_view, checked_cast<i32>(lengthof(GApplicationPhases_)));
+
+    domain._OnPreStart(domain);
+    DEFERRED{ domain._OnPostStart(domain); };
+
+    foreachitem(phase, GApplicationPhases_) {
         domain.StartPhase(*phase);
+
+        pbar.Inc();
+    }
 
     foreachitem(it, domain._modules)
         it->second->PostStart(domain);
@@ -204,16 +231,31 @@ void FModularDomain::Start(FModularDomain& domain) {
     PPE_LOG_FLUSH();
 }
 //----------------------------------------------------------------------------
+void FModularDomain::Run(FModularDomain& domain) {
+    domain._services.Run(domain);
+
+    FPlatformDialog::PopSplashScreen_ReturnIfOpened();
+}
+//----------------------------------------------------------------------------
 void FModularDomain::Shutdown(FModularDomain& domain) {
     Assert(&domain == GAppDomainRef_);
+
+    FFeedbackProgressBar pbar("Shutdown modular domains"_view, checked_cast<i32>(lengthof(GApplicationPhases_)));
+
+    domain._OnPreShutdown(domain);
+    DEFERRED {
+        domain._OnPostShutdown(domain);
+        GAppDomainRef_ = nullptr;
+    };
 
     reverseforeachitem(it, domain._modules)
         it->second->PreShutdown(domain);
 
-    reverseforeachitem(phase, GApplicationPhases_)
+    reverseforeachitem(phase, GApplicationPhases_) {
         domain.ShutdownPhase(*phase);
 
-    GAppDomainRef_ = nullptr;
+        pbar.Inc();
+    }
 
     PPE_LOG_FLUSH();
 }
@@ -258,7 +300,7 @@ IModuleInterface* FModularDomain::LoadModule_(const FModuleInfo& info) {
     };
     PPE_CLOG(not pmod, Modular, Fatal, "failed to initialize module <{0}>", info.Name);
 
-    Assert_NoAssume(pmod->Name() == info.Name);
+    Assert_NoAssume(pmod->Name() == info.Name.MakeView());
     Assert_NoAssume(pmod->Phase() == info.Phase);
 
     IModuleInterface* const result = pmod.get();

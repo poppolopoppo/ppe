@@ -15,6 +15,7 @@
 	],
 	"PrivateDependencies": [
 		"ContentPipeline/BuildGraph",
+		"ContentPipeline/MeshBuilder",
 		"ContentPipeline/PipelineCompiler",
 		"Runtime/Remoting"
 	]

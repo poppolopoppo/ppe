@@ -113,6 +113,7 @@ public:
     bool Insert_ReturnIfExists(_Key&& key);
     void Insert_KeepOldIFN(_Key&& key);
     void Insert_AssertUnique(_Key&& key);
+    void Insert_Overwrite(_Key&& key);
 
     bool Insert_ReturnIfExists(const _Key& key);
     void Insert_KeepOldIFN(const _Key& key);

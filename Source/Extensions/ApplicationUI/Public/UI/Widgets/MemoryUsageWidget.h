@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "UI/Imgui.h"
+#include "UI/ImGui.h"
 
 #include "Container/Vector.h"
 #include "IO/String.h"

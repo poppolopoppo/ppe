@@ -87,10 +87,10 @@ using i64   = std::int64_t;
 //----------------------------------------------------------------------------
 #define WSTRINGIZE(...) WIDESTRING(STRINGIZE(__VA_ARGS__))
 //----------------------------------------------------------------------------
-#define CONCAT_I(_X, _Y) _X ## _Y
-#define CONCAT_OO(_ARGS) CONCAT_I ## _ARGS
-#define CONCAT(_X, _Y) CONCAT_I(_X, _Y) //CONCAT_OO((_X, _Y))
-#define CONCAT3(_X, _Y, _Z) CONCAT(_X, CONCAT(_Y, _Z))
+    #define CONCAT_I(_X, _Y) _X ## _Y
+    #define CONCAT_OO(_ARGS) CONCAT_I ## _ARGS
+    #define CONCAT(_X, _Y) CONCAT_I(_X, _Y) //CONCAT_OO((_X, _Y))
+    #define CONCAT3(_X, _Y, _Z) CONCAT(_X, CONCAT(_Y, _Z))
 //----------------------------------------------------------------------------
 #define ANONYMIZE(_X) CONCAT(_X, __LINE__)
 //----------------------------------------------------------------------------

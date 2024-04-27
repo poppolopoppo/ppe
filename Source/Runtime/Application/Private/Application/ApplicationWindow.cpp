@@ -14,6 +14,7 @@
 
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformApplicationMisc.h"
+#include "HAL/PlatformDialog.h"
 #include "HAL/PlatformSurvey.h"
 #include "Thread/ThreadPool.h"
 
@@ -54,13 +55,11 @@ static void RecommendedDeviceInfo_(
     outDeviceInfo->MaxStagingBufferMemory = rhiModule.MaxStagingBufferMemory();
     outDeviceInfo->StagingBufferSize = rhiModule.StagingBufferSize();
 
-    PPE_LOG(Application, Info, "create RHI service with device info:\n"
-        "\tFeatures                : {0}\n"
-        "\tMaxStagingBufferMemory  : {1}\n"
-        "\tStagingBufferSize       : {2}",
-        outDeviceInfo->Features,
-        Fmt::SizeInBytes(outDeviceInfo->MaxStagingBufferMemory),
-        Fmt::SizeInBytes(outDeviceInfo->StagingBufferSize) );
+    PPE_SLOG(Application, Info, "create RHI service with device info", {
+        {"Features", Opaq::Format(outDeviceInfo->Features)},
+        {"MaxStagingBufferMemory", Opaq::Format(Fmt::SizeInBytes(outDeviceInfo->MaxStagingBufferMemory))},
+        {"StagingBufferSize", Opaq::Format(Fmt::SizeInBytes(outDeviceInfo->StagingBufferSize))},
+    });
 }
 //----------------------------------------------------------------------------
 static void RecommendedSurfaceInfo_(
@@ -73,15 +72,13 @@ static void RecommendedSurfaceInfo_(
     outSurfaceInfo->EnableFullscreen = window.Fullscreen();
     outSurfaceInfo->EnableVSync = (deviceFeatures & ERHIFeature::VSync);
 
-    PPE_LOG(Application, Info, "create RHI framebuffer with surface info:\n"
-        "\tHandle                  : {0}\n"
-        "\tDimensions              : {1}\n"
-        "\tEnableFullscreen        : {2:a}\n"
-        "\tEnableVSync             : {3:a}",
-        Fmt::Pointer(outSurfaceInfo->Hwnd.Value),
-        outSurfaceInfo->Dimensions,
-        outSurfaceInfo->EnableFullscreen,
-        outSurfaceInfo->EnableVSync );
+    PPE_SLOG(Application, Info, "create RHI framebuffer with surface info", {
+        {"Handle", Opaq::Format(Fmt::Pointer(outSurfaceInfo->Hwnd.Value))},
+        {"Width", outSurfaceInfo->Dimensions.x},
+        {"Height", outSurfaceInfo->Dimensions.y},
+        {"EnableFullscreen", outSurfaceInfo->EnableFullscreen},
+        {"EnableVSync", outSurfaceInfo->EnableVSync},
+    });
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -90,8 +87,11 @@ static void RecommendedSurfaceInfo_(
 //----------------------------------------------------------------------------
 FApplicationWindow::FApplicationWindow(FModularDomain& domain, FString&& name, bool needRHI)
 :   FApplicationBase(domain, std::move(name))
-,   _targetRHI(RetrieveTargetRHI_(domain, needRHI)) {}
+,   _targetRHI(RetrieveTargetRHI_(domain, needRHI)) {
 
+    // open splash screen window
+    FPlatformDialog::PushSplashScreen_ReturnIfOpened();
+}
 //----------------------------------------------------------------------------
 FApplicationWindow::~FApplicationWindow() = default;
 //----------------------------------------------------------------------------
@@ -145,6 +145,16 @@ void FApplicationWindow::Start() {
     FApplicationBase::Start();
 }
 //----------------------------------------------------------------------------
+void FApplicationWindow::Run() {
+    FApplicationBase::Run();
+
+    // close splash screen window
+    FPlatformDialog::PopSplashScreen_ReturnIfOpened();
+
+    // bring focus to main window
+    _main->BringToFront();
+}
+//----------------------------------------------------------------------------
 void FApplicationWindow::Shutdown() {
     FApplicationBase::Shutdown();
 
@@ -185,7 +195,7 @@ bool FApplicationWindow::PumpMessages() NOEXCEPT {
     if (FApplicationBase::PumpMessages() &&
         _main->PumpMessages()) {
 
-        _input->Poll();
+        _input->PollInputEvents();
 
         if (_windowWasResized) {
             _windowWasResized = false;
@@ -206,7 +216,7 @@ void FApplicationWindow::Tick(FTimespan dt) {
     const FMovingAverageTimer::FScope timedScope{_tickTime};
     Unused(timedScope);
 
-    _input->Update(dt);
+    _input->PostInputMessages(ApplicationTime());
 
     Update(dt);
 

@@ -274,7 +274,7 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity le
 
 #define PPE_LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) do { \
     _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
-        ::PPE::FLogger::LogFmt( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), _FORMAT, _FORMAT_ARG_LIST ); \
+        ::PPE::FLogger::LogFmt( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), _PPE_LOG_STRING(_FORMAT), _FORMAT_ARG_LIST ); \
     } } while(0)
 
 #define PPE_SLOG(_CATEGORY, _LEVEL, ...) do { \

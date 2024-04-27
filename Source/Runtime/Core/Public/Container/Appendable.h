@@ -2,7 +2,7 @@
 
 #include "Core_fwd.h"
 
-#include "Misc/Function_fwd.h"
+#include "Misc/Function.h"
 
 namespace PPE {
 template <typename T, bool _IsPod>
@@ -28,10 +28,13 @@ public:
 
     TAppendable() = default;
 
+    CONSTEXPR TAppendable(FNoFunction)
+    :   TAppendable(nullptr, [](void*, T&&) NOEXCEPT {})
+    {}
+
     CONSTEXPR TAppendable(void* userData, FPushBackFunc pushBack)
     :   _userData(userData)
     ,   _pushBack(pushBack) {
-        Assert_NoAssume(userData);
         Assert_NoAssume(_pushBack);
     }
 
@@ -44,10 +47,17 @@ public:
     CONSTEXPR void* UserData() const { return _userData; }
 
     CONSTEXPR void push_back(const T& value) const { _pushBack(_userData, T(value)); }
-    CONSTEXPR void push_back(T& rvalue) const { _pushBack(_userData, std::move(rvalue)); }
+    CONSTEXPR void push_back(T&& rvalue) const { _pushBack(_userData, std::move(rvalue)); }
 
     template <typename... _Args, class = Meta::TEnableIf<std::is_constructible_v<T, _Args&&...>> >
     CONSTEXPR void emplace_back(_Args&&... args) const { push_back(T{ std::forward<_Args>(args)... }); }
+
+    template <typename _It>
+    CONSTEXPR void insert(_It first, _It last) {
+        forrange(it, first, last) {
+            emplace_back(*it);
+        }
+    }
 
     friend CONSTEXPR const TAppendable& operator <<(const TAppendable& appendable, const T& value) {
         appendable.push_back(value);
@@ -74,6 +84,13 @@ private:
     void* _userData{ nullptr };
     FPushBackFunc _pushBack{ nullptr };
 };
+//----------------------------------------------------------------------------
+template <typename _Char>
+TAppendable<_Char> MakeAppendable(TBasicString<_Char>& str) {
+    return { &str, [](void* userData, _Char&& rvalue) NOEXCEPT {
+        static_cast<TBasicString<_Char>*>(userData)->push_back(std::move(rvalue));
+    } };
+}
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 TAppendable<T> MakeAppendable(TStack<T, _IsPod>& stack) {

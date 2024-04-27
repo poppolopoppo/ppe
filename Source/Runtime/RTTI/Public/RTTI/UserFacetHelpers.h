@@ -31,7 +31,7 @@ public:
     const _Facet& Facet() const { return _facet; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
-    virtual FTextWriter& Description(FTextWriter& oss) const override;
+    PPE_RTTI_API virtual FTextWriter& Description(FTextWriter& oss) const override;
 #endif
 
 private:

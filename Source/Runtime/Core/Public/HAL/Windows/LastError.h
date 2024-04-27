@@ -38,10 +38,14 @@ private:
 };
 //----------------------------------------------------------------------------
 #if USE_PPE_LOGGER && defined(PLATFORM_WINDOWS)
-#   define PPE_LOG_LASTERROR(_CATEGORY, _CONTEXT) \
-        PPE_LOG(_CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::PPE::FLastError())
-#   define PPE_CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) \
-        PPE_CLOG(_CONDITION, _CATEGORY, Error, _CONTEXT " failed, last error : {0}", ::PPE::FLastError())
+#   define PPE_LOG_LASTERROR(_CATEGORY, _CONTEXT) do { \
+        const ::PPE::FLastError ANONYMIZE(lastErr){}; /* initialize before any other function call */ \
+        Unused(ANONYMIZE(lastErr)); \
+        PPE_LOG(_CATEGORY, Error, _CONTEXT " failed, last error : {0}", ANONYMIZE(lastErr)); \
+    } while (0)
+#   define PPE_CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) do { \
+        if (Unlikely(_CONDITION)) PPE_LOG_LASTERROR(_CATEGORY, _CONTEXT); \
+    } while (0)
 #else
 #   define PPE_LOG_LASTERROR(_CATEGORY, _CONTEXT) NOOP()
 #   define PPE_CLOG_LASTERROR(_CONDITION, _CATEGORY, _CONTEXT) Unused(_CONDITION)

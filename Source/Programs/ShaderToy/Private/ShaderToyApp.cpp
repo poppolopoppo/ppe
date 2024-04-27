@@ -12,7 +12,7 @@
 
 #include "HAL/PlatformDialog.h"
 
-#include "UI/Imgui.h"
+#include "UI/ImGui.h"
 #include "External/imgui/Public/imgui-internal.h"
 
 #include "UI/Widgets/ConsoleWidget.h"
@@ -92,6 +92,10 @@ void FShaderToyApp::Start() {
     _shaderTimeSpeed = 1.0f;
 
     StartInterafaceWidgets_();
+}
+//----------------------------------------------------------------------------
+void FShaderToyApp::Run() {
+    parent_type::Run();
 
     ApplicationLoop();
 }
@@ -168,8 +172,13 @@ void main() {
 
         FInput& in = Inputs[s];
 
-        in.Sampler.Reset(*fg, fg->CreateSampler(desc ARGS_IF_RHIDEBUG(
-            INLINE_FORMAT(GShaderToyApp_DebugNameCapacity, "ShaderToy/{}/Sampler_{}", DebugName, GShaderToyApp_BufferLetters[s]))) );
+#if USE_PPE_RHIDEBUG
+        char buf[GShaderToyApp_DebugNameCapacity];
+        FFixedSizeTextWriter tmp{buf};
+        Format(tmp, "ShaderToy/{}/Sampler_{}", DebugName, GShaderToyApp_BufferLetters[s]);
+#endif
+
+        in.Sampler.Reset(*fg, fg->CreateSampler(desc ARGS_IF_RHIDEBUG(tmp.c_str())));
         PPE_LOG_CHECK(ShaderToy, in.Sampler.Valid());
 
         in.Source = app._dummySource;
@@ -809,38 +818,41 @@ void FShaderToyApp::Render(RHI::IFrameGraph& fg, FTimespan dt) {
             ImGuiWindowFlags_NoScrollWithMouse);
         DEFERRED{ ImGui::EndChild(); };
 
-        viewportSize = RoundToUnsigned(ImGui::GetContentRegionAvail().ToFloat2());
-        PPE_LOG_CHECKVOID(ShaderToy, RecreateRenderTargets_(fg, viewportSize));
+        const float2 viewportSizeF = ImGui::GetContentRegionAvail();
+        if (AllGreater(viewportSizeF, float2::Zero)) {
+            viewportSize = RoundToUnsigned(ImGui::GetContentRegionAvail().ToFloat2());
+            PPE_LOG_CHECKVOID(ShaderToy, RecreateRenderTargets_(fg, viewportSize));
 
-        ImGui::Image(
-            FImTexturePackedID{ _main.RenderTarget->Pack().Packed },
-            float2(viewportSize));
+            ImGui::Image(
+                FImTexturePackedID{ _main.RenderTarget->Pack().Packed },
+                float2(viewportSize));
 
-        mouseCursor = Clamp(ImGui::GetMousePos().ToFloat2(), ImGui::GetItemRectMin().ToFloat2(), ImGui::GetItemRectMax().ToFloat2()) - ImGui::GetItemRectMin();
+            mouseCursor = Clamp(ImGui::GetMousePos().ToFloat2(), ImGui::GetItemRectMin().ToFloat2(), ImGui::GetItemRectMax().ToFloat2()) - ImGui::GetItemRectMin();
 
-        FPushConstantData frameData;
-        frameData.iTime = static_cast<float>(*FSeconds(_shaderTime.Total()));
-        frameData.iTimeDelta = static_cast<float>(*FSeconds(dt));
-        frameData.iFrame = fg.CurrentFrameIndex();
-        frameData.iFrameRate = static_cast<float>(*FSeconds(TickRate()));
-        frameData.iMouse = float4(-1);
+            FPushConstantData frameData;
+            frameData.iTime = static_cast<float>(*FSeconds(_shaderTime.Total()));
+            frameData.iTimeDelta = static_cast<float>(*FSeconds(dt));
+            frameData.iFrame = fg.CurrentFrameIndex();
+            frameData.iFrameRate = static_cast<float>(*FSeconds(TickRate()));
+            frameData.iMouse = float4(-1);
 
-        if (ImGui::IsItemHovered()) {
-            if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
-                frameData.iMouse.xy = mouseCursor;
-            if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-                frameData.iMouse.zw = mouseCursor;
+            if (ImGui::IsItemHovered()) {
+                if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+                    frameData.iMouse.xy = mouseCursor;
+                if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                    frameData.iMouse.zw = mouseCursor;
+            }
+
+            RHI::FCommandBufferBatch cmd = fg.Begin(RHI::FCommandBufferDesc{RHI::EQueueType::Graphics}.SetName("ShaderToy"));
+            PPE_LOG_CHECKVOID(ShaderToy, !!cmd);
+
+            for (const PBuffer& buf : _buffers)
+                Unused(buf->RenderFrame(*this, cmd, frameData));
+
+            Unused(_main.RenderFrame(*this, cmd, frameData));
+
+            PPE_LOG_CHECKVOID(ShaderToy, fg.Execute(cmd));
         }
-
-        RHI::FCommandBufferBatch cmd = fg.Begin(RHI::FCommandBufferDesc{RHI::EQueueType::Graphics}.SetName("ShaderToy"));
-        PPE_LOG_CHECKVOID(ShaderToy, !!cmd);
-
-        for (const PBuffer& buf : _buffers)
-            Unused(buf->RenderFrame(*this, cmd, frameData));
-
-        Unused(_main.RenderFrame(*this, cmd, frameData));
-
-        PPE_LOG_CHECKVOID(ShaderToy, fg.Execute(cmd));
     }
     { // Bottom
         ImGui::BeginChild("ShaderToy##Bottom", ImVec2(0, ImGui::GetFrameHeightWithSpacing()));

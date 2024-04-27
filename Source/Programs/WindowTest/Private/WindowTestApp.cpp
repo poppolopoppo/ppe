@@ -7,10 +7,12 @@
 #include "RHIModule.h"
 #include "Window/WindowService.h"
 
+#include "Diagnostic/FeedbackContext.h"
 #include "Diagnostic/Logger.h"
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "Maths/Threefy.h"
+#include "Meta/Utility.h"
 
 #define RUN_PPE_WINDOWTESTS 1 // %_NOCOMMIT%
 
@@ -150,7 +152,11 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 
             PPE_LOG(WindowTest, Info, "-==================- [LOOP:{0:#4}] -==================-", loop);
 
+            FFeedbackProgressBar pbar("running RHI unit tests"_view, unitTests.size());
+
             for (const auto& test : unitTests) {
+                DEFERRED{ pbar.Inc(); };
+
                 ++testIndex;
                 ++testInvocation;
 
@@ -218,6 +224,10 @@ void FWindowTestApp::Start() {
     auto& appmodule = FApplicationModule::Get(Domain());
     appmodule.OnApplicationTick().FireAndForget(&LaunchWindowTests_);
 #endif
+}
+//----------------------------------------------------------------------------
+void FWindowTestApp::Run() {
+    parent_type::Run();
 
     ApplicationLoop();
 }

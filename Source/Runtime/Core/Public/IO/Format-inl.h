@@ -1,5 +1,7 @@
 #pragma once
 
+#include "StreamProvider.h"
+
 #include "IO/Format.h"
 
 namespace PPE {
@@ -110,9 +112,19 @@ size_t Format(const TMemoryView<_Char>& dst, TBasicStringLiteral<_Char> format, 
 
     TBasicFixedSizeTextWriter<_Char> oss(dst);
     Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
-    oss << Eos;
+    oss.NullTerminated();
 
-    return oss.size();
+    return (oss.size() - 1);
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Arg0, typename... _Args>
+size_t StreamFormat(IStreamWriter& dst, TBasicStringLiteral<_Char> format, _Arg0&& arg0, _Args&&... args) {
+    const std::streamoff startOff = dst.TellO();
+
+    TBasicTextWriter<_Char> oss{ &dst };
+    Format(oss, format, std::forward<_Arg0>(arg0), std::forward<_Args>(args)...);
+
+    return checked_cast<size_t>(dst.TellO() - startOff);
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Arg0, typename... _Args>

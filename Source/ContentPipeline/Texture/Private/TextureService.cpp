@@ -20,6 +20,7 @@
 #include "Diagnostic/Logger.h"
 #include "IO/BufferedStream.h"
 #include "IO/Format.h"
+#include "IO/ObservableStream.h"
 #include "IO/StringBuilder.h"
 #include "Thread/ThreadSafe.h"
 #include "VirtualFileSystem_fwd.h"
@@ -163,7 +164,11 @@ static Meta::TOptional<FTextureSource> ImportTextureSourceFromFile_(const ITextu
     PPE_LOG_CHECKEX(Texture, Meta::TOptional<FTextureSource>{}, input.valid());
 
     FTextureSourceProperties sourceProperties;
-    FTextureImporterResult importerResult = (*imageFormat.*_ImportTexture)(&sourceProperties, *input);
+    FTextureImporterResult importerResult = UsingStreamWithProgress(*input,
+        INLINE_FORMAT(50 + FileSystem::MaxPathLength, "Building texture: \"{}\"", sourceFile),
+        [&imageFormat, &sourceProperties](IStreamReader& rd) {
+            return (*imageFormat.*_ImportTexture)(&sourceProperties, rd);
+        });
     if (not importerResult)
         return Meta::TOptional<FTextureSource>{};
 

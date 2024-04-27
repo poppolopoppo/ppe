@@ -12,6 +12,13 @@ struct NODISCARD FAllocatorBlock {
     void* Data{ nullptr };
     size_t SizeInBytes{ 0 };
 
+    FAllocatorBlock() = default;
+
+    CONSTEXPR FAllocatorBlock(void* data, size_t sizeInBytes) NOEXCEPT
+        : Data(data)
+        , SizeInBytes(sizeInBytes)
+    {}
+
     PPE_FAKEBOOL_OPERATOR_DECL() { return (!!Data); }
 
     CONSTEXPR FAllocatorBlock Reset() NOEXCEPT {

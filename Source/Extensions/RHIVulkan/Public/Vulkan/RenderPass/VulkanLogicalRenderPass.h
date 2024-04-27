@@ -61,7 +61,7 @@ public:
     const FDepthStencilTarget& DepthStencilTarget() const { return _depthStencilTarget; }
     TMemoryView<const VkClearValue> ClearValues() const { return _clearValues.MakeConstView(); }
 
-    const FRectangleU& Area() const { return _area; }
+    const FRectangle2u& Area() const { return _area; }
     bool IsSubmitted() const { return _isSubmitted; }
 
     FRawFramebufferID FramebufferId() const { return _framebufferId; }
@@ -142,7 +142,7 @@ private:
     FMipmapLevel _shadingRateImageLevel;
     FShadingRatePerViewport _shadingRatePalette;
 
-    FRectangleU _area;
+    FRectangle2u _area;
     bool _isSubmitted{ false };
 };
 //----------------------------------------------------------------------------

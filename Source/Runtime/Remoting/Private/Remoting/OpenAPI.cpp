@@ -180,7 +180,7 @@ static void DefineNativeSchema_(
             mapping.emplace_back(variant, TextFormat(api->Content.Allocator(), "#/components/schemas/Any{0}", variant));
         }
 
-        auto& discriminator =Emplace_Back(*schema, "discriminator")
+        auto& discriminator = Emplace_Back(*schema, "discriminator", Default)
             ->value.emplace<FOpenAPI::FBuildSpan>(api->Content.Heap());
 
         discriminator.emplace_back("propertyName", Serialize::FJson::TypeId);
@@ -308,14 +308,14 @@ static void DefineSpecializedSchema_(
         FOpenAPI::FBuildSpan& parentDecl = *Opaq::XPathAs<FOpenAPI::FBuildSpan>(*api->Schemas, parent->Name().MakeLiteral());
 
         TPtrRef<FOpenAPI::FBuildSpan> mappings;
-        auto& discriminator = Emplace_Back(parentDecl, "discriminator")->value;
+        auto& discriminator = Emplace_Back(parentDecl, "discriminator", Default)->value;
         if (Likely(not discriminator.Nil())) {
             mappings = XPathAs<FOpenAPI::FBuildSpan>(discriminator, { "mapping"_json });
         }
         else {
             auto& dico = discriminator.emplace<FOpenAPI::FBuildSpan>(api->Content.Heap());
             dico.emplace_back("propertyName", Serialize::FJson::Class);
-            mappings = Emplace_Back(dico, "mappings")
+            mappings = Emplace_Back(dico, "mappings", Default)
                 ->value.emplace<FOpenAPI::FBuildSpan>(api->Content.Heap());
         }
 
@@ -364,10 +364,10 @@ void FOpenAPI::Header(
     header.emplace_back("info", std::move(info));
     header.emplace_back("servers", std::move(servers));
 
-    Tags = Emplace_Back(header, "tags")->value.emplace<FBuildArray>(Content.Heap());
-    Paths = Emplace_Back(header, "tags")->value.emplace<FBuildSpan>(Content.Heap());
-    Schemas = Emplace_Back(Emplace_Back(header, "components")
-        ->value.emplace<FBuildSpan>(Content.Heap()), "schemas")
+    Tags = Emplace_Back(header, "tags", Default)->value.emplace<FBuildArray>(Content.Heap());
+    Paths = Emplace_Back(header, "tags", Default)->value.emplace<FBuildSpan>(Content.Heap());
+    Schemas = Emplace_Back(Emplace_Back(header, "components", Default)
+        ->value.emplace<FBuildSpan>(Content.Heap()), "schemas", Default)
         ->value.emplace<FBuildSpan>(Content.Heap());
 }
 //----------------------------------------------------------------------------
@@ -384,7 +384,7 @@ FOpenAPI::FSchema FOpenAPI::AllOf(
     if (not description.empty())
         span.emplace_back("description", std::move(description));
 
-    FBuildArray& allOf = Emplace_Back(span, "allOf")
+    FBuildArray& allOf = Emplace_Back(span, "allOf", Default)
         ->value.emplace<FBuildArray>(Content.Heap());
 
     allOf.emplace_back(std::move(composed));
@@ -406,10 +406,10 @@ FOpenAPI::FSchema FOpenAPI::AllOf(
     if (not description.empty())
         span.emplace_back("description", std::move(description));
 
-    FBuildArray& allOf = Emplace_Back(span, "allOf")
+    FBuildArray& allOf = Emplace_Back(span, "allOf", Default)
         ->value.emplace<FBuildArray>(Content.Heap());
 
-    allOf.append(MakeIterable(composed).Map([this](FStringLiteral name) -> FRef {
+    allOf.append(MakeIterable(composed).Map([](FStringLiteral name) -> FRef {
         return name;
     }));
 
@@ -597,8 +597,8 @@ void FOpenAPI::Operation(
 
     FOperation span(Content.Heap());
     span.emplace_back("operationId", std::move(id));
-    Emplace_Back(span, "parameters")->value.emplace<FBuildArray>(Content.Heap());
-    Emplace_Back(span, "responses")->value.emplace<FBuildSpan>(Content.Heap());
+    Emplace_Back(span, "parameters", Default)->value.emplace<FBuildArray>(Content.Heap());
+    Emplace_Back(span, "responses", Default)->value.emplace<FBuildSpan>(Content.Heap());
 
     if (not summary.empty())
         span.emplace_back("summary", std::move(summary));
@@ -615,9 +615,9 @@ void FOpenAPI::Operation(
 
     Assert_NoAssume(not XPathAs<Serialize::FJson::FObject>(span, "responses"_json)->empty());
 
-    Emplace_Back(Emplace_Back(*Paths, std::move(path))
+    Emplace_Back(Emplace_Back(*Paths, std::move(path), Default)
         ->value.emplace<FBuildSpan>(Content.Heap()),
-        std::move(method))
+        std::move(method), Default)
         ->value = std::move(span);
 }
 //----------------------------------------------------------------------------
@@ -626,7 +626,7 @@ void FOpenAPI::Operation_Body(FOperation* operation, FText&& mediaType, FText&& 
     Assert(not mediaType.empty());
     Assert(not schema.empty());
 
-    auto& body = Emplace_Back(*operation, "requestBody")->value.emplace<FBuildSpan>(Content.Heap());
+    auto& body = Emplace_Back(*operation, "requestBody", Default)->value.emplace<FBuildSpan>(Content.Heap());
 
     if (required)
         body.emplace_back("required", true);
@@ -635,12 +635,12 @@ void FOpenAPI::Operation_Body(FOperation* operation, FText&& mediaType, FText&& 
         body.emplace_back("description", std::move(description));
 
     Emplace_Back(
-    Emplace_Back(
-        Emplace_Back(body, "content")
+        Emplace_Back(
+            Emplace_Back(body, "content", Default)
+                ->value.emplace<FBuildSpan>(Content.Heap()),
+            std::move(mediaType), Default)
             ->value.emplace<FBuildSpan>(Content.Heap()),
-        std::move(mediaType))
-        ->value.emplace<FBuildSpan>(Content.Heap()),
-        "schema")->value = std::move(schema);
+            "schema", Default)->value = std::move(schema);
 }
 //----------------------------------------------------------------------------
 void FOpenAPI::Operation_Parameter(FOperation* operation, FText&& in, FText&& name, FText&& description, FSchema&& schema, bool required) {
@@ -669,7 +669,7 @@ void FOpenAPI::Operation_Response(FOperation* operation, FText&& code, FText&& d
     Assert(not code.empty());
     Assert(not description.empty());
 
-    auto& response = Emplace_Back(*XPathAs<FBuildSpan>(*operation, "responses"_json), std::move(code))
+    auto& response = Emplace_Back(*XPathAs<FBuildSpan>(*operation, "responses"_json), std::move(code), Default)
         ->value.emplace<FBuildSpan>(Content.Heap());
 
     if (not description.empty())
@@ -682,18 +682,18 @@ void FOpenAPI::Operation_Response(FOperation* operation, FText&& code, FText&& m
     Assert(not mediaType.empty());
     Assert(not schema.empty());
 
-    auto& response = Emplace_Back(*XPathAs<FBuildSpan>(*operation, "responses"_json), std::move(code))
+    auto& response = Emplace_Back(*XPathAs<FBuildSpan>(*operation, "responses"_json), std::move(code), Default)
         ->value.emplace<FBuildSpan>(Content.Heap());
 
     if (not description.empty())
         response.emplace_back("description", std::move(description));
 
-    auto& content = Emplace_Back(response, "content")
+    auto& content = Emplace_Back(response, "content", Default)
         ->value.emplace<FBuildSpan>(Content.Heap());
 
-    Emplace_Back(Emplace_Back(content, std::move(mediaType))
+    Emplace_Back(Emplace_Back(content, std::move(mediaType), Default)
         ->value.emplace<FBuildSpan>(Content.Heap()),
-        "schema")->value = std::move(schema);
+        "schema", Default)->value = std::move(schema);
 }
 //----------------------------------------------------------------------------
 // Schema

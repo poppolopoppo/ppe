@@ -82,7 +82,7 @@ struct TDrawCallDesc : TDrawTaskDesc<_Task> {
     _Task& AddResources(FDescriptorSetID&& rid, PCPipelineResources&& rres);
     _Task& AddResources(const FDescriptorSetID& id, const PCPipelineResources& res);
 
-    _Task& AddScissor(const FRectangleU& clip);
+    _Task& AddScissor(const FRectangle2u& clip);
 
     _Task& AddColorBuffer(ERenderTargetID id, const FColorBufferState& cb);
     _Task& AddColorBuffer(ERenderTargetID id, EColorMask colorMask = EColorMask::All );

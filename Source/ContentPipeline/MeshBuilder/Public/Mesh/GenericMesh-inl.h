@@ -15,9 +15,11 @@ Meta::TOptional<TGenericVertexSubPart<T>> FGenericVertexData::MakeSubPart() cons
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TGenericVertexSubPart<T>::TGenericVertexSubPart(FGenericVertexData* data)
-:   _data(data) {
-    Assert(!_data || Format == _data->Format());
+TGenericVertexSubPart<T>::TGenericVertexSubPart(FGenericVertexData* pDataIFP) NOEXCEPT {
+    if (pDataIFP) {
+        Assert_NoAssume(Format == pDataIFP->Format());
+        _data = pDataIFP;
+    }
 }
 //----------------------------------------------------------------------------
 template <typename T>

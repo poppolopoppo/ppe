@@ -27,6 +27,12 @@ struct FBufferDesc {
     FBufferDesc& SetUsage(EBufferUsage usage) { Usage = usage; return (*this); }
     FBufferDesc& SetQueues(EQueueUsage queues) { Queues = queues; return (*this); }
 
+    NODISCARD bool operator ==(const FBufferDesc& other) const NOEXCEPT {
+        return (SizeInBytes == other.SizeInBytes && Usage == other.Usage && Queues == other.Queues);
+    }
+    NODISCARD bool operator !=(const FBufferDesc& other) const NOEXCEPT {
+        return (not operator ==(other));
+    }
 };
 PPE_ASSUME_TYPE_AS_POD(FBufferDesc)
 //----------------------------------------------------------------------------
@@ -50,14 +56,14 @@ struct FBufferViewDesc {
         SizeInBytes	= Min(SizeInBytes, desc.SizeInBytes - Offset);
     }
 
-    bool operator ==(const FBufferViewDesc& other) const {
+    NODISCARD bool operator ==(const FBufferViewDesc& other) const NOEXCEPT {
         return (Format == other.Format && Offset == other.Offset && SizeInBytes == other.SizeInBytes);
     }
-    bool operator !=(const FBufferViewDesc& other) const {
+    NODISCARD bool operator !=(const FBufferViewDesc& other) const NOEXCEPT {
         return (not operator ==(other));
     }
 
-    friend hash_t hash_value(const FBufferViewDesc& it) {
+    NODISCARD friend hash_t hash_value(const FBufferViewDesc& it) NOEXCEPT {
         return hash_tuple(it.Format, it.Offset, it.SizeInBytes);
     }
 };

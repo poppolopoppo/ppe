@@ -4,9 +4,10 @@
 
 #include "HAL/Windows/WindowsPlatformMouse.h"
 
-#include "Input/MouseState.h"
 #include "HAL/Windows/WindowsWindow.h"
 #include "HAL/PlatformIncludes.h"
+
+#include "Input/Device/MouseState.h"
 
 #include "Container/FlatMap.h"
 #include "Diagnostic/Logger.h"

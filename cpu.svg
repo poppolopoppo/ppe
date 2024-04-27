@@ -1,0 +1,973 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" width="1200" height="758" onload="init(evt)" viewBox="0 0 1200 758" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!-- Flame graph stack visualization. See https://github.com/brendangregg/FlameGraph for latest version, and http://www.brendangregg.com/flamegraphs.html for examples. -->
+<!-- NOTES:  -->
+<defs>
+	<linearGradient id="background" y1="0" y2="1" x1="0" x2="0" >
+		<stop stop-color="#eeeeee" offset="5%" />
+		<stop stop-color="#eeeeb0" offset="95%" />
+	</linearGradient>
+</defs>
+<style type="text/css">
+	text { font-family:Verdana; font-size:12px; fill:rgb(0,0,0); }
+	#search, #ignorecase { opacity:0.1; cursor:pointer; }
+	#search:hover, #search.show, #ignorecase:hover, #ignorecase.show { opacity:1; }
+	#subtitle { text-anchor:middle; font-color:rgb(160,160,160); }
+	#title { text-anchor:middle; font-size:17px}
+	#unzoom { cursor:pointer; }
+	#frames > *:hover { stroke:black; stroke-width:0.5; cursor:pointer; }
+	.hide { display:none; }
+	.parent { opacity:0.5; }
+</style>
+<script type="text/ecmascript">
+<![CDATA[
+	"use strict";
+	var details, searchbtn, unzoombtn, matchedtxt, svg, searching, currentSearchTerm, ignorecase, ignorecaseBtn;
+	function init(evt) {
+		details = document.getElementById("details").firstChild;
+		searchbtn = document.getElementById("search");
+		ignorecaseBtn = document.getElementById("ignorecase");
+		unzoombtn = document.getElementById("unzoom");
+		matchedtxt = document.getElementById("matched");
+		svg = document.getElementsByTagName("svg")[0];
+		searching = 0;
+		currentSearchTerm = null;
+
+		// use GET parameters to restore a flamegraphs state.
+		var params = get_params();
+		if (params.x && params.y)
+			zoom(find_group(document.querySelector('[x="' + params.x + '"][y="' + params.y + '"]')));
+                if (params.s) search(params.s);
+	}
+
+	// event listeners
+	window.addEventListener("click", function(e) {
+		var target = find_group(e.target);
+		if (target) {
+			if (target.nodeName == "a") {
+				if (e.ctrlKey === false) return;
+				e.preventDefault();
+			}
+			if (target.classList.contains("parent")) unzoom(true);
+			zoom(target);
+			if (!document.querySelector('.parent')) {
+				// we have basically done a clearzoom so clear the url
+				var params = get_params();
+				if (params.x) delete params.x;
+				if (params.y) delete params.y;
+				history.replaceState(null, null, parse_params(params));
+				unzoombtn.classList.add("hide");
+				return;
+			}
+
+			// set parameters for zoom state
+			var el = target.querySelector("rect");
+			if (el && el.attributes && el.attributes.y && el.attributes._orig_x) {
+				var params = get_params()
+				params.x = el.attributes._orig_x.value;
+				params.y = el.attributes.y.value;
+				history.replaceState(null, null, parse_params(params));
+			}
+		}
+		else if (e.target.id == "unzoom") clearzoom();
+		else if (e.target.id == "search") search_prompt();
+		else if (e.target.id == "ignorecase") toggle_ignorecase();
+	}, false)
+
+	// mouse-over for info
+	// show
+	window.addEventListener("mouseover", function(e) {
+		var target = find_group(e.target);
+		if (target) details.nodeValue = "Function: " + g_to_text(target);
+	}, false)
+
+	// clear
+	window.addEventListener("mouseout", function(e) {
+		var target = find_group(e.target);
+		if (target) details.nodeValue = ' ';
+	}, false)
+
+	// ctrl-F for search
+	// ctrl-I to toggle case-sensitive search
+	window.addEventListener("keydown",function (e) {
+		if (e.keyCode === 114 || (e.ctrlKey && e.keyCode === 70)) {
+			e.preventDefault();
+			search_prompt();
+		}
+		else if (e.ctrlKey && e.keyCode === 73) {
+			e.preventDefault();
+			toggle_ignorecase();
+		}
+	}, false)
+
+	// functions
+	function get_params() {
+		var params = {};
+		var paramsarr = window.location.search.substr(1).split('&');
+		for (var i = 0; i < paramsarr.length; ++i) {
+			var tmp = paramsarr[i].split("=");
+			if (!tmp[0] || !tmp[1]) continue;
+			params[tmp[0]]  = decodeURIComponent(tmp[1]);
+		}
+		return params;
+	}
+	function parse_params(params) {
+		var uri = "?";
+		for (var key in params) {
+			uri += key + '=' + encodeURIComponent(params[key]) + '&';
+		}
+		if (uri.slice(-1) == "&")
+			uri = uri.substring(0, uri.length - 1);
+		if (uri == '?')
+			uri = window.location.href.split('?')[0];
+		return uri;
+	}
+	function find_child(node, selector) {
+		var children = node.querySelectorAll(selector);
+		if (children.length) return children[0];
+	}
+	function find_group(node) {
+		var parent = node.parentElement;
+		if (!parent) return;
+		if (parent.id == "frames") return node;
+		return find_group(parent);
+	}
+	function orig_save(e, attr, val) {
+		if (e.attributes["_orig_" + attr] != undefined) return;
+		if (e.attributes[attr] == undefined) return;
+		if (val == undefined) val = e.attributes[attr].value;
+		e.setAttribute("_orig_" + attr, val);
+	}
+	function orig_load(e, attr) {
+		if (e.attributes["_orig_"+attr] == undefined) return;
+		e.attributes[attr].value = e.attributes["_orig_" + attr].value;
+		e.removeAttribute("_orig_"+attr);
+	}
+	function g_to_text(e) {
+		var text = find_child(e, "title").firstChild.nodeValue;
+		return (text)
+	}
+	function g_to_func(e) {
+		var func = g_to_text(e);
+		// if there's any manipulation we want to do to the function
+		// name before it's searched, do it here before returning.
+		return (func);
+	}
+	function update_text(e) {
+		var r = find_child(e, "rect");
+		var t = find_child(e, "text");
+		var w = parseFloat(r.attributes.width.value) -3;
+		var txt = find_child(e, "title").textContent.replace(/\([^(]*\)$/,"");
+		t.attributes.x.value = parseFloat(r.attributes.x.value) + 3;
+
+		// Smaller than this size won't fit anything
+		if (w < 2 * 12 * 0.59) {
+			t.textContent = "";
+			return;
+		}
+
+		t.textContent = txt;
+		var sl = t.getSubStringLength(0, txt.length);
+		// check if only whitespace or if we can fit the entire string into width w
+		if (/^ *$/.test(txt) || sl < w)
+			return;
+
+		// this isn't perfect, but gives a good starting point
+		// and avoids calling getSubStringLength too often
+		var start = Math.floor((w/sl) * txt.length);
+		for (var x = start; x > 0; x = x-2) {
+			if (t.getSubStringLength(0, x + 2) <= w) {
+				t.textContent = txt.substring(0, x) + "..";
+				return;
+			}
+		}
+		t.textContent = "";
+	}
+
+	// zoom
+	function zoom_reset(e) {
+		if (e.attributes != undefined) {
+			orig_load(e, "x");
+			orig_load(e, "width");
+		}
+		if (e.childNodes == undefined) return;
+		for (var i = 0, c = e.childNodes; i < c.length; i++) {
+			zoom_reset(c[i]);
+		}
+	}
+	function zoom_child(e, x, ratio) {
+		if (e.attributes != undefined) {
+			if (e.attributes.x != undefined) {
+				orig_save(e, "x");
+				e.attributes.x.value = (parseFloat(e.attributes.x.value) - x - 10) * ratio + 10;
+				if (e.tagName == "text")
+					e.attributes.x.value = find_child(e.parentNode, "rect[x]").attributes.x.value + 3;
+			}
+			if (e.attributes.width != undefined) {
+				orig_save(e, "width");
+				e.attributes.width.value = parseFloat(e.attributes.width.value) * ratio;
+			}
+		}
+
+		if (e.childNodes == undefined) return;
+		for (var i = 0, c = e.childNodes; i < c.length; i++) {
+			zoom_child(c[i], x - 10, ratio);
+		}
+	}
+	function zoom_parent(e) {
+		if (e.attributes) {
+			if (e.attributes.x != undefined) {
+				orig_save(e, "x");
+				e.attributes.x.value = 10;
+			}
+			if (e.attributes.width != undefined) {
+				orig_save(e, "width");
+				e.attributes.width.value = parseInt(svg.width.baseVal.value) - (10 * 2);
+			}
+		}
+		if (e.childNodes == undefined) return;
+		for (var i = 0, c = e.childNodes; i < c.length; i++) {
+			zoom_parent(c[i]);
+		}
+	}
+	function zoom(node) {
+		var attr = find_child(node, "rect").attributes;
+		var width = parseFloat(attr.width.value);
+		var xmin = parseFloat(attr.x.value);
+		var xmax = parseFloat(xmin + width);
+		var ymin = parseFloat(attr.y.value);
+		var ratio = (svg.width.baseVal.value - 2 * 10) / width;
+
+		// XXX: Workaround for JavaScript float issues (fix me)
+		var fudge = 0.0001;
+
+		unzoombtn.classList.remove("hide");
+
+		var el = document.getElementById("frames").children;
+		for (var i = 0; i < el.length; i++) {
+			var e = el[i];
+			var a = find_child(e, "rect").attributes;
+			var ex = parseFloat(a.x.value);
+			var ew = parseFloat(a.width.value);
+			var upstack;
+			// Is it an ancestor
+			if (0 == 0) {
+				upstack = parseFloat(a.y.value) > ymin;
+			} else {
+				upstack = parseFloat(a.y.value) < ymin;
+			}
+			if (upstack) {
+				// Direct ancestor
+				if (ex <= xmin && (ex+ew+fudge) >= xmax) {
+					e.classList.add("parent");
+					zoom_parent(e);
+					update_text(e);
+				}
+				// not in current path
+				else
+					e.classList.add("hide");
+			}
+			// Children maybe
+			else {
+				// no common path
+				if (ex < xmin || ex + fudge >= xmax) {
+					e.classList.add("hide");
+				}
+				else {
+					zoom_child(e, xmin, ratio);
+					update_text(e);
+				}
+			}
+		}
+		search();
+	}
+	function unzoom(dont_update_text) {
+		unzoombtn.classList.add("hide");
+		var el = document.getElementById("frames").children;
+		for(var i = 0; i < el.length; i++) {
+			el[i].classList.remove("parent");
+			el[i].classList.remove("hide");
+			zoom_reset(el[i]);
+			if(!dont_update_text) update_text(el[i]);
+		}
+		search();
+	}
+	function clearzoom() {
+		unzoom();
+
+		// remove zoom state
+		var params = get_params();
+		if (params.x) delete params.x;
+		if (params.y) delete params.y;
+		history.replaceState(null, null, parse_params(params));
+	}
+
+	// search
+	function toggle_ignorecase() {
+		ignorecase = !ignorecase;
+		if (ignorecase) {
+			ignorecaseBtn.classList.add("show");
+		} else {
+			ignorecaseBtn.classList.remove("show");
+		}
+		reset_search();
+		search();
+	}
+	function reset_search() {
+		var el = document.querySelectorAll("#frames rect");
+		for (var i = 0; i < el.length; i++) {
+			orig_load(el[i], "fill")
+		}
+		var params = get_params();
+		delete params.s;
+		history.replaceState(null, null, parse_params(params));
+	}
+	function search_prompt() {
+		if (!searching) {
+			var term = prompt("Enter a search term (regexp " +
+			    "allowed, eg: ^ext4_)"
+			    + (ignorecase ? ", ignoring case" : "")
+			    + "\nPress Ctrl-i to toggle case sensitivity", "");
+			if (term != null) search(term);
+		} else {
+			reset_search();
+			searching = 0;
+			currentSearchTerm = null;
+			searchbtn.classList.remove("show");
+			searchbtn.firstChild.nodeValue = "Search"
+			matchedtxt.classList.add("hide");
+			matchedtxt.firstChild.nodeValue = ""
+		}
+	}
+	function search(term) {
+		if (term) currentSearchTerm = term;
+
+		var re = new RegExp(currentSearchTerm, ignorecase ? 'i' : '');
+		var el = document.getElementById("frames").children;
+		var matches = new Object();
+		var maxwidth = 0;
+		for (var i = 0; i < el.length; i++) {
+			var e = el[i];
+			var func = g_to_func(e);
+			var rect = find_child(e, "rect");
+			if (func == null || rect == null)
+				continue;
+
+			// Save max width. Only works as we have a root frame
+			var w = parseFloat(rect.attributes.width.value);
+			if (w > maxwidth)
+				maxwidth = w;
+
+			if (func.match(re)) {
+				// highlight
+				var x = parseFloat(rect.attributes.x.value);
+				orig_save(rect, "fill");
+				rect.attributes.fill.value = "rgb(230,0,230)";
+
+				// remember matches
+				if (matches[x] == undefined) {
+					matches[x] = w;
+				} else {
+					if (w > matches[x]) {
+						// overwrite with parent
+						matches[x] = w;
+					}
+				}
+				searching = 1;
+			}
+		}
+		if (!searching)
+			return;
+		var params = get_params();
+		params.s = currentSearchTerm;
+		history.replaceState(null, null, parse_params(params));
+
+		searchbtn.classList.add("show");
+		searchbtn.firstChild.nodeValue = "Reset Search";
+
+		// calculate percent matched, excluding vertical overlap
+		var count = 0;
+		var lastx = -1;
+		var lastw = 0;
+		var keys = Array();
+		for (k in matches) {
+			if (matches.hasOwnProperty(k))
+				keys.push(k);
+		}
+		// sort the matched frames by their x location
+		// ascending, then width descending
+		keys.sort(function(a, b){
+			return a - b;
+		});
+		// Step through frames saving only the biggest bottom-up frames
+		// thanks to the sort order. This relies on the tree property
+		// where children are always smaller than their parents.
+		var fudge = 0.0001;	// JavaScript floating point
+		for (var k in keys) {
+			var x = parseFloat(keys[k]);
+			var w = matches[keys[k]];
+			if (x >= lastx + lastw - fudge) {
+				count += w;
+				lastx = x;
+				lastw = w;
+			}
+		}
+		// display matched percent
+		matchedtxt.classList.remove("hide");
+		var pct = 100 * count / maxwidth;
+		if (pct != 100) pct = pct.toFixed(1)
+		matchedtxt.firstChild.nodeValue = "Matched: " + pct + "%";
+	}
+]]>
+</script>
+<rect x="0.0" y="0" width="1200.0" height="758.0" fill="url(#background)"  />
+<text id="title" x="600.00" y="24" >Flame Graph</text>
+<text id="details" x="10.00" y="741" > </text>
+<text id="unzoom" x="10.00" y="24" class="hide">Reset Zoom</text>
+<text id="search" x="1090.00" y="24" >Search</text>
+<text id="ignorecase" x="1174.00" y="24" >ic</text>
+<text id="matched" x="1090.00" y="741" > </text>
+<g id="frames">
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*bytesRecyclerPool).Allocate (1 samples, 6.67%)</title><rect x="10.0" y="437" width="78.7" height="15.0" fill="rgb(249,177,11)" rx="2" ry="2" />
+<text  x="13.00" y="447.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.NewArchiveBinaryWriter (1 samples, 6.67%)</title><rect x="10.0" y="469" width="78.7" height="15.0" fill="rgb(212,120,21)" rx="2" ry="2" />
+<text  x="13.00" y="479.5" >github.co..</text>
+</g>
+<g >
+<title>runtime.sysUsedOS (2 samples, 13.33%)</title><rect x="1032.7" y="645" width="157.3" height="15.0" fill="rgb(223,50,24)" rx="2" ry="2" />
+<text  x="1035.67" y="655.5" >runtime.sysUsedOS</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="718.0" y="101" width="78.7" height="15.0" fill="rgb(208,161,50)" rx="2" ry="2" />
+<text  x="721.00" y="111.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/compile.(*Facet).Serialize (1 samples, 6.67%)</title><rect x="482.0" y="213" width="78.7" height="15.0" fill="rgb(205,92,42)" rx="2" ry="2" />
+<text  x="485.00" y="223.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).String (1 samples, 6.67%)</title><rect x="796.7" y="197" width="78.6" height="15.0" fill="rgb(221,16,27)" rx="2" ry="2" />
+<text  x="799.67" y="207.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/hal/windows.InitWindowsHAL (1 samples, 6.67%)</title><rect x="875.3" y="613" width="78.7" height="15.0" fill="rgb(221,70,28)" rx="2" ry="2" />
+<text  x="878.33" y="623.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/action.(*CommandRules).Serialize (4 samples, 26.67%)</title><rect x="88.7" y="213" width="314.6" height="15.0" fill="rgb(220,12,43)" rx="2" ry="2" />
+<text  x="91.67" y="223.5" >github.com/poppolopoppo/ppb/action.(*Comma..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeMany[go.shape.string] (4 samples, 26.67%)</title><rect x="88.7" y="165" width="314.6" height="15.0" fill="rgb(230,217,8)" rx="2" ry="2" />
+<text  x="91.67" y="175.5" >github.com/poppolopoppo/ppb/internal/base...</text>
+</g>
+<g >
+<title>github.com/pierrec/lz4/v4.(*Reader).Read (3 samples, 20.00%)</title><rect x="167.3" y="117" width="236.0" height="15.0" fill="rgb(235,21,18)" rx="2" ry="2" />
+<text  x="170.33" y="127.5" >github.com/pierrec/lz4/v4.(*Rea..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/io.(*EnvironmentDefinition).Serialize (1 samples, 6.67%)</title><rect x="560.7" y="133" width="78.6" height="15.0" fill="rgb(220,165,27)" rx="2" ry="2" />
+<text  x="563.67" y="143.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="639.3" y="149" width="78.7" height="15.0" fill="rgb(242,157,35)" rx="2" ry="2" />
+<text  x="642.33" y="159.5" >github.co..</text>
+</g>
+<g >
+<title>runtime.memmove (1 samples, 6.67%)</title><rect x="796.7" y="149" width="78.6" height="15.0" fill="rgb(237,114,47)" rx="2" ry="2" />
+<text  x="799.67" y="159.5" >runtime.m..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Int32 (1 samples, 6.67%)</title><rect x="718.0" y="69" width="78.7" height="15.0" fill="rgb(247,26,6)" rx="2" ry="2" />
+<text  x="721.00" y="79.5" >github.co..</text>
+</g>
+<g >
+<title>os.stat (1 samples, 6.67%)</title><rect x="875.3" y="501" width="78.7" height="15.0" fill="rgb(216,191,19)" rx="2" ry="2" />
+<text  x="878.33" y="511.5" >os.stat</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Int32 (1 samples, 6.67%)</title><rect x="403.3" y="133" width="78.7" height="15.0" fill="rgb(205,87,50)" rx="2" ry="2" />
+<text  x="406.33" y="143.5" >github.co..</text>
+</g>
+<g >
+<title>runtime.(*mheap).grow (1 samples, 6.67%)</title><rect x="954.0" y="645" width="78.7" height="15.0" fill="rgb(238,42,21)" rx="2" ry="2" />
+<text  x="957.00" y="655.5" >runtime.(..</text>
+</g>
+<g >
+<title>sync.(*Pool).pin (1 samples, 6.67%)</title><rect x="10.0" y="405" width="78.7" height="15.0" fill="rgb(221,74,2)" rx="2" ry="2" />
+<text  x="13.00" y="415.5" >sync.(*Po..</text>
+</g>
+<g >
+<title>runtime.systemstack (3 samples, 20.00%)</title><rect x="954.0" y="693" width="236.0" height="15.0" fill="rgb(229,154,34)" rx="2" ry="2" />
+<text  x="957.00" y="703.5" >runtime.systemstack</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/compile.(*Unit).Serialize (3 samples, 20.00%)</title><rect x="482.0" y="245" width="236.0" height="15.0" fill="rgb(227,120,13)" rx="2" ry="2" />
+<text  x="485.00" y="255.5" >github.com/poppolopoppo/ppb/com..</text>
+</g>
+<g >
+<title>runtime.cgocall (1 samples, 6.67%)</title><rect x="875.3" y="437" width="78.7" height="15.0" fill="rgb(246,19,32)" rx="2" ry="2" />
+<text  x="878.33" y="447.5" >runtime.c..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (10 samples, 66.67%)</title><rect x="88.7" y="309" width="786.6" height="15.0" fill="rgb(238,63,36)" rx="2" ry="2" />
+<text  x="91.67" y="319.5" >github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (4 samples, 26.67%)</title><rect x="88.7" y="197" width="314.6" height="15.0" fill="rgb(228,115,52)" rx="2" ry="2" />
+<text  x="91.67" y="207.5" >github.com/poppolopoppo/ppb/internal/base...</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/cmd.newExportNodesCommand[go.shape.struct (10 samples, 66.67%)</title><rect x="88.7" y="533" width="786.6" height="15.0" fill="rgb(219,158,21)" rx="2" ry="2" />
+<text  x="91.67" y="543.5" >github.com/poppolopoppo/ppb/internal/cmd.newExportNodesCommand[go.shape.struct</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/hal/generic.(*VkFunctionArg).Serialize (1 samples, 6.67%)</title><rect x="718.0" y="85" width="78.7" height="15.0" fill="rgb(226,70,50)" rx="2" ry="2" />
+<text  x="721.00" y="95.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeMany[go.shape.struct (1 samples, 6.67%)</title><rect x="639.3" y="213" width="78.7" height="15.0" fill="rgb(233,63,3)" rx="2" ry="2" />
+<text  x="642.33" y="223.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeSlice[go.shape.struct (1 samples, 6.67%)</title><rect x="718.0" y="149" width="78.7" height="15.0" fill="rgb(209,24,48)" rx="2" ry="2" />
+<text  x="721.00" y="159.5" >github.co..</text>
+</g>
+<g >
+<title>os.statNolog (1 samples, 6.67%)</title><rect x="875.3" y="517" width="78.7" height="15.0" fill="rgb(236,49,45)" rx="2" ry="2" />
+<text  x="878.33" y="527.5" >os.statNo..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="482.0" y="197" width="78.7" height="15.0" fill="rgb(209,181,47)" rx="2" ry="2" />
+<text  x="485.00" y="207.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*buildNode).Serialize (10 samples, 66.67%)</title><rect x="88.7" y="293" width="786.6" height="15.0" fill="rgb(252,119,35)" rx="2" ry="2" />
+<text  x="91.67" y="303.5" >github.com/poppolopoppo/ppb/utils.(*buildNode).Serialize</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeSlice[go.shape.struct (1 samples, 6.67%)</title><rect x="718.0" y="117" width="78.7" height="15.0" fill="rgb(230,43,53)" rx="2" ry="2" />
+<text  x="721.00" y="127.5" >github.co..</text>
+</g>
+<g >
+<title>runtime.sysReserve (1 samples, 6.67%)</title><rect x="954.0" y="629" width="78.7" height="15.0" fill="rgb(214,68,18)" rx="2" ry="2" />
+<text  x="957.00" y="639.5" >runtime.s..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/hal/generic.(*VkFunctionPointer).Serialize (1 samples, 6.67%)</title><rect x="718.0" y="165" width="78.7" height="15.0" fill="rgb(253,189,20)" rx="2" ry="2" />
+<text  x="721.00" y="175.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*UFSFrontEnd).OpenBuffered.(*UFSFrontEnd).Open.func2 (1 samples, 6.67%)</title><rect x="10.0" y="549" width="78.7" height="15.0" fill="rgb(250,104,20)" rx="2" ry="2" />
+<text  x="13.00" y="559.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="560.7" y="149" width="78.6" height="15.0" fill="rgb(236,64,25)" rx="2" ry="2" />
+<text  x="563.67" y="159.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*CommandEnvT).loadConfig (1 samples, 6.67%)</title><rect x="10.0" y="597" width="78.7" height="15.0" fill="rgb(223,71,1)" rx="2" ry="2" />
+<text  x="13.00" y="607.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/hal.InitHAL (1 samples, 6.67%)</title><rect x="875.3" y="629" width="78.7" height="15.0" fill="rgb(222,228,2)" rx="2" ry="2" />
+<text  x="878.33" y="639.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeSlice[go.shape.struct (1 samples, 6.67%)</title><rect x="718.0" y="229" width="78.7" height="15.0" fill="rgb(228,187,22)" rx="2" ry="2" />
+<text  x="721.00" y="239.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/compile.(*TargetPayload).Serialize (1 samples, 6.67%)</title><rect x="403.3" y="245" width="78.7" height="15.0" fill="rgb(222,79,49)" rx="2" ry="2" />
+<text  x="406.33" y="255.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="560.7" y="117" width="78.6" height="15.0" fill="rgb(249,50,24)" rx="2" ry="2" />
+<text  x="563.67" y="127.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb.LaunchCommand (12 samples, 80.00%)</title><rect x="10.0" y="661" width="944.0" height="15.0" fill="rgb(221,35,42)" rx="2" ry="2" />
+<text  x="13.00" y="671.5" >github.com/poppolopoppo/ppb.LaunchCommand</text>
+</g>
+<g >
+<title>runtime.mallocgc (1 samples, 6.67%)</title><rect x="10.0" y="357" width="78.7" height="15.0" fill="rgb(206,192,52)" rx="2" ry="2" />
+<text  x="13.00" y="367.5" >runtime.m..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*CommandEvents).Run (10 samples, 66.67%)</title><rect x="88.7" y="597" width="786.6" height="15.0" fill="rgb(231,179,32)" rx="2" ry="2" />
+<text  x="91.67" y="607.5" >github.com/poppolopoppo/ppb/utils.(*CommandEvents).Run</text>
+</g>
+<g >
+<title>runtime.sysUsed (2 samples, 13.33%)</title><rect x="1032.7" y="661" width="157.3" height="15.0" fill="rgb(209,131,0)" rx="2" ry="2" />
+<text  x="1035.67" y="671.5" >runtime.sysUsed</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeMany[go.shape.struct (1 samples, 6.67%)</title><rect x="718.0" y="133" width="78.7" height="15.0" fill="rgb(206,202,42)" rx="2" ry="2" />
+<text  x="721.00" y="143.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*buildGraph).Load (10 samples, 66.67%)</title><rect x="88.7" y="453" width="786.6" height="15.0" fill="rgb(244,132,28)" rx="2" ry="2" />
+<text  x="91.67" y="463.5" >github.com/poppolopoppo/ppb/utils.(*buildGraph).Load</text>
+</g>
+<g >
+<title>os/exec.LookPath (1 samples, 6.67%)</title><rect x="875.3" y="581" width="78.7" height="15.0" fill="rgb(242,223,43)" rx="2" ry="2" />
+<text  x="878.33" y="591.5" >os/exec.L..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.Recover (10 samples, 66.67%)</title><rect x="88.7" y="405" width="786.6" height="15.0" fill="rgb(225,189,43)" rx="2" ry="2" />
+<text  x="91.67" y="415.5" >github.com/poppolopoppo/ppb/internal/base.Recover</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeMany[go.shape.struct (1 samples, 6.67%)</title><rect x="718.0" y="213" width="78.7" height="15.0" fill="rgb(211,5,17)" rx="2" ry="2" />
+<text  x="721.00" y="223.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/app.WithCommandEnv (12 samples, 80.00%)</title><rect x="10.0" y="645" width="944.0" height="15.0" fill="rgb(218,222,43)" rx="2" ry="2" />
+<text  x="13.00" y="655.5" >github.com/poppolopoppo/ppb/app.WithCommandEnv</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/io.(*DirectoryCreator).Serialize (1 samples, 6.67%)</title><rect x="796.7" y="245" width="78.6" height="15.0" fill="rgb(250,202,19)" rx="2" ry="2" />
+<text  x="799.67" y="255.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.getPersistentDataFingerprint (1 samples, 6.67%)</title><rect x="10.0" y="501" width="78.7" height="15.0" fill="rgb(224,40,16)" rx="2" ry="2" />
+<text  x="13.00" y="511.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeSlice[go.shape.struct (1 samples, 6.67%)</title><rect x="560.7" y="197" width="78.6" height="15.0" fill="rgb(228,61,14)" rx="2" ry="2" />
+<text  x="563.67" y="207.5" >github.co..</text>
+</g>
+<g >
+<title>runtime.stdcall4 (1 samples, 6.67%)</title><rect x="954.0" y="597" width="78.7" height="15.0" fill="rgb(248,47,6)" rx="2" ry="2" />
+<text  x="957.00" y="607.5" >runtime.s..</text>
+</g>
+<g >
+<title>github.com/pierrec/lz4/v4.(*Reader).Read (1 samples, 6.67%)</title><rect x="718.0" y="37" width="78.7" height="15.0" fill="rgb(220,172,12)" rx="2" ry="2" />
+<text  x="721.00" y="47.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="403.3" y="197" width="78.7" height="15.0" fill="rgb(238,209,44)" rx="2" ry="2" />
+<text  x="406.33" y="207.5" >github.co..</text>
+</g>
+<g >
+<title>runtime.makeslice (1 samples, 6.67%)</title><rect x="10.0" y="373" width="78.7" height="15.0" fill="rgb(250,151,40)" rx="2" ry="2" />
+<text  x="13.00" y="383.5" >runtime.m..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="403.3" y="165" width="78.7" height="15.0" fill="rgb(206,180,27)" rx="2" ry="2" />
+<text  x="406.33" y="175.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*UFSFrontEnd).Open (1 samples, 6.67%)</title><rect x="10.0" y="581" width="78.7" height="15.0" fill="rgb(207,80,10)" rx="2" ry="2" />
+<text  x="13.00" y="591.5" >github.co..</text>
+</g>
+<g >
+<title>os/exec.lookPath (1 samples, 6.67%)</title><rect x="875.3" y="565" width="78.7" height="15.0" fill="rgb(237,216,8)" rx="2" ry="2" />
+<text  x="878.33" y="575.5" >os/exec.l..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="403.3" y="229" width="78.7" height="15.0" fill="rgb(246,186,25)" rx="2" ry="2" />
+<text  x="406.33" y="239.5" >github.co..</text>
+</g>
+<g >
+<title>all (15 samples, 100%)</title><rect x="10.0" y="709" width="1180.0" height="15.0" fill="rgb(225,73,42)" rx="2" ry="2" />
+<text  x="13.00" y="719.5" ></text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeMany[go.shape.*uint8] (10 samples, 66.67%)</title><rect x="88.7" y="341" width="786.6" height="15.0" fill="rgb(235,229,20)" rx="2" ry="2" />
+<text  x="91.67" y="351.5" >github.com/poppolopoppo/ppb/internal/base.SerializeMany[go.shape.*uint8]</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeSlice[go.shape.struct (1 samples, 6.67%)</title><rect x="560.7" y="165" width="78.6" height="15.0" fill="rgb(254,28,16)" rx="2" ry="2" />
+<text  x="563.67" y="175.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/hal/generic.(*VulkanHeaders).Serialize (1 samples, 6.67%)</title><rect x="718.0" y="245" width="78.7" height="15.0" fill="rgb(242,59,33)" rx="2" ry="2" />
+<text  x="721.00" y="255.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/compile.(*TargetAlias).Serialize (1 samples, 6.67%)</title><rect x="639.3" y="165" width="78.7" height="15.0" fill="rgb(230,6,49)" rx="2" ry="2" />
+<text  x="642.33" y="175.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/compile.(*TargetAlias).Serialize (1 samples, 6.67%)</title><rect x="403.3" y="213" width="78.7" height="15.0" fill="rgb(250,87,33)" rx="2" ry="2" />
+<text  x="406.33" y="223.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeSlice[go.shape.struct (1 samples, 6.67%)</title><rect x="639.3" y="229" width="78.7" height="15.0" fill="rgb(238,60,28)" rx="2" ry="2" />
+<text  x="642.33" y="239.5" >github.co..</text>
+</g>
+<g >
+<title>sync.(*Pool).Get (1 samples, 6.67%)</title><rect x="10.0" y="421" width="78.7" height="15.0" fill="rgb(227,84,54)" rx="2" ry="2" />
+<text  x="13.00" y="431.5" >sync.(*Po..</text>
+</g>
+<g >
+<title>syscall.SyscallN (1 samples, 6.67%)</title><rect x="875.3" y="453" width="78.7" height="15.0" fill="rgb(213,16,16)" rx="2" ry="2" />
+<text  x="878.33" y="463.5" >syscall.S..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.AnyDelegate.Invoke (10 samples, 66.67%)</title><rect x="88.7" y="581" width="786.6" height="15.0" fill="rgb(222,22,48)" rx="2" ry="2" />
+<text  x="91.67" y="591.5" >github.com/poppolopoppo/ppb/internal/base.AnyDelegate.Invoke</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*buildGraph).Serialize.func1 (10 samples, 66.67%)</title><rect x="88.7" y="325" width="786.6" height="15.0" fill="rgb(219,54,23)" rx="2" ry="2" />
+<text  x="91.67" y="335.5" >github.com/poppolopoppo/ppb/utils.(*buildGraph).Serialize.func1</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/io.(*ProcessEnvironment).Serialize (1 samples, 6.67%)</title><rect x="560.7" y="213" width="78.6" height="15.0" fill="rgb(208,36,6)" rx="2" ry="2" />
+<text  x="563.67" y="223.5" >github.co..</text>
+</g>
+<g >
+<title>runtime.main (12 samples, 80.00%)</title><rect x="10.0" y="693" width="944.0" height="15.0" fill="rgb(254,177,11)" rx="2" ry="2" />
+<text  x="13.00" y="703.5" >runtime.main</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeExternal[go.shape.interface (10 samples, 66.67%)</title><rect x="88.7" y="277" width="786.6" height="15.0" fill="rgb(248,15,10)" rx="2" ry="2" />
+<text  x="91.67" y="287.5" >github.com/poppolopoppo/ppb/internal/base.SerializeExternal[go.shape.interface</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeSlice[go.shape.struct (1 samples, 6.67%)</title><rect x="639.3" y="197" width="78.7" height="15.0" fill="rgb(235,87,39)" rx="2" ry="2" />
+<text  x="642.33" y="207.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*CommandEnvT).BuildGraph (10 samples, 66.67%)</title><rect x="88.7" y="501" width="786.6" height="15.0" fill="rgb(224,115,4)" rx="2" ry="2" />
+<text  x="91.67" y="511.5" >github.com/poppolopoppo/ppb/utils.(*CommandEnvT).BuildGraph</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/cmd.newJsonExportCommand[go.shape.struct (10 samples, 66.67%)</title><rect x="88.7" y="517" width="786.6" height="15.0" fill="rgb(205,219,3)" rx="2" ry="2" />
+<text  x="91.67" y="527.5" >github.com/poppolopoppo/ppb/internal/cmd.newJsonExportCommand[go.shape.struct</text>
+</g>
+<g >
+<title>runtime.memclrNoHeapPointers (1 samples, 6.67%)</title><rect x="10.0" y="341" width="78.7" height="15.0" fill="rgb(206,22,38)" rx="2" ry="2" />
+<text  x="13.00" y="351.5" >runtime.m..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="718.0" y="181" width="78.7" height="15.0" fill="rgb(212,134,26)" rx="2" ry="2" />
+<text  x="721.00" y="191.5" >github.co..</text>
+</g>
+<g >
+<title>runtime.(*mheap).allocSpan (1 samples, 6.67%)</title><rect x="954.0" y="661" width="78.7" height="15.0" fill="rgb(238,103,45)" rx="2" ry="2" />
+<text  x="957.00" y="671.5" >runtime.(..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.EventDelegate[go.shape.interface (10 samples, 66.67%)</title><rect x="88.7" y="549" width="786.6" height="15.0" fill="rgb(212,209,10)" rx="2" ry="2" />
+<text  x="91.67" y="559.5" >github.com/poppolopoppo/ppb/internal/base.EventDelegate[go.shape.interface</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Raw (1 samples, 6.67%)</title><rect x="718.0" y="53" width="78.7" height="15.0" fill="rgb(241,59,35)" rx="2" ry="2" />
+<text  x="721.00" y="63.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*persistentData).Deserialize (1 samples, 6.67%)</title><rect x="10.0" y="517" width="78.7" height="15.0" fill="rgb(245,116,22)" rx="2" ry="2" />
+<text  x="13.00" y="527.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*StringSet).Serialize (1 samples, 6.67%)</title><rect x="482.0" y="181" width="78.7" height="15.0" fill="rgb(234,137,1)" rx="2" ry="2" />
+<text  x="485.00" y="191.5" >github.co..</text>
+</g>
+<g >
+<title>os/exec.chkStat (1 samples, 6.67%)</title><rect x="875.3" y="533" width="78.7" height="15.0" fill="rgb(217,57,52)" rx="2" ry="2" />
+<text  x="878.33" y="543.5" >os/exec.c..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Int32 (4 samples, 26.67%)</title><rect x="88.7" y="149" width="314.6" height="15.0" fill="rgb(229,3,21)" rx="2" ry="2" />
+<text  x="91.67" y="159.5" >github.com/poppolopoppo/ppb/internal/base...</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb.LaunchCommand.func2 (11 samples, 73.33%)</title><rect x="10.0" y="629" width="865.3" height="15.0" fill="rgb(249,24,12)" rx="2" ry="2" />
+<text  x="13.00" y="639.5" >github.com/poppolopoppo/ppb.LaunchCommand.func2</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/compile.(*NamespaceAlias).Serialize (1 samples, 6.67%)</title><rect x="403.3" y="149" width="78.7" height="15.0" fill="rgb(240,21,42)" rx="2" ry="2" />
+<text  x="406.33" y="159.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).String (1 samples, 6.67%)</title><rect x="639.3" y="85" width="78.7" height="15.0" fill="rgb(254,82,10)" rx="2" ry="2" />
+<text  x="642.33" y="95.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*StringSet).Serialize (4 samples, 26.67%)</title><rect x="88.7" y="181" width="314.6" height="15.0" fill="rgb(252,85,34)" rx="2" ry="2" />
+<text  x="91.67" y="191.5" >github.com/poppolopoppo/ppb/internal/base...</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.ArchiveBinaryRead (10 samples, 66.67%)</title><rect x="88.7" y="421" width="786.6" height="15.0" fill="rgb(252,14,49)" rx="2" ry="2" />
+<text  x="91.67" y="431.5" >github.com/poppolopoppo/ppb/internal/base.ArchiveBinaryRead</text>
+</g>
+<g >
+<title>runtime.(*mheap).alloc.func1 (3 samples, 20.00%)</title><rect x="954.0" y="677" width="236.0" height="15.0" fill="rgb(253,157,7)" rx="2" ry="2" />
+<text  x="957.00" y="687.5" >runtime.(*mheap).alloc.func1</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*buildGraph).Serialize (10 samples, 66.67%)</title><rect x="88.7" y="357" width="786.6" height="15.0" fill="rgb(240,138,37)" rx="2" ry="2" />
+<text  x="91.67" y="367.5" >github.com/poppolopoppo/ppb/utils.(*buildGraph).Serialize</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="796.7" y="229" width="78.6" height="15.0" fill="rgb(245,76,34)" rx="2" ry="2" />
+<text  x="799.67" y="239.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeMany[go.shape.string] (1 samples, 6.67%)</title><rect x="560.7" y="85" width="78.6" height="15.0" fill="rgb(241,225,28)" rx="2" ry="2" />
+<text  x="563.67" y="95.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*processSafeBuildGraph).LoadBuildGraph (10 samples, 66.67%)</title><rect x="88.7" y="469" width="786.6" height="15.0" fill="rgb(226,117,21)" rx="2" ry="2" />
+<text  x="91.67" y="479.5" >github.com/poppolopoppo/ppb/utils.(*processSafeBuildGraph).LoadBuildGraph</text>
+</g>
+<g >
+<title>syscall.GetFileAttributesEx (1 samples, 6.67%)</title><rect x="875.3" y="485" width="78.7" height="15.0" fill="rgb(208,45,10)" rx="2" ry="2" />
+<text  x="878.33" y="495.5" >syscall.G..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeAnyFingerprint (1 samples, 6.67%)</title><rect x="10.0" y="485" width="78.7" height="15.0" fill="rgb(216,4,16)" rx="2" ry="2" />
+<text  x="13.00" y="495.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/hal/windows.SetupWindowsAttachDebugger (1 samples, 6.67%)</title><rect x="875.3" y="597" width="78.7" height="15.0" fill="rgb(229,174,9)" rx="2" ry="2" />
+<text  x="878.33" y="607.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeMany[go.shape.string] (1 samples, 6.67%)</title><rect x="482.0" y="165" width="78.7" height="15.0" fill="rgb(211,34,39)" rx="2" ry="2" />
+<text  x="485.00" y="175.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="639.3" y="181" width="78.7" height="15.0" fill="rgb(226,26,39)" rx="2" ry="2" />
+<text  x="642.33" y="191.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (10 samples, 66.67%)</title><rect x="88.7" y="261" width="786.6" height="15.0" fill="rgb(230,9,52)" rx="2" ry="2" />
+<text  x="91.67" y="271.5" >github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*StringSet).Serialize (1 samples, 6.67%)</title><rect x="560.7" y="101" width="78.6" height="15.0" fill="rgb(241,136,14)" rx="2" ry="2" />
+<text  x="563.67" y="111.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.ArchiveFileRead.ArchiveBinaryRead.func2 (10 samples, 66.67%)</title><rect x="88.7" y="389" width="786.6" height="15.0" fill="rgb(206,58,0)" rx="2" ry="2" />
+<text  x="91.67" y="399.5" >github.com/poppolopoppo/ppb/internal/base.ArchiveFileRead.ArchiveBinaryRead.func2</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*UFSFrontEnd).OpenFile (1 samples, 6.67%)</title><rect x="10.0" y="565" width="78.7" height="15.0" fill="rgb(243,14,0)" rx="2" ry="2" />
+<text  x="13.00" y="575.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (4 samples, 26.67%)</title><rect x="88.7" y="229" width="314.6" height="15.0" fill="rgb(224,12,6)" rx="2" ry="2" />
+<text  x="91.67" y="239.5" >github.com/poppolopoppo/ppb/internal/base...</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*CommandEvents).Add.func2 (10 samples, 66.67%)</title><rect x="88.7" y="565" width="786.6" height="15.0" fill="rgb(243,172,40)" rx="2" ry="2" />
+<text  x="91.67" y="575.5" >github.com/poppolopoppo/ppb/utils.(*CommandEvents).Add.func2</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/action.(*ActionRules).Serialize (4 samples, 26.67%)</title><rect x="88.7" y="245" width="314.6" height="15.0" fill="rgb(217,87,31)" rx="2" ry="2" />
+<text  x="91.67" y="255.5" >github.com/poppolopoppo/ppb/action.(*Actio..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.ArchiveFileRead.func1 (10 samples, 66.67%)</title><rect x="88.7" y="373" width="786.6" height="15.0" fill="rgb(246,193,22)" rx="2" ry="2" />
+<text  x="91.67" y="383.5" >github.com/poppolopoppo/ppb/internal/base.ArchiveFileRead.func1</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*GlobalBuildGraph).Get (10 samples, 66.67%)</title><rect x="88.7" y="485" width="786.6" height="15.0" fill="rgb(209,98,51)" rx="2" ry="2" />
+<text  x="91.67" y="495.5" >github.com/poppolopoppo/ppb/utils.(*GlobalBuildGraph).Get</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/compile.(*EnvironmentAlias).Serialize (1 samples, 6.67%)</title><rect x="639.3" y="133" width="78.7" height="15.0" fill="rgb(253,211,22)" rx="2" ry="2" />
+<text  x="642.33" y="143.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Raw (1 samples, 6.67%)</title><rect x="482.0" y="133" width="78.7" height="15.0" fill="rgb(228,155,6)" rx="2" ry="2" />
+<text  x="485.00" y="143.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (2 samples, 13.33%)</title><rect x="482.0" y="229" width="157.3" height="15.0" fill="rgb(228,198,33)" rx="2" ry="2" />
+<text  x="485.00" y="239.5" >github.com/poppolopo..</text>
+</g>
+<g >
+<title>sync.(*Pool).pinSlow (1 samples, 6.67%)</title><rect x="10.0" y="389" width="78.7" height="15.0" fill="rgb(249,185,32)" rx="2" ry="2" />
+<text  x="13.00" y="399.5" >sync.(*Po..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*CommandEnvT).Run (11 samples, 73.33%)</title><rect x="10.0" y="613" width="865.3" height="15.0" fill="rgb(213,37,36)" rx="2" ry="2" />
+<text  x="13.00" y="623.5" >github.com/poppolopoppo/ppb/utils.(*CommandEnvT).Run</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Raw (1 samples, 6.67%)</title><rect x="796.7" y="181" width="78.6" height="15.0" fill="rgb(212,15,26)" rx="2" ry="2" />
+<text  x="799.67" y="191.5" >github.co..</text>
+</g>
+<g >
+<title>runtime.sysReserveOS (1 samples, 6.67%)</title><rect x="954.0" y="613" width="78.7" height="15.0" fill="rgb(245,180,16)" rx="2" ry="2" />
+<text  x="957.00" y="623.5" >runtime.s..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Raw (4 samples, 26.67%)</title><rect x="88.7" y="133" width="314.6" height="15.0" fill="rgb(225,136,52)" rx="2" ry="2" />
+<text  x="91.67" y="143.5" >github.com/poppolopoppo/ppb/internal/base...</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*UFSFrontEnd).OpenBuffered.func1 (1 samples, 6.67%)</title><rect x="10.0" y="533" width="78.7" height="15.0" fill="rgb(217,165,25)" rx="2" ry="2" />
+<text  x="13.00" y="543.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Int32 (1 samples, 6.67%)</title><rect x="482.0" y="149" width="78.7" height="15.0" fill="rgb(251,165,6)" rx="2" ry="2" />
+<text  x="485.00" y="159.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/compile.(*ModuleAlias).Serialize (1 samples, 6.67%)</title><rect x="403.3" y="181" width="78.7" height="15.0" fill="rgb(210,226,33)" rx="2" ry="2" />
+<text  x="406.33" y="191.5" >github.co..</text>
+</g>
+<g >
+<title>runtime.stdcall4 (2 samples, 13.33%)</title><rect x="1032.7" y="629" width="157.3" height="15.0" fill="rgb(250,217,1)" rx="2" ry="2" />
+<text  x="1035.67" y="639.5" >runtime.stdcall4</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/utils.(*Directory).Serialize (1 samples, 6.67%)</title><rect x="796.7" y="213" width="78.6" height="15.0" fill="rgb(251,135,6)" rx="2" ry="2" />
+<text  x="799.67" y="223.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/pierrec/lz4/v4.(*Reader).Read (1 samples, 6.67%)</title><rect x="796.7" y="165" width="78.6" height="15.0" fill="rgb(222,16,13)" rx="2" ry="2" />
+<text  x="799.67" y="175.5" >github.co..</text>
+</g>
+<g >
+<title>os/exec.findExecutable (1 samples, 6.67%)</title><rect x="875.3" y="549" width="78.7" height="15.0" fill="rgb(234,209,22)" rx="2" ry="2" />
+<text  x="878.33" y="559.5" >os/exec.f..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.(*ArchiveBinaryReader).Serializable (1 samples, 6.67%)</title><rect x="639.3" y="117" width="78.7" height="15.0" fill="rgb(237,116,46)" rx="2" ry="2" />
+<text  x="642.33" y="127.5" >github.co..</text>
+</g>
+<g >
+<title>syscall.Syscall (1 samples, 6.67%)</title><rect x="875.3" y="469" width="78.7" height="15.0" fill="rgb(241,22,37)" rx="2" ry="2" />
+<text  x="878.33" y="479.5" >syscall.S..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/compile.(*PlatformAlias).Serialize (1 samples, 6.67%)</title><rect x="639.3" y="101" width="78.7" height="15.0" fill="rgb(215,145,28)" rx="2" ry="2" />
+<text  x="642.33" y="111.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeMany[go.shape.struct (1 samples, 6.67%)</title><rect x="560.7" y="181" width="78.6" height="15.0" fill="rgb(236,59,21)" rx="2" ry="2" />
+<text  x="563.67" y="191.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.SerializeSlice[go.shape.struct (1 samples, 6.67%)</title><rect x="718.0" y="197" width="78.7" height="15.0" fill="rgb(212,148,31)" rx="2" ry="2" />
+<text  x="721.00" y="207.5" >github.co..</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.newBasicArchive (1 samples, 6.67%)</title><rect x="10.0" y="453" width="78.7" height="15.0" fill="rgb(223,201,22)" rx="2" ry="2" />
+<text  x="13.00" y="463.5" >github.co..</text>
+</g>
+<g >
+<title>main.main (12 samples, 80.00%)</title><rect x="10.0" y="677" width="944.0" height="15.0" fill="rgb(213,221,3)" rx="2" ry="2" />
+<text  x="13.00" y="687.5" >main.main</text>
+</g>
+<g >
+<title>github.com/poppolopoppo/ppb/internal/base.CompressedArchiveFileRead (10 samples, 66.67%)</title><rect x="88.7" y="437" width="786.6" height="15.0" fill="rgb(239,89,43)" rx="2" ry="2" />
+<text  x="91.67" y="447.5" >github.com/poppolopoppo/ppb/internal/base.CompressedArchiveFileRead</text>
+</g>
+<g >
+<title>runtime.makeslice (1 samples, 6.67%)</title><rect x="560.7" y="69" width="78.6" height="15.0" fill="rgb(216,18,32)" rx="2" ry="2" />
+<text  x="563.67" y="79.5" >runtime.m..</text>
+</g>
+</g>
+</svg>

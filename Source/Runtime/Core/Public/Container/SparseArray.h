@@ -67,54 +67,55 @@ public:
     TBasicSparseArray(TBasicSparseArray&& rvalue) NOEXCEPT; // but you can still move it
     TBasicSparseArray& operator =(TBasicSparseArray&& rvalue) NOEXCEPT;
 
-    bool empty() const { return (0 == _size); }
-    size_type size() const { return _size; }
-    size_type capacity() const { return ckOffset_(_numChunks); }
+    NODISCARD bool empty() const { return (0 == _size); }
+    NODISCARD size_type size() const { return _size; }
+    NODISCARD size_type capacity() const { return ckOffset_(_numChunks); }
 
-    iterator begin() NOEXCEPT;
-    iterator end() NOEXCEPT;
+    NODISCARD iterator begin() NOEXCEPT;
+    NODISCARD iterator end() NOEXCEPT;
 
-    const_iterator begin() const NOEXCEPT;
-    const_iterator end() const NOEXCEPT;
+    NODISCARD const_iterator begin() const NOEXCEPT;
+    NODISCARD const_iterator end() const NOEXCEPT;
 
-    const_iterator cbegin() const NOEXCEPT { return begin(); }
-    const_iterator cend() const NOEXCEPT { return end(); }
+    NODISCARD const_iterator cbegin() const NOEXCEPT { return begin(); }
+    NODISCARD const_iterator cend() const NOEXCEPT { return end(); }
 
-    reverse_iterator rbegin() NOEXCEPT { return reverse_iterator(end()); }
-    reverse_iterator rend() NOEXCEPT { return reverse_iterator(begin()); }
+    NODISCARD reverse_iterator rbegin() NOEXCEPT { return reverse_iterator(end()); }
+    NODISCARD reverse_iterator rend() NOEXCEPT { return reverse_iterator(begin()); }
 
-    const_reverse_iterator rbegin() const NOEXCEPT { return const_reverse_iterator(end()); }
-    const_reverse_iterator rend() const NOEXCEPT { return const_reverse_iterator(begin()); }
+    NODISCARD const_reverse_iterator rbegin() const NOEXCEPT { return const_reverse_iterator(end()); }
+    NODISCARD const_reverse_iterator rend() const NOEXCEPT { return const_reverse_iterator(begin()); }
 
-    const_reverse_iterator crbegin() const NOEXCEPT { return const_reverse_iterator(end()); }
-    const_reverse_iterator crend() const NOEXCEPT { return const_reverse_iterator(begin()); }
+    NODISCARD const_reverse_iterator crbegin() const NOEXCEPT { return const_reverse_iterator(end()); }
+    NODISCARD const_reverse_iterator crend() const NOEXCEPT { return const_reverse_iterator(begin()); }
 
-    FDataId IndexOf(const_reference data) const;
+    NODISCARD FDataId DataId(const_reference data) const NOEXCEPT;
+    NODISCARD size_t IndexOf(const_reference data) const NOEXCEPT;
 
-    iterator Iterator(FDataId id);
-    const_iterator Iterator(FDataId id) const {
+    NODISCARD iterator Iterator(FDataId id);
+    NODISCARD const_iterator Iterator(FDataId id) const {
         return const_cast<TBasicSparseArray*>(this)->Iterator(id);
     }
 
-    reference At(size_t index);
-    const_reference At(size_t index) const {
+    NODISCARD reference At(size_t index);
+    NODISCARD const_reference At(size_t index) const {
         return const_cast<TBasicSparseArray*>(this)->At(index);
     }
 
-    pointer Find(FDataId id);
-    const_pointer Find(FDataId id) const {
+    NODISCARD pointer Find(FDataId id);
+    NODISCARD const_pointer Find(FDataId id) const {
         return const_cast<TBasicSparseArray*>(this)->Find(id);
     }
 
     void Swap(TBasicSparseArray& other) NOEXCEPT;
 
-    bool CheckInvariants() const;
+    NODISCARD bool CheckInvariants() const;
 
-    bool AliasesToContainer(const_pointer p) const;
-    bool AliasesToContainer(iterator it) const;
-    bool AliasesToContainer(const_iterator it) const;
+    NODISCARD bool AliasesToContainer(const_pointer p) const;
+    NODISCARD bool AliasesToContainer(iterator it) const;
+    NODISCARD bool AliasesToContainer(const_iterator it) const;
 
-    static size_t Nth(FDataId id) {
+    NODISCARD static size_t Nth(FDataId id) {
         return UnpackId_(id).Index;
     }
 
@@ -232,17 +233,17 @@ public:
         return (*this);
     }
 
-    size_t Index() const { return _index; }
-    const FSparseArray* Owner() const { return _owner; }
+    NODISCARD size_t Index() const { return _index; }
+    NODISCARD const FSparseArray* Owner() const { return _owner; }
 
-    pointer data() const {
+    NODISCARD pointer data() const {
         Assert(_owner);
         return const_cast<pointer>(// <== better than duping the code
             std::addressof(_owner->At_(_index)->Data) );
     }
 
-    pointer operator->() const { return data(); }
-    reference operator*() const { return (*data()); }
+    NODISCARD pointer operator->() const { return data(); }
+    NODISCARD reference operator*() const { return (*data()); }
 
     TSparseArrayIterator& operator++() /* prefix */ { return GotoNextItem_(); }
     TSparseArrayIterator operator++(int) /* postfix */ {
@@ -259,32 +260,32 @@ public:
         lhs.Swap(rhs);
     }
 
-    static TSparseArrayIterator Begin(const FSparseArray& owner) {
+    NODISCARD static TSparseArrayIterator Begin(const FSparseArray& owner) {
         return (not owner.empty() // skip linear search when empty
             ? TSparseArrayIterator(owner, 0).GotoFirstItem_()
             : End(owner) );
     }
-    static TSparseArrayIterator End(const FSparseArray& owner) {
+    NODISCARD static TSparseArrayIterator End(const FSparseArray& owner) {
         return TSparseArrayIterator(owner, owner._highestIndex);
     }
 
     template <typename U>
-    inline friend bool operator ==(const TSparseArrayIterator& lhs, const TSparseArrayIterator<U>& rhs) {
+    NODISCARD inline friend bool operator ==(const TSparseArrayIterator& lhs, const TSparseArrayIterator<U>& rhs) {
         Assert_NoAssume(lhs.Owner() == rhs.Owner());
         return (lhs.Index() == rhs.Index());
     }
     template <typename U>
-    inline friend bool operator !=(const TSparseArrayIterator& lhs, const TSparseArrayIterator<U>& rhs) {
+    NODISCARD inline friend bool operator !=(const TSparseArrayIterator& lhs, const TSparseArrayIterator<U>& rhs) {
         return (not operator ==(lhs, rhs));
     }
 
     template <typename U>
-    inline friend bool operator < (const TSparseArrayIterator& lhs, const TSparseArrayIterator<U>& rhs) {
+    NODISCARD inline friend bool operator < (const TSparseArrayIterator& lhs, const TSparseArrayIterator<U>& rhs) {
         Assert_NoAssume(lhs.Owner() == rhs.Owner());
         return (lhs.Index() < rhs.Index());
     }
     template <typename U>
-    inline friend bool operator >=(const TSparseArrayIterator& lhs, const TSparseArrayIterator<U>& rhs) {
+    NODISCARD inline friend bool operator >=(const TSparseArrayIterator& lhs, const TSparseArrayIterator<U>& rhs) {
         return (not operator < (lhs, rhs));
     }
 
@@ -403,11 +404,11 @@ public:
     using parent_type::CheckInvariants;
     using parent_type::AliasesToContainer;
 
-    const allocator_type& get_allocator() const NOEXCEPT {
+    NODISCARD const allocator_type& get_allocator() const NOEXCEPT {
         return static_cast<const allocator_type&>(*this);
     }
 
-    reference Add();
+    NODISCARD reference Add();
 
     template <typename _It>
     void AddRange(_It first, _It last);
@@ -459,15 +460,15 @@ public:
     void Clear_ReleaseMemory();
     void Reserve(size_t n);
 
-    bool Equals(const TSparseArray& other) const;
+    NODISCARD bool Equals(const TSparseArray& other) const;
 
-    auto Iterable() { return MakeIterable(*this); }
-    auto Iterable() const { return MakeIterable(*this); }
+    NODISCARD auto Iterable() { return MakeIterable(*this); }
+    NODISCARD auto Iterable() const { return MakeIterable(*this); }
 
-    friend bool operator ==(const TSparseArray& lhs, const TSparseArray& rhs) {
+    NODISCARD friend bool operator ==(const TSparseArray& lhs, const TSparseArray& rhs) {
         return (lhs.Equals(rhs));
     }
-    friend bool operator !=(const TSparseArray& lhs, const TSparseArray& rhs) {
+    NODISCARD friend bool operator !=(const TSparseArray& lhs, const TSparseArray& rhs) {
         return (not lhs.Equals(rhs));
     }
 
@@ -522,7 +523,7 @@ private:
 // Use TSparseArray<T> as an in-place allocator :
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-inline void* operator new(size_t sizeInBytes, PPE::TSparseArray<T, _Allocator>& arr) {
+NODISCARD inline void* operator new(size_t sizeInBytes, PPE::TSparseArray<T, _Allocator>& arr) {
     Assert(sizeInBytes == sizeof(T));
     void* const p = &arr.Add();
     Assert(PPE::Meta::IsAlignedPow2(std::alignment_of_v<T>, p));

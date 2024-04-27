@@ -346,12 +346,12 @@ static void TextWrite_(Meta::TType<wchar_t>, FWTextWriter& w, const void* v) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBaseTextWriter::FBaseTextWriter(TPtrRef<IStreamWriter> ostream)
+FBaseTextWriter::FBaseTextWriter(TPtrRef<IStreamWriter> ostream) NOEXCEPT
 :   _ostream(ostream) {
     Assert(_ostream);
 }
 //----------------------------------------------------------------------------
-FBaseTextWriter::~FBaseTextWriter() {
+FBaseTextWriter::~FBaseTextWriter() NOEXCEPT {
     //_ostream->Flush(); // let the client control Flush()
 }
 //----------------------------------------------------------------------------

@@ -23,8 +23,10 @@ public:
     }
 
     void Done() NOEXCEPT {
-        if (not Add(-1))
-            _onDone.notify_one();
+        const std::unique_lock lock(_barrier);
+        Assert_NoAssume(_count > 1);
+        if (--_count == 0)
+            _onDone.notify_one();a
     }
 
     void Wait() NOEXCEPT {

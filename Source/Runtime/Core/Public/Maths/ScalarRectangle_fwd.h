@@ -9,13 +9,13 @@ namespace PPE {
 template <typename T, size_t _Dim>
 class TScalarRectangle;
 //----------------------------------------------------------------------------
-typedef TScalarRectangle<i32, 2> FRectangleI;
+typedef TScalarRectangle<i32, 2> FRectangle2i;
 //----------------------------------------------------------------------------
-typedef TScalarRectangle<u32, 2> FRectangleU;
+typedef TScalarRectangle<u32, 2> FRectangle2u;
 //----------------------------------------------------------------------------
-typedef TScalarRectangle<float, 2> FRectangleF;
+typedef TScalarRectangle<float, 2> FRectangle2f;
 //----------------------------------------------------------------------------
-typedef TScalarRectangle<float, 3> FViewport;
+typedef TScalarRectangle<float, 3> FRectangle3f;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

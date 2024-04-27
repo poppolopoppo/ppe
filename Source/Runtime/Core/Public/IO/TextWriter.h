@@ -151,8 +151,8 @@ STATIC_ASSERT(sizeof(FTextFormat) == sizeof(u32));
 //----------------------------------------------------------------------------
 class PPE_CORE_API FBaseTextWriter {
 public:
-    FBaseTextWriter(TPtrRef<IStreamWriter> ostream);
-    ~FBaseTextWriter();
+    FBaseTextWriter(TPtrRef<IStreamWriter> ostream) NOEXCEPT;
+    ~FBaseTextWriter() NOEXCEPT;
 
     IStreamWriter& Stream() const { return _ostream; }
 
@@ -417,10 +417,19 @@ public:
 
     bool empty() const { return Written().empty(); }
     size_t size() const { return Written().size(); }
+
     const _Char* data() const { return Written().data(); }
+    const _Char* c_str() { return NullTerminated().Data; }
 
     size_t Tell() const { return Written().size(); }
     void Reset() { FMemoryViewWriter::Reset(); }
+
+    TBasicConstChar<_Char> NullTerminated() {
+        TBasicStringView<_Char> written = Written();
+        if (written.empty() or written.back() != STRING_LITERAL(_Char, '\0'))
+            WritePOD(STRING_LITERAL(_Char, '\0'));
+        return written.data();
+    }
 
     TBasicStringView<_Char> Written() const {
         return FMemoryViewWriter::Written().template Cast<const _Char>();

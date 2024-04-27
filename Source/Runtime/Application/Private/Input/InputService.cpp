@@ -2,11 +2,16 @@
 
 #include "Input/InputService.h"
 
-#include "Input/KeyboardInputHandler.h"
-#include "Input/GamepadInputHandler.h"
-#include "Input/MouseInputHandler.h"
+#include "Input/Action/InputListener.h"
+#include "Input/Device/KeyboardDevice.h"
+#include "Input/Device/GamepadDevice.h"
+#include "Input/Device/MouseDevice.h"
 
+#include "HAL/PlatformGamepad.h"
 #include "HAL/PlatformWindow.h"
+
+#include "Container/Array.h"
+#include "Time/Timeline.h"
 #include "Thread/ReadWriteLock.h"
 
 namespace PPE {
@@ -19,7 +24,6 @@ namespace {
 class FDefaultInputService_ : public IInputService {
 public:
     FDefaultInputService_() = default;
-    ~FDefaultInputService_() override = default;
 
     virtual const FKeyboardState& Keyboard() const override final;
     virtual const FMouseState& Mouse() const override final;
@@ -28,18 +32,36 @@ public:
     virtual const FGamepadState* FirstGamepadConnected() const override final;
 
     virtual void SetupWindow(FGenericWindow& window) override final;
-    virtual void Poll() override final;
-    virtual void Update(FTimespan dt) override final;
-    virtual void Clear() override final;
 
     virtual FGenericWindow* FocusedWindow() const override final { return _focusedWindow; }
     virtual void SetWindowFocused(FGenericWindow*) override final;
 
+    virtual Meta::TOptionalReference<const IInputDevice> InputDevice(FInputDeviceID deviceId) const NOEXCEPT override final;
+
+    virtual void PollInputEvents() override final;
+    virtual void PostInputMessages(const FTimeline& time) override final;
+    virtual void FlushInputKeys() override final;
+    virtual void SupportedInputKeys(TAppendable<FInputKey> keys) const NOEXCEPT override final;
+
+    virtual void AddInputListener(const SInputListener& listener) override final;
+    virtual bool RemoveInputListener(const SInputListener& listener) override final;
+
+    virtual void AddInputMapping(const Application::PInputMapping& mapping, i32 priority) override final;
+    virtual bool RemoveInputMapping(const Application::PInputMapping& mapping) override final;
+
 private:
     FReadWriteLock _barrierRW;
-    FKeyboardInputHandler _keyboard;
-    FGamepadInputHandler _gamepad;
-    FMouseInputHandler _mouse;
+
+    FInputListener _mainListener;
+
+    FMouseDevice _mouse;
+    FKeyboardDevice _keyboard;
+    TStaticArray<FGamepadDevice, FPlatformGamepad::MaxNumGamepad> _gamepads =
+        Meta::static_for<FPlatformGamepad::MaxNumGamepad>([](auto ...idx) {
+            return MakeStaticArray<FGamepadDevice>(idx...);
+        });
+
+    VECTORINSITU(Input, SInputListener, 1) _listeners = { &_mainListener };
 
     FPlatformWindow* _focusedWindow{ nullptr };
     FPlatformWindow* _nextFocusedWindow{ nullptr };
@@ -55,14 +77,18 @@ const FMouseState& FDefaultInputService_::Mouse() const {
     return _mouse.State();
 }
 //----------------------------------------------------------------------------
-const FGamepadState& FDefaultInputService_::Gamepad(size_t index) const {
+const FGamepadState& FDefaultInputService_::Gamepad(size_t player) const {
     READSCOPELOCK(_barrierRW);
-    return _gamepad.State(index);
+    return _gamepads[player].State();
 }
 //----------------------------------------------------------------------------
 const FGamepadState* FDefaultInputService_::FirstGamepadConnected() const {
     READSCOPELOCK(_barrierRW);
-    return _gamepad.FirstConnectedIFP();
+    for (const FGamepadDevice& gamepad : _gamepads) {
+        if (gamepad.IsConnected())
+            return (&gamepad.State());
+    }
+    return nullptr;
 }
 //----------------------------------------------------------------------------
 void FDefaultInputService_::SetupWindow(FGenericWindow& window) {
@@ -83,21 +109,54 @@ void FDefaultInputService_::SetWindowFocused(FGenericWindow* window) {
         _nextFocusedWindow = nullptr;
 }
 //----------------------------------------------------------------------------
-void FDefaultInputService_::Poll() {
-    WRITESCOPELOCK(_barrierRW);
+Meta::TOptionalReference<const IInputDevice> FDefaultInputService_::InputDevice(FInputDeviceID deviceId) const NOEXCEPT {
+    READSCOPELOCK(_barrierRW);
 
-    _gamepad.Poll();
+    if (_keyboard.InputDeviceID() == deviceId)
+        return &_keyboard;
+    if (_mouse.InputDeviceID() == deviceId)
+        return &_mouse;
+
+    for (const FGamepadDevice& gamepad : _gamepads) {
+        if (gamepad.InputDeviceID() == deviceId)
+            return &gamepad;
+    }
+
+    return nullptr;
 }
 //----------------------------------------------------------------------------
-void FDefaultInputService_::Update(FTimespan dt) {
+void FDefaultInputService_::PollInputEvents() {
+    WRITESCOPELOCK(_barrierRW);
+
+    for (FGamepadDevice& gamepad : _gamepads)
+        gamepad.PollGamepadEvents();
+}
+//----------------------------------------------------------------------------
+void FDefaultInputService_::PostInputMessages(const FTimeline& time) {
     bool focusChanged = false;
     FGenericWindow* previousFocus = nullptr;
+    VECTORINSITU(Input, FInputMessage, 8) frameMessages;
+
+    const FTimespan dt = time.Elapsed();
+
+    // harvest this frame input messages inside a write scope lock
     {
         WRITESCOPELOCK(_barrierRW);
 
-        _keyboard.Update(dt);
-        _gamepad.Update(dt);
-        _mouse.Update(dt);
+        const TAppendable<FInputMessage> inputKey = MakeAppendable(frameMessages);
+
+        _keyboard.PostInputMessages(dt, inputKey);
+        _mouse.PostInputMessages(dt, inputKey);
+
+        for (FGamepadDevice& gamepad : _gamepads) {
+            gamepad.PostInputMessages(dt, inputKey);
+
+            if (gamepad.State().OnConnect())
+                _OnDeviceConnected(*this, gamepad.InputDeviceID());
+
+            if (gamepad.State().OnDisconnect())
+                _OnDeviceDisconnected(*this, gamepad.InputDeviceID());
+        }
 
         if (_nextFocusedWindow != _focusedWindow) {
             focusChanged = true;
@@ -106,18 +165,73 @@ void FDefaultInputService_::Update(FTimespan dt) {
         }
     }
 
+    // trigger events outside of scope lock, to avoid dead-lock in delegates accessing *this
+
+    for (const FInputMessage& message : frameMessages) {
+        bool unhandled = true;
+        for (const SInputListener& listener : _listeners) {
+            if (listener->InputKey(message)) {
+                unhandled = false;
+                break;
+            }
+        }
+
+        if (unhandled)
+            _OnUnhandledKey(*this, message);
+    }
+
     if (focusChanged)
         _OnWindowFocus.Invoke(*this, previousFocus);
 
-    _OnInputUpdate.Invoke(*this, dt);
+    // finally call update input callback for injected services
+
+    _OnUpdateInput(*this, time.Elapsed());
 }
 //----------------------------------------------------------------------------
-void FDefaultInputService_::Clear() {
+void FDefaultInputService_::FlushInputKeys() {
     WRITESCOPELOCK(_barrierRW);
 
-    _keyboard.Clear();
-    _gamepad.Clear();
-    _mouse.Clear();
+    _keyboard.FlushInputKeys();
+    _mouse.FlushInputKeys();
+
+    for (FGamepadDevice& gamepad : _gamepads)
+        gamepad.FlushInputKeys();
+}
+//----------------------------------------------------------------------------
+void FDefaultInputService_::SupportedInputKeys(TAppendable<FInputKey> keys) const NOEXCEPT {
+    READSCOPELOCK(_barrierRW);
+
+    _keyboard.SupportedInputKeys(keys);
+    _mouse.SupportedInputKeys(keys);
+
+    for (const FGamepadDevice& gamepad : _gamepads)
+        gamepad.SupportedInputKeys(keys);
+}
+//----------------------------------------------------------------------------
+void FDefaultInputService_::AddInputListener(const SInputListener& listener) {
+    Assert(listener);
+    WRITESCOPELOCK(_barrierRW);
+
+    Add_AssertUnique(_listeners, listener);
+}
+//----------------------------------------------------------------------------
+bool FDefaultInputService_::RemoveInputListener(const SInputListener& listener) {
+    Assert(listener);
+    WRITESCOPELOCK(_barrierRW);
+
+    return Remove_ReturnIfExists(_listeners, listener);
+}
+//----------------------------------------------------------------------------
+void FDefaultInputService_::AddInputMapping(const Application::PInputMapping& mapping, i32 priority) {
+    WRITESCOPELOCK(_barrierRW);
+
+    _mainListener.AddMapping(mapping, priority);
+}
+//----------------------------------------------------------------------------
+bool FDefaultInputService_::RemoveInputMapping(const Application::PInputMapping& mapping) {
+    WRITESCOPELOCK(_barrierRW);
+
+    return _mainListener.RemoveMapping(mapping);
 }
 //----------------------------------------------------------------------------
 } //!namespace

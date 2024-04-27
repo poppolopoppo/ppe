@@ -17,7 +17,7 @@ FBitSet::FBitSet(word_t *storage, size_t size, bool allTrue) NOEXCEPT
     ResetAll(allTrue);
 }
 //----------------------------------------------------------------------------
-bool FBitSet::AllTrue() const {
+bool FBitSet::AllTrue() const NOEXCEPT {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
 
@@ -37,7 +37,7 @@ bool FBitSet::AllTrue() const {
     }
 }
 //----------------------------------------------------------------------------
-bool FBitSet::AllFalse() const {
+bool FBitSet::AllFalse() const NOEXCEPT {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
 
@@ -55,7 +55,7 @@ bool FBitSet::AllFalse() const {
     }
 }
 //----------------------------------------------------------------------------
-bool FBitSet::AnyTrue() const {
+bool FBitSet::AnyTrue() const NOEXCEPT {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
 
@@ -73,7 +73,7 @@ bool FBitSet::AnyTrue() const {
     }
 }
 //----------------------------------------------------------------------------
-bool FBitSet::AnyFalse() const {
+bool FBitSet::AnyFalse() const NOEXCEPT {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
 
@@ -92,7 +92,7 @@ bool FBitSet::AnyFalse() const {
     }
 }
 //----------------------------------------------------------------------------
-void FBitSet::ResetAll(bool value) {
+void FBitSet::ResetAll(bool value) NOEXCEPT {
     const size_t wordCount = WordCapacity(_size);
     Assert(wordCount);
 
@@ -108,7 +108,7 @@ void FBitSet::ResetAll(bool value) {
     }
 }
 //----------------------------------------------------------------------------
-void FBitSet::CopyTo(FBitSet* other) const {
+void FBitSet::CopyTo(FBitSet* other) const NOEXCEPT {
     Assert(other);
     Assert(other->_size == _size);
 

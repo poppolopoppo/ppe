@@ -798,7 +798,7 @@ bool FVulkanCommandBatch::FindShaderTimemapForDebug(FRawBufferID* pBuf, size_t* 
 #endif
 //----------------------------------------------------------------------------
 #if USE_PPE_RHIDEBUG
-EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(TMemoryView<const FRectangleU>& regions, const FTaskName& name, const FGraphicsShaderDebugMode& mode, size_t size) {
+EShaderDebugIndex FVulkanCommandBatch::AppendShaderForDebug(TMemoryView<const FRectangle2u>& regions, const FTaskName& name, const FGraphicsShaderDebugMode& mode, size_t size) {
     Assert_NoAssume(EnableShaderDebugging);
     Assert_NoAssume(not name.empty());
 

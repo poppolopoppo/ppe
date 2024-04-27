@@ -38,7 +38,7 @@ inline float3 FPlane::PointOnPlane() const {
 //----------------------------------------------------------------------------
 inline FPlane FPlane::Normalize() const {
     const float norm = Length(_normal);
-    Assert(fabsf(norm) > Epsilon);
+    Assert(Abs(norm) > SmallEpsilon);
     return FPlane(_normal / norm, _d / norm);
 }
 //----------------------------------------------------------------------------

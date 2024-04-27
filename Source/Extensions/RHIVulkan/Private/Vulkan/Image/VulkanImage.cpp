@@ -394,8 +394,7 @@ bool FVulkanImage::IsSupported(const FVulkanDevice& device, const FImageDesc& de
         const VkImageCreateFlagBits required = VkCast(desc.Flags);
         const VkImageCreateFlagBits available = device.Flags().ImageCreateFlags;
 
-        if (not (available & required))
-            return false;
+        PPE_LOG_CHECK(RHI, NOOP("ImageCreateFlags"), !!(available & required));
     }
 
     // check format features
@@ -429,8 +428,7 @@ bool FVulkanImage::IsSupported(const FVulkanDevice& device, const FImageDesc& de
             case EImageUsage::InputAttachment: break;
 
             case EImageUsage::ShadingRate:
-                if (not device.Enabled().ShadingRateImageNV)
-                    return false;
+                PPE_LOG_CHECK(RHI, device.Enabled().ShadingRateImageNV);
                 break;
 
             case EImageUsage::Unknown:
@@ -438,8 +436,7 @@ bool FVulkanImage::IsSupported(const FVulkanDevice& device, const FImageDesc& de
             }
         }
 
-        if ((available & required) != required)
-            return false;
+        PPE_LOG_CHECK(RHI, NOOP("FormatFeatureFlags"), (available & required) == required);
     }
 
     // check image properties
@@ -456,16 +453,13 @@ bool FVulkanImage::IsSupported(const FVulkanDevice& device, const FImageDesc& de
             VkCast(desc.Flags),
             &props ));
 
-        if (desc.Dimensions.x > props.maxExtent.width or
-            desc.Dimensions.y > props.maxExtent.height or
-            desc.Dimensions.z > props.maxExtent.depth )
-            return false;
+        PPE_LOG_CHECK(RHI, desc.Dimensions.x <= props.maxExtent.width);
+        PPE_LOG_CHECK(RHI, desc.Dimensions.y <= props.maxExtent.height);
+        PPE_LOG_CHECK(RHI, desc.Dimensions.z <= props.maxExtent.depth);
 
-        if (*desc.MaxLevel > props.maxArrayLayers)
-            return false;
+        PPE_LOG_CHECK(RHI, *desc.MaxLevel <= props.maxArrayLayers);
 
-        if ((props.sampleCounts & *desc.Samples) != *desc.Samples)
-            return false;
+        PPE_LOG_CHECK(RHI, (props.sampleCounts & *desc.Samples) == *desc.Samples);
     }
 
     return true;
@@ -475,35 +469,24 @@ bool FVulkanImage::IsSupported(const FVulkanDevice& device, const FImageViewDesc
     const auto sharedData = _data.LockShared();
 
     if (desc.View == EImageView_CubeArray) {
-        if (not device.Features().imageCubeArray)
-            return false;
-
-        if (sharedData->Desc.Type != EImageDim_2D or (sharedData->Desc.Type == EImageDim_3D and sharedData->Desc.Flags & EImageFlags::Array2DCompatible))
-            return false;
-
-        if (not (sharedData->Desc.Flags & EImageFlags::CubeCompatible))
-            return false;
-
-        if (desc.LayerCount % 6 != 0)
-            return false;
+        PPE_LOG_CHECK(RHI, device.Features().imageCubeArray);
+        PPE_LOG_CHECK(RHI, sharedData->Desc.Flags & EImageFlags::CubeCompatible);
+        PPE_LOG_CHECK(RHI, desc.LayerCount % 6 == 0);
+        PPE_LOG_CHECK(RHI, sharedData->Desc.Type == EImageDim_2D or (
+            sharedData->Desc.Type == EImageDim_3D and sharedData->Desc.Flags & EImageFlags::Array2DCompatible));
     }
 
     if (desc.View == EImageView_Cube) {
-        if (not (sharedData->Desc.Flags & EImageFlags::CubeCompatible))
-            return false;
-
-        if (desc.LayerCount != 6)
-            return false;
+        PPE_LOG_CHECK(RHI, sharedData->Desc.Flags & EImageFlags::CubeCompatible);
+        PPE_LOG_CHECK(RHI, desc.LayerCount == 6);
     }
 
     if (sharedData->Desc.Type == EImageDim_3D and desc.View != EImageView_3D) {
-        if (not (sharedData->Desc.Flags & EImageFlags::Array2DCompatible))
-            return false;
+        PPE_LOG_CHECK(RHI, sharedData->Desc.Flags & EImageFlags::Array2DCompatible);
     }
 
     if (desc.Format != Default and desc.Format != sharedData->Desc.Format) {
-        if (not (sharedData->Desc.Flags & EImageFlags::MutableFormat))
-            return false;
+        PPE_LOG_CHECK(RHI, sharedData->Desc.Flags & EImageFlags::MutableFormat);
 
         const FPixelFormatInfo required = EPixelFormat_Infos(sharedData->Desc.Format);
         const FPixelFormatInfo original = EPixelFormat_Infos(desc.Format);
@@ -513,24 +496,16 @@ bool FVulkanImage::IsSupported(const FVulkanDevice& device, const FImageViewDesc
 
         // compressed to uncompressed
         if (sharedData->Desc.Flags & EImageFlags::BlockTexelViewCompatible and originalUseBlock and not requiredUseBlock) {
-            if (required.BitsPerBlock0 != original.BitsPerBlock0)
-                return false;
+            PPE_LOG_CHECK(RHI, required.BitsPerBlock0 == original.BitsPerBlock0);
         }
         else {
-            if (requiredUseBlock != originalUseBlock)
-                return false;
+            PPE_LOG_CHECK(RHI, requiredUseBlock == originalUseBlock);
+            PPE_LOG_CHECK(RHI, required.BlockDim == original.BlockDim);
 
-            if (required.BlockDim != original.BlockDim)
-                return false;
-
-            if (desc.AspectMask == EImageAspect::Stencil) {
-                if (required.BitsPerBlock1 != original.BitsPerBlock1)
-                    return false;
-            }
-            else {
-                if (required.BitsPerBlock0 != original.BitsPerBlock0)
-                    return false;
-            }
+            if (desc.AspectMask == EImageAspect::Stencil)
+                PPE_LOG_CHECK(RHI, required.BitsPerBlock1 == original.BitsPerBlock1);
+            else
+                PPE_LOG_CHECK(RHI, required.BitsPerBlock0 == original.BitsPerBlock0);
         }
     }
 

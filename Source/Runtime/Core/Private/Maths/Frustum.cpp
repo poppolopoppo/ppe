@@ -9,7 +9,6 @@
 #include "Maths/ScalarBoundingBoxHelpers.h"
 #include "Maths/ScalarVector.h"
 #include "Maths/ScalarVectorHelpers.h"
-#include "Maths/Sphere.h"
 
 #include "Memory/MemoryView.h"
 
@@ -20,24 +19,24 @@ namespace PPE {
 namespace {
 //----------------------------------------------------------------------------
 static void ComputeFrustumCorners_(const FPlane (&planes)[6], float3 (&points)[8]) {
-    const FPlane& ptop = planes[size_t(EFrustumPlane::Top)];
-    const FPlane& pbottom = planes[size_t(EFrustumPlane::Bottom)];
+    const FPlane& ptop = planes[static_cast<size_t>(EFrustumPlane::Top)];
+    const FPlane& pbottom = planes[static_cast<size_t>(EFrustumPlane::Bottom)];
 
-    const FPlane& pleft = planes[size_t(EFrustumPlane::Left)];
-    const FPlane& pright = planes[size_t(EFrustumPlane::Right)];
+    const FPlane& pleft = planes[static_cast<size_t>(EFrustumPlane::Left)];
+    const FPlane& pright = planes[static_cast<size_t>(EFrustumPlane::Right)];
 
-    const FPlane& pnear = planes[size_t(EFrustumPlane::Near)];
-    const FPlane& pfar = planes[size_t(EFrustumPlane::Far)];
+    const FPlane& pnear = planes[static_cast<size_t>(EFrustumPlane::Near)];
+    const FPlane& pfar = planes[static_cast<size_t>(EFrustumPlane::Far)];
 
-    points[size_t(EFrustumCorner::Near_LeftTop)]     = FPlane::Get3PlanesInterPoint(pnear, pleft, ptop);
-    points[size_t(EFrustumCorner::Near_LeftBottom)]  = FPlane::Get3PlanesInterPoint(pnear, pleft, pbottom);
-    points[size_t(EFrustumCorner::Near_RightBottom)] = FPlane::Get3PlanesInterPoint(pnear, pright, pbottom);
-    points[size_t(EFrustumCorner::Near_RightTop)]    = FPlane::Get3PlanesInterPoint(pnear, pright, ptop);
+    points[static_cast<size_t>(EFrustumCorner::Near_LeftTop)]     = FPlane::Get3PlanesInterPoint(pnear, pleft, ptop);
+    points[static_cast<size_t>(EFrustumCorner::Near_LeftBottom)]  = FPlane::Get3PlanesInterPoint(pnear, pleft, pbottom);
+    points[static_cast<size_t>(EFrustumCorner::Near_RightBottom)] = FPlane::Get3PlanesInterPoint(pnear, pright, pbottom);
+    points[static_cast<size_t>(EFrustumCorner::Near_RightTop)]    = FPlane::Get3PlanesInterPoint(pnear, pright, ptop);
 
-    points[size_t(EFrustumCorner::Far_LeftTop)]      = FPlane::Get3PlanesInterPoint(pfar, pleft, ptop);
-    points[size_t(EFrustumCorner::Far_LeftBottom)]   = FPlane::Get3PlanesInterPoint(pfar, pleft, pbottom);
-    points[size_t(EFrustumCorner::Far_RightBottom)]  = FPlane::Get3PlanesInterPoint(pfar, pright, pbottom);
-    points[size_t(EFrustumCorner::Far_RightTop)]     = FPlane::Get3PlanesInterPoint(pfar, pright, ptop);
+    points[static_cast<size_t>(EFrustumCorner::Far_LeftTop)]      = FPlane::Get3PlanesInterPoint(pfar, pleft, ptop);
+    points[static_cast<size_t>(EFrustumCorner::Far_LeftBottom)]   = FPlane::Get3PlanesInterPoint(pfar, pleft, pbottom);
+    points[static_cast<size_t>(EFrustumCorner::Far_RightBottom)]  = FPlane::Get3PlanesInterPoint(pfar, pright, pbottom);
+    points[static_cast<size_t>(EFrustumCorner::Far_RightTop)]     = FPlane::Get3PlanesInterPoint(pfar, pright, ptop);
 }
 //----------------------------------------------------------------------------
 static EContainmentType FrustumContainsConvexVolume_(
@@ -93,6 +92,8 @@ FFrustum::FFrustum(const FFrustum& other)
 }
 //----------------------------------------------------------------------------
 FFrustum& FFrustum::operator =(const FFrustum& other) {
+    Assert(&other != this);
+
     _matrix = other._matrix;
     _box = other._box;
     for (size_t i = 0; i < 6; ++i)
@@ -103,74 +104,63 @@ FFrustum& FFrustum::operator =(const FFrustum& other) {
     return *this;
 }
 //----------------------------------------------------------------------------
-void FFrustum::SetMatrix(const float4x4& viewProjection) {
-    //http://www.chadvernon.com/blog/resources/directx9/frustum-culling/
-
+void FFrustum::SetMatrixLH(const float4x4& viewProjection) {
     _matrix = viewProjection;
 
-    FPlane& ptop = _planes[size_t(EFrustumPlane::Top)];
-    FPlane& pbottom = _planes[size_t(EFrustumPlane::Bottom)];
+    FPlane& ptop = _planes[static_cast<size_t>(EFrustumPlane::Top)];
+    FPlane& pbottom = _planes[static_cast<size_t>(EFrustumPlane::Bottom)];
 
-    FPlane& pleft = _planes[size_t(EFrustumPlane::Left)];
-    FPlane& pright = _planes[size_t(EFrustumPlane::Right)];
+    FPlane& pleft = _planes[static_cast<size_t>(EFrustumPlane::Left)];
+    FPlane& pright = _planes[static_cast<size_t>(EFrustumPlane::Right)];
 
-    FPlane& pnear = _planes[size_t(EFrustumPlane::Near)];
-    FPlane& pfar = _planes[size_t(EFrustumPlane::Far)];
+    FPlane& pnear = _planes[static_cast<size_t>(EFrustumPlane::Near)];
+    FPlane& pfar = _planes[static_cast<size_t>(EFrustumPlane::Far)];
 
-    // Left plane
-    pleft.Normal().x  = _matrix._14() + _matrix._11();
-    pleft.Normal().y  = _matrix._24() + _matrix._21();
-    pleft.Normal().z  = _matrix._34() + _matrix._31();
-    pleft.D()           = _matrix._44() + _matrix._41();
-    pleft = pleft.Normalize();
+    pleft = FPlane{ viewProjection.Row(3) + viewProjection.Row(0) }.Normalize();
+    pright = FPlane{ viewProjection.Row(3) - viewProjection.Row(0) }.Normalize();
 
-    // Right plane
-    pright.Normal().x = _matrix._14() - _matrix._11();
-    pright.Normal().y = _matrix._24() - _matrix._21();
-    pright.Normal().z = _matrix._34() - _matrix._31();
-    pright.D()          = _matrix._44() - _matrix._41();
-    pright = pright.Normalize();
+    ptop = FPlane{ viewProjection.Row(3) + viewProjection.Row(1) }.Normalize();
+    pbottom = FPlane{ viewProjection.Row(3) - viewProjection.Row(1) }.Normalize();
 
-    // Top plane
-    ptop.Normal().x   = _matrix._14() - _matrix._12();
-    ptop.Normal().y   = _matrix._24() - _matrix._22();
-    ptop.Normal().z   = _matrix._34() - _matrix._32();
-    ptop.D()            = _matrix._44() - _matrix._42();
-    ptop = ptop.Normalize();
+    pnear = FPlane{ viewProjection.Row(3) + viewProjection.Row(2) }.Normalize();
+    pfar = FPlane{ viewProjection.Row(3) - viewProjection.Row(2) }.Normalize();
 
-    // Bottom plane
-    pbottom.Normal().x= _matrix._14() + _matrix._12();
-    pbottom.Normal().y= _matrix._24() + _matrix._22();
-    pbottom.Normal().z= _matrix._34() + _matrix._32();
-    pbottom.D()         = _matrix._44() + _matrix._42();
-    pbottom = pbottom.Normalize();
+    InitProperties_();
+}
+//----------------------------------------------------------------------------
+void FFrustum::SetMatrixRH(const float4x4& viewProjection) {
+    _matrix = viewProjection;
 
-    // Near plane
-    pnear.Normal().x  = _matrix._14() + _matrix._13();
-    pnear.Normal().y  = _matrix._24() + _matrix._23();
-    pnear.Normal().z  = _matrix._34() + _matrix._33();
-    pnear.D()           = _matrix._44() + _matrix._43();
-    pnear = pnear.Normalize();
+    FPlane& ptop = _planes[static_cast<size_t>(EFrustumPlane::Top)];
+    FPlane& pbottom = _planes[static_cast<size_t>(EFrustumPlane::Bottom)];
 
-    // Far plane
-    pfar.Normal().x   = _matrix._14() - _matrix._13();
-    pfar.Normal().y   = _matrix._24() - _matrix._23();
-    pfar.Normal().z   = _matrix._34() - _matrix._33();
-    pfar.D()            = _matrix._44() - _matrix._43();
-    pfar = pfar.Normalize();
+    FPlane& pleft = _planes[static_cast<size_t>(EFrustumPlane::Left)];
+    FPlane& pright = _planes[static_cast<size_t>(EFrustumPlane::Right)];
+
+    FPlane& pnear = _planes[static_cast<size_t>(EFrustumPlane::Near)];
+    FPlane& pfar = _planes[static_cast<size_t>(EFrustumPlane::Far)];
+
+    pleft = FPlane{ viewProjection.Row(3) + viewProjection.Row(0) }.Normalize();
+    pright = FPlane{ viewProjection.Row(3) - viewProjection.Row(0) }.Normalize();
+
+    ptop = FPlane{ viewProjection.Row(3) - viewProjection.Row(1) }.Normalize();
+    pbottom = FPlane{ viewProjection.Row(3) + viewProjection.Row(1) }.Normalize();
+
+    pnear = FPlane{ viewProjection.Row(3) - viewProjection.Row(2) }.Normalize();
+    pfar = FPlane{ viewProjection.Row(3) + viewProjection.Row(2) }.Normalize();
 
     InitProperties_();
 }
 //----------------------------------------------------------------------------
 void FFrustum::GetCameraParams(FFrustumCameraParams& params) const {
-    const FPlane& ptop = _planes[size_t(EFrustumPlane::Top)];
+    const FPlane& ptop = _planes[static_cast<size_t>(EFrustumPlane::Top)];
     //const FPlane& pbottom = _planes[size_t(EFrustumPlane::Bottom)];
 
-    const FPlane& pleft = _planes[size_t(EFrustumPlane::Left)];
-    const FPlane& pright = _planes[size_t(EFrustumPlane::Right)];
+    const FPlane& pleft = _planes[static_cast<size_t>(EFrustumPlane::Left)];
+    const FPlane& pright = _planes[static_cast<size_t>(EFrustumPlane::Right)];
 
-    const FPlane& pnear = _planes[size_t(EFrustumPlane::Near)];
-    const FPlane& pfar = _planes[size_t(EFrustumPlane::Far)];
+    const FPlane& pnear = _planes[static_cast<size_t>(EFrustumPlane::Near)];
+    const FPlane& pfar = _planes[static_cast<size_t>(EFrustumPlane::Far)];
 
     params.Position = FPlane::Get3PlanesInterPoint(pright, ptop, pleft);
     params.LookAtDir = pnear.Normal();
@@ -267,14 +257,14 @@ bool FFrustum::Intersects(const FRay& ray, float& in, float& out) const {
     out = -1;
 
     FFrustum ioFrsutrum(*this);
-    ioFrsutrum._planes[size_t(EFrustumPlane::Top)].Normal() = -Top().Normal();
-    ioFrsutrum._planes[size_t(EFrustumPlane::Bottom)].Normal() = -Bottom().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Top)].Normal() = -Top().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Bottom)].Normal() = -Bottom().Normal();
 
-    ioFrsutrum._planes[size_t(EFrustumPlane::Left)].Normal() = -Left().Normal();
-    ioFrsutrum._planes[size_t(EFrustumPlane::Right)].Normal() = -Right().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Left)].Normal() = -Left().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Right)].Normal() = -Right().Normal();
 
-    ioFrsutrum._planes[size_t(EFrustumPlane::Near)].Normal() = -Near().Normal();
-    ioFrsutrum._planes[size_t(EFrustumPlane::Far)].Normal() = -Far().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Near)].Normal() = -Near().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Far)].Normal() = -Far().Normal();
 
     for (const FPlane& plane : ioFrsutrum._planes) {
         float planeDistance;
@@ -300,7 +290,7 @@ bool FFrustum::Intersects(const FRay& ray, float& in, float& out) const {
         }
     }
 
-    //if the intersection happed at one point, then the ray starts from inside the frustum
+    //if the intersection happened at one point, then the ray starts from inside the frustum
     //and intersects it while going out.
     if (result && in > 0 && out < 0)
     {
@@ -332,14 +322,14 @@ float FFrustum::GetZoomToExtentsShiftDistance(const TMemoryView<const float3>& p
     float horizontalToVerticalMapping = vSin / hSin;
 
     FFrustum ioFrsutrum(*this);
-    ioFrsutrum._planes[size_t(EFrustumPlane::Top)].Normal() = -Top().Normal();
-    ioFrsutrum._planes[size_t(EFrustumPlane::Bottom)].Normal() = -Bottom().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Top)].Normal() = -Top().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Bottom)].Normal() = -Bottom().Normal();
 
-    ioFrsutrum._planes[size_t(EFrustumPlane::Left)].Normal() = -Left().Normal();
-    ioFrsutrum._planes[size_t(EFrustumPlane::Right)].Normal() = -Right().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Left)].Normal() = -Left().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Right)].Normal() = -Right().Normal();
 
-    ioFrsutrum._planes[size_t(EFrustumPlane::Near)].Normal() = -Near().Normal();
-    ioFrsutrum._planes[size_t(EFrustumPlane::Far)].Normal() = -Far().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Near)].Normal() = -Near().Normal();
+    ioFrsutrum._planes[static_cast<size_t>(EFrustumPlane::Far)].Normal() = -Far().Normal();
 
     float maxPointDist = FLT_MIN;
     for (const float3& point : points)
@@ -390,12 +380,12 @@ FFrustum FFrustum::FromCamera(const float3& cameraPos, const float3& lookDir, co
         MakeLookAtLHMatrix(cameraPos, float3(cameraPos + lookDir * 10.f), upDir) *
         MakePerspectiveFovLHMatrix(fov, aspect, znear, zfar));
 
-    result._planes[size_t(EFrustumPlane::Near)]      = FPlane::FromTriangle(Near1, Near2, Near3).Normalize();
-    result._planes[size_t(EFrustumPlane::Far)]       = FPlane::FromTriangle(Far3, Far2, Far1).Normalize();
-    result._planes[size_t(EFrustumPlane::Left)]      = FPlane::FromTriangle(Near4, Near3, Far3).Normalize();
-    result._planes[size_t(EFrustumPlane::Right)]     = FPlane::FromTriangle(Far1, Far2, Near2).Normalize();
-    result._planes[size_t(EFrustumPlane::Top)]       = FPlane::FromTriangle(Near2, Far2, Far3).Normalize();
-    result._planes[size_t(EFrustumPlane::Bottom)]    = FPlane::FromTriangle(Far4, Far1, Near1).Normalize();
+    result._planes[static_cast<size_t>(EFrustumPlane::Near)]      = FPlane::FromTriangle(Near1, Near2, Near3).Normalize();
+    result._planes[static_cast<size_t>(EFrustumPlane::Far)]       = FPlane::FromTriangle(Far3, Far2, Far1).Normalize();
+    result._planes[static_cast<size_t>(EFrustumPlane::Left)]      = FPlane::FromTriangle(Near4, Near3, Far3).Normalize();
+    result._planes[static_cast<size_t>(EFrustumPlane::Right)]     = FPlane::FromTriangle(Far1, Far2, Near2).Normalize();
+    result._planes[static_cast<size_t>(EFrustumPlane::Top)]       = FPlane::FromTriangle(Near2, Far2, Far3).Normalize();
+    result._planes[static_cast<size_t>(EFrustumPlane::Bottom)]    = FPlane::FromTriangle(Far4, Far1, Near1).Normalize();
 
     result.InitProperties_();
 

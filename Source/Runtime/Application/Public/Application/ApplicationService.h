@@ -20,7 +20,11 @@ public:
     virtual const FString& Name() const NOEXCEPT = 0;
     virtual bool HasFocus() const NOEXCEPT = 0;
 
-    virtual FTimeline RealTime() const NOEXCEPT = 0;
+    virtual const FTimeline& RealTime() const NOEXCEPT = 0;
+    virtual const FTimeline& ApplicationTime() const NOEXCEPT = 0;
+
+    virtual float ApplicationTimeDilation() const NOEXCEPT = 0;
+    virtual void SetApplicationTimeDilation(float speed) NOEXCEPT = 0;
 
     virtual void SetLowerTickRateInBackground(bool enabled) NOEXCEPT = 0;
     virtual bool LowerTickRateInBackground() const NOEXCEPT = 0;

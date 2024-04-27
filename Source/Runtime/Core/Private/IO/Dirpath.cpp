@@ -379,29 +379,20 @@ NODISCARD FFilename operator /(const FDirpath& lhs, const FBasename& basename) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const PPE::FDirpath& dirpath) {
-    PPE::FMountingPoint mountingPoint;
-    STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, dirpath.Depth());
-    const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
-
-    if (not mountingPoint.empty())
-        oss << mountingPoint << '/';
-    for (size_t i = 0; i < k; ++i)
-        oss << dirnames[i] << '/';
-
+    STATIC_ASSERT(static_cast<char>(FileSystem::NormalizedSeparator) == '/');
+    for (const FFileSystemToken& token : dirpath.ExpandTokens()) {
+        oss << token << static_cast<char>(FileSystem::NormalizedSeparator);
+    }
     return oss;
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const PPE::FDirpath& dirpath) {
-    PPE::FMountingPoint mountingPoint;
-    STACKLOCAL_ASSUMEPOD_ARRAY(FDirname, dirnames, dirpath.Depth());
-    const size_t k = dirpath.ExpandPath(mountingPoint, dirnames);
-
-    if (not mountingPoint.empty())
-        oss << mountingPoint << static_cast<wchar_t>(FileSystem::NormalizedSeparator);
-    for (size_t i = 0; i < k; ++i)
-        oss << dirnames[i] << static_cast<wchar_t>(FileSystem::NormalizedSeparator);
-
+    STATIC_ASSERT(static_cast<wchar_t>(FileSystem::NormalizedSeparator) == L'/');
+    for (const FFileSystemToken& token : dirpath.ExpandTokens()) {
+        oss << token << static_cast<wchar_t>(FileSystem::NormalizedSeparator);
+    }
     return oss;
 }
 //----------------------------------------------------------------------------

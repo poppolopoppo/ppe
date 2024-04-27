@@ -14,6 +14,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// #TODO: replace affinity mask by cpu sets, affinity mask tamper with work scheduling on Windows!
+// see p.58 https://gpuopen.com/gdc-presentations/2024/GDC2024_AMD_Ryzen_Processor_Software_Optimization.pdf
+//----------------------------------------------------------------------------
 // Windows uses a special API for CPUs with more than 64 cores
 // https://docs.microsoft.com/en-us/windows/desktop/api/winbase/nf-winbase-setthreadaffinitymask
 STATIC_ASSERT(PPE_MAX_NUMCPUCORE <= 64);

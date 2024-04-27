@@ -33,7 +33,7 @@ TVulkanFrameTask<_Task>* TVulkanTaskGraph<_Visitor>::AddTask(FVulkanCommandBuffe
     _nodes->insert(pTask);
 
     if  (pTask->Inputs().empty())
-        _entries->Emplace(pTask);
+        _entries->EmplaceIt(pTask);
 
     for (auto pInputNode : pTask->Inputs()) {
         Assert_NoAssume(!!_nodes->Contains(pInputNode));

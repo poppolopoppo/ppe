@@ -49,7 +49,7 @@ static bool PassthroughCompression_CreateTextureData_(
     outProperties->ImageView = src.ImageView();
     outProperties->NumMips = checked_cast<u8>(src.NumMips());
 
-    outBulk->AttachSourceFile(src.BulkData().SourceFile());
+    outBulk->AttachSourceFile(src.Data().SourceFile());
     outBulk->Resize_DiscardData(pixelInfo.SizeInBytes(
         RHI::EImageAspect::Color,
         src.Dimensions(),

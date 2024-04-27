@@ -135,6 +135,8 @@ public:
 #   pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
+#pragma include_alias(<vulkan/vulkan.h>, <External/vulkan/Vulkan-Header.git/include/vulkan/vulkan.h>)
+
 #include "External/vma/vma.git/include/vk_mem_alloc.h"
 
 #ifdef __gcc__

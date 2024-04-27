@@ -7,7 +7,6 @@
 #include "Container/HashMap.h"
 #include "Container/IntrusiveList.h"
 #include "Memory/MemoryDomain.h"
-#include "Meta/ThreadResource.h"
 #include "RTTI/UserFacet.h"
 
 namespace PPE {
@@ -57,7 +56,7 @@ private:
     TIntrusiveSingleListNode<FMetaEnumHandle> _node;
 };
 //----------------------------------------------------------------------------
-class PPE_RTTI_API FMetaModule : Meta::FThreadResource {
+class PPE_RTTI_API FMetaModule {
 public:
 #if USE_PPE_MEMORYDOMAINS
     FMemoryTracking& TrackingData() const { return _trackingData; }
@@ -113,15 +112,15 @@ private:
     HASHMAP(MetaModule, FName, const FMetaClass*) _classes;
     HASHMAP(MetaModule, FName, const FMetaEnum*) _enums;
 
+    INTRUSIVESINGLELIST(&FMetaClassHandle::_node) _classHandles;
+    INTRUSIVESINGLELIST(&FMetaEnumHandle::_node) _enumHandles;
+
     FName _nameToken;
     size_t _classIdOffset;
     size_t _classCount;
     size_t _enumCount;
 
     const FStringLiteral _nameCStr;
-
-    INTRUSIVESINGLELIST(&FMetaClassHandle::_node) _classHandles;
-    INTRUSIVESINGLELIST(&FMetaEnumHandle::_node) _enumHandles;
 
     FMetaModuleFacet _facets;
 

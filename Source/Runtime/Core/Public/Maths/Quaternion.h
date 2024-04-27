@@ -13,7 +13,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 class PPE_CORE_API FQuaternion {
 public:
-    FORCE_INLINE FQuaternion() {}
+    CONSTEXPR FQuaternion() NOEXCEPT : data{} {}
+    FORCE_INLINE FQuaternion(Meta::FNoInit) NOEXCEPT {}
     FQuaternion(Meta::FForceInit);
     explicit FQuaternion(float broadcast);
     explicit FQuaternion(const float4& value);

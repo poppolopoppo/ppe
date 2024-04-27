@@ -4,8 +4,9 @@
 
 #include "HAL/Windows/WindowsPlatformGamepad.h"
 
+#include "Input/Device/GamepadState.h"
+
 #include "HAL/Windows/XInputWrapper.h"
-#include "Input/GamepadState.h"
 #include "Maths/PackingHelpers.h"
 
 namespace PPE {

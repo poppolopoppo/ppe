@@ -80,25 +80,25 @@ public:
     CONSTEXPR CONSTF size_type size() const { return _size; }
     CONSTEXPR CONSTF bool empty() const { return 0 == _size; }
 
-    iterator begin() const { return MakeCheckedIterator(_storage, _size, 0); }
-    iterator end() const { return MakeCheckedIterator(_storage, _size, _size); }
+    CONSTEXPR iterator begin() const { return MakeCheckedIterator(_storage, _size, 0); }
+    CONSTEXPR iterator end() const { return MakeCheckedIterator(_storage, _size, _size); }
 
-    iterator cbegin() const { return begin(); }
-    iterator cend() const { return end(); }
+    CONSTEXPR iterator cbegin() const { return begin(); }
+    CONSTEXPR iterator cend() const { return end(); }
 
-    reverse_iterator rbegin() const { return reverse_iterator(end()); }
-    reverse_iterator rend() const { return reverse_iterator(begin()); }
+    CONSTEXPR reverse_iterator rbegin() const { return reverse_iterator(end()); }
+    CONSTEXPR reverse_iterator rend() const { return reverse_iterator(begin()); }
 
-    reference at(size_type index) const;
-    reference operator [](size_type index) const { return at(index); }
+    CONSTEXPR reference at(size_type index) const;
+    CONSTEXPR reference operator [](size_type index) const { return at(index); }
 
-    reference front() const { return at(0); }
-    reference back() const { return at(_size - 1); }
+    CONSTEXPR reference front() const { return at(0); }
+    CONSTEXPR reference back() const { return at(_size - 1); }
 
-    void CopyTo(const TMemoryView<Meta::TRemoveConst<T>>& dst) const;
+    CONSTEXPR void CopyTo(const TMemoryView<Meta::TRemoveConst<T>>& dst) const;
 
     template <size_t _Dim>
-    void CopyTo(Meta::TRemoveConst<T> (&dst)[_Dim], size_t offset = 0) const {
+    CONSTEXPR void CopyTo(Meta::TRemoveConst<T> (&dst)[_Dim], size_t offset = 0) const {
         Assert(_Dim >= offset + _size);
         CopyTo(TMemoryView<Meta::TRemoveConst<T>>(dst + offset, _size));
     }
@@ -111,7 +111,7 @@ public:
         return eaten;
     }
 
-    bool Eat(const TMemoryView& other) {
+    CONSTEXPR bool Eat(const TMemoryView& other) {
         if (StartsWith(other)) {
             Eat(other.size());
             return true;
@@ -136,79 +136,79 @@ public:
         return reinterpret_cast<result_t*>(_storage);
     }
 
-    NODISCARD TMemoryView Slice(size_t index, size_t stride) const;
-    NODISCARD TMemoryView< Meta::TAddConst<T> > SliceConst(size_t index, size_t stride) const;
+    NODISCARD CONSTEXPR TMemoryView Slice(size_t index, size_t stride) const;
+    NODISCARD CONSTEXPR TMemoryView< Meta::TAddConst<T> > SliceConst(size_t index, size_t stride) const;
 
-    NODISCARD TMemoryView SubRange(size_t offset, size_t count) const;
-    NODISCARD TMemoryView< Meta::TAddConst<T> > SubRangeConst(size_t offset, size_t count) const;
+    NODISCARD CONSTEXPR TMemoryView SubRange(size_t offset, size_t count) const;
+    NODISCARD CONSTEXPR TMemoryView< Meta::TAddConst<T> > SubRangeConst(size_t offset, size_t count) const;
 
-    NODISCARD TMemoryView SubRange(iterator first, iterator last) const;
-    NODISCARD TMemoryView< Meta::TAddConst<T> > SubRangeConst(iterator first, iterator last) const;
+    NODISCARD CONSTEXPR TMemoryView SubRange(iterator first, iterator last) const;
+    NODISCARD CONSTEXPR TMemoryView< Meta::TAddConst<T> > SubRangeConst(iterator first, iterator last) const;
 
-    NODISCARD TMemoryView CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
-    NODISCARD TMemoryView< Meta::TAddConst<T> > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
+    NODISCARD CONSTEXPR TMemoryView CutStartingAt(size_t offset) const { return SubRange(offset, _size - offset); }
+    NODISCARD CONSTEXPR TMemoryView< Meta::TAddConst<T> > CutStartingAtConst(size_t offset) const { return SubRangeConst(offset, _size - offset); }
 
-    NODISCARD TMemoryView CutStartingAt(iterator it) const {
+    NODISCARD CONSTEXPR TMemoryView CutStartingAt(iterator it) const {
         Assert_NoAssume(end() == it || AliasesToContainer(it));
         return (end() != it
             ? TMemoryView(std::addressof(*it), std::distance(it, end()))
             : TMemoryView(_storage+_size, size_type(0)) );
     }
 
-    NODISCARD TMemoryView CutStartingAt(reverse_iterator it) const {
+    NODISCARD CONSTEXPR TMemoryView CutStartingAt(reverse_iterator it) const {
         Assert_NoAssume(rend() == it || AliasesToContainer(it));
         return (rend() != it
             ? TMemoryView(std::addressof(*it), _storage + _size - std::addressof(*it))
             : TMemoryView(_storage, size_type(0)) );
     }
 
-    NODISCARD TMemoryView CutBefore(size_t offset) const { return SubRange(0, offset); }
-    NODISCARD TMemoryView< Meta::TAddConst<T> > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
+    NODISCARD CONSTEXPR TMemoryView CutBefore(size_t offset) const { return SubRange(0, offset); }
+    NODISCARD CONSTEXPR TMemoryView< Meta::TAddConst<T> > CutBeforeConst(size_t offset) const { return SubRangeConst(0, offset); }
 
-    NODISCARD TMemoryView CutBefore(iterator it) const {
+    NODISCARD CONSTEXPR TMemoryView CutBefore(iterator it) const {
         Assert_NoAssume(end() == it || AliasesToContainer(it));
         return TMemoryView(_storage, std::distance(begin(), it));
     }
 
-    NODISCARD TMemoryView CutBefore(reverse_iterator it) const {
+    NODISCARD CONSTEXPR TMemoryView CutBefore(reverse_iterator it) const {
         Assert_NoAssume(rend() == it || AliasesToContainer(it));
         return TMemoryView(_storage, std::addressof(*it) - _storage);
     }
 
-    NODISCARD TMemoryView FirstNElements(size_t count) const { return CutBefore(count); }
-    NODISCARD TMemoryView LastNElements(size_t count) const { Assert(_size >= count); return CutStartingAt(_size - count); }
+    NODISCARD CONSTEXPR TMemoryView FirstNElements(size_t count) const { return CutBefore(count); }
+    NODISCARD CONSTEXPR TMemoryView LastNElements(size_t count) const { Assert(_size >= count); return CutStartingAt(_size - count); }
 
-    NODISCARD TMemoryView TrimFirstNElements(size_t count) const { return CutStartingAt(count); }
-    NODISCARD TMemoryView TrimLastNElements(size_t count) const { Assert(_size >= count); return CutBefore(_size - count); }
+    NODISCARD CONSTEXPR TMemoryView TrimFirstNElements(size_t count) const { return CutStartingAt(count); }
+    NODISCARD CONSTEXPR TMemoryView TrimLastNElements(size_t count) const { Assert(_size >= count); return CutBefore(_size - count); }
 
-    NODISCARD TMemoryView ShiftBack(const size_type n = 1) const { Assert(_size >= n); return TMemoryView(_storage, _size - n); }
-    NODISCARD TMemoryView ShiftFront(const size_type n = 1) const { Assert(_size >= n); return TMemoryView(_storage + n, _size - n); }
+    NODISCARD CONSTEXPR TMemoryView ShiftBack(const size_type n = 1) const { Assert(_size >= n); return TMemoryView(_storage, _size - n); }
+    NODISCARD CONSTEXPR TMemoryView ShiftFront(const size_type n = 1) const { Assert(_size >= n); return TMemoryView(_storage + n, _size - n); }
 
     NODISCARD TMemoryView GrowBack(const size_type n = 1) const { return TMemoryView(_storage, _size + n); }
     NODISCARD TMemoryView GrowFront(const size_type n = 1) const { return TMemoryView(_storage - n, _size + n); }
 
     template <typename U>
-    bool IsSubRangeOf(const TMemoryView<U>& parent) const {
+    CONSTEXPR bool IsSubRangeOf(const TMemoryView<U>& parent) const {
         return (static_cast<const void*>(parent.data()) <= static_cast<const void*>(_storage) &&
                 static_cast<const void*>(parent.data() + parent.size()) >= static_cast<const void*>(_storage + _size));
     }
 
-    iterator Find(const T& elem) const { return std::find(begin(), end(), elem); }
-    iterator FindAfter(const T& elem, iterator first) const {
+    CONSTEXPR iterator Find(const T& elem) const { return std::find(begin(), end(), elem); }
+    CONSTEXPR iterator FindAfter(const T& elem, iterator first) const {
         Assert(AliasesToContainer(first));
         const iterator last = end();
         return (first == last ? last : std::find(++first, last, elem));
     }
 
-    reverse_iterator FindR(const T& elem) const { return std::find(rbegin(), rend(), elem); }
-    reverse_iterator FindAfterR(const T& elem, reverse_iterator rfirst) const {
+    CONSTEXPR reverse_iterator FindR(const T& elem) const { return std::find(rbegin(), rend(), elem); }
+    CONSTEXPR reverse_iterator FindAfterR(const T& elem, reverse_iterator rfirst) const {
         Assert(AliasesToContainer(rfirst));
         const reverse_iterator rlast = rend();
         return (rfirst == rlast ? rlast : std::find(++rfirst, rlast, elem));
     }
 
-    bool Contains(const T& elem) const { return (end() != Find(elem)); }
-    bool ContainsRef(TPtrRef<const T> p) const {
+    CONSTEXPR bool Contains(const T& elem) const { return (end() != Find(elem)); }
+    CONSTEXPR bool ContainsRef(TPtrRef<const T> p) const {
         return (end() != FindIf([p](const T& elem) {
             return (MakePtrRef(elem) == p);
         }));
@@ -217,60 +217,60 @@ public:
     auto MakeRef(iterator it) const { return (it != end() ? MakePtrRef(*it) : nullptr); }
 
     template <typename _Pred>
-    auto Any(const _Pred& pred) const { return MakeRef(FindIf(pred)); }
+    CONSTEXPR auto Any(const _Pred& pred) const { return MakeRef(FindIf(pred)); }
     template <typename _Pred = Meta::TLess<Meta::TDecay<T>>>
-    auto Min(const _Pred& pred = _Pred{}) { return MakeRef(FindMin(pred)); }
+    CONSTEXPR auto Min(const _Pred& pred = _Pred{}) { return MakeRef(FindMin(pred)); }
     template <typename _Pred = Meta::TLess<Meta::TDecay<T>>>
-    auto Max(const _Pred& pred = _Pred{}) { return MakeRef(FindMax(pred)); }
+    CONSTEXPR auto Max(const _Pred& pred = _Pred{}) { return MakeRef(FindMax(pred)); }
 
     template <typename _Pred>
-    iterator FindIf(const _Pred& pred) const { return std::find_if(begin(), end(), pred); }
+    CONSTEXPR iterator FindIf(const _Pred& pred) const { return std::find_if(begin(), end(), pred); }
     template <typename _Pred>
-    size_type FindFirst(const _Pred& pred) const { return std::distance(begin(), FindIf(pred)); }
+    CONSTEXPR size_type FindFirst(const _Pred& pred) const { return std::distance(begin(), FindIf(pred)); }
 
     template <typename _Pred>
-    reverse_iterator FindIfR(const _Pred& pred) const { return std::find_if(rbegin(), rend(), pred); }
+    CONSTEXPR reverse_iterator FindIfR(const _Pred& pred) const { return std::find_if(rbegin(), rend(), pred); }
     template <typename _Pred>
-    size_type FindLast(const _Pred& pred) const { return std::distance(rbegin(), FindIfR(pred)); }
+    CONSTEXPR size_type FindLast(const _Pred& pred) const { return std::distance(rbegin(), FindIfR(pred)); }
 
     template <typename _Pred>
-    iterator FindIfNot(const _Pred& pred) const { return std::find_if_not(begin(), end(), pred); }
+    CONSTEXPR iterator FindIfNot(const _Pred& pred) const { return std::find_if_not(begin(), end(), pred); }
     template <typename _Pred>
-    size_type FindFirstNot(const _Pred& pred) const { return std::distance(begin(), FindIfNot(pred)); }
-
-    template <typename _Pred>
-    reverse_iterator FindIfNotR(const _Pred& pred) const { return std::find_if_not(rbegin(), rend(), pred); }
-    template <typename _Pred>
-    size_type FindLastNot(const _Pred& pred) const { return std::distance(rbegin(), FindIfNotR(pred)); }
+    CONSTEXPR size_type FindFirstNot(const _Pred& pred) const { return std::distance(begin(), FindIfNot(pred)); }
 
     template <typename _Pred>
-    iterator FindMin(const _Pred& pred = Meta::TLess<Meta::TDecay<T>>{}) const { return std::min_element(begin(), end(), pred); }
+    CONSTEXPR reverse_iterator FindIfNotR(const _Pred& pred) const { return std::find_if_not(rbegin(), rend(), pred); }
     template <typename _Pred>
-    iterator FindMax(const _Pred& pred = Meta::TLess<Meta::TDecay<T>>{}) const { return std::max_element(begin(), end(), pred); }
+    CONSTEXPR size_type FindLastNot(const _Pred& pred) const { return std::distance(rbegin(), FindIfNotR(pred)); }
 
-    iterator FindSubRange(const TMemoryView& subrange) const;
+    template <typename _Pred>
+    CONSTEXPR iterator FindMin(const _Pred& pred = Meta::TLess<Meta::TDecay<T>>{}) const { return std::min_element(begin(), end(), pred); }
+    template <typename _Pred>
+    CONSTEXPR iterator FindMax(const _Pred& pred = Meta::TLess<Meta::TDecay<T>>{}) const { return std::max_element(begin(), end(), pred); }
 
-    bool EndsWith(const T& suffix) const;
-    bool StartsWith(const T& prefix) const;
+    CONSTEXPR iterator FindSubRange(const TMemoryView& subrange) const;
 
-    bool EndsWith(const TMemoryView& suffix) const;
-    bool StartsWith(const TMemoryView& prefix) const;
+    CONSTEXPR bool EndsWith(const T& suffix) const;
+    CONSTEXPR bool StartsWith(const T& prefix) const;
 
-    bool RangeEqual(TMemoryView other) const {
+    CONSTEXPR bool EndsWith(const TMemoryView& suffix) const;
+    CONSTEXPR bool StartsWith(const TMemoryView& prefix) const;
+
+    CONSTEXPR bool RangeEqual(TMemoryView other) const {
         return std::equal(begin(), end(), other.begin(), other.end());
     }
     template <typename U, typename _Pred = Meta::TEqualTo<T>, Meta::TEnableIf<std::is_assignable_v<T*&, U*>>* = nullptr>
-    bool RangeEqual(TMemoryView<U> other, _Pred pred = Default) const {
+    CONSTEXPR bool RangeEqual(TMemoryView<U> other, _Pred pred = Default) const {
         return std::equal(begin(), end(), other.begin(), other.end(), pred);
     }
 
-    NODISCARD TMemoryView Concat(const TMemoryView& other) const;
-    NODISCARD TMemoryView Concat_AssumeNotEmpty(const TMemoryView& other) const;
+    NODISCARD CONSTEXPR TMemoryView Concat(const TMemoryView& other) const;
+    NODISCARD CONSTEXPR TMemoryView Concat_AssumeNotEmpty(const TMemoryView& other) const;
 
     template <typename _Pred>
-    NODISCARD TMemoryView SplitIf(const _Pred& pred) const { return TMemoryView(_storage, FindFirst(pred)); }
+    NODISCARD CONSTEXPR TMemoryView SplitIf(const _Pred& pred) const { return TMemoryView(_storage, FindFirst(pred)); }
     template <typename _Pred>
-    NODISCARD TMemoryView SplitIfNot(const _Pred& pred) const { return TMemoryView(_storage, FindFirstNot(pred)); }
+    NODISCARD CONSTEXPR TMemoryView SplitIfNot(const _Pred& pred) const { return TMemoryView(_storage, FindFirstNot(pred)); }
 
     CONSTEXPR bool AliasesToContainer(const_reference v) const { return (_storage <= &v && _storage + _size > &v); }
     CONSTEXPR bool AliasesToContainer(iterator it) const { return (begin() <= it && it < end()); }
@@ -502,7 +502,12 @@ CONSTEXPR void Broadcast(const TMemoryView<U>& dst, V&& value) {
 template <typename U, typename V, std::decay_t<decltype(std::declval<std::add_lvalue_reference_t<U>>() = std::declval<std::add_rvalue_reference_t<V>>())>* = nullptr>
 CONSTEXPR void Copy(const TMemoryView<U>& dst, const TMemoryView<V>& src) {
     Assert(dst.size() == src.size());
-    std::copy(src.begin(), src.end(), dst.begin());
+    IF_CONSTEXPR(std::is_same_v<U, V>) {
+        src.CopyTo(dst); // CopyTo<>() is specialized to use memcpy for raw memory views
+    }
+    else {
+        std::copy(src.begin(), src.end(), dst.begin());
+    }
 }
 //----------------------------------------------------------------------------
 template <typename T>

@@ -62,7 +62,7 @@ auto TBasicSparseArray<T>::end() const NOEXCEPT -> const_iterator {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-auto TBasicSparseArray<T>::IndexOf(const_reference data) const -> FDataId {
+auto TBasicSparseArray<T>::DataId(const_reference data) const NOEXCEPT -> FDataId {
     Assert_NoAssume(CheckInvariants());
     Assert(AliasesToContainer(&data));
 
@@ -70,6 +70,12 @@ auto TBasicSparseArray<T>::IndexOf(const_reference data) const -> FDataId {
     Assert(not UnpackId_(it->Id).empty());
 
     return it->Id;
+}
+//----------------------------------------------------------------------------
+template <typename T>
+auto TBasicSparseArray<T>::IndexOf(const_reference data) const NOEXCEPT -> size_t {
+    const FDataId id = DataId(data);
+    return UnpackId_(id).Index;
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -96,7 +102,7 @@ auto TBasicSparseArray<T>::At(size_t index) -> reference {
     Assert(it);
     Assert_NoAssume(not UnpackId_(it->Id).empty());
 
-    return (*it);
+    return it->Data;
 }
 //----------------------------------------------------------------------------
 template <typename T>
@@ -213,7 +219,7 @@ size_t TBasicSparseArray<T>::GrabFirstFreeBlock_() {
     FDataItem* const head = At_(result);
 
     Assert(UnpackId_(head->Id).empty()); // check that this a deleted key
-    _freeIndex = checked_cast<u32>(head->Id); // allow to treat Id as a valid size_t
+    _freeIndex = checked_cast<u32>(static_cast<size_t>(head->Id)); // allow to treat Id as a valid size_t
 
     return result;
 }
@@ -561,10 +567,10 @@ void TSparseArray<T, _Allocator>::ReleaseItem_(FUnpackedId_ id, FDataItem* it) {
         // don't sort completely, so no guarantee on final sort order
         // but this is better than doing nothing
         it->Id = ft->Id;
-        ft->Id = oldIndex;
+        ft->Id = static_cast<FDataId>(oldIndex);
     }
     else {
-        it->Id = _freeIndex;
+        it->Id = static_cast<FDataId>(_freeIndex);
         _freeIndex = checked_cast<u32>(oldIndex);
     }
     Assert(UnpackId_(it->Id).empty());
@@ -684,7 +690,7 @@ template <typename T, typename _Allocator>
 template <typename _It>
 void TSparseArray<T, _Allocator>::AddRange_(_It first, _It last, std::input_iterator_tag) {
     for (; first != last; ++first)
-        Emplace(*first);
+        EmplaceIt(*first);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
@@ -736,7 +742,7 @@ bool Add_Unique(TSparseArray<T, _Allocator>& v, T&& elt) {
         return false;
     }
     else {
-        v.Emplace(std::move(elt));
+        v.EmplaceIt(std::move(elt));
         return true;
     }
 }

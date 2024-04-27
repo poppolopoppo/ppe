@@ -60,7 +60,25 @@ struct FImageDesc {
 
     PPE_RHI_API void Validate();
 
-    friend hash_t hash_value(const FImageDesc& it) {
+    NODISCARD bool operator ==(const FImageDesc& other) const NOEXCEPT {
+        return (
+            Dimensions == other.Dimensions &&
+            Type == other.Type &&
+            View == other.View &&
+            Flags == other.Flags &&
+            Samples == other.Samples &&
+            Format == other.Format &&
+            Usage == other.Usage &&
+            ArrayLayers == other.ArrayLayers &&
+            MaxLevel == other.MaxLevel &&
+            Queues == other.Queues &&
+            IsExternal == other.IsExternal );
+    }
+    NODISCARD bool operator !=(const FImageDesc& other) const NOEXCEPT {
+        return (not operator ==(other));
+    }
+
+    NODISCARD friend hash_t hash_value(const FImageDesc& it) NOEXCEPT {
         return hash_tuple(it.Type, it.View, it.Flags, it.Dimensions, it.Format, it.Usage, it.ArrayLayers, it.MaxLevel, it.Queues);
     }
 };
@@ -109,7 +127,7 @@ struct FImageViewDesc {
 
     PPE_RHI_API void Validate(const FImageDesc& desc);
 
-    bool operator ==(const FImageViewDesc& other) const {
+    NODISCARD bool operator ==(const FImageViewDesc& other) const NOEXCEPT {
         return (
             View == other.View &&
             Format == other.Format &&
@@ -120,11 +138,11 @@ struct FImageViewDesc {
             Swizzle == other.Swizzle &&
             AspectMask == other.AspectMask );
     }
-    bool operator !=(const FImageViewDesc& other) const {
+    NODISCARD bool operator !=(const FImageViewDesc& other) const NOEXCEPT {
         return (not operator ==(other));
     }
 
-    friend hash_t hash_value(const FImageViewDesc& it) {
+    NODISCARD friend hash_t hash_value(const FImageViewDesc& it) NOEXCEPT {
         return hash_tuple(it.View, it.Format, it.BaseLevel, it.LevelCount, it.BaseLayer, it.LayerCount, it.Swizzle, it.AspectMask);
     }
 };

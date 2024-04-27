@@ -22,6 +22,7 @@
 #include "IO/StringBuilder.h"
 #include "VirtualFileSystem_fwd.h"
 #include "Maths/MathHelpers.h"
+#include "Meta/Utility.h"
 
 #if !USE_PPE_FINAL_RELEASE
 #   include "Window/WindowService.h"
@@ -164,6 +165,15 @@ void FApplicationBase::Start() {
     ReportAllTrackingData();
 }
 //----------------------------------------------------------------------------
+void FApplicationBase::Run() {
+    FPlatformApplication::Run();
+
+    FModularDomain::Run(Domain_());
+
+    FModularServices& services = Services_();
+    FApplicationModule::Get(Domain())._OnApplicationRun.Invoke(*this, services);
+}
+//----------------------------------------------------------------------------
 void FApplicationBase::Tick(FTimespan dt) {
     FPlatformApplication::Tick(dt);
 
@@ -194,6 +204,9 @@ void FApplicationBase::RequestExit() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 NO_INLINE bool FApplicationBase::ApplicationTick_(FTimespan dt) {
+    FMemoryTracking::BeginFrame();
+    DEFERRED{ FMemoryTracking::EndFrame(); };
+
     if (not PumpMessages())
         return false;
 

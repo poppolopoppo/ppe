@@ -22,6 +22,13 @@
 #include "Memory/UniqueView.h"
 #include "Thread/ThreadPool.h"
 #include "Thread/Task/TaskHelpers.h"
+#include "Time/TimedScope.h"
+
+#if USE_PPE_LOGGER
+#   include "IO/FormatHelpers.h"
+#   include "RHI/EnumToString.h"
+#   include "Texture/EnumToString.h"
+#endif
 
 // will compile stb_image_resize2 in this translation unit:
 #include "stb_image_resize2-impl.h"
@@ -234,6 +241,26 @@ PTexture FTextureGeneration::Generate(const FTextureSource& source) const {
         actualInput = &updatedSource;
     }
 
+    PTexture result;
+    BENCHMARK_SCOPE_ARGS(Texture, "CompressTexture",
+        {"ImageView", Opaq::Format(actualInput->ImageView())},
+        {"Dimensions", Opaq::array_init{actualInput->Dimensions().x, actualInput->Dimensions().y, actualInput->Dimensions().z}},
+        {"NumMips", actualInput->NumMips()},
+        {"SourceFile", Opaq::Format(actualInput->Data().SourceFile().value_or(FFilename{}))},
+        {"Dst", Opaq::object_init{
+            {"Format", Opaq::Format(Compression->Format())},
+            {"Size", [&result](FTextWriter& oss) {
+                oss << Fmt::FSizeInBytes(result ? result->Data().SizeInBytes() : 0);
+            }},
+        }},
+        {"Src", Opaq::object_init{
+            {"Format", Opaq::Format(actualInput->Format())},
+            {"Flags", Opaq::Format(actualInput->Flags())},
+            {"Gamma", Opaq::Format(actualInput->Gamma())},
+            {"ColorMask", Opaq::Format(actualInput->ColorMask())},
+            {"Size", Opaq::Format(Fmt::FSizeInBytes{ actualInput->Data().SizeInBytes() })}
+        }});
+
     switch (actualInput->ImageView()) {
     case RHI::EImageView::_1D:
         FALLTHROUGH();
@@ -244,35 +271,35 @@ PTexture FTextureGeneration::Generate(const FTextureSource& source) const {
     {
         FTexture2D dst;
         if (Compression->CompressTexture(dst, *actualInput, *this))
-            return NEW_REF(Texture, FTexture2D, std::move(dst));
+            result = NEW_REF(Texture, FTexture2D, std::move(dst));
     }
         break;
     case RHI::EImageView::_2DArray:
     {
         FTexture2DArray dst;
         if (Compression->CompressTexture(dst, *actualInput, *this))
-            return NEW_REF(Texture, FTexture2DArray, std::move(dst));
+            result = NEW_REF(Texture, FTexture2DArray, std::move(dst));
     }
         break;
     case RHI::EImageView::_3D:
     {
         FTexture3D dst;
         if (Compression->CompressTexture(dst, *actualInput, *this))
-            return NEW_REF(Texture, FTexture3D, std::move(dst));
+            result = NEW_REF(Texture, FTexture3D, std::move(dst));
     }
         break;
     case RHI::EImageView::_Cube:
     {
         FTextureCube dst;
         if (Compression->CompressTexture(dst, *actualInput, *this))
-            return NEW_REF(Texture, FTextureCube, std::move(dst));
+            result = NEW_REF(Texture, FTextureCube, std::move(dst));
     }
         break;
     case RHI::EImageView::_CubeArray:
     {
         FTextureCubeArray dst;
         if (Compression->CompressTexture(dst, *actualInput, *this))
-            return NEW_REF(Texture, FTextureCubeArray, std::move(dst));
+            result = NEW_REF(Texture, FTextureCubeArray, std::move(dst));
     }
         break;
 
@@ -280,7 +307,7 @@ PTexture FTextureGeneration::Generate(const FTextureSource& source) const {
         AssertNotImplemented();
     }
 
-    return Default;
+    return result;
 }
 //----------------------------------------------------------------------------
 bool FTextureGeneration::ResizeMip2D(
@@ -297,96 +324,114 @@ bool FTextureGeneration::ResizeMip2D(
     Assert_NoAssume(outputData.SizeInBytes() ==
         ETextureSourceFormat_SizeInBytes(properties.Format, (outputDimensions,1_u32)));
 
-    // First off, you must ALWAYS call stbir_resize_init on your resize structure before any of the other calls!
-    ::STBIR_RESIZE stbir_resize;
-    ::stbir_resize_init(&stbir_resize,
-        // input:
-        inputData.data(),
-        checked_cast<int>(inputDimensions.x),
-        checked_cast<int>(inputDimensions.y),
-        0 /* 0 stride -> contiguous in memory */,
-        // output:
-        outputData.data(),
-        checked_cast<int>(outputDimensions.x),
-        checked_cast<int>(outputDimensions.y),
-        0 /* 0 stride -> contiguous in memory */,
-        // layout:
-        STBImagePixelLayout_(inputFormat, inputFlags),
-        STBImageDataType_(inputFormat, inputGamma));
+    // resize the texture with stb_image_resize2
+    {
+        BENCHMARK_SCOPE_ARGS(Texture, "ResizeMip2D",
+            {"Method", Opaq::Format(MipGeneration)},
+            {"Output", Opaq::object_init{
+                {"Dimensions", Opaq::array_init{outputDimensions.x, outputDimensions.y}},
+                {"Format", Opaq::Format(properties.Format)},
+                {"Flags", Opaq::Format(properties.Flags)},
+                {"Gamma", Opaq::Format(properties.Gamma)},
+            }},
+            {"Input", Opaq::object_init{
+                {"Dimensions", Opaq::array_init{inputDimensions.x, inputDimensions.y}},
+                {"Format", Opaq::Format(inputFormat)},
+                {"Flags", Opaq::Format(inputFlags)},
+                {"Gamma", Opaq::Format(inputGamma)},
+            }});
 
-    // Check for format conversion
-    if (properties.Format != inputFormat && properties.Flags != inputFlags) {
-        ::stbir_set_datatypes(&stbir_resize,
-            STBImageDataType_(inputFormat, inputGamma),
-            STBImageDataType_(properties.Format, properties.Gamma));
-
-        PPE_LOG_CHECK(Texture, !!::stbir_set_pixel_layouts(&stbir_resize,
+        // First off, you must ALWAYS call stbir_resize_init on your resize structure before any of the other calls!
+        ::STBIR_RESIZE stbir_resize;
+        ::stbir_resize_init(&stbir_resize,
+            // input:
+            inputData.data(),
+            checked_cast<int>(inputDimensions.x),
+            checked_cast<int>(inputDimensions.y),
+            0 /* 0 stride -> contiguous in memory */,
+            // output:
+            outputData.data(),
+            checked_cast<int>(outputDimensions.x),
+            checked_cast<int>(outputDimensions.y),
+            0 /* 0 stride -> contiguous in memory */,
+            // layout:
             STBImagePixelLayout_(inputFormat, inputFlags),
-            STBImagePixelLayout_(properties.Format, properties.Flags)));
-    }
+            STBImageDataType_(inputFormat, inputGamma));
 
-    // Set filtering algorithms
-    switch (MipGeneration) {
-    case ETextureMipGeneration::Default:
-        if (properties.HasAlpha()) // default Mitchell/CatmullRom give bad results with fully transparent pixels
+        // Check for format conversion
+        if (properties.Format != inputFormat && properties.Flags != inputFlags) {
+            ::stbir_set_datatypes(&stbir_resize,
+                STBImageDataType_(inputFormat, inputGamma),
+                STBImageDataType_(properties.Format, properties.Gamma));
+
+            PPE_LOG_CHECK(Texture, !!::stbir_set_pixel_layouts(&stbir_resize,
+                STBImagePixelLayout_(inputFormat, inputFlags),
+                STBImagePixelLayout_(properties.Format, properties.Flags)));
+        }
+
+        // Set filtering algorithms
+        switch (MipGeneration) {
+        case ETextureMipGeneration::Default:
+            if (properties.HasAlpha()) // default Mitchell/CatmullRom give bad results with fully transparent pixels
+                ::stbir_set_filters(&stbir_resize, STBIR_FILTER_CUBICBSPLINE, STBIR_FILTER_CUBICBSPLINE);
+            else
+                ::stbir_set_filters(&stbir_resize, STBIR_FILTER_DEFAULT, STBIR_FILTER_DEFAULT);
+            break;
+        case ETextureMipGeneration::Box:
+            ::stbir_set_filters(&stbir_resize, STBIR_FILTER_BOX, STBIR_FILTER_BOX);
+            break;
+        case ETextureMipGeneration::CubicSpine:
             ::stbir_set_filters(&stbir_resize, STBIR_FILTER_CUBICBSPLINE, STBIR_FILTER_CUBICBSPLINE);
-        else
-            ::stbir_set_filters(&stbir_resize, STBIR_FILTER_DEFAULT, STBIR_FILTER_DEFAULT);
-        break;
-    case ETextureMipGeneration::Box:
-        ::stbir_set_filters(&stbir_resize, STBIR_FILTER_BOX, STBIR_FILTER_BOX);
-        break;
-    case ETextureMipGeneration::CubicSpine:
-        ::stbir_set_filters(&stbir_resize, STBIR_FILTER_CUBICBSPLINE, STBIR_FILTER_CUBICBSPLINE);
-        break;
-    case ETextureMipGeneration::CatmullRom:
-        ::stbir_set_filters(&stbir_resize, STBIR_FILTER_CATMULLROM, STBIR_FILTER_CATMULLROM);
-        break;
-    case ETextureMipGeneration::PointSample:
-        ::stbir_set_filters(&stbir_resize, STBIR_FILTER_POINT_SAMPLE, STBIR_FILTER_POINT_SAMPLE);
-        break;
-    case ETextureMipGeneration::GaussianBlur3: FALLTHROUGH();
-    case ETextureMipGeneration::GaussianBlur5: FALLTHROUGH();
-    case ETextureMipGeneration::GaussianBlur7: FALLTHROUGH();
-    case ETextureMipGeneration::GaussianBlur9: FALLTHROUGH();
-    case ETextureMipGeneration::ContrastAdaptiveSharpen1: FALLTHROUGH();
-    case ETextureMipGeneration::ContrastAdaptiveSharpen2: FALLTHROUGH();
-    case ETextureMipGeneration::ContrastAdaptiveSharpen3: FALLTHROUGH();
-    case ETextureMipGeneration::ContrastAdaptiveSharpen4: FALLTHROUGH();
-    case ETextureMipGeneration::ContrastAdaptiveSharpen5: FALLTHROUGH();
-    case ETextureMipGeneration::ContrastAdaptiveSharpen6: FALLTHROUGH();
-    case ETextureMipGeneration::ContrastAdaptiveSharpen7: FALLTHROUGH();
-    case ETextureMipGeneration::ContrastAdaptiveSharpen8: FALLTHROUGH();
-    case ETextureMipGeneration::ContrastAdaptiveSharpen9: FALLTHROUGH();
-    case ETextureMipGeneration::MitchellNetrevalli:
-        ::stbir_set_filters(&stbir_resize, STBIR_FILTER_MITCHELL, STBIR_FILTER_MITCHELL);
-        break;
+            break;
+        case ETextureMipGeneration::CatmullRom:
+            ::stbir_set_filters(&stbir_resize, STBIR_FILTER_CATMULLROM, STBIR_FILTER_CATMULLROM);
+            break;
+        case ETextureMipGeneration::PointSample:
+            ::stbir_set_filters(&stbir_resize, STBIR_FILTER_POINT_SAMPLE, STBIR_FILTER_POINT_SAMPLE);
+            break;
+        case ETextureMipGeneration::GaussianBlur3: FALLTHROUGH();
+        case ETextureMipGeneration::GaussianBlur5: FALLTHROUGH();
+        case ETextureMipGeneration::GaussianBlur7: FALLTHROUGH();
+        case ETextureMipGeneration::GaussianBlur9: FALLTHROUGH();
+        case ETextureMipGeneration::ContrastAdaptiveSharpen1: FALLTHROUGH();
+        case ETextureMipGeneration::ContrastAdaptiveSharpen2: FALLTHROUGH();
+        case ETextureMipGeneration::ContrastAdaptiveSharpen3: FALLTHROUGH();
+        case ETextureMipGeneration::ContrastAdaptiveSharpen4: FALLTHROUGH();
+        case ETextureMipGeneration::ContrastAdaptiveSharpen5: FALLTHROUGH();
+        case ETextureMipGeneration::ContrastAdaptiveSharpen6: FALLTHROUGH();
+        case ETextureMipGeneration::ContrastAdaptiveSharpen7: FALLTHROUGH();
+        case ETextureMipGeneration::ContrastAdaptiveSharpen8: FALLTHROUGH();
+        case ETextureMipGeneration::ContrastAdaptiveSharpen9: FALLTHROUGH();
+        case ETextureMipGeneration::MitchellNetrevalli:
+            ::stbir_set_filters(&stbir_resize, STBIR_FILTER_MITCHELL, STBIR_FILTER_MITCHELL);
+            break;
+        }
+
+        // Enable edge wrapping when tiling is enabled (slower)
+        if (properties.Flags & ETextureSourceFlags::Tilable) {
+            ::stbir_set_edgemodes(&stbir_resize, STBIR_EDGE_WRAP, STBIR_EDGE_WRAP);
+        }
+
+        // Retrieve task manager for multi-thread resize
+        const FTaskManager& threadPool = FGlobalThreadPool::Get();
+
+        // This will build samplers for threading.
+        const int numSplits = ::stbir_build_samplers_with_splits(&stbir_resize,
+            checked_cast<int>(threadPool.WorkerCount()));
+        DEFERRED {
+            ::stbir_free_samplers(&stbir_resize);
+        };
+        PPE_LOG_CHECK(Texture, numSplits > 0);
+
+        const int numSucceeds = ParallelSum(0, checked_cast<size_t>(numSplits), [&stbir_resize](size_t splitIndex) -> int {
+            // This function does a split of the resizing (you call this fuction for each
+            // split, on multiple threads). A split is a piece of the output resize pixel space.
+            PPE_LOG_CHECK(Texture, !!::stbir_resize_extended_split(&stbir_resize, checked_cast<int>(splitIndex), 1));
+            return 1;
+
+        }, ETaskPriority::Normal, threadPool.GlobalContext());
+        PPE_LOG_CHECK(Texture, numSucceeds == numSplits);
     }
-
-    // Enable edge wrapping when tiling is enabled (slower)
-    if (properties.Flags & ETextureSourceFlags::Tilable) {
-        ::stbir_set_edgemodes(&stbir_resize, STBIR_EDGE_WRAP, STBIR_EDGE_WRAP);
-    }
-
-    // Retrieve task manager for multi-thread resize
-    const FTaskManager& threadPool = FGlobalThreadPool::Get();
-
-    // This will build samplers for threading.
-    const int numSplits = ::stbir_build_samplers_with_splits(&stbir_resize,
-        checked_cast<int>(threadPool.WorkerCount()));
-    DEFERRED {
-        ::stbir_free_samplers(&stbir_resize);
-    };
-    PPE_LOG_CHECK(Texture, numSplits > 0);
-
-    const int numSucceeds = ParallelSum(0, checked_cast<size_t>(numSplits), [&stbir_resize](size_t splitIndex) -> int {
-        // This function does a split of the resizing (you call this fuction for each
-        // split, on multiple threads). A split is a piece of the output resize pixel space.
-        PPE_LOG_CHECK(Texture, !!::stbir_resize_extended_split(&stbir_resize, checked_cast<int>(splitIndex), 1));
-        return 1;
-
-    }, ETaskPriority::Normal, threadPool.GlobalContext());
-    PPE_LOG_CHECK(Texture, numSucceeds == numSplits);
 
     // Handle optional post-processing
     switch (MipGeneration) {
@@ -485,6 +530,12 @@ bool FTextureGeneration::FloodMipChainWithAlpha(
     PPE_LOG_CHECK(Texture, properties.NumComponents() > 1);
     PPE_LOG_CHECK(Texture, properties.HasAlpha());
 
+    BENCHMARK_SCOPE_ARGS(Texture, "FloodMipChainWithAlpha",
+        {"Dimensions", Opaq::array_init{properties.Dimensions.x, properties.Dimensions.y, properties.Dimensions.z}},
+        {"Format", Opaq::Format(properties.Format)},
+        {"Flags", Opaq::Format(properties.Flags)},
+        {"NumMips", properties.NumMips} );
+
     // https://youtu.be/MKX45_riWQA?si=zyuadh4gH5oD3oSb&t=3026
 
     const RHI::FPixelFormatInfo pixelInfo = EPixelFormat_Infos(FTextureSourceProperties::PixelFormat(properties));
@@ -545,6 +596,13 @@ float FTextureGeneration::AlphaTestCoverage2D(
     const uint2& dimensions,
     const FRawMemoryConst& mipData,
     const float alphaScale ) const NOEXCEPT {
+    BENCHMARK_SCOPE_ARGS(Texture, "AlphaTestCoverage2D",
+        {"Dimensions", Opaq::array_init{dimensions.x, dimensions.y}},
+        {"Format", Opaq::Format(properties.Format)},
+        {"Flags", Opaq::Format(properties.Flags)},
+        {"AlphaCutoff", AlphaCutoff},
+        {"AlphaScale", alphaScale} );
+
     const RHI::FImageView::subpart_type subParts[1] = { mipData };
     const RHI::FImageView view{ subParts, {dimensions,1}, FTextureSourceProperties::PixelFormat(properties), RHI::EImageAspect::Color,
         properties.IsTilable() };
@@ -562,10 +620,12 @@ float FTextureGeneration::AlphaTestCoverage2D(
             view.Load(&pixel01, uint3{x+0,y+1,0});
             view.Load(&pixel11, uint3{x+1,y+1,0});
 
-            pixel00.w = Saturate(pixel00.w * alphaScale);
-            pixel01.w = Saturate(pixel01.w * alphaScale);
-            pixel10.w = Saturate(pixel10.w * alphaScale);
-            pixel11.w = Saturate(pixel11.w * alphaScale);
+            const float4 alpha0123{
+                Saturate(pixel00.w * alphaScale),
+                Saturate(pixel10.w * alphaScale),
+                Saturate(pixel11.w * alphaScale),
+                Saturate(pixel01.w * alphaScale),
+            };
 
             constexpr u32 superSampling = 4;
             u32 texelCoverage = 0;
@@ -575,7 +635,7 @@ float FTextureGeneration::AlphaTestCoverage2D(
                 forrange(sx, 0, superSampling) {
                     const float fx = (sx + 0.5f) / superSampling;
 
-                    const float alpha = BilateralLerp(pixel00.w, pixel10.w, pixel11.w, pixel01.w, fx, fy);
+                    const float alpha = BilateralLerp(alpha0123.x, alpha0123.y, alpha0123.z, alpha0123.w, fx, fy);
                     if (alpha > AlphaCutoff)
                         texelCoverage++;
                 }
@@ -600,6 +660,14 @@ void FTextureGeneration::ScaleAlphaToCoverage2D(
     float alphaScale = 1.0f;
     float bestAlphaScale = 1.0f;
     float bestError = FLT_MAX;
+    BENCHMARK_SCOPE_ARGS(Texture, "ScaleAlphaToCoverage2D",
+        {"Dimensions", Opaq::array_init{dimensions.x, dimensions.y}},
+        {"Format", Opaq::Format(properties.Format)},
+        {"Flags", Opaq::Format(properties.Flags)},
+        {"AlphaCutoff", AlphaCutoff},
+        {"DesiredCoverage", desiredCoverage},
+        {"BestAlphaScale", bestAlphaScale},
+        {"BestError", bestError} );
 
     // Determine desired scale using a binary search. Hard-coded to 10 steps max.
     for (int i = 0; i < 10; i++) {
@@ -631,6 +699,13 @@ void FTextureGeneration::ScaleBias(
     const FRawMemory& mipData,
     const float4& scale,
     const float4& bias ) NOEXCEPT {
+    BENCHMARK_SCOPE_ARGS(Texture, "ScaleBias",
+        {"Dimensions", Opaq::array_init{dimensions.x, dimensions.y, dimensions.z}},
+        {"Format", Opaq::Format(properties.Format)},
+        {"Flags", Opaq::Format(properties.Flags)},
+        {"Scale", Opaq::array_init{scale.x, scale.y, scale.z, scale.w}},
+        {"Bias", Opaq::array_init{bias.x, bias.y, bias.z, bias.w}} );
+
     const RHI::FImageView::subpart_type subParts[1] = { mipData };
     const RHI::FImageView view{ subParts, dimensions, FTextureSourceProperties::PixelFormat(properties), RHI::EImageAspect::Color,
         properties.IsTilable() };
@@ -655,8 +730,15 @@ void FTextureGeneration::GenerateAlphaDistanceField2D(
     const FRawMemory& mipData,
     const float spreadRatio01 ) const {
     Assert(spreadRatio01 >= 0 && spreadRatio01 <= 1);
-
     const i32 spreadDistance = Max(1, CeilToInt((float2(properties.Dimensions.xy) * Lerp(0.002f, 0.1f, spreadRatio01)).MaxComponent()));
+
+    BENCHMARK_SCOPE_ARGS(Texture, "GenerateAlphaDistanceField2D",
+        {"Dimensions", Opaq::array_init{dimensions.x, dimensions.y}},
+        {"Format", Opaq::Format(properties.Format)},
+        {"Flags", Opaq::Format(properties.Flags)},
+        {"AlphaCutoff", AlphaCutoff},
+        {"SpreadRatio01", spreadRatio01},
+        {"SpreadDistance", spreadDistance});
 
     const RHI::FImageView::subpart_type subPartsDst[1] = { mipData };
     const RHI::FImageView viewDst{ subPartsDst, {dimensions,1}, FTextureSourceProperties::PixelFormat(properties), RHI::EImageAspect::Color,
@@ -717,6 +799,13 @@ void FTextureGeneration::ContrastAdaptiveSharpening2D(
     const FRawMemory& mipData,
     const float sharpenFactor01 ) const {
     Assert(sharpenFactor01 >= 0 && sharpenFactor01 <= 1);
+
+    BENCHMARK_SCOPE_ARGS(Texture, "ContrastAdaptiveSharpening2D",
+        {"Dimensions", Opaq::array_init{dimensions.x, dimensions.y}},
+        {"Format", Opaq::Format(properties.Format)},
+        {"Flags", Opaq::Format(properties.Flags)},
+        {"SharpenFactor01", sharpenFactor01},
+        {"HasAlpha", properties.HasAlpha()} );
 
     const RHI::FImageView::subpart_type subPartsDst[1] = { mipData };
     const RHI::FImageView viewDst{ subPartsDst, {dimensions,1}, FTextureSourceProperties::PixelFormat(properties), RHI::EImageAspect::Color,
@@ -816,6 +905,7 @@ void FTextureGeneration::ContrastAdaptiveSharpening2D(
                     // leave transparent pixels untouched
                     viewSrc.Load(&e, uint3{x, y, 0});
                     viewDst.Store(uint3{x, y, 0}, e);
+                    continue;
                 }
 
                 // Smooth minimum distance to signal limit divided by smooth max.
@@ -911,7 +1001,6 @@ void FTextureGeneration::ContrastAdaptiveSharpening2D(
             }
         });
     }
-
 }
 //----------------------------------------------------------------------------
 void FTextureGeneration::GaussianBlur2D(
@@ -922,6 +1011,13 @@ void FTextureGeneration::GaussianBlur2D(
     const float sigma01/* = 1.0f */) const {
     Assert(windowSize > 0);
     Assert(sigma01 >= 0 && sigma01 <= 1);
+
+    BENCHMARK_SCOPE_ARGS(Texture, "GaussianBlur2D",
+        {"Dimensions", Opaq::array_init{dimensions.x, dimensions.y}},
+        {"Format", Opaq::Format(properties.Format)},
+        {"Flags", Opaq::Format(properties.Flags)},
+        {"WindowSize", windowSize},
+        {"Sigma01", sigma01});
 
     // prepare 1D Gaussian kernel
     const u32 kernelSize = (windowSize-1)/2;

@@ -13,7 +13,7 @@
 
 #define PUBLIC_EVENT(_NAME, ...) \
     protected: \
-        ::PPE::TEvent< __VA_ARGS__ , false > CONCAT(_, _NAME); \
+        mutable ::PPE::TEvent< __VA_ARGS__ , false > CONCAT(_, _NAME); \
     public: \
         ::PPE::TPublicEvent< __VA_ARGS__ , false >& _NAME() { \
             return CONCAT(_, _NAME).Public(); \
@@ -21,7 +21,7 @@
 
 #define THREADSAFE_EVENT(_NAME, ...) \
     protected: \
-        ::PPE::TEvent< __VA_ARGS__ , true > CONCAT(_, _NAME); \
+        mutable ::PPE::TEvent< __VA_ARGS__ , true > CONCAT(_, _NAME); \
     public: \
         ::PPE::TPublicEvent< __VA_ARGS__ , true >& _NAME() { \
             return CONCAT(_, _NAME).Public(); \
@@ -43,31 +43,39 @@ public:
     using FHandle = FEventHandle;
     using FInvocationList = SPARSEARRAY_INSITU(Event, FDelegate);
 
-    TPublicEvent() NOEXCEPT {}
+    TPublicEvent() = default;
 
     TPublicEvent(const TPublicEvent&) = delete;
     TPublicEvent& operator =(const TPublicEvent&) = delete;
 
-    TPublicEvent(TPublicEvent&&) = delete;
     TPublicEvent& operator =(TPublicEvent&&) = delete;
+
+    TPublicEvent(TPublicEvent&& rvalue) NOEXCEPT
+    :   _delegates(std::move(*rvalue._delegates.LockExclusive()))
+    {}
 
     bool empty() const { return _delegates.LockShared()->empty(); }
 
-    NODISCARD FHandle Add(FDelegate&& rfunc) {
+    FHandle Add(FDelegate&& rfunc) {
         Assert(rfunc);
         const auto delegatesRW = _delegates.LockExclusive();
         return FHandle(delegatesRW->Emplace(std::move(rfunc)));
     }
 
     template <auto _OtherFunc, typename... _Extra>
-    NODISCARD FHandle Bind(_Extra... extra) {
+    FHandle Bind(_Extra... extra) {
         return Add(FDelegate::template Bind<_OtherFunc>(std::forward<_Extra>(extra)...));
     }
 
     void Emplace(FDelegate&& rfunc) {
         Assert(rfunc);
         const auto delegatesRW = _delegates.LockExclusive();
-        delegatesRW->Emplace(std::move(rfunc));
+        delegatesRW->EmplaceIt(std::move(rfunc));
+    }
+
+    template <auto _OtherFunc, typename... _Extra>
+    void Emplace(_Extra... extra) {
+        Emplace(FDelegate::template Bind<_OtherFunc>(std::forward<_Extra>(extra)...));
     }
 
     void FireAndForget(FDelegate&& rfunc) {
@@ -92,7 +100,7 @@ public:
 
 protected:
     TThreadSafe<FInvocationList, (!!_ThreadSafe
-        ? EThreadBarrier::RWLock
+        ? EThreadBarrier::AtomicReadWriteLock
         : EThreadBarrier::DataRaceCheck )> _delegates;
 };
 //----------------------------------------------------------------------------
@@ -120,6 +128,7 @@ public:
     using typename public_event_t::FInvocationList;
 
     TEvent() = default;
+    TEvent(TEvent&&) = default;
 
     using public_event_t::Add;
     using public_event_t::Emplace;
@@ -172,6 +181,7 @@ public:
     using typename public_event_t::FInvocationList;
 
     TEvent() = default;
+    TEvent(TEvent&&) = default;
 
     using public_event_t::Add;
     using public_event_t::Emplace;

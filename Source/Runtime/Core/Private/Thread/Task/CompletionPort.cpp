@@ -22,6 +22,7 @@ STATIC_ASSERT(uintptr_t(ETaskPriority::Internal) == 3);
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 FCompletionPort::~FCompletionPort() {
+    const FCriticalScope scopeLock(&_barrier);
     Assert((CP_NotReady == _countDown) || (CP_Finished == _countDown));
     Assert(_queue.empty());
     Assert(_children.empty());
@@ -42,7 +43,7 @@ void FCompletionPort::AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPrio
     // already finished then we'd switch directly back to the original fiber.
 
     FTaskFiberPool::AttachWakeUpCallback(preparedFiber,
-        TFunction<void()>::Bind<&FCompletionPort::QueueWaitingFiber_>(this, FInterruptedTask{
+        TFunction<void()>::Bind<&FCompletionPort::QueueWaitingFiber_>(MakePtrRef(this), FInterruptedTask{
             ITaskContext::Get(), FTaskFiberPool::CurrentHandleRef(), priority
         }));
 
@@ -61,10 +62,11 @@ void FCompletionPort::AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPrio
     }
 }
 //----------------------------------------------------------------------------
-void FCompletionPort::QueueWaitingFiber_(const FInterruptedTask& waiting) {
-    _queue.push_back(waiting);
+void FCompletionPort::QueueWaitingFiber_(FCompletionPort* port, const FInterruptedTask& waiting) {
+    Assert_NoAssume(CP_NotReady != port->_countDown);
 
-    _barrier.Unlock();
+    port->_queue.push_back(waiting);
+    port->_barrier.Unlock();
 }
 //----------------------------------------------------------------------------
 void FCompletionPort::Start(size_t n) NOEXCEPT {

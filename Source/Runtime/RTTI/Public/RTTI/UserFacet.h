@@ -9,69 +9,57 @@ namespace PPE::RTTI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct PPE_RTTI_API FGenericUserFacet {};
+//----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR bool is_user_facet = std::is_base_of_v<FGenericUserFacet, T>;
 //----------------------------------------------------------------------------
+namespace details {
 template <typename _Meta>
-struct TUserFacetTraits {
-    using decorate_f = void (*)(void*, const _Meta& meta, void* data) NOEXCEPT;
-    using validate_f = void (*)(void*, const _Meta& meta, const void* data);
-
-    template <typename T>
-    using has_decorator_t = decltype(std::declval<T&>().Decorate(nullptr, std::declval<const _Meta&>(), std::declval<void*>()));
-    template <typename T>
-    using has_validator_t = decltype(std::declval<T&>().Validate(nullptr, std::declval<const _Meta&>(), std::declval<const void*>()));
-
-    using meta = _Meta;
-    using type = TTuple<decorate_f, validate_f>;
-
-    template <typename T>
-    static type BindCallbacks(T*) NOEXCEPT {
-        STATIC_ASSERT(is_user_facet<T>);
-        type result{};
-        IF_CONSTEXPR(Meta::has_defined_v<has_decorator_t, T>)
-            std::get<decorate_f>(result) = [](void* user, const _Meta& meta, void* data) NOEXCEPT {
-                static_cast<T*>(user)->Decorate(meta, data);
-            };
-        IF_CONSTEXPR(Meta::has_defined_v<has_validator_t, T>)
-            std::get<validate_f>(result) = [](void* user, const _Meta& meta, const void* data) {
-                static_cast<T*>(user)->Validate(meta, data);
-            };
-        return result;
-    }
-};
+struct TUserFacetDecorate : TPolymorphicLambda<
+    [](auto* p, const _Meta& meta, void* data) -> decltype(p->Decorate(meta, data)) {
+        return p->Decorate(meta, data);
+    },
+    void, const _Meta&, void*
+> {};
+} //!details
+//----------------------------------------------------------------------------
+namespace details {
+template <typename _Meta>
+struct TUserFacetValidate : TPolymorphicLambda<
+    [](auto* p, const _Meta& meta, const void* data) -> decltype(p->Validate(meta, data)) {
+        return p->Validate(meta, data);
+    },
+    void, const _Meta&, const void*
+> {};
+} //!details
 //----------------------------------------------------------------------------
 template <typename _Meta>
-class TUserFacet : public TPolymorphicTuple<ALLOCATOR(UserFacet), TUserFacetTraits<_Meta> > {
-    using pmr_traits_type = TUserFacetTraits<_Meta>;
-    using pmr_tuple_type = TPolymorphicTuple<ALLOCATOR(UserFacet), pmr_traits_type>;
-
+class TUserFacet : public TPolymorphicTuple<
+    ALLOCATOR(UserFacet),
+    details::TUserFacetDecorate<_Meta>,
+    details::TUserFacetValidate<_Meta>
+> {
 public:
+    using parent_type = TPolymorphicTuple<
+        ALLOCATOR(UserFacet),
+        details::TUserFacetDecorate<_Meta>,
+        details::TUserFacetValidate<_Meta>
+    >;
+
+    using parent_type::parent_type;
+    using parent_type::Broadcast;
+
     TUserFacet() = default;
 
-    using pmr_tuple_type::empty;
-    using pmr_tuple_type::size;
-
-    using pmr_tuple_type::Get;
-    using pmr_tuple_type::GetIFP;
-
-    using pmr_tuple_type::Add;
-    using pmr_tuple_type::Remove;
-    using pmr_tuple_type::Broadcast;
-    using pmr_tuple_type::Clear;
-
-    void Decorate(const _Meta& meta, void* data) const NOEXCEPT {
+    void Decorate(const _Meta& meta, void* data) const {
         Assert(data);
-        _tuple.template Broadcast<typename pmr_traits_type::decorate_f>(meta, data);
+        parent_type::template Broadcast<details::TUserFacetDecorate<_Meta>>(meta, data);
     }
 
-    void Validate(const _Meta& meta, const void* data) const NOEXCEPT {
+    void Validate(const _Meta& meta, const void* data) const {
         Assert(data);
-        _tuple.template Broadcast<typename pmr_traits_type::validate_f>(meta, data);
+        parent_type::template Broadcast<details::TUserFacetValidate<_Meta>>(meta, data);
     }
-
-private:
-    pmr_tuple_type _tuple;
 };
 //----------------------------------------------------------------------------
 using FMetaClassFacet = TUserFacet<FMetaClass>;

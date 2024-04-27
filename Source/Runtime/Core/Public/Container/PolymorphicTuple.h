@@ -16,25 +16,57 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-struct FPolymorphicTupleTraits {
-    using type = TTuple<>;
+template <template<class> class _Func, typename _Ret, typename... _Args>
+struct TPolymorphicFunc {
+    using result = _Ret;
+    struct type {
+        _Ret(*fn)(void*, _Args...){ nullptr };
+    };
     template <typename T>
-    static type BindCallbacks(T*) NOEXCEPT {
-        return Default;
+    static CONSTEXPR type Bind() {
+        type result{};
+        if constexpr (Meta::has_defined_v<_Func, T>)
+            result.fn = [](void* p, _Args... args) -> _Ret {
+                return (static_cast<T*>(p)->*_Func<T>::value)(std::forward<_Args>(args)...);
+            };
+        return result;
     }
 };
 //----------------------------------------------------------------------------
-template <typename _Allocator = ALLOCATOR(Container), typename _Traits = FPolymorphicTupleTraits>
-class TPolymorphicTuple : private _Traits {
+template <auto _Lambda, typename _Ret, typename... _Args>
+struct TPolymorphicLambda {
+    using result = _Ret;
+    struct type {
+        _Ret(*fn)(void*, _Args...){ nullptr };
+    };
+    template <typename T>
+    using available_t = decltype(_Lambda(std::declval<T*>(), std::declval<_Args>()...));
+    template <typename T>
+    static CONSTEXPR type Bind() {
+        type result{};
+        if constexpr (Meta::has_defined_v<available_t, T>)
+            result.fn = [](void* p, _Args... args) -> _Ret {
+                return _Lambda(static_cast<T*>(p), std::forward<_Args>(args)...);
+            };
+        return result;
+    }
+};
+//----------------------------------------------------------------------------
+template <typename _Allocator = ALLOCATOR(Container), typename... _Funcs>
+class TPolymorphicTuple {
 public:
     using allocator_type = _Allocator;
     using allocator_traits = TAllocatorTraits<_Allocator>;
-    using polymorphic_traits = _Traits;
 
-    using FDeleterFunc = void (*)(void*, allocator_type& );
-    using FVirtualTable = decltype(std::tuple_cat(
-        std::make_tuple(std::declval<FDeleterFunc>()),
-        std::declval<typename polymorphic_traits::type>() ));
+    struct FDeleterFunc {
+        using type = FDeleterFunc;
+        void (*fn)(void*, allocator_type&){nullptr};
+    };
+
+    using FVirtualTable = std::tuple<
+        FDeleterFunc,
+        typename _Funcs::type...
+    >;
 
     using FTypeKey = Meta::type_info_t;
 
@@ -45,8 +77,8 @@ public:
         template <typename _Callback, typename... _Args>
         bool Invoke(_Args&&... args) const {
             Assert(Data);
-            if (const _Callback callback = std::get<_Callback>(Callbacks)) {
-                callback(Data, std::forward<_Args>(args)...);
+            if (const _Callback callback = std::get<_Callback>(Callbacks); callback.fn) {
+                callback.fn(Data, std::forward<_Args>(args)...);
                 return true;
             }
             return false;
@@ -83,10 +115,11 @@ public:
         return _items.GetIFP(key);
     }
 
-    template <typename _Callback, typename... _Args>
+    template <typename _Func, typename... _Args, decltype(std::declval<typename _Func::type>().fn(nullptr, std::declval<_Args&&>()...))* = nullptr>
     void Broadcast(_Args&&... args) const {
+        using callback_t = typename _Func::type;
         for (const auto& it : _items)
-            it.second.template Invoke<_Callback>(std::forward<_Args>(args)...);
+            it.second.template Invoke<callback_t>(std::forward<_Args>(args)...);
     }
 
     template <typename T>
@@ -202,15 +235,15 @@ private:
     FItemMap _items;
 
     template <typename T, typename _Derived = T>
-    void Insert_AssertUnique_(_Derived* rawPtr, FDeleterFunc deleter = nullptr) {
+    void Insert_AssertUnique_(_Derived* rawPtr, decltype(FDeleterFunc::fn) deleter = nullptr) {
         Assert(rawPtr);
         _items.Insert_AssertUnique(
             FTypeKey{ Meta::type_info<T> },
             FOpaqueItem{
                 rawPtr,
-                std::tuple_cat(
-                    std::make_tuple(deleter),
-                    polymorphic_traits::template BindCallbacks<_Derived>(rawPtr) ) });
+                std::make_tuple(
+                    FDeleterFunc{deleter},
+                    _Funcs::template Bind<T>()... ) });
     }
 };
 //----------------------------------------------------------------------------

@@ -9,6 +9,17 @@ namespace Application {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+static constexpr EGamepadAxis GEachGamepadAxises[] = {
+    EGamepadAxis::Stick0,
+    EGamepadAxis::Stick1,
+    EGamepadAxis::Stick2,
+    EGamepadAxis::Stick3,
+    EGamepadAxis::Trigger0,
+    EGamepadAxis::Trigger1,
+    EGamepadAxis::Trigger2,
+    EGamepadAxis::Trigger4,
+};
+//----------------------------------------------------------------------------
 static constexpr EGamepadButton GEachGamepadButtons[] = {
     EGamepadButton::Button0,
     EGamepadButton::Button1,
@@ -30,77 +41,93 @@ static constexpr EGamepadButton GEachGamepadButtons[] = {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FStringView GamepadButtonToCStr(EGamepadButton value) {
+FStringLiteral GamepadAxisToXBoxCStr(EGamepadAxis value) NOEXCEPT {
     switch (value) {
-    case PPE::Application::EGamepadButton::Button0:
-        return MakeStringView("Button0");
-    case PPE::Application::EGamepadButton::Button1:
-        return MakeStringView("Button1");
-    case PPE::Application::EGamepadButton::Button2:
-        return MakeStringView("Button2");
-    case PPE::Application::EGamepadButton::Button3:
-        return MakeStringView("Button3");
-    case PPE::Application::EGamepadButton::Button4:
-        return MakeStringView("Button4");
-    case PPE::Application::EGamepadButton::Button5:
-        return MakeStringView("Button5");
-    case PPE::Application::EGamepadButton::Button6:
-        return MakeStringView("Button6");
-    case PPE::Application::EGamepadButton::Button7:
-        return MakeStringView("Button7");
-    case PPE::Application::EGamepadButton::Button8:
-        return MakeStringView("Button8");
-    case PPE::Application::EGamepadButton::Button9:
-        return MakeStringView("Button9");
-    case PPE::Application::EGamepadButton::DPadUp:
-        return MakeStringView("DPadUp");
-    case PPE::Application::EGamepadButton::DPadLeft:
-        return MakeStringView("DPadLeft");
-    case PPE::Application::EGamepadButton::DPadRight:
-        return MakeStringView("DPadRight");
-    case PPE::Application::EGamepadButton::DPadDown:
-        return MakeStringView("DPadDown");
+    case EGamepadAxis::Stick0: return "GamepadStick0";
+    case EGamepadAxis::Stick1: return "GamepadStick1";
+    case EGamepadAxis::Stick2: return "GamepadStick2";
+    case EGamepadAxis::Stick3: return "GamepadStick3";
+    case EGamepadAxis::Trigger0: return "GamepadTrigger0";
+    case EGamepadAxis::Trigger1: return "GamepadTrigger1";
+    case EGamepadAxis::Trigger2: return "GamepadTrigger2";
+    case EGamepadAxis::Trigger4: return "GamepadTrigger4";
     }
 
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-FStringView GamepadButtonToXBoxCStr(EGamepadButton value) {
+FStringLiteral GamepadAxisToCStr(EGamepadAxis value) NOEXCEPT {
+    switch (value) {
+    case EGamepadAxis::LeftStick: return "LeftStick";
+    case EGamepadAxis::RightStick: return "RightStick";
+    case EGamepadAxis::LeftTrigger: return "LeftTrigger";
+    case EGamepadAxis::RightTrigger:  return "RightTrigger";
+    default:
+        AssertNotImplemented();
+    }
+}
+//----------------------------------------------------------------------------
+FStringLiteral GamepadButtonToCStr(EGamepadButton value) NOEXCEPT {
+    switch (value) {
+    case EGamepadButton::Button0: return "GamepadButton0";
+    case EGamepadButton::Button1: return "GamepadButton1";
+    case EGamepadButton::Button2: return "GamepadButton2";
+    case EGamepadButton::Button3: return "GamepadButton3";
+    case EGamepadButton::Button4: return "GamepadButton4";
+    case EGamepadButton::Button5: return "GamepadButton5";
+    case EGamepadButton::Button6: return "GamepadButton6";
+    case EGamepadButton::Button7: return "GamepadButton7";
+    case EGamepadButton::Button8: return "GamepadButton8";
+    case EGamepadButton::Button9: return "GamepadButton9";
+    case EGamepadButton::DPadUp: return "GamepadDPadUp";
+    case EGamepadButton::DPadLeft: return "GamepadDPadLeft";
+    case EGamepadButton::DPadRight: return "GamepadDPadRight";
+    case EGamepadButton::DPadDown: return "GamepadDPadDown";
+    }
+
+    AssertNotImplemented();
+}
+//----------------------------------------------------------------------------
+FStringLiteral GamepadButtonToXBoxCStr(EGamepadButton value) NOEXCEPT {
     switch (value) {
     case PPE::Application::EGamepadButton::A:
-        return MakeStringView("A");
+        return "A";
     case PPE::Application::EGamepadButton::B:
-        return MakeStringView("B");
+        return "B";
     case PPE::Application::EGamepadButton::X:
-        return MakeStringView("X");
+        return "X";
     case PPE::Application::EGamepadButton::Y:
-        return MakeStringView("Y");
+        return "Y";
     case PPE::Application::EGamepadButton::LeftThumb:
-        return MakeStringView("LeftThumb");
+        return "LeftThumb";
     case PPE::Application::EGamepadButton::RightThumb:
-        return MakeStringView("RightThumb");
+        return "RightThumb";
     case PPE::Application::EGamepadButton::Start:
-        return MakeStringView("Start");
+        return "Start";
     case PPE::Application::EGamepadButton::Back:
-        return MakeStringView("Back");
+        return "Back";
     case PPE::Application::EGamepadButton::LeftShoulder:
-        return MakeStringView("LeftShoulder");
+        return "LeftShoulder";
     case PPE::Application::EGamepadButton::RightShoulder:
-        return MakeStringView("RightShoulder");
+        return "RightShoulder";
     case PPE::Application::EGamepadButton::DPadUp:
-        return MakeStringView("DPadUp");
+        return "DPadUp";
     case PPE::Application::EGamepadButton::DPadLeft:
-        return MakeStringView("DPadLeft");
+        return "DPadLeft";
     case PPE::Application::EGamepadButton::DPadRight:
-        return MakeStringView("DPadRight");
+        return "DPadRight";
     case PPE::Application::EGamepadButton::DPadDown:
-        return MakeStringView("DPadDown");
+        return "DPadDown";
     }
 
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-TMemoryView<const EGamepadButton> EachGamepadButtons() {
+TMemoryView<const EGamepadAxis> EachGamepadAxises() NOEXCEPT {
+    return MakeConstView(GEachGamepadAxises);
+}
+//----------------------------------------------------------------------------
+TMemoryView<const EGamepadButton> EachGamepadButtons() NOEXCEPT {
     return MakeConstView(GEachGamepadButtons);
 }
 //----------------------------------------------------------------------------

@@ -199,7 +199,7 @@ FUniqueBuffer FVirtualFileSystem::ReadAll(const FFilename& filename, EAccessPoli
         PPE_LOG_CHECK(VFS, reader->ReadView(content.MakeView()) && reader->Eof());
 
         if (Likely(not needDecompress))
-            return std::move(content);
+            return content;
 
         return Compression::DecompressBuffer(content.MoveToShared());
     }

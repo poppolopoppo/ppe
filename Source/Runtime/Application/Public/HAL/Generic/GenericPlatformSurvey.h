@@ -11,6 +11,8 @@ namespace Application {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct PPE_APPLICATION_API FGenericDisplayAdapter {
+    FGenericDisplayAdapter() = default;
+
     enum class EVendor {
         Amd,
         Intel,
@@ -20,16 +22,18 @@ struct PPE_APPLICATION_API FGenericDisplayAdapter {
 
     FWString DeviceName;
     FWString DeviceDescription;
-    bool Primary;
-    EVendor Vendor;
+    bool Primary{false};
+    EVendor Vendor{Default};
 };
 //----------------------------------------------------------------------------
 struct PPE_APPLICATION_API FGenericMonitorInfo {
+    FGenericMonitorInfo() = default;
+
     struct FResolution {
-        u32 Width;
-        u32 Height;
-        u32 BitsPerPixel;
-        u32 RefreshRate;
+        u32 Width{0};
+        u32 Height{0};
+        u32 BitsPerPixel{0};
+        u32 RefreshRate{0};
     };
 
     enum EOrientation {
@@ -41,30 +45,32 @@ struct PPE_APPLICATION_API FGenericMonitorInfo {
 
     FWString MonitorName;
 
-    int ScreenX;
-    int ScreenY;
+    int ScreenX{0};
+    int ScreenY{0};
 
-    int SafeX;
-    int SafeY;
-    size_t SafeWidth;
-    size_t SafeHeight;
+    int SafeX{0};
+    int SafeY{0};
+    size_t SafeWidth{0};
+    size_t SafeHeight{0};
 
-    bool Primary;
-    EOrientation Orientation;
+    bool Primary{false};
+    EOrientation Orientation{Default};
 
-    u32 DPIScale;
+    u32 DPIScale{0};
 
-    FResolution CurrentResolution;
+    FResolution CurrentResolution{};
     VECTORINSITU(Survey, FResolution, 8) SupportedResolutions;
 };
 //----------------------------------------------------------------------------
 struct PPE_APPLICATION_API FGenericStorageInfo {
+    FGenericStorageInfo() = default;
+
     FWString MountPath;
     FWString FileSystem;
     FWString VolumeName;
 
-    u64 FreeSizeInBytes;
-    u64 TotalSizeInBytes;
+    u64 FreeSizeInBytes{0};
+    u64 TotalSizeInBytes{0};
 
     bool CanRead        : 1;
     bool CanWrite       : 1;

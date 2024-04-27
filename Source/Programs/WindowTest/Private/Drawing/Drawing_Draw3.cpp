@@ -111,7 +111,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         .Draw(3)
         .SetPipeline(*ppln)
         .SetTopology(EPrimitiveTopology::TriangleList)
-        .AddScissor(FRectangleU{0, 0, viewSize.x, viewSize.y / 2}) );
+        .AddScissor(FRectangle2u{0, 0, viewSize.x, viewSize.y / 2}) );
 
     const PFrameTask tDraw = cmd->Task(FSubmitRenderPass{ renderPass });
     Unused(tDraw);

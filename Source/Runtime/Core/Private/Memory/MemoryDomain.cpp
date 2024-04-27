@@ -7,6 +7,7 @@
 #include "Memory/MemoryTracking.h"
 #include "Memory/MemoryView.h"
 
+#include "Container/Appendable.h"
 #include "Diagnostic/Logger.h"
 #include "Meta/OneTimeInitialize.h"
 
@@ -157,6 +158,18 @@ public:
 
         for (FMemoryTracking* node = _domains.Head(); node; node = node->Node.Next)
             plist.push_back(node);
+    }
+
+    bool ForeachDatas(void* user, bool (*each)(void*, const FMemoryTracking&)) const NOEXCEPT {
+        Assert(each);
+        const FAtomicSpinLock::FScope scopeLock(_barrier);
+
+        for (FMemoryTracking* node = _domains.Head(); node; node = node->Node.Next) {
+            if (not each(user, *node))
+                return false;
+        }
+
+        return true;
     }
 
     void RegisterObserver(ITrackingDataObserver* pObserver) {
@@ -428,12 +441,22 @@ void UnregisterTrackingDataObserver(ITrackingDataObserver* pObserver) {
 #endif
 }
 //----------------------------------------------------------------------------
-bool AllTrackingData(void* user, bool (*each)(void*, TMemoryView<const FMemoryTracking* const>)) NOEXCEPT {
+bool AllTrackingDataSorted(void* user, bool (*each)(void*, TMemoryView<const FMemoryTracking* const>)) NOEXCEPT {
 #if USE_PPE_MEMORYDOMAINS
     Assert(each);
     FTrackingDataRegistry_::FMemoryDomainsList datas;
     FetchAllTrackingDataSorted_(&datas);
     return each(user, datas.MakeView());
+#else
+    Unused(user);
+    Unused(each);
+    return false;
+#endif
+}
+//----------------------------------------------------------------------------
+bool ForeachTrackingDataUnsorted(void* user, bool (*each)(void*, const FMemoryTracking&)) NOEXCEPT {
+#if USE_PPE_MEMORYDOMAINS
+    return FTrackingDataRegistry_::Get().ForeachDatas(user, each);
 #else
     Unused(user);
     Unused(each);

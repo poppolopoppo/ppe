@@ -6,7 +6,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_CORE_API FDiagnosticsStartup {
+class FDiagnosticsStartup {
 public:
     FDiagnosticsStartup() {
         Start();
@@ -16,8 +16,8 @@ public:
         Shutdown();
     }
 
-    static void Start();
-    static void Shutdown();
+    PPE_CORE_API static void Start();
+    PPE_CORE_API static void Shutdown();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -15,7 +15,7 @@ STATIC_ASSERT(sizeof(u32) == sizeof(UX10Y10Z10W2N));
 //----------------------------------------------------------------------------
 // https://www.benicourt.com/blender/wp-content/uploads/2015/03/gdc2015_rendering_the_world_of_far_cry_4.pdf
 //----------------------------------------------------------------------------
-UX10Y10Z10W2N Quaternion_to_UX10Y10Z10W2N(const FQuaternion& quaternion) {
+UX10Y10Z10W2N Quaternion_to_UX10Y10Z10W2N(const FQuaternion& quaternion) NOEXCEPT {
     float4 q = quaternion.data;
     const size_t index = q.xyz.MaxComponentIndex();
     if (0 == index) q = q.yzwx;
@@ -27,7 +27,7 @@ UX10Y10Z10W2N Quaternion_to_UX10Y10Z10W2N(const FQuaternion& quaternion) {
     return packed;
 }
 //----------------------------------------------------------------------------
-FQuaternion UX10Y10Z10W2N_to_Quaternion(const UX10Y10Z10W2N& packed) {
+FQuaternion UX10Y10Z10W2N_to_Quaternion(const UX10Y10Z10W2N& packed) NOEXCEPT {
     float4 quaternion(
         packed._x * Sqrt2_v<float> - Sqrt2OO,
         packed._y * Sqrt2_v<float> - Sqrt2OO,
@@ -41,6 +41,16 @@ FQuaternion UX10Y10Z10W2N_to_Quaternion(const UX10Y10Z10W2N& packed) {
     if (2 == index) quaternion = quaternion.xywz;
 
     return FQuaternion(quaternion);
+}
+//----------------------------------------------------------------------------
+// // https://www.shadertoy.com/view/NsfBWf
+//----------------------------------------------------------------------------
+ubyte2n Normal_to_UByte2n(const float3& normal) NOEXCEPT {
+    return ubyte2n(FloatM11_to_UByte0255(OctahedralNormalEncode(normal)));
+}
+//----------------------------------------------------------------------------
+float3  UByte2n_to_Normal(const ubyte2n& packed) NOEXCEPT {
+    return OctahedralNormalDecode(UByte0255_to_FloatM11(ubyte2(packed)));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -112,6 +112,28 @@ NODISCARD PPE_CORE_API int ParallelSum(
     ETaskPriority priority = ETaskPriority::Normal,
     ITaskContext* context = nullptr/* uses FGlobalThreadPool by default */);
 //----------------------------------------------------------------------------
+template <typename _Map, typename _Reduce,
+    typename _Result = decltype(std::declval<const _Reduce&>()(
+        std::declval<const _Map&>()(std::declval<size_t>()),
+        std::declval<const _Map&>()(std::declval<size_t>()) ))>
+NODISCARD _Result ParallelMapReduce(
+    size_t first, size_t last,
+    const _Map& map,
+    const _Reduce& reduce,
+    ETaskPriority priority = ETaskPriority::Normal,
+    ITaskContext* context = nullptr/* uses FGlobalThreadPool by default */);
+//----------------------------------------------------------------------------
+template <typename _It, typename _Map, typename _Reduce,
+    typename _Result = decltype(std::declval<const _Reduce&>()(
+        std::declval<const _Map&>()(std::declval<typename Meta::TIteratorTraits<_It>::reference>()),
+        std::declval<const _Map&>()(std::declval<typename Meta::TIteratorTraits<_It>::reference>()) ))>
+NODISCARD _Result ParallelMapReduce(
+    _It first, _It last,
+    const _Map& map,
+    const _Reduce& reduce,
+    ETaskPriority priority = ETaskPriority::Normal,
+    ITaskContext* context = nullptr/* uses FGlobalThreadPool by default */);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE

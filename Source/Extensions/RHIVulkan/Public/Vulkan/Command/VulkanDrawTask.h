@@ -57,6 +57,7 @@ protected:
         const _Task& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
 
 public:
+
     using FBufferBinding = TPair<FVertexBufferID, FVertexBufferBinding>;
     using FColorBuffer = TPair<const ERenderTargetID, FColorBufferState>;
     using FResource = FVulkanPipelineResourceSet::FResource;
@@ -72,7 +73,7 @@ public:
 
     TMemoryView<const FColorBuffer> ColorBuffers;
     TMemoryView<const FPushConstantData> PushConstants;
-    TMemoryView<const FRectangleU> Scissors;
+    TMemoryView<const FRectangle2u> Scissors;
 
     TMemoryView<const FBufferBinding> BufferBindings;
     TMemoryView<const FVertexInput> VertexInputs;
@@ -211,7 +212,7 @@ public:
 
     TMemoryView<const FColorBuffer> ColorBuffers;
     TMemoryView<const FPushConstantData> PushConstants;
-    TMemoryView<const FRectangleU> Scissors;
+    TMemoryView<const FRectangle2u> Scissors;
 
     mutable FVulkanDescriptorSets DescriptorSets;
 

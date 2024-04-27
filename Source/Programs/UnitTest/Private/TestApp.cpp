@@ -34,6 +34,10 @@ FTestApp::~FTestApp() = default;
 //----------------------------------------------------------------------------
 void FTestApp::Start() {
     parent_type::Start();
+}
+//----------------------------------------------------------------------------
+void FTestApp::Run() {
+    parent_type::Run();
 
     using FAppNotify = Application::FPlatformNotification;
 

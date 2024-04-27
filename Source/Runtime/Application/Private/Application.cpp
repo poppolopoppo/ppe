@@ -85,7 +85,22 @@ int LaunchApplication(FApplicationBase* app) {
         PPE_CATCH(const std::exception& e)
         PPE_CATCH_BLOCK({
             Unused(e);
-            PPE_LOG(Application, Fatal, "exception caught while starting : {0}", MakeCStringView(e.what()));
+            PPE_LOG(Application, Fatal, "exception caught while starting: {0}", MakeCStringView(e.what()));
+            FCurrentProcess::Get().SetExitCode(3);
+        })
+#endif
+#if USE_APPLICATION_EXCEPTION_TRAP
+        PPE_TRY
+#endif
+        {
+            PPE_PROFILING_SCOPE("run application");
+            app->Run();
+        }
+#if USE_APPLICATION_EXCEPTION_TRAP
+        PPE_CATCH(const std::exception& e)
+        PPE_CATCH_BLOCK({
+            Unused(e);
+            PPE_LOG(Application, Fatal, "exception caught while running: {0}", MakeCStringView(e.what()));
             FCurrentProcess::Get().SetExitCode(3);
         })
 #endif
@@ -100,7 +115,7 @@ int LaunchApplication(FApplicationBase* app) {
         PPE_CATCH(const std::exception& e)
         PPE_CATCH_BLOCK({
             Unused(e);
-            PPE_LOG(Application, Fatal, "exception caught while shutting down : {0}", MakeCStringView(e.what()));
+            PPE_LOG(Application, Fatal, "exception caught while shutting down: {0}", MakeCStringView(e.what()));
             FCurrentProcess::Get().SetExitCode(3);
         })
 #endif

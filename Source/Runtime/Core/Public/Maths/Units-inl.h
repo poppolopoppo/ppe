@@ -19,9 +19,9 @@ struct TNextUnitIndex<void> {
 };
 } //!details
 //----------------------------------------------------------------------------
-template <typename _Tag, u64 _Ratio, typename _Smaller>
+template <typename _UnitTag, u64 _Ratio, typename _Smaller>
 struct TUnitTraits {
-    typedef _Tag tag_type;
+    typedef _UnitTag tag_type;
     typedef _Smaller smaller_type;
     typedef typename tag_type::value_type value_type;
     static constexpr u64 Ratio = _Ratio;
@@ -63,7 +63,7 @@ struct TConvertionRatio {
 
     static_assert(std::is_same< typename to_traits_type::tag_type,
                                 typename from_traits_type::tag_type>::value,
-                    "convertion between different units");
+                    "conversion between different units");
 
     static CONSTEXPR bool LargerToSmaller = (to_traits_type::Index <= from_traits_type::Index);
 

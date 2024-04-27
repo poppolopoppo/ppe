@@ -6,14 +6,17 @@
 #include "Mesh/GenericMesh.h"
 
 #include "Container/Vector.h"
+#include "Diagnostic/Logger.h"
 #include "IO/BufferedStream.h"
 #include "IO/ConstNames.h"
 #include "IO/Filename.h"
 #include "IO/String.h"
+#include "IO/StringView.h"
 #include "IO/TextReader.h"
 #include "Maths/ScalarVector.h"
-#include "Memory/MemoryProvider.h"
+#include "Maths/ScalarVectorHelpers.h"
 #include "Memory/MemoryStream.h"
+#include "Memory/SharedBuffer.h"
 
 #include "VirtualFileSystem.h"
 
@@ -22,39 +25,62 @@ namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-const FExtname& FWaveFrontObj::Extname() {
+const FExtname& FWaveFrontObj::Extname() NOEXCEPT {
     return FFSConstNames::Obj();
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+// IMeshFormat
+//----------------------------------------------------------------------------
+bool FWaveFrontObj::ExportGenericMesh(IStreamWriter* output, const FGenericMesh& mesh) const {
+    const FFilename sourceFile = mesh.SourceFile().value_or(Default);
+    return UsingBufferedStream(output, [&](TPtrRef<IBufferedStreamWriter> buf) {
+        return Save(mesh, sourceFile, buf);
+    });
+}
+//----------------------------------------------------------------------------
+FMeshBuilderResult FWaveFrontObj::ImportGenericMesh(const FRawMemoryConst& memory) const {
+    FMemoryViewReader reader{ memory };
+    return ImportGenericMesh(reader);
+}
+//----------------------------------------------------------------------------
+FMeshBuilderResult FWaveFrontObj::ImportGenericMesh(IStreamReader& input) const {
+    FGenericMesh result;
+    if (Load(&result, Default, input))
+        return Meta::MakeOptional(std::move(result));
+
+    return std::nullopt;
+}
+//----------------------------------------------------------------------------
+// Load
 //----------------------------------------------------------------------------
 bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename) {
     EAccessPolicy policy = EAccessPolicy::Binary;
     if (filename.Extname() == FFSConstNames::Z())
         policy = policy + EAccessPolicy::Compress;
 
-    UStreamReader in{ VFS_OpenTextReadable(filename, policy) };
-    if (not in)
-        return false;
+    const FUniqueBuffer buf = VFS_ReadAll(filename, policy);
+    PPE_LOG_CHECK(MeshBuilder, buf);
 
-    return UsingBufferedStream(in.get(), [&](IBufferedStreamReader* buf) {
-        return Load(dst, filename, buf);
-    });
+    return Load(dst, filename, buf.MakeView().Cast<const char>());
+}
+//----------------------------------------------------------------------------
+bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename, IStreamReader& reader) {
+    STACKLOCAL_POD_ARRAY(u8, raw, reader.SizeInBytes());
+    PPE_LOG_CHECK(MeshBuilder, reader.ReadView(raw));
+    PPE_LOG_CHECK(MeshBuilder, reader.Eof());
+    return Load(dst, filename, raw.Cast<const char>());
 }
 //----------------------------------------------------------------------------
 bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename, const FStringView& content) {
-    FMemoryViewReader reader(content);
-    return Load(dst, filename, &reader);
-}
-//----------------------------------------------------------------------------
-bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename, IBufferedStreamReader* reader) {
     Assert(dst);
-    Assert(reader);
+
+    if (not filename.empty())
+        dst->SetSourceFile(filename);
 
     struct FVertex_ {
-        u32 Position = (u32)-1;
-        u32 TexCoord = (u32)-1;
-        u32 Normal = (u32)-1;
+        u32 Position    = UMax;
+        u32 Texcoord    = UMax;
+        u32 Normal      = UMax;
     };
 
     VECTOR(MeshBuilder, float3) positions;
@@ -63,11 +89,24 @@ bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename, IBuffered
     VECTOR(MeshBuilder, float3) colors;
     VECTOR(MeshBuilder, FVertex_) vertices;
 
-    FTextReader r{reader};
+    FFilename mtllib;
+    FString meshName;
 
-    FString header;
-    while (r >> &header) {
-        if (EqualsI(header,"v")) {
+    FStringView reader{ content };
+
+    while (not reader.empty()) {
+        FStringView line = Strip(EatUntil(reader, '\n'));
+        EatSpaces(reader);
+        if (line.empty() || line.front() == '#')
+            continue;
+
+        const FStringView header = EatIdentifier(line);
+        EatSpaces(line);
+
+        FMemoryViewReader stream{ line };
+        FTextReader r{ &stream };
+
+        if (EqualsI(header, "v")) {
             float3 v;
             if (r >> &v.x && r >> &v.y && r >> &v.z)
                 positions.push_back(v);
@@ -78,88 +117,47 @@ bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename, IBuffered
             if (r >> &v.x && r >> &v.y && r >> &v.z)
                 colors.push_back(v);
         }
-        if (EqualsI(header, "vt")) {
+        else if (EqualsI(header, "vt")) {
             float2 v;
             if (r >> &v.x && r >> &v.y)
                 texcoords.push_back(v);
             else
                 return false;
         }
-        if (EqualsI(header, "vn")) {
+        else if (EqualsI(header, "vn")) {
             float3 v;
             if (r >> &v.x && r >> &v.y && r >> &v.z)
-                positions.push_back(v);
+                normals.push_back(SafeNormalize(v));
             else
                 return false;
         }
-        for (; header == "v"; header = EatIdentifier(reader)) {
-            float3 p;
-            EatDigits()
-            iss >> p._data[0] >> p._data[1] >> p._data[2];
-            positions.push_back(p);
-
-            const std::streampos offset = iss.tellg();
-            float3 c;
-            iss >> c._data[0] >> c._data[1] >> c._data[2];
-
-            if (iss.fail()) {
-                iss.seekg(offset);
-                iss.clear();
+        else if (EqualsI(header, "f")) {
+            forrange(i, 0, 3) {
+                FVertex_ v;
+                if (r >> &v.Position && r.Expect('/') &&
+                    r >> &v.Texcoord && r.Expect('/') &&
+                    r >> &v.Normal)
+                    vertices.push_back(v);
+                else
+                    return false;
             }
-            else {
-                colors.push_back(c);
-            }
-
-            iss >> header;
-            readNext = false;
         }
-        while (iss.good() && header == "vt") {
-            float2 uv;
-            iss >> uv._data[0] >> uv._data[1];
-            texcoords.push_back(uv);
-            iss >> header;
-            readNext = false;
+        else if (EqualsI(header, "mtllib")) {
+            mtllib = FFilename{UTF_8_TO_WCHAR(line)};
         }
-        while (iss.good() && header == "vn") {
-            float3 n;
-            iss >> n._data[0] >> n._data[1] >> n._data[2];
-            if (float len = Length3(n))
-                n /= len;
-            normals.push_back(n);
-            iss >> header;
-            readNext = false;
+        else if (EqualsI(header, "usemtl")) {
+            PPE_LOG(MeshBuilder, Warning, "no support for wavefront obj material sections: {} {}", header, line);
         }
-        while (iss.good() && header == "f") {
-            for (int i = 0; i < 3; ++i) {
-                Assert(!iss.bad());
-
-                FVertex_& vertex = vertices.push_back_Default();
-
-                iss >> vertex.Position;
-                iss.get(); // skip '/'
-                iss >> vertex.TexCoord;
-                iss.get(); // skip '/'
-                iss >> vertex.Normal;
-
-                vertex.Position--;
-                vertex.TexCoord--;
-                vertex.Normal--;
-            }
-            iss >> header;
-            readNext = false;
+        else if (EqualsI(header, "o")) {
+            meshName = line;
         }
-
-        if (readNext) {
-            while ('\n' != iss.get() && iss.good());
-            iss >> header;
+        else {
+            PPE_LOG(MeshBuilder, Warning, "ignored unknown wavefront obj header: {} {}", header, line);
         }
     }
 
-    if (iss.bad())
-        return false;
-
     const bool hasPositions = (positions.size() > 0);
-    const bool hasTexCoords = (texcoords.size() > 0);
+    const bool hasTexcoords = (texcoords.size() > 0);
     const bool hasNormals = (normals.size() > 0);
     const bool hasColors = (colors.size() > 0);
 
@@ -172,8 +170,8 @@ bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename, IBuffered
     const TMemoryView<float3> sp_position3f = dst->Position3f(index).Append(vertexCount);
 
     TMemoryView<float2> sp_texcoord2f;
-    if (hasTexCoords)
-        sp_texcoord2f = dst->TexCoord2f(index).Append(vertexCount);
+    if (hasTexcoords)
+        sp_texcoord2f = dst->Texcoord2f(index).Append(vertexCount);
 
     TMemoryView<float3> sp_normal3f;
     if (hasNormals)
@@ -183,31 +181,31 @@ bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename, IBuffered
     if (hasColors)
         sp_color4f = dst->Color4f(index).Append(vertexCount);
 
-    for (u32 vertexIndex = 0; vertexIndex < vertexCount; vertexIndex += 3) {
+    for (size_t vertexIndex = 0; vertexIndex < vertexCount; vertexIndex += 3) {
         const FVertex_& v0 = vertices[vertexIndex + 0];
         const FVertex_& v1 = vertices[vertexIndex + 1];
         const FVertex_& v2 = vertices[vertexIndex + 2];
 
-        sp_position3f[vertexIndex + 0] = positions[v0.Position];
-        sp_position3f[vertexIndex + 1] = positions[v1.Position];
-        sp_position3f[vertexIndex + 2] = positions[v2.Position];
+        sp_position3f[vertexIndex + 0] = positions[v0.Position - 1];
+        sp_position3f[vertexIndex + 1] = positions[v1.Position - 1];
+        sp_position3f[vertexIndex + 2] = positions[v2.Position - 1];
 
-        if (hasTexCoords) {
-            sp_texcoord2f[vertexIndex + 0] = texcoords[v0.TexCoord];
-            sp_texcoord2f[vertexIndex + 1] = texcoords[v1.TexCoord];
-            sp_texcoord2f[vertexIndex + 2] = texcoords[v2.TexCoord];
+        if (hasTexcoords) {
+            sp_texcoord2f[vertexIndex + 0] = texcoords[v0.Texcoord - 1];
+            sp_texcoord2f[vertexIndex + 1] = texcoords[v1.Texcoord - 1];
+            sp_texcoord2f[vertexIndex + 2] = texcoords[v2.Texcoord - 1];
         }
 
         if (hasNormals) {
-            sp_normal3f[vertexIndex + 0] = normals[v0.Normal];
-            sp_normal3f[vertexIndex + 1] = normals[v1.Normal];
-            sp_normal3f[vertexIndex + 2] = normals[v2.Normal];
+            sp_normal3f[vertexIndex + 0] = normals[v0.Normal - 1];
+            sp_normal3f[vertexIndex + 1] = normals[v1.Normal - 1];
+            sp_normal3f[vertexIndex + 2] = normals[v2.Normal - 1];
         }
 
         if (hasColors) {
-            sp_color4f[vertexIndex + 0] = colors[v0.Position].OneExtend();
-            sp_color4f[vertexIndex + 1] = colors[v1.Position].OneExtend();
-            sp_color4f[vertexIndex + 2] = colors[v2.Position].OneExtend();
+            sp_color4f[vertexIndex + 0] = float4(colors[v0.Position - 1], 1.f);
+            sp_color4f[vertexIndex + 1] = float4(colors[v1.Position - 1], 1.f);
+            sp_color4f[vertexIndex + 2] = float4(colors[v2.Position - 1], 1.f);
         }
 
         dst->AddTriangle(vertexIndex + 0, vertexIndex + 1, vertexIndex + 2);
@@ -216,93 +214,90 @@ bool FWaveFrontObj::Load(FGenericMesh* dst, const FFilename& filename, IBuffered
     return true;
 }
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+// Save
 //----------------------------------------------------------------------------
-bool FWaveFrontObj::Save(const FGenericMesh* src, const FFilename& filename) {
-    MEMORYSTREAM(Image) writer;
-    if (false == Save(src, filename, &writer))
+bool FWaveFrontObj::Save(const FGenericMesh& src, const FFilename& filename) {
+    MEMORYSTREAM(MeshBuilder) writer;
+    if (false == Save(src, filename, writer))
         return false;
 
     EAccessPolicy policy = EAccessPolicy::Truncate_Binary;
-    if (filename.Extname() == FFSConstNames::Objz())
+    if (filename.Extname() == FFSConstNames::Z())
         policy = policy + EAccessPolicy::Compress;
 
     return VFS_WriteAll(filename, writer.MakeView(), policy);
 }
 //----------------------------------------------------------------------------
-bool FWaveFrontObj::Save(const FGenericMesh* src, const FFilename& filename, IBufferedStreamWriter* writer) {
-    Assert(src);
-    Assert(writer);
+bool FWaveFrontObj::Save(const FGenericMesh& src, const FFilename& filename, IBufferedStreamWriter& writer) {
+    FTextWriter oss{ writer };
 
-    FStreamWriterOStream oss(writer);
-
-    oss << "# Generated by PPE::Lattice::FWaveFrontObj" << eol;
-    oss << "o " << filename.BasenameNoExt() << eol;
+    oss << "# Generated by PPE/MeshBuilder/FWaveFrontObj" << Eol;
+    oss << "o " << filename.BasenameNoExt() << Eol;
 
     const size_t index = 0;
 
-    const TGenericVertexSubPart<float3> sp_position3f = src->Position3f_IFP(index);
-    const TGenericVertexSubPart<float4> sp_position4f = src->Position4f_IFP(index);
+    const TGenericVertexSubPart<float3> sp_position3f = src.Position3f_IFP(index);
+    const TGenericVertexSubPart<float4> sp_position4f = src.Position4f_IFP(index);
     if (!sp_position3f && !sp_position4f) {
         AssertNotReached();
         return 0;
     }
 
-    const TGenericVertexSubPart<float4> sp_color4f = src->Color4f_IFP(index);
+    const TGenericVertexSubPart<float4> sp_color4f = src.Color4f_IFP(index);
 
     if (sp_position3f) {
         const TMemoryView<const float3> positions = sp_position3f.MakeView();
         const TMemoryView<const float4> colors = sp_color4f.MakeView();
-        forrange(v, 0, src->VertexCount()) {
+        forrange(v, 0, src.VertexCount()) {
             const float3& p = positions[v];
-            oss << "v " << p.x() << ' ' << p.y() << ' ' << p.z();
+            oss << "v " << p.x << ' ' << p.y << ' ' << p.z;
 
             if (sp_color4f) {
                 const float4& c = colors[v];
-                oss << " " << c.x() << ' ' << c.y() << ' ' << c.z() << eol;
+                oss << " " << c.x << ' ' << c.y << ' ' << c.z << Eol;
             }
             else {
-                oss << eol;
+                oss << Eol;
             }
         }
     }
     else {
         const TMemoryView<const float4> positions = sp_position4f.MakeView();
         const TMemoryView<const float4> colors = sp_color4f.MakeView();
-        forrange(v, 0, src->VertexCount()) {
+        forrange(v, 0, src.VertexCount()) {
             const float4& p = positions[v];
-            oss << "v " << p.x() << ' ' << p.y() << ' ' << p.z();
+            oss << "v " << p.x << ' ' << p.y << ' ' << p.z;
 
             if (sp_color4f) {
                 const float4& c = colors[v];
-                oss << " " << c.x() << ' ' << c.y() << ' ' << c.z() << eol;
+                oss << " " << c.x << ' ' << c.y << ' ' << c.z << Eol;
             }
             else {
-                oss << eol;
+                oss << Eol;
             }
         }
     }
 
-    if (const TGenericVertexSubPart<float2> sp_texcoord2f = src->TexCoord2f_IFP(index))
+    if (const TGenericVertexSubPart<float2> sp_texcoord2f = src.Texcoord2f_IFP(index))
         for (const float2& uv : sp_texcoord2f.MakeView())
-            oss << "vt " << uv.x() << ' ' << uv.y() << eol;
+            oss << "vt " << uv.x << ' ' << uv.y << Eol;
 
-    if (const TGenericVertexSubPart<float3> sp_normal3f = src->Normal3f_IFP(index))
+    if (const TGenericVertexSubPart<float3> sp_normal3f = src.Normal3f_IFP(index))
         for (const float3& n : sp_normal3f.MakeView())
-            oss << "vn " << n.x() << ' ' << n.y() << ' ' << n.z() << eol;
+            oss << "vn " << n.x << ' ' << n.y << ' ' << n.z << Eol;
 
-    const TMemoryView<const u32> indices = src->Indices();
-    for (uint32_t i = 0; i < indices.size(); i += 3) {
+    const TMemoryView<const u32> indices = src.Indices();
+    for (size_t i = 0; i < indices.size(); i += 3) {
         const uint32_t v0 = indices[i + 0] + 1;
         const uint32_t v1 = indices[i + 1] + 1;
         const uint32_t v2 = indices[i + 2] + 1;
         oss << "f " << v0 << '/' << v0 << '/' << v0
             <<  ' ' << v1 << '/' << v1 << '/' << v1
             <<  ' ' << v2 << '/' << v2 << '/' << v2
-            <<  eol;
+            <<  Eol;
     }
 
-    return (oss.good());
+    return true;
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

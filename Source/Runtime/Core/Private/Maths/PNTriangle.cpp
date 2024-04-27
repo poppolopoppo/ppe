@@ -19,11 +19,10 @@ FORCE_INLINE float3 ProjectToPlane_(const float3& p, const float3& plane, const 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FPNTriangle::FPNTriangle() {}
-//----------------------------------------------------------------------------
-FPNTriangle::~FPNTriangle() = default;
-//----------------------------------------------------------------------------
-float3 FPNTriangle::LerpPosition(float u, float v, float w) const {
+float3 FPNTriangle::LerpPosition(float u, float v, float w) const NOEXCEPT {
+    Assert_NoAssume(Saturate(u) == u && not IsNANorINF(u));
+    Assert_NoAssume(Saturate(v) == v && not IsNANorINF(v));
+    Assert_NoAssume(Saturate(w) == w && not IsNANorINF(w));
     return _p300 * (w * w * w) +
            _p030 * (u * u * u) +
            _p003 * (v * v * v) +
@@ -36,7 +35,10 @@ float3 FPNTriangle::LerpPosition(float u, float v, float w) const {
            _p111 * (6.0f * w * u * v);
 }
 //----------------------------------------------------------------------------
-float3 FPNTriangle::LerpNormal(float u, float v, float w) const {
+float3 FPNTriangle::LerpNormal(float u, float v, float w) const NOEXCEPT {
+    Assert_NoAssume(Saturate(u) == u && not IsNANorINF(u));
+    Assert_NoAssume(Saturate(v) == v && not IsNANorINF(v));
+    Assert_NoAssume(Saturate(w) == w && not IsNANorINF(w));
     return Normalize(
            _n200 * (w * w) +
            _n020 * (u * u) +
@@ -50,7 +52,15 @@ void FPNTriangle::FromTriangle(
     FPNTriangle& pn,
     const float3& p0, const float3& n0,
     const float3& p1, const float3& n1,
-    const float3& p2, const float3& n2 ) {
+    const float3& p2, const float3& n2 ) NOEXCEPT {
+    Assert_NoAssume(not IsNANorINF(p0));
+    Assert_NoAssume(not IsNANorINF(p1));
+    Assert_NoAssume(not IsNANorINF(p2));
+
+    Assert_NoAssume(not IsNANorINF(n0));
+    Assert_NoAssume(not IsNANorINF(n1));
+    Assert_NoAssume(not IsNANorINF(n2));
+
     // The original vertices stay the same
     pn._p030 = p0; pn._n020 = n0;
     pn._p003 = p1; pn._n002 = n1;
@@ -87,9 +97,9 @@ void FPNTriangle::FromTriangle(
     const float3 h020 = pn._n200 + pn._n002;
     const float3 h002 = pn._n020 + pn._n200;
 
-    pn._n110 = Normalize(h200 - e300 * ( 2.0f * Dot(e300, h200) / Dot(e300, e300) ));
-    pn._n011 = Normalize(h020 - e030 * ( 2.0f * Dot(e030, h020) / Dot(e030, e030) ));
-    pn._n101 = Normalize(h002 - e003 * ( 2.0f * Dot(e003, h002) / Dot(e003, e003) ));
+    pn._n110 = SafeNormalize(h200 - e300 * ( 2.0f * Dot(e300, h200) / Dot(e300, e300) ));
+    pn._n011 = SafeNormalize(h020 - e030 * ( 2.0f * Dot(e030, h020) / Dot(e030, e030) ));
+    pn._n101 = SafeNormalize(h002 - e003 * ( 2.0f * Dot(e003, h002) / Dot(e003, e003) ));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

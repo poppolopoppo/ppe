@@ -11,10 +11,13 @@
 #include "RHI_fwd.h"
 
 #include "Diagnostic/Logger_fwd.h"
+
+#include "Memory/InSituPtr.h"
 #include "Memory/RefPtr.h"
 #include "Memory/UniquePtr.h"
 
 namespace PPE {
+FWD_INTEFARCE_UNIQUEPTR(MeshBuilderService);
 namespace ContentPipeline {
 EXTERN_LOG_CATEGORY(PPE_MESHBUILDER_API, MeshBuilder);
 //----------------------------------------------------------------------------
@@ -27,11 +30,13 @@ FWD_UNIQUEPTR(GenericVertexData);
 template <typename T>
 class TGenericVertexSubPart;
 //----------------------------------------------------------------------------
+FWD_INTEFARCE_INSITUPTR(MeshFormat);
+//----------------------------------------------------------------------------
 typedef TGenericVertexSubPart<float3> FPositions3f;
 typedef TGenericVertexSubPart<float4> FPositions4f;
-typedef TGenericVertexSubPart<float2> FTexCoords2f;
-typedef TGenericVertexSubPart<float3> FTexCoords3f;
-typedef TGenericVertexSubPart<float4> FTexCoords4f;
+typedef TGenericVertexSubPart<float2> FTexcoords2f;
+typedef TGenericVertexSubPart<float3> FTexcoords3f;
+typedef TGenericVertexSubPart<float4> FTexcoords4f;
 typedef TGenericVertexSubPart<float4> FColors4f;
 typedef TGenericVertexSubPart<float3> FNormals3f;
 typedef TGenericVertexSubPart<float4> FNormals4f;

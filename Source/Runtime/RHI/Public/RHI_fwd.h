@@ -240,7 +240,7 @@ struct FImageDataRange;
 struct FImageSubresourceRange;
 struct FPushConstantData;
 struct FVertexBuffer;
-PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(float, FDepthValue, 0.0f);
+PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(float, FDepthValue, FLT_MAX);
 PPE_STRONGLYTYPED_NUMERIC_DEFAULTVALUE_DEF(u8, FStencilValue, 0xFF);
 struct FDepthStencilValue {
     FDepthValue Depth{0};

@@ -29,6 +29,7 @@ public: // must be defined for every platform
 
     virtual bool PumpMessages() override final;
 
+    virtual bool BringToFront() override final;
     virtual bool Center() override final;
     virtual bool Maximize() override final;
     virtual bool Minimize() override final;

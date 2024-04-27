@@ -65,8 +65,11 @@ UX10Y10Z10W2N Float01_to_UX10Y10Z10W2N(float x, float y, float z, u8 w);
 UX10Y10Z10W2N FloatM11_to_UX10Y10Z10W2N(const float3& xyz, u8 w);
 UX10Y10Z10W2N FloatM11_to_UX10Y10Z10W2N(float x, float y, float z, u8 w);
 //----------------------------------------------------------------------------
-UX10Y10Z10W2N Quaternion_to_UX10Y10Z10W2N(const class FQuaternion& quaternion);
-FQuaternion   UX10Y10Z10W2N_to_Quaternion(const struct UX10Y10Z10W2N& packed);
+PPE_CORE_API UX10Y10Z10W2N Quaternion_to_UX10Y10Z10W2N(const class FQuaternion& quaternion) NOEXCEPT;
+PPE_CORE_API FQuaternion   UX10Y10Z10W2N_to_Quaternion(const struct UX10Y10Z10W2N& packed) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API ubyte2n Normal_to_UByte2n(const float3& normal) NOEXCEPT;
+PPE_CORE_API float3  UByte2n_to_Normal(const ubyte2n& packed) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <>
 struct TNumericLimits< UX10Y10Z10W2N > {
@@ -79,7 +82,6 @@ struct TNumericLimits< UX10Y10Z10W2N > {
 
     static value_type DefaultValue() { return FloatM11_to_UX10Y10Z10W2N(0.0f,0.0f,0.0f,0); }
     static value_type Epsilon() { return FloatM11_to_UX10Y10Z10W2N(1.0f/1024,1.0f/1024,1.0f/1024,0); }
-    static value_type Inf() { return FloatM11_to_UX10Y10Z10W2N(1.0f,1.0f,1.0f,0); }
     static value_type MaxValue() { return FloatM11_to_UX10Y10Z10W2N(1.0f,1.0f,1.0f,2); }
     static value_type MinValue() { return FloatM11_to_UX10Y10Z10W2N(-1.0f,-1.0f,-1.0f,0); }
     static value_type Nan() { return FloatM11_to_UX10Y10Z10W2N(1.0f,1.0f,1.0f,0); }
@@ -150,7 +152,6 @@ struct TNumericLimits< UX11Y11Z10 > {
 
     static value_type DefaultValue() { return Float_to_UX11Y11Z10(0.0f,0.0f,0.0f); }
     static value_type Epsilon() { return Float_to_UX11Y11Z10(1.0f/1024,1.0f/1024,1.0f/1024); }
-    static value_type Inf() { return Float_to_UX11Y11Z10(1.0f,1.0f,1.0f); }
     static value_type MaxValue() { return Float_to_UX11Y11Z10(1.0f,1.0f,1.0f); }
     static value_type MinValue() { return Float_to_UX11Y11Z10(-1.0f,-1.0f,-1.0f); }
     static value_type Nan() { return Float_to_UX11Y11Z10(1.0f,1.0f,1.0f); }

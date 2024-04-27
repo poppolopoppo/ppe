@@ -133,7 +133,7 @@ static bool STBDxtCompression_CompressTextureData(
     outProperties->ImageView = src.ImageView();
     outProperties->NumMips = checked_cast<u8>(Min(src.NumMips(), pixelInfo.FullMipCount(src.Dimensions())));
 
-    outBulk->AttachSourceFile(src.BulkData().SourceFile());
+    outBulk->AttachSourceFile(src.Data().SourceFile());
     outBulk->Resize_DiscardData(pixelInfo.SizeInBytes(
         RHI::EImageAspect::Color,
         src.Dimensions(),

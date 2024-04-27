@@ -2,7 +2,7 @@
 
 #include "UI/Widgets/MemoryUsageWidget.h"
 
-#include "UI/Imgui.h"
+#include "UI/ImGui.h"
 #include "imgui-internal.h"
 
 #include "Allocator/BitmapHeap.h"
@@ -100,6 +100,8 @@ static void MemoryUsage_ShowMemoryDomainSnapshot_(
     print(&FMemoryTracking::FSnapshot::PeakSize, false, true);
     print(&FMemoryTracking::FSnapshot::AccumulatedAllocs, false, false);
     print(&FMemoryTracking::FSnapshot::AccumulatedSize, false, true);
+    print(&FMemoryTracking::FSnapshot::IntraFrameTotalAllocs, false, false);
+    print(&FMemoryTracking::FSnapshot::IntraFrameTotalSize, false, true);
 
     if (isMemoryDomain)
         print(&FMemoryTracking::FSnapshot::SmallAllocs, false, false);
@@ -164,7 +166,7 @@ static void MemoryUsage_ShowMemoryDomainsTableRow_(FMemoryUsageWidget& widget, c
 }
 //----------------------------------------------------------------------------
 static void MemoryUsage_ShowMemoryDomainsTable_(FMemoryUsageWidget& widget) {
-    if (not ImGui::BeginTable("##MemoryUsage::MemoryDomains", 21,
+    if (not ImGui::BeginTable("##MemoryUsage::MemoryDomains", 25,
         ImGuiTableFlags_BordersInner |
         ImGuiTableFlags_Hideable |
         ImGuiTableFlags_ScrollY |
@@ -193,6 +195,8 @@ static void MemoryUsage_ShowMemoryDomainsTable_(FMemoryUsageWidget& widget) {
     ImGui::TableSetupColumn("Peak Size", ImGuiTableColumnFlags_AngledHeader);
     ImGui::TableSetupColumn("Accumulated Count", ImGuiTableColumnFlags_AngledHeader | ImGuiTableColumnFlags_DefaultHide);
     ImGui::TableSetupColumn("Accumulated Size", ImGuiTableColumnFlags_AngledHeader | ImGuiTableColumnFlags_DefaultHide);
+    ImGui::TableSetupColumn("Intra-Frame Count", ImGuiTableColumnFlags_AngledHeader);
+    ImGui::TableSetupColumn("Intra-Frame Size", ImGuiTableColumnFlags_AngledHeader);
     ImGui::TableSetupColumn("Small Allocs", ImGuiTableColumnFlags_AngledHeader);
 
     ImGui::TableSetupColumn("System",
@@ -208,6 +212,8 @@ static void MemoryUsage_ShowMemoryDomainsTable_(FMemoryUsageWidget& widget) {
     ImGui::TableSetupColumn("Peak Size", ImGuiTableColumnFlags_AngledHeader);
     ImGui::TableSetupColumn("Accumulated Count", ImGuiTableColumnFlags_AngledHeader | ImGuiTableColumnFlags_DefaultHide);
     ImGui::TableSetupColumn("Accumulated Size", ImGuiTableColumnFlags_AngledHeader | ImGuiTableColumnFlags_DefaultHide);
+    ImGui::TableSetupColumn("Intra-Frame Count", ImGuiTableColumnFlags_AngledHeader);
+    ImGui::TableSetupColumn("Intra-Frame Size", ImGuiTableColumnFlags_AngledHeader);
     ImGui::TableSetupColumn("Small Allocs", ImGuiTableColumnFlags_AngledHeader);
 
     ImGui::TableAngledHeadersRow();
@@ -254,8 +260,8 @@ static void MemoryUsage_ShowAllocationSizeHistogram_(FMemoryUsageWidget& widget)
     ImGui::TableSetupColumn("Total Size", ImGuiTableColumnFlags_AngledHeader);
     ImGui::TableSetupColumn("Peak Count", ImGuiTableColumnFlags_AngledHeader);
     ImGui::TableSetupColumn("Peak Size", ImGuiTableColumnFlags_AngledHeader);
-    ImGui::TableSetupColumn("Accumulated Count", ImGuiTableColumnFlags_AngledHeader);
-    ImGui::TableSetupColumn("Accumulated Size", ImGuiTableColumnFlags_AngledHeader);
+    ImGui::TableSetupColumn("Intra-Frame Count", ImGuiTableColumnFlags_AngledHeader);
+    ImGui::TableSetupColumn("Intra-Frame Size", ImGuiTableColumnFlags_AngledHeader);
 
     ImGui::TableSetupColumn("Allocs %", ImGuiTableColumnFlags_WidthStretch);
 

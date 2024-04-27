@@ -34,13 +34,14 @@ public:
 #endif
 
     FBitSet() = default;
-    FBitSet(word_t *storage, size_t size) NOEXCEPT;
-    FBitSet(word_t *storage, size_t size, bool allTrue) NOEXCEPT;
 
-    size_t size() const { return _size; }
+    PPE_CORE_API FBitSet(word_t *storage, size_t size) NOEXCEPT;
+    PPE_CORE_API FBitSet(word_t *storage, size_t size, bool allTrue) NOEXCEPT;
 
-    FORCE_INLINE bool Get(size_t index) const { return 0 != (Word_(index) & IndexFlag_(index)); }
-    FORCE_INLINE void Set(size_t index, bool value) { if (value) SetTrue(index); else SetFalse(index); }
+    NODISCARD size_t size() const { return _size; }
+
+    NODISCARD FORCE_INLINE bool Get(size_t index) const { return 0 != (Word_(index) & IndexFlag_(index)); }
+    NODISCARD FORCE_INLINE void Set(size_t index, bool value) { if (value) SetTrue(index); else SetFalse(index); }
 
     FORCE_INLINE void SetTrue(size_t index) { Word_(index) |= IndexFlag_(index); }
     FORCE_INLINE void SetFalse(size_t index) { Word_(index) &= ~IndexFlag_(index); }
@@ -53,27 +54,27 @@ public:
         return false;
     }
 
-    FORCE_INLINE bool operator [](size_t index) const { return Get(index); }
+    NODISCARD FORCE_INLINE bool operator [](size_t index) const { return Get(index); }
 
-    FORCE_INLINE word_t Word(size_t w) const {
+    NODISCARD FORCE_INLINE word_t Word(size_t w) const {
         Assert(w < _size);
         return _storage[w];
     }
 
-    bool AllTrue() const;
-    bool AllFalse() const;
+    NODISCARD PPE_CORE_API bool AllTrue() const NOEXCEPT;
+    NODISCARD PPE_CORE_API bool AllFalse() const NOEXCEPT;
 
-    bool AnyTrue() const;
-    bool AnyFalse() const;
+    NODISCARD PPE_CORE_API bool AnyTrue() const NOEXCEPT;
+    NODISCARD PPE_CORE_API bool AnyFalse() const NOEXCEPT;
 
-    void ResetAll(bool value);
+    PPE_CORE_API void ResetAll(bool value) NOEXCEPT;
 
-    void CopyTo(FBitSet* other) const;
+    PPE_CORE_API void CopyTo(FBitSet* other) const NOEXCEPT;
 
-    word_t FirstBitSet() const NOEXCEPT; // return _size if empty
-    word_t LastBitSet() const NOEXCEPT; // return _size if empty
-    word_t PopFront() NOEXCEPT; // return 0 if empty or bit index + 1
-    word_t PopFront_After(size_t last = 0) NOEXCEPT; // return 0 if empty or bit index + 1
+    NODISCARD PPE_CORE_API word_t FirstBitSet() const NOEXCEPT; // return _size if empty
+    NODISCARD PPE_CORE_API word_t LastBitSet() const NOEXCEPT; // return _size if empty
+    NODISCARD PPE_CORE_API word_t PopFront() NOEXCEPT; // return 0 if empty or bit index + 1
+    NODISCARD PPE_CORE_API word_t PopFront_After(size_t last = 0) NOEXCEPT; // return 0 if empty or bit index + 1
 
     static size_t WordCapacity(size_t size) { return ((size + WordBitMask) >> WordBitShift); }
 

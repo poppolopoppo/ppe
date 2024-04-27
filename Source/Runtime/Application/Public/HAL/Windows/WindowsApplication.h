@@ -16,11 +16,8 @@ public: // must be defined for every platform
     using parent_type = FGenericApplication;
 
     explicit FWindowsApplication(FModularDomain& domain, FString&& name);
-    virtual ~FWindowsApplication() override;
 
     virtual void Start() override;
-    virtual bool PumpMessages() NOEXCEPT override;
-    virtual void Tick(FTimespan dt) override;
     virtual void Shutdown() override;
 
 };

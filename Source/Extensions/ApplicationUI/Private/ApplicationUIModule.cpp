@@ -4,7 +4,7 @@
 
 #include "Application/ApplicationBase.h"
 
-#include "UI/ImguiService.h"
+#include "UI/ImGuiService.h"
 
 #include "Allocator/TrackingMalloc.h"
 #include "Diagnostic/Logger.h"

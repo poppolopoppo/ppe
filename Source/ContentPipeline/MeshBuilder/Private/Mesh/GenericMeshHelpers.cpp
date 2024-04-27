@@ -6,10 +6,12 @@
 
 #include "HAL/PlatformMemory.h"
 
+#include "Diagnostic/Logger.h"
+
 #include "Container/BitSet.h"
 #include "Container/Hash.h"
-#include "Container/HashMap.h"
 #include "Container/HashSet.h"
+#include "Container/Stack.h"
 #include "Container/Vector.h"
 
 #include "Maths/MathHelpers.h"
@@ -24,6 +26,8 @@
 #include "Maths/QuaternionHelpers.h"
 #include "Memory/UniqueView.h"
 
+#include "Thread/Task/TaskHelpers.h"
+
 #include <algorithm>
 
 namespace PPE {
@@ -36,8 +40,8 @@ namespace {
 // http://fgiesen.wordpress.com/2013/12/14/simple-lossless-index-buffer-compression/
 // https://github.com/rygorous/simple-ib-compress/blob/master/main.cpp
 struct FVertexCache {
-    static const size_t Size = 32;
-    static const size_t MaxValence = 15;
+    static const u32 Size = 32;
+    static const u32 MaxValence = 15;
 
     struct FEntry {
         u32 CachePos;           // its position in the cache (UINT32_MAX if not in)
@@ -54,13 +58,16 @@ struct FVertexCache {
 };
 //----------------------------------------------------------------------------
 static float3 ComputeNormal_(const float3& p0, const float3& p1, const float3& p2) {
-    const float d01 = Length(p1 - p0);
-    const float d12 = Length(p2 - p1);
-    const float d20 = Length(p0 - p2);
+#if 0
+    return Cross(Normalize(p1 - p0), Normalize(p2 - p1));
+#elif 0
+    const float3 p10 = SafeNormalize(p1 - p0);
+    const float3 p21 = SafeNormalize(p2 - p1);
+    const float3 p02 = SafeNormalize(p0 - p2);
 
-    const float3 c012 = Cross((p1 - p0)/d01,  (p2  - p0)/d20);
-    const float3 c102 = Cross((p0 - p1)/d01,  (p2  - p1)/d12);
-    const float3 c201 = Cross((p0 - p2)/d20,  (p1  - p2)/d12);
+    const float3 c012 = Cross(p10, p02);
+    const float3 c102 = Cross(p10, p21);
+    const float3 c201 = Cross(p02, p21);
 
     const float d012 = LengthSq(c012);
     const float d102 = LengthSq(c102);
@@ -69,6 +76,21 @@ static float3 ComputeNormal_(const float3& p0, const float3& p1, const float3& p
     return (d012 > d102)
         ? (d012 > d201 ? c012 : c201)
         : (d102 > d201 ? c102 : c201);
+#else
+    // Newell's method: sum cross product of all consecutive edges
+    // https://www.khronos.org/opengl/wiki/Calculating_a_Surface_Normal
+
+    auto crossEdge = [](const double3& a, const double3& b) -> double3 {
+        return (double3(a - b).yzx * double3(a + b).zxy);
+    };
+
+    const double3 d0{ p0 };
+    const double3 d1{ p1 };
+    const double3 d2{ p2 };
+
+    const double3 normal = crossEdge(d0, d1) + crossEdge(d1, d2) + crossEdge(d2, d0);
+    return float3(normal);
+#endif
 }
 //----------------------------------------------------------------------------
 static void ComputeTriangleBasis_(
@@ -165,11 +187,11 @@ FAabb3f ComputeBounds(const FGenericMesh& mesh, size_t index) {
 }
 //----------------------------------------------------------------------------
 FAabb3f ComputeSubPartBounds(const TGenericVertexSubPart<float3>& subPart) {
-    return ComputeSubPartBounds_(subPart);
+    return ComputeSubPartBounds_<3>(subPart);
 }
 //----------------------------------------------------------------------------
 FAabb4f ComputeSubPartBounds(const TGenericVertexSubPart<float4>& subPart) {
-    return ComputeSubPartBounds_(subPart);
+    return ComputeSubPartBounds_<4>(subPart);
 }
 //----------------------------------------------------------------------------
 namespace {
@@ -180,8 +202,8 @@ static void ComputeNormals_(
     const FNormals3f& sp_normal3f ) {
     Assert((!sp_position3f) ^ (!sp_position4f));
 
-    const size_t indexCount = mesh.IndexCount();
-    const size_t vertexCount = mesh.VertexCount();
+    const u32 indexCount = mesh.IndexCount();
+    const u32 vertexCount = mesh.VertexCount();
 
     Assert(!sp_position3f || sp_position3f.size() == vertexCount);
     Assert(!sp_position4f || sp_position4f.size() == vertexCount);
@@ -198,10 +220,10 @@ static void ComputeNormals_(
         const TMemoryView<const float4> positions4f = sp_position4f.MakeView();
         Assert(positions4f.size() == mesh.VertexCount());
 
-        for (size_t t = 0; t < indexCount; t += 3) {
-            const size_t i0 = indices[t + 0];
-            const size_t i1 = indices[t + 1];
-            const size_t i2 = indices[t + 2];
+        for (u32 t = 0; t < indexCount; t += 3) {
+            const u32 i0 = indices[t + 0];
+            const u32 i1 = indices[t + 1];
+            const u32 i2 = indices[t + 2];
 
             const float3 n = ComputeNormal_(
                 positions4f[i0].xyz,
@@ -217,10 +239,10 @@ static void ComputeNormals_(
         Assert(!sp_position4f);
         const TMemoryView<const float3> positions3f = sp_position3f.MakeView();
 
-        for (size_t t = 0; t < indexCount; t += 3) {
-            const size_t i0 = indices[t + 0];
-            const size_t i1 = indices[t + 1];
-            const size_t i2 = indices[t + 2];
+        for (u32 t = 0; t < indexCount; t += 3) {
+            const u32 i0 = indices[t + 0];
+            const u32 i1 = indices[t + 1];
+            const u32 i2 = indices[t + 2];
 
             const float3 n = ComputeNormal_(
                 positions3f[i0],
@@ -234,7 +256,7 @@ static void ComputeNormals_(
     }
 
     for (float3& n : normals3f)
-        n = SafeNormalize(n);
+        n = Normalize(n);
 }
 } //!namespace
 //----------------------------------------------------------------------------
@@ -273,7 +295,7 @@ static void ComputeTangentSpace_(
     const FGenericMesh& mesh,
     const FPositions3f& sp_position3f,
     const FPositions4f& sp_position4f,
-    const FTexCoords2f& sp_texcoord2f,
+    const FTexcoords2f& sp_texcoord2f,
     const FNormals3f& sp_normal3f,
     const FTangents3f& sp_tangent3f,
     const FTangents4f& sp_tangent4f,
@@ -281,8 +303,8 @@ static void ComputeTangentSpace_(
     Assert((!sp_position3f) ^ (!sp_position4f));
     Assert((!sp_tangent4f) ^ (!sp_tangent3f));
 
-    const size_t indexCount = mesh.IndexCount();
-    const size_t vertexCount = mesh.VertexCount();
+    const u32 indexCount = mesh.IndexCount();
+    const u32 vertexCount = mesh.VertexCount();
 
     Assert(!sp_position3f || sp_position3f.size() == vertexCount);
     Assert(!sp_position4f || sp_position4f.size() == vertexCount);
@@ -317,13 +339,13 @@ static void ComputeTangentSpace_(
     }
 
     const float3 zero = float3::Zero;
-    for (size_t i = 0; i < vertexCount; ++i)
+    for (u32 i = 0; i < vertexCount; ++i)
         tangents3f[i] = binormals3f[i] = zero;
 
-    for (size_t i = 0; i < indexCount; i += 3) {
-        const size_t i0 = indices[i + 0];
-        const size_t i1 = indices[i + 1];
-        const size_t i2 = indices[i + 2];
+    for (u32 i = 0; i < indexCount; i += 3) {
+        const u32 i0 = indices[i + 0];
+        const u32 i1 = indices[i + 1];
+        const u32 i2 = indices[i + 2];
 
         float3 tangent;
         float3 binormal;
@@ -350,7 +372,7 @@ static void ComputeTangentSpace_(
         binormals3f[i2] += binormal;
     }
 
-    for (size_t i = 0; i < vertexCount; ++i) {
+    ParallelFor(0, vertexCount, [&](size_t i) {
         float3& tangent = tangents3f[i];
         float3& binormal = binormals3f[i];
 
@@ -387,7 +409,7 @@ static void ComputeTangentSpace_(
             if (sp_tangent4f)
                 tangents4f[i] = float4(tangent, leftHanded ? 1.0f : 0.0f);
         }
-    }
+    });
 }
 } //!namespace
 //----------------------------------------------------------------------------
@@ -399,7 +421,7 @@ bool ComputeTangentSpace(FGenericMesh& mesh, size_t index, bool packHandedness/*
 
     Assert(!sp_position3f ^ !sp_position4f);
 
-    const TGenericVertexSubPart<float2> sp_texcoord2f = mesh.TexCoord2f_IFP(index);
+    const TGenericVertexSubPart<float2> sp_texcoord2f = mesh.Texcoord2f_IFP(index);
     if (!sp_texcoord2f)
         return false;
 
@@ -429,19 +451,19 @@ bool ComputeTangentSpace(FGenericMesh& mesh, size_t index, bool packHandedness/*
     return true;
 }
 //----------------------------------------------------------------------------
-void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents3f& tangents, const FBinormals3f& binormals) {
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords2f& uv, const FNormals3f& normals, const FTangents3f& tangents, const FBinormals3f& binormals) {
     ComputeTangentSpace_(mesh, positions, FPositions4f(), uv, normals, tangents, FTangents4f(), binormals);
 }
 //----------------------------------------------------------------------------
-void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions4f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents3f& tangents, const FBinormals3f& binormals) {
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions4f& positions, const FTexcoords2f& uv, const FNormals3f& normals, const FTangents3f& tangents, const FBinormals3f& binormals) {
     ComputeTangentSpace_(mesh, FPositions3f(), positions, uv, normals, tangents, FTangents4f(), binormals);
 }
 //----------------------------------------------------------------------------
-void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions3f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents4f& tangents) {
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords2f& uv, const FNormals3f& normals, const FTangents4f& tangents) {
     ComputeTangentSpace_(mesh, positions, FPositions4f(), uv, normals, FTangents3f(), tangents, FBinormals3f());
 }
 //----------------------------------------------------------------------------
-void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions4f& positions, const FTexCoords2f& uv, const FNormals3f& normals, const FTangents4f& tangents) {
+void ComputeTangentSpace(const FGenericMesh& mesh, const FPositions4f& positions, const FTexcoords2f& uv, const FNormals3f& normals, const FTangents4f& tangents) {
     ComputeTangentSpace_(mesh, FPositions3f(), positions, uv, normals, FTangents3f(), tangents, FBinormals3f());
 }
 //----------------------------------------------------------------------------
@@ -453,23 +475,22 @@ bool TangentSpaceToQuaternion(FGenericMesh& mesh, size_t index, bool removeTBN/*
         return false;
 
     if (const TGenericVertexSubPart<float4> sp_tangent4f = mesh.Tangent4f_IFP(index)) {
+        const UGenericVertexData oldNormals = mesh.StealVertexData(sp_normal3f);
         TangentSpaceToQuaternion(mesh, sp_normal3f, sp_tangent4f, mesh.Normal4f(index));
 
         if (removeTBN) {
-            mesh.RemoveSubPart(sp_normal3f);
             mesh.RemoveSubPart(sp_tangent4f);
         }
     }
     else if (const TGenericVertexSubPart<float3> sp_tangent3f = mesh.Tangent3f_IFP(index)) {
-
         const TGenericVertexSubPart<float3> sp_binormal3f = mesh.Binormal3f_IFP(index);
         if (!sp_binormal3f)
             return false;
 
+        const UGenericVertexData oldNormals = mesh.StealVertexData(sp_normal3f);
         TangentSpaceToQuaternion(mesh, sp_normal3f, sp_binormal3f, sp_tangent3f, mesh.Normal4f(index));
 
         if (removeTBN) {
-            mesh.RemoveSubPart(sp_normal3f);
             mesh.RemoveSubPart(sp_binormal3f);
             mesh.RemoveSubPart(sp_tangent3f);
         }
@@ -482,53 +503,54 @@ bool TangentSpaceToQuaternion(FGenericMesh& mesh, size_t index, bool removeTBN/*
 }
 //----------------------------------------------------------------------------
 void TangentSpaceToQuaternion(const FGenericMesh& mesh, const FNormals3f& normals, const FBinormals3f& binormals, const FTangents3f& tangents, const FNormals4f& quaternions) {
-    const size_t vertexCount = mesh.VertexCount();
+    const u32 vertexCount = mesh.VertexCount();
+    quaternions.Resize(vertexCount, false);
 
     const TMemoryView<const float3> t = tangents.MakeView();
     const TMemoryView<const float3> b = binormals.MakeView();
     const TMemoryView<const float3> n = normals.MakeView();
 
     TMemoryView<float4> q = quaternions.MakeView();
-    forrange(v, 0, vertexCount)
-        q[v] = TangentSpaceToQuaternion(t[v], b[v], n[v]).data;
+
+    ParallelFor(0, vertexCount, [&](size_t v) {
+        q[v] = PPE::TangentSpaceToQuaternion(t[v], b[v], n[v]).data;
+    });
 }
 //----------------------------------------------------------------------------
 void TangentSpaceToQuaternion(const FGenericMesh& mesh, const FNormals3f& normals, const FTangents4f& tangentsWithHandedness, const FNormals4f& quaternions) {
-    const size_t vertexCount = mesh.VertexCount();
+    const u32 vertexCount = mesh.VertexCount();
 
     const TMemoryView<const float4> t = tangentsWithHandedness.MakeView();
     const TMemoryView<const float3> n = normals.MakeView();
 
     TMemoryView<float4> q = quaternions.MakeView();
-    forrange(v, 0, vertexCount) {
+
+    ParallelFor(0, vertexCount, [&](size_t v) {
         const float4& tangent = t[v];
         const float3& normal = n[v];
-        const float3 binormal = SafeNormalize(Cross(tangent.xyz, normal)) *
+        const float3 binormal = Normalize(Cross(tangent.xyz, normal)) *
             (tangent.w > 0 ? -1.f : 1.f);
 
-        q[v] = TangentSpaceToQuaternion(tangent.xyz, binormal, normal).data;
-    }
+        q[v] = PPE::TangentSpaceToQuaternion(tangent.xyz, binormal, normal).data;
+    });
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 size_t MergeCloseVertices(FGenericMesh& mesh, size_t index, float minDistance/* = Epsilon */) {
-    const size_t vertexCount = mesh.VertexCount();
+    const u32 vertexCount = mesh.VertexCount();
     if (0 == vertexCount)
         return 0;
 
     const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index);
     const TGenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index);
-    if (!sp_position3f && !sp_position4f) {
-        AssertNotReached();
-        return 0;
-    }
+    PPE_LOG_CHECK(MeshBuilder, sp_position3f || sp_position4f);
 
     STACKLOCAL_POD_ARRAY(u32, tmp, vertexCount * 2);
     const TMemoryView<u32> sorted = tmp.SubRange(0 * vertexCount, vertexCount);
     const TMemoryView<u32> reindexation = tmp.SubRange(1 * vertexCount, vertexCount);
 
-    forrange(i, 0, mesh.VertexCount())
+    forrange(i, 0, vertexCount)
         sorted[i] = u32(i);
 
     const TMemoryView<const float3> positions3f = sp_position3f.MakeView();
@@ -544,16 +566,16 @@ size_t MergeCloseVertices(FGenericMesh& mesh, size_t index, float minDistance/* 
         });
 
     const float minDistanceSq = Sqr(minDistance);
-    for (size_t a = 0; a < vertexCount; ++a) {
+    for (u32 a = 0; a < vertexCount; ++a) {
         const u32 ia = sorted[a];
-        const float3& pa = (sp_position3f ? positions3f[ia] : positions4f[ia].xyz);
+        const float3 pa = (sp_position3f ? positions3f[ia] : float3(positions4f[ia].xyz));
 
         reindexation[ia] = ia;
 
-        size_t b = a;
+        u32 b = a;
         while (b--) {
             const u32 ib = sorted[b];
-            const float3& pb = (sp_position3f ? positions3f[ib] : positions4f[ib].xyz);
+            const float3 pb = (sp_position3f ? positions3f[ib] : float3(positions4f[ib].xyz));
 
             if (pb.x < pa.x - minDistance)
                 break;
@@ -567,7 +589,7 @@ size_t MergeCloseVertices(FGenericMesh& mesh, size_t index, float minDistance/* 
     for (u32& vertexIndex : mesh.Indices())
         vertexIndex = reindexation[vertexIndex];
 
-    size_t mergedCount = 0;
+    u32 mergedCount = 0;
     forrange(v, 0, vertexCount)
         if (reindexation[v] != v)
             mergedCount++;
@@ -576,7 +598,7 @@ size_t MergeCloseVertices(FGenericMesh& mesh, size_t index, float minDistance/* 
 }
 //----------------------------------------------------------------------------
 size_t MergeDuplicateVertices(FGenericMesh& mesh) {
-    const size_t vertexCount = mesh.VertexCount();
+    const u32 vertexCount = mesh.VertexCount();
     if (0 == vertexCount)
         return 0;
 
@@ -585,18 +607,19 @@ size_t MergeDuplicateVertices(FGenericMesh& mesh) {
     std::fill(hashes.begin(), hashes.end(), PPE_HASH_VALUE_SEED);
 
     // Compute each vertex hash value subpart by subpart
-    for (const UGenericVertexData& subpart : mesh.Vertices()) {
+    ParallelForEachRef(mesh.Vertices().begin(), mesh.Vertices().end(), [&](const UGenericVertexData& subpart) {
         Assert(subpart->VertexCount() == vertexCount);
 
         const TMemoryView<const u8> rawData = subpart->MakeView();
-        const Graphics::EValueType type = subpart->Type();
+        const size_t sizeInBytes = EVertexFormat_SizeOf(subpart->Format());
         const size_t strideInBytes = subpart->StrideInBytes();
+        Assert_NoAssume(sizeInBytes <= strideInBytes);
 
         forrange(v, 0, vertexCount) {
-            auto block = rawData.SubRange(v * strideInBytes, strideInBytes);
-            hash_combine(hashes[v], Graphics::ValueHash(type, block));
+            const auto block = rawData.SubRange(v * strideInBytes, strideInBytes).CutBefore(sizeInBytes);
+            hash_combine(hashes[v], hash_view(block));
         }
-    }
+    });
 
     // Construct a hash set with all vertices
     struct TVertexIndexHasher_ {
@@ -613,13 +636,13 @@ size_t MergeDuplicateVertices(FGenericMesh& mesh) {
                     pMesh->AreVertexEquals(lhs, rhs) );
         }
     };
-    THashSet<u32, TVertexIndexHasher_, TVertexIndexEqual_, THREAD_LOCAL_ALLOCATOR(GenericMesh, u32)>
+    THashSet<u32, TVertexIndexHasher_, TVertexIndexEqual_, ALLOCATOR(MeshBuilder)>
         verticesSet(TVertexIndexHasher_{ hashes }, TVertexIndexEqual_{ hashes, &mesh });
     verticesSet.reserve(vertexCount);
 
     // Merge and re-index all vertices
     STACKLOCAL_POD_ARRAY(u32, reindexation, vertexCount);
-    forrange(v, 0, u32(vertexCount)) {
+    forrange(v, 0, vertexCount) {
         const auto it = verticesSet.insert(v);
         Assert(it.second || *it.first < v);
         reindexation[v] = *it.first;
@@ -645,10 +668,7 @@ size_t RemoveZeroAreaTriangles(FGenericMesh& mesh, size_t index, float minArea/*
 
     const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index);
     const TGenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index);
-    if (!sp_position3f && !sp_position4f) {
-        AssertNotReached();
-        return 0;
-    }
+    PPE_LOG_CHECK(MeshBuilder, sp_position3f || sp_position4f);
 
     const TMemoryView<u32> indices = mesh.Indices();
     const float twiceMinArea = 2 * minArea;
@@ -676,9 +696,9 @@ size_t RemoveZeroAreaTriangles(FGenericMesh& mesh, size_t index, float minArea/*
         }
 
         float twiceArea = 0;
-        twiceArea = Max(twiceArea, Length3(Cross(p1 - p0, p2 - p0)));
-        twiceArea = Max(twiceArea, Length3(Cross(p0 - p1, p2 - p1)));
-        twiceArea = Max(twiceArea, Length3(Cross(p0 - p2, p1 - p2)));
+        twiceArea = Max(twiceArea, Length(Cross(p1 - p0, p2 - p0)));
+        twiceArea = Max(twiceArea, Length(Cross(p0 - p1, p2 - p1)));
+        twiceArea = Max(twiceArea, Length(Cross(p0 - p2, p1 - p2)));
 
         if (twiceArea > twiceMinArea)
         {
@@ -701,10 +721,11 @@ size_t RemoveUnusedVertices(FGenericMesh& mesh) {
     if (mesh.VertexCount() == 0)
         return 0;
 
-    STACKLOCAL_POD_BITSET(inUse, mesh.VertexCount());
+
+    STACKLOCAL_BITSET(inUse, mesh.VertexCount());
     inUse.ResetAll(false);
 
-    size_t vertexCountUsed = 0;
+    u32 vertexCountUsed = 0;
     for (u32 vertexIndex : mesh.Indices()) {
         if (!inUse[vertexIndex]) {
             inUse.SetTrue(vertexIndex);
@@ -715,7 +736,7 @@ size_t RemoveUnusedVertices(FGenericMesh& mesh) {
     if (vertexCountUsed == mesh.VertexCount())
         return 0;
 
-    const size_t vertexCountBefore = mesh.VertexCount();
+    const u32 vertexCountBefore = mesh.VertexCount();
     Assert(vertexCountUsed < vertexCountBefore);
 
     STACKLOCAL_POD_ARRAY(u32, reindexation, mesh.VertexCount());
@@ -755,6 +776,7 @@ namespace {
 static void PNTesselateRecursive_(
     u32* pBaseIndex,
     u32* pBaseVertex,
+    const u32 vertexOffset,
     const TMemoryView<u32>& indices,
     const TMemoryView<float3>& vertices,
     const float3& uvw00, u32 i00,
@@ -764,27 +786,31 @@ static void PNTesselateRecursive_(
     if (n) {
         n--;
 
-        const u32 j01 = *pBaseVertex++;
-        const u32 j12 = *pBaseVertex++;
-        const u32 j20 = *pBaseVertex++;
+        const u32 j01 = (*pBaseVertex)++;
+        const u32 j12 = (*pBaseVertex)++;
+        const u32 j20 = (*pBaseVertex)++;
 
         const float3 uvw01 = (uvw00 + uvw11) * 0.5f;
         const float3 uvw12 = (uvw11 + uvw22) * 0.5f;
         const float3 uvw20 = (uvw22 + uvw00) * 0.5f;
 
-        PNTesselateRecursive_(pBaseIndex, pBaseVertex, indices, vertices, uvw00,i00, vertices[j01],j01, vertices[j20],j20, n);
-        PNTesselateRecursive_(pBaseIndex, pBaseVertex, indices, vertices, vertices[j01],j01, uvw11,i11, vertices[j12],j12, n);
-        PNTesselateRecursive_(pBaseIndex, pBaseVertex, indices, vertices, vertices[j12],j12, vertices[j20],j20, vertices[j01],j01, n);
-        PNTesselateRecursive_(pBaseIndex, pBaseVertex, indices, vertices, vertices[j20],j20, vertices[j12],j12, uvw22,i22, n);
+        vertices[j01 - vertexOffset] = uvw01;
+        vertices[j12 - vertexOffset] = uvw12;
+        vertices[j20 - vertexOffset] = uvw20;
+
+        PNTesselateRecursive_(pBaseIndex, pBaseVertex, vertexOffset, indices, vertices, uvw00,i00, uvw01,j01, uvw20,j20, n);
+        PNTesselateRecursive_(pBaseIndex, pBaseVertex, vertexOffset, indices, vertices, uvw01,j01, uvw11,i11, uvw12,j12, n);
+        PNTesselateRecursive_(pBaseIndex, pBaseVertex, vertexOffset, indices, vertices, uvw12,j12, uvw20,j20, uvw01,j01, n);
+        PNTesselateRecursive_(pBaseIndex, pBaseVertex, vertexOffset, indices, vertices, uvw20,j20, uvw12,j12, uvw22,i22, n);
     }
     else {
-        indices[*pBaseIndex++] = i00;
-        indices[*pBaseIndex++] = i11;
-        indices[*pBaseIndex++] = i22;
+        indices[(*pBaseIndex)++] = i00;
+        indices[(*pBaseIndex)++] = i11;
+        indices[(*pBaseIndex)++] = i22;
     }
 }
 //----------------------------------------------------------------------------
-// The generated indices order will be very inefficient, better call OptimizeIndices() afterwards
+// The generated index order will be very inefficient, better call OptimizeIndices() afterwards
 static void PNTriangles_(
     FGenericMesh& mesh,
     const FPositions3f& sp_position3f,
@@ -805,17 +831,17 @@ static void PNTriangles_(
     const u32 baseVertex = checked_cast<u32>(mesh.VertexCount());
     Assert(0 == (baseIndex % 3));
 
-    // Space allocated per triangle perfect quadtree, geometric series : (4^depth - 1)/3)
-    const size_t triangleCount = (baseIndex / 3);
-    const size_t indicesPerTriangle = Pow(4, recursions) * 3;
-    const size_t verticesPerTriangle = (indicesPerTriangle / 3 - 1);
+    // Space allocated per triangle perfect quad-tree, geometric series : (4^depth - 1)/3)
+    const u32 triangleCount = (baseIndex / 3u);
+    const u32 indicesPerTriangle = Pow(4u, checked_cast<unsigned>(recursions)) * 3u;
+    const u32 verticesPerTriangle = (indicesPerTriangle / 3u - 1u);
 
     STACKLOCAL_POD_ARRAY(float3, barycentrics, verticesPerTriangle);
     STACKLOCAL_POD_ARRAY(u32, baseIndices, baseIndex);
     Copy(baseIndices, mesh.Indices());
 
-    const size_t nextIndexCount = indicesPerTriangle * triangleCount;
-    const size_t nextVertexCount = baseVertex + verticesPerTriangle * triangleCount;
+    const u32 nextIndexCount = indicesPerTriangle * triangleCount;
+    const u32 nextVertexCount = baseVertex + verticesPerTriangle * triangleCount;
     mesh.Resize(nextIndexCount, nextVertexCount);
 
     const TMemoryView<float3> positions3f = sp_position3f.MakeView();
@@ -827,8 +853,7 @@ static void PNTriangles_(
 
     u32 nextIndex = 0;
     u32 nextVertex = baseVertex;
-
-    for (size_t i = 0; i < baseIndex; i += 3) {
+    for (u32 i = 0; i < baseIndex; i += 3) {
         const u32 i0 = baseIndices[i + 0];
         const u32 i1 = baseIndices[i + 1];
         const u32 i2 = baseIndices[i + 2];
@@ -839,6 +864,7 @@ static void PNTriangles_(
         PNTesselateRecursive_(
             &nextIndex,
             &nextVertex,
+            startVertex,
             mesh.Indices(),
             barycentrics,
             float3(1,0,0), i0,
@@ -855,24 +881,48 @@ static void PNTriangles_(
         Assert(verticesPerTriangle == (nextVertex - startVertex));
 
         forrange(j, startVertex, nextVertex)
-            positions3f[j] = pn.LerpPosition(barycentrics[j]);
+            positions3f[j] = pn.LerpPosition(barycentrics[j - startVertex]);
 
         forrange(j, startVertex, nextVertex)
-            normals3f[j] = pn.LerpNormal(barycentrics[j]);
+            normals3f[j] = pn.LerpNormal(barycentrics[j - startVertex]);
 
         for (FGenericVertexData* pData : sp_lerps) {
-            Graphics::ValueBarycentricLerpArray(
-                pData->Type(),
-                pData->SubRange(startVertex, verticesPerTriangle),
-                pData->StrideInBytes(),
-                pData->VertexView(i0),
-                pData->VertexView(i1),
-                pData->VertexView(i2),
-                barycentrics );
+            void (*lerpF)(const FRawMemory& dst, const FRawMemoryConst& a, const FRawMemoryConst& b, const FRawMemoryConst& c, const float3& uvw);
+            switch (pData->Format()) {
+            case RHI::EVertexFormat::Float:
+                lerpF = [](const FRawMemory& dst, const FRawMemoryConst& a, const FRawMemoryConst& b, const FRawMemoryConst& c, const float3& uvw) {
+                    dst.Cast<float>()[0] = BarycentricLerp(a.Cast<const float>()[0], b.Cast<const float>()[0], c.Cast<const float>()[0], uvw.x, uvw.y, uvw.z);
+                };
+                break;
+            case RHI::EVertexFormat::Float2:
+                lerpF = [](const FRawMemory& dst, const FRawMemoryConst& a, const FRawMemoryConst& b, const FRawMemoryConst& c, const float3& uvw) {
+                    dst.Cast<float2>()[0] = BarycentricLerp(a.Cast<const float2>()[0], b.Cast<const float2>()[0], c.Cast<const float2>()[0], uvw.x, uvw.y, uvw.z);
+                };
+                break;
+            case RHI::EVertexFormat::Float3:
+                lerpF = [](const FRawMemory& dst, const FRawMemoryConst& a, const FRawMemoryConst& b, const FRawMemoryConst& c, const float3& uvw) {
+                    dst.Cast<float3>()[0] = BarycentricLerp(a.Cast<const float3>()[0], b.Cast<const float3>()[0], c.Cast<const float3>()[0], uvw.x, uvw.y, uvw.z);
+                };
+                break;
+            case RHI::EVertexFormat::Float4:
+                lerpF = [](const FRawMemory& dst, const FRawMemoryConst& a, const FRawMemoryConst& b, const FRawMemoryConst& c, const float3& uvw) {
+                    dst.Cast<float4>()[0] = BarycentricLerp(a.Cast<const float4>()[0], b.Cast<const float4>()[0], c.Cast<const float4>()[0], uvw.x, uvw.y, uvw.z);
+                };
+                break;
+            default:
+                AssertNotImplemented();
+            }
+
+            const FRawMemoryConst v0 = pData->Vertex(i0);
+            const FRawMemoryConst v1 = pData->Vertex(i1);
+            const FRawMemoryConst v2 = pData->Vertex(i2);
+            forrange(tess, 0, barycentrics.size()) {
+                lerpF(pData->SubRange(startVertex + tess, 1), v0, v1, v2, barycentrics[tess]);
+            }
         }
 
-        Assert(nextIndex == (i/3) * indicesPerTriangle);
-        Assert(nextVertex == baseVertex + (i/3) * verticesPerTriangle);
+        Assert_NoAssume(nextIndex == ((i+3)/3) * indicesPerTriangle);
+        Assert_NoAssume(nextVertex == baseVertex + ((i+3)/3) * verticesPerTriangle);
     }
 }
 //----------------------------------------------------------------------------
@@ -911,39 +961,46 @@ void Transform(FGenericMesh& mesh, size_t index, const float4x4& transform) {
     Assert(not IsNANorINF(transform));
 
     if (const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index)) {
-        for (float3& p : sp_position3f.MakeView())
+        ParallelForEachRef(sp_position3f.MakeView().begin(), sp_position3f.MakeView().end(), [&](float3& p) {
             p = TransformPosition3(transform, p);
+        });
     }
     else if (const TGenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index)) {
-        for (float4& p : sp_position4f.MakeView())
+        ParallelForEachRef(sp_position4f.MakeView().begin(), sp_position4f.MakeView().end(), [&](float4& p) {
             p = transform.Multiply(p);
+        });
     }
 
     if (const TGenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f_IFP(index)) {
-        for (float3& p : sp_normal3f.MakeView())
-            p = SafeNormalize(TransformVector3(transform, p));
+        ParallelForEachRef(sp_normal3f.MakeView().begin(), sp_normal3f.MakeView().end(), [&](float3& p) {
+            p = Normalize(TransformVector3(transform, p));
+        });
     }
     else if (const TGenericVertexSubPart<float4> sp_normal4f = mesh.Normal4f_IFP(index)) {
         float3 scale;
         float3 translation;
         FQuaternion rotation;
         Decompose(transform, scale, rotation, translation);
-        for (float4& p : sp_normal4f.MakeView())
-            p = (rotation * FQuaternion(p)).Normalize().Value();
+        ParallelForEachRef(sp_normal4f.MakeView().begin(), sp_normal4f.MakeView().end(), [&](float4& p) {
+            p = (rotation * FQuaternion(p)).Normalize().data;
+        });
     }
 
     if (const TGenericVertexSubPart<float3> sp_tangent3f = mesh.Tangent3f_IFP(index)) {
-        for (float3& p : sp_tangent3f.MakeView())
-            p = SafeNormalize(TransformVector3(transform, p));
+        ParallelForEachRef(sp_tangent3f.MakeView().begin(), sp_tangent3f.MakeView().end(), [&](float3& p) {
+            p = Normalize(TransformVector3(transform, p));
+        });
     }
     else if (const TGenericVertexSubPart<float4> sp_tangent4f = mesh.Tangent4f_IFP(index)) {
-        for (float4& p : sp_tangent4f.MakeView())
-            p = float4(SafeNormalize(TransformVector3(transform, p.xyz)), p.w);
+        ParallelForEachRef(sp_tangent4f.MakeView().begin(), sp_tangent4f.MakeView().end(), [&](float4& p) {
+            p = float4(Normalize(TransformVector3<float>(transform, p.xyz)), p.w);
+        });
     }
 
     if (const TGenericVertexSubPart<float3> sp_binormal3f = mesh.Binormal3f_IFP(index)) {
-        for (float3& p : sp_binormal3f.MakeView())
-            p = SafeNormalize(TransformVector3(transform, p));
+        ParallelForEachRef(sp_binormal3f.MakeView().begin(), sp_binormal3f.MakeView().end(), [&](float3& p) {
+            p = Normalize(TransformVector3(transform, p));
+        });
     }
 }
 //----------------------------------------------------------------------------
@@ -951,35 +1008,42 @@ void Transform(FGenericMesh& mesh, size_t index, const FTransform& transform) {
     Assert(not IsNANorINF(transform));
 
     if (const TGenericVertexSubPart<float3> sp_position3f = mesh.Position3f_IFP(index)) {
-        for (float3& p : sp_position3f.MakeView())
+        ParallelForEachRef(sp_position3f.MakeView().begin(), sp_position3f.MakeView().end(), [&](float3& p) {
             p = transform.TransformPosition(p);
+        });
     }
     else if (const TGenericVertexSubPart<float4> sp_position4f = mesh.Position4f_IFP(index)) {
-        for (float4& p : sp_position4f.MakeView())
+        ParallelForEachRef(sp_position4f.MakeView().begin(), sp_position4f.MakeView().end(), [&](float4& p) {
             p = transform.Transform(p);
+        });
     }
 
     if (const TGenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f_IFP(index)) {
-        for (float3& p : sp_normal3f.MakeView())
+        ParallelForEachRef(sp_normal3f.MakeView().begin(), sp_normal3f.MakeView().end(), [&](float3& p) {
             p = transform.TransformVectorNoScale(p);
+        });
     }
     else if (const TGenericVertexSubPart<float4> sp_normal4f = mesh.Normal4f_IFP(index)) {
-        for (float4& p : sp_normal4f.MakeView())
-            p = (transform.Rotation() * FQuaternion(p)).Value();
+        ParallelForEachRef(sp_normal4f.MakeView().begin(), sp_normal4f.MakeView().end(), [&](float4& p) {
+            p = (transform.Rotation() * FQuaternion(p)).data;
+        });
     }
 
     if (const TGenericVertexSubPart<float3> sp_tangent3f = mesh.Tangent3f_IFP(index)) {
-        for (float3& p : sp_tangent3f.MakeView())
+        ParallelForEachRef(sp_tangent3f.MakeView().begin(), sp_tangent3f.MakeView().end(), [&](float3& p) {
             p = transform.TransformVectorNoScale(p);
+        });
     }
     else if (const TGenericVertexSubPart<float4> sp_tangent4f = mesh.Tangent4f_IFP(index)) {
-        for (float4& p : sp_tangent4f.MakeView())
+        ParallelForEachRef(sp_tangent4f.MakeView().begin(), sp_tangent4f.MakeView().end(), [&](float4& p) {
             p = float4(transform.TransformVectorNoScale(p.xyz), p.w);
+        });
     }
 
     if (const TGenericVertexSubPart<float3> sp_binormal3f = mesh.Binormal3f_IFP(index)) {
-        for (float3& p : sp_binormal3f.MakeView())
+        ParallelForEachRef(sp_binormal3f.MakeView().begin(), sp_binormal3f.MakeView().end(), [&](float3& p) {
             p = transform.TransformVectorNoScale(p);
+        });
     }
 }
 //----------------------------------------------------------------------------
@@ -1000,14 +1064,14 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
     }
 
     // alloc space for entry triangle indices
-    const size_t triangleCount = indices.size() / 3;
+    const u32 triangleCount = checked_cast<u32>(indices.size() / 3);
     STACKLOCAL_POD_ARRAY(FVertexCache::FTriangle, triangles, triangleCount);
     {
         const u32 *pIndex = &indices[0];
-        for (size_t i = 0; i < triangleCount; ++i) {
+        for (u32 i = 0; i < triangleCount; ++i) {
             FVertexCache::FTriangle& triangle = triangles[i];
             triangle.Score = 0;
-            for (size_t j = 0; j < 3; ++j) {
+            for (u32 j = 0; j < 3; ++j) {
                 const u32 index = *pIndex++;
                 triangle.Indices[j] = index;
                 ++entries[index].TrianglesLeft;
@@ -1020,7 +1084,7 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
         u32 *pTriList = adjacencies.Pointer();
         ONLY_IF_ASSERT(const u32 *pTriListEnd = adjacencies.Pointer() + adjacencies.size());
 
-        for (size_t i = 0; i < vertexCount; ++i) {
+        for (u32 i = 0; i < vertexCount; ++i) {
             FVertexCache::FEntry& entry = entries[i];
             entry.TriangleList = pTriList;
             pTriList += entry.TrianglesLeft;
@@ -1028,9 +1092,9 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
             entry.TrianglesLeft = 0;
         }
 
-        for (size_t i = 0; i < triangleCount; ++i) {
+        for (u32 i = 0; i < triangleCount; ++i) {
             const FVertexCache::FTriangle& triangle = triangles[i];
-            for (size_t j = 0; j < 3; ++j) {
+            for (u32 j = 0; j < 3; ++j) {
                 const u32 index = triangle.Indices[j];
                 FVertexCache::FEntry& entry = entries[index];
                 entry.TriangleList[entry.TrianglesLeft++] = u32(i);
@@ -1040,14 +1104,14 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
 
     // open vertices
     STACKLOCAL_POD_ARRAY(u32, openVertices, vertexCount);
-    size_t openCount = 0;
+    u32 openCount = 0;
 
     // the cache
     u32 cache[FVertexCache::Size + 3] = {UINT32_MAX};
     u32 pos2score[FVertexCache::Size];
     u32 val2score[FVertexCache::Size + 1];
 
-    for (size_t i = 0; i < FVertexCache::Size; ++i) {
+    for (u32 i = 0; i < FVertexCache::Size; ++i) {
         const float score = (i < 3) ? 0.75f : std::pow(1.0f - (i - 3)/float(FVertexCache::Size - 3), 1.5f);
         pos2score[i] = static_cast<u32>(score * 65536.0f + 0.5f);
     }
@@ -1064,46 +1128,58 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
     u32 seedPos = 0;
 
     for (;;) {
-        u32 seedScore = 0;
-        u32 seedTriangle = UINT32_MAX;
+        struct seed_triangle_t {
+            u32 seedScore = 0;
+            u32 seedTriangle = UINT32_MAX;
+
+            bool operator <(const seed_triangle_t& other) const {
+                return (seedScore > other.seedScore);
+            }
+        };
 
         // if there are open vertices, search them for the seed triangle
         // which maximum score.
-        for (size_t i = 0; i < openCount; ++i) {
-            const FVertexCache::FEntry &entry = entries[openVertices[i]];
+        seed_triangle_t bestTri = ParallelMapReduce(0, openCount,
+            [&](size_t i) NOEXCEPT -> seed_triangle_t {
+                const FVertexCache::FEntry& entry = entries[openVertices[i]];
 
-            for (size_t j = 0; j < entry.TrianglesLeft; ++j) {
-                const u32 index = entry.TriangleList[j];
-                const FVertexCache::FTriangle& triangle = triangles[index];
+                seed_triangle_t bestTri;
+                for (u32 j = 0; j < entry.TrianglesLeft; ++j) {
+                    const u32 index = entry.TriangleList[j];
+                    const FVertexCache::FTriangle& triangle = triangles[index];
 
-                if (triangle.Score > seedScore) {
-                    seedScore = triangle.Score;
-                    seedTriangle = index;
+                    if (triangle.Score > bestTri.seedScore) {
+                        bestTri.seedScore = triangle.Score;
+                        bestTri.seedTriangle = index;
+                    }
                 }
-            }
-        }
+
+                return bestTri;
+            },
+            [](const seed_triangle_t& lhs, const seed_triangle_t& rhs) NOEXCEPT -> seed_triangle_t {
+                return (lhs.seedScore < rhs.seedScore ? rhs : lhs);
+            });
 
         // if we haven't found a seed triangle yet, there are no open
         // vertices and we can pick any triangle
-        if (UINT32_MAX == seedTriangle) {
+        if (UINT32_MAX == bestTri.seedTriangle) {
             while (seedPos < triangleCount && triangles[seedPos].Score == UINT32_MAX)
                 ++seedPos;
 
             if (seedPos == triangleCount) // no triangle left, we're done!
                 break;
 
-            seedTriangle = seedPos;
+            bestTri.seedTriangle = seedPos;
         }
 
-        u32 bestTriangle = seedTriangle;
-        while (bestTriangle != UINT32_MAX) {
-            FVertexCache::FTriangle& triangle = triangles[bestTriangle];
+        while (bestTri.seedTriangle != UINT32_MAX) {
+            FVertexCache::FTriangle& triangle = triangles[bestTri.seedTriangle];
 
             // mark this triangle as used, remove it from the "remaining tris"
             // list of the vertices it uses, and add it to the index buffer.
             triangle.Score = UINT32_MAX;
 
-            for (size_t j = 0; j < 3; ++j) {
+            for (u32 j = 0; j < 3; ++j) {
                 const u32 index = triangle.Indices[j];
                 *pIndex++ = index;
 
@@ -1111,7 +1187,7 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
 
                 // find this triangles' entry
                 u32 k = 0;
-                while(entry.TriangleList[k] != bestTriangle) {
+                while(entry.TriangleList[k] != bestTri.seedTriangle) {
                     Assert(k < entry.TrianglesLeft);
                     ++k;
                 }
@@ -1129,7 +1205,7 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
             // update cache status
             cache[FVertexCache::Size] = cache[FVertexCache::Size + 1] = cache[FVertexCache::Size + 2] = UINT32_MAX;
 
-            for(size_t j = 0; j < 3 ; ++j) {
+            for(u32 j = 0; j < 3 ; ++j) {
                 const u32 index = triangle.Indices[j];
                 cache[FVertexCache::Size + 2] = index;
 
@@ -1150,7 +1226,7 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
             }
 
             // update vertex scores
-            for (size_t i = 0; i < FVertexCache::Size + 3; ++i) {
+            for (u32 i = 0; i < FVertexCache::Size + 3; ++i) {
                 const u32 index = cache[i];
                 if (UINT32_MAX == index)
                     continue;
@@ -1159,7 +1235,7 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
 
                 entry.Score = val2score[std::min(entry.TrianglesLeft, u32(FVertexCache::MaxValence))];
                 if (i < FVertexCache::Size) {
-                    entry.CachePos = checked_cast<u32>(i);
+                    entry.CachePos = i;
                     entry.Score += pos2score[i];
                 }
                 else {
@@ -1167,37 +1243,35 @@ void OptimizeIndicesOrder(const TMemoryView<u32>& indices, size_t vertexCount) {
 
                     // also add to open vertices list if the vertex is indeed open
                     if (UINT32_MAX == entry.OpenPos && entry.TrianglesLeft) {
-                        entry.OpenPos = checked_cast<u32>(openCount);
+                        entry.OpenPos = openCount;
                         openVertices[openCount++] = index;
                     }
                 }
             }
 
             // update triangle scores, find new best triangle
-            u32 bestScore = 0;
-            bestTriangle = UINT32_MAX;
+            bestTri.seedScore = 0;
+            bestTri.seedTriangle = UINT32_MAX;
 
-            for (size_t i = 0; i < FVertexCache::Size; ++i) {
+            for (u32 i = 0; i < FVertexCache::Size; ++i) {
                 if (cache[i] == UINT32_MAX)
                     continue;
 
                 const FVertexCache::FEntry& entry = entries[cache[i]];
 
-                for (size_t j = 0; j < entry.TrianglesLeft; ++j) {
+                forrange(j, 0, entry.TrianglesLeft) {
                     const u32 index = entry.TriangleList[j];
                     FVertexCache::FTriangle& tri = triangles[index];
 
                     Assert(tri.Score != UINT32_MAX);
 
                     u32 score = 0;
-                    for (size_t k = 0; k < 3; ++k)
+                    for (u32 k = 0; k < 3; ++k)
                         score += entries[tri.Indices[k]].Score;
 
                     tri.Score = score;
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestTriangle = index;
-                    }
+                    if (tri.Score > bestTri.seedScore)
+                        bestTri = seed_triangle_t{score, index};
                 }
             }
         } //!while (bestTriangle != UINT32_MAX)
@@ -1209,13 +1283,14 @@ void OptimizeIndicesOrder(FGenericMesh& mesh) {
 }
 //----------------------------------------------------------------------------
 void OptimizeVerticesOrder(FGenericMesh& mesh) { // also removes unused vertices as a side effect
-    const size_t vertexCount = mesh.VertexCount();
+    const u32 vertexCount = mesh.VertexCount();
 
     STACKLOCAL_POD_ARRAY(u32, tmpData, vertexCount*3);
+    FPlatformMemory::Memset(tmpData.Pointer(), 0xFF, tmpData.SizeInBytes());
+
     const TMemoryView<u32> old2new = tmpData.SubRange(0, vertexCount);
     const TMemoryView<u32> reindexation = tmpData.SubRange(vertexCount, vertexCount);
     const TMemoryView<u32> tmp = tmpData.SubRange(2*vertexCount, vertexCount);
-    FPlatformMemory::Memset(old2new.Pointer(), 0xFF, old2new.SizeInBytes());
 
     u32 sortedCount = 0;
 
@@ -1239,17 +1314,23 @@ void OptimizeVerticesOrder(FGenericMesh& mesh) { // also removes unused vertices
     Assert(sortedCount <= vertexCount);
 
     // Reorder each vertex subpart
-    Graphics::FValue x;
+    const size_t maxVertexStride = *mesh.Vertices().Map([](const UGenericVertexData& v) {
+        return v->StrideInBytes();
+    }).MaxElement();
+    STACKLOCAL_POD_ARRAY(u8, tmpVertex, maxVertexStride);
+
     for (const UGenericVertexData& subpart : mesh.Vertices()) {
         Copy(tmp, reindexation);
 
-        forrange(i, 0, vertexCount) {
-            subpart->ReadVertex(i, x);
+        const FRawMemory rawVertex = tmpVertex.CutBefore(subpart->StrideInBytes());
 
-            size_t j = i;
+        forrange(i, 0, vertexCount) {
+            subpart->ReadVertex(i, rawVertex);
+
+            u32 j = i;
             while (true) {
-                const size_t k = tmp[j];
-                tmp[j] = u32(j);
+                const u32 k = tmp[j];
+                tmp[j] = j;
                 if (k == i)
                     break;
 
@@ -1257,7 +1338,7 @@ void OptimizeVerticesOrder(FGenericMesh& mesh) { // also removes unused vertices
                 j = k;
             }
 
-            subpart->WriteVertex(j, x);
+            subpart->WriteVertex(j, rawVertex);
         }
     }
 
@@ -1277,24 +1358,24 @@ float VertexAverageCacheMissRate(const TMemoryView<const u32>& indices, bool fif
     if (indices.empty())
         return 0.0f;
 
-    const size_t indexCount = indices.size();
+    const u32 indexCount = checked_cast<u32>(indices.size());
 
-    size_t misses = 0;
-    size_t wrPos = 0;
+    u32 misses = 0;
+    u32 wrPos = 0;
 
     STACKLOCAL_POD_ARRAY(u32, cache, cacheSize+1);
 
     // initialize cache (we simulate a FIFO here)
-    for (size_t i = 0; i < cacheSize; ++i)
+    for (u32 i = 0; i < cacheSize; ++i)
         cache[i] = UINT32_MAX;
 
     // simulate
-    for (size_t i = 0; i < indexCount; ++i) {
+    for (u32 i = 0; i < indexCount; ++i) {
         const u32 index = indices[i];
         cache[cacheSize] = index;
 
         // find in cache
-        size_t cachePos = 0;
+        u32 cachePos = 0;
         while (cache[cachePos] != index)
             ++cachePos;
 
@@ -1307,7 +1388,7 @@ float VertexAverageCacheMissRate(const TMemoryView<const u32>& indices, bool fif
         }
         else {
             // move to front
-            for (size_t j = cachePos; j > 0; --j)
+            for (u32 j = cachePos; j > 0; --j)
                 cache[j] = cache[j - 1];
 
             cache[0] = index;

@@ -96,6 +96,12 @@ static bool WindowsMonitorInfo_(::HMONITOR hMonitor, FWindowsPlatformSurvey::FMo
     monitor->CurrentResolution.BitsPerPixel = checked_cast<u32>(devmode.dmBitsPerPel);
     monitor->CurrentResolution.RefreshRate = checked_cast<u32>(devmode.dmDisplayFrequency);
 
+    // for some very odd reason, win32 api rounds down the refresh rate from 119.91 to 119 when querying ENUM_CURRENT_SETTINGS (it must pass as an int),
+    // despise the fact the modes returned later by EnumDisplaySettingsExW() having the value rounded UP to 120 ;(
+    // #TODO: remove this hack?
+    if (monitor->CurrentResolution.RefreshRate & 1)
+        ++monitor->CurrentResolution.RefreshRate; // transform 59 to 60, 119 to 120, etc.
+
     // const int dpiAwareW = FPlatformApplicationMisc::ApplyDPIScale(checked_cast<int>(monitor->CurrentResolution.Width), monitor->DPIScale);
     // AssertRelease_NoAssume(checked_cast<int>(screenW) == dpiAwareW);
     // Unused(dpiAwareW);

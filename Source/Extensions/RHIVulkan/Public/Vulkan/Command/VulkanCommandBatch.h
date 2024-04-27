@@ -247,7 +247,7 @@ public:
 
     STATIC_CONST_INTEGRAL(size_t, DebugBufferSize, 8 * 1024 * 1024);
 
-    EShaderDebugIndex AppendShaderForDebug(TMemoryView<const FRectangleU>& regions, const FTaskName& name, const FGraphicsShaderDebugMode& mode, size_t size = DebugBufferSize);
+    EShaderDebugIndex AppendShaderForDebug(TMemoryView<const FRectangle2u>& regions, const FTaskName& name, const FGraphicsShaderDebugMode& mode, size_t size = DebugBufferSize);
     EShaderDebugIndex AppendShaderForDebug(const FTaskName& name, const FComputeShaderDebugMode& mode, size_t size = DebugBufferSize);
     EShaderDebugIndex AppendShaderForDebug(const FTaskName& name, const FRayTracingShaderDebugMode& mode, size_t size = DebugBufferSize);
 

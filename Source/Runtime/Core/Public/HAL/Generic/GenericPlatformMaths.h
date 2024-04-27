@@ -134,6 +134,14 @@ public: // must be defined for every platform
     }
 
     //-----------------------------------------------------------------------
+    // Returns 1, or -1 depending on relation of T to 0 */
+
+    template< class T >
+    static CONSTEXPR FORCE_INLINE T SignNotZero(const T A) NOEXCEPT {
+        return (A >= T(0) ? T(1) : T(-1));
+    }
+
+    //-----------------------------------------------------------------------
     // Returns higher value in a generic way
 
     template< class T >

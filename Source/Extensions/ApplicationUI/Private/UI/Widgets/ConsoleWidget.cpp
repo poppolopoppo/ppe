@@ -2,7 +2,7 @@
 
 #include "UI/Widgets/ConsoleWidget.h"
 
-#include "UI/Imgui.h"
+#include "UI/ImGui.h"
 
 
 namespace PPE {

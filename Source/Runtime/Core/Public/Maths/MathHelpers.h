@@ -35,12 +35,12 @@ struct FConstantNumber {
     constexpr FORCE_INLINE operator float() const { return Float; }
     constexpr FORCE_INLINE operator double() const { return Double; }
 
-    constexpr FORCE_INLINE float Get(Meta::TType<float>) const { return Float; }
-    constexpr FORCE_INLINE double Get(Meta::TType<double>) const { return Double; }
+    NODISCARD constexpr FORCE_INLINE float Get(Meta::TType<float>) const { return Float; }
+    NODISCARD constexpr FORCE_INLINE double Get(Meta::TType<double>) const { return Double; }
 
 #define PPE_CONSTANTNUMBER_OPERATOR_T_DEF(_Float, _Op) \
-    friend constexpr FORCE_INLINE decltype(std::declval<_Float>() _Op std::declval<_Float>()) operator _Op(const FConstantNumber& a, _Float b) { return a.Get(Meta::Type<_Float>) _Op b; } \
-    friend constexpr FORCE_INLINE decltype(std::declval<_Float>() _Op std::declval<_Float>()) operator _Op(_Float a, const FConstantNumber& b) { return a _Op b.Get(Meta::Type<_Float>); }
+    NODISCARD friend constexpr FORCE_INLINE decltype(std::declval<_Float>() _Op std::declval<_Float>()) operator _Op(const FConstantNumber& a, _Float b) { return a.Get(Meta::Type<_Float>) _Op b; } \
+    NODISCARD friend constexpr FORCE_INLINE decltype(std::declval<_Float>() _Op std::declval<_Float>()) operator _Op(_Float a, const FConstantNumber& b) { return a _Op b.Get(Meta::Type<_Float>); }
 #define PPE_CONSTANTNUMBER_OPERATOR_DEF(_Op) \
     PPE_CONSTANTNUMBER_OPERATOR_T_DEF(float, _Op) \
     PPE_CONSTANTNUMBER_OPERATOR_T_DEF(double, _Op)
@@ -87,55 +87,55 @@ PPE_CONSTANTNUMBER_DEF(SqrtHalf, Sqrt2OO);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline CONSTEXPR bool Any(bool value) { return value; }
-inline CONSTEXPR bool All(bool value) { return value; }
+NODISCARD inline CONSTEXPR bool Any(bool value) { return value; }
+NODISCARD inline CONSTEXPR bool All(bool value) { return value; }
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
-inline CONSTEXPR bool Any(T value) { return (!!value); }
+NODISCARD inline CONSTEXPR bool Any(T value) { return (!!value); }
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
-inline CONSTEXPR bool All(T value) { return (value == UMax); }
+NODISCARD inline CONSTEXPR bool All(T value) { return (value == UMax); }
 //----------------------------------------------------------------------------
-inline CONSTEXPR i8 Abs(i8 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
-inline CONSTEXPR i16 Abs(i16 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
-inline CONSTEXPR i32 Abs(i32 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
-inline CONSTEXPR i64 Abs(i64 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
-inline CONSTEXPR float Abs(float v) NOEXCEPT { return FPlatformMaths::Abs(v); }
-inline CONSTEXPR double Abs(double v) NOEXCEPT { return FPlatformMaths::Abs(v); }
-//----------------------------------------------------------------------------
-template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T>&& std::is_arithmetic_v<U>>* = nullptr >
-CONSTEXPR auto BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT;
+NODISCARD inline CONSTEXPR i8 Abs(i8 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
+NODISCARD inline CONSTEXPR i16 Abs(i16 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
+NODISCARD inline CONSTEXPR i32 Abs(i32 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
+NODISCARD inline CONSTEXPR i64 Abs(i64 v) NOEXCEPT { return FPlatformMaths::Abs(v); }
+NODISCARD inline CONSTEXPR float Abs(float v) NOEXCEPT { return FPlatformMaths::Abs(v); }
+NODISCARD inline CONSTEXPR double Abs(double v) NOEXCEPT { return FPlatformMaths::Abs(v); }
 //----------------------------------------------------------------------------
 template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T>&& std::is_arithmetic_v<U>>* = nullptr >
-CONSTEXPR auto BilateralLerp(T v00, T v10, T v11, T v01, U f0, U f1) NOEXCEPT;
+NODISCARD CONSTEXPR auto BarycentricLerp(T v0, T v1, T v2, U f0, U f1, U f2) NOEXCEPT;
 //----------------------------------------------------------------------------
-inline CONSTEXPR auto BiasScale(float x, float bias, float scale) NOEXCEPT { return ((x + bias) * scale); }
-inline CONSTEXPR auto BiasScale(double x, double bias, double scale) NOEXCEPT { return ((x + bias) * scale); }
+template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T>&& std::is_arithmetic_v<U>>* = nullptr >
+NODISCARD CONSTEXPR auto BilateralLerp(T v00, T v10, T v11, T v01, U f0, U f1) NOEXCEPT;
+//----------------------------------------------------------------------------
+NODISCARD inline CONSTEXPR auto BiasScale(float x, float bias, float scale) NOEXCEPT { return ((x + bias) * scale); }
+NODISCARD inline CONSTEXPR auto BiasScale(double x, double bias, double scale) NOEXCEPT { return ((x + bias) * scale); }
 //----------------------------------------------------------------------------
 template <typename U, typename V, typename  _Result = std::common_type_t<U, V> >
-CONSTEXPR auto Blend(const U& ifTrue, const V& ifFalse, bool mask) -> _Result {
+NODISCARD CONSTEXPR auto Blend(const U& ifTrue, const V& ifFalse, bool mask) -> _Result {
     return (mask ? ifTrue : ifFalse);
 }
 //----------------------------------------------------------------------------
-inline float Exp(float value) NOEXCEPT { return FPlatformMaths::Exp(value); }
-inline float Exp2(float value) NOEXCEPT { return FPlatformMaths::Exp2(value); }
-inline float Loge(float value) NOEXCEPT { return FPlatformMaths::Loge(value); }
-inline float LogX(float value, float n) NOEXCEPT { return FPlatformMaths::LogX(value, n); }
-inline float Log2(float value) NOEXCEPT { return FPlatformMaths::Log2(value); }
+NODISCARD inline float Exp(float value) NOEXCEPT { return FPlatformMaths::Exp(value); }
+NODISCARD inline float Exp2(float value) NOEXCEPT { return FPlatformMaths::Exp2(value); }
+NODISCARD inline float Loge(float value) NOEXCEPT { return FPlatformMaths::Loge(value); }
+NODISCARD inline float LogX(float value, float n) NOEXCEPT { return FPlatformMaths::LogX(value, n); }
+NODISCARD inline float Log2(float value) NOEXCEPT { return FPlatformMaths::Log2(value); }
 //----------------------------------------------------------------------------
-inline float Frac(float f) NOEXCEPT { return FPlatformMaths::Frac(f); }
-inline float Fractional(float f) NOEXCEPT { return FPlatformMaths::Fractional(f); }
+NODISCARD inline float Frac(float f) NOEXCEPT { return FPlatformMaths::Frac(f); }
+NODISCARD inline float Fractional(float f) NOEXCEPT { return FPlatformMaths::Fractional(f); }
 //----------------------------------------------------------------------------
-inline float FMod(float f, float m) NOEXCEPT { return FPlatformMaths::Fmod(f, m); }
+NODISCARD inline float FMod(float f, float m) NOEXCEPT { return FPlatformMaths::Fmod(f, m); }
 //----------------------------------------------------------------------------
-float Hypot(float a, float b) NOEXCEPT;
-double Hypot(double a, double b) NOEXCEPT;
+NODISCARD float Hypot(float a, float b) NOEXCEPT;
+NODISCARD double Hypot(double a, double b) NOEXCEPT;
 //----------------------------------------------------------------------------
-CONSTEXPR float Lerp(float v0, float v1, float f) NOEXCEPT;
-CONSTEXPR double Lerp(double v0, double v1, double f) NOEXCEPT;
+NODISCARD CONSTEXPR float Lerp(float v0, float v1, float f) NOEXCEPT;
+NODISCARD CONSTEXPR double Lerp(double v0, double v1, double f) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
-CONSTEXPR float LinearStep(T value, Meta::TDontDeduce<T> vmin, Meta::TDontDeduce<T> vmax) NOEXCEPT;
+NODISCARD CONSTEXPR float LinearStep(T value, Meta::TDontDeduce<T> vmin, Meta::TDontDeduce<T> vmax) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<std::is_arithmetic_v<T>> >
 CONSTEXPR void MinMax(Meta::TDontDeduce<T> a, Meta::TDontDeduce<T> b, T* pmin, T* pmax) NOEXCEPT;
@@ -152,123 +152,133 @@ NODISCARD CONSTEXPR u32 MaxElement(const std::initializer_list<T>& list);
 template <typename T, typename = Meta::has_trivial_less_t<T>>
 NODISCARD CONSTEXPR TPair<u32, u32> MinMaxElement(const std::initializer_list<T>& list);
 //----------------------------------------------------------------------------
-inline float Pow(float f, float n) NOEXCEPT { return FPlatformMaths::Pow(f, n); }
-double Pow(double d, double n) NOEXCEPT;
+NODISCARD CONSTEXPR inline int Pow(int i, int n) NOEXCEPT { int r = 1; while(n--) r *= i;  return r; }
+NODISCARD CONSTEXPR inline unsigned Pow(unsigned u, unsigned n) NOEXCEPT { unsigned r = 1; while(n--) r *= u;  return r; }
+NODISCARD inline float Pow(float f, float n) NOEXCEPT { return FPlatformMaths::Pow(f, n); }
+NODISCARD double Pow(double d, double n) NOEXCEPT;
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
-float Rcp(float f);
-double Rcp(double d);
+NODISCARD float Rcp(float f);
+NODISCARD double Rcp(double d);
 #else
 CONSTEXPR float Rcp(float f) NOEXCEPT;
 CONSTEXPR double Rcp(double d) NOEXCEPT;
 #endif
 //----------------------------------------------------------------------------
-inline float RSqrt(float f) NOEXCEPT { return FPlatformMaths::RSqrt(f); }
-inline float RSqrt_Low(float f) NOEXCEPT { return FPlatformMaths::RSqrt_Low(f); }
-inline double RSqrt(double f) NOEXCEPT { return FPlatformMaths::RSqrt(f); }
+NODISCARD inline float RSqrt(float f) NOEXCEPT { return FPlatformMaths::RSqrt(f); }
+NODISCARD inline float RSqrt_Low(float f) NOEXCEPT { return FPlatformMaths::RSqrt_Low(f); }
+NODISCARD inline double RSqrt(double f) NOEXCEPT { return FPlatformMaths::RSqrt(f); }
 //----------------------------------------------------------------------------
-inline CONSTEXPR float Saturate(float value) NOEXCEPT { return Clamp(value, 0.0f, 1.0f); }
-inline CONSTEXPR double Saturate(double value) NOEXCEPT { return Clamp(value, 0.0, 1.0); }
+NODISCARD inline CONSTEXPR float Saturate(float value) NOEXCEPT { return Clamp(value, 0.0f, 1.0f); }
+NODISCARD inline CONSTEXPR double Saturate(double value) NOEXCEPT { return Clamp(value, 0.0, 1.0); }
 //----------------------------------------------------------------------------
-inline CONSTEXPR i8 Sign(i8 value) NOEXCEPT { return FPlatformMaths::Sign(value); }
-inline CONSTEXPR i16 Sign(i16 value) NOEXCEPT { return FPlatformMaths::Sign(value); }
-inline CONSTEXPR i32 Sign(i32 value) NOEXCEPT { return FPlatformMaths::Sign(value); }
-inline CONSTEXPR i64 Sign(i64 value) NOEXCEPT { return FPlatformMaths::Sign(value); }
-inline CONSTEXPR float Sign(float value) NOEXCEPT { return FPlatformMaths::Sign(value); }
-inline CONSTEXPR double Sign(double value) NOEXCEPT { return FPlatformMaths::Sign(value); }
+NODISCARD inline CONSTEXPR i8 Sign(i8 value) NOEXCEPT { return FPlatformMaths::Sign(value); }
+NODISCARD inline CONSTEXPR i16 Sign(i16 value) NOEXCEPT { return FPlatformMaths::Sign(value); }
+NODISCARD inline CONSTEXPR i32 Sign(i32 value) NOEXCEPT { return FPlatformMaths::Sign(value); }
+NODISCARD inline CONSTEXPR i64 Sign(i64 value) NOEXCEPT { return FPlatformMaths::Sign(value); }
+NODISCARD inline CONSTEXPR float Sign(float value) NOEXCEPT { return FPlatformMaths::Sign(value); }
+NODISCARD inline CONSTEXPR double Sign(double value) NOEXCEPT { return FPlatformMaths::Sign(value); }
+//----------------------------------------------------------------------------
+NODISCARD inline CONSTEXPR i8 SignNotZero(i8 value) NOEXCEPT { return FPlatformMaths::SignNotZero(value); }
+NODISCARD inline CONSTEXPR i16 SignNotZero(i16 value) NOEXCEPT { return FPlatformMaths::SignNotZero(value); }
+NODISCARD inline CONSTEXPR i32 SignNotZero(i32 value) NOEXCEPT { return FPlatformMaths::SignNotZero(value); }
+NODISCARD inline CONSTEXPR i64 SignNotZero(i64 value) NOEXCEPT { return FPlatformMaths::SignNotZero(value); }
+NODISCARD inline CONSTEXPR float SignNotZero(float value) NOEXCEPT { return FPlatformMaths::SignNotZero(value); }
+NODISCARD inline CONSTEXPR double SignNotZero(double value) NOEXCEPT { return FPlatformMaths::SignNotZero(value); }
 //----------------------------------------------------------------------------
 template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* = nullptr >
-inline CONSTEXPR auto SLerp(T v0, Meta::TDontDeduce<T> v1, U f) NOEXCEPT;
+NODISCARD inline CONSTEXPR auto SLerp(T v0, Meta::TDontDeduce<T> v1, U f) NOEXCEPT;
 //----------------------------------------------------------------------------
-inline float Sqrt(float f) NOEXCEPT { return FPlatformMaths::Sqrt(f); }
-inline double Sqrt(double f) NOEXCEPT { return FPlatformMaths::Sqrt(f); }
+NODISCARD inline float Sqrt(float f) NOEXCEPT { return FPlatformMaths::Sqrt(f); }
+NODISCARD inline double Sqrt(double f) NOEXCEPT { return FPlatformMaths::Sqrt(f); }
 //----------------------------------------------------------------------------
 template <typename T>
-inline CONSTEXPR T Sqr(T x) NOEXCEPT { return x * x; }
+NODISCARD inline CONSTEXPR T Sqr(T x) NOEXCEPT { return x * x; }
 //----------------------------------------------------------------------------
 template <typename T, Meta::TEnableIf<std::is_arithmetic_v<T>>* = nullptr >
-inline CONSTEXPR T Step(T y, Meta::TDontDeduce<T> x) NOEXCEPT { return (x >= y) ? T(1) : T(0); }
+NODISCARD inline CONSTEXPR T Step(T y, Meta::TDontDeduce<T> x) NOEXCEPT { return (x >= y) ? T(1) : T(0); }
 //----------------------------------------------------------------------------
-inline CONSTEXPR float SStep(float x) NOEXCEPT;
-inline CONSTEXPR double SStep(double x) NOEXCEPT;
-//----------------------------------------------------------------------------
-template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* = nullptr>
-inline CONSTEXPR auto SMin(T a, Meta::TDontDeduce<T> b, U k) NOEXCEPT;
+NODISCARD inline CONSTEXPR float SStep(float x) NOEXCEPT;
+NODISCARD inline CONSTEXPR double SStep(double x) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* = nullptr>
-inline CONSTEXPR auto Smoothstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
+NODISCARD inline CONSTEXPR auto SMin(T a, Meta::TDontDeduce<T> b, U k) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* = nullptr>
-inline CONSTEXPR auto Smootherstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
+NODISCARD inline CONSTEXPR auto Smoothstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
 //----------------------------------------------------------------------------
-inline float CeilToFloat(float f) NOEXCEPT { return FPlatformMaths::CeilToFloat(f); }
-inline double CeilToFloat(double d) NOEXCEPT { return FPlatformMaths::CeilToDouble(d); }
-inline int CeilToInt(float f) NOEXCEPT { return FPlatformMaths::CeilToInt(f); }
-inline unsigned CeilToUnsigned(float f) NOEXCEPT { return FPlatformMaths::CeilToUnsigned(f); }
+template <typename T, typename U, Meta::TEnableIf<std::is_arithmetic_v<T> && std::is_arithmetic_v<U>>* = nullptr>
+NODISCARD inline CONSTEXPR auto Smootherstep(T vmin, Meta::TDontDeduce<T> vmax, U f) NOEXCEPT;
 //----------------------------------------------------------------------------
-inline float FloorToFloat(float f) NOEXCEPT { return FPlatformMaths::FloorToFloat(f); }
-inline double FloorToFloat(double d) NOEXCEPT { return FPlatformMaths::FloorToDouble(d); }
-inline int FloorToInt(float f) NOEXCEPT { return FPlatformMaths::FloorToInt(f); }
-inline unsigned FloorToUnsigned(float f) NOEXCEPT { return FPlatformMaths::FloorToUnsigned(f); }
+NODISCARD inline float CeilToFloat(float f) NOEXCEPT { return FPlatformMaths::CeilToFloat(f); }
+NODISCARD inline double CeilToFloat(double d) NOEXCEPT { return FPlatformMaths::CeilToDouble(d); }
+NODISCARD inline int CeilToInt(float f) NOEXCEPT { return FPlatformMaths::CeilToInt(f); }
+NODISCARD inline unsigned CeilToUnsigned(float f) NOEXCEPT { return FPlatformMaths::CeilToUnsigned(f); }
 //----------------------------------------------------------------------------
-inline float RoundToFloat(float f) NOEXCEPT { return FPlatformMaths::RoundToFloat(f); }
-inline double RoundToFloat(double d) NOEXCEPT { return FPlatformMaths::RoundToDouble(d); }
-inline int RoundToInt(float f) NOEXCEPT { return FPlatformMaths::RoundToInt(f); }
-inline unsigned RoundToUnsigned(float f) NOEXCEPT { return FPlatformMaths::RoundToUnsigned(f); }
+NODISCARD inline float FloorToFloat(float f) NOEXCEPT { return FPlatformMaths::FloorToFloat(f); }
+NODISCARD inline double FloorToFloat(double d) NOEXCEPT { return FPlatformMaths::FloorToDouble(d); }
+NODISCARD inline int FloorToInt(float f) NOEXCEPT { return FPlatformMaths::FloorToInt(f); }
+NODISCARD inline unsigned FloorToUnsigned(float f) NOEXCEPT { return FPlatformMaths::FloorToUnsigned(f); }
 //----------------------------------------------------------------------------
-inline float TruncToFloat(float f) NOEXCEPT { return FPlatformMaths::TruncToFloat(f); }
-inline double TruncToFloat(double d) NOEXCEPT { return FPlatformMaths::TruncToDouble(d); }
-inline int TruncToInt(float f) NOEXCEPT { return FPlatformMaths::TruncToInt(f); }
-inline unsigned TruncToUnsigned(float f) NOEXCEPT { return FPlatformMaths::TruncToUnsigned(f); }
+NODISCARD inline float RoundToFloat(float f) NOEXCEPT { return FPlatformMaths::RoundToFloat(f); }
+NODISCARD inline double RoundToFloat(double d) NOEXCEPT { return FPlatformMaths::RoundToDouble(d); }
+NODISCARD inline int RoundToInt(float f) NOEXCEPT { return FPlatformMaths::RoundToInt(f); }
+NODISCARD inline unsigned RoundToUnsigned(float f) NOEXCEPT { return FPlatformMaths::RoundToUnsigned(f); }
+//----------------------------------------------------------------------------
+NODISCARD inline float TruncToFloat(float f) NOEXCEPT { return FPlatformMaths::TruncToFloat(f); }
+NODISCARD inline double TruncToFloat(double d) NOEXCEPT { return FPlatformMaths::TruncToDouble(d); }
+NODISCARD inline int TruncToInt(float f) NOEXCEPT { return FPlatformMaths::TruncToInt(f); }
+NODISCARD inline unsigned TruncToUnsigned(float f) NOEXCEPT { return FPlatformMaths::TruncToUnsigned(f); }
 //----------------------------------------------------------------------------
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
-inline CONSTEXPR T IntDivCeil(T x, T divider) { return (x + divider - 1) / divider; }
+NODISCARD inline CONSTEXPR T IntDivCeil(T x, T divider) { return (x + divider - 1) / divider; }
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
-inline CONSTEXPR T IntDivFloor(T x, T divider) { return x / divider; }
+NODISCARD inline CONSTEXPR T IntDivFloor(T x, T divider) { return x / divider; }
 template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
-inline CONSTEXPR T IntDivRound(T x, T divider) { return (x + divider / 2 - 1) / divider; }
+NODISCARD inline CONSTEXPR T IntDivRound(T x, T divider) { return (x + divider / 2 - 1) / divider; }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-CONSTEXPR float Degrees(float radians) NOEXCEPT;
+NODISCARD CONSTEXPR float Degrees(float radians) NOEXCEPT;
 //----------------------------------------------------------------------------
-CONSTEXPR float Radians(float degrees) NOEXCEPT;
+NODISCARD CONSTEXPR float Radians(float degrees) NOEXCEPT;
 //----------------------------------------------------------------------------
-CONSTEXPR float Float01_to_FloatM11(float v_01) NOEXCEPT { return Clamp(v_01 * 2.f - 1.f, -1.f, 1.f); }
-CONSTEXPR float FloatM11_to_Float01(float v_M11) NOEXCEPT { return Saturate(v_M11 * .5f + .5f); }
+NODISCARD CONSTEXPR float Float01_to_FloatM11(float v_01) NOEXCEPT { return Clamp(v_01 * 2.f - 1.f, -1.f, 1.f); }
+NODISCARD CONSTEXPR float FloatM11_to_Float01(float v_M11) NOEXCEPT { return Saturate(v_M11 * .5f + .5f); }
 //----------------------------------------------------------------------------
 void SinCos(float radians, float *fsin, float *fcos) NOEXCEPT;
 void SinCos(double radians, double *fsin, double *fcos) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool NearlyEquals(float A, float B, float maxRelDiff = Epsilon) NOEXCEPT;
-bool NearlyEquals(double A, double B, double maxRelDiff = Epsilon) NOEXCEPT;
+NODISCARD bool NearlyEquals(float A, float B, float maxRelDiff = Epsilon) NOEXCEPT;
+NODISCARD bool NearlyEquals(double A, double B, double maxRelDiff = Epsilon) NOEXCEPT;
 //----------------------------------------------------------------------------
-inline bool IsINF(float f) NOEXCEPT { return std::isinf(f); }
-inline bool IsINF(double d) NOEXCEPT { return std::isinf(d); }
+NODISCARD inline bool IsINF(float f) NOEXCEPT { return std::isinf(f); }
+NODISCARD inline bool IsINF(double d) NOEXCEPT { return std::isinf(d); }
 //----------------------------------------------------------------------------
-inline bool IsNAN(float f) NOEXCEPT { return std::isnan(f); }
-inline bool IsNAN(double d) NOEXCEPT { return std::isnan(d); }
+NODISCARD inline bool IsNAN(float f) NOEXCEPT { return std::isnan(f); }
+NODISCARD inline bool IsNAN(double d) NOEXCEPT { return std::isnan(d); }
 //----------------------------------------------------------------------------
-inline bool IsNANorINF(float f) NOEXCEPT { return (IsNAN(f) || IsINF(f)); }
-inline bool IsNANorINF(double d) NOEXCEPT { return (IsNAN(d) || IsINF(d)); }
+NODISCARD inline bool IsNANorINF(float f) NOEXCEPT { return (IsNAN(f) || IsINF(f)); }
+NODISCARD inline bool IsNANorINF(double d) NOEXCEPT { return (IsNAN(d) || IsINF(d)); }
 //----------------------------------------------------------------------------
-float ClampAngle(float degrees) NOEXCEPT;
+NODISCARD float ClampAngle(float degrees) NOEXCEPT;
 //----------------------------------------------------------------------------
-float NormalizeAngle(float degrees) NOEXCEPT;
+NODISCARD float NormalizeAngle(float degrees) NOEXCEPT;
+NODISCARD float NormalizeRadian(float radians) NOEXCEPT;
 //----------------------------------------------------------------------------
 // https://michaldrobot.files.wordpress.com/2014/05/gcn_alu_opt_digitaldragons2014.pdf
-u32 CubeMapFaceID(float x, float y, float z) NOEXCEPT;
+NODISCARD u32 CubeMapFaceID(float x, float y, float z) NOEXCEPT;
 //----------------------------------------------------------------------------
-float GridSnap(float location, float grid) NOEXCEPT;
+NODISCARD float GridSnap(float location, float grid) NOEXCEPT;
 //----------------------------------------------------------------------------
-float NormPDF(float x, float sigma) NOEXCEPT;
-double NormPDF(double x, double sigma) NOEXCEPT;
+NODISCARD float NormPDF(float x, float sigma) NOEXCEPT;
+NODISCARD double NormPDF(double x, double sigma) NOEXCEPT;
 //----------------------------------------------------------------------------
 // http://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/
 // https://github.com/lemire/fastrange/blob/master/fastrange.h
-inline CONSTEXPR u32 Bounded(u32 x, u32 N) NOEXCEPT {
+NODISCARD inline CONSTEXPR u32 Bounded(u32 x, u32 N) NOEXCEPT {
     return (u32)(((u64)x * (u64)N) >> 32);
 }
 #if 0

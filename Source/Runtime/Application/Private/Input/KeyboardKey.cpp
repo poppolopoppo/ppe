@@ -65,10 +65,6 @@ static constexpr EKeyboardKey GEachKeyboardKeys[] = {
     EKeyboardKey::Numpad8,
     EKeyboardKey::Numpad9,
 
-    EKeyboardKey::Add,
-    EKeyboardKey::Subtract,
-    EKeyboardKey::Multiply,
-    EKeyboardKey::Divide,
     EKeyboardKey::Enter,
 
     // Function
@@ -85,13 +81,6 @@ static constexpr EKeyboardKey GEachKeyboardKeys[] = {
     EKeyboardKey::F10,
     EKeyboardKey::F11,
     EKeyboardKey::F12,
-
-    // Direction
-
-    EKeyboardKey::Up,
-    EKeyboardKey::Down,
-    EKeyboardKey::Left,
-    EKeyboardKey::Right,
 
     // Specials
 
@@ -113,219 +102,254 @@ static constexpr EKeyboardKey GEachKeyboardKeys[] = {
     EKeyboardKey::PageUp,
     EKeyboardKey::PageDown,
 
-    EKeyboardKey::Comma,             // ,
-    EKeyboardKey::Plus,              // +
-    EKeyboardKey::Minus,             // -
-    EKeyboardKey::Period,            // .
-
     EKeyboardKey::CapsLock,
     EKeyboardKey::NumLock,
 
+    EKeyboardKey::Comma,             // ,
+    EKeyboardKey::Equals,             // ,
+    EKeyboardKey::Plus,              // +
+    EKeyboardKey::Minus,             // -
+    EKeyboardKey::Period,            // .
+    EKeyboardKey::Semicolon,         // ;
+    EKeyboardKey::Underscore,         // ;
+
+    EKeyboardKey::Ampersand,          // &
+    EKeyboardKey::Apostrophe,         // '
+    EKeyboardKey::Asterix,            // *
+    EKeyboardKey::Caret,              // ^
+    EKeyboardKey::Colon,              // :
+    EKeyboardKey::Dollar,             // $
+    EKeyboardKey::Exclamation,        // !
+    EKeyboardKey::Tilde,              // ~
+    EKeyboardKey::Quote,              // "
+
+    EKeyboardKey::Slash,              // /
+    EKeyboardKey::Backslash,          //
+    EKeyboardKey::LeftBracket,        // [
+    EKeyboardKey::RightBracket,       // ]
+    EKeyboardKey::LeftParantheses,    // (
+    EKeyboardKey::RightParantheses,   // )
+
+    // Directions
+
+    EKeyboardKey::LeftArrow,
+    EKeyboardKey::RightArrow,
+    EKeyboardKey::UpArrow,
+    EKeyboardKey::DownArrow,
+
     // Modifiers
 
-    EKeyboardKey::Alt,
-    EKeyboardKey::Control,
-    EKeyboardKey::Shift,
-
-    EKeyboardKey::Menu,
-    EKeyboardKey::Super,
+    EKeyboardKey::LeftAlt,
+    EKeyboardKey::RightAlt,
+    EKeyboardKey::LeftControl,
+    EKeyboardKey::RightControl,
+    EKeyboardKey::LeftShift,
+    EKeyboardKey::RightShift,
+    EKeyboardKey::LeftSuper,
+    EKeyboardKey::RightSuper,
 };
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FStringView KeyboardKeyToCStr(EKeyboardKey value) {
-    switch (value)
-    {
-    case PPE::Application::EKeyboardKey::_0:
-        return MakeStringView("0");
-    case PPE::Application::EKeyboardKey::_1:
-        return MakeStringView("1");
-    case PPE::Application::EKeyboardKey::_2:
-        return MakeStringView("2");
-    case PPE::Application::EKeyboardKey::_3:
-        return MakeStringView("3");
-    case PPE::Application::EKeyboardKey::_4:
-        return MakeStringView("4");
-    case PPE::Application::EKeyboardKey::_5:
-        return MakeStringView("5");
-    case PPE::Application::EKeyboardKey::_6:
-        return MakeStringView("6");
-    case PPE::Application::EKeyboardKey::_7:
-        return MakeStringView("7");
-    case PPE::Application::EKeyboardKey::_8:
-        return MakeStringView("8");
-    case PPE::Application::EKeyboardKey::_9:
-        return MakeStringView("9");
-    case PPE::Application::EKeyboardKey::A:
-        return MakeStringView("A");
-    case PPE::Application::EKeyboardKey::B:
-        return MakeStringView("B");
-    case PPE::Application::EKeyboardKey::C:
-        return MakeStringView("C");
-    case PPE::Application::EKeyboardKey::D:
-        return MakeStringView("D");
-    case PPE::Application::EKeyboardKey::E:
-        return MakeStringView("E");
-    case PPE::Application::EKeyboardKey::F:
-        return MakeStringView("F");
-    case PPE::Application::EKeyboardKey::G:
-        return MakeStringView("G");
-    case PPE::Application::EKeyboardKey::H:
-        return MakeStringView("H");
-    case PPE::Application::EKeyboardKey::I:
-        return MakeStringView("I");
-    case PPE::Application::EKeyboardKey::J:
-        return MakeStringView("J");
-    case PPE::Application::EKeyboardKey::K:
-        return MakeStringView("K");
-    case PPE::Application::EKeyboardKey::L:
-        return MakeStringView("L");
-    case PPE::Application::EKeyboardKey::M:
-        return MakeStringView("M");
-    case PPE::Application::EKeyboardKey::N:
-        return MakeStringView("N");
-    case PPE::Application::EKeyboardKey::O:
-        return MakeStringView("O");
-    case PPE::Application::EKeyboardKey::P:
-        return MakeStringView("P");
-    case PPE::Application::EKeyboardKey::Q:
-        return MakeStringView("Q");
-    case PPE::Application::EKeyboardKey::R:
-        return MakeStringView("R");
-    case PPE::Application::EKeyboardKey::S:
-        return MakeStringView("S");
-    case PPE::Application::EKeyboardKey::_T:
-        return MakeStringView("T");
-    case PPE::Application::EKeyboardKey::U:
-        return MakeStringView("U");
-    case PPE::Application::EKeyboardKey::V:
-        return MakeStringView("V");
-    case PPE::Application::EKeyboardKey::W:
-        return MakeStringView("W");
-    case PPE::Application::EKeyboardKey::X:
-        return MakeStringView("X");
-    case PPE::Application::EKeyboardKey::Y:
-        return MakeStringView("Y");
-    case PPE::Application::EKeyboardKey::Z:
-        return MakeStringView("Z");
-    case PPE::Application::EKeyboardKey::Numpad0:
-        return MakeStringView("Numpad0");
-    case PPE::Application::EKeyboardKey::Numpad1:
-        return MakeStringView("Numpad1");
-    case PPE::Application::EKeyboardKey::Numpad2:
-        return MakeStringView("Numpad2");
-    case PPE::Application::EKeyboardKey::Numpad3:
-        return MakeStringView("Numpad3");
-    case PPE::Application::EKeyboardKey::Numpad4:
-        return MakeStringView("Numpad4");
-    case PPE::Application::EKeyboardKey::Numpad5:
-        return MakeStringView("Numpad5");
-    case PPE::Application::EKeyboardKey::Numpad6:
-        return MakeStringView("Numpad6");
-    case PPE::Application::EKeyboardKey::Numpad7:
-        return MakeStringView("Numpad7");
-    case PPE::Application::EKeyboardKey::Numpad8:
-        return MakeStringView("Numpad8");
-    case PPE::Application::EKeyboardKey::Numpad9:
-        return MakeStringView("Numpad9");
-    case PPE::Application::EKeyboardKey::Add:
-        return MakeStringView("Add");
-    case PPE::Application::EKeyboardKey::Subtract:
-        return MakeStringView("Subtract");
-    case PPE::Application::EKeyboardKey::Multiply:
-        return MakeStringView("Multiply");
-    case PPE::Application::EKeyboardKey::Divide:
-        return MakeStringView("Divide");
-    case PPE::Application::EKeyboardKey::F1:
-        return MakeStringView("F1");
-    case PPE::Application::EKeyboardKey::F2:
-        return MakeStringView("F2");
-    case PPE::Application::EKeyboardKey::F3:
-        return MakeStringView("F3");
-    case PPE::Application::EKeyboardKey::F4:
-        return MakeStringView("F4");
-    case PPE::Application::EKeyboardKey::F5:
-        return MakeStringView("F5");
-    case PPE::Application::EKeyboardKey::F6:
-        return MakeStringView("F6");
-    case PPE::Application::EKeyboardKey::F7:
-        return MakeStringView("F7");
-    case PPE::Application::EKeyboardKey::F8:
-        return MakeStringView("F8");
-    case PPE::Application::EKeyboardKey::F9:
-        return MakeStringView("F9");
-    case PPE::Application::EKeyboardKey::F10:
-        return MakeStringView("F10");
-    case PPE::Application::EKeyboardKey::F11:
-        return MakeStringView("F11");
-    case PPE::Application::EKeyboardKey::F12:
-        return MakeStringView("F12");
-    case PPE::Application::EKeyboardKey::Up:
-        return MakeStringView("Up");
-    case PPE::Application::EKeyboardKey::Down:
-        return MakeStringView("Down");
-    case PPE::Application::EKeyboardKey::Left:
-        return MakeStringView("Left");
-    case PPE::Application::EKeyboardKey::Right:
-        return MakeStringView("Right");
-    case PPE::Application::EKeyboardKey::Escape:
-        return MakeStringView("Escape");
-    case PPE::Application::EKeyboardKey::Space:
-        return MakeStringView("Space");
-    case PPE::Application::EKeyboardKey::Pause:
-        return MakeStringView("Pause");
-    case PPE::Application::EKeyboardKey::PrintScreen:
-        return MakeStringView("PrintScreen");
-    case PPE::Application::EKeyboardKey::ScrollLock:
-        return MakeStringView("ScrollLock");
-    case PPE::Application::EKeyboardKey::Backspace:
-        return MakeStringView("Backspace");
-    case PPE::Application::EKeyboardKey::Enter:
-        return MakeStringView("Enter");
-    case PPE::Application::EKeyboardKey::Tab:
-        return MakeStringView("Tab");
-    case PPE::Application::EKeyboardKey::Home:
-        return MakeStringView("Home");
-    case PPE::Application::EKeyboardKey::End:
-        return MakeStringView("End");
-    case PPE::Application::EKeyboardKey::Insert:
-        return MakeStringView("Insert");
-    case PPE::Application::EKeyboardKey::Delete:
-        return MakeStringView("Delete");
-    case PPE::Application::EKeyboardKey::PageUp:
-        return MakeStringView("PageUp");
-    case PPE::Application::EKeyboardKey::PageDown:
-        return MakeStringView("PageDown");
-    case PPE::Application::EKeyboardKey::Alt:
-        return MakeStringView("Alt");
-    case PPE::Application::EKeyboardKey::Menu:
-        return MakeStringView("Menu");
-    case PPE::Application::EKeyboardKey::Control:
-        return MakeStringView("Control");
-    case PPE::Application::EKeyboardKey::Shift:
-        return MakeStringView("Shift");
+FStringLiteral KeyboardKeyToCStr(EKeyboardKey value) NOEXCEPT {
+    switch (value) {
+    case EKeyboardKey::_0:
+        return "0";
+    case EKeyboardKey::_1:
+        return "1";
+    case EKeyboardKey::_2:
+        return "2";
+    case EKeyboardKey::_3:
+        return "3";
+    case EKeyboardKey::_4:
+        return "4";
+    case EKeyboardKey::_5:
+        return "5";
+    case EKeyboardKey::_6:
+        return "6";
+    case EKeyboardKey::_7:
+        return "7";
+    case EKeyboardKey::_8:
+        return "8";
+    case EKeyboardKey::_9:
+        return "9";
+    case EKeyboardKey::A:
+        return "A";
+    case EKeyboardKey::B:
+        return "B";
+    case EKeyboardKey::C:
+        return "C";
+    case EKeyboardKey::D:
+        return "D";
+    case EKeyboardKey::E:
+        return "E";
+    case EKeyboardKey::F:
+        return "F";
+    case EKeyboardKey::G:
+        return "G";
+    case EKeyboardKey::H:
+        return "H";
+    case EKeyboardKey::I:
+        return "I";
+    case EKeyboardKey::J:
+        return "J";
+    case EKeyboardKey::K:
+        return "K";
+    case EKeyboardKey::L:
+        return "L";
+    case EKeyboardKey::M:
+        return "M";
+    case EKeyboardKey::N:
+        return "N";
+    case EKeyboardKey::O:
+        return "O";
+    case EKeyboardKey::P:
+        return "P";
+    case EKeyboardKey::Q:
+        return "Q";
+    case EKeyboardKey::R:
+        return "R";
+    case EKeyboardKey::S:
+        return "S";
+    case EKeyboardKey::_T:
+        return "T";
+    case EKeyboardKey::U:
+        return "U";
+    case EKeyboardKey::V:
+        return "V";
+    case EKeyboardKey::W:
+        return "W";
+    case EKeyboardKey::X:
+        return "X";
+    case EKeyboardKey::Y:
+        return "Y";
+    case EKeyboardKey::Z:
+        return "Z";
+    case EKeyboardKey::Numpad0:
+        return "Numpad0";
+    case EKeyboardKey::Numpad1:
+        return "Numpad1";
+    case EKeyboardKey::Numpad2:
+        return "Numpad2";
+    case EKeyboardKey::Numpad3:
+        return "Numpad3";
+    case EKeyboardKey::Numpad4:
+        return "Numpad4";
+    case EKeyboardKey::Numpad5:
+        return "Numpad5";
+    case EKeyboardKey::Numpad6:
+        return "Numpad6";
+    case EKeyboardKey::Numpad7:
+        return "Numpad7";
+    case EKeyboardKey::Numpad8:
+        return "Numpad8";
+    case EKeyboardKey::Numpad9:
+        return "Numpad9";
+    case EKeyboardKey::F1:
+        return "F1";
+    case EKeyboardKey::F2:
+        return "F2";
+    case EKeyboardKey::F3:
+        return "F3";
+    case EKeyboardKey::F4:
+        return "F4";
+    case EKeyboardKey::F5:
+        return "F5";
+    case EKeyboardKey::F6:
+        return "F6";
+    case EKeyboardKey::F7:
+        return "F7";
+    case EKeyboardKey::F8:
+        return "F8";
+    case EKeyboardKey::F9:
+        return "F9";
+    case EKeyboardKey::F10:
+        return "F10";
+    case EKeyboardKey::F11:
+        return "F11";
+    case EKeyboardKey::F12:
+        return "F12";
+    case EKeyboardKey::Escape:
+        return "Escape";
+    case EKeyboardKey::Space:
+        return "Space";
+    case EKeyboardKey::Pause:
+        return "Pause";
+    case EKeyboardKey::PrintScreen:
+        return "PrintScreen";
+    case EKeyboardKey::ScrollLock:
+        return "ScrollLock";
+    case EKeyboardKey::Backspace:
+        return "Backspace";
+    case EKeyboardKey::Enter:
+        return "Enter";
+    case EKeyboardKey::Tab:
+        return "Tab";
+    case EKeyboardKey::Home:
+        return "Home";
+    case EKeyboardKey::End:
+        return "End";
+    case EKeyboardKey::Insert:
+        return "Insert";
+    case EKeyboardKey::Delete:
+        return "Delete";
+    case EKeyboardKey::PageUp:
+        return "PageUp";
+    case EKeyboardKey::PageDown:
+        return "PageDown";
+    case EKeyboardKey::LeftAlt: return "LeftAlt";
+    case EKeyboardKey::RightAlt: return "RightAlt";
+    case EKeyboardKey::LeftSuper:  return "LeftCommand";
+    case EKeyboardKey::RightSuper:  return "RightCommand";
+    case EKeyboardKey::LeftControl: return "LeftControl";
+    case EKeyboardKey::RightControl: return "RightControl";
+    case EKeyboardKey::LeftShift: return "LeftShift";
+    case EKeyboardKey::RightShift: return "RightShift";
     case EKeyboardKey::Comma:
-        return MakeStringView("Comma");
+        return ",";
+    case EKeyboardKey::Equals:
+        return "=";
     case EKeyboardKey::Plus:
-        return MakeStringView("Plus");
+        return "+";
     case EKeyboardKey::Minus:
-        return MakeStringView("Minus");
+        return "-";
     case EKeyboardKey::Period:
-        return MakeStringView("Period");
+        return ".";
+    case EKeyboardKey::Semicolon:
+        return ";";
+    case EKeyboardKey::Underscore:
+        return "_";
     case EKeyboardKey::CapsLock:
-        return MakeStringView("CapsLock");
+        return "CapsLock";
     case EKeyboardKey::NumLock:
-        return MakeStringView("NumLock");
-    case EKeyboardKey::Super:
-        return MakeStringView("Super");
+        return "NumLock";
+    case EKeyboardKey::LeftArrow: return "LeftArrow";
+    case EKeyboardKey::RightArrow: return "RightArrow";
+    case EKeyboardKey::UpArrow: return "UpArrow";
+    case EKeyboardKey::DownArrow: return "DownArrow";
+    case EKeyboardKey::Ampersand: return "&";
+    case EKeyboardKey::Apostrophe: return "'";
+    case EKeyboardKey::Asterix: return "*";
+    case EKeyboardKey::Caret: return "^";
+    case EKeyboardKey::Colon: return ":";
+    case EKeyboardKey::Dollar: return "$";
+    case EKeyboardKey::Exclamation: return "!";
+    case EKeyboardKey::Tilde: return "~";
+    case EKeyboardKey::Quote: return "\"";
+    case EKeyboardKey::Slash: return "/";
+    case EKeyboardKey::Backslash: return "\\";
+    case EKeyboardKey::LeftBracket: return "[";
+    case EKeyboardKey::RightBracket: return "]";
+    case EKeyboardKey::LeftParantheses: return "(";
+    case EKeyboardKey::RightParantheses: return ")";
     }
 
     AssertNotImplemented();
 }
 //----------------------------------------------------------------------------
-TMemoryView<const EKeyboardKey> EachKeyboardKeys() {
+TMemoryView<const EKeyboardKey> EachKeyboardKeys() NOEXCEPT {
     return MakeView(GEachKeyboardKeys);
 }
 //----------------------------------------------------------------------------

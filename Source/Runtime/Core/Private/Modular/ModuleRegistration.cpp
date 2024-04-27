@@ -118,7 +118,7 @@ bool FModuleDynamicRegistration::Load(FModuleInfo* pinfo, const FStringView& nam
     }
 
     *pinfo = ModuleInfo(reinterpret_cast<FModuleStaticAnchor>(fAnchor));
-    AssertRelease(name == pinfo->Name);
+    AssertRelease(name == pinfo->Name.MakeView());
 
     return true;
 }
@@ -157,7 +157,7 @@ void FModuleDynamicRegistration::RegisterLibrary(
     PPE_LOG(Modular, Info, "register dynamic module <{0}> ({1})", name, MakeCStringView(path));
 
     const Meta::FLockGuard scopeLock(_barrier);
-    _modules.Emplace_AssertUnique(name, anchor, path);
+    _modules.Emplace_AssertUnique(name.MakeView(), anchor, path);
 }
 //----------------------------------------------------------------------------
 void FModuleDynamicRegistration::UnregisterLibrary(const FStringView& name) {

@@ -648,9 +648,9 @@ TScalarMatrix<T, 4, 4> MakeLookAtRHMatrix(   const TScalarVector<T, 3>& eye,
     result._12() = yaxis.x; result._22() = yaxis.y; result._32() = yaxis.z;
     result._13() = zaxis.x; result._23() = zaxis.y; result._33() = zaxis.z;
 
-    result._41() = Dot3(xaxis, eye);
-    result._42() = Dot3(yaxis, eye);
-    result._43() = Dot3(zaxis, eye);
+    result._41() = Dot(xaxis, eye);
+    result._42() = Dot(yaxis, eye);
+    result._43() = Dot(zaxis, eye);
 
     result._41() = -result._41();
     result._42() = -result._42();
@@ -1145,12 +1145,14 @@ TScalarVector<T, 3> Transform3(const TScalarMatrix<T, 3, 3>& m, const TScalarVec
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarVector<T, 3> TransformPosition3(const TScalarMatrix<T, 4, 4>& m, const TScalarVector<T, 3>& v) {
-    return Transform3_OneExtend(m, v).Dehomogenize();
+    const TScalarVector<T, 4> homogeneous = Transform3_OneExtend(m, v);
+    Assert_NoAssume(Abs(homogeneous.w) > SmallEpsilon);
+    return (homogeneous.xyz / homogeneous.w);
 }
 //----------------------------------------------------------------------------
 template <typename T>
 TScalarVector<T, 3> TransformVector3(const TScalarMatrix<T, 4, 4>& m, const TScalarVector<T, 3>& v) {
-    return Transform3_ZeroExtend(m, v).xyz();
+    return Transform3_ZeroExtend(m, v).xyz;
 }
 //----------------------------------------------------------------------------
 template <typename T>

@@ -353,7 +353,7 @@ struct value_block_inliner {
         FAllocatorBlock Block;
         size_t OffsetInBlock{ 0 };
 
-        explicit slab(FAllocatorBlock block) NOEXCEPT : Block(block) {}
+        explicit slab(FAllocatorBlock alloc) NOEXCEPT : Block(alloc) {}
 
         FRawMemory Allocate(size_t sz, size_t alignment) {
             if (sz == 0)
@@ -569,12 +569,12 @@ size_t BlockSize(const value<_Allocator>& value) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-value_block NewBlock(FAllocatorBlock block, const value<_Allocator>& value) {
-    details::value_block_inliner::slab slab{ block };
+value_block NewBlock(FAllocatorBlock alloc, const value<_Allocator>& value) {
+    details::value_block_inliner::slab slab{ alloc };
     // first value_view is embedded in block: TRelativeView<> can't be copied/moved!
     value_view& root = *slab.AllocateView<value_view>(1).data();
     std::visit(details::value_block_inliner{ root, slab }, value);
-    return { block };
+    return { alloc };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -733,10 +733,10 @@ size_t TBuilder<_Allocator>::BlockSize() const NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-value_block TBuilder<_Allocator>::ToValueBlock(FAllocatorBlock block) {
+value_block TBuilder<_Allocator>::ToValueBlock(FAllocatorBlock alloc) {
     Assert_NoAssume(_edits.size() == 1);
 
-    return NewBlock(block, *_edits[0]);
+    return NewBlock(alloc, *_edits[0]);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>

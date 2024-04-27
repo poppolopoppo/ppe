@@ -40,6 +40,58 @@ PPipelineResources IFrameGraph::CreatePipelineResources(FRawRTPipelineID pipelin
     return CreatePipelineResources_(*this, pipeline, id);
 }
 //----------------------------------------------------------------------------
+bool IFrameGraph::RecreateResourceIFN(FBufferID& id,
+    const FBufferDesc& newDesc,
+    const FMemoryDesc& mem/* = Default*/
+    ARGS_IF_RHIDEBUG(FConstChar debugName/* = Default */)) {
+    if (Likely(id)) {
+        const FBufferDesc& desc = Description(id);
+        if (desc == newDesc)
+            return false;
+    }
+
+    Unused(ReleaseResource(id));
+    id = CreateBuffer(newDesc, mem ARGS_IF_RHIDEBUG(debugName));
+    return true;
+}
+//----------------------------------------------------------------------------
+bool IFrameGraph::RecreateResourceIFN(FImageID& id,
+    FImageDesc&& newDesc,
+    const FMemoryDesc& mem/* = Default*/
+    ARGS_IF_RHIDEBUG(FConstChar debugName/* = Default */)) {
+    if (Likely(id)) {
+        newDesc.Validate();
+
+        const FImageDesc& desc = Description(id);
+        if (desc == newDesc)
+            return false;
+    }
+
+    Unused(ReleaseResource(id));
+    id = CreateImage(newDesc, mem ARGS_IF_RHIDEBUG(debugName));
+    return true;
+}
+//----------------------------------------------------------------------------
+bool IFrameGraph::RecreateResourceIFN(TAutoResource<FBufferID>& resource,
+    const FBufferDesc& newDesc,
+    const FMemoryDesc& mem/* = Default*/
+    ARGS_IF_RHIDEBUG(FConstChar debugName/* = Default */)) {
+    FBufferID id{ resource.Release() };
+    const bool created = RecreateResourceIFN(id, newDesc, mem ARGS_IF_RHIDEBUG(debugName));
+    resource.Reset(*this, std::move(id));
+    return created;
+}
+//----------------------------------------------------------------------------
+bool IFrameGraph::RecreateResourceIFN(TAutoResource<FImageID>& resource,
+    FImageDesc&& newDesc,
+    const FMemoryDesc& mem/* = Default*/
+    ARGS_IF_RHIDEBUG(FConstChar debugName/* = Default */)) {
+    FImageID id{ resource.Release() };
+    const bool created = RecreateResourceIFN(id, std::move(newDesc), mem ARGS_IF_RHIDEBUG(debugName));
+    resource.Reset(*this, std::move(id));
+    return created;
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace RHI

@@ -9,7 +9,7 @@
 namespace PPE {
 namespace RHI {
 EXTERN_LOG_CATEGORY(PPE_PIPELINEREFLECTION_API, PipelineReflection)
-} //!namespace ContentPipeline
+} //!namespace RHI
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

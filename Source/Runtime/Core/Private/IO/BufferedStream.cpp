@@ -68,7 +68,7 @@ bool FBufferedStreamReader::ReadAt_SkipBuffer(const FRawMemory& storage, std::st
 //----------------------------------------------------------------------------
 bool FBufferedStreamReader::Eof() const NOEXCEPT {
     Assert(_nonBuffered);
-    Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI());
+    //Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI()); // too expansive!
 
     return (_offset == _capacity && _nonBuffered->Eof());
 }
@@ -77,7 +77,7 @@ std::streamoff FBufferedStreamReader::TellI() const NOEXCEPT {
     Assert(_nonBuffered);
     Assert(_origin >= 0);
     Assert(_offset <= _capacity);
-    Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI());
+    //Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI()); // too expansive!
 
     return (_origin + _offset);
 }
@@ -120,7 +120,7 @@ std::streamoff FBufferedStreamReader::SeekI(std::streamoff offset, ESeekOrigin o
 //----------------------------------------------------------------------------
 bool FBufferedStreamReader::Read(void* storage, std::streamsize sizeInBytesL) {
     Assert(_nonBuffered);
-    Assert_NoAssume(_nonBuffered->TellI() == _origin + _capacity);
+    //Assert_NoAssume(_nonBuffered->TellI() == _origin + _capacity); // too expansive!
     if (sizeInBytesL == 0)
         return true;
 
@@ -180,7 +180,7 @@ bool FBufferedStreamReader::Read(void* storage, std::streamsize sizeInBytesL) {
 //----------------------------------------------------------------------------
 size_t FBufferedStreamReader::ReadSome(void* storage, size_t eltsize, size_t count) {
     Assert(_nonBuffered);
-    Assert_NoAssume(_nonBuffered->TellI() == _origin + _capacity);
+    //Assert_NoAssume(_nonBuffered->TellI() == _origin + _capacity); // too expansive!
 
     size_t sizeInBytes = checked_cast<size_t>(eltsize * count);
     if (sizeInBytes == 0)
@@ -246,7 +246,7 @@ size_t FBufferedStreamReader::ReadSome(void* storage, size_t eltsize, size_t cou
 //----------------------------------------------------------------------------
 bool FBufferedStreamReader::Peek(char& ch) {
     Assert(_nonBuffered);
-    Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI());
+    //Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI()); // too expansive!
 
     if (_offset + sizeof(char) > _capacity && not RefillBuffer_()) {
         ch = static_cast<char>(EOF);
@@ -261,7 +261,7 @@ bool FBufferedStreamReader::Peek(char& ch) {
 //----------------------------------------------------------------------------
 bool FBufferedStreamReader::Peek(wchar_t& wch) {
     Assert(_nonBuffered);
-    Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI());
+    //Assert_NoAssume(_origin + _capacity == _nonBuffered->TellI()); // too expansive!
 
     if (_offset + sizeof(wchar_t) > _capacity && not RefillBuffer_()) {
         wch = static_cast<wchar_t>(EOF);
@@ -368,7 +368,7 @@ std::streamoff FBufferedStreamWriter::TellO() const NOEXCEPT {
     Assert(_nonBuffered);
     Assert(_origin >= 0);
     Assert(_offset <= _bufferSize);
-    Assert_NoAssume(_nonBuffered->TellO() == _origin);
+    //Assert_NoAssume(_nonBuffered->TellO() == _origin); // too expansive!
 
     return (_origin + checked_cast<std::streamsize>(_offset));
 }
@@ -412,7 +412,7 @@ std::streamoff FBufferedStreamWriter::SeekO(std::streamoff offset, ESeekOrigin o
 //----------------------------------------------------------------------------
 bool FBufferedStreamWriter::Write(const void* storage, std::streamsize sizeInBytes) {
     Assert(_nonBuffered);
-    Assert_NoAssume(_nonBuffered->TellO() == _origin);
+    //Assert_NoAssume(_nonBuffered->TellO() == _origin); // too expansive!
     if (sizeInBytes == 0)
         return true;
 

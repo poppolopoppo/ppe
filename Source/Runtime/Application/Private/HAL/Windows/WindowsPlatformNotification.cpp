@@ -71,13 +71,13 @@ public:
 
     using FUserCommands = SPARSEARRAY_INSITU(Window, FUserCmd);
 
-    void Commands(TSmallFunction<void(FUserCommands& cmds)>&& event) {
+    void Commands(TTinyFunction<void(FUserCommands& cmds)>&& event) {
         Assert_NoAssume(event.FitInSitu());
         const Meta::FLockGuard scopeLock(_barrier);
         event(_commands);
     }
 
-    void Taskbar(TSmallFunction<void(::ITaskbarList3& taskbar, ::HWND window) > && event) {
+    void Taskbar(TTinyFunction<void(::ITaskbarList3& taskbar, ::HWND window) > && event) {
         Assert_NoAssume(event.FitInSitu());
         AsyncSyscall([this, event(std::move(event))](ITaskContext&) {
             const Meta::FLockGuard scopeLock(_barrier);
@@ -166,19 +166,19 @@ public:
         switch (icon) {
         case ENotificationIcon::None:
             nid.dwInfoFlags = NIIF_NONE;
-            PPE_LOG(Notification, Debug, "notify systray : {0} -- {1}", title, text);
+            PPE_LOG(Notification, Debug, "notify system tray : {0} -- {1}", title, text);
             break;
         case ENotificationIcon::Info:
             nid.dwInfoFlags = NIIF_INFO;
-            PPE_LOG(Notification, Info, "notify systray : {0} -- {1}", title, text);
+            PPE_LOG(Notification, Info, "notify system tray : {0} -- {1}", title, text);
             break;
         case ENotificationIcon::Warning:
             nid.dwInfoFlags = NIIF_WARNING;
-            PPE_LOG(Notification, Warning, "notify systray : {0} -- {1}", title, text);
+            PPE_LOG(Notification, Warning, "notify system tray : {0} -- {1}", title, text);
             break;
         case ENotificationIcon::Error:
             nid.dwInfoFlags = NIIF_ERROR;
-            PPE_LOG(Notification, Error, "notify systray : {0} -- {1}", title, text);
+            PPE_LOG(Notification, Error, "notify system tray : {0} -- {1}", title, text);
             break;
         }
 
@@ -206,7 +206,7 @@ public:
         Assert_NoAssume(_backgroundWorker.get_id() == std::this_thread::get_id());
         Assert_NoAssume(not _barrier.try_lock());
 
-        // create popup menu from systray commands :
+        // create popup menu from system tray commands :
         ::HMENU const hSystrayPopup = ::CreatePopupMenu();
 
         VECTORINSITU(Window, FSparseDataId, 16) userCmdRefs;
@@ -228,7 +228,7 @@ public:
                 }
                 Assert(hSubPopup);
 
-                const FSparseDataId cmdIndex = systrayCmds._commands.IndexOf(userCmd);
+                const FSparseDataId cmdIndex = systrayCmds._commands.DataId(userCmd);
                 userCmdRefs.push_back(cmdIndex);
                 const ::UINT cmdIDI = checked_cast<::UINT>(userCmdRefs.size());
 
@@ -275,7 +275,7 @@ public:
             const FWindowsTaskbar_::FUserCmd* const pUserCmd = systrayCmds._commands.Find(cmdIndex);
 
             if (pUserCmd) {
-                PPE_LOG(Notification, Emphasis, "launch windows systray command <{0}/{1}>", pUserCmd->Category, pUserCmd->Label);
+                PPE_LOG(Notification, Emphasis, "launch windows system tray command <{0}/{1}>", pUserCmd->Category, pUserCmd->Label);
                 pUserCmd->Delegate();
             }
         }
@@ -314,7 +314,7 @@ private:
             ShowSystray_(systray->_hWnd);
         }
 
-        PPE_LOG(HAL, Debug, "started windows systray background thread for message pump");
+        PPE_LOG(HAL, Debug, "started windows system tray background thread for message pump");
 
         while (systray->_active) {
             if (systray->_barrier.try_lock()) {
@@ -324,7 +324,7 @@ private:
             FPlatformProcess::Sleep(.3f);
         }
 
-        PPE_LOG(HAL, Debug, "stopping windows systray background thread for message pump");
+        PPE_LOG(HAL, Debug, "stopping windows system tray background thread for message pump");
 
         {
             const Meta::FLockGuard scopeLock(systray->_barrier);
@@ -442,26 +442,27 @@ size_t FWindowsPlatformNotification::AddSystrayCommand(
     Assert(not label.empty());
     Assert(cmd);
 
-    FSparseDataId cmdIndex = INDEX_NONE;
+    FSparseDataId cmdIndex = Default;
     FWindowsTaskbar_::Get().Commands([&](FWindowsTaskbar_::FUserCommands& cmds) {
         PPE_LEAKDETECTOR_WHITELIST_SCOPE();
         cmdIndex = cmds.Emplace(category, label, std::move(cmd));
     });
 
-    PPE_LOG(Notification, Debug, "add systray command <{0}/{1}> -> #{2}", category, label, cmdIndex);
+    PPE_LOG(Notification, Debug, "add system tray command <{0}/{1}> -> #{2}", category, label,
+        static_cast<size_t>(cmdIndex));
 
-    return cmdIndex;
+    return static_cast<size_t>(cmdIndex);
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformNotification::RemoveSystrayCommand(size_t index) {
     Assert(index != INDEX_NONE);
 
-    PPE_LOG(Notification, Debug, "remove systray command #{0}", index);
+    PPE_LOG(Notification, Debug, "remove system tray command #{0}", index);
 
     bool cmdFound = false;
     FWindowsTaskbar_::Get().Commands([&](FWindowsTaskbar_::FUserCommands& cmds) {
         PPE_LEAKDETECTOR_WHITELIST_SCOPE();
-        cmdFound = cmds.Remove(index);
+        cmdFound = cmds.Remove(static_cast<FSparseDataId>(index));
     });
 
     return cmdFound;

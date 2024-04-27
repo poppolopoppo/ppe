@@ -59,6 +59,7 @@
     - https://bottosson.github.io/posts/oklab/
 
 - [ ] Point Cloud Rendering
+    - https://ar5iv.labs.arxiv.org/html/2104.07526#S5.SS4 <-- MORTON CODE
     - https://www.magnopus.com/blog/how-we-render-extremely-large-point-clouds
     - http://indigo.diginext.fr/EN/Documents/vast2011-pbr.pdf
     - https://www.cg.tuwien.ac.at/research/publications/2019/schuetz-2019-CLOD/
@@ -103,6 +104,11 @@
 - [ ] Bindless rendering in Vulkan, DX12 and OpenGL
     - https://www.youtube.com/watch?v=SVm0HanVTRw
 
+- [ ] Screen-space horizon GI
+    - https://www.shadertoy.com/view/dsGBzW
+    - https://arxiv.org/pdf/2301.11376.pdf
+- [ ] Lumen: Vulkan raytracing framework with RESTir/DDGI implementations
+    - https://github.com/yuphin/Lumen
 - [ ] Surfels Global Illumination
     - https://www.youtube.com/watch?v=Uea9Wq1XdA4
 - [ ] Hybrid Rendering for Real-Time Ray Tracing

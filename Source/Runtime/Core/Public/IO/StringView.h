@@ -167,8 +167,9 @@ public:
         return Data[index];
     }
 
+    // NODISCARD CONSTEXPR operator const _Char* () const { return c_str(); } // *AMBIGUOUS*, use operator *() instead
     NODISCARD CONSTEXPR operator TBasicConstChar<_Char> () const { return ConstChar(); }
-    NODISCARD CONSTEXPR operator TBasicStringView<_Char> () const { return MakeView(); }
+    // NODISCARD CONSTEXPR operator TBasicStringView<_Char> () const { return MakeView(); } // *AMBIGUOUS* with TBasicStringView<>(TBasicStringLiteral<>)
 
     friend bool operator ==(const TBasicStringLiteral& lhs, const TBasicStringLiteral& rhs) NOEXCEPT { return Equals(lhs.MakeView(), rhs.MakeView()); }
     friend bool operator !=(const TBasicStringLiteral& lhs, const TBasicStringLiteral& rhs) NOEXCEPT { return not operator ==(lhs, rhs); }
@@ -463,6 +464,15 @@ PPE_CORE_API FWStringView EatUntil(FWStringView& wstr, const FWStringView& wmult
 //----------------------------------------------------------------------------
 PPE_CORE_API FStringView EatUntil(FStringView& str, bool (*is_not_a)(char)) NOEXCEPT;
 PPE_CORE_API FWStringView EatUntil(FWStringView& wstr, bool (*is_not_a)(wchar_t)) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FStringView EatLine(FStringView& str) NOEXCEPT;
+PPE_CORE_API FWStringView EatLine(FWStringView& wstr) NOEXCEPT;
+//----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API bool EatExpect(FStringView& str, const FStringView& expected) NOEXCEPT;
+NODISCARD PPE_CORE_API bool EatExpect(FWStringView& wstr, const FWStringView& expected) NOEXCEPT;
+//----------------------------------------------------------------------------
+NODISCARD PPE_CORE_API bool EatExpectI(FStringView& str, const FStringView& expected) NOEXCEPT;
+NODISCARD PPE_CORE_API bool EatExpectI(FWStringView& wstr, const FWStringView& expected) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -12,7 +12,7 @@
 #include "RHI/RenderStateEnums.h"
 #include "RHI/ResourceEnums.h"
 
-#include "UI/Imgui.h"
+#include "UI/ImGui.h"
 
 #include "Container/Vector.h"
 #include "Diagnostic/Logger.h"
@@ -114,7 +114,7 @@ bool FImportTextureWidget::Show() {
             ImGui::EndDisabled();
 
             ImGui::TextUnformatted(INLINE_FORMAT(32, "Input size: {:f3}",
-                Fmt::SizeInBytes(TextureSource->BulkData().SizeInBytes())));
+                Fmt::SizeInBytes(TextureSource->Data().SizeInBytes())));
         }
 
         if (ImGui::CollapsingHeader("Format", ImGuiTreeNodeFlags_DefaultOpen)) {

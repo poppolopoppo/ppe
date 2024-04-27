@@ -154,6 +154,22 @@ FMemoryTracking* FMemoryTracking::SetThreadTrackingData(FMemoryTracking* trackin
     return trackingData;
 }
 //----------------------------------------------------------------------------
+void FMemoryTracking::BeginFrame() NOEXCEPT {
+#if USE_PPE_MEMORYDOMAINS
+    ForeachTrackingDataUnsorted(nullptr, [](void*, const FMemoryTracking& domain) -> bool {
+         FMemoryTracking& md = const_cast<FMemoryTracking&>(domain); // trust me bro (TM)
+         md._user.OnFrameFlip();
+         md._system.OnFrameFlip();
+         return true;
+    });
+#endif
+}
+//----------------------------------------------------------------------------
+void FMemoryTracking::EndFrame() NOEXCEPT {
+#if USE_PPE_MEMORYDOMAINS
+#endif
+}
+//----------------------------------------------------------------------------
 FMemoryTracking::FMemoryTracking(
     const char* optionalName /*= "unknown"*/,
     FMemoryTracking* optionalParent /*= nullptr*/) NOEXCEPT
@@ -377,17 +393,22 @@ void FMemoryTracking::FCounters::ReleaseBatch(size_t n, size_t s) {
 }
 //----------------------------------------------------------------------------
 auto FMemoryTracking::FCounters::Snapshot() const -> FSnapshot {
-    return FSnapshot{
+    FSnapshot result{
         checked_cast<i64>(NumAllocs.load(std::memory_order_relaxed)),
         checked_cast<i64>(MinSize <= MaxSize ? MinSize.load(std::memory_order_relaxed) : 0),
         checked_cast<i64>(MaxSize.load(std::memory_order_relaxed)),
         checked_cast<i64>(TotalSize.load(std::memory_order_relaxed)),
         checked_cast<i64>(PeakAllocs.load(std::memory_order_relaxed)),
         checked_cast<i64>(PeakSize.load(std::memory_order_relaxed)),
+        checked_cast<i64>(SmallAllocs.load(std::memory_order_relaxed)),
         checked_cast<i64>(AccumulatedAllocs.load(std::memory_order_relaxed)),
         checked_cast<i64>(AccumulatedSize.load(std::memory_order_relaxed)),
-        checked_cast<i64>(SmallAllocs.load(std::memory_order_relaxed))
+        checked_cast<i64>(PreviousAccumulatedAllocs.load(std::memory_order_relaxed)),
+        checked_cast<i64>(PreviousAccumulatedSize.load(std::memory_order_relaxed)),
+        checked_cast<i64>(IntraFrameTotalAllocs.load(std::memory_order_relaxed)),
+        checked_cast<i64>(IntraFrameTotalSize.load(std::memory_order_relaxed)),
     };
+    return result;
 }
 //----------------------------------------------------------------------------
 auto FMemoryTracking::FCounters::Difference(const FCounters& o) const -> FSnapshot {
@@ -403,9 +424,13 @@ auto FMemoryTracking::FCounters::Difference(const FCounters& o) const -> FSnapsh
         lhs.TotalSize - rhs.TotalSize,
         lhs.PeakAllocs - rhs.PeakAllocs,
         lhs.PeakSize - rhs.PeakSize,
+        lhs.SmallAllocs - rhs.SmallAllocs,
         lhs.AccumulatedAllocs - rhs.AccumulatedAllocs,
         lhs.AccumulatedSize - rhs.AccumulatedSize,
-        lhs.SmallAllocs - rhs.SmallAllocs
+        lhs.PreviousAccumulatedAllocs - rhs.PreviousAccumulatedAllocs,
+        lhs.PreviousAccumulatedSize - rhs.PreviousAccumulatedSize,
+        lhs.IntraFrameTotalAllocs - rhs.IntraFrameTotalAllocs,
+        lhs.IntraFrameTotalSize - rhs.IntraFrameTotalSize,
     };
 }
 //----------------------------------------------------------------------------
@@ -416,11 +441,24 @@ void FMemoryTracking::FCounters::ResetAt(const FSnapshot& snapshot) {
     TotalSize.store(checked_cast<size_t>(snapshot.TotalSize), std::memory_order_relaxed);
     PeakAllocs.store(checked_cast<size_t>(snapshot.PeakAllocs), std::memory_order_relaxed);
     PeakSize.store(checked_cast<size_t>(snapshot.PeakSize), std::memory_order_relaxed);
-    AccumulatedAllocs.store(checked_cast<size_t>(snapshot.AccumulatedAllocs), std::memory_order_relaxed);
-    AccumulatedSize.store(checked_cast<size_t>(snapshot.AccumulatedSize), std::memory_order_relaxed);
     SmallAllocs.store(checked_cast<size_t>(snapshot.SmallAllocs), std::memory_order_relaxed);
+    AccumulatedAllocs.store(checked_cast<size_t>(snapshot.AccumulatedAllocs), std::memory_order_relaxed);
+    AccumulatedSize.store(checked_cast<u64>(snapshot.AccumulatedSize), std::memory_order_relaxed);
+    PreviousAccumulatedAllocs.store(checked_cast<size_t>(snapshot.PreviousAccumulatedAllocs), std::memory_order_relaxed);
+    PreviousAccumulatedSize.store(checked_cast<u64>(snapshot.PreviousAccumulatedSize), std::memory_order_relaxed);
 
     std::atomic_thread_fence(std::memory_order_acquire);
+}
+//----------------------------------------------------------------------------
+void FMemoryTracking::FCounters::OnFrameFlip() {
+    const size_t currFrameAllocs = AccumulatedAllocs.load(std::memory_order_relaxed);
+    const u64 currFrameSize = AccumulatedSize.load(std::memory_order_relaxed);
+
+    IntraFrameTotalAllocs.store(currFrameAllocs - PreviousAccumulatedAllocs);
+    IntraFrameTotalSize.store(currFrameSize - PreviousAccumulatedSize);
+
+    PreviousAccumulatedAllocs.store(currFrameAllocs);
+    PreviousAccumulatedSize.store(currFrameSize);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

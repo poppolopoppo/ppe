@@ -4,7 +4,7 @@
 
 #if USE_PPE_LOGGER
 
-#include "UI/Imgui.h"
+#include "UI/ImGui.h"
 #include "imgui-internal.h"
 
 #include "Allocator/SlabAllocator.h"
@@ -184,7 +184,7 @@ static void LogViewer_ShowLogs_(FLogViewerWidget& widget) {
         case ELoggerVerbosity::Info:
             return FColor::GhostWhite();
         case ELoggerVerbosity::Profiling:
-            return FColor::Magenta();
+            return FColor::MediumPurple();
         case ELoggerVerbosity::Emphasis:
             return FColor::LawnGreen();
         case ELoggerVerbosity::Warning:
@@ -289,7 +289,7 @@ static void LogViewer_ShowLogs_(FLogViewerWidget& widget) {
                     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, labelColor.Fade(160).ToPackedABGR());
                     ImGui::PushStyleColor(ImGuiCol_ButtonActive, labelColor.ToPackedABGR());
 
-                    sb << FTextFormat::Compact << it << Eos;
+                    sb << FTextFormat::Compact << FTextFormat::FFloat{ FTextFormat::DefaultFloat, 3 } << it << Eos;
                     ImGui::SmallButton(sb.c_str());
                     sb.clear();
 

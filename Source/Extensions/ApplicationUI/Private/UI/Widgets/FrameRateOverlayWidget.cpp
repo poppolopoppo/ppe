@@ -2,7 +2,7 @@
 
 #include "UI/Widgets/FrameRateOverlayWidget.h"
 
-#include "UI/Imgui.h"
+#include "UI/ImGui.h"
 
 #include "Application/ApplicationWindow.h"
 

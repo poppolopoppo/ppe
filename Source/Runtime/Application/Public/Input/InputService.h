@@ -1,13 +1,14 @@
 #pragma once
 
-#include "Application.h"
-
 #include "Application_fwd.h"
+#include "InputDevice.h"
+
 #include "HAL/Generic/GenericWindow.h"
 
+#include "Container/Appendable.h"
 #include "Memory/UniquePtr.h"
 #include "Misc/Event.h"
-#include "Time/Timepoint.h"
+#include "Time/Time_fwd.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -33,22 +34,39 @@ public:
     virtual Application::FGenericWindow* FocusedWindow() const = 0;
     virtual void SetWindowFocused(Application::FGenericWindow*) = 0;
 
-    virtual void Poll() = 0;
-    virtual void Update(FTimespan dt) = 0;
-    virtual void Clear() = 0;
+    virtual Meta::TOptionalReference<const Application::IInputDevice> InputDevice(Application::FInputDeviceID deviceId) const NOEXCEPT = 0;
+
+    virtual void PollInputEvents() = 0;
+    virtual void PostInputMessages(const FTimeline& time) = 0;
+    virtual void FlushInputKeys() = 0;
+    virtual void SupportedInputKeys(TAppendable<Application::FInputKey> keys) const NOEXCEPT = 0;
+
+    virtual void AddInputListener(const Application::SInputListener& listener) = 0;
+    virtual bool RemoveInputListener(const Application::SInputListener& listener) = 0;
+
+    virtual void AddInputMapping(const Application::PInputMapping& mapping, i32 priority) = 0;
+    virtual bool RemoveInputMapping(const Application::PInputMapping& mapping) = 0;
+
+public:
+    using FUpdateInputEvent = TFunction<void(const IInputService&, FTimespan)>;
+
+    THREADSAFE_EVENT(OnUpdateInput, FUpdateInputEvent);
+
+    using FDeviceEvent = TFunction<void(const IInputService&, Application::FInputDeviceID)>;
+
+    THREADSAFE_EVENT(OnDeviceConnected, FDeviceEvent);
+    THREADSAFE_EVENT(OnDeviceDisconnected, FDeviceEvent);
+
+    using FFocusEvent = TFunction<void(const IInputService&, const Application::FGenericWindow*)>;
+
+    THREADSAFE_EVENT(OnWindowFocus, FFocusEvent);
+
+    using FUnhandledKey = TFunction<void(const IInputService&, const Application::FInputMessage&)>;
+
+    THREADSAFE_EVENT(OnUnhandledKey, FUnhandledKey);
 
 public:
     static PPE_APPLICATION_API void MakeDefault(UInputService* input);
-
-public:
-    using FInputUpdateEvent = TFunction<void(IInputService&, FTimespan dt)>;
-
-    THREADSAFE_EVENT(OnInputUpdate, FInputUpdateEvent);
-
-    using FInputFocusEvent = TFunction<void(const IInputService&, const Application::FGenericWindow*)>;
-
-    THREADSAFE_EVENT(OnWindowFocus, FInputFocusEvent);
-
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

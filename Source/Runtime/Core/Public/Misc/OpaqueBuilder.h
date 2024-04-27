@@ -83,7 +83,7 @@ template <typename _Allocator>
 NODISCARD inline size_t BlockSize(const value<_Allocator>& value) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-NODISCARD inline value_block NewBlock(FAllocatorBlock block, const value<_Allocator>& value);
+NODISCARD inline value_block NewBlock(FAllocatorBlock alloc, const value<_Allocator>& value);
 //----------------------------------------------------------------------------
 template <typename _Allocator = default_allocator, typename _ValueAllocator = default_allocator>
 NODISCARD inline value_block NewBlock(const value<_ValueAllocator>& value) {
@@ -109,53 +109,53 @@ NODISCARD inline value<_Allocator> NewValue(const _Allocator& allocator, const v
 // Lookup value_view for expected named properties
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-inline NODISCARD Meta::TOptional<TPtrRef<value<_Allocator>>> XPath(object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT;
+NODISCARD inline Meta::TOptional<TPtrRef<value<_Allocator>>> XPath(object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT;
 template <typename _Allocator>
-inline NODISCARD Meta::TOptional<TPtrRef<value<_Allocator>>> XPath(object<_Allocator>& o, FStringLiteral literal) NOEXCEPT { return XPath(o, string<_Allocator>(literal)); }
+NODISCARD inline Meta::TOptional<TPtrRef<value<_Allocator>>> XPath(object<_Allocator>& o, FStringLiteral literal) NOEXCEPT { return XPath(o, string<_Allocator>(literal)); }
 template <typename _Allocator>
-inline NODISCARD Meta::TOptional<TPtrRef<value<_Allocator>>> XPath(value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT;
+NODISCARD inline Meta::TOptional<TPtrRef<value<_Allocator>>> XPath(value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename _Allocator>
-inline NODISCARD Meta::TOptional<TPtrRef<const value<_Allocator>>> XPath(const object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT;
+NODISCARD inline Meta::TOptional<TPtrRef<const value<_Allocator>>> XPath(const object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT;
 template <typename _Allocator>
-inline NODISCARD Meta::TOptional<TPtrRef<const value<_Allocator>>> XPath(const object<_Allocator>& o, FStringLiteral literal) NOEXCEPT { return XPath(o, string<_Allocator>(literal)); }
+NODISCARD inline Meta::TOptional<TPtrRef<const value<_Allocator>>> XPath(const object<_Allocator>& o, FStringLiteral literal) NOEXCEPT { return XPath(o, string<_Allocator>(literal)); }
 template <typename _Allocator>
-inline NODISCARD Meta::TOptional<TPtrRef<const value<_Allocator>>> XPath(const value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT;
+NODISCARD inline Meta::TOptional<TPtrRef<const value<_Allocator>>> XPath(const value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-inline NODISCARD Meta::TOptionalReference<T> XPathAs(object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT {
+NODISCARD inline Meta::TOptionalReference<T> XPathAs(object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT {
     if (Meta::TOptional<TPtrRef<value<_Allocator>>> result = XPath(o, key))
         return std::get_if<T>(result->get());
     return nullptr;
 }
 template <typename T, typename _Allocator>
-inline NODISCARD Meta::TOptionalReference<T> XPathAs(object<_Allocator>& o, FStringLiteral literal) NOEXCEPT {
+NODISCARD inline Meta::TOptionalReference<T> XPathAs(object<_Allocator>& o, FStringLiteral literal) NOEXCEPT {
     if (Meta::TOptional<TPtrRef<value<_Allocator>>> result = XPath(o, literal))
         return std::get_if<T>(result->get());
     return nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-inline NODISCARD Meta::TOptionalReference<const T> XPathAs(const object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT {
+NODISCARD inline Meta::TOptionalReference<const T> XPathAs(const object<_Allocator>& o, const string<_Allocator>& key) NOEXCEPT {
     if (Meta::TOptional<TPtrRef<const value<_Allocator>>> result = XPath(o, key))
         return std::get_if<T>(result->get());
     return nullptr;
 }
 template <typename T, typename _Allocator>
-inline NODISCARD Meta::TOptionalReference<const T> XPathAs(const object<_Allocator>& o, FStringLiteral literal) NOEXCEPT {
+NODISCARD inline Meta::TOptionalReference<const T> XPathAs(const object<_Allocator>& o, FStringLiteral literal) NOEXCEPT {
     if (Meta::TOptional<TPtrRef<const value<_Allocator>>> result = XPath(o, literal))
         return std::get_if<T>(result->get());
     return nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
-inline NODISCARD Meta::TOptionalReference<T> XPathAs(value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT {
+NODISCARD inline Meta::TOptionalReference<T> XPathAs(value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT {
     if (Meta::TOptional<TPtrRef<value<_Allocator>>> result = XPath(v, path))
         return std::get_if<T>(result->get());
     return nullptr;
 }
 template <typename T, typename _Allocator>
-inline NODISCARD Meta::TOptionalReference<const T> XPathAs(const value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT {
+NODISCARD inline Meta::TOptionalReference<const T> XPathAs(const value<_Allocator>& v, std::initializer_list<string<_Allocator>> path) NOEXCEPT {
     if (Meta::TOptional<TPtrRef<const value<_Allocator>>> result = XPath(v, path))
         return std::get_if<T>(result->get());
     return nullptr;
@@ -168,7 +168,7 @@ public:
     virtual ~IBuilder() = default;
 
     virtual size_t BlockSize() const NOEXCEPT = 0;
-    virtual value_block ToValueBlock(FAllocatorBlock block) = 0;
+    virtual value_block ToValueBlock(FAllocatorBlock alloc) = 0;
 
     virtual void Write(nil v) = 0;
     virtual void Write(boolean v) = 0;
@@ -369,7 +369,7 @@ public:
     Meta::TOptionalReference<const value_type> Peek() const NOEXCEPT { return const_cast<TBuilder*>(this)->Peek(); }
 
     virtual size_t BlockSize() const NOEXCEPT override final;
-    virtual value_block ToValueBlock(FAllocatorBlock block) override final;
+    virtual value_block ToValueBlock(FAllocatorBlock alloc) override final;
 
     virtual void Write(nil v) override final { SetValue_(v); }
     virtual void Write(boolean v) override final { SetValue_(v); }
@@ -406,8 +406,8 @@ public:
     void BeginKeyValue(string_type&& rkey);
     void BeginKeyValue(const string_type& key) { BeginKeyValue(string_type(key)); }
 
-    template <typename _KeyLike, typename _Char, size_t _Len,
-        decltype(std::declval<IBuilder*>()->BeginKeyValue(std::forward<_KeyLike>(std::declval<_KeyLike&&>())))* = nullptr
+    template <typename _KeyLike, typename _Char, size_t _Len/*,
+        decltype(std::declval<IBuilder*>()->BeginKeyValue(std::forward<_KeyLike>(std::declval<_KeyLike&&>())))* = nullptr*/
     >
     void KeyValue(_KeyLike&& keyLike, const _Char (&staticString)[_Len]) {
         BeginKeyValue(std::forward<_KeyLike>(keyLike));
@@ -415,9 +415,9 @@ public:
         EndKeyValue();
     }
 
-    template <typename _KeyLike, typename... _Args,
+    template <typename _KeyLike, typename... _Args/*,
         decltype(std::declval<TBuilder*>()->BeginKeyValue(std::forward<_KeyLike>(std::declval<_KeyLike&&>())))* = nullptr,
-        decltype(std::declval<TBuilder*>()->Write(std::forward<_Args>(std::declval<_Args&&>())...))* = nullptr
+        decltype(std::declval<TBuilder*>()->Write(std::forward<_Args>(std::declval<_Args&&>())...))* = nullptr*/
     >
     void KeyValue(_KeyLike&& keyLike, _Args&&... args) {
         BeginKeyValue(std::forward<_KeyLike>(keyLike));

@@ -1,21 +1,13 @@
 ﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
-#include "GenericMaterial.h"
+#include "Mesh/GenericMaterial.h"
 
-#include "Lattice_fwd.h"
-
-#include "Device/State/SamplerState.h"
-
-#include "Allocator/PoolAllocator-impl.h"
+#include "RHI/SamplerEnums.h"
 
 namespace PPE {
 namespace ContentPipeline {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-SINGLETON_POOL_ALLOCATED_SEGREGATED_DEF(Lattice, FGenericMaterial, );
-//----------------------------------------------------------------------------
-FGenericMaterial::FGenericMaterial() {}
 //----------------------------------------------------------------------------
 FGenericMaterial::FGenericMaterial(
     FString&& name,
@@ -31,8 +23,6 @@ FGenericMaterial::FGenericMaterial(
     Assert(!_name.empty());
     Assert(!_technique.empty());
 }
-//----------------------------------------------------------------------------
-FGenericMaterial::~FGenericMaterial() {}
 //----------------------------------------------------------------------------
 void FGenericMaterial::AddTag(const FStringView& tag) {
     Assert(!tag.empty());
@@ -62,21 +52,19 @@ bool FGenericMaterial::RemoveTag(const FStringView& tag) {
     }
 }
 //----------------------------------------------------------------------------
-void FGenericMaterial::AddParameter(const FStringView& key, const Graphics::FValue& value) {
+void FGenericMaterial::AddParameter(const FStringView& key, const Opaq::value_init& value) {
     Assert(!key.empty());
-    Assert(!value.empty());
 
-    _parameters.Insert_AssertUnique(ToString(key), value);
+    _parameters.Insert_AssertUnique(ToString(key), FGenericParameterBlock{ value });
 }
 //----------------------------------------------------------------------------
-void FGenericMaterial::SetParameter(const FStringView& key, const Graphics::FValue& value) {
+void FGenericMaterial::SetParameter(const FStringView& key, const Opaq::value_init& value) {
     Assert(!key.empty());
-    Assert(!value.empty());
 
-    _parameters.GetOrAdd(ToString(key)) = value;
+    _parameters.Insert_Overwrite(ToString(key), FGenericParameterBlock{ value });
 }
 //----------------------------------------------------------------------------
-Graphics::FValue& FGenericMaterial::GetParameterValue(const FStringView& key) {
+FGenericParameterBlock& FGenericMaterial::GetParameterBlock(const FStringView& key) {
     Assert(!key.empty());
 
     const auto it = std::find_if(_parameters.begin(), _parameters.end(), [&key](const auto& it) {
@@ -86,7 +74,7 @@ Graphics::FValue& FGenericMaterial::GetParameterValue(const FStringView& key) {
     return (it->second);
 }
 //----------------------------------------------------------------------------
-Graphics::FValue* FGenericMaterial::GetParameterValueIFP(const FStringView& key) {
+FGenericParameterBlock* FGenericMaterial::GetParameterBlockIFP(const FStringView& key) {
     Assert(!key.empty());
 
     const auto it = std::find_if(_parameters.begin(), _parameters.end(), [&key](const auto& it) {
@@ -115,37 +103,36 @@ bool FGenericMaterial::RemoveParameter(const FStringView& key) {
 void FGenericMaterial::AddTexture(
     const FStringView& key,
     const FFilename& filename,
-    Graphics::ETextureDimension dimension,
-    Graphics::ETextureAddressMode addressMode,
-    Graphics::ETextureFilter filter ) {
-    const FGenericTextureSampler sampler{
+    RHI::EImageView view,
+    RHI::EAddressMode addressMode,
+    RHI::ETextureFilter filter ) {
+    AddTexture(key, {
         filename,
-        dimension,
+        view,
         addressMode,
         filter
-    };
-    AddTexture(key, sampler);
+    });
 }
 //----------------------------------------------------------------------------
 void FGenericMaterial::AddTexture2D(const FStringView& key, const FFilename& filename) {
     AddTexture(key, filename,
-        Graphics::ETextureDimension::FTexture2D,
-        Graphics::ETextureAddressMode::Wrap,
-        Graphics::ETextureFilter::Linear );
+        RHI::EImageView_2D,
+        RHI::EAddressMode::Repeat,
+        RHI::ETextureFilter::Linear );
 }
 //----------------------------------------------------------------------------
 void FGenericMaterial::AddTexture3D(const FStringView& key, const FFilename& filename) {
     AddTexture(key, filename,
-        Graphics::ETextureDimension::Texture3D,
-        Graphics::ETextureAddressMode::Wrap,
-        Graphics::ETextureFilter::Linear );
+        RHI::EImageView_3D,
+        RHI::EAddressMode::Repeat,
+        RHI::ETextureFilter::Linear );
 }
 //----------------------------------------------------------------------------
 void FGenericMaterial::AddTextureCube(const FStringView& key, const FFilename& filename) {
     AddTexture(key, filename,
-        Graphics::ETextureDimension::FTextureCube,
-        Graphics::ETextureAddressMode::Wrap,
-        Graphics::ETextureFilter::Linear );
+        RHI::EImageView_Cube,
+        RHI::EAddressMode::Repeat,
+        RHI::ETextureFilter::Linear );
 }
 //----------------------------------------------------------------------------
 void FGenericMaterial::AddTexture(const FStringView& key, const FGenericTextureSampler& sampler) {

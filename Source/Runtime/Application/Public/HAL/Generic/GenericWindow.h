@@ -64,6 +64,7 @@ public: // must be defined for every platform
     size_t Width() const { PPE_DATARACE_SHARED_SCOPE(this); return _width; }
     size_t Height() const { PPE_DATARACE_SHARED_SCOPE(this); return _height; }
 
+    int2 Position() const NOEXCEPT;
     uint2 Dimensions() const NOEXCEPT;
 
     u32 DPI() const { return _dpi; }
@@ -86,6 +87,7 @@ public: // must be defined for every platform
 
     virtual bool PumpMessages();
 
+    virtual bool BringToFront();
     virtual bool Center();
     virtual bool Maximize();
     virtual bool Minimize();

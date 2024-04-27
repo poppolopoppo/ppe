@@ -36,7 +36,12 @@ FGenericWindow::~FGenericWindow() {
     Assert_NoAssume(nullptr == _handle);
 }
 //----------------------------------------------------------------------------
-uint2 FGenericWindow::Dimensions() const noexcept {
+int2 FGenericWindow::Position() const NOEXCEPT {
+    PPE_DATARACE_SHARED_SCOPE(this);
+    return { _left, _top };
+}
+//----------------------------------------------------------------------------
+uint2 FGenericWindow::Dimensions() const NOEXCEPT {
     PPE_DATARACE_SHARED_SCOPE(this);
     return { _width, _height };
 }
@@ -65,6 +70,11 @@ bool FGenericWindow::SetFocus() {
 }
 //----------------------------------------------------------------------------
 bool FGenericWindow::PumpMessages() {
+    PPE_DATARACE_EXCLUSIVE_SCOPE(this);
+    return true;
+}
+//----------------------------------------------------------------------------
+bool FGenericWindow::BringToFront() {
     PPE_DATARACE_EXCLUSIVE_SCOPE(this);
     return true;
 }

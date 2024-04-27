@@ -5,6 +5,9 @@
 #include "RHI/EnumHelpers.h"
 
 #include "Maths/PackingHelpers.h"
+#include "Maths/PackedVectors.h"
+
+PRAGMA_DISABLE_RUNTIMECHECKS
 
 namespace PPE {
 namespace RHI {
@@ -71,13 +74,13 @@ struct TVertexFormatPromote_ {
     static FVertexFormatPromote Make(u32 arity, EVertexFormat fmt, _Remaining... remaining) NOEXCEPT {
         if (EVertexFormat_IsSignedInt(fmt)) {
             switch (EVertexFormat_Type(fmt)) {
-            case EVertexFormat::Byte:
+            case EVertexFormat::_Byte:
                 return TVertexFormatPromote_<_Args..., i8>::Make(arity, remaining...);
-            case EVertexFormat::Short:
+            case EVertexFormat::_Short:
                 return TVertexFormatPromote_<_Args..., i16>::Make(arity, remaining...);
-            case EVertexFormat::Int:
+            case EVertexFormat::_Int:
                 return TVertexFormatPromote_<_Args..., i32>::Make(arity, remaining...);
-            case EVertexFormat::Long:
+            case EVertexFormat::_Long:
                 return TVertexFormatPromote_<_Args..., i64>::Make(arity, remaining...);
             default:
                 break;
@@ -85,13 +88,13 @@ struct TVertexFormatPromote_ {
         }
         else if (EVertexFormat_IsUnsignedInt(fmt)) {
             switch (EVertexFormat_Type(fmt)) {
-            case EVertexFormat::UByte:
+            case EVertexFormat::_UByte:
                 return TVertexFormatPromote_<_Args..., u8>::Make(arity, remaining...);
-            case EVertexFormat::UShort:
+            case EVertexFormat::_UShort:
                 return TVertexFormatPromote_<_Args..., u16>::Make(arity, remaining...);
-            case EVertexFormat::UInt:
+            case EVertexFormat::_UInt:
                 return TVertexFormatPromote_<_Args..., u32>::Make(arity, remaining...);
-            case EVertexFormat::ULong:
+            case EVertexFormat::_ULong:
                 return TVertexFormatPromote_<_Args..., u64>::Make(arity, remaining...);
             default:
                 break;
@@ -160,6 +163,14 @@ struct TVertexFormatPromote_<_Dst, _Src> {
             else
                 return TVertexCopy_Checked_<_Dst, _Src>::Make(arity);
         }
+        else IF_CONSTEXPR( // signed/unsigned, same sizes
+            (EVertexFormat_IsSignedInt(VertexAttrib<_Dst>()) && EVertexFormat_IsUnsignedInt(VertexAttrib<_Src>())) ||
+            (EVertexFormat_IsUnsignedInt(VertexAttrib<_Dst>()) && EVertexFormat_IsSignedInt(VertexAttrib<_Src>()))) {
+            IF_CONSTEXPR(sizeof(_Dst) == sizeof(_Src))
+                return &VertexCopy_Promote_<_Dst, _Src>;
+            else
+                return nullptr; // only allow invalid sign assignments with types of same size
+        }
         else IF_CONSTEXPR( // both floating point, different sizes
             EVertexFormat_IsFloatingPoint(VertexAttrib<_Dst>()) &&
             EVertexFormat_IsFloatingPoint(VertexAttrib<_Src>())) {;
@@ -174,17 +185,69 @@ struct TVertexFormatPromote_<_Dst, _Src> {
     }
 };
 //----------------------------------------------------------------------------
+static bool OctahedralNormalPromote_(const FRawMemory& rawTo, const FRawMemoryConst& rawFrom) NOEXCEPT {
+    const TMemoryView<const float3> from = rawFrom.Cast<const float3>();
+    const TMemoryView<ubyte2n> to = rawTo.Cast<ubyte2n>();
+    if (Unlikely(from.size() != to.size()))
+        return false;
+
+    forrange(i, 0, from.size())
+        to[i] = Normal_to_UByte2n(from[i]);
+    return true;
+}
+//----------------------------------------------------------------------------
+static bool OctahedralNormalDemote_(const FRawMemory& rawTo, const FRawMemoryConst& rawFrom) NOEXCEPT {
+    const TMemoryView<const ubyte2n> from = rawFrom.Cast<const ubyte2n>();
+    const TMemoryView<float3> to = rawTo.Cast<float3>();
+    if (Unlikely(from.size() != to.size()))
+        return false;
+
+    forrange(i, 0, from.size())
+        to[i] = UByte2n_to_Normal(from[i]);
+    return true;
+}
+//----------------------------------------------------------------------------
+static bool IdentityRawCopy_(const FRawMemory& rawTo, const FRawMemoryConst& rawFrom) NOEXCEPT {
+    if (rawTo.size() == rawFrom.size()) {
+        rawFrom.CopyTo(rawTo);
+        return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVertexFormatPromote EVertexFormat_Promote(EVertexFormat dst, EVertexFormat src) NOEXCEPT {
+    // early exit for trivial copies
+    if (src == dst)
+        return &IdentityRawCopy_;
+
     const u32 arity = EVertexFormat_Arity(src);
-    if (EVertexFormat_Arity(dst) == arity &&
-        EVertexFormat_IsSignedInt(dst) == EVertexFormat_IsSignedInt(src) &&
-        EVertexFormat_IsUnsignedInt(dst) == EVertexFormat_IsUnsignedInt(src) &&
-        EVertexFormat_IsFloatingPoint(dst) == EVertexFormat_IsFloatingPoint(src) )
-        return TVertexFormatPromote_<>::Make(arity, dst, src);
+    if (EVertexFormat_Arity(dst) == arity) {
+        bool allowPromotion = false;
+
+        // representation promotions
+        allowPromotion |= (
+            EVertexFormat_IsSignedInt(dst) == EVertexFormat_IsSignedInt(src) &&
+            EVertexFormat_IsUnsignedInt(dst) == EVertexFormat_IsUnsignedInt(src) &&
+            EVertexFormat_IsFloatingPoint(dst) == EVertexFormat_IsFloatingPoint(src));
+
+        // signed/unsigned conversions
+        allowPromotion |= (EVertexFormat_SizeOf(dst) >= EVertexFormat_SizeOf(src) && (
+            (EVertexFormat_IsSignedInt(dst) && EVertexFormat_IsUnsignedInt(src)) ||
+            (EVertexFormat_IsSignedInt(src) && EVertexFormat_IsUnsignedInt(dst)) ));
+
+        if (allowPromotion)
+            return TVertexFormatPromote_<>::Make(arity, dst, src);
+    }
+
+    // normal vector octahedral encoding
+    if (src == EVertexFormat::Float3 && dst == EVertexFormat::UByte2_Norm)
+        return &OctahedralNormalPromote_;
+    if (dst == EVertexFormat::Float3 && src == EVertexFormat::UByte2_Norm)
+        return &OctahedralNormalDemote_;
 
     return nullptr;
 }
@@ -193,3 +256,5 @@ FVertexFormatPromote EVertexFormat_Promote(EVertexFormat dst, EVertexFormat src)
 //----------------------------------------------------------------------------
 } //!namespace RHI
 } //!namespace PPE
+
+PRAGMA_RESTORE_RUNTIMECHECKS

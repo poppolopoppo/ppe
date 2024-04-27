@@ -65,6 +65,7 @@ public:
     static FModularDomain& Get() NOEXCEPT;
 
     static void Start(FModularDomain& domain);
+    static void Run(FModularDomain& domain);
     static void Shutdown(FModularDomain& domain);
 
 public: // typed module interface
@@ -99,6 +100,12 @@ public: // events
     PUBLIC_EVENT(OnPostPhaseShutdown, FPhaseDelegate)
 
     using FDomainDelegate = TFunction<void(const FModularDomain&)>;
+
+    PUBLIC_EVENT(OnPreStart, FDomainDelegate)
+    PUBLIC_EVENT(OnPostStart, FDomainDelegate)
+
+    PUBLIC_EVENT(OnPreShutdown, FDomainDelegate)
+    PUBLIC_EVENT(OnPostShutdown, FDomainDelegate)
 
     PUBLIC_EVENT(OnPreDutyCycle, FDomainDelegate)
     PUBLIC_EVENT(OnPostDutyCycle, FDomainDelegate)

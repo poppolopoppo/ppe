@@ -2,7 +2,7 @@
 
 #include "UI/Widgets/FileDialogWidget.h"
 
-#include "UI/Imgui.h"
+#include "UI/ImGui.h"
 #include "imgui-internal.h"
 
 #include "Color/Color.h"
@@ -421,10 +421,10 @@ static void FileDialog_ShowLargeView_(FFileDialogWidget& dialog) {
 
                     if (ImGui::BeginItemTooltip()) {
                         if (entry.IsFile)
-                            ImGui::TextUnformatted(/*alloc tolerated in loop since it's called only once*/INLINE_FORMAT(MAX_PATH + 10,
+                            ImGui::TextUnformatted(/*alloc tolerated in loop since it's called only once*/*INLINE_FORMAT(MAX_PATH + 10,
                                 "{0} - {1:f2}\0", entry.Name, Fmt::SizeInBytes(entry.FileSize)));
                         else
-                            ImGui::TextUnformatted(/*alloc tolerated in loop since it's called only once*/INLINE_FORMAT(MAX_PATH,
+                            ImGui::TextUnformatted(/*alloc tolerated in loop since it's called only once*/*INLINE_FORMAT(MAX_PATH,
                                 "{0}\0", entry.Name));
                         ImGui::EndTooltip();
                     }

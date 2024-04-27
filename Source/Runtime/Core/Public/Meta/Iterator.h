@@ -127,90 +127,90 @@ public:
     }
 
     // needed for implicit conversion
-    TCheckedArrayIterator(const parent_type& other) NOEXCEPT : parent_type(other) {}
-    TCheckedArrayIterator& operator =(const parent_type& other) {
+    CONSTEXPR TCheckedArrayIterator(const parent_type& other) NOEXCEPT : parent_type(other) {}
+    CONSTEXPR TCheckedArrayIterator& operator =(const parent_type& other) {
         parent_type::operator=(other);
         return *this;
     }
 
     // overload stdext::checked_array_iterator<> for this constructor
     // std needs iterator = const_iterator which is supported by default
-    TCheckedArrayIterator(T* ptr, size_t count, size_t index) NOEXCEPT
+    CONSTEXPR TCheckedArrayIterator(T* ptr, size_t count, size_t index) NOEXCEPT
         : parent_type(ptr, count, index)
     {}
 
     // All those are specialized to return a TCheckArrayIterator instead of stdext::checked_array_iterator
 
-    TCheckedArrayIterator& operator++() NOEXCEPT {
+    CONSTEXPR TCheckedArrayIterator& operator++() NOEXCEPT {
         parent_type::operator++();
         return (*this);
     }
 
-    TCheckedArrayIterator operator++(int) NOEXCEPT {
+    CONSTEXPR TCheckedArrayIterator operator++(int) NOEXCEPT {
         TCheckedArrayIterator tmp(*this);
         ++(*this);
         return tmp;
     }
 
-    TCheckedArrayIterator& operator--() NOEXCEPT {
+    CONSTEXPR TCheckedArrayIterator& operator--() NOEXCEPT {
         parent_type::operator--();
         return (*this);
     }
 
-    TCheckedArrayIterator operator--(int) NOEXCEPT {
+    CONSTEXPR TCheckedArrayIterator operator--(int) NOEXCEPT {
         TCheckedArrayIterator tmp(*this);
         --(*this);
         return tmp;
     }
 
-    TCheckedArrayIterator& operator+=(const difference_type offset) NOEXCEPT {
+    CONSTEXPR TCheckedArrayIterator& operator+=(const difference_type offset) NOEXCEPT {
         parent_type::operator+=(offset);
         return (*this);
     }
 
-    TCheckedArrayIterator operator+(const difference_type offset) const NOEXCEPT {
+    CONSTEXPR TCheckedArrayIterator operator+(const difference_type offset) const NOEXCEPT {
         TCheckedArrayIterator tmp(*this);
         return (tmp += offset);
     }
 
-    TCheckedArrayIterator& operator-=(const difference_type offset) NOEXCEPT {
+    CONSTEXPR TCheckedArrayIterator& operator-=(const difference_type offset) NOEXCEPT {
         parent_type::operator-=(offset);
         return (*this);
     }
 
-    TCheckedArrayIterator operator-(const difference_type offset) const NOEXCEPT {
+    CONSTEXPR TCheckedArrayIterator operator-(const difference_type offset) const NOEXCEPT {
         TCheckedArrayIterator tmp(*this);
         return (tmp -= offset);
     }
 
-    difference_type operator-(const TCheckedArrayIterator& other) const NOEXCEPT {
+    CONSTEXPR difference_type operator-(const TCheckedArrayIterator& other) const NOEXCEPT {
         return parent_type::operator-(other);
     }
 
 #if PPE_HAS_CXX20
     using parent_type::operator <=>;
 
-    bool operator==(const TCheckedArrayIterator& other) const NOEXCEPT {
+    CONSTEXPR bool operator==(const TCheckedArrayIterator& other) const NOEXCEPT {
         return parent_type::operator<=>(other) == 0;
     }
 
-    bool operator!=(const TCheckedArrayIterator& other) const NOEXCEPT {
+    CONSTEXPR bool operator!=(const TCheckedArrayIterator& other) const NOEXCEPT {
         return parent_type::operator<=>(other) != 0;
     }
 
-    bool operator<(const TCheckedArrayIterator& other) const NOEXCEPT {
+    CONSTEXPR bool operator<(const TCheckedArrayIterator& other) const NOEXCEPT {
         return parent_type::operator<=>(other) < 0;
     }
 
-    bool operator>(const TCheckedArrayIterator& other) const NOEXCEPT {
+    CONSTEXPR bool operator>(const TCheckedArrayIterator& other) const NOEXCEPT {
         return parent_type::operator<=>(other) > 0;
     }
 
-    bool operator<=(const TCheckedArrayIterator& other) const NOEXCEPT {
+    CONSTEXPR bool operator<=(const TCheckedArrayIterator& other) const NOEXCEPT {
         return parent_type::operator<=>(other) <= 0;
     }
 
-    bool operator>=(const TCheckedArrayIterator& other) const NOEXCEPT {
+    CONSTEXPR bool operator>=(const TCheckedArrayIterator& other) const NOEXCEPT {
         return parent_type::operator<=>(other) >= 0;
     }
 
@@ -226,7 +226,7 @@ public:
 };
 //----------------------------------------------------------------------------
 template <typename T>
-TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index) {
+CONSTEXPR TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index) {
     return TCheckedArrayIterator<T>(ptr, count, index);
 }
 //----------------------------------------------------------------------------
@@ -249,7 +249,7 @@ TCheckedArrayIterator<T> MakeCheckedIterator(T* ptr, size_t count, size_t index)
 #endif //!USE_PPE_CHECKEDARRAYITERATOR
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
-TCheckedArrayIterator<T> MakeCheckedIterator(T (&staticArray)[_Dim], size_t index) {
+CONSTEXPR TCheckedArrayIterator<T> MakeCheckedIterator(T (&staticArray)[_Dim], size_t index) {
     return MakeCheckedIterator<T>(&staticArray[0], _Dim, index);
 }
 //----------------------------------------------------------------------------
@@ -264,7 +264,7 @@ public:
     using difference_type = decltype(_Int(0) - _Int(1));
     using typename parent_type::value_type;
     using typename parent_type::pointer;
-    using typename parent_type::reference;
+    using reference = value_type;
 
     CONSTEXPR explicit TCountingIterator(_Int it) : _it(it) {}
 
@@ -283,10 +283,10 @@ public:
     CONSTEXPR TCountingIterator operator+(difference_type n) const { return TCountingIterator(_it + n * _Inc); }
     CONSTEXPR TCountingIterator operator-(difference_type n) const { return TCountingIterator(_it - n * _Inc); }
 
-    CONSTEXPR _Int operator*() const { return _it; }
+    CONSTEXPR reference operator*() const { return _it; }
     //pointer operator->() const { return _it.operator ->(); }
 
-    CONSTEXPR _Int operator[](difference_type n) const { return (_it + n * _Inc); }
+    CONSTEXPR reference operator[](difference_type n) const { return (_it + n * _Inc); }
 
     CONSTEXPR difference_type operator-(const TCountingIterator& other) const { return checked_cast<difference_type>(_it - other._it); }
 
@@ -475,12 +475,12 @@ CONSTEXPR TOutputIterator<_It, _Transform> MakeOutputIterator(const _It& it, con
 template <typename _It>
 class TKeyIterator : public Meta::TIterator<
     Meta::TAddConst< decltype(std::declval<_It>()->first) >,
-    std::forward_iterator_tag
+    typename std::iterator_traits<_It>::iterator_category
 > {
 public:
     typedef Meta::TIterator<
         Meta::TAddConst< decltype(std::declval<_It>()->first) >,
-        std::forward_iterator_tag
+        typename std::iterator_traits<_It>::iterator_category
     >   parent_type;
 
     using typename parent_type::iterator_category;
@@ -502,6 +502,19 @@ public:
     CONSTEXPR TKeyIterator& operator++() /* prefix */ { ++_it; return *this; }
     CONSTEXPR TKeyIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TKeyIterator(jt); }
 
+    CONSTEXPR TKeyIterator& operator--() /* prefix */ { --_it; return *this; }
+    CONSTEXPR TKeyIterator operator--(int) /* postfix */ { const auto jt = _it; --_it; return TKeyIterator(jt); }
+
+    CONSTEXPR TKeyIterator& operator+=(difference_type n) { _it += n; return *this; }
+    CONSTEXPR TKeyIterator& operator-=(difference_type n) { _it -= n; return *this; }
+
+    CONSTEXPR TKeyIterator operator+(difference_type n) const { return TKeyIterator(_it + n); }
+    CONSTEXPR TKeyIterator operator-(difference_type n) const { return TKeyIterator(_it - n); }
+
+    CONSTEXPR reference operator[](difference_type n) const { return *(*this + n); }
+
+    CONSTEXPR difference_type operator-(const TKeyIterator& other) const { return checked_cast<difference_type>(_it - other._it); }
+
     CONSTEXPR reference operator*() const { return (_it->first); }
     CONSTEXPR pointer operator->() const { return (&_it->first); }
 
@@ -512,6 +525,12 @@ public:
     CONSTEXPR bool operator ==(const TKeyIterator<U>& other) const { return (_it == other.Inner()); }
     template <typename U>
     CONSTEXPR bool operator !=(const TKeyIterator<U>& other) const { return (_it != other.Inner()); }
+
+    CONSTEXPR bool operator< (const TKeyIterator& other) const { return (_it <  other._it); }
+    CONSTEXPR bool operator> (const TKeyIterator& other) const { return (_it >  other._it); }
+
+    CONSTEXPR bool operator<=(const TKeyIterator& other) const { return (_it <= other._it); }
+    CONSTEXPR bool operator>=(const TKeyIterator& other) const { return (_it >= other._it); }
 
 private:
     _It _it;
@@ -527,12 +546,12 @@ CONSTEXPR TKeyIterator<_It> MakeKeyIterator(_It&& it) { return TKeyIterator<_It>
 template <typename _It>
 class TValueIterator : public Meta::TIterator<
     Meta::TAddConst< decltype(std::declval<_It>()->second) >,
-    std::forward_iterator_tag
+    typename std::iterator_traits<_It>::iterator_category
 > {
 public:
     typedef Meta::TIterator<
         Meta::TAddConst<  decltype(std::declval<_It>()->second) >,
-        std::forward_iterator_tag
+        typename std::iterator_traits<_It>::iterator_category
     >   parent_type;
 
     using typename parent_type::iterator_category;
@@ -554,6 +573,19 @@ public:
     CONSTEXPR TValueIterator& operator++() /* prefix */ { ++_it; return *this; }
     CONSTEXPR TValueIterator operator++(int) /* postfix */ { const auto jt = _it; ++_it; return TValueIterator(jt); }
 
+    CONSTEXPR TValueIterator& operator--() /* prefix */ { --_it; return *this; }
+    CONSTEXPR TValueIterator operator--(int) /* postfix */ { const auto jt = _it; --_it; return TValueIterator(jt); }
+
+    CONSTEXPR TValueIterator& operator+=(difference_type n) { _it += n; return *this; }
+    CONSTEXPR TValueIterator& operator-=(difference_type n) { _it -= n; return *this; }
+
+    CONSTEXPR TValueIterator operator+(difference_type n) const { return TValueIterator(_it + n); }
+    CONSTEXPR TValueIterator operator-(difference_type n) const { return TValueIterator(_it - n); }
+
+    CONSTEXPR reference operator[](difference_type n) const { return *(*this + n); }
+
+    CONSTEXPR difference_type operator-(const TValueIterator& other) const { return checked_cast<difference_type>(_it - other._it); }
+
     CONSTEXPR reference operator*() const { return (_it->second); }
     CONSTEXPR pointer operator->() const { return (&_it->second); }
 
@@ -564,6 +596,12 @@ public:
     CONSTEXPR bool operator ==(const TValueIterator<U>& other) const { return (_it == other.Inner()); }
     template <typename U>
     CONSTEXPR bool operator !=(const TValueIterator<U>& other) const { return (_it != other.Inner()); }
+
+    CONSTEXPR bool operator< (const TValueIterator& other) const { return (_it <  other._it); }
+    CONSTEXPR bool operator> (const TValueIterator& other) const { return (_it >  other._it); }
+
+    CONSTEXPR bool operator<=(const TValueIterator& other) const { return (_it <= other._it); }
+    CONSTEXPR bool operator>=(const TValueIterator& other) const { return (_it >= other._it); }
 
 private:
     _It _it;
