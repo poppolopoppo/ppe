@@ -48,7 +48,7 @@ public:
     }
 
     static PPE_CORE_API FTaskFunc ResumeTask(const FInterruptedTask& task);
-    static PPE_CORE_API void Resume(const TMemoryView<FInterruptedTask>& tasks);
+    static PPE_CORE_API void Resume(TMemoryView<FInterruptedTask> tasks);
 
 private:
     FTaskFiberRef _fiber;

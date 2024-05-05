@@ -215,7 +215,7 @@ static void WorkerThreadLaunchpad_(FTaskManager* pmanager, size_t workerIndex, u
     Format(workerName, "{0}#{1}", pmanager->Name(), workerIndex );
 #   else
     char workerName[128];
-    Format(workerName, "{0}_Worker_{1}_of_{2}",
+    Format(workerName, "{0}_Worker_{1:#2}_of_{2:#2}",
         pmanager->Name(), (workerIndex + 1), pmanager->WorkerCount() );
 #   endif
 #else
@@ -809,42 +809,32 @@ FTaskFunc FInterruptedTask::ResumeTask(const FInterruptedTask& task) {
     };
 }
 //----------------------------------------------------------------------------
-void FInterruptedTask::Resume(const TMemoryView<FInterruptedTask>& tasks) {
+void FInterruptedTask::Resume(TMemoryView<FInterruptedTask> tasks) {
     Assert(not tasks.empty());
 
     // sort all queued fibers by priority before resuming and outside of the lock
     // (no need for stable sort since each task should have a unique priority)
     std::sort(tasks.begin(), tasks.end());
 
-    bool postTaskAvailable = false;
-    FWorkerContext_* workerIFP = nullptr;
-    FTaskManagerImpl* workerCtx = nullptr;
+    // it's faster to use PostTaskDelegate versus spawning a new fiber,
+    // but there's only one task that can benefit from this : we can't steal
+    // the current fiber more than once.
+    // also we can't use PostTaskDelegate when the stalled fiber belongs to
+    // another task manager.
+#if 0 // /!!\ DONT USE, THIS IS NOT WORKING AS INTENDED AND NEEDS TO BE DEBUGGED
     if (FFiber::IsInFiber()) {
-        postTaskAvailable = true;
-        workerIFP = &FWorkerContext_::Get();
-        workerCtx = &workerIFP->Context();
+        FWorkerContext_& worker = FWorkerContext_::Get();
+        if (&worker.Context() == tasks.front().Context() &&
+            worker.SetPostTaskDelegate(ResumeTask(tasks.front())))
+            tasks = tasks.ShiftFront();
     }
-    Assert(not workerIFP || workerCtx);
+#endif
 
     for (const FInterruptedTask& task : tasks) {
-        FTaskFunc func{ ResumeTask(task) };
-        Assert_NoAssume(func.FitInSitu());
+        // stalled fibers are resumed through a task to let the current fiber dispatch
+        // all jobs to every worker thread before yielding (won't steal execution from current fiber)
 
-        // it's faster to use PostTaskDelegate versus spawning a new fiber,
-        // but there's only one task that can benefit from this : we can't steal
-        // the current fiber more than once.
-        // also we can't use PostTaskDelegate when the stalled fiber belongs to
-        // another task manager.
-
-        if ((not postTaskAvailable) || (task.Context() != workerCtx) ||
-            (postTaskAvailable = workerIFP->SetPostTaskDelegate(std::move(func))) == false ) {
-            Assert_NoAssume(func);
-
-            // stalled fibers are resumed through a task to let the current fiber dispatch
-            // all jobs to every worker thread before yielding (won't steal execution from current fiber)
-
-            task.Context()->FireAndForget(std::move(func), task.Priority());
-        }
+        task.Context()->FireAndForget(ResumeTask(task), task.Priority());
     }
 
     Assert_NoAssume(not workerIFP || workerIFP == &FWorkerContext_::Get()); // didn't change thread
