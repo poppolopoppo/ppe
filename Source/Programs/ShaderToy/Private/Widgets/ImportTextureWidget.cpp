@@ -99,13 +99,13 @@ bool FImportTextureWidget::Show() {
 
             ContentPipeline::FTextureSourceProperties oldProperties = TextureSource->Properties();
 
-            ImGui::SmallButton(INLINE_FORMAT(16, "{}", oldProperties.ImageView));
+            ImGui::SmallButton(*INLINE_FORMAT(16, "{}", oldProperties.ImageView));
             ImGui::SameLine();
-            ImGui::SmallButton(INLINE_FORMAT(16, "{}", oldProperties.Format));
+            ImGui::SmallButton(*INLINE_FORMAT(16, "{}", oldProperties.Format));
             ImGui::SameLine();
-            ImGui::SmallButton(INLINE_FORMAT(16, "{} bpp", bpp));
+            ImGui::SmallButton(*INLINE_FORMAT(16, "{} bpp", bpp));
             ImGui::SameLine();
-            ImGui::SmallButton(INLINE_FORMAT(16, "{}", oldProperties.Gamma));
+            ImGui::SmallButton(*INLINE_FORMAT(16, "{}", oldProperties.Gamma));
 
             ImGui::InputScalarN("Dimensions", ImGuiDataType_U32, &oldProperties.Dimensions, 3);
             ImGui::InputScalar("Mips", ImGuiDataType_U32, &oldProperties.NumMips);
@@ -113,7 +113,7 @@ bool FImportTextureWidget::Show() {
 
             ImGui::EndDisabled();
 
-            ImGui::TextUnformatted(INLINE_FORMAT(32, "Input size: {:f3}",
+            ImGui::TextUnformatted(*INLINE_FORMAT(32, "Input size: {:f3}",
                 Fmt::SizeInBytes(TextureSource->Data().SizeInBytes())));
         }
 
@@ -269,13 +269,13 @@ bool FImportTextureWidget::Show() {
             if (ImGui::CollapsingHeader("Output", ImGuiTreeNodeFlags_DefaultOpen)) {
                 ImGui::BeginDisabled();
 
-                ImGui::SmallButton(INLINE_FORMAT(16, "{}", newProperties.ImageView));
+                ImGui::SmallButton(*INLINE_FORMAT(16, "{}", newProperties.ImageView));
                 ImGui::SameLine();
-                ImGui::SmallButton(INLINE_FORMAT(16, "{}", pixelInfo.Format));
+                ImGui::SmallButton(*INLINE_FORMAT(16, "{}", pixelInfo.Format));
                 ImGui::SameLine();
-                ImGui::SmallButton(INLINE_FORMAT(16, "{} bpp", pixelInfo.BitsPerPixel(RHI::EImageAspect::Color)));
+                ImGui::SmallButton(*INLINE_FORMAT(16, "{} bpp", pixelInfo.BitsPerPixel(RHI::EImageAspect::Color)));
                 ImGui::SameLine();
-                ImGui::SmallButton(INLINE_FORMAT(16, "{}x{}", pixelInfo.BlockDim.x, pixelInfo.BlockDim.y));
+                ImGui::SmallButton(*INLINE_FORMAT(16, "{}x{}", pixelInfo.BlockDim.x, pixelInfo.BlockDim.y));
 
                 if (pixelInfo.IsSRGB()) {
                     ImGui::SameLine();
@@ -288,7 +288,7 @@ bool FImportTextureWidget::Show() {
 
                 ImGui::EndDisabled();
 
-                ImGui::TextUnformatted(INLINE_FORMAT(32, "Output size: {:f3}",
+                ImGui::TextUnformatted(*INLINE_FORMAT(32, "Output size: {:f3}",
                     Fmt::SizeInBytes(pixelInfo.SizeInBytes(
                         RHI::EImageAspect::Color,
                         newProperties.Dimensions,

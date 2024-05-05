@@ -563,9 +563,8 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
         LZJB::CompressMemory(compressed.get(), uncompressed.MakeView());
 #else
         RAWSTORAGE(Stream, u8) compressed;
-        const size_t compressedSizeInBytes = Compression::CompressMemory(compressed, uncompressed.MakeView(), Compression::HighCompression);
-        Assert(compressedSizeInBytes <= compressed.SizeInBytes());
-        const TMemoryView<const u8> compressedView = compressed.MakeView().SubRange(0, compressedSizeInBytes);
+        const size_t compressedSize = Compression::CompressMemory(compressed, uncompressed.MakeView(), Compression::HighCompression);
+        const TMemoryView<const u8> compressedView = compressed.MakeView().FirstNElements(compressedSize);
 
         RAWSTORAGE(Stream, u8) decompressed;
         if (false == Compression::DecompressMemory(decompressed, compressedView))
@@ -589,14 +588,9 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
         const Meta::TOptional<FUniqueBuffer> compressed = VFS_ReadAll(fname_binz, EAccessPolicy::Binary);
         AssertRelease(compressed);
 
-        FUniqueBuffer decompressed;
-        if (false == Compression::DecompressMemory(decompressed, compressed.MakeConstView()))
-            AssertNotReached();
-
-        Assert(checked_cast<size_t>(uncompressed.SizeInBytes()) == decompressed.SizeInBytes());
-        const size_t k = decompressed.SizeInBytes();
-        for (size_t i = 0; i < k; ++i)
-            Assert(uncompressed.Pointer()[i] == decompressed.Pointer()[i]);
+        FUniqueBuffer decompressed = Compression::DecompressBuffer( *compressed);
+        AssertRelease(checked_cast<size_t>(uncompressed.SizeInBytes()) == decompressed.SizeInBytes());
+        AssertRelease(uncompressed.MakeView().RangeEqual(decompressed.MakeView()));
 
         Serialize::FTransactionLinker linker{ filename };
         Serialize::ISerializer::Deserialize(serializer, decompressed.MakeView(), &linker);

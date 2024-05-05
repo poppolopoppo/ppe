@@ -114,7 +114,10 @@ void FArchive::SerializeCompressed(FUniqueBuffer* buffer) {
 		VerifyRelease(Compression::DecompressMemory(buffer->MakeView(), compressed.MakeView()));
 	}
 	else {
-		VerifyRelease(Compression::CompressMemory(compressed, buffer->MakeView()));
+		const size_t compressedSize = Compression::CompressMemory(compressed, buffer->MakeView());
+		AssertRelease(compressedSize > 0);
+
+		compressed.Resize_KeepData(compressedSize);
 
 		*this << &compressed;
 	}

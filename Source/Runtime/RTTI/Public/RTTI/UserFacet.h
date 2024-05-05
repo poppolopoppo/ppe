@@ -4,7 +4,8 @@
 
 #include "Container/PolymorphicTuple.h"
 
-namespace PPE::RTTI {
+namespace PPE {
+namespace RTTI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -14,23 +15,17 @@ template <typename T>
 CONSTEXPR bool is_user_facet = std::is_base_of_v<FGenericUserFacet, T>;
 //----------------------------------------------------------------------------
 namespace details {
+template <typename T>
+using TUserFacetHasDecorate = Meta::TValue<&T::Decorate>;
 template <typename _Meta>
-struct TUserFacetDecorate : TPolymorphicLambda<
-    [](auto* p, const _Meta& meta, void* data) -> decltype(p->Decorate(meta, data)) {
-        return p->Decorate(meta, data);
-    },
-    void, const _Meta&, void*
-> {};
+using TUserFacetDecorate = TPolymorphicFunc<TUserFacetHasDecorate, void, const _Meta&, void*>;
 } //!details
 //----------------------------------------------------------------------------
 namespace details {
+template <typename T>
+using TUserFacetHasValidate = Meta::TValue<&T::Validate>;
 template <typename _Meta>
-struct TUserFacetValidate : TPolymorphicLambda<
-    [](auto* p, const _Meta& meta, const void* data) -> decltype(p->Validate(meta, data)) {
-        return p->Validate(meta, data);
-    },
-    void, const _Meta&, const void*
-> {};
+using TUserFacetValidate = TPolymorphicFunc<TUserFacetHasValidate, void, const _Meta&, const void*>;
 } //!details
 //----------------------------------------------------------------------------
 template <typename _Meta>
@@ -83,4 +78,5 @@ const _Facet* UserFacetIFP(const _Meta& meta) NOEXCEPT {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //namespace PPE::RTTI
+} //namespace RTTI
+} //namespace PPE

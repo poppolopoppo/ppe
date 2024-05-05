@@ -70,7 +70,7 @@ public:
     void Concat(const FDirname& append);
     void Concat(const TMemoryView<const FDirname>& path);
     void Concat(const FileSystem::char_type *cstr);
-    void Concat(const TMemoryView<const FileSystem::char_type>& strview);
+    void Concat(const TBasicStringView<FileSystem::char_type>& strview);
 
     NODISCARD FString ToString() const;
     NODISCARD FWString ToWString() const;

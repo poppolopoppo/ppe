@@ -40,6 +40,7 @@ public:
     using stream_type::clear;
     using stream_type::clear_ReleaseMemory;
 
+    void Reset();
     TBasicStringView<_Char> Written() const;
     TBasicConstChar<_Char> NullTerminated();
 
@@ -99,6 +100,11 @@ size_t TGenericStringBuilder<_Char, _Allocator>::capacity() const {
 template <typename _Char, typename _Allocator>
 void TGenericStringBuilder<_Char, _Allocator>::reserve(size_t count) {
     stream_type::reserve((count + 1/* null char */) * sizeof(_Char));
+}
+//----------------------------------------------------------------------------
+template <typename _Char, typename _Allocator>
+void TGenericStringBuilder<_Char, _Allocator>::Reset() {
+    stream_type::clear();
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename _Allocator>

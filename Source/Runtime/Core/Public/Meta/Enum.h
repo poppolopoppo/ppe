@@ -11,7 +11,7 @@ namespace Meta {
 //----------------------------------------------------------------------------
 // helpers to ease manipulations of enum classes
 //----------------------------------------------------------------------------
-template <typename _Enum, TEnableIf<std::is_enum_v<_Enum>>* = nullptr >
+template <typename _Enum>
 CONSTEVAL CONSTF bool EnumIsFlags(_Enum) { return false; }
 template <typename _Enum, TEnableIf<std::is_enum_v<_Enum>>* = nullptr >
 CONSTEXPR bool enum_is_flags_v = EnumIsFlags(_Enum{});
@@ -83,7 +83,7 @@ FORCE_INLINE CONSTEXPR CONSTF bool EnumLess(_Enum lhs, _Enum rhs) {
 }
 //----------------------------------------------------------------------------
 #define _ENUM_FLAGS_IMPL(_PREFIX, _ENUMTYPE) \
-    _PREFIX CONSTEXPR bool EnumIsFlags(_ENUMTYPE) { return true; } \
+    _PREFIX CONSTEVAL bool EnumIsFlags(_ENUMTYPE) { return true; } \
     MAYBE_UNUSED _PREFIX CONSTEXPR CONSTF _ENUMTYPE    BitAnd(_ENUMTYPE lhs, _ENUMTYPE rhs)      { return ::PPE::Meta::EnumAnd(lhs, rhs); } \
     MAYBE_UNUSED _PREFIX CONSTEXPR CONSTF _ENUMTYPE    BitOr(_ENUMTYPE lhs, _ENUMTYPE rhs)       { return ::PPE::Meta::EnumOr(lhs, rhs); } \
     MAYBE_UNUSED _PREFIX CONSTEXPR CONSTF _ENUMTYPE    operator ~(_ENUMTYPE value)               { return ::PPE::Meta::EnumOneComplement(value); } \

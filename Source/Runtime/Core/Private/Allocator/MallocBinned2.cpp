@@ -1058,7 +1058,7 @@ static void* BinnedReallocFallback_(void* ptr, size_t newSize) {
         Assert(nblk.Data != ptr);
         const size_t oldSize = FMallocBinned2::RegionSize(ptr);
         Assert(oldSize != newSize); // don't want to realloc into a block of same size a-priori
-        FPlatformMemory::Memstream(nblk.Data, ptr, Min(newSize, oldSize));
+        FPlatformMemory::Memcpy(nblk.Data, ptr, Min(newSize, oldSize));
     }
 
     if (ptr)

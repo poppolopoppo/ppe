@@ -161,7 +161,7 @@ static void Test_Opaq_Slab_() {
     value_block value_block = builder.ToValueBlock(
         TStaticAllocator<default_allocator>::Allocate(builder.BlockSize()));
     DEFERRED {
-        TStaticAllocator<default_allocator>::Deallocate(value_block.block);
+        TStaticAllocator<default_allocator>::Deallocate(value_block.alloc);
     };
 
     value.Reset();
@@ -220,7 +220,7 @@ static void Test_Opaq_SlabMemoization_() {
     value_block value_block = builder.ToValueBlock(
         TStaticAllocator<default_allocator>::Allocate(builder.BlockSize()));
     DEFERRED {
-        TStaticAllocator<default_allocator>::Deallocate(value_block.block);
+        TStaticAllocator<default_allocator>::Deallocate(value_block.alloc);
     };
 
     value.Reset();

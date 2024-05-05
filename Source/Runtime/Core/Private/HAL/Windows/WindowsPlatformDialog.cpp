@@ -580,9 +580,10 @@ struct FProgressState {
     ::HWND hProgressBar{ NULL };
     ::HWND hStaticLabel{ NULL };
 
-    size_t YLevel{ 0 };
     size_t Total{ 0 };
     size_t Amount{ 0 };
+
+    u32 YLevel{ 0 };
 };
 //----------------------------------------------------------------------------
 class FSplashScreenDialog_ : public Meta::FNonCopyableNorMovable {
@@ -620,11 +621,11 @@ public:
 
         QueueCommand_([id](FInternal& data) {
             if (FProgressState* const pPbar = data.ProgressBars.Find(id); Ensure(pPbar)) {
-                pPbar->YLevel = data.cyYLevelStack.PopFront_AssumeNotEmpty();
+                pPbar->YLevel = checked_cast<u32>(data.cyYLevelStack.PopFront_AssumeNotEmpty());
+
                 CreateProgressBar_(pPbar, data.hDialog, data.cyProgressBar);
 
                 ::SendMessage(pPbar->hStaticLabel, WM_SETFONT, (WPARAM)data.hTextFont, TRUE);
-
                 ::RedrawWindow(data.hDialog, NULL, NULL, RDW_INVALIDATE);
             }
         });

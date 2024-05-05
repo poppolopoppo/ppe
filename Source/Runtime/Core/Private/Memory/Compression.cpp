@@ -197,6 +197,15 @@ bool DecompressMemory(const TMemoryView<u8>& dst, const TMemoryView<const u8>& s
     }
 }
 //----------------------------------------------------------------------------
+FUniqueBuffer DecompressBuffer(const FUniqueBuffer& src) {
+    FUniqueBuffer decompressed = FUniqueBuffer::Allocate(DecompressedSize(src.MakeView()));
+
+    if (DecompressMemory(decompressed.MakeView(), src.MakeView()))
+        return decompressed;
+
+    return Meta::Default;
+}
+//----------------------------------------------------------------------------
 FUniqueBuffer DecompressBuffer(const FSharedBuffer& src) {
     FUniqueBuffer decompressed = FUniqueBuffer::Allocate(DecompressedSize(src.MakeView()));
 

@@ -216,7 +216,7 @@ void FDirpath::Concat(const FileSystem::char_type *cstr) {
     return Concat(TMemoryView<const FileSystem::char_type>(cstr, Length(cstr)) );
 }
 //----------------------------------------------------------------------------
-void FDirpath::Concat(const TMemoryView<const FileSystem::char_type>& strview) {
+void FDirpath::Concat(const TBasicStringView<FileSystem::char_type>& strview) {
     Assert(strview.Pointer());
 
     FFileSystemTrie& trie = FFileSystemTrie::Get();

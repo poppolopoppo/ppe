@@ -33,24 +33,25 @@ struct TPolymorphicFunc {
     }
 };
 //----------------------------------------------------------------------------
-template <auto _Lambda, typename _Ret, typename... _Args>
-struct TPolymorphicLambda {
-    using result = _Ret;
-    struct type {
-        _Ret(*fn)(void*, _Args...){ nullptr };
-    };
-    template <typename T>
-    using available_t = decltype(_Lambda(std::declval<T*>(), std::declval<_Args>()...));
-    template <typename T>
-    static CONSTEXPR type Bind() {
-        type result{};
-        if constexpr (Meta::has_defined_v<available_t, T>)
-            result.fn = [](void* p, _Args... args) -> _Ret {
-                return _Lambda(static_cast<T*>(p), std::forward<_Args>(args)...);
-            };
-        return result;
-    }
-};
+// #TODO: NOT YET IMPLEMENTED BY MSVC (lambda as template parameter is too evil :P)
+//template <auto _Lambda, typename _Ret, typename... _Args>
+//struct TPolymorphicLambda {
+//    using result = _Ret;
+//    struct type {
+//        _Ret(*fn)(void*, _Args...){ nullptr };
+//    };
+//    template <typename T>
+//    using available_t = decltype(_Lambda(std::declval<T*>(), std::declval<_Args>()...));
+//    template <typename T>
+//    static CONSTEXPR type Bind() {
+//        type result{};
+//        if constexpr (Meta::has_defined_v<available_t, T>)
+//            result.fn = [](void* p, _Args... args) -> _Ret {
+//                return _Lambda(static_cast<T*>(p), std::forward<_Args>(args)...);
+//            };
+//        return result;
+//    }
+//};
 //----------------------------------------------------------------------------
 template <typename _Allocator = ALLOCATOR(Container), typename... _Funcs>
 class TPolymorphicTuple {

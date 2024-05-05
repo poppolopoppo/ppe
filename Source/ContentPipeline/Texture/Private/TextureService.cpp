@@ -166,7 +166,7 @@ static Meta::TOptional<FTextureSource> ImportTextureSourceFromFile_(const ITextu
     FTextureSourceProperties sourceProperties;
     FTextureImporterResult importerResult = UsingStreamWithProgress(*input,
         INLINE_FORMAT(50 + FileSystem::MaxPathLength, "Building texture: \"{}\"", sourceFile),
-        [&imageFormat, &sourceProperties](IStreamReader& rd) {
+        [&imageFormat, &sourceProperties](TPtrRef<IStreamReader> rd) {
             return (*imageFormat.*_ImportTexture)(&sourceProperties, rd);
         });
     if (not importerResult)

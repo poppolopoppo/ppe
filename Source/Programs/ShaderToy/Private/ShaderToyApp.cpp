@@ -641,7 +641,7 @@ void FShaderToyApp::FBuffer::RenderUI(FShaderToyApp& app, RHI::IFrameGraph& fg) 
     forrange(i, 0, lengthof(Inputs)) {
         FInput& in = Inputs[i];
 
-        if (not ImGui::CollapsingHeader(INLINE_FORMAT(64, "Input {}", GShaderToyApp_BufferLetters[i]), ImGuiTreeNodeFlags_DefaultOpen))
+        if (not ImGui::CollapsingHeader(*INLINE_FORMAT(64, "Input {}", GShaderToyApp_BufferLetters[i]), ImGuiTreeNodeFlags_DefaultOpen))
             continue;
 
         ImGui::PushID(&in);
@@ -718,16 +718,16 @@ void FShaderToyApp::FBuffer::RenderUI(FShaderToyApp& app, RHI::IFrameGraph& fg) 
 
         ImGui::BeginDisabled();
 
-        ImGui::SmallButton(INLINE_FORMAT(16, "{}", desc.View));
+        ImGui::SmallButton(*INLINE_FORMAT(16, "{}", desc.View));
 
         ImGui::SameLine();
-        ImGui::SmallButton(INLINE_FORMAT(16, "{}", desc.Format));
+        ImGui::SmallButton(*INLINE_FORMAT(16, "{}", desc.Format));
 
         ImGui::SameLine();
-        ImGui::SmallButton(INLINE_FORMAT(16, "{} bpp", pixelInfo.BitsPerPixel(RHI::EImageAspect::Color)));
+        ImGui::SmallButton(*INLINE_FORMAT(16, "{} bpp", pixelInfo.BitsPerPixel(RHI::EImageAspect::Color)));
 
         ImGui::SameLine();
-        ImGui::SmallButton(INLINE_FORMAT(16, "{}x{}", pixelInfo.BlockDim.x, pixelInfo.BlockDim.y));
+        ImGui::SmallButton(*INLINE_FORMAT(16, "{}x{}", pixelInfo.BlockDim.x, pixelInfo.BlockDim.y));
 
         if (pixelInfo.IsSRGB()) {
             ImGui::SameLine();
@@ -748,7 +748,7 @@ void FShaderToyApp::FBuffer::RenderUI(FShaderToyApp& app, RHI::IFrameGraph& fg) 
 
         ImGui::EndDisabled();
 
-        ImGui::TextUnformatted(INLINE_FORMAT(32, "Memory size: {:f3}",
+        ImGui::TextUnformatted(*INLINE_FORMAT(32, "Memory size: {:f3}",
             Fmt::SizeInBytes(pixelInfo.SizeInBytes(
                 RHI::EImageAspect::Color,
                 desc.Dimensions,

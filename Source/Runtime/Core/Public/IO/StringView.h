@@ -70,8 +70,8 @@ public:
     TBasicStringView(const TPair<iterator, iterator>& span) NOEXCEPT : parent_type(span.first, span.second) {}
     CONSTEXPR TBasicStringView(pointer storage, size_type size) NOEXCEPT : parent_type(storage, size) {}
 
-    CONSTEXPR TBasicStringView(TBasicStringLiteral<_Char> literal);
-    CONSTEXPR TBasicStringView& operator =(TBasicStringLiteral<_Char> literal);
+    CONSTEXPR TBasicStringView(const TBasicStringLiteral<_Char>& literal);
+    CONSTEXPR TBasicStringView& operator =(const TBasicStringLiteral<_Char>& literal);
 
     template <u32 _Len>
     explicit CONSTEXPR TBasicStringView(const _Char (&arr)[_Len])
@@ -198,12 +198,12 @@ TBasicTextWriter<_CharA>& operator <<(TBasicTextWriter<_CharA>& oss, const TBasi
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-CONSTEXPR TBasicStringView<_Char>::TBasicStringView(TBasicStringLiteral<_Char> literal)
+CONSTEXPR TBasicStringView<_Char>::TBasicStringView(const TBasicStringLiteral<_Char>& literal)
 :   TBasicStringView(literal.MakeView())
 {}
 //----------------------------------------------------------------------------
 template <typename _Char>
-CONSTEXPR TBasicStringView<_Char>& TBasicStringView<_Char>::operator =(TBasicStringLiteral<_Char> literal) {
+CONSTEXPR TBasicStringView<_Char>& TBasicStringView<_Char>::operator =(const TBasicStringLiteral<_Char>& literal) {
     return operator =(literal.MakeView());
 }
 //----------------------------------------------------------------------------
