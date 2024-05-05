@@ -15,6 +15,18 @@ PRAGMA_MSVC_WARNING_PUSH()
 #pragma include_alias(<vulkan/vulkan.h>, <External/vulkan/Vulkan-Header.git/include/vulkan/vulkan.h>)
 #pragma include_alias("vulkan/vk_platform.h", "External/vulkan/Vulkan-Header.git/include/vulkan/vk_platform.h")
 
+#pragma include_alias("vk_video/vulkan_video_codec_av1std.h", "External/vulkan/Vulkan-Header.git/include/vk_video/vulkan_video_codec_av1std.h")
+#pragma include_alias("vk_video/vulkan_video_codec_av1std_encode.h", "External/vulkan/Vulkan-Header.git/include/vk_video/vulkan_video_codec_av1std_encode.h")
+#pragma include_alias("vk_video/vulkan_video_codec_av1std_decode.h", "External/vulkan/Vulkan-Header.git/include/vk_video/vulkan_video_codec_av1std_decode.h")
+
+#pragma include_alias("vk_video/vulkan_video_codec_h264std.h", "External/vulkan/Vulkan-Header.git/include/vk_video/vulkan_video_codec_h264std.h")
+#pragma include_alias("vk_video/vulkan_video_codec_h264std_encode.h", "External/vulkan/Vulkan-Header.git/include/vk_video/vulkan_video_codec_h264std_encode.h")
+#pragma include_alias("vk_video/vulkan_video_codec_h264std_decode.h", "External/vulkan/Vulkan-Header.git/include/vk_video/vulkan_video_codec_h264std_decode.h")
+
+#pragma include_alias("vk_video/vulkan_video_codec_h265std.h", "External/vulkan/Vulkan-Header.git/include/vk_video/vulkan_video_codec_h265std.h")
+#pragma include_alias("vk_video/vulkan_video_codec_h265std_encode.h", "External/vulkan/Vulkan-Header.git/include/vk_video/vulkan_video_codec_h265std_encode.h")
+#pragma include_alias("vk_video/vulkan_video_codec_h265std_decode.h", "External/vulkan/Vulkan-Header.git/include/vk_video/vulkan_video_codec_h265std_decode.h")
+
 #include "HAL/PlatformIncludes.h"
 
 #include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan.h"
