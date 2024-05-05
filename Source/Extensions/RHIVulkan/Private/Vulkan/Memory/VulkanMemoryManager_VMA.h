@@ -269,7 +269,7 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateImage(FBlock* 
             prefersDedicatedAllocation,
             VK_NULL_HANDLE,
             image,
-            UINT32_MAX, // #TODO ?
+            VmaBufferImageUsage::UNKNOWN, // #TODO ?
             info,
             VMA_SUBALLOCATION_TYPE_IMAGE_UNKNOWN,
             1, &allocation ));
@@ -329,7 +329,7 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateBuffer(FBlock*
             prefersDedicatedAllocation,
             buffer,
             VK_NULL_HANDLE,
-            UINT32_MAX, // #TODO ?
+            VmaBufferImageUsage::UNKNOWN, // #TODO ?
             info,
             VMA_SUBALLOCATION_TYPE_BUFFER,
             1, &allocation ));
@@ -387,7 +387,7 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::AllocateAccelStruct(FB
         false, false,
         VK_NULL_HANDLE,
         VK_NULL_HANDLE,
-        UINT32_MAX, // #TODO ?
+        VmaBufferImageUsage::UNKNOWN, // #TODO ?
         vmaInfo,
         VMA_SUBALLOCATION_TYPE_UNKNOWN,
         1, &allocation ));

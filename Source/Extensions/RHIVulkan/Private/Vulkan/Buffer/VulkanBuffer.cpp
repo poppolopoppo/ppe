@@ -42,8 +42,8 @@ static VkAccessFlagBits AllBufferReadAccessMasks_(VkBufferUsageFlags usage) {
 
 #ifdef VK_NV_ray_tracing
         case VK_BUFFER_USAGE_RAY_TRACING_BIT_NV: result |= VK_ACCESS_SHADER_READ_BIT; break;
-#endif
 #ifdef VK_KHR_buffer_device_address
+#endif
         case VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT: result |= VK_ACCESS_SHADER_READ_BIT; break;
 #endif
 #ifdef VK_EXT_transform_feedback
@@ -57,6 +57,24 @@ static VkAccessFlagBits AllBufferReadAccessMasks_(VkBufferUsageFlags usage) {
         case VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR: break;
         case VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR: break;
 #endif
+
+#ifdef VK_KHR_video_encode_queue
+        case VK_BUFFER_USAGE_VIDEO_ENCODE_SRC_BIT_KHR: FALLTHROUGH();
+        case VK_BUFFER_USAGE_VIDEO_ENCODE_DST_BIT_KHR:
+            AssertNotImplemented(); // #TODO: support vulkan video codecs?
+#endif
+#ifdef VK_KHR_video_decode_queue
+        case VK_BUFFER_USAGE_VIDEO_DECODE_SRC_BIT_KHR: FALLTHROUGH();
+        case VK_BUFFER_USAGE_VIDEO_DECODE_DST_BIT_KHR:
+            AssertNotImplemented(); // #TODO: support vulkan video codecs?
+#endif
+
+        case VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT: FALLTHROUGH();
+        case VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT: FALLTHROUGH();
+        case VK_BUFFER_USAGE_MICROMAP_BUILD_INPUT_READ_ONLY_BIT_EXT: FALLTHROUGH();
+        case VK_BUFFER_USAGE_MICROMAP_STORAGE_BIT_EXT: FALLTHROUGH();
+        case VK_BUFFER_USAGE_PUSH_DESCRIPTORS_DESCRIPTOR_BUFFER_BIT_EXT:
+            AssertNotImplemented(); // #TODO: investigate new vulkan 1.3 extensions
 
         case VK_BUFFER_USAGE_FLAG_BITS_MAX_ENUM: break;	// to shutup compiler warnings
         }

@@ -252,8 +252,21 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkImageLayout valu
     //case VK_IMAGE_LAYOUT_STENCIL_READ_ONLY_OPTIMAL_KHR: return oss << STRING_LITERAL(_Char, "StencilReadOnlyKhr");
     case VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL: return oss << STRING_LITERAL(_Char, "DepthStencilReadOnlyOptimal");
 #endif
+
+    case VK_IMAGE_LAYOUT_VIDEO_DECODE_SRC_KHR: return oss << STRING_LITERAL(_Char, "VideoDecodeSrcKhr");
+    case VK_IMAGE_LAYOUT_VIDEO_DECODE_DST_KHR: return oss << STRING_LITERAL(_Char, "VideoDecodeDstKhr");
+    case VK_IMAGE_LAYOUT_VIDEO_DECODE_DPB_KHR: return oss << STRING_LITERAL(_Char, "VideoDecodeDpbKhr");
+
+    case VK_IMAGE_LAYOUT_VIDEO_ENCODE_SRC_KHR: return oss << STRING_LITERAL(_Char, "VideoEncodeSrcKhr");
+    case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DST_KHR: return oss << STRING_LITERAL(_Char, "VideoEncodeDstKhr");
+    case VK_IMAGE_LAYOUT_VIDEO_ENCODE_DPB_KHR: return oss << STRING_LITERAL(_Char, "VideoEncodeDpbKhr");
+
     case VK_IMAGE_LAYOUT_READ_ONLY_OPTIMAL_KHR: return oss << STRING_LITERAL(_Char, "ReadOnlyOptimalKhr");
     case VK_IMAGE_LAYOUT_ATTACHMENT_OPTIMAL_KHR: return oss << STRING_LITERAL(_Char, "AttachmentOptimalKhr");
+
+    case VK_IMAGE_LAYOUT_RENDERING_LOCAL_READ_KHR: return oss << STRING_LITERAL(_Char, "RenderingLocalReadKhr");
+    case VK_IMAGE_LAYOUT_ATTACHMENT_FEEDBACK_LOOP_OPTIMAL_EXT: return oss << STRING_LITERAL(_Char, "AttachmentFeedbackLoopOptimalKhr");
+
     case VK_IMAGE_LAYOUT_MAX_ENUM:
         AssertNotImplemented();
     }
