@@ -309,7 +309,7 @@ void FGenericMesh::CleanAndOptimize(const FMeshBuilderSettings& settings, size_t
 
     pbar.Print("Compute mesh bounds"_view);
     const FAabb3f bounds = ComputeBounds(*this, index);
-    const float minDistance = bounds.Extents().MinComponent() * 0.001f; // 0.01%
+    const float minDistance = (bounds.Extents().MinComponent() * settings.Epsilon);
     const float minArea = (minDistance * minDistance) / 2.f;
     PPE_SLOG(MeshBuilder, Info, "computed mesh bounds", {
         {"Min", Opaq::Format(bounds.Min())},

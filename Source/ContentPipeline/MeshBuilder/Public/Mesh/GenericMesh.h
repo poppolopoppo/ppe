@@ -233,7 +233,7 @@ public:
     NODISCARD bool ExportVertices(const RHI::FVertexInputState& vdecl, const RHI::FVertexBufferID& vertexBuffer, TRawStorage<T, _Allocator>& dst) const {
         Assert_NoAssume(vdecl.BufferBindings[vertexBuffer].Stride == sizeof(T));
         dst.Resize_DiscardData(VertexCount());
-        return ExportVertices(vdecl, MakeRawView(dst.MakeView()));
+        return ExportVertices(vdecl, vertexBuffer, MakeRawView(dst.MakeView()));
     }
 
     NODISCARD PPE_MESHBUILDER_API bool Validate() const NOEXCEPT;

@@ -30,6 +30,8 @@ FWD_UNIQUEPTR(GenericVertexData);
 template <typename T>
 class TGenericVertexSubPart;
 //----------------------------------------------------------------------------
+enum class ERecomputeMode : u8;
+struct FMeshBuilderSettings;
 FWD_INTEFARCE_INSITUPTR(MeshFormat);
 //----------------------------------------------------------------------------
 typedef TGenericVertexSubPart<float3> FPositions3f;

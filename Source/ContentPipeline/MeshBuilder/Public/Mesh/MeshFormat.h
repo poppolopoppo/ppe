@@ -32,10 +32,13 @@ struct FMeshBuilderSettings {
 
     bool EncodeTangentSpaceToQuaternion{ false };
     bool MergeCloseVertices{ false };
+    bool MergeDuplicateVertices{ false };
     bool OptimizeIndicesOrder{ false };
     bool OptimizeVerticesOrder{ false };
     bool RemoveUnusedVertices{ false };
     bool RemoveZeroAreaTriangles{ false };
+
+    float Epsilon{ Epsilon_v<float> };
 
     ERecomputeMode RecomputeNormals{ Default };
     ERecomputeMode RecomputeTangentSpace{ Default };
