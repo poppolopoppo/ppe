@@ -72,6 +72,7 @@ PPE_CONSTANTNUMBER_DEF(LargeEpsilon, 0.01f, 0.001f);
 PPE_CONSTANTNUMBER_DEF(Delta, 0.00001);
 
 PPE_CONSTANTNUMBER_DEF(E, 2.718281828459045090795598298427648842334747314453);
+PPE_CONSTANTNUMBER_DEF(PHI, 1.61803398874989484820458683436563811772030917980576);
 PPE_CONSTANTNUMBER_DEF(PI, 3.141592653589793115997963468544185161590576171875);
 PPE_CONSTANTNUMBER_DEF(PIOver2, 1.047197551196597631317786181170959025621414184570);
 PPE_CONSTANTNUMBER_DEF(PIOver3, 1.047197551196597631317786181170959025621414184570);
@@ -119,6 +120,7 @@ NODISCARD CONSTEXPR auto Blend(const U& ifTrue, const V& ifFalse, bool mask) -> 
 //----------------------------------------------------------------------------
 NODISCARD inline float Exp(float value) NOEXCEPT { return FPlatformMaths::Exp(value); }
 NODISCARD inline float Exp2(float value) NOEXCEPT { return FPlatformMaths::Exp2(value); }
+NODISCARD inline float Log(float value) NOEXCEPT { return FPlatformMaths::Log(value); }
 NODISCARD inline float Loge(float value) NOEXCEPT { return FPlatformMaths::Loge(value); }
 NODISCARD inline float LogX(float value, float n) NOEXCEPT { return FPlatformMaths::LogX(value, n); }
 NODISCARD inline float Log2(float value) NOEXCEPT { return FPlatformMaths::Log2(value); }
@@ -245,6 +247,16 @@ NODISCARD CONSTEXPR float Radians(float degrees) NOEXCEPT;
 //----------------------------------------------------------------------------
 NODISCARD CONSTEXPR float Float01_to_FloatM11(float v_01) NOEXCEPT { return Clamp(v_01 * 2.f - 1.f, -1.f, 1.f); }
 NODISCARD CONSTEXPR float FloatM11_to_Float01(float v_M11) NOEXCEPT { return Saturate(v_M11 * .5f + .5f); }
+//----------------------------------------------------------------------------
+NODISCARD inline float Cos(float radians) { return FPlatformMaths::Cos(radians); }
+NODISCARD inline float Acos(float radians) { return FPlatformMaths::Acos(radians); }
+NODISCARD inline float Sin(float radians) { return FPlatformMaths::Sin(radians); }
+NODISCARD inline float ASin(float radians) { return FPlatformMaths::Asin(radians); }
+NODISCARD inline float Sinh(float radians) { return FPlatformMaths::Sinh(radians); }
+NODISCARD inline float Tan(float radians) { return FPlatformMaths::Tan(radians); }
+NODISCARD inline float Tanh(float radians) { return FPlatformMaths::Tanh(radians); }
+NODISCARD inline float Atan(float radians) { return FPlatformMaths::Atan(radians); }
+NODISCARD inline float Atan2(float y, float x) { return FPlatformMaths::Atan2(y, x); }
 //----------------------------------------------------------------------------
 void SinCos(float radians, float *fsin, float *fcos) NOEXCEPT;
 void SinCos(double radians, double *fsin, double *fcos) NOEXCEPT;

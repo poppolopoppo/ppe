@@ -68,8 +68,14 @@ UX10Y10Z10W2N FloatM11_to_UX10Y10Z10W2N(float x, float y, float z, u8 w);
 PPE_CORE_API UX10Y10Z10W2N Quaternion_to_UX10Y10Z10W2N(const class FQuaternion& quaternion) NOEXCEPT;
 PPE_CORE_API FQuaternion   UX10Y10Z10W2N_to_Quaternion(const struct UX10Y10Z10W2N& packed) NOEXCEPT;
 //----------------------------------------------------------------------------
-PPE_CORE_API ubyte2n Normal_to_UByte2n(const float3& normal) NOEXCEPT;
-PPE_CORE_API float3  UByte2n_to_Normal(const ubyte2n& packed) NOEXCEPT;
+PPE_CORE_API float3 OctahedralNormalDecode(const float2& oct) NOEXCEPT;
+PPE_CORE_API float2 OctahedralNormalEncode(const float3& n/* [-1,1], should be normalized */) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API ubyte2n Normal_to_Octahedral(const float3& normal) NOEXCEPT;
+PPE_CORE_API float3  Octahedral_to_Normal(const ubyte2n& packed) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API u32 FibonacciSphereNormalEncode(const float3& v/* [-1,1], should be normalized */, const u32 n) NOEXCEPT;
+PPE_CORE_API float3 FibonacciSphereNormalDecode(const u32 index, const u32 n) NOEXCEPT;
 //----------------------------------------------------------------------------
 template <>
 struct TNumericLimits< UX10Y10Z10W2N > {

@@ -259,7 +259,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvector(int c, vector_type& eigenvector
         }
 
         // Apply the Householder reflections.
-        for (int i = N - 3; i >= 0; --i)
+        for (int i = int(N) - 3; i >= 0; --i)
         {
             // Get the Householder vector v.
             T const* column = &_matrix.data().raw[i];
@@ -410,7 +410,7 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
 
     // Copy the diagonal and subdiagonal entries for cache coherence in
     // the QR iterations.
-    int k, ksup = N - 1, index = 0, delta = N + 1;
+    int k, ksup = int(N) - 1, index = 0, delta = N + 1;
     for (k = 0; k < ksup; ++k, index += delta)
     {
         mDiagonal[k] = _matrix.data().raw[index];

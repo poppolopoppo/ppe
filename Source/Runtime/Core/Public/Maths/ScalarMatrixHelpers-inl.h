@@ -126,6 +126,16 @@ TScalarMatrix<T, _Width, _Height> Abs(const TScalarMatrix<T, _Width, _Height>& m
 }
 //----------------------------------------------------------------------------
 template <typename T, u32 _Width, u32 _Height>
+TScalarMatrix<T, _Width, _Height> OuterProduct(const TScalarVector<T, _Height>& c,
+                                               const TScalarVector<T, _Width>& r) {
+    TScalarMatrix<T, 1, _Height> col;
+    col.SetColumn(0, c);
+    TScalarMatrix<T, _Width, 1> row;
+    row.SetRow(0, r);
+    return (col.Multiply(row));
+}
+//----------------------------------------------------------------------------
+template <typename T, u32 _Width, u32 _Height>
 void Lerp(  const TScalarMatrix<T, _Width, _Height>& v0,
             const TScalarMatrix<T, _Width, _Height>& v1,
             float f,
@@ -861,6 +871,13 @@ TScalarMatrix<T, 4, 4> MakeShadowMatrix(const TScalarVector<T, 4>& light, const 
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+template <typename T, u32 _N>
+TScalarMatrix<T, _N, _N> MakeDiagonalMatrix(const TScalarVector<T, _N>& diagonal) {
+    TScalarMatrix<T, _N, _N> result(0);
+    result.SetDiagonal(diagonal);
+    return result;
+}
 //----------------------------------------------------------------------------
 template <typename T, u32 _N>
 TScalarMatrix<T, _N + 1, _N + 1> MakeHomogeneousMatrix(const TScalarMatrix<T, _N, _N>& m) {

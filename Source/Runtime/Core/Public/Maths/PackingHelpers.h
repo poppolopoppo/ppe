@@ -12,7 +12,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// Generalist float quantization
+// Uniform float quantization
 //----------------------------------------------------------------------------
 template <typename T, size_t _Bits>
 constexpr T QuantizeCeil(float value, float vmin, float vmax) {
@@ -41,6 +41,58 @@ constexpr float Unquantize(T quantized, float vmin, float vmax) {
     constexpr float GMaxValueF = float(GMaxValue);
     Assert(vmin < vmax);
     return Lerp(vmin, vmax, Min(1.f, quantized / GMaxValueF));
+}
+//----------------------------------------------------------------------------
+// Signed logarithmic float quantization
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr T QuantizeSignedLogCeil(float value, float emin, float emax) {
+    const T qnt = T(CeilToInt((1u << (_Bits - 1u)) * (Log2(Abs(value)) - emin) / (emax - emin)));
+    const T sig = T((1u << (_Bits - 1u)) * Sign(value));
+    return (qnt + sig);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr T QuantizeSignedLogFloor(float value, float emin, float emax) {
+    const T qnt = T(FloorToInt((1u << (_Bits - 1u)) * (Log2(Abs(value)) - emin) / (emax - emin)));
+    const T sig = T((1u << (_Bits - 1u)) * Sign(value));
+    return (qnt + sig);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr T QuantizeSignedLogRound(float value, float emin, float emax) {
+    const T qnt = T(RoundToInt((1u << (_Bits - 1u)) * (Log2(Abs(value)) - emin) / (emax - emin)));
+    const T sig = T((1u << (_Bits - 1u)) * Sign(value));
+    return (qnt + sig);
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr float UnquantizeSignedLog(T quantized, float emin, float emax) {
+    const T value = quantized & ((1u << (_Bits - 1)) - 1u);
+    const T sig = quantized >> (_Bits - 1u);
+    return (float(sig)*2.0f - 1.0f) * Exp2(float(value)*(emax - emin) / (1u << (_Bits - 1u)) + emin);
+}
+//----------------------------------------------------------------------------
+// Unsigned logarithmic float quantization
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr T QuantizeUnsignedLogCeil(float value, float emin, float emax) {
+     return T(CeilToInt( (1u << _Bits) *(Log2(Abs(value)) - emin)/(emax - emin) ));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr T QuantizeUnsignedLogFloor(float value, float emin, float emax) {
+    return T(FloorToInt( (1u << _Bits) *(Log2(Abs(value)) - emin)/(emax - emin) ));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr T QuantizeUnsignedLogRound(float value, float emin, float emax) {
+    return T(RoundToInt( (1u << _Bits) *(Log2(Abs(value)) - emin)/(emax - emin) ));
+}
+//----------------------------------------------------------------------------
+template <typename T, size_t _Bits>
+constexpr float UnquantizeUnsignedLog(T quantized, float emin, float emax) {
+    return Exp2(float(quantized)*(emax - emin) / (1u << _Bits) + emin);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

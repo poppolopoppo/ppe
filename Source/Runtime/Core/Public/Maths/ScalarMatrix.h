@@ -32,8 +32,12 @@ public:
     typedef TScalarVector<T, _Width> row_type;
     typedef TScalarVector<T, _Height> column_type;
 
-    FORCE_INLINE TScalarMatrix() {}
     explicit TScalarMatrix(Meta::FForceInit);
+    explicit TScalarMatrix(Meta::FNoInit) NOEXCEPT {}
+
+    CONSTEXPR TScalarMatrix() NOEXCEPT
+        : TScalarMatrix(Meta::ForceInit)
+    {}
 
     TScalarMatrix(T broadcast);
     TScalarMatrix(std::initializer_list<T> values);
@@ -162,6 +166,9 @@ public:
 
     FORCE_INLINE T& operator ()(u32 col, u32 row) { return at(col, row); }
     FORCE_INLINE const T& operator ()(u32 col, u32 row) const { return at(col, row); }
+
+    FORCE_INLINE column_type& operator [](u32 col) { return Column(col); }
+    FORCE_INLINE const column_type& operator [](u32 col) const { return Column(col); }
 
     FORCE_INLINE ScalarMatrixData<T, _Width, _Height>& data() { return _data; }
     FORCE_INLINE const ScalarMatrixData<T, _Width, _Height>& data() const { return _data; }

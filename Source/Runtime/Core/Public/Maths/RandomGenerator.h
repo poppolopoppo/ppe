@@ -105,6 +105,18 @@ public:
     }
 
     template <typename T>
+    void RandomizeUniq(const TMemoryView<T>& view, T maxValue) {
+        forrange(i, 0, view.size()) {
+            for (T& elt = view[i];;) {
+                Randomize(elt);
+                elt = (elt % maxValue);
+                if (not Contains(view.CutBefore(i), elt))
+                    break;
+            }
+        }
+    }
+
+    template <typename T>
     T& RandomElement(const TMemoryView<T>& view) {
         Assert(not view.empty());
         const size_t n = size_t(Next() % view.size());

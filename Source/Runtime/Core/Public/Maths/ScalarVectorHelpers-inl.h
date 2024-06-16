@@ -30,24 +30,6 @@ inline TScalarVector<double, 2> SinCos(double angle) NOEXCEPT {
         std::cos(angle) };
 }
 //----------------------------------------------------------------------------
-template <typename _Expr>
-TScalarVector<float, 2> OctahedralNormalEncode(const details::TScalarVectorExpr<float, 3, _Expr>& n/* [-1,1], should be normalized */) NOEXCEPT {
-    // https://www.shadertoy.com/view/NsfBWf
-    Assert_NoAssume(IsNormalized(n));
-    float2 p{ n.template Get<0>(), n.template Get<1>() };
-    p /= Abs(n).HSum();
-    return ((n.template Get<2>() <= 0.f) ? ( (1.f - Abs(p.yx)) * SignNotZero(p) ) : p);
-}
-//----------------------------------------------------------------------------
-template <typename _Expr>
-TScalarVector<float, 3> OctahedralNormalDecode(const details::TScalarVectorExpr<float, 2, _Expr>& v/* [-1,1] */) NOEXCEPT {
-    // https://www.shadertoy.com/view/NsfBWf
-    float3 n{ v, 1.f - Abs(v.template Get<0>()) - Abs(v.template Get<1>()) };
-    if (n.z < 0)
-        n.xy = float2((1.f - Abs(n.yx)) * SignNotZero(n.xy));
-    return Normalize(n);
-}
-//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, u32 _Dim, typename _Expr>

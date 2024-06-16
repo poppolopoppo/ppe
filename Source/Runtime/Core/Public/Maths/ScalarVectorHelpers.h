@@ -422,6 +422,9 @@ TScalarVector<float, 2> OctahedralNormalEncode(const details::TScalarVectorExpr<
 template <typename _Expr>
 TScalarVector<float, 3> OctahedralNormalDecode(const details::TScalarVectorExpr<float, 2, _Expr>& v/* [-1,1] */) NOEXCEPT;
 //----------------------------------------------------------------------------
+u32 FibonacciSphereNormalEncode(const TScalarVector<float, 3>& v/* [-1,1], should be normalized */, const u32 n) NOEXCEPT;
+TScalarVector<float, 3> FibonacciSphereNormalDecode(const u32 index, const u32 n) NOEXCEPT;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T, u32 _Dim, typename _Expr>
