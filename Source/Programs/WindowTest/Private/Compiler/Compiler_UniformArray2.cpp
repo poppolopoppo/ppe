@@ -45,9 +45,9 @@ ARGS_IF_RHIDEBUG("Compiler_UniformArray2_CS"));
     const FDescriptorSet* ds = ppln.DescriptorSet("0"_descriptorset);
     PPE_LOG_CHECK(WindowTest, !!ds);
 
-    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Textures"_uniform, EImageSampler::Float2D, 0, EShaderStages::Compute, 0));
+    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Textures"_uniform, EImageSampler_Float2D, 0, EShaderStages::Compute, 0));
     PPE_LOG_CHECK(WindowTest, TestSamplerUniform(*ds, "un_Sampler"_uniform, 2, EShaderStages::Compute, 1));
-    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_OutImage"_uniform, EImageSampler::Float2D, EShaderAccess::WriteOnly, 1, EShaderStages::Compute, 1));
+    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_OutImage"_uniform, EImageSampler_Float2D, EShaderAccess::WriteOnly, 1, EShaderStages::Compute, 1));
 
     return true;
 }

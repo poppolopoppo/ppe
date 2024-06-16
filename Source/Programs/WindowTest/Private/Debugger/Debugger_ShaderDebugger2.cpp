@@ -91,7 +91,7 @@ ARGS_IF_RHIDEBUG("Debugger_ShaderDebugger2_PS"));
         shaderOutputIsCorrect &= (taskName == "DebuggableDraw");
 
         if (shaderName == "Debugger_ShaderDebugger2_VS") {
-            const FStringView ref0 = R"#(//> gl_VertexIndex: int {1}
+            const FStringLiteral ref0 = R"#(//> gl_VertexIndex: int {1}
 //> gl_InstanceIndex: int {0}
 no source
 
@@ -104,7 +104,7 @@ no source
 27. v_Color		= g_Colors[gl_VertexIndex];
 
 )#";
-            const FStringView ref1 = R"#(//> gl_VertexIndex: int {2}
+            const FStringLiteral ref1 = R"#(//> gl_VertexIndex: int {2}
 //> gl_InstanceIndex: int {0}
 no source
 
@@ -124,7 +124,7 @@ no source
             PPE_LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
         }
         else if (shaderName == "Debugger_ShaderDebugger2_PS") {
-            const FStringView ref2 = R"#(//> gl_FragCoord: float4 {400.500000, 300.500000, 0.000000, 1.000000}
+            const FStringLiteral ref2 = R"#(//> gl_FragCoord: float4 {400.500000, 300.500000, 0.000000, 1.000000}
 //> gl_PrimitiveID: int {0}
 //> v_Color: float3 {0.498333, 0.252083, 0.249583}
 no source
@@ -151,7 +151,7 @@ no source
     fg.SetShaderDebugCallback(onShaderTraceReady);
 
     const auto onLoaded = [&dataIsCorrect](const FImageView& imageData) {
-        const auto testPixel = [&imageData](float x, float y, const FRgba32f& color) -> bool {
+        const auto testTexel = [&imageData](float x, float y, const FRgba32f& color) -> bool {
             const u32 ix = FPlatformMaths::RoundToUnsigned((x + 1.0f) * 0.5f * static_cast<float>(imageData.Dimensions().x) + 0.5f);
             const u32 iy = FPlatformMaths::RoundToUnsigned((y + 1.0f) * 0.5f * static_cast<float>(imageData.Dimensions().y) + 0.5f);
 
@@ -166,15 +166,15 @@ no source
         };
 
         dataIsCorrect = true;
-        dataIsCorrect &= testPixel( 0.00f, -0.49f, FRgba32f{1.0f, 0.0f, 0.0f, 0.5f} );
-        dataIsCorrect &= testPixel( 0.49f,  0.49f, FRgba32f{0.0f, 1.0f, 0.0f, 0.5f} );
-        dataIsCorrect &= testPixel(-0.49f,  0.49f, FRgba32f{0.0f, 0.0f, 1.0f, 0.5f} );
-        dataIsCorrect &= testPixel( 0.00f, -0.51f, FRgba32f{0.0f} );
-        dataIsCorrect &= testPixel( 0.51f,  0.51f, FRgba32f{0.0f} );
-        dataIsCorrect &= testPixel(-0.51f,  0.51f, FRgba32f{0.0f} );
-        dataIsCorrect &= testPixel( 0.00f,  0.51f, FRgba32f{0.0f} );
-        dataIsCorrect &= testPixel( 0.51f, -0.51f, FRgba32f{0.0f} );
-        dataIsCorrect &= testPixel(-0.51f, -0.51f, FRgba32f{0.0f} );
+        dataIsCorrect &= testTexel( 0.00f, -0.49f, FRgba32f{1.0f, 0.0f, 0.0f, 0.5f} );
+        dataIsCorrect &= testTexel( 0.49f,  0.49f, FRgba32f{0.0f, 1.0f, 0.0f, 0.5f} );
+        dataIsCorrect &= testTexel(-0.49f,  0.49f, FRgba32f{0.0f, 0.0f, 1.0f, 0.5f} );
+        dataIsCorrect &= testTexel( 0.00f, -0.51f, FRgba32f{0.0f} );
+        dataIsCorrect &= testTexel( 0.51f,  0.51f, FRgba32f{0.0f} );
+        dataIsCorrect &= testTexel(-0.51f,  0.51f, FRgba32f{0.0f} );
+        dataIsCorrect &= testTexel( 0.00f,  0.51f, FRgba32f{0.0f} );
+        dataIsCorrect &= testTexel( 0.51f, -0.51f, FRgba32f{0.0f} );
+        dataIsCorrect &= testTexel(-0.51f, -0.51f, FRgba32f{0.0f} );
     };
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}

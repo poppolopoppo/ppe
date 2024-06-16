@@ -220,7 +220,12 @@ FWStringView FFilename::ToWCStr(const TMemoryView<wchar_t>& dst) const {
     return oss.Written().ShiftBack();
 }
 //----------------------------------------------------------------------------
-void FFilename::Swap(FFilename& other) {
+void FFilename::Clear() NOEXCEPT {
+    _dirpath.Clear();
+    _basename.Clear();
+}
+//----------------------------------------------------------------------------
+void FFilename::Swap(FFilename& other) NOEXCEPT {
     swap(other._dirpath, _dirpath);
     swap(other._basename, _basename);
 }

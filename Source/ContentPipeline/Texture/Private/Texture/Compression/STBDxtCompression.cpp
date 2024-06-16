@@ -23,7 +23,6 @@
 
 // will compile stb_dxt_write in this translation unit:
 #include "stb_dxt-impl.h"
-#include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan_core.h"
 
 namespace PPE {
 namespace ContentPipeline {

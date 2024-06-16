@@ -102,7 +102,7 @@ public:
     NODISCARD FSwapchainID CreateSwapchain(const FSwapchainDesc& desc, FRawSwapchainID oldSwapchain ARGS_IF_RHIDEBUG(FConstChar debugName)) override;
     NODISCARD FRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName)) override;
     NODISCARD FRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName)) override;
-    NODISCARD FRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(const FStringView& name)) override;
+    NODISCARD FRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FConstChar debugName)) override;
 
     NODISCARD bool InitPipelineResources(FPipelineResources* pResources, FRawGPipelineID pipeline, const FDescriptorSetID& id) const override;
     NODISCARD bool InitPipelineResources(FPipelineResources* pResources, FRawCPipelineID pipeline, const FDescriptorSetID& id) const override;

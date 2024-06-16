@@ -70,7 +70,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     TAutoResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Drawing_Draw7")) };
     PPE_LOG_CHECK(WindowTest, ppln.Valid());
 
-    const auto testPixel = [](const FImageView& imageData, float x, float y, const FRgba32f& color) -> bool {
+    const auto testTexel = [](const FImageView& imageData, float x, float y, const FRgba32f& color) -> bool {
         const u32 ix = FPlatformMaths::RoundToUnsigned((x + 1.0f) * 0.5f * static_cast<float>(imageData.Dimensions().x) + 0.5f);
         const u32 iy = FPlatformMaths::RoundToUnsigned((y + 1.0f) * 0.5f * static_cast<float>(imageData.Dimensions().y) + 0.5f);
 
@@ -85,25 +85,25 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
     };
 
     bool dataIsCorrect = false;
-    const auto onLoaded1 = [&dataIsCorrect, &testPixel](const FImageView& imageData) {
+    const auto onLoaded1 = [&dataIsCorrect, &testTexel](const FImageView& imageData) {
         dataIsCorrect = true;
-        dataIsCorrect &= testPixel(imageData,  0.0f,  0.0f, FRgba32f{ 1.0f, 0.0f, 0.0f, 1.0f });
-        dataIsCorrect &= testPixel(imageData,  0.0f, -0.7f, FRgba32f{ 0.0f });
-        dataIsCorrect &= testPixel(imageData,  0.7f,  0.7f, FRgba32f{ 0.0f });
-        dataIsCorrect &= testPixel(imageData, -0.7f,  0.7f, FRgba32f{ 0.0f });
-        dataIsCorrect &= testPixel(imageData,  0.0f,  0.7f, FRgba32f{ 0.0f });
-        dataIsCorrect &= testPixel(imageData,  0.7f, -0.7f, FRgba32f{ 0.0f });
-        dataIsCorrect &= testPixel(imageData, -0.7f, -0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData,  0.0f,  0.0f, FRgba32f{ 1.0f, 0.0f, 0.0f, 1.0f });
+        dataIsCorrect &= testTexel(imageData,  0.0f, -0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData,  0.7f,  0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData, -0.7f,  0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData,  0.0f,  0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData,  0.7f, -0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData, -0.7f, -0.7f, FRgba32f{ 0.0f });
     };
-    const auto onLoaded2 = [&dataIsCorrect, &testPixel](const FImageView& imageData) {
+    const auto onLoaded2 = [&dataIsCorrect, &testTexel](const FImageView& imageData) {
         dataIsCorrect = true;
-        dataIsCorrect &= testPixel(imageData,  0.0f,  0.0f, FRgba32f{ 0.0f, 1.0f, 0.0f, 1.0f });
-        dataIsCorrect &= testPixel(imageData,  0.0f, -0.7f, FRgba32f{ 0.0f });
-        dataIsCorrect &= testPixel(imageData,  0.7f,  0.7f, FRgba32f{ 0.0f });
-        dataIsCorrect &= testPixel(imageData, -0.7f,  0.7f, FRgba32f{ 0.0f });
-        dataIsCorrect &= testPixel(imageData,  0.0f,  0.7f, FRgba32f{ 0.0f });
-        dataIsCorrect &= testPixel(imageData,  0.7f, -0.7f, FRgba32f{ 0.0f });
-        dataIsCorrect &= testPixel(imageData, -0.7f, -0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData,  0.0f,  0.0f, FRgba32f{ 0.0f, 1.0f, 0.0f, 1.0f });
+        dataIsCorrect &= testTexel(imageData,  0.0f, -0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData,  0.7f,  0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData, -0.7f,  0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData,  0.0f,  0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData,  0.7f, -0.7f, FRgba32f{ 0.0f });
+        dataIsCorrect &= testTexel(imageData, -0.7f, -0.7f, FRgba32f{ 0.0f });
     };
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}

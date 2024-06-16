@@ -202,6 +202,7 @@ public: // must be defined for every platform
 
     static FORCE_INLINE float Exp(float f) { return ::expf(f); } // Returns e^f
     static FORCE_INLINE float Exp2(float f) { return ::powf(2.f, f); /*exp2f(f);*/ } // Returns 2^f
+    static FORCE_INLINE float Log(float f) { return ::logf(f); }
     static FORCE_INLINE float Loge(float f) { return ::logf(f); }
     static FORCE_INLINE float LogX(float base, float f) { return Loge(f) / Loge(base); }
     static FORCE_INLINE float Log2(float f) { return Loge(f) * 1.4426950f; } // 1.0 / Loge(2) = 1.4426950f
@@ -358,6 +359,7 @@ public: // must be defined for every platform
     static FORCE_INLINE float Cos(float f) { return ::cosf(f); }
     static FORCE_INLINE float Acos(float f) { return ::acosf((f < -1.f) ? -1.f : ((f < 1.f) ? f : 1.f)); }
     static FORCE_INLINE float Tan(float f) { return ::tanf(f); }
+    static FORCE_INLINE float Tanh(float f) { return ::tanhf(f); }
     static FORCE_INLINE float Atan(float f) { return ::atanf(f); }
     static FORCE_INLINE float Atan2(float y, float x) { return ::atan2f(y, x); }
 

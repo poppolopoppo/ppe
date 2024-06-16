@@ -38,12 +38,18 @@ public:
     FFilename(const FileSystem::FStringView& content);
     FFilename& operator =(const FileSystem::FStringView& content);
 
+    FFilename& operator =(Meta::FDefaultValue) {
+        Clear();
+        return (*this);
+    }
+
     template <size_t _Dim>
     FFilename(const FileSystem::char_type (&content)[_Dim]) : FFilename(MakeStringView(content)) {}
     template <size_t _Dim>
     FFilename& operator =(const FileSystem::char_type (&content)[_Dim]) { return operator =(MakeStringView(content)); }
 
-    void Swap(FFilename& other);
+    void Clear() NOEXCEPT;
+    void Swap(FFilename& other) NOEXCEPT;
 
     NODISCARD const FDirpath& Dirpath() const { return _dirpath; }
     NODISCARD const FDirectory& Directory() const { return _dirpath; }

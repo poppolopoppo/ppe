@@ -10,7 +10,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 struct FMultithreading4_ {
     STATIC_CONST_INTEGRAL(size_t, MaxCount, 1000);
-    STATIC_CONST_INTEGRAL(RHI::EQueueUsage, QueueUsage, RHI::EQueueUsage::All);
+    STATIC_CONST_INTEGRAL(RHI::EQueueUsage, QueueUsage, RHI::EQueueUsage_All);
 
     RHI::SFrameGraph Fg;
     RHI::FRawCPipelineID CPipeline;

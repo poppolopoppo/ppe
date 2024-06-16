@@ -332,9 +332,9 @@ FRTSceneID FVulkanFrameGraph::CreateRayTracingScene(const FRayTracingSceneDesc& 
 //----------------------------------------------------------------------------
 // CreateRayTracingShaderTable
 //----------------------------------------------------------------------------
-FRTShaderTableID FVulkanFrameGraph::CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(const FStringView& name)) {
+FRTShaderTableID FVulkanFrameGraph::CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FConstChar debugName)) {
     Assert_NoAssume(IsInitialized_());
-    return FRTShaderTableID{ _resourceManager.CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(name)) };
+    return FRTShaderTableID{ _resourceManager.CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(debugName)) };
 }
 //----------------------------------------------------------------------------
 // InitPipelineResources

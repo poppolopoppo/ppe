@@ -130,7 +130,7 @@ ARGS_IF_RHIDEBUG("RayClosestHit"));
         shaderOutputIsCorrect &= (taskName == "DebuggableRayTracing");
 
         if (shaderName == "MainRayGenShader") {
-            const FStringView ref0 = R"#(//> gl_LaunchIDNV: uint3 {400, 300, 0}
+            const FStringLiteral ref0 = R"#(//> gl_LaunchIDNV: uint3 {400, 300, 0}
 no source
 
 //> uv: float2 {0.500626, 0.500835}
@@ -166,7 +166,7 @@ no source
             PPE_LOG_CHECKVOID(WindowTest, shaderOutputIsCorrect);
         }
         else if (shaderName == "RayClosestHit") {
-            const FStringView ref1 = R"#(//> gl_LaunchIDNV: uint3 {400, 300, 0}
+            const FStringLiteral ref1 = R"#(//> gl_LaunchIDNV: uint3 {400, 300, 0}
 no source
 
 //> barycentrics: float3 {0.249583, 0.252086, 0.498331}

@@ -45,7 +45,7 @@ ARGS_IF_RHIDEBUG("Compiler_Annotation4_CS"));
     const EShaderCompilationFlags flags = compiler->CompilationFlags();
     compiler->SetCompilationFlags(flags | EShaderCompilationFlags::ParseAnnotations);
 
-    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100, logger));
+    PPE_LOG_CHECK(WindowTest, compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
 
     compiler->SetCompilationFlags(flags);
 

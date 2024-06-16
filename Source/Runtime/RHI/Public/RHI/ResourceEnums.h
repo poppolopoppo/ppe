@@ -467,8 +467,8 @@ inline CONSTEXPR EImageSampler EImageSampler_UIntCube       { EImageSampler::_UI
 inline CONSTEXPR EImageSampler EImageSampler_UIntCubeArray  { EImageSampler::_UInt, EImageSampler::_CubeArray };
 inline CONSTEXPR EImageSampler EImageSampler_UInt3D         { EImageSampler::_UInt, EImageSampler::_3D };
 //----------------------------------------------------------------------------
-inline CONSTEXPR EImageSampler EImageSampler_FromPixelFormat(EPixelFormat fmt) {
-    return {fmt, Zero, Zero, Zero};
+inline CONSTEXPR EImageSampler EImageSampler_FromPixelFormat(EImageSampler sampler, EPixelFormat fmt) {
+    return {fmt, sampler.Dimension, sampler.Type, sampler.Flags};
 }
 //----------------------------------------------------------------------------
 // Fragment output

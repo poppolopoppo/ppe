@@ -57,7 +57,7 @@ public:
     const FVulkanDebugName& DebugName() const { return _debugName; }
 #endif
 
-    NODISCARD bool Construct(ARG0_IF_RHIDEBUG(FStringView debugName));
+    NODISCARD bool Construct(ARG0_IF_RHIDEBUG(FConstChar debugName));
     void TearDown(FVulkanResourceManager& resources);
 
     NODISCARD bool BindingsFor(

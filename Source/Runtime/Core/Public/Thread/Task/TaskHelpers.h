@@ -4,6 +4,7 @@
 
 #include "Thread/Task/Task.h"
 #include "Thread/Task/TaskManager.h"
+#include "Thread/ThreadSafe.h"
 
 #include "Misc/Function.h"
 

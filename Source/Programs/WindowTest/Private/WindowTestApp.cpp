@@ -24,7 +24,7 @@ LOG_CATEGORY(, WindowTest)
 #if RUN_PPE_WINDOWTESTS
 //----------------------------------------------------------------------------
 struct FUnitTestFunc_ {
-    FWStringView Name;
+    FWStringLiteral Name;
     bool (*Callback)(FWindowTestApp&) = nullptr;
 };
 //----------------------------------------------------------------------------
@@ -132,7 +132,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
     if (enabled) {
         app.Window().NotifySystrayWarning(
             StringFormat(L"Launch {0} unit tests...", lengthof(unitTests)),
-            L"WindowTest");
+            L"WindowTest"_view);
 
         app.Window().BeginTaskbarProgress();
 
@@ -152,7 +152,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
 
             PPE_LOG(WindowTest, Info, "-==================- [LOOP:{0:#4}] -==================-", loop);
 
-            FFeedbackProgressBar pbar("running RHI unit tests"_view, unitTests.size());
+            FFeedbackProgressBar pbar("running RHI unit tests"_view, sizeof(unitTests));
 
             for (const auto& test : unitTests) {
                 DEFERRED{ pbar.Inc(); };
@@ -166,7 +166,7 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
                 else {
                     app.Window().NotifySystrayError(
                         StringFormat(L"frame graph test <{0}> failed!", test.Name),
-                        L"failed unit test");
+                        L"failed unit test"_view);
                 }
 
                 app.Window().SetTaskbarProgress(testIndex, testCount);
@@ -187,12 +187,12 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
         if (testSucceed == testCount) {
             app.Window().NotifySystrayInfo(
                 StringFormat(L"all {0} tests passed", testInvocation),
-                L"finished unit testing");
+                L"finished unit testing"_view);
         }
         else {
             app.Window().NotifySystrayWarning(
                 StringFormat(L"{0} / {1} tests passed", testSucceed, testInvocation),
-                L"finished unit testing");
+                L"finished unit testing"_view);
         }
     }
 
@@ -233,7 +233,7 @@ void FWindowTestApp::Run() {
 }
 //----------------------------------------------------------------------------
 void FWindowTestApp::Shutdown() {
-    Window().NotifySystrayWarning(L"Here I go", L"WindowTest");
+    Window().NotifySystrayWarning(L"Here I go"_view, L"WindowTest"_view);
 
     parent_type::Shutdown();
 }

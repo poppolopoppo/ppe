@@ -821,7 +821,7 @@ void FInterruptedTask::Resume(TMemoryView<FInterruptedTask> tasks) {
     // the current fiber more than once.
     // also we can't use PostTaskDelegate when the stalled fiber belongs to
     // another task manager.
-#if 0 // /!!\ DONT USE, THIS IS NOT WORKING AS INTENDED AND NEEDS TO BE DEBUGGED
+#if 0 // #TODO /!!\ DONT USE, THIS IS NOT WORKING AS INTENDED AND NEEDS TO BE DEBUGGED
     if (FFiber::IsInFiber()) {
         FWorkerContext_& worker = FWorkerContext_::Get();
         if (&worker.Context() == tasks.front().Context() &&
@@ -836,8 +836,6 @@ void FInterruptedTask::Resume(TMemoryView<FInterruptedTask> tasks) {
 
         task.Context()->FireAndForget(ResumeTask(task), task.Priority());
     }
-
-    Assert_NoAssume(not workerIFP || workerIFP == &FWorkerContext_::Get()); // didn't change thread
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

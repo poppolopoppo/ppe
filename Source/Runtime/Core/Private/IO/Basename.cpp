@@ -100,6 +100,11 @@ FWStringView FBasename::ToWCStr(wchar_t *dst, size_t capacity) const {
     return oss.Written().ShiftBack();
 }
 //----------------------------------------------------------------------------
+void FBasename::Clear() NOEXCEPT {
+    _basenameNoExt.Clear();
+    _extname.Clear();
+}
+//----------------------------------------------------------------------------
 void FBasename::Swap(FBasename& other) NOEXCEPT {
     swap(other._basenameNoExt, _basenameNoExt);
     swap(other._extname, _extname);

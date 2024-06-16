@@ -231,6 +231,7 @@ public:
 
     NODISCARD hash_t HashValue() const { return (_handle ? _handle->HashValue : 0); }
 
+    void Clear() { _handle = nullptr; }
     void Swap(TToken& other) { std::swap(_handle, other._handle); }
 
     NODISCARD bool Equals(const TToken& other) const { return (_handle == other._handle); }

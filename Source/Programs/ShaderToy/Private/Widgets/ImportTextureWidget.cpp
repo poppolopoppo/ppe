@@ -133,6 +133,9 @@ bool FImportTextureWidget::Show() {
             ImGui::SameLine();
             bChangeColorMask |= ImGui::CheckboxFlags("A", &colorMask, static_cast<u8>(RHI::EColorMask::A));
 
+            if (bChangeColorMask)
+                TextureSource->SetColorMask(static_cast<RHI::EColorMask>(colorMask));
+
             caption.clear();
             caption << TextureGeneration.Quality;
 

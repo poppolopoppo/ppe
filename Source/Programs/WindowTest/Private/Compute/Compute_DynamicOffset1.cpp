@@ -62,7 +62,7 @@ ARGS_IF_RHIDEBUG("Compute_DynamicOffset1_CS"));
             Max(ubOffset + srcSize, sbOffset + dstSize),
             EBufferUsage::Uniform |
             EBufferUsage::Storage |
-            EBufferUsage::Transfer },
+            EBufferUsage_Transfer },
         Default ARGS_IF_RHIDEBUG("SharedBuffer")
     ));
     PPE_LOG_CHECK(WindowTest, !!buffer);

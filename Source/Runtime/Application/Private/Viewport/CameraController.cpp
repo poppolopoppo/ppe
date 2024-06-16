@@ -43,7 +43,7 @@ FFreeLookCameraController::FFreeLookCameraController()
     });
     // speed
     _speedInput->OnTriggered().Emplace([this](const FInputActionInstance& action, const FInputKey& ) {
-        _speedMultiplier.SetRaw(action.Axis1D().Absolute);
+        _speedMultiplier.AddClamp(action.Axis1D().Relative, _speedMultiplierMinMax.x, _speedMultiplierMinMax.y);
     });
 }
 //----------------------------------------------------------------------------
@@ -124,10 +124,9 @@ void FFreeLookCameraController::InputActionKeyMappings(TAppendable<FInputActionK
             });
         });
     };
-    const auto speedModifier = [this](float normalized) NOEXCEPT -> FInputAction::FModifierEvent {
-        return FInputAction::Modulate([this, normalized](FTimespan ) -> float {
-            // do not modulate with dt here since its used as an absolute value, see UpdateCamera() function
-            return Lerp(_speedMultiplierMinMax.x, _speedMultiplierMinMax.y, normalized);
+    const auto speedModifier = [this](float delta) NOEXCEPT -> FInputAction::FModifierEvent {
+        return FInputAction::Modulate([this, delta](FTimespan dt) -> float {
+            return static_cast<float>((double(delta) * double(_speedMultiplierMinMax.y - _speedMultiplierMinMax.x)) * *dt);
         });
     };
 
@@ -144,8 +143,8 @@ void FFreeLookCameraController::InputActionKeyMappings(TAppendable<FInputActionK
     keyMappings.emplace_back(EInputKey::PageUp, _moveInput, moveModifier(float3::Y));
     keyMappings.emplace_back(EInputKey::PageDown, _moveInput, moveModifier(-float3::Y));
 
-    keyMappings.emplace_back(EInputKey::LeftShift, _speedInput, speedModifier(1.f));
-    keyMappings.emplace_back(EInputKey::LeftControl, _speedInput, speedModifier(0.f));
+    keyMappings.emplace_back(EInputKey::LeftShift, _speedInput, speedModifier(0.001f));
+    keyMappings.emplace_back(EInputKey::LeftControl, _speedInput, speedModifier(-0.001f));
 
     keyMappings.emplace_back(EInputKey::Q, _rotateInput, rotateModifier(-float2::X * _mouseSensitivity.x * 2));
     keyMappings.emplace_back(EInputKey::E, _rotateInput, rotateModifier( float2::X * _mouseSensitivity.x * 2));
@@ -159,8 +158,8 @@ void FFreeLookCameraController::InputActionKeyMappings(TAppendable<FInputActionK
     keyMappings.emplace_back(EInputKey::Gamepad_DPad_Up, _moveInput, moveModifier(float3::Y));
     keyMappings.emplace_back(EInputKey::Gamepad_DPad_Down, _moveInput, moveModifier(-float3::Y));
 
-    keyMappings.emplace_back(EInputKey::Gamepad_LeftShoulder, _speedInput, speedModifier(0.f));
-    keyMappings.emplace_back(EInputKey::Gamepad_RightShoulder, _speedInput, speedModifier(1.f));
+    keyMappings.emplace_back(EInputKey::Gamepad_LeftShoulder, _speedInput, speedModifier(-0.01f));
+    keyMappings.emplace_back(EInputKey::Gamepad_RightShoulder, _speedInput, speedModifier(0.01f));
 
     keyMappings.emplace_back(EInputKey::MouseWheelAxisY, _fovInput, fovModifier(0.01f));
     keyMappings.emplace_back(EInputKey::Add, _fovInput, fovModifier(0.001f));

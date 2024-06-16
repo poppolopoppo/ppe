@@ -998,7 +998,7 @@ FRawRTSceneID FVulkanResourceManager::CreateRayTracingScene(
 //----------------------------------------------------------------------------
 // CreateRayTracingShaderTable
 //----------------------------------------------------------------------------
-FRawRTShaderTableID FVulkanResourceManager::CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FStringView debugName)) {
+FRawRTShaderTableID FVulkanResourceManager::CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FConstChar debugName)) {
     FRawRTShaderTableID shaderTableId;
     TResourceProxy<FVulkanRayTracingShaderTable>* const pShaderTable = CreatePooledResource_(&shaderTableId);
     Assert(pShaderTable);

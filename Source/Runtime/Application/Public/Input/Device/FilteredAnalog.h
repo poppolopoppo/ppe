@@ -41,10 +41,6 @@ public:
     }
 
     void SetRaw(const value_type& raw) {
-        if (Likely(_filtered.has_value()))
-            _delta = (raw - _raw);
-        else
-            _delta = value_type{0.f};
         _raw = raw;
     }
 
@@ -55,11 +51,16 @@ public:
     void Update(FTimespan dt) {
         dt = Min(dt, FMilliseconds{ 150 }); // defensive time update: clamp DT to 150ms
 
-        if (Likely(_filtered.has_value()))
+        if (Likely(_filtered.has_value())) {
+            const value_type previous = *_filtered;
             _filtered = Lerp(*_filtered, _raw, Saturate(static_cast<float>(
                 Pow(FSeconds{dt}.Value(), 1.0 / Max(SmallEpsilon_v<float>, _sensitivity)))));
-        else
+            _delta = (*_filtered - previous);
+        }
+        else {
             _filtered = _raw;
+            _delta = value_type{0.f};
+        }
     }
 
     void Clear() {
@@ -68,6 +69,7 @@ public:
 
     void Reset(value_type init) {
         _raw = init;
+        _delta = value_type{0.f};
         _filtered.reset();
     }
 

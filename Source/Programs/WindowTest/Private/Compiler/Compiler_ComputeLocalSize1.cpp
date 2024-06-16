@@ -50,7 +50,7 @@ ARGS_IF_RHIDEBUG("Compiler_ComputeLocalSize1_CS"));
     FDescriptorSet* const ds = ppln.DescriptorSet("0"_descriptorset);
     PPE_LOG_CHECK(WindowTest, !!ds);
 
-    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_OutImage"_uniform, EImageSampler::Float2D | EImageSampler(EPixelFormat::RGBA8_UNorm), EShaderAccess::WriteOnly, 0, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_OutImage"_uniform, EImageSampler_FromPixelFormat(EImageSampler_Float2D, EPixelFormat::RGBA8_UNorm), EShaderAccess::WriteOnly, 0, EShaderStages::Compute));
     PPE_LOG_CHECK(WindowTest, TestStorageBuffer(*ds, "un_SSBO"_uniform, 16_b, 0_b, EShaderAccess::ReadOnly, 1, EShaderStages::Compute));
 
     PPE_LOG_CHECK(WindowTest, ppln.DefaultLocalGroupSize == uint3{ 8,8,1 });

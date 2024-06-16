@@ -73,27 +73,30 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
 
     bool dataIsCorrect = false;
     const auto onLoaded = [&dataIsCorrect](const FImageView& imageData) {
-        const auto testPixel = [&imageData](float x, float y, const FRgba32f& color) -> bool {
+        const auto testTexel = [&imageData](float x, float y, const FRgba32f& color) -> bool {
+            const u32 ix = FPlatformMaths::RoundToUnsigned((x + 1.0f) * 0.5f * static_cast<float>(imageData.Dimensions().x) + 0.5f);
+            const u32 iy = FPlatformMaths::RoundToUnsigned((y + 1.0f) * 0.5f * static_cast<float>(imageData.Dimensions().y) + 0.5f);
+
             FRgba32f texel;
-            imageData.Load(&texel, float3(x, y, 0));
+            imageData.Load(&texel, uint3(ix, iy, 0));
 
             const bool isEqual = DistanceSq(color, texel) < LargeEpsilon;
-            PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", float2(x, y), texel, color, isEqual);
+            PPE_LOG(WindowTest, Debug, "Read({0}) -> {1} vs {2} == {3}", uint2(ix, iy), texel, color, isEqual);
             PPE_LOG_CHECK(WindowTest, isEqual);
             Assert(isEqual);
             return true;
         };
 
         dataIsCorrect = true;
-        dataIsCorrect &= testPixel( 0.00f, -0.49f, FLinearColor{ 1.0f, 0.0f, 0.0f, 1.0f });
-        dataIsCorrect &= testPixel( 0.49f,  0.49f, FLinearColor{ 0.0f, 1.0f, 0.0f, 1.0f });
-        dataIsCorrect &= testPixel(-0.49f,  0.49f, FLinearColor{ 0.0f, 0.0f, 1.0f, 1.0f });
-        dataIsCorrect &= testPixel( 0.00f, -0.51f, Zero);
-        dataIsCorrect &= testPixel( 0.51f,  0.51f, Zero);
-        dataIsCorrect &= testPixel(-0.51f,  0.51f, Zero);
-        dataIsCorrect &= testPixel( 0.00f,  0.51f, Zero);
-        dataIsCorrect &= testPixel( 0.51f, -0.51f, Zero);
-        dataIsCorrect &= testPixel(-0.51f, -0.51f, Zero);
+        dataIsCorrect &= testTexel( 0.00f, -0.49f, FLinearColor{ 1.0f, 0.0f, 0.0f, 1.0f });
+        dataIsCorrect &= testTexel( 0.49f,  0.49f, FLinearColor{ 0.0f, 1.0f, 0.0f, 1.0f });
+        dataIsCorrect &= testTexel(-0.49f,  0.49f, FLinearColor{ 0.0f, 0.0f, 1.0f, 1.0f });
+        dataIsCorrect &= testTexel( 0.00f, -0.51f, Zero);
+        dataIsCorrect &= testTexel( 0.51f,  0.51f, Zero);
+        dataIsCorrect &= testTexel(-0.51f,  0.51f, Zero);
+        dataIsCorrect &= testTexel( 0.00f,  0.51f, Zero);
+        dataIsCorrect &= testTexel( 0.51f, -0.51f, Zero);
+        dataIsCorrect &= testTexel(-0.51f, -0.51f, Zero);
     };
 
     FCommandBufferBatch cmd{ fg.Begin(FCommandBufferDesc{}

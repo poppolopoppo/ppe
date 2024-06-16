@@ -73,7 +73,7 @@ void main() {
     const FDescriptorSet* ds = ppln.DescriptorSet("0"_descriptorset);
     PPE_LOG_CHECK(WindowTest, !!ds);
 
-    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_ColorTexture"_uniform, EImageSampler::Float2D, 0, EShaderStages::Vertex | EShaderStages::Fragment));
+    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_ColorTexture"_uniform, EImageSampler_Float2D, 0, EShaderStages::Vertex | EShaderStages::Fragment));
     PPE_LOG_CHECK(WindowTest, TestBufferUniform(*ds, "UB"_uniform, 16_b, 1, EShaderStages::Fragment));
 
     PPE_LOG_CHECK(WindowTest, ppln.EarlyFragmentTests);

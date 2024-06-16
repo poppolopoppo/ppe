@@ -78,7 +78,8 @@ public:
     NODISCARD FStringView ToCStr(const TMemoryView<char>& dst) const;
     NODISCARD FWStringView ToWCStr(const TMemoryView<wchar_t>& dst) const;
 
-    void Swap(FDirpath& other);
+    void Clear() NOEXCEPT;
+    void Swap(FDirpath& other) NOEXCEPT;
 
     NODISCARD bool Equals(const FDirpath& other) const { return _path == other._path; }
     NODISCARD bool Less(const FDirpath& other) const;

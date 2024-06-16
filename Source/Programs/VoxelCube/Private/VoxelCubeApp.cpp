@@ -27,6 +27,21 @@ LOG_CATEGORY(, VoxelCube)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+struct FGaussianSplat3 {
+    float3 Position;
+    float3 U, V, N;
+    float Roughness;
+    FLinearColor Color;
+};
+//----------------------------------------------------------------------------
+struct FGaussianSplatNode3 {
+    FGaussianSplat3 Splats[8];
+    u32 FirstChildIndex : 24;
+    u32 HasChildren     : 8;
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 FVoxelCubeApp::FVoxelCubeApp(FModularDomain& domain)
 :   parent_type(domain, "Tools/VoxelCube", true) {
 
@@ -140,16 +155,30 @@ void FVoxelCubeApp::Render(RHI::IFrameGraph& fg, FTimespan dt) {
     FSubmitRenderPass submit{ renderPass };
     submit.DependsOn(tUpdateUniform);
 
-    cmd->Task(renderPass, FDrawIndexed{}
-        .SetPipeline(*_graphicsPpln)
-        .SetTopology(EPrimitiveTopology::TriangleList)
-        .AddResources("0"_descriptorset, _resources)
-        .SetIndexBuffer(_indexBuffer, 0, IndexAttrib<u32>())
-        .AddVertexBuffer(Default, _vertexBuffer)
-        .SetVertexInput(_vertexInput)
-        .SetEnableDepthTest(true)
-        .SetCullMode(ECullMode::Back)
-        .Draw(_genericMesh.IndexCount()));
+    static bool bDrawPoints = true;
+    if (bDrawPoints) {
+        cmd->Task(renderPass, FDrawVertices{}
+            .SetPipeline(*_graphicsPpln)
+            .SetTopology(EPrimitiveTopology::Point)
+            .AddResources("0"_descriptorset, _resources)
+            .AddVertexBuffer(Default, _vertexBuffer)
+            .SetVertexInput(_vertexInput)
+            .SetEnableDepthTest(true)
+            .SetCullMode(ECullMode::None)
+            .Draw(_genericMesh.VertexCount()));
+    }
+    else {
+        cmd->Task(renderPass, FDrawIndexed{}
+            .SetPipeline(*_graphicsPpln)
+            .SetTopology(EPrimitiveTopology::TriangleList)
+            .AddResources("0"_descriptorset, _resources)
+            .SetIndexBuffer(_indexBuffer, 0, IndexAttrib<u32>())
+            .AddVertexBuffer(Default, _vertexBuffer)
+            .SetVertexInput(_vertexInput)
+            .SetEnableDepthTest(true)
+            .SetCullMode(ECullMode::Back)
+            .Draw(_genericMesh.IndexCount()));
+    }
 
     Unused(cmd->Task(submit));
 
@@ -190,13 +219,13 @@ bool FVoxelCubeApp::CreateMeshBuffers_(RHI::IFrameGraph& fg) {
 
     ContentPipeline::FMeshBuilderSettings settings;
     settings.EncodeTangentSpaceToQuaternion = false;
-    settings.OptimizeIndicesOrder = true;
-    settings.OptimizeVerticesOrder = true;
+    settings.OptimizeIndicesOrder = false;
+    settings.OptimizeVerticesOrder = false;
     settings.RecomputeNormals = ContentPipeline::ERecomputeMode::IfMissing;
     settings.RecomputeTangentSpace = ContentPipeline::ERecomputeMode::Remove;
-    settings.RemoveUnusedVertices = true;
+    settings.RemoveUnusedVertices = false;
 
-    ContentPipeline::FMeshBuilderResult result = meshBuilder.ImportGenericMesh(L"Data:/Models/xyzrgb_statuette_50K_voro10.ply", settings);
+    ContentPipeline::FMeshBuilderResult result = meshBuilder.ImportGenericMesh(L"Data:/Models/statue_mid.ply", settings);
     PPE_LOG_CHECK(VoxelCube, result.has_value());
 
     _genericMesh = std::move(result.value());
@@ -232,8 +261,8 @@ bool FVoxelCubeApp::CreateMeshBuffers_(RHI::IFrameGraph& fg) {
     PPE_LOG_CHECK(VoxelCube, !!cmd);
 
     Unused(cmd->Task(FUpdateBuffer{}
-            .SetBuffer(indexBuf)
-            .AddData(indexData.data(), indexData.SizeInBytes(), 0)));
+        .SetBuffer(indexBuf)
+        .AddData(indexData.data(), indexData.SizeInBytes(), 0)));
 
     Unused(cmd->Task(FUpdateBuffer{}
         .SetBuffer(vertexBuf)

@@ -170,8 +170,6 @@ PTexture FTextureGeneration::Generate(const FTextureSource& source) const {
 
         // creates a new texture
         {
-            const RHI::FPixelFormatInfo pixelInfo = EPixelFormat_Infos(Compression->Format());
-
             FTextureSourceProperties newProperties = Prepare(source._properties);
 
             PPE_LOG_CHECK(Texture, Compression->SupportsTextureSource(newProperties, *this));
@@ -926,7 +924,7 @@ void FTextureGeneration::ContrastAdaptiveSharpening2D(
                 const float3 window = (b.xyz + d.xyz) + (f.xyz + h.xyz);
                 const float3 outColor = Saturate((window * wRGB + e.xyz) * rcpWeightRGB);
 
-                viewDst.Store(uint3{x,y,0}, FLinearColor({outColor, alpha}).LinearToGamma(properties.Gamma));
+                viewDst.Store(uint3{x,y,0}, FLinearColor(outColor, alpha).LinearToGamma(properties.Gamma));
             }
         });
     }
@@ -997,7 +995,7 @@ void FTextureGeneration::ContrastAdaptiveSharpening2D(
                 const float3 window = (b.xyz + d.xyz) + (f.xyz + h.xyz);
                 const float3 outColor = Saturate((window * wRGB + e.xyz) * rcpWeightRGB);
 
-                viewDst.Store(uint3{x,y,0}, FLinearColor({outColor, e.w}).LinearToGamma(properties.Gamma));
+                viewDst.Store(uint3{x,y,0}, FLinearColor(outColor, e.w).LinearToGamma(properties.Gamma));
             }
         });
     }

@@ -19,7 +19,7 @@ FVulkanRayTracingShaderTable::~FVulkanRayTracingShaderTable() {
 }
 #endif
 //----------------------------------------------------------------------------
-bool FVulkanRayTracingShaderTable::Construct(ARG0_IF_RHIDEBUG(FStringView debugName)) {
+bool FVulkanRayTracingShaderTable::Construct(ARG0_IF_RHIDEBUG(FConstChar debugName)) {
     const auto exclusiveData = _data.LockExclusive();
     Assert(not exclusiveData->BufferId);
     Assert(not exclusiveData->PipelineId);

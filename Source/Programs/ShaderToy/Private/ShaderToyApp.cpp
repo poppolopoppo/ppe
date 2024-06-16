@@ -38,7 +38,9 @@ LOG_CATEGORY(, ShaderToy)
 namespace {
 //----------------------------------------------------------------------------
 static CONSTEXPR const char GShaderToyApp_BufferLetters[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+#if USE_PPE_RHIDEBUG
 static CONSTEXPR size_t GShaderToyApp_DebugNameCapacity = 128;
+#endif
 //----------------------------------------------------------------------------
 } //!namepsace
 //----------------------------------------------------------------------------

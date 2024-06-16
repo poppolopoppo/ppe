@@ -14,10 +14,10 @@ bool Queue_CopyBuffer1_(FWindowTestApp& app) {
     const size_t srcBufferSize = 256;
     const size_t dstBufferSize = 512;
 
-    auto srcBuffer = fg.ScopedResource(fg.CreateBuffer(FBufferDesc{ srcBufferSize, EBufferUsage::Transfer }, Default ARGS_IF_RHIDEBUG("SrcBuffer")));
+    auto srcBuffer = fg.ScopedResource(fg.CreateBuffer(FBufferDesc{ srcBufferSize, EBufferUsage_Transfer }, Default ARGS_IF_RHIDEBUG("SrcBuffer")));
     PPE_LOG_CHECK(WindowTest, srcBuffer.Valid());
 
-    auto dstBuffer = fg.ScopedResource(fg.CreateBuffer(FBufferDesc{ dstBufferSize, EBufferUsage::Transfer }, Default ARGS_IF_RHIDEBUG("DstBuffer")));
+    auto dstBuffer = fg.ScopedResource(fg.CreateBuffer(FBufferDesc{ dstBufferSize, EBufferUsage_Transfer }, Default ARGS_IF_RHIDEBUG("DstBuffer")));
     PPE_LOG_CHECK(WindowTest, dstBuffer.Valid());
 
     RAWSTORAGE(UnitTest, u8) srcData;

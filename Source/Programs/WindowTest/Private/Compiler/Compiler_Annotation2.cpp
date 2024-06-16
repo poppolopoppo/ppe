@@ -58,7 +58,7 @@ ARGS_IF_RHIDEBUG("Compiler_Annotation2_CS"));
     PPE_LOG_CHECK(WindowTest, TestBufferUniform(*ds, "UB"_uniform, 64_b, 1, EShaderStages::Compute, 1, UMax));
     PPE_LOG_CHECK(WindowTest, TestStorageBuffer(*ds, "SSB"_uniform, 64_b, 0, EShaderAccess::WriteDiscard, 0, EShaderStages::Compute, 1, UMax));
     PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_Image"_uniform,
-        EImageSampler::Float2D | EImageSampler(EPixelFormat::RGBA8_UNorm),
+        EImageSampler_FromPixelFormat(EImageSampler_Float2D, EPixelFormat::RGBA8_UNorm),
         EShaderAccess::WriteDiscard, 2, EShaderStages::Compute ));
 
     PPE_LOG_CHECK(WindowTest, ppln.DefaultLocalGroupSize == uint3(1));

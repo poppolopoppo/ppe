@@ -129,7 +129,7 @@ public:
         {}
     };
 
-    using FStagingBuffers = TFixedSizeStack<FStagingBuffer, 8>;
+    using FStagingBuffers = TFixedSizeStack<FStagingBuffer, 16>;
 
     struct FInternalData {
         EQueueType QueueType{ Default };

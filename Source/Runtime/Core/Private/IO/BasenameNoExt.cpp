@@ -22,6 +22,10 @@ FBasenameNoExt::FBasenameNoExt(const FileSystem::FString& content)
     : FBasenameNoExt(content.MakeView())
 {}
 //----------------------------------------------------------------------------
+void FBasenameNoExt::Clear() NOEXCEPT {
+    parent_type::Clear();
+}
+//----------------------------------------------------------------------------
 void FBasenameNoExt::Swap(FBasenameNoExt& other) NOEXCEPT {
     parent_type::Swap(other);
 }

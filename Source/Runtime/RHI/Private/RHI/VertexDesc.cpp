@@ -192,7 +192,7 @@ static bool OctahedralNormalPromote_(const FRawMemory& rawTo, const FRawMemoryCo
         return false;
 
     forrange(i, 0, from.size())
-        to[i] = Normal_to_UByte2n(from[i]);
+        to[i] = Normal_to_Octahedral(from[i]);
     return true;
 }
 //----------------------------------------------------------------------------
@@ -203,7 +203,33 @@ static bool OctahedralNormalDemote_(const FRawMemory& rawTo, const FRawMemoryCon
         return false;
 
     forrange(i, 0, from.size())
-        to[i] = UByte2n_to_Normal(from[i]);
+        to[i] = Octahedral_to_Normal(from[i]);
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _UInt>
+static bool FibonacciSphereNormalPromote_(const FRawMemory& rawTo, const FRawMemoryConst& rawFrom) NOEXCEPT {
+    const TMemoryView<const float3> from = rawFrom.Cast<const float3>();
+    const TMemoryView<_UInt> to = rawTo.Cast<_UInt>();
+    if (Unlikely(from.size() != to.size()))
+        return false;
+
+    constexpr u32 numBits = sizeof(_UInt) << 3;
+    forrange(i, 0, from.size())
+        to[i] = checked_cast<_UInt>( FibonacciSphereNormalEncode(from[i], numBits) );
+    return true;
+}
+//----------------------------------------------------------------------------
+template <typename _UInt>
+static bool FibonacciSphereNormalDemote_(const FRawMemory& rawTo, const FRawMemoryConst& rawFrom) NOEXCEPT {
+    const TMemoryView<const _UInt> from = rawFrom.Cast<const _UInt>();
+    const TMemoryView<float3> to = rawTo.Cast<float3>();
+    if (Unlikely(from.size() != to.size()))
+        return false;
+
+    constexpr u32 numBits = sizeof(_UInt) << 3;
+    forrange(i, 0, from.size())
+        to[i] = FibonacciSphereNormalDecode(from[i], numBits);
     return true;
 }
 //----------------------------------------------------------------------------
@@ -243,11 +269,27 @@ FVertexFormatPromote EVertexFormat_Promote(EVertexFormat dst, EVertexFormat src)
             return TVertexFormatPromote_<>::Make(arity, dst, src);
     }
 
+    /*** SPECIAL CASES ***/
+
     // normal vector octahedral encoding
     if (src == EVertexFormat::Float3 && dst == EVertexFormat::UByte2_Norm)
         return &OctahedralNormalPromote_;
     if (dst == EVertexFormat::Float3 && src == EVertexFormat::UByte2_Norm)
         return &OctahedralNormalDemote_;
+
+    // normal vector fibonacci sphere encoding
+    if (src == EVertexFormat::Float3 && dst == EVertexFormat::UByte)
+        return &FibonacciSphereNormalPromote_<u8>;
+    if (dst == EVertexFormat::Float3 && src == EVertexFormat::UByte)
+        return &FibonacciSphereNormalDemote_<u8>;
+    if (src == EVertexFormat::Float3 && dst == EVertexFormat::UShort)
+        return &FibonacciSphereNormalPromote_<u16>;
+    if (dst == EVertexFormat::Float3 && src == EVertexFormat::UShort)
+        return &FibonacciSphereNormalDemote_<u16>;
+    if (src == EVertexFormat::Float3 && dst == EVertexFormat::UInt)
+        return &FibonacciSphereNormalPromote_<u32>;
+    if (dst == EVertexFormat::Float3 && src == EVertexFormat::UInt)
+        return &FibonacciSphereNormalDemote_<u32>;
 
     return nullptr;
 }

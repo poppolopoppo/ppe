@@ -253,7 +253,11 @@ FWStringView FDirpath::ToWCStr(const TMemoryView<wchar_t>& dst) const {
     return oss.Written().ShiftBack();
 }
 //----------------------------------------------------------------------------
-void FDirpath::Swap(FDirpath& other) {
+void FDirpath::Clear() NOEXCEPT {
+    _path.reset();
+}
+//----------------------------------------------------------------------------
+void FDirpath::Swap(FDirpath& other) NOEXCEPT {
     std::swap(other._path, _path);
 }
 //----------------------------------------------------------------------------

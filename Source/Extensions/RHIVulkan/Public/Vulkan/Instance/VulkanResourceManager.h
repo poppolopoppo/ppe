@@ -147,7 +147,7 @@ public:
 
     NODISCARD FRawRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName));
     NODISCARD FRawRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem ARGS_IF_RHIDEBUG(FConstChar debugName));
-    NODISCARD FRawRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FStringView debugName));
+    NODISCARD FRawRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FConstChar debugName));
 
     NODISCARD FRawDescriptorSetLayoutID CreateDescriptorSetLayout(FPipelineDesc::PUniformMap&& uniforms ARGS_IF_RHIDEBUG(FConstChar debugName));
 

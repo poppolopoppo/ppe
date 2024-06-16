@@ -25,6 +25,7 @@ public:
     FBasenameNoExt(const FFileSystemToken& token) NOEXCEPT;
     FBasenameNoExt& operator =(const FFileSystemToken& token) NOEXCEPT;
 
+    void Clear() NOEXCEPT;
     void Swap(FBasenameNoExt& other) NOEXCEPT;
 
 };

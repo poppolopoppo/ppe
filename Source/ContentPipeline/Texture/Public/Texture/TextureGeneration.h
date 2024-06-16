@@ -79,7 +79,7 @@ private:
         const FTextureSourceProperties& properties,
         const FRawMemory& sliceData ) const;
 
-    static NODISCARD bool FloodMipChainWithAlpha(
+    NODISCARD static bool FloodMipChainWithAlpha(
         const FTextureSourceProperties& properties,
         const FRawMemory& textureData ) NOEXCEPT;
 

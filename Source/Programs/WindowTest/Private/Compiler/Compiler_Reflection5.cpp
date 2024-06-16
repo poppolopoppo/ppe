@@ -42,14 +42,14 @@ void main ()
     const FDescriptorSet* ds = ppln.DescriptorSet("0"_descriptorset);
     PPE_LOG_CHECK(WindowTest, !!ds);
 
-    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_Image2D_0"_uniform, EImageSampler(EPixelFormat::RGBA8_UNorm) | EImageSampler::Float2D, EShaderAccess::ReadOnly, 0, EShaderStages::Compute));
-    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_Image2D_1"_uniform, EImageSampler(EPixelFormat::R16u) | EImageSampler::UInt2D, EShaderAccess::ReadWrite, 1, EShaderStages::Compute));
-    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_Image2DMS_2"_uniform, EImageSampler::Float2DMS, EShaderAccess::WriteOnly, 2, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_Image2D_0"_uniform, EImageSampler_FromPixelFormat(EImageSampler_Float2D, EPixelFormat::RGBA8_UNorm), EShaderAccess::ReadOnly, 0, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_Image2D_1"_uniform, EImageSampler_FromPixelFormat(EImageSampler_UInt2D, EPixelFormat::R16u), EShaderAccess::ReadWrite, 1, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestImageUniform(*ds, "un_Image2DMS_2"_uniform, EImageSampler_Float2DMS, EShaderAccess::WriteOnly, 2, EShaderStages::Compute));
 
-    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Image3D_3"_uniform, EImageSampler::Float3D, 3, EShaderStages::Compute));
-    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Image2DA_4"_uniform, EImageSampler::Float2DArray, 4, EShaderStages::Compute));
-    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Image1D_5"_uniform, EImageSampler::Int1D, 5, EShaderStages::Compute));
-    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Image2DS_6"_uniform, EImageSampler::Float2D | EImageSampler::_Shadow, 6, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Image3D_3"_uniform, EImageSampler_Float3D, 3, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Image2DA_4"_uniform, EImageSampler_Float2DArray, 4, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Image1D_5"_uniform, EImageSampler_Int1D, 5, EShaderStages::Compute));
+    PPE_LOG_CHECK(WindowTest, TestTextureUniform(*ds, "un_Image2DS_6"_uniform, EImageSampler_Float2D | EImageSampler::_Shadow, 6, EShaderStages::Compute));
 
     return true;
 }

@@ -62,6 +62,7 @@ public:
     FStringView ToCStr(TMemoryView<char> dst) const { return ToCStr(dst.data(), dst.size()); }
     FWStringView ToWCStr(TMemoryView<wchar_t> dst) const { return ToWCStr(dst.data(), dst.size()); }
 
+    void Clear() NOEXCEPT;
     void Swap(FBasename& other) NOEXCEPT;
 
     size_t HashValue() const;

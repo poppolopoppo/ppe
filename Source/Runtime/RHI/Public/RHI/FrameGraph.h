@@ -76,7 +76,7 @@ public: // interface
     NODISCARD virtual FSwapchainID CreateSwapchain(const FSwapchainDesc& desc, FRawSwapchainID oldSwapchain = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default)) = 0;
     NODISCARD virtual FRTGeometryID CreateRayTracingGeometry(const FRayTracingGeometryDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default)) = 0;
     NODISCARD virtual FRTSceneID CreateRayTracingScene(const FRayTracingSceneDesc& desc, const FMemoryDesc& mem = Default ARGS_IF_RHIDEBUG(FConstChar debugName = Default)) = 0;
-    NODISCARD virtual FRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(const FStringView& name)) = 0;
+    NODISCARD virtual FRTShaderTableID CreateRayTracingShaderTable(ARG0_IF_RHIDEBUG(FConstChar debugName)) = 0;
 
     NODISCARD virtual bool InitPipelineResources(FPipelineResources* pResources, FRawGPipelineID pipeline, const FDescriptorSetID& id) const = 0;
     NODISCARD virtual bool InitPipelineResources(FPipelineResources* pResources, FRawCPipelineID pipeline, const FDescriptorSetID& id) const = 0;
