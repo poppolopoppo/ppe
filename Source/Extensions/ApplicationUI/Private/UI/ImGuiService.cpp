@@ -763,9 +763,9 @@ void FImGuiService::InitializeImGuiStyle_() {
     colors[ImGuiCol_ResizeGripActive]       = ImVec4(0.74f, 0.14f, 0.23f, 0.80f);
     colors[ImGuiCol_Tab]                    = ImVec4(0.32f, 0.06f, 0.10f, 0.35f);
     colors[ImGuiCol_TabHovered]             = ImVec4(0.87f, 0.17f, 0.28f, 0.82f);
-    colors[ImGuiCol_TabActive]              = ImVec4(0.74f, 0.14f, 0.23f, 0.80f);
-    colors[ImGuiCol_TabUnfocused]           = ImVec4(0.46f, 0.09f, 0.14f, 0.50f);
-    colors[ImGuiCol_TabUnfocusedActive]     = ImVec4(0.64f, 0.13f, 0.20f, 0.70f);
+    colors[ImGuiCol_TabSelected]              = ImVec4(0.74f, 0.14f, 0.23f, 0.80f);
+    colors[ImGuiCol_TabDimmed]           = ImVec4(0.46f, 0.09f, 0.14f, 0.50f);
+    colors[ImGuiCol_TabDimmedSelected]     = ImVec4(0.64f, 0.13f, 0.20f, 0.70f);
     colors[ImGuiCol_DockingPreview]         = ImVec4(0.26f, 0.59f, 0.98f, 0.70f);
     colors[ImGuiCol_DockingEmptyBg]         = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
     colors[ImGuiCol_PlotLines]              = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
@@ -857,7 +857,7 @@ void FImGuiService::InitializeImGuiStyle_() {
 
     style.Colors[ImGuiCol_Tab]                = ImVec4(0.47f, 0.77f, 0.83f, 0.14f);
     style.Colors[ImGuiCol_TabHovered]         = ImVec4(0.92f, 0.18f, 0.29f, 0.86f);
-    style.Colors[ImGuiCol_TabActive]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_TabSelected]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
 #elif 0 // Darcula style by ice1000 from ImThemes
     ImGuiStyle& style = ImGui::GetStyle();
 
@@ -977,15 +977,15 @@ void FImGuiService::InitializeImGuiStyle_() {
 
     /*style.Colors[ImGuiCol_Tab] = ImVec4(0.1764705926179886f, 0.3490196168422699f, 0.5764706134796143f, 0.8619999885559082f);
     style.Colors[ImGuiCol_TabHovered] = ImVec4(0.2588235437870026f, 0.5882353186607361f, 0.9764705896377563f, 0.800000011920929f);
-    style.Colors[ImGuiCol_TabActive] = ImVec4(0.196078434586525f, 0.407843142747879f, 0.6784313917160034f, 1.0f);
-    style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.06666667014360428f, 0.1019607856869698f, 0.1450980454683304f, 0.9724000096321106f);
-    style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.1333333402872086f, 0.2588235437870026f, 0.4235294163227081f, 1.0f);*/
+    style.Colors[ImGuiCol_TabSelected] = ImVec4(0.196078434586525f, 0.407843142747879f, 0.6784313917160034f, 1.0f);
+    style.Colors[ImGuiCol_TabDimmed] = ImVec4(0.06666667014360428f, 0.1019607856869698f, 0.1450980454683304f, 0.9724000096321106f);
+    style.Colors[ImGuiCol_TabDimmedSelected] = ImVec4(0.1333333402872086f, 0.2588235437870026f, 0.4235294163227081f, 1.0f);*/
 
     style.Colors[ImGuiCol_Tab]                = ImVec4(0.92f, 0.18f, 0.29f, 1.00f).ToFloat4()*0.35f;
     style.Colors[ImGuiCol_TabHovered]         = ImVec4(0.92f, 0.18f, 0.29f, 0.86f).ToFloat4()*0.95f;
-    style.Colors[ImGuiCol_TabActive]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f).ToFloat4()*0.8f;
-    style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.92f, 0.18f, 0.29f, 1.00f).ToFloat4()*0.7f;
-    style.Colors[ImGuiCol_TabUnfocused]       = ImVec4(0.92f, 0.18f, 0.29f, 1.00f).ToFloat4()*0.5f;
+    style.Colors[ImGuiCol_TabSelected]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f).ToFloat4()*0.8f;
+    style.Colors[ImGuiCol_TabDimmedSelected] = ImVec4(0.92f, 0.18f, 0.29f, 1.00f).ToFloat4()*0.7f;
+    style.Colors[ImGuiCol_TabDimmed]       = ImVec4(0.92f, 0.18f, 0.29f, 1.00f).ToFloat4()*0.5f;
 
     style.Colors[ImGuiCol_BorderShadow] = ImVec4(0.1568627506494522f, 0.1568627506494522f, 0.1568627506494522f, 0.14999f);
     style.Colors[ImGuiCol_ResizeGrip] = ImVec4(0.6980392336845398f, 0.6980392336845398f, 0.6980392336845398f, 0.6200000047683716f);
@@ -1074,7 +1074,7 @@ void FImGuiService::InitializeImGuiStyle_() {
     colors[ImGuiCol_ResizeGripActive]       = ImVec4(0.19f, 0.39f, 0.69f, 1.00f);
     colors[ImGuiCol_Tab]                    = ImVec4(0.11f, 0.11f, 0.11f, 1.00f);
     colors[ImGuiCol_TabHovered]             = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-    colors[ImGuiCol_TabActive]              = ImVec4(0.19f, 0.19f, 0.19f, 1.00f);
+    colors[ImGuiCol_TabSelected]              = ImVec4(0.19f, 0.19f, 0.19f, 1.00f);
     colors[ImGuiCol_PlotHistogram]          = ImVec4(0.28f, 0.45f, 0.70f, 1.00f);
     colors[ImGuiCol_PlotHistogramHovered]   = ImVec4(0.20f, 0.39f, 0.69f, 1.00f);
     colors[ImGuiCol_TextSelectedBg]         = ImVec4(0.28f, 0.45f, 0.70f, 1.00f);
