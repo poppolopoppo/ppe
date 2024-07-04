@@ -219,8 +219,8 @@ func makePPE_Common(rules *ModuleRules) error {
 	rules.Defines.Append("EXPORT_PPE_" + SanitizeIdentifier(strings.ToUpper(rules.ModuleAlias.String())))
 
 	// HAL handling
-	currentHost := CurrentHost()
-	for _, hostId := range HostIds() {
+	currentHost := GetCurrentHost()
+	for _, hostId := range GetHostIds() {
 		if hostId != currentHost.Id {
 			hostName := hostId.String()
 			hostName = strings.ToUpper(hostName[0:1]) + strings.ToLower(hostName[1:])
@@ -265,7 +265,7 @@ func makePPE_Internal(rules *ModuleRules) error {
 
 func makePPE_Headers(rules *ModuleRules) error {
 	Inherit(&rules.ModuleType, MODULE_HEADERS)
-	Inherit(&rules.DebugSymbols, DEBUG_EMBEDDED)
+	Inherit(&rules.DebugInfo, DEBUGINFO_EMBEDDED)
 	rules.IncludePaths.AppendUniq(UFS.Source.Folder("Runtime", "Core", "Public"))
 	return nil
 }
@@ -274,7 +274,7 @@ func makePPE_External(rules *ModuleRules) error {
 		return err
 	}
 	Inherit(&rules.ModuleType, MODULE_EXTERNAL)
-	Inherit(&rules.DebugSymbols, DEBUG_EMBEDDED)
+	Inherit(&rules.DebugInfo, DEBUGINFO_EMBEDDED)
 	Inherit(&rules.Unity, UNITY_DISABLED)
 	rules.IncludePaths.AppendUniq(UFS.Source.Folder("Runtime", "Core", "Public"))
 	return nil
