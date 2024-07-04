@@ -309,6 +309,7 @@ CONSTEXPR T MakeNoInit() NOEXCEPT {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 #ifdef __clang__
+#   pragma clang diagnostic push
 #   pragma clang diagnostic ignored "-Wdynamic-class-memaccess"
 #endif
 //----------------------------------------------------------------------------

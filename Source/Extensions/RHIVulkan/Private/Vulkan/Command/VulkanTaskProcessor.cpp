@@ -1267,10 +1267,9 @@ void FVulkanTaskProcessor::Visit(const FVulkanCopyBufferTask& task) {
         Assert(src.Size + src.SrcOffset <= srcBuffer->SizeInBytes());
         Assert(src.Size + src.DstOffset <= dstBuffer->SizeInBytes());
 
-        using range_t = TRange<VkDeviceSize>;
         Assert_NoAssume( (task.SrcBuffer != task.DstBuffer) ||
-            range_t(dst.srcOffset, dst.srcOffset + dst.size)
-                .Overlaps(range_t(dst.dstOffset, dst.dstOffset + dst.size )) );
+            TRange<VkDeviceSize>(dst.srcOffset, dst.srcOffset + dst.size)
+                .Overlaps(TRange<VkDeviceSize>(dst.dstOffset, dst.dstOffset + dst.size )) );
 
         AddBuffer_(task.SrcBuffer, EResourceState_TransferSrc, dst.srcOffset, dst.size);
         AddBuffer_(task.DstBuffer, EResourceState_TransferDst, dst.dstOffset, dst.size);

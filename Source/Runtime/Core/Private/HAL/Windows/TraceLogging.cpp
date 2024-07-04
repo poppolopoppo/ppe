@@ -43,7 +43,7 @@ static ::SYSTEMTIME MakeSystemTime_(i64 timestamp) {
 }
 //----------------------------------------------------------------------------
 #ifdef __clang__
-#   pragma clang diagnostic push,
+#   pragma clang diagnostic push
 #   pragma clang diagnostic ignored "-Wbitwise-op-parentheses"
 #endif
 template <int _TraceLevel>

@@ -729,7 +729,7 @@ PRAGMA_MSVC_WARNING_DISABLE(4302) // 'type cast': truncation from 'FARPROC' to '
 PRAGMA_MSVC_WARNING_DISABLE(4311) // 'type cast': pointer truncation from 'FARPROC' to 'DWORD'
 PRAGMA_MSVC_WARNING_DISABLE(4312) // 'type cast': conversion from 'DWORD' to 'DWORD *' of greater size
 #ifdef __clang__
-#   pragma clang diagnostic push,
+#   pragma clang diagnostic push
 #   pragma clang diagnostic ignored "-Wmicrosoft-cast"
 #endif
 static u32 WriteRelativeJump_(void* func2hook, void* jumpTarget) {
