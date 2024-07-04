@@ -19,7 +19,7 @@
 				"/MD"
 			],
 			"LinkerOptions": [
-				"/LTCG"
+				"/LTCG", "/NOEXP"
 			]
 		}
 	}
