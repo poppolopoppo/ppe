@@ -13,16 +13,17 @@ jobs:
     steps:
     - uses: actions/checkout@master
       with:
+        fetch-depth: 1
         submodules: true
-        
+
     - uses: actions/setup-go@v5
       with:
         go-version: '1.22.0'
         check-latest: true
-        
+
     - name: build PPE
-      run: go run PPE.go configure -v -Ide -Color -and build Programs/ShaderToy-Win64-Devel
-          
+      run: go run -pgo=off PPPE.go configure -v -Ide -Color -and build Programs/ShaderToy-Win64-Devel -ShowCmds
+
     - uses: actions/upload-artifact@v4
       with:
         name: ShaderToy-Win64-Devel
