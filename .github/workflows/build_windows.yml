@@ -21,11 +21,9 @@ jobs:
         check-latest: true
         
     - name: build PPE
-      run: >
-        go run PPE.go configure -v -and build 
-          Programs/ShaderToy-Win64-FastDebug
+      run: go run PPE.go configure -v -Ide -Color -and build Programs/ShaderToy-Win64-Devel
           
     - uses: actions/upload-artifact@v4
       with:
-        name: UnitTest-Win64-Debug
+        name: ShaderToy-Win64-Devel
         path: Output/Binaries
