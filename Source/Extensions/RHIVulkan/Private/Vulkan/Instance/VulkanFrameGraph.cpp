@@ -182,7 +182,7 @@ FDeviceProperties FVulkanFrameGraph::DeviceProperties() const NOEXCEPT {
     result.FragmentStoresAndAtomics = (caps.Features.fragmentStoresAndAtomics == VK_TRUE);
     result.DedicatedAllocation = (enabled.DedicatedAllocation);
     result.DispatchBase = (enabled.DispatchBase);
-    result.ImageCubeArray = (caps.Features.imageCubeArray);
+    result.ImageCubeArray = (!!caps.Features.imageCubeArray);
     result.Array2DCompatible = (enabled.Array2DCompatible);
     result.BlockTexelView = (enabled.BlockTexelView);
     result.SamplerMirrorClamp = (enabled.SamplerMirrorClamp);

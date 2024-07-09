@@ -135,7 +135,7 @@ static bool RayIntersectsOctree_(
     return RayIntersectsOctree_(ray, firstHit, root, voxelSize, dimension, candidates);
 }
 //----------------------------------------------------------------------------
-static bool BatchRaysIntersectsOctree_(
+static size_t BatchRaysIntersectsOctree_(
     const float3& center,
     const TMemoryView<const FRay>& rays,
     const TMemoryView<FBasicOctree::FHitResult>& firstHits,

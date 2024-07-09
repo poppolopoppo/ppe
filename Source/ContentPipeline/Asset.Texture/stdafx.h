@@ -9,6 +9,6 @@
 
 #include "Core.Pixmap/Pixmap.h"
 
-#if BUILD_PCH
+#ifdef BUILD_PCH // deprecated
 #   include "Core.Pixmap/stdafx.generated.h"
 #endif

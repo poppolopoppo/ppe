@@ -1479,7 +1479,7 @@ void FVulkanPipelineCache::ValidateRenderState_(
 
     // validate color buffer states
     {
-        const bool dualSrcBlend = device.Features().dualSrcBlend;
+        const bool enableDualSrcBlend = (!!device.Features().dualSrcBlend);
 
         for (FColorBufferState& cb : pRender->Blend.Buffers) {
             if (not cb.EnableAlphaBlending) {
@@ -1487,7 +1487,7 @@ void FVulkanPipelineCache::ValidateRenderState_(
                 cb.DstBlendFactor = { EBlendFactor::Zero, EBlendFactor::Zero };
                 cb.BlendOp = { EBlendOp::Add, EBlendOp::Add };
             }
-            else if (not dualSrcBlend) {
+            else if (not enableDualSrcBlend) {
                 Assert_NoAssume(not EBlendFactor_HasDualSrcBlendFactor(cb.SrcBlendFactor.Color));
                 Assert_NoAssume(not EBlendFactor_HasDualSrcBlendFactor(cb.SrcBlendFactor.Alpha));
                 Assert_NoAssume(not EBlendFactor_HasDualSrcBlendFactor(cb.DstBlendFactor.Color));

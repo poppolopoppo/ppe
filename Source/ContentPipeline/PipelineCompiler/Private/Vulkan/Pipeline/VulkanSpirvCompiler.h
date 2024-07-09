@@ -14,7 +14,7 @@
 #include "Misc/Function.h"
 #include "Misc/Opaque.h"
 
-#include "External/vulkan/Vulkan-Header.git/include/vulkan/vulkan_core.h"
+#include "vulkan-external.h"
 
 #include "glslang-external.h"
 #include "glslang/Include/ResourceLimits.h"

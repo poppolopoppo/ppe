@@ -50,7 +50,7 @@ struct FInputKey {
     NODISCARD bool IsDigital() const { return (ValueType == EInputValueType::Digital); }
 
     NODISCARD bool IsGamepadKey() const { return (std::get_if<EGamepadAxis>(&Code) || std::get_if<EGamepadButton>(&Code)); }
-    NODISCARD bool IsKeyboardKey() const { return std::get_if<EKeyboardKey>(&Code); }
+    NODISCARD bool IsKeyboardKey() const { return (!!std::get_if<EKeyboardKey>(&Code)); }
     NODISCARD bool IsMouseKey() const { return (std::get_if<EMouseAxis>(&Code) || std::get_if<EMouseButton>(&Code)); }
 
     NODISCARD friend bool operator ==(const FInputKey& lhs, const FInputKey& rhs) {

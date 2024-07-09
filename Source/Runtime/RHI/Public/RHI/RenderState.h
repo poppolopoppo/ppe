@@ -17,24 +17,27 @@ namespace RHI {
 //----------------------------------------------------------------------------
 // FColorBufferState
 //----------------------------------------------------------------------------
+template <typename T>
+struct TPerChannelColorState {
+    T Color{ Default };
+    T Alpha{ Default };
+
+    TPerChannelColorState() = default;
+
+    TPerChannelColorState(T rgba) : Color(rgba), Alpha(rgba) {}
+    TPerChannelColorState(T rgb, T a) : Color(rgb), Alpha(a) {}
+
+    bool operator ==(const TPerChannelColorState& other) const { return (Color == other.Color && Alpha == other.Alpha); }
+    bool operator !=(const TPerChannelColorState& other) const { return (not operator ==(other)); }
+
+    friend hash_t hash_value(const TPerChannelColorState& state) {
+        return hash_tuple(state.Color, state.Alpha);
+    }
+};
+//----------------------------------------------------------------------------
 struct FColorBufferState {
     template <typename T>
-    struct TColorState {
-        T Color{ Default };
-        T Alpha{ Default };
-
-        TColorState() = default;
-
-        TColorState(T rgba) : Color(rgba), Alpha(rgba) {}
-        TColorState(T rgb, T a) : Color(rgb), Alpha(a) {}
-
-        bool operator ==(const TColorState& other) const { return (Color == other.Color && Alpha == other.Alpha); }
-        bool operator !=(const TColorState& other) const { return (not operator ==(other)); }
-
-        friend hash_t hash_value(const TColorState& state) {
-            return hash_tuple(state.Color, state.Alpha);
-        }
-    };
+    using TColorState = TPerChannelColorState<T>;
 
     TColorState<EBlendFactor> SrcBlendFactor{ EBlendFactor::One };
     TColorState<EBlendFactor> DstBlendFactor{ EBlendFactor::Zero };

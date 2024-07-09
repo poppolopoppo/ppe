@@ -81,7 +81,8 @@ u32 FibonacciSphereNormalEncode(const float3& p/* [-1,1], should be normalized *
     const float Fk = pow(PHI, k) / Sqrt(5.0f);
     const float2 F( RoundToFloat(Fk), RoundToFloat(Fk * PHI) ); // k, k+1
 
-    const float2 ka = 2.0f*F/n;
+    const float ooN = Rcp(static_cast<float>(n));
+    const float2 ka = 2.0f*F*ooN;
     const float2 kb = 2.0f*PI*( Fractional((F+1.0f)*PHI) - (PHI-1.0f) );
     const float2x2 iB = float2x2{ ka.y, -ka.x,
                                   kb.y, -kb.x } / (ka.y*kb.x - ka.x*kb.y);
@@ -94,12 +95,12 @@ u32 FibonacciSphereNormalEncode(const float3& p/* [-1,1], should be normalized *
 
         const float i = Dot(F, uv + c); // all quantities are ingeters (can take a round() for extra safety)
 
-        float phi = 2.0f * PI * Fractional(i*PHI);
-        float cosTheta = m - 2.0f * i / n;
-        float sinTheta = Sqrt(1.0f - cosTheta*cosTheta);
+        const float phi = 2.0f * PI * Fractional(i*PHI);
+        const float cosPhi = m - 2.0f*i*ooN;
+        const float sinPhi = Sqrt(1.0f - cosPhi*cosPhi);
 
-        float3 q( Cos(phi) * sinTheta, Sin(phi) * sinTheta, cosTheta );
-        float squaredDistance = Dot(q-p, q-p);
+        const float3 q( Cos(phi) * sinPhi, Sin(phi) * sinPhi, cosPhi );
+        const float squaredDistance = Dot(q-p, q-p);
         if (squaredDistance < d)  {
             d = squaredDistance;
             j = i;

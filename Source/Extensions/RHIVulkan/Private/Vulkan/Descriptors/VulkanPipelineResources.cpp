@@ -6,6 +6,7 @@
 #include "Vulkan/Instance/VulkanResourceManager.h"
 
 #include "RHI/EnumToString.h"
+#include "RHI/PipelineResources.h"
 
 #include "Allocator/Alloca.h"
 #include "Allocator/AllocatorHelpers.h"
@@ -45,10 +46,10 @@ struct FVulkanPipelineResources::FUpdateDescriptors {
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FBuffer& value) {
     Unused(id);
-    const auto infos = AllocateT<VkDescriptorBufferInfo>(value.Elements.Count);
+    const TMemoryView<VkDescriptorBufferInfo> infos = AllocateT<VkDescriptorBufferInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
+        const FPipelineResources::FBuffer::FElement& elt = value.Elements[i];
         const FVulkanBuffer* const pBuffer = manager.ResourceDataIFP(elt.BufferId, false, true);
 
         if (Unlikely(not pBuffer)) {
@@ -82,10 +83,10 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FTexelBuffer& value) {
     Unused(id);
-    const auto infos = AllocateT<VkBufferView>(value.Elements.Count);
+    const TMemoryView<VkBufferView> infos = AllocateT<VkBufferView>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
+        const FPipelineResources::FTexelBuffer::FElement& elt = value.Elements[i];
         const FVulkanBuffer* const pBuffer = manager.ResourceDataIFP(elt.BufferId, false, true);
 
         if (Unlikely(not pBuffer)) {
@@ -121,10 +122,10 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FImage& value) {
     Unused(id);
-    const auto infos = AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+    const TMemoryView<VkDescriptorImageInfo> infos = AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
+        FPipelineResources::FImage::FElement& elt = value.Elements[i];
         const FVulkanImage* const pImage = manager.ResourceDataIFP(elt.ImageId, false, true);
 
         if (Unlikely(not pImage)) {
@@ -164,10 +165,10 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, FPipelineResources::FTexture& value) {
     Unused(id);
-    const auto infos = AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+    const TMemoryView<VkDescriptorImageInfo> infos = AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
+        FPipelineResources::FTexture::FElement& elt = value.Elements[i];
         const FVulkanImage* const pImage = manager.ResourceDataIFP(elt.ImageId, false, true);
         const FVulkanSampler* const pSampler = manager.ResourceDataIFP(elt.SamplerId, false, true);
 
@@ -204,10 +205,10 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FSampler& value) {
     Unused(id);
-    const auto infos = AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
+    const TMemoryView<VkDescriptorImageInfo> infos = AllocateT<VkDescriptorImageInfo>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
+        const FPipelineResources::FSampler::FElement& elt = value.Elements[i];
         const FVulkanSampler* const pSampler = manager.ResourceDataIFP(elt.SamplerId, false, true);
 
         if (Unlikely(not pSampler)) {
@@ -234,10 +235,10 @@ bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResource
 //----------------------------------------------------------------------------
 bool FVulkanPipelineResources::FUpdateDescriptors::AddResource(FInternalResources& data, FVulkanResourceManager& manager, const FUniformID& id, const FPipelineResources::FRayTracingScene& value) {
     Unused(id);
-    const auto tlas = AllocateT<VkAccelerationStructureNV>(value.Elements.Count);
+    const TMemoryView<VkAccelerationStructureNV> tlas = AllocateT<VkAccelerationStructureNV>(value.Elements.Count);
 
     forrange(i, 0, value.Elements.Count) {
-        auto& elt = value.Elements[i];
+        const FPipelineResources::FRayTracingScene::FElement& elt = value.Elements[i];
         const FVulkanRTScene* const pRTScene = manager.ResourceDataIFP(elt.SceneId, false, true);
 
         if (Unlikely(not pRTScene)) {

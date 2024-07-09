@@ -537,7 +537,7 @@ auto TSparseArray<T, _Allocator>::AllocateItem_() -> FUnpackedId_ {
         : GrabFirstFreeBlock_() );
 
     return FUnpackedId_{
-#if PLATFORM_BIGENDIAN // so when Key == 0 we can use Index as a valid size_t
+#ifdef PLATFORM_BIGENDIAN // so when Key == 0 we can use Index as a valid size_t
         key, index
 #else
         index, key

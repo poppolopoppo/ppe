@@ -37,6 +37,7 @@
 
 PRAGMA_MSVC_WARNING_DISABLE(4189) // tab': local variable is initialized but not referenced
 PRAGMA_MSVC_WARNING_DISABLE(4505) // 'GetInputSourceName': unreferenced function with internal linkage has been removed
+PRAGMA_MSVC_WARNING_DISABLE(4668) // undefined preprocessor macro, replacing with '0'
 PRAGMA_MSVC_WARNING_DISABLE(4702) // unreachable code
 
 #ifdef __clang__

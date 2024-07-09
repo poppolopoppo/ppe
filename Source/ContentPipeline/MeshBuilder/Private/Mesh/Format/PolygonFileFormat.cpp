@@ -158,6 +158,7 @@ inline constexpr size_t EType_SizeOf(EType type) {
     case EType::Unknown:
         AssertNotReached();
     }
+    return 0;
 }
 inline void EType_SwapEndianness(EType type, const FRawMemory& value) NOEXCEPT {
     switch (type) {

@@ -19,6 +19,6 @@
 #include "Runtime/Application/stdafx.h"
 #include "Runtime/RHI/stdafx.h"
 
-#if BUILD_PCH
+#ifdef BUILD_PCH // deprecated
 #   include "stdafx.generated.h"
 #endif

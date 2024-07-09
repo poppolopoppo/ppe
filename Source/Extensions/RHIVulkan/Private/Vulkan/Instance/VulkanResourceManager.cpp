@@ -10,6 +10,8 @@
 
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformDialog.h"
+#include "HAL/TargetRHI.h"
+#include "IO/Format.h"
 #include "Modular/ModularDomain.h"
 
 #if USE_PPE_RHIDEBUG
@@ -17,6 +19,7 @@
 #endif
 #if USE_PPE_LOGGER
 #   include "IO/FormatHelpers.h"
+#   include "RHI/EnumToString.h"
 #endif
 
 namespace PPE {
@@ -389,7 +392,7 @@ RETRY_COMPILE_SHADERS:
             PPE_THROW_IT(FVulkanException("shader compilation failed", VK_ERROR_UNKNOWN));
 
         if (result == FPlatformDialog::Retry) {
-#if USE_PPE_RHIDEBUG
+#if USE_PPE_LOGGER && USE_PPE_RHIDEBUG
             PPE_SLOG(RHI, Emphasis, "retrying shader compilation", {
                 {"Name", debugName.MakeView()},
                 {"Pipeline", pipelineType.MakeView()},

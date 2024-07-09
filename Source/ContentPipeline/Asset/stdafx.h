@@ -9,6 +9,6 @@
 
 #include "Core.ContentPipeline/ContentPipeline.h"
 
-#if BUILD_PCH
+#ifdef BUILD_PCH // deprecated
 #   include "Core.ContentPipeline/stdafx.generated.h"
 #endif

@@ -1371,20 +1371,33 @@ void FLogger::RegisterSystemTraceLogger() {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+PRAGMA_MSVC_WARNING_POP()
+} //!namespace PPE
+
+#endif //!USE_PPE_LOGGER
+
+#include "IO/FormatHelpers.h"
+#include "IO/StringView.h"
+#include "IO/TextWriter.h"
+
+namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicConstChar<_Char> ELoggerVerbosity_Text_(ELoggerVerbosity level) {
     switch (level) {
-    case FLogger::EVerbosity::None:      return STRING_LITERAL(_Char, "None");
-    case FLogger::EVerbosity::Debug:     return STRING_LITERAL(_Char, "Debug");
-    case FLogger::EVerbosity::Verbose:   return STRING_LITERAL(_Char, "Verbose");
-    case FLogger::EVerbosity::Info:      return STRING_LITERAL(_Char, "Info");
-    case FLogger::EVerbosity::Profiling: return STRING_LITERAL(_Char, "Profiling");
-    case FLogger::EVerbosity::Emphasis:  return STRING_LITERAL(_Char, "Emphasis");
-    case FLogger::EVerbosity::Warning:   return STRING_LITERAL(_Char, "Warning");
-    case FLogger::EVerbosity::Error:     return STRING_LITERAL(_Char, "Error");
-    case FLogger::EVerbosity::Fatal:     return STRING_LITERAL(_Char, "Fatal");
+    case ELoggerVerbosity::None:      return STRING_LITERAL(_Char, "None");
+    case ELoggerVerbosity::Debug:     return STRING_LITERAL(_Char, "Debug");
+    case ELoggerVerbosity::Verbose:   return STRING_LITERAL(_Char, "Verbose");
+    case ELoggerVerbosity::Info:      return STRING_LITERAL(_Char, "Info");
+    case ELoggerVerbosity::Profiling: return STRING_LITERAL(_Char, "Profiling");
+    case ELoggerVerbosity::Emphasis:  return STRING_LITERAL(_Char, "Emphasis");
+    case ELoggerVerbosity::Warning:   return STRING_LITERAL(_Char, "Warning");
+    case ELoggerVerbosity::Error:     return STRING_LITERAL(_Char, "Error");
+    case ELoggerVerbosity::Fatal:     return STRING_LITERAL(_Char, "Fatal");
     default: break;
     }
     AssertNotReached();
@@ -1393,38 +1406,35 @@ TBasicConstChar<_Char> ELoggerVerbosity_Text_(ELoggerVerbosity level) {
 template <typename _Char>
 TBasicTextWriter<_Char>& ELoggerVerbosity_Oss_(TBasicTextWriter<_Char>& oss, ELoggerVerbosity level) {
     auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
-    if (level & FLogger::EVerbosity::Debug)     oss << sep << STRING_LITERAL(_Char, "Debug");
-    if (level & FLogger::EVerbosity::Verbose)   oss << sep << STRING_LITERAL(_Char, "Verbose");
-    if (level & FLogger::EVerbosity::Info)      oss << sep << STRING_LITERAL(_Char, "Info");
-    if (level & FLogger::EVerbosity::Profiling) oss << sep << STRING_LITERAL(_Char, "Profiling");
-    if (level & FLogger::EVerbosity::Emphasis)  oss << sep << STRING_LITERAL(_Char, "Emphasis");
-    if (level & FLogger::EVerbosity::Warning)   oss << sep << STRING_LITERAL(_Char, "Warning");
-    if (level & FLogger::EVerbosity::Error)     oss << sep << STRING_LITERAL(_Char, "Error");
-    if (level & FLogger::EVerbosity::Fatal)     oss << sep << STRING_LITERAL(_Char, "Fatal");
+    if (level & ELoggerVerbosity::Debug)     oss << sep << STRING_LITERAL(_Char, "Debug");
+    if (level & ELoggerVerbosity::Verbose)   oss << sep << STRING_LITERAL(_Char, "Verbose");
+    if (level & ELoggerVerbosity::Info)      oss << sep << STRING_LITERAL(_Char, "Info");
+    if (level & ELoggerVerbosity::Profiling) oss << sep << STRING_LITERAL(_Char, "Profiling");
+    if (level & ELoggerVerbosity::Emphasis)  oss << sep << STRING_LITERAL(_Char, "Emphasis");
+    if (level & ELoggerVerbosity::Warning)   oss << sep << STRING_LITERAL(_Char, "Warning");
+    if (level & ELoggerVerbosity::Error)     oss << sep << STRING_LITERAL(_Char, "Error");
+    if (level & ELoggerVerbosity::Fatal)     oss << sep << STRING_LITERAL(_Char, "Fatal");
     return oss;
 }
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------
-FConstChar ToString(FLogger::EVerbosity level) NOEXCEPT {
+FConstChar ToString(ELoggerVerbosity level) NOEXCEPT {
     return ELoggerVerbosity_Text_<char>(level);
 }
 //----------------------------------------------------------------------------
-FConstWChar ToWString(FLogger::EVerbosity level) NOEXCEPT {
+FConstWChar ToWString(ELoggerVerbosity level) NOEXCEPT {
     return ELoggerVerbosity_Text_<wchar_t>(level);
 }
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level) {
+FTextWriter& operator <<(FTextWriter& oss, ELoggerVerbosity level) {
     return ELoggerVerbosity_Oss_(oss, level);
 }
 //----------------------------------------------------------------------------
-FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level) {
+FWTextWriter& operator <<(FWTextWriter& oss, ELoggerVerbosity level) {
     return ELoggerVerbosity_Oss_(oss, level);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PRAGMA_MSVC_WARNING_POP()
 } //!namespace PPE
-
-#endif //!USE_PPE_LOGGER

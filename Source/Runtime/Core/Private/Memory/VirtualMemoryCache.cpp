@@ -2,6 +2,12 @@
 
 #include "Memory/VirtualMemoryCache.h"
 
+#if (USE_PPE_ASSERT || USE_PPE_MEMORY_DEBUGGING)
+#   define USE_VMCACHE_PAGE_PROTECT     1// Crash when using a VM cached block
+#else
+#   define USE_VMCACHE_PAGE_PROTECT     0
+#endif
+
 #if USE_PPE_MEMORYDOMAINS
 #   define TRACKINGDATA_ARG_IFP , FMemoryTracking& trackingData
 #   define TRACKINGDATA_ARG_FWD , trackingData

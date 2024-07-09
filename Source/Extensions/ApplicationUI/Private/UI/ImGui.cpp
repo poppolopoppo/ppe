@@ -4,7 +4,7 @@
 
 #ifdef _WIN32
 //  #TODO: remove workaround for static inline definition with header units
-#   if _USE_32BIT_TIME_T
+#   ifdef _USE_32BIT_TIME_T
 #       define mktime(_Tm) _mktime32(_Tm)
 #       define _mkgmtime(_Tm) _mkgmtime32(_Tm)
 #       define gmtime_s(_Tm, _Time) _gmtime32_s(_Tm, _Time)

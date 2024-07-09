@@ -23,6 +23,47 @@ namespace RHI {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T>
+struct TPipelineElementArray {
+    const u16 Capacity{};
+    u16 Count{};
+    T Data[1];
+
+    TPipelineElementArray() = default;
+    TPipelineElementArray(u16 capacity, u16 count) NOEXCEPT
+    :   Capacity(capacity)
+    ,   Count(count) {
+        FPlatformMemory::Memzero(Data, Count * sizeof(T));
+    }
+
+    NODISCARD TMemoryView<T> MakeView() {
+        return { Data, Count };
+    }
+    NODISCARD TMemoryView<const T> MakeView() const {
+        return { Data, Count };
+    }
+
+    NODISCARD T& operator [](size_t index) {
+        return MakeView()[index];
+    }
+    NODISCARD const T& operator [](size_t index) const {
+        return MakeView()[index];
+    }
+
+    bool operator ==(const TPipelineElementArray& other) const NOEXCEPT {
+        const auto lhs = MakeView();
+        const auto rhs = other.MakeView();
+        return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+    }
+    bool operator !=(const TPipelineElementArray& other) const NOEXCEPT {
+        return (not operator ==(other));
+    }
+
+    friend hash_t hash_value(const TPipelineElementArray& arr) NOEXCEPT {
+        return hash_range(arr.Data, arr.Count);
+    }
+};
+//----------------------------------------------------------------------------
 class PPE_RHI_API FPipelineResources : public FRefCountable {
 public:
     enum class EDescriptorType : u16 {
@@ -37,45 +78,7 @@ public:
     };
 
     template <typename T>
-    struct TElementArray {
-        const u16 Capacity{};
-        u16 Count{};
-        T Data[1];
-
-        TElementArray() = default;
-        TElementArray(u16 capacity, u16 count) NOEXCEPT
-        :   Capacity(capacity)
-        ,   Count(count) {
-            FPlatformMemory::Memzero(Data, Count * sizeof(T));
-        }
-
-        NODISCARD TMemoryView<T> MakeView() {
-            return { Data, Count };
-        }
-        NODISCARD TMemoryView<const T> MakeView() const {
-            return { Data, Count };
-        }
-
-        NODISCARD T& operator [](size_t index) {
-            return MakeView()[index];
-        }
-        NODISCARD const T& operator [](size_t index) const {
-            return MakeView()[index];
-        }
-
-        bool operator ==(const TElementArray& other) const NOEXCEPT {
-            const auto lhs = MakeView();
-            const auto rhs = other.MakeView();
-            return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
-        }
-        bool operator !=(const TElementArray& other) const NOEXCEPT {
-            return (not operator ==(other));
-        }
-
-        friend hash_t hash_value(const TElementArray& arr) NOEXCEPT {
-            return hash_range(arr.Data, arr.Count);
-        }
-    };
+    using TElementArray = TPipelineElementArray<T>;
 
     struct FBuffer {
         STATIC_CONST_INTEGRAL(EDescriptorType, TypeId, EDescriptorType::Buffer);

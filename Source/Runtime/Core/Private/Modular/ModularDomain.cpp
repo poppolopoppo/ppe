@@ -10,6 +10,7 @@
 
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformDialog.h"
+#include "IO/Format.h"
 
 #include "Meta/Utility.h"
 

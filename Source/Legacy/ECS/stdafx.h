@@ -9,6 +9,6 @@
 
 #include "Core.Logic/Logic.h"
 
-#if BUILD_PCH
+#ifdef BUILD_PCH // deprecated
 #   include "Core.Logic/stdafx.generated.h"
 #endif

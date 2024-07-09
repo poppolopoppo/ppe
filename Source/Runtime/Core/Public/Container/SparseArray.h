@@ -141,7 +141,7 @@ protected:
     size_t GrabFirstFreeBlock_();
 
     struct FUnpackedId_ {
-#if PLATFORM_BIGENDIAN // so when Key == 0 we can use Index as a valid size_t
+#ifdef PLATFORM_BIGENDIAN // so when Key == 0 we can use Index as a valid size_t
         size_t Key : 16;
         size_t Index : sizeof(size_t) * 8 - 16;
 #else

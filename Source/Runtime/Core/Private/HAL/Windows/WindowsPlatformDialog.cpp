@@ -25,6 +25,7 @@
 #include "Container/SparseArray.h"
 #include "Container/Vector.h"
 #include "IO/FileSystem.h"
+#include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/StringBuilder.h"
 #include "IO/String.h"

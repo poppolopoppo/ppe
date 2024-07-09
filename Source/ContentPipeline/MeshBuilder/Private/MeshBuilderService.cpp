@@ -10,6 +10,7 @@
 #include "Diagnostic/Logger.h"
 #include "IO/BufferedStream.h"
 #include "IO/Extname.h"
+#include "IO/Format.h"
 #include "IO/ObservableStream.h"
 #include "Maths/ScalarBoundingBox.h"
 #include "Thread/ThreadSafe.h"

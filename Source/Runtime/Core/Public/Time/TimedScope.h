@@ -21,6 +21,7 @@
         const ::PPE::FIOBenchmarkScope ANONYMIZE(_IObenchmarkScope)((_CATEGORY), (_MSG), (_SIZE_IN_BYTES_PTR))
 #else
 #   define BENCHMARK_SCOPE(_CATEGORY, _MSG) NOOP()
+#   define BENCHMARK_SCOPE_ARGS(_CATEGORY, _MSG, ...) NOOP()
 #   define IOBENCHMARK_SCOPE(_CATEGORY, _MSG, _SIZE_IN_BYTES_PTR) NOOP()
 #endif
 

@@ -94,7 +94,7 @@ public:
 
     template <typename T, u32 _Dim>
     void Randomize(TScalarVector<T, _Dim>& v) {
-        for (size_t i = 0; i < _Dim; ++i)
+        for (u32 i = 0; i < _Dim; ++i)
             Randomize(v[i]);
     }
 

@@ -354,20 +354,20 @@ public:
     // Bit Scan Forward
 
     static FORCE_INLINE bool bsf(unsigned long* __restrict r, u32 v) NOEXCEPT {
-        return ::_BitScanForward(r, v);
+        return !!::_BitScanForward(r, v);
     }
     static FORCE_INLINE bool bsf(u32* __restrict r, u32 v) NOEXCEPT {
         STATIC_ASSERT(sizeof(u32) == sizeof(unsigned long));
-        return ::_BitScanForward((unsigned long*)r, v);
+        return !!::_BitScanForward((unsigned long*)r, v);
     }
 
 #   ifdef ARCH_X64
     static FORCE_INLINE bool bsf(unsigned long* __restrict r, u64 v) NOEXCEPT {
-        return ::_BitScanForward64(r, v);
+        return !!::_BitScanForward64(r, v);
     }
     static FORCE_INLINE bool bsf(u32* __restrict r, u64 v) NOEXCEPT {
         STATIC_ASSERT(sizeof(u32) == sizeof(unsigned long));
-        return ::_BitScanForward64((unsigned long*)r, v);
+        return !!::_BitScanForward64((unsigned long*)r, v);
     }
 #   endif
 
@@ -375,20 +375,20 @@ public:
     // Bit Scan Reverse
 
     static FORCE_INLINE bool bsr(unsigned long* __restrict r, u32 v) NOEXCEPT {
-        return ::_BitScanReverse(r, v);
+        return !!::_BitScanReverse(r, v);
     }
     static FORCE_INLINE bool bsr(u32* __restrict r, u32 v) NOEXCEPT {
         STATIC_ASSERT(sizeof(u32) == sizeof(unsigned long));
-        return ::_BitScanReverse((unsigned long*)r, v);
+        return !!::_BitScanReverse((unsigned long*)r, v);
     }
 
 #   ifdef ARCH_X64
     static FORCE_INLINE bool bsr(unsigned long* __restrict r, u64 v) NOEXCEPT {
-        return ::_BitScanReverse64(r, v);
+        return !!::_BitScanReverse64(r, v);
     }
     static FORCE_INLINE bool bsr(u32* __restrict r, u64 v) NOEXCEPT {
         STATIC_ASSERT(sizeof(u32) == sizeof(unsigned long));
-        return ::_BitScanReverse64((unsigned long*)r, v);
+        return !!::_BitScanReverse64((unsigned long*)r, v);
     }
 #   endif
 

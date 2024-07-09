@@ -9,6 +9,6 @@
 
 #include "Core.Lattice/Lattice.h"
 
-#if BUILD_PCH
+#ifdef BUILD_PCH // deprecated
 #   include "Core.Lattice/stdafx.generated.h"
 #endif

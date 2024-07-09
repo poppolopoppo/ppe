@@ -2,6 +2,8 @@
 
 #include "Maths/Gaussian.h"
 
+#include "Maths/PackedVectors.h"
+
 #include "Thread/Task.h"
 
 namespace PPE {

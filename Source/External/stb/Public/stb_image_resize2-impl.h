@@ -11,6 +11,7 @@ PRAGMA_MSVC_WARNING_PUSH()
 
 PRAGMA_MSVC_WARNING_DISABLE(4456) // declaration of 'c' hides previous local declaration
 PRAGMA_MSVC_WARNING_DISABLE(4505) // 'XXX': unreferenced function with internal linkage has been removed
+PRAGMA_MSVC_WARNING_DISABLE(4668) // undefined preprocessor macro
 
 #ifdef __clang__
 #   pragma clang system_header

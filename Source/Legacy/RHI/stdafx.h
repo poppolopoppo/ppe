@@ -9,6 +9,6 @@
 
 #include "Core.Graphics/Graphics.h"
 
-#if BUILD_PCH
+#ifdef BUILD_PCH // deprecated
 #   include "Core.Graphics/stdafx.generated.h"
 #endif

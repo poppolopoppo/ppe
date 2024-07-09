@@ -2,6 +2,8 @@
 
 #include "Vulkan/Pipeline/VulkanComputePipeline.h"
 
+#include "RHI/PipelineResources.h"
+
 #include "Vulkan/Instance/VulkanDevice.h"
 #include "Vulkan/Instance/VulkanResourceManager.h"
 #include "Vulkan/Pipeline/VulkanShaderModule.h"

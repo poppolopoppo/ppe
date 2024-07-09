@@ -73,20 +73,20 @@ struct TScalarVectorExprBase : _Expr {
     NODISCARD CONSTEXPR const_reference_type operator [](u32 index) const { return Get(index); }
 
     NODISCARD CONSTEXPR T HSum() const {
-        return Meta::static_for<_Dim>([this](auto... idx) {
-            return (this->Get<idx>() + ...);
+        return Meta::static_for<_Dim>([this](auto... idx) CONSTEXPR -> T {
+            return static_cast<T>((this->Get<idx>() + ...));
         });
     }
 
     NODISCARD CONSTEXPR T MaxComponent() const {
-        return Meta::static_for<_Dim - 1>([this](auto... idx) {
+        return Meta::static_for<_Dim - 1>([this](auto... idx) CONSTEXPR -> T {
             T result = Get<0>();
             FOLD_EXPR(result = Max(result, this->Get<idx + 1>()));
             return result;
         });
     }
     NODISCARD CONSTEXPR T MinComponent() const {
-        return Meta::static_for<_Dim - 1>([this](auto... idx) {
+        return Meta::static_for<_Dim - 1>([this](auto... idx) CONSTEXPR -> T {
             T result = Get<0>();
             FOLD_EXPR(result = Min(result, this->Get<idx + 1>()));
             return result;
@@ -94,14 +94,14 @@ struct TScalarVectorExprBase : _Expr {
     }
 
     NODISCARD CONSTEXPR u32 MaxComponentIndex() const {
-        return Meta::static_for<_Dim - 1>([this](auto... idx) {
+        return Meta::static_for<_Dim - 1>([this](auto... idx) CONSTEXPR -> u32 {
             u32 result = 0;
             FOLD_EXPR(result = this->Get(result) < this->Get<idx + 1>() ? static_cast<u32>(idx + 1) : result);
             return result;
         });
     }
     NODISCARD CONSTEXPR u32 MinComponentIndex() const {
-        return Meta::static_for<_Dim - 1>([this](auto... idx) {
+        return Meta::static_for<_Dim - 1>([this](auto... idx) CONSTEXPR -> u32 {
             u32 result = 0;
             FOLD_EXPR(result = this->Get(result) > this->Get<idx + 1>() ? static_cast<u32>(idx + 1) : result);
             return result;
@@ -109,7 +109,7 @@ struct TScalarVectorExprBase : _Expr {
     }
 
     NODISCARD CONSTEXPR auto Extend(const T& value) const {
-        return Meta::static_for<_Dim>([&](auto... idx) {
+        return Meta::static_for<_Dim>([&](auto... idx) CONSTEXPR {
             return TScalarVector<T, sizeof...(idx) + 1>{ this->Get<idx>()..., value };
         });
     }
@@ -117,7 +117,7 @@ struct TScalarVectorExprBase : _Expr {
     template <u32 _Dim2, typename _Other>
     NODISCARD CONSTEXPR auto Extend(const TScalarVectorExpr<T, _Dim2, _Other>& other) const {
         return Meta::static_for<_Dim>([&](auto... idx) {
-            return Meta::static_for<_Dim2>([&](auto... jdx) {
+            return Meta::static_for<_Dim2>([&](auto... jdx) CONSTEXPR {
                 return TScalarVector<T, sizeof...(idx) + sizeof...(jdx)>{ this->Get<idx>()..., other.template Get<jdx>()... };
             });
         });
@@ -125,7 +125,7 @@ struct TScalarVectorExprBase : _Expr {
 
     template <u32 _Count = 1>
     NODISCARD CONSTEXPR auto Shift() const {
-        return Meta::static_for<(_Dim > _Count ? _Dim - _Count : 1)>([this](auto... idx) {
+        return Meta::static_for<(_Dim > _Count ? _Dim - _Count : 1)>([this](auto... idx) CONSTEXPR {
             return TScalarVector<T, sizeof...(idx)>(this->Get<idx>()...);
         });
     }
@@ -302,6 +302,10 @@ struct TScalarVectorAssignable : _Expr {
 
     inline CONSTEXPR TScalarVectorAssignable(Meta::FForceInit) NOEXCEPT {
         Broadcast(Meta::MakeForceInit<T>());
+    }
+
+    inline CONSTEXPR TScalarVectorAssignable(Meta::FDefaultValue) NOEXCEPT {
+        Broadcast(Meta::DefaultValue<T>());
     }
 
     template <typename _Cast, typename _Other>

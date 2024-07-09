@@ -21,12 +21,6 @@
 #   define USE_VMALLOC_SIZE_PTRIE          1// No support on other platforms
 #endif
 
-#if (USE_PPE_ASSERT || USE_PPE_MEMORY_DEBUGGING)
-#   define USE_VMCACHE_PAGE_PROTECT     1// Crash when using a VM cached block
-#else
-#   define USE_VMCACHE_PAGE_PROTECT     0
-#endif
-
 #if USE_VMALLOC_SIZE_PTRIE
 #   include "Thread/AtomicSpinLock.h"
 #endif

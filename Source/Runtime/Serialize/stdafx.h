@@ -20,6 +20,6 @@
 #include "Runtime/RTTI/stdafx.h"
 #include "Runtime/VFS/stdafx.h"
 
-#if BUILD_PCH
+#ifdef BUILD_PCH // deprecated
 #   include "stdafx.generated.h"
 #endif

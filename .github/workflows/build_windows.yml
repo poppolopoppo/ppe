@@ -22,7 +22,7 @@ jobs:
         check-latest: true
 
     - name: build PPE
-      run: go run -pgo=off PPPE.go configure -v -Ide -Color -and build Programs/ShaderToy-Win64-Devel -ShowCmds
+      run: go run -pgo=off PPE.go configure -v -Ide -Summary -Color -and build Programs/ShaderToy-Win64-Devel
 
     - uses: actions/upload-artifact@v4
       with:

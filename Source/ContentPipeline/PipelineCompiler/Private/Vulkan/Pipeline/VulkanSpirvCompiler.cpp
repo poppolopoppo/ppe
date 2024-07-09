@@ -8,6 +8,7 @@
 
 #include "RHI/EnumHelpers.h"
 #include "RHI/PipelineCompiler.h"
+#include "RHI/PipelineResources.h"
 
 #include "Container/BitMask.h"
 #include "Container/HashMap.h"

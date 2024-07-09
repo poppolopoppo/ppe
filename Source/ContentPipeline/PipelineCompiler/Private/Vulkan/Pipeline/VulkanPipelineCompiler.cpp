@@ -495,12 +495,12 @@ FVulkanPipelineCompiler::FVulkanPipelineCompiler(const FVulkanDevice& device)
         _device->vkGetPhysicalDeviceFeatures2(_device->vkPhysicalDevice(), &deviceFeatures2);
 
         exclusiveData->SpirvCompiler->SetShaderClockFeatures(
-            clockFeatures.shaderSubgroupClock,
-            clockFeatures.shaderDeviceClock );
+            !!clockFeatures.shaderSubgroupClock,
+            !!clockFeatures.shaderDeviceClock );
 
         exclusiveData->SpirvCompiler->SetShaderFeatures(
-            deviceFeatures2.features.vertexPipelineStoresAndAtomics,
-            deviceFeatures2.features.fragmentStoresAndAtomics);
+            !!deviceFeatures2.features.vertexPipelineStoresAndAtomics,
+            !!deviceFeatures2.features.fragmentStoresAndAtomics);
     }
     else
 #endif
@@ -509,8 +509,8 @@ FVulkanPipelineCompiler::FVulkanPipelineCompiler(const FVulkanDevice& device)
         _device->vkGetPhysicalDeviceFeatures(_device->vkPhysicalDevice(), &deviceFeatures);
 
         exclusiveData->SpirvCompiler->SetShaderFeatures(
-            deviceFeatures.vertexPipelineStoresAndAtomics,
-            deviceFeatures.fragmentStoresAndAtomics);
+            !!deviceFeatures.vertexPipelineStoresAndAtomics,
+            !!deviceFeatures.fragmentStoresAndAtomics);
     }
 }
 //----------------------------------------------------------------------------

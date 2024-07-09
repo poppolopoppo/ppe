@@ -501,7 +501,8 @@ bool FWindowsPlatformProcess::Name(FString* pName, FProcessHandle process) {
 bool FWindowsPlatformProcess::Pid(FProcessId* pPid, FProcessHandle process) {
     Assert(pPid);
 
-    return checked_cast<FProcessId>(::GetProcessId(process));
+    *pPid = checked_cast<FProcessId>(::GetProcessId(process));
+    return (!!*pPid);
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformProcess::Priority(EProcessPriority* pPriority, FProcessHandle process) {

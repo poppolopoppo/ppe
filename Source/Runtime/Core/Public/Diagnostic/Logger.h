@@ -41,6 +41,12 @@ enum class ELoggerVerbosity : u8 {
 };
 ENUM_FLAGS(ELoggerVerbosity);
 //----------------------------------------------------------------------------
+PPE_CORE_API FConstChar ToString(ELoggerVerbosity level) NOEXCEPT;
+PPE_CORE_API FConstWChar ToWString(ELoggerVerbosity level) NOEXCEPT;
+//----------------------------------------------------------------------------
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, ELoggerVerbosity level);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, ELoggerVerbosity level);
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
@@ -223,12 +229,6 @@ public:
     static PPE_CORE_API void RegisterSystemTraceLogger();
 
 };
-//----------------------------------------------------------------------------
-PPE_CORE_API FConstChar ToString(FLogger::EVerbosity level) NOEXCEPT;
-PPE_CORE_API FConstWChar ToWString(FLogger::EVerbosity level) NOEXCEPT;
-//----------------------------------------------------------------------------
-PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, FLogger::EVerbosity level);
-PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, FLogger::EVerbosity level);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
