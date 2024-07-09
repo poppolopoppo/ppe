@@ -1,4 +1,4 @@
 # README #
 
-![Windows build](https://github.com/poppolopoppo/ppe/workflows/Windows%20build/badge.svg)
-![Linux tests](https://github.com/poppolopoppo/ppe/workflows/Linux%20tests/badge.svg)
+[![Windows build](https://github.com/poppolopoppo/ppe/actions/workflows/build_windows.yml/badge.svg)](https://github.com/poppolopoppo/ppe/actions/workflows/build_windows.yml)
+[![Linux tests](https://github.com/poppolopoppo/ppe/actions/workflows/build_linux.yml/badge.svg)](https://github.com/poppolopoppo/ppe/actions/workflows/build_linux.yml)
