@@ -124,6 +124,7 @@ NODISCARD static FTextureImporterResult STBImageLoadFromStream_(
     FTextureSourceProperties* outProperties,
     RHI::EImageView imageView,
     IStreamReader& input) {
+    ::stbi_set_flip_vertically_on_load(true); // #TODO: do not consider OpenGL as default target, DirectX would not need to flip
 
     ETextureSourceFormat format;
     int2 dimensions;
@@ -199,6 +200,7 @@ NODISCARD static FTextureImporterResult STBImageLoadFromMemory_(
     FTextureSourceProperties* outProperties,
     RHI::EImageView imageView,
     const FRawMemoryConst& memory) {
+    ::stbi_set_flip_vertically_on_load(true); // #TODO: do not consider OpenGL as default target, DirectX would not need to flip
 
     ETextureSourceFormat format;
     int2 dimensions;
@@ -534,6 +536,7 @@ bool TSTBImageFormat<EImageFormat::PNG>::ExportTexture2D(IStreamWriter* output, 
     AssertRelease(output);
     PPE_LOG_CHECK(Texture, SupportsTextureSource(properties));
     Assert_NoAssume(properties.SizeInBytes() == bulk.SizeInBytes());
+    ::stbi_flip_vertically_on_write(true); // #TODO: do not consider OpenGL as default target, DirectX would not need to flip
 
     return (!!::stbi_write_png_to_func(&STBImageWriteFunc_, output,
         checked_cast<int>(properties.Width()),
@@ -578,6 +581,7 @@ bool TSTBImageFormat<EImageFormat::BMP>::ExportTexture2D(IStreamWriter* output, 
     AssertRelease(output);
     Assert_NoAssume(SupportsTextureSource(properties));
     Assert_NoAssume(properties.SizeInBytes() == bulk.SizeInBytes());
+    ::stbi_flip_vertically_on_write(true); // #TODO: do not consider OpenGL as default target, DirectX would not need to flip
 
     return (!!::stbi_write_bmp_to_func(&STBImageWriteFunc_, output,
         checked_cast<int>(properties.Width()),
@@ -621,6 +625,7 @@ bool TSTBImageFormat<EImageFormat::TGA>::ExportTexture2D(IStreamWriter* output, 
     AssertRelease(output);
     Assert_NoAssume(SupportsTextureSource(properties));
     Assert_NoAssume(properties.SizeInBytes() == bulk.SizeInBytes());
+    ::stbi_flip_vertically_on_write(true); // #TODO: do not consider OpenGL as default target, DirectX would not need to flip
 
     return (!!::stbi_write_tga_to_func(&STBImageWriteFunc_, output,
         checked_cast<int>(properties.Width()),
@@ -664,6 +669,7 @@ bool TSTBImageFormat<EImageFormat::JPG>::ExportTexture2D(IStreamWriter* output, 
     AssertRelease(output);
     Assert_NoAssume(SupportsTextureSource(properties));
     Assert_NoAssume(properties.SizeInBytes() == bulk.SizeInBytes());
+    ::stbi_flip_vertically_on_write(true); // #TODO: do not consider OpenGL as default target, DirectX would not need to flip
 
     constexpr int GSTBImageJPGQuality = 90; // `high` quality by default
     return (!!::stbi_write_jpg_to_func(&STBImageWriteFunc_, output,
@@ -709,6 +715,7 @@ bool TSTBImageFormat<EImageFormat::HDR>::ExportTexture2D(IStreamWriter* output, 
     AssertRelease(output);
     Assert_NoAssume(SupportsTextureSource(properties));
     Assert_NoAssume(properties.SizeInBytes() == bulk.SizeInBytes());
+    ::stbi_flip_vertically_on_write(true); // #TODO: do not consider OpenGL as default target, DirectX would not need to flip
 
     return (!!::stbi_write_hdr_to_func(&STBImageWriteFunc_, output,
         checked_cast<int>(properties.Width()),
