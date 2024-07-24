@@ -16,7 +16,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FException::FException(const char* what) noexcept
-:   std::exception(what) {
+:   std::runtime_error(what) {
     Assert(what);
 #if USE_PPE_EXCEPTION_CALLSTACK
     _siteHash = 0;

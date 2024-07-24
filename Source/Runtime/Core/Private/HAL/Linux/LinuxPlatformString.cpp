@@ -133,6 +133,30 @@ bool FLinuxPlatformString::EqualsI(const wchar_t* lhs, const wchar_t* rhs, size_
     return (0 == ::wcsncasecmp(lhs, rhs, len));
 }
 //----------------------------------------------------------------------------
+size_t FLinuxPlatformString::Length(const char* str) NOEXCEPT {
+    return ::strlen(str);
+}
+//----------------------------------------------------------------------------
+size_t FLinuxPlatformString::Length(const wchar_t* str) NOEXCEPT {
+    return ::wcslen(str);
+}
+//----------------------------------------------------------------------------
+int FLinuxPlatformString::Cmp(const char* lhs, const char* rhs) NOEXCEPT {
+    return ::strcmp(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+int FLinuxPlatformString::Cmp(const wchar_t* lhs, const wchar_t* rhs) NOEXCEPT {
+    return ::wcscmp(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+int FLinuxPlatformString::CmpI(const char* lhs, const char* rhs) NOEXCEPT {
+    return ::strcasecmp(lhs, rhs);
+}
+//----------------------------------------------------------------------------
+int FLinuxPlatformString::CmpI(const wchar_t* lhs, const wchar_t* rhs) NOEXCEPT {
+    return ::wcscasecmp(lhs, rhs);
+}
+//----------------------------------------------------------------------------
 int FLinuxPlatformString::NCmp(const char* lhs, const char* rhs, size_t len) NOEXCEPT {
     Assert(lhs);
     Assert(rhs);

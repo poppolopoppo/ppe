@@ -66,16 +66,16 @@ public: // must be defined for every platform
     //------------------------------------------------------------------------
     // system allocator
 
-    NODISCARD PPE_CORE_API static void* SystemMalloc(size_t s);
-    NODISCARD PPE_CORE_API static void* SystemRealloc(void* p, size_t s);
-    static void SystemFree(void* p);
+    NODISCARD static void* SystemMalloc(size_t s) = delete;
+    NODISCARD static void* SystemRealloc(void* p, size_t s) = delete;
+    static void SystemFree(void* p) = delete;
 
-    NODISCARD PPE_CORE_API static void* SystemAlignedMalloc(size_t s, size_t boundary);
-    NODISCARD PPE_CORE_API static void* SystemAlignedRealloc(void* p, size_t s, size_t boundary);
-    PPE_CORE_API static void SystemAlignedFree(void* p, size_t boundary);
+    NODISCARD static void* SystemAlignedMalloc(size_t s, size_t boundary) = delete;
+    NODISCARD static void* SystemAlignedRealloc(void* p, size_t s, size_t boundary) = delete;
+    static void SystemAlignedFree(void* p, size_t boundary) = delete;
 
 #if !USE_PPE_FINAL_RELEASE
-    PPE_CORE_API static size_t SystemAlignedRegionSize(void* p, size_t boundary);
+    static size_t SystemAlignedRegionSize(void* p, size_t boundary) = delete;
 #endif
 
     //------------------------------------------------------------------------

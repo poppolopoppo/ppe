@@ -5,6 +5,7 @@
 #include "HAL/PlatformApplication.h"
 #include "HAL/PlatformProcess.h"
 
+#include "Diagnostic/FeedbackContext.h"
 #include "Modular/ModularDomain.h"
 
 namespace PPE {
@@ -19,11 +20,15 @@ public:
         const wchar_t* filename, size_t argc, const wchar_t* const* argv ) {
         FPlatformProcess::OnProcessStart(appHandle, nShowCmd, filename, argc, argv);
 
+        FGlobalFeedbackContext::Start();
+
         ReportAllTrackingData();
     }
 
     static void OnPlatformShutdown() {
         ReportAllTrackingData();
+
+        FGlobalFeedbackContext::Shutdown();
 
         FPlatformProcess::OnProcessShutdown();
     }

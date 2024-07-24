@@ -35,7 +35,7 @@ class FDecodedCallstack;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class FException : public std::exception {
+class FException : public std::runtime_error {
 public:
     // don't use FStringView to avoid cyclic dependencies in includes
     PPE_CORE_API FException(const char* what) noexcept;
@@ -47,7 +47,7 @@ public:
     FException& operator =(const FException& ) noexcept = default;
     FException& operator =(FException&& ) noexcept = default;
 
-    const char* What() const { return std::exception::what(); }
+    const char* What() const { return std::runtime_error::what(); }
 #if USE_PPE_EXCEPTION_CALLSTACK
     size_t SiteHash() const { return _siteHash; }
     PPE_CORE_API FDecodedCallstack Callstack() const;

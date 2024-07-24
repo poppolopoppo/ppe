@@ -3,6 +3,7 @@
 #include "Meta/Aliases.h"
 #include "Meta/Config.h"
 
+#include <cstring> // memset
 #include <functional>
 #include <type_traits>
 

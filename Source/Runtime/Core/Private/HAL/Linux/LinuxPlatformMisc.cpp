@@ -27,7 +27,9 @@
 #include <fstream>
 
 #include <cpuid.h>
+#include <pwd.h>
 #include <thread>
+#include <unistd.h>
 
 #include <sys/signal.h>
 #include <sys/syscall.h>
@@ -341,7 +343,7 @@ FString FLinuxPlatformMisc::OSName() {
     FStringView release = MakeCStringView(un.release);
     FStringView version = MakeCStringView(un.version);
 
-    const FStringView arch = (::strcmp(un.machine, "x86_64") == 0
+    const FStringLiteral arch = (::strcmp(un.machine, "x86_64") == 0
         ? "64 bit"
         : "32 bit" );
 
@@ -357,7 +359,13 @@ FString FLinuxPlatformMisc::MachineName() {
 //----------------------------------------------------------------------------
 FString FLinuxPlatformMisc::UserName() {
     char buf[PATH_MAX + 1];
-    Verify(0 == ::getlogin_r(buf, lengthof(buf)));
+    buf[0] = '\0';
+    if (::getlogin_r(buf, lengthof(buf))) {
+        if (::passwd* const pwd = ::getpwuid(::getuid()); pwd)
+            ::strncpy(buf, pwd->pw_name, PATH_MAX);
+        else
+            ::strncpy(buf, "unknown", PATH_MAX);
+    }
     return ToString(MakeCStringView(buf));
 }
 //----------------------------------------------------------------------------
@@ -527,7 +535,7 @@ bool FLinuxPlatformMisc::ErasePersistentVariable(const char* storeId, const char
 bool FLinuxPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t line/* = 0 */, size_t column/* = 0 */) {
     Assert(filename);
 
-    CONSTEXPR const TPair<FWStringView, FWStringView> editors[] = {
+    CONSTEXPR const TPair<FWStringLiteral, FWStringLiteral> editors[] = {
         // visual studio code
         { L"code", L"-g \"{0}:{1}:{2}\"" },
         // sublime text 3
@@ -544,13 +552,13 @@ bool FLinuxPlatformMisc::ExternalTextEditor(const wchar_t* filename, size_t line
         Format(args, editor.second, MakeCStringView(filename), line, column);
         args << Eos;
 
-        if (FLinuxPlatformProcess::ExecDetachedProcess(editor.first.data(), args.Written().data(), nullptr)) {
-            PPE_LOG(HAL, Emphasis, "opened external editor: {0} {1}", editor.first, args.Written());
+        if (FLinuxPlatformProcess::ExecDetachedProcess(editor.first.c_str(), args.NullTerminated(), nullptr)) {
+            PPE_LOG(HAL, Emphasis, "opened external editor: {0} {1}", editor.first, args.NullTerminated());
             return true;
         }
         else {
             PPE_LOG(HAL, Error, "failed to open external editor: {0} {1}",
-                editor.first, args.Written() );
+                editor.first, args.NullTerminated() );
         }
     }
 

@@ -37,7 +37,7 @@ public:
     using base_type::size;
     using base_type::operator [];
 
-    TUniqueView() NOEXCEPT;
+    TUniqueView() = default;
     ~TUniqueView();
 
     explicit TUniqueView(const TMemoryView<T>& other);
@@ -53,10 +53,6 @@ public:
 
     void Reset(TUniqueView&& rvalue);
 };
-//----------------------------------------------------------------------------
-template <typename T, typename _Deleter >
-TUniqueView<T, _Deleter>::TUniqueView() NOEXCEPT
-{}
 //----------------------------------------------------------------------------
 template <typename T, typename _Deleter >
 TUniqueView<T, _Deleter>::TUniqueView(const TMemoryView<T>& other)

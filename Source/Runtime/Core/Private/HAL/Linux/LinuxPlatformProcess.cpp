@@ -67,13 +67,13 @@ FLinuxProcessState::FLinuxProcessState(::pid_t pid, bool fireAndForget) NOEXCEPT
 FLinuxProcessState::~FLinuxProcessState() {
     if (not (_state & kFireForget)) {
         if (_state & kRunning) {
-            LOG(HAL, Warning,
-                L"closing a process handle while the process (pid={0}) is still running - we will block until it exits to prevent a zombie",
+            PPE_LOG(HAL, Warning,
+                "closing a process handle while the process (pid={0}) is still running - we will block until it exits to prevent a zombie",
                 Pid() );
         }
         else if (not (_state & kWaitFor)) {
-            LOG(HAL, Warning,
-                L"closing a process handle of a process (pid={0}) that has not been wait()ed for - will wait now to reap a zombie",
+            PPE_LOG(HAL, Warning,
+                "closing a process handle of a process (pid={0}) that has not been wait()ed for - will wait now to reap a zombie",
                 Pid() );
         }
 
@@ -95,8 +95,8 @@ bool FLinuxProcessState::IsRunning() {
                 if (::waitid(P_PID, Pid(), &sig, WEXITED | WNOHANG | WNOWAIT)) {
                     if (errno != EINTR) {
                         const FErrno thisErrno;
-                        LOG(HAL, Fatal,
-                            L"waitid() for pid={0} failed with errno: {1}",
+                        PPE_LOG(HAL, Fatal,
+                            "waitid() for pid={0} failed with errno: {1}",
                             Pid(), thisErrno );
                         break; // exit the loop if for some reason fatal log above returns
                     }
@@ -146,8 +146,8 @@ void FLinuxProcessState::Wait() {
         if (::waitid(P_PID, Pid(), &sig, WEXITED)) {
             if (errno != EINTR) {
                 const FErrno thisErrno;
-                LOG(HAL, Fatal,
-                    L"waitid() for pid={0} failed with errno: {1}",
+                PPE_LOG(HAL, Fatal,
+                    "waitid() for pid={0} failed with errno: {1}",
                     Pid(), thisErrno );
                 break; // exit the loop if for some reason fatal log above returns
             }
@@ -174,8 +174,8 @@ bool FLinuxProcessState::WaitFor(int timeoutMs) {
         if (::waitid(P_PID, Pid(), &sig, WNOHANG)) {
             if (errno != EINTR) {
                 const FErrno thisErrno;
-                LOG(HAL, Fatal,
-                    L"waitid() for pid={0} failed this errno: {1}",
+                PPE_LOG(HAL, Fatal,
+                    "waitid() for pid={0} failed this errno: {1}",
                     Pid(), thisErrno );
                 break; // exit the loop if for some reason fatal log above returns
             }
@@ -635,7 +635,7 @@ auto FLinuxPlatformProcess::CreateProcess(
     Unused(noWindow);
 
     PPE_CLOG(workingDir != nullptr, HAL, Error,
-        L"::posix_spawn() doesn't support working directory yet: {0}",
+        "::posix_spawn() doesn't support working directory yet: {0}",
         MakeCStringView(workingDir) );
 
     // parse parameters
@@ -801,7 +801,7 @@ auto FLinuxPlatformProcess::CreateSemaphore(const char* name, bool create, size_
         sem = ::sem_open(name, O_EXCL);
 
     PPE_CLOG(nullptr == sem, HAL, Error,
-        L"sem_open({0}) failed with errno: {1}",
+        "sem_open({0}) failed with errno: {1}",
         UTF_8_TO_WCHAR<>(name),
         FErrno{} );
 
@@ -917,7 +917,7 @@ void* FLinuxPlatformProcess::DynamicLibraryFunction(FDynamicLibraryHandle lib, c
 
     void* fnAddr = ::dlsym(lib, name);
     PPE_CLOG(!fnAddr, HAL, Error,
-        L"dlsym({0}) failed: {1}",
+        "dlsym({0}) failed: {1}",
         MakeCStringView(name),
         UTF_8_TO_WCHAR<>(::dlerror()) );
 

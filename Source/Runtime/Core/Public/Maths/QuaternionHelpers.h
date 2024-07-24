@@ -17,11 +17,11 @@ NODISCARD PPE_CORE_API FQuaternion SLerp(const FQuaternion& v0, const FQuaternio
 //----------------------------------------------------------------------------
 NODISCARD PPE_CORE_API FQuaternion SQuad(const FQuaternion& v0, const FQuaternion& v1, const FQuaternion& v2, const FQuaternion& v3, float f);
 //----------------------------------------------------------------------------
-NODISCARD PPE_CORE_API void SQuadSetup(FQuaternion *p0, FQuaternion *p1, FQuaternion *p2,
+PPE_CORE_API void SQuadSetup(FQuaternion *p0, FQuaternion *p1, FQuaternion *p2,
                 const FQuaternion& v0, const FQuaternion& v1, const FQuaternion& v2, const FQuaternion& v3 );
 //----------------------------------------------------------------------------
-NODISCARD PPE_CORE_API void Extract3AxisFromQuaternion(float3 *paxisx, float3 *paxisy, float3 *paxisz,
-                                const FQuaternion& quaternion);
+PPE_CORE_API void Extract3AxisFromQuaternion(float3 *paxisx, float3 *paxisy, float3 *paxisz,
+                                             const FQuaternion& quaternion);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -73,7 +73,7 @@ NODISCARD inline FQuaternion TangentSpaceToQuaternion(const float3& tangent, con
     return Make3AxisQuaterion(tangent, binormal, normal);
 }
 //----------------------------------------------------------------------------
-NODISCARD inline void QuaternionToTangentSpace(   float3 *ptangent, float3 *pbinormal, float3 *pnormal,
+inline void QuaternionToTangentSpace(   float3 *ptangent, float3 *pbinormal, float3 *pnormal,
                                         const FQuaternion& quaternion) {
     Extract3AxisFromQuaternion(ptangent, pbinormal, pnormal, quaternion);
 }

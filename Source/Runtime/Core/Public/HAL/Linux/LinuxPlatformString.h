@@ -19,6 +19,15 @@ public:
     static bool EqualsI(const char* lhs, const char* rhs, size_t len) NOEXCEPT;
     static bool EqualsI(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT;
 
+    static size_t Length(const char* str) NOEXCEPT;
+    static size_t Length(const wchar_t* str) NOEXCEPT;
+
+    static int Cmp(const char* lhs, const char* rhs) NOEXCEPT;
+    static int Cmp(const wchar_t* lhs, const wchar_t* rhs) NOEXCEPT;
+
+    static int CmpI(const char* lhs, const char* rhs) NOEXCEPT;
+    static int CmpI(const wchar_t* lhs, const wchar_t* rhs) NOEXCEPT;
+
     static int NCmp(const char* lhs, const char* rhs, size_t len) NOEXCEPT;
     static int NCmp(const wchar_t* lhs, const wchar_t* rhs, size_t len) NOEXCEPT;
 
@@ -30,6 +39,8 @@ public:
 
     static void ToUpper(char* dst, const char* src, size_t len) NOEXCEPT;
     static void ToUpper(wchar_t* dst, const wchar_t* src, size_t len) NOEXCEPT;
+
+
 
     static int Printf(char* dst, size_t capacity, const char* fmt, va_list args) {
         return std::snprintf(dst, capacity, fmt, args);

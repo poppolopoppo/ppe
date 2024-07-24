@@ -334,17 +334,17 @@ public:
             bucket.Heap.ReleaseAll();
         }
         // release free buckets
-        _freeBuckets.ResetMask(MaskAllocationBuckets);
+        _freeBuckets.ResetMask(TBitMask<u32>{MaskAllocationBuckets});
         details::NotifyAllAtomicBarrier(&_freeBuckets.Data());
     }
 
 private:
     STATIC_CONST_INTEGRAL(u32, NumAllocationBuckets, 8);
-    STATIC_CONST_INTEGRAL(TBitMask<u32>, MaskAllocationBuckets, (1_u32 << NumAllocationBuckets) - 1_u32);
+    STATIC_CONST_INTEGRAL(u32, MaskAllocationBuckets, (1_u32 << NumAllocationBuckets) - 1_u32);
     STATIC_ASSERT(Meta::IsPow2(NumAllocationBuckets));
 
     FBucket _buckets[NumAllocationBuckets];
-    TAtomicBitMask<u32> _freeBuckets{ MaskAllocationBuckets };
+    TAtomicBitMask<u32> _freeBuckets{ TBitMask<u32>{MaskAllocationBuckets} };
     u8 _revision{ 0 };
 
     FORCE_INLINE FBucket& OpenBucket_(FBucket& bucket) {
@@ -1155,7 +1155,7 @@ public:
         FTextWriter oss(_buffered);
         oss << FTextFormat::Compact << FTextFormat::Escape << Opaq::object_init{
             {"timestamp", msg.Site.LogTime.Timestamp().Value() },
-            {"tid", bit_cast<u32>(msg.Site.ThreadId)},
+            {"tid", std::hash<std::thread::id>{}(msg.Site.ThreadId)},
             {"category", msg.Category->Name},
             {"severity", static_cast<u32>(msg.Level())},
             {"message", msg.Text.MakeView()},

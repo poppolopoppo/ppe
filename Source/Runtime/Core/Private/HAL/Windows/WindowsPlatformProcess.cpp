@@ -4,7 +4,6 @@
 
 #ifdef PLATFORM_WINDOWS
 
-#include "Diagnostic/FeedbackContext.h"
 #include "Diagnostic/Logger.h"
 #include "Container/Vector.h"
 #include "IO/Format.h"
@@ -223,13 +222,9 @@ void FWindowsPlatformProcess::OnProcessStart(
 #if USE_PPE_WINDOWS_VSPERF
     FVSPerfWrapper::Create();
 #endif
-
-    FGlobalFeedbackContext::Start();
 }
 //----------------------------------------------------------------------------
 void FWindowsPlatformProcess::OnProcessShutdown() {
-    FGlobalFeedbackContext::Shutdown();
-
 #if USE_PPE_WINDOWS_VSPERF
     FVSPerfWrapper::Destroy();
 #endif

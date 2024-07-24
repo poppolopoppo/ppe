@@ -242,12 +242,12 @@ public:
 #   ifdef ARCH_X64
     static FORCE_INLINE bool bsf(unsigned long* __restrict r, u64 v) NOEXCEPT {
         Assert(r);
-        *r = __builtin_ctz(v);
+        *r = __builtin_ctzll(v);
         return true;
     }
     static FORCE_INLINE bool bsf(u32* __restrict r, u64 v) NOEXCEPT {
         Assert(r);
-        *r = __builtin_ctz(v);
+        *r = __builtin_ctzll(v);
         return true;
     }
 #   endif
@@ -256,21 +256,21 @@ public:
     // Bit Scan Reverse
 
     static FORCE_INLINE bool bsr(unsigned long* __restrict r, u32 v) NOEXCEPT {
-        *r = 31 ^ __builtin_clz(v);
+        *r = 31 - __builtin_clz(v);
         return (0 != v);
     }
     static FORCE_INLINE bool bsr(u32* __restrict r, u32 v) NOEXCEPT {
-        *r = 31 ^ __builtin_clz(v);
+        *r = 31 - __builtin_clz(v);
         return (0 != v);
     }
 
 #   ifdef ARCH_X64
     static FORCE_INLINE bool bsr(unsigned long* __restrict r, u64 v) NOEXCEPT {
-        *r = 63 ^ __builtin_clz(v);
+        *r = 63 - __builtin_clzll(v);
         return (0 != v);
     }
     static FORCE_INLINE bool bsr(u32* __restrict r, u64 v) NOEXCEPT {
-        *r = 63 ^ __builtin_clz(v);
+        *r = 63 - __builtin_clzll(v);
         return (0 != v);
     }
 #   endif

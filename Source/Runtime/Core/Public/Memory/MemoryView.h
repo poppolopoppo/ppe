@@ -36,7 +36,8 @@ public:
     typedef std::random_access_iterator_tag iterator_category;
     typedef std::reverse_iterator<iterator> reverse_iterator;
 
-    CONSTEXPR TMemoryView() NOEXCEPT;
+    CONSTEXPR TMemoryView() = default;
+
     CONSTEXPR TMemoryView(pointer storage, size_type size) NOEXCEPT;
 
     // enables type promotion between {T(),T(),T()} and TMemoryView<T>
@@ -319,8 +320,8 @@ public:
     }
 
 protected:
-    pointer _storage;
-    size_type _size;
+    pointer _storage{ nullptr };
+    size_type _size{ 0 };
 };
 //----------------------------------------------------------------------------
 #if PPE_HAS_CXX17
@@ -361,6 +362,32 @@ Meta::TEnableIf< std::is_integral<_Index>::value > ReindexMemoryView(const TMemo
 //----------------------------------------------------------------------------
 using FRawMemory = TMemoryView<u8>;
 using FRawMemoryConst = TMemoryView<const u8>;
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+} //!namespace PPE
+
+#include "Memory/MemoryView-inl.h"
+
+namespace PPE {
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+namespace Meta {
+//----------------------------------------------------------------------------
+// Construct/Destroy views
+//----------------------------------------------------------------------------
+template <typename T, typename... _Args>
+void Construct(const TMemoryView<T>& view, _Args&& ... args) {
+    Construct(MakeIterable(view.begin(), view.end()), std::forward<_Args>(args)...);
+}
+//----------------------------------------------------------------------------
+template <typename T>
+void Destroy(const TMemoryView<T>& view) NOEXCEPT {
+    Destroy(MakeIterable(view.begin(), view.end()));
+}
+//----------------------------------------------------------------------------
+} //!namespace Meta
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -553,28 +580,4 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& oss, const TMemory
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-} //!namespace PPE
-
-#include "Memory/MemoryView-inl.h"
-
-namespace PPE {
-namespace Meta {
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-// Construct/Destroy views
-//----------------------------------------------------------------------------
-template <typename T, typename... _Args>
-void Construct(const TMemoryView<T>& view, _Args&& ... args) {
-    Construct(MakeIterable(view.begin(), view.end()), std::forward<_Args>(args)...);
-}
-//----------------------------------------------------------------------------
-template <typename T>
-void Destroy(const TMemoryView<T>& view) NOEXCEPT {
-    Destroy(MakeIterable(view.begin(), view.end()));
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-} //!namespace Meta
 } //!namespace PPE

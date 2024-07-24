@@ -2,13 +2,13 @@
 
 #include "HAL/WindowsTargetPlatform.h"
 
-#ifdef PLATFORM_WINDOWS
-
 #include "HAL/PlatformMisc.h"
 #include "IO/String.h"
 
+#ifdef PLATFORM_WINDOWS
 #include <winnt_version.h>
 #include <VersionHelpers.h>
+#endif //!PLATFORM_WINDOWS
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -24,6 +24,7 @@ FString FWindowsTargetPlatform::DisplayName() const {
 }
 //----------------------------------------------------------------------------
 FString FWindowsTargetPlatform::FullName() const {
+#ifdef PLATFORM_WINDOWS
     FString version;
 
     if (::IsWindows10OrGreater()) {
@@ -56,6 +57,9 @@ FString FWindowsTargetPlatform::FullName() const {
     }
 
     return version;
+#else
+    return "Windows 10.0 or greater";
+#endif
 }
 //----------------------------------------------------------------------------
 FString FWindowsTargetPlatform::ShortName() const {
@@ -103,5 +107,3 @@ bool FWindowsTargetPlatform::SupportsFeature(EPlatformFeature feature) const {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-
-#endif //!PLATFORM_WINDOWS

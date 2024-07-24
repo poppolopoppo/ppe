@@ -20,8 +20,8 @@ public:
     using mask_type = TBitMask<T>;
     STATIC_CONST_INTEGRAL(u32, Capacity, mask_type::BitCount);
 
-    STATIC_CONST_INTEGRAL(mask_type, AllMask, mask_type::AllMask);
-    STATIC_CONST_INTEGRAL(mask_type, EmptyMask, 0);
+    STATIC_CONST_INTEGRAL(mask_type, AllMask, mask_type{ mask_type::AllMask });
+    STATIC_CONST_INTEGRAL(mask_type, EmptyMask, mask_type{ 0 });
 
     TAtomicBitMask() = default;
 

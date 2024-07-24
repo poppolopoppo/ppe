@@ -11,10 +11,11 @@
 	],
 	"HAL": {
 		"Linux": {
-			"CompilerOptions": [
-				"-ldl",
-				"-lncurses",
-				"-lrt"
+			"Libraries": [
+				"ncurses",
+				"tinfo",
+				"dl",
+				"rt"
 			]
 		}
 	},

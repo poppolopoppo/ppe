@@ -13,7 +13,7 @@
 
 #include <atomic>
 
-#define USE_PPE_VIRTUALPAGE_CACHE (!USE_PPE_SANITIZER)
+#define USE_PPE_VIRTUALPAGE_CACHE 0//(!USE_PPE_SANITIZER) not so much allocations to justify all this code
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -33,38 +33,21 @@ struct CACHELINE_ALIGNED FVirtualPageCache_ : Meta::FNonCopyableNorMovable {
     };
 
     struct FBlock {
-        STATIC_CONST_INTEGRAL(u32, BitMask, UINT16_MAX);
-        u8* Packed;
+        uintptr_t Packed : Meta::BitCount<uintptr_t> - 16;
+        uintptr_t NumUsedPages : 16;
 
-        NODISCARD u8* Alloc() const {
-            u8* const alloc = Packed - (reinterpret_cast<uintptr_t>(Packed) & BitMask);
-            Assert_NoAssume(Meta::IsAligned(FPlatformMemory::AllocationGranularity, alloc));
-            return alloc;
+        FFreePage* FirstPage() const {
+            return bit_cast<FFreePage*>(Packed << 16u);
         }
 
-        NODISCARD void* PageAddress(u32 index) const {
-            Assert_NoAssume(UsedPages().Get(index));
-            return Alloc() + (PageSize * index);
+        bool CanReleseBlock() const {
+            return (NumUsedPages == 0);
         }
 
-        NODISCARD TBitMask<u32> UsedPages() const {
-            return { static_cast<u32>(reinterpret_cast<uintptr_t>(Packed)& BitMask) };
-        }
-
-        void SetUsedPages(const TBitMask<u32>& mask) {
-            Assert_NoAssume((mask.Data & BitMask) == mask.Data);
-            const auto addr = reinterpret_cast<uintptr_t>(Packed);
-            Packed = (Packed - (addr & BitMask)) + mask.Data;
-        }
-
-        void Reset(void* alloc, size_t sizeInBytes) {
-            Assert(alloc);
-            Assert(Meta::IsAlignedPow2(BitMask + 1, alloc));
-            Assert_NoAssume(Meta::IsAligned(FPlatformMemory::AllocationGranularity, alloc));
-            Assert_NoAssume(sizeInBytes / PageSize <= BitMask);
-            const auto usedPages = TBitMask<u32>::SetFirstN(static_cast<u32>(sizeInBytes / PageSize));
-            Packed = static_cast<u8*>(alloc) + usedPages.Data/* all pages are used */;
-            Assert_NoAssume(Alloc() == alloc);
+        void Reset(void* data) {
+            Assert_NoAssume(Meta::IsAlignedPow2(1ul << 16ul, data));
+            Packed = bit_cast<uintptr_t>(data) >> 16u;
+            NumUsedPages = 0;
         }
     };
 
@@ -89,7 +72,7 @@ struct CACHELINE_ALIGNED FVirtualPageCache_ : Meta::FNonCopyableNorMovable {
     }
 #endif
 
-    FCriticalSection Barrier;
+    FCriticalSection AllocationBarrier;
     FChunk* Chunks{ nullptr };
 
     std::atomic<FFreePage*> FreePages{ nullptr };
@@ -124,7 +107,7 @@ struct CACHELINE_ALIGNED FVirtualPageCache_ : Meta::FNonCopyableNorMovable {
     }
 
     void ReleaseAll() {
-        const FCriticalScope scopeLock{ &Barrier };
+        const FCriticalScope scopeLock{ &AllocationBarrier };
 
         // first need to acquire all the queue
         FFreePage* freePages = nullptr;
@@ -147,7 +130,7 @@ struct CACHELINE_ALIGNED FVirtualPageCache_ : Meta::FNonCopyableNorMovable {
         for (const FChunk* chunk = Chunks; chunk; chunk = chunk->NextChunk) {
             for (const FBlock& block : chunk->MakeView()) {
 #if USE_PPE_ASSERT
-                const i32 numPagesReleased = checked_cast<i32>(block.UsedPages().Count());
+                const i32 numPagesReleased = checked_cast<i32>(block.NumUsedPages);
                 Assert_NoAssume(NumFreePages.fetch_add(-numPagesReleased, std::memory_order_relaxed) >= numPagesReleased);
 #endif
 
@@ -175,12 +158,15 @@ struct CACHELINE_ALIGNED FVirtualPageCache_ : Meta::FNonCopyableNorMovable {
     }
 
 private:
+    NODISCARD FORCE_INLINE static size_t BlockSizeInBytes_() {
+        return FPlatformMemory::AllocationGranularity;
+    }
     NODISCARD static void* BlockAlloc_() {
-        return FVirtualMemory::InternalAlloc(FPlatformMemory::AllocationGranularity ARGS_IF_MEMORYDOMAINS(TrackingData()));
+        return FVirtualMemory::InternalAlloc(BlockSizeInBytes_() ARGS_IF_MEMORYDOMAINS(TrackingData()));
     }
 
     static void BlockFree_(void* p) {
-        return FVirtualMemory::InternalFree(p, FPlatformMemory::AllocationGranularity ARGS_IF_MEMORYDOMAINS(TrackingData()));
+        return FVirtualMemory::InternalFree(p, BlockSizeInBytes_() ARGS_IF_MEMORYDOMAINS(TrackingData()));
     }
 
     NODISCARD FORCE_INLINE void* FindFreePage_() {
@@ -199,7 +185,7 @@ private:
         return nullptr;
     }
 
-    NODISCARD FORCE_INLINE void ReleaseUsedPages_(void* pfirst, void* plast) {
+    FORCE_INLINE void ReleaseUsedPages_(void* pfirst, void* plast) {
         auto* const first = static_cast<FFreePage*>(pfirst);
         auto* const last = static_cast<FFreePage*>(plast);
 
@@ -218,7 +204,7 @@ private:
     }
 
     NODISCARD NO_INLINE void* AllocateNewPage_() {
-        const FCriticalScope scopeLock{&Barrier};
+        const FCriticalScope scopeLock{ &AllocationBarrier };
 
         // another thread might have allocated a block already
         if (void* const freePage = FindFreePage_())
@@ -228,42 +214,39 @@ private:
 
         // get a new virtual memory block
         FBlock newBlock{};
-        newBlock.Reset(BlockAlloc_(), FPlatformMemory::AllocationGranularity);
+        newBlock.Reset(BlockAlloc_());
 
-        auto newPages = newBlock.UsedPages();
-        Assert_NoAssume(Meta::IsPow2(newPages.Count()));
+        FFreePage* pFirstPage = newBlock.FirstPage();
+        FFreePage* const pLastPage = (pFirstPage + BlockSizeInBytes_() / PageSize);
 
         // check if we need a new chunk for the new block
         if (Unlikely(!Chunks || Chunks->NumBlocks == FChunk::Capacity)) {
-            Verify(0 == newPages.PopFront_AssumeNotEmpty());
             ONLY_IF_MEMORYDOMAINS(TrackingData().AllocateUser(PageSize));
-            Assert_NoAssume(not Meta::IsPow2(newPages.Count()));
 
-            auto* const newChunk = INPLACE_NEW(newBlock.Alloc(), FChunk);
+            auto* const newChunk = INPLACE_NEW(pFirstPage, FChunk);
             newChunk->NextChunk = Chunks;
             Chunks = newChunk;
+
+            ++pFirstPage;
+            ++newBlock.NumUsedPages;
         }
 
         // register new block in current chunk
         Assert(Chunks);
         Assert(Chunks->NumBlocks < FChunk::Capacity);
-        newBlock.SetUsedPages(newPages);
         Chunks->Blocks[Chunks->NumBlocks++] = newBlock;
 
         // reserve first page for callee
-        ONLY_IF_ASSERT(NumUsedPages.fetch_add(newPages.Count(), std::memory_order_relaxed));
-        void* const result = newBlock.PageAddress(newPages.PopFront_AssumeNotEmpty());
+        void* const result = pFirstPage;
+        pFirstPage += PageSize;
 
         // register all remaining free pages from new block
-        auto* const first = static_cast<FFreePage*>(newBlock.PageAddress(newPages.FirstBitSet_Unsafe()));
-        auto* const last = first + (newPages.Count() - 1);
-
-        for (auto* page = first; page != last; ++page) {
-            Assert_NoAssume(Meta::IsAligned(PageSize, page));
+        for (; pFirstPage != pLastPage; pFirstPage += PageSize) {
+            Assert_NoAssume(Meta::IsAligned(PageSize, pFirstPage));
 #if USE_PPE_MEMORY_DEBUGGING
-            Assert_Lightweight(ValidatePage_(page));
+            Assert_Lightweight(ValidatePage_(pFirstPage));
 #endif
-            page->NextPage = page + 1;
+            reinterpret_cast<FFreePage*>(pFirstPage)->NextPage = reinterpret_cast<FFreePage*>(pFirstPage + PageSize);
         }
 
         last->NextPage = nullptr;
@@ -279,7 +262,7 @@ private:
 
 
     NODISCARD bool ValidatePage_(const FFreePage* const page) const {
-        const FCriticalScope scopeLock{ &Barrier };
+        const FCriticalScope scopeLock{ &AllocationBarrier };
 
         bool bValidPage = false;
 
@@ -296,7 +279,6 @@ private:
                 }
             }
         }
-
 
         return bValidPage;
     }
@@ -318,7 +300,7 @@ FAllocatorBlock FPageAllocator::Allocate(size_t s) {
 #if USE_PPE_VIRTUALPAGE_CACHE
     blk.Data = FVirtualPageCache_::Get().Allocate();
 #else
-    blk.Data = FPlatformMemory::SystemAlignedMalloc(PageSize, PageSize);
+    blk.Data = FVirtualMemory::PageAlloc(s ARGS_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(PageAllocator)));
 #endif
 
     Assert(blk.Data);
@@ -334,7 +316,7 @@ void FPageAllocator::Deallocate(FAllocatorBlock blk) {
 #if USE_PPE_VIRTUALPAGE_CACHE
     FVirtualPageCache_::Get().Deallocate(blk.Data);
 #else
-    FPlatformMemory::SystemAlignedFree(blk.Data, PageSize);
+    FVirtualMemory::PageFree(blk.Data, blk.SizeInBytes ARGS_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(PageAllocator)));
 #endif
 }
 //----------------------------------------------------------------------------

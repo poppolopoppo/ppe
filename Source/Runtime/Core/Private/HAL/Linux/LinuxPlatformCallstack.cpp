@@ -11,11 +11,13 @@
 
 #include "HAL/Linux/Errno.h"
 #include "HAL/Linux/LinuxPlatformIncludes.h"
+#include "HAL/TargetPlatform.h" // HAL log category
 
 // #TODO: need to manually generate a debug symbol file ?
 // https://github.com/EpicGames/UnrealEngine/blob/6c20d9831a/Engine/Source/Runtime/Core/Private/Unix/UnixPlatformStackWalk.cpp
 
 namespace PPE {
+EXTERN_LOG_CATEGORY(PPE_CORE_API, HAL)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -27,15 +29,15 @@ namespace {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FLinuxPlatformCallstack::InitializeSymbolInfos() {
-
+    // PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformCallstack::LoadAllSymbolInfos() {
-
+    // PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformCallstack::OnLoadModule() {
-
+    // PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 size_t FLinuxPlatformCallstack::CaptureCallstack(const TMemoryView<FProgramCounter>& backtrace, size_t framesToSkip) {
@@ -43,7 +45,7 @@ size_t FLinuxPlatformCallstack::CaptureCallstack(const TMemoryView<FProgramCount
 
     Unused(backtrace);
     Unused(framesToSkip);
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 
     return 0;
 }
@@ -54,7 +56,7 @@ bool FLinuxPlatformCallstack::ProgramCounterToModuleName(FWString* moduleName, F
 
     Unused(moduleName);
     Unused(pc);
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 
     return false;
 }
@@ -65,7 +67,7 @@ bool FLinuxPlatformCallstack::ProgramCounterToSymbolInfo(FProgramCounterSymbolIn
 
     Unused(symbolInfo);
     Unused(pc);
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 
     return false;
 }

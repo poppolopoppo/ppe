@@ -10,8 +10,12 @@
 #include "HAL/Linux/LinuxPlatformIncludes.h"
 
 #include <curses.h>
-#include <term.h>
 #include <iostream>
+
+#include <term.h>
+#ifdef generic_type
+#   undef generic_type // term.h:165 :'(
+#endif
 
 namespace PPE {
 //----------------------------------------------------------------------------

@@ -56,6 +56,21 @@ public:
     static PPE_CORE_API bool PageProtect(void* ptr, size_t sizeInBytes, bool read, bool write);
 
     //------------------------------------------------------------------------
+    // system allocator
+
+    NODISCARD PPE_CORE_API static void* SystemMalloc(size_t s);
+    NODISCARD PPE_CORE_API static void* SystemRealloc(void* p, size_t s);
+    PPE_CORE_API static void SystemFree(void* p);
+
+    NODISCARD PPE_CORE_API static void* SystemAlignedMalloc(size_t s, size_t boundary);
+    NODISCARD PPE_CORE_API static void* SystemAlignedRealloc(void* p, size_t s, size_t boundary);
+    PPE_CORE_API static void SystemAlignedFree(void* p, size_t boundary);
+
+#if !USE_PPE_FINAL_RELEASE
+    PPE_CORE_API static size_t SystemAlignedRegionSize(void* p, size_t boundary);
+#endif
+
+    //------------------------------------------------------------------------
     // memory block helpers
 
     using FGenericPlatformMemory::Memaliases;

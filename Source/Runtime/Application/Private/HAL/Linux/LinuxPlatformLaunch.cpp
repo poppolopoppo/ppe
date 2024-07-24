@@ -15,8 +15,8 @@ namespace Application {
 //----------------------------------------------------------------------------
 void FLinuxPlatformLaunch::OnPlatformLaunch(const char* filename, size_t argc, const char** argv) {
     // convert char to wchar_t, kind of ugly : #TODO refactor to replace wchar_t references with TCHAR
-    auto wargs = NewArray<FWString>(argc);
-    const auto wargv = NewArray<const wchar_t*>(argc);
+    auto wargs = NEW_ARRAY(Launch, FWString, argc);
+    const auto wargv = NEW_ARRAY(Launch, const wchar_t*, argc);
     forrange(i, 0, argc) {
         wargs[i].assign(UTF_8_TO_WCHAR(argv[i]));
         wargv[i] = wargs[i].data();

@@ -43,31 +43,31 @@ inline CONSTEXPR CONSTF bool IsPowOf(size_t u) {
 //----------------------------------------------------------------------------
 // /!\ Assumes <alignment> is a power of 2
 inline CONSTEXPR CONSTF bool IsAlignedPow2(const size_t alignment, const uintptr_t v) {
-    assert(Meta::IsPow2(alignment));
+    Assert(Meta::IsPow2(alignment));
     return (0 == (v & (alignment - 1)));
 }
 template <typename T>
 inline CONSTF bool IsAlignedPow2(const size_t alignment, const T* ptr) NOEXCEPT {
-    assert(Meta::IsPow2(alignment));
-    return (0 == (reinterpret_cast<uintptr_t>(ptr) & (alignment - 1)));
+    Assert(Meta::IsPow2(alignment));
+    return (0 == (std::bit_cast<uintptr_t>(ptr) & (alignment - 1)));
 }
-template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
+template <typename T, class = std::enable_if_t<std::is_integral_v<T>> >
 inline CONSTEXPR T RoundToNextPow2(const T v, TDontDeduce<T> alignment) {
-    assert(Meta::IsPow2(alignment));
+    Assert(Meta::IsPow2(alignment));
     return ((0 == v) ? 0 : (v + alignment - static_cast<T>(1)) & ~(alignment - static_cast<T>(1)));
 }
-template <typename T, class = Meta::TEnableIf<std::is_integral_v<T>> >
+template <typename T, class = std::enable_if_t<std::is_integral_v<T>> >
 inline CONSTEXPR T RoundToPrevPow2(const T v, TDontDeduce<T> alignment) {
-    assert(Meta::IsPow2(alignment));
+    Assert(Meta::IsPow2(alignment));
     return ((0 == v) ? 0 : v & ~(alignment - static_cast<T>(1)));
 }
 template <typename T>
 inline T* RoundToNextPow2(const T* p, size_t alignment) NOEXCEPT {
-    return reinterpret_cast<T*>(RoundToNextPow2(reinterpret_cast<uintptr_t>(p), alignment));
+    return reinterpret_cast<T*>(RoundToNextPow2(std::bit_cast<uintptr_t>(p), alignment));
 }
 template <typename T>
 inline T* RoundToPrevPow2(const T* p, size_t alignment) NOEXCEPT {
-    return reinterpret_cast<T*>(RoundToPrevPow2(reinterpret_cast<uintptr_t>(p), alignment));
+    return reinterpret_cast<T*>(RoundToPrevPow2(std::bit_cast<uintptr_t>(p), alignment));
 }
 //----------------------------------------------------------------------------
 // works for every alignment value
@@ -77,26 +77,26 @@ inline CONSTEXPR CONSTF bool IsAligned(size_t alignment, uintptr_t value) {
 }
 template <typename T>
 inline CONSTF bool IsAligned(size_t alignment, T* ptr) NOEXCEPT {
-    return IsAligned(alignment, reinterpret_cast<uintptr_t>(ptr));
+    return IsAligned(alignment, std::bit_cast<uintptr_t>(ptr));
 }
 template <typename T>
-inline CONSTEXPR T RoundToNext(T integral, Meta::TEnableIf<std::is_integral_v<T>, T> alignment) {
+inline CONSTEXPR T RoundToNext(T integral, std::enable_if_t<std::is_integral_v<T>, T> alignment) {
     Assume(alignment > 0);
     Assume(integral >= 0);
     return (((integral + alignment - 1) / alignment) * alignment);
 }
 template <typename T>
-inline CONSTEXPR T RoundToPrev(T integral, Meta::TEnableIf<std::is_integral_v<T>, T> alignment) {
+inline CONSTEXPR T RoundToPrev(T integral, std::enable_if_t<std::is_integral_v<T>, T> alignment) {
     Assume(alignment > 0);
     return ((integral / alignment) * alignment);
 }
 template <typename T>
 inline T* RoundToNext(const T* p, size_t alignment) NOEXCEPT {
-    return reinterpret_cast<T*>(RoundToNext(reinterpret_cast<uintptr_t>(p), alignment));
+    return reinterpret_cast<T*>(RoundToNext(std::bit_cast<uintptr_t>(p), alignment));
 }
 template <typename T>
 inline T* RoundToPrev(const T* p, size_t alignment) NOEXCEPT {
-    return reinterpret_cast<T*>(RoundToPrev(reinterpret_cast<uintptr_t>(p), alignment));
+    return reinterpret_cast<T*>(RoundToPrev(std::bit_cast<uintptr_t>(p), alignment));
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

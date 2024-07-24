@@ -32,6 +32,8 @@ public:
     static void*    Alloc(size_t alignment, size_t sizeInBytes TRACKINGDATA_ARG_IFP);
     static void     Free(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP);
 
+    static void*    PageAlloc(size_t sizeInBytes TRACKINGDATA_ARG_IFP);
+    static void     PageFree(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP);
     static void*    PageReserve(size_t sizeInBytes);
     static void*    PageReserve(size_t alignment, size_t sizeInBytes);
     static void     PageCommit(void* ptr, size_t sizeInBytes TRACKINGDATA_ARG_IFP);

@@ -790,7 +790,10 @@ template <typename _Allocator>
 void TBuilder<_Allocator>::BeginKeyValue(string_type&& rkey) {
     object_type& obj = std::get<object_type>(Head_());
 
-    _edits.Push(Emplace_Back(obj, std::move(rkey), value_type{})->value);
+    _edits.Push(Emplace_Back(obj, typename object_type::value_type{
+        std::move(rkey),
+        Meta::DefaultValue<value_type>()
+    })->value);
 }
 //----------------------------------------------------------------------------
 template <typename _Allocator>

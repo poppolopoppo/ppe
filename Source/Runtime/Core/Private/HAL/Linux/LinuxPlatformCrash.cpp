@@ -37,7 +37,7 @@ auto FLinuxPlatformCrash::WriteMiniDump(
 //----------------------------------------------------------------------------
 void FLinuxPlatformCrash::SetExceptionHandlers() {
     // http://www.scribd.com/doc/3726406/Crash-N-Burn-Writing-Linux-application-fault-handlers
-    PPE_LOG_DIRECT(HAL, Warning, "SetExceptionHandlers() is not implemented on linux");
+    PPE_LOG(HAL, Warning, "SetExceptionHandlers() is not implemented on linux");
 }
 //----------------------------------------------------------------------------
 void FLinuxPlatformCrash::AbortProgramWithDump() {

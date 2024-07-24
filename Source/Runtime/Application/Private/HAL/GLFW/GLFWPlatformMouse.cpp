@@ -10,7 +10,7 @@
 
 #include "Container/AssociativeVector.h"
 #include "Diagnostic/Logger.h"
-#include "Input/MouseState.h"
+#include "Input/Device/MouseState.h"
 #include "Maths/MathHelpers.h"
 #include "Misc/Function.h"
 #include "Thread/ThreadSafe.h"
@@ -146,14 +146,14 @@ struct FGLFWWindow::FMouseCallbacks {
             break;
         case FGLFWMessageMouse::Scroll:
             mouse->SetWheelDeltaY(FPlatformMaths::RoundToInt(static_cast<float>(event.Coords.x)));
-            window.OnMouseWheel(mouse->ClientX(), mouse->ClientY(), mouse->WheelDeltaY().Raw());
+            window.OnMouseWheel(mouse->ClientX(), mouse->ClientY(), mouse->WheelY().Raw());
             break;
         }
     }
 };
 //----------------------------------------------------------------------------
 auto FGLFWPlatformMouse::CursorType() -> ECursorType {
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
     return Default; // #TODO: track cursor type inside active FGLFWWindow
 }
 //----------------------------------------------------------------------------
@@ -195,12 +195,12 @@ bool FGLFWPlatformMouse::SetVisible(bool value) {
 }
 //----------------------------------------------------------------------------
 void FGLFWPlatformMouse::ResetCapture() {
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 void FGLFWPlatformMouse::SetCapture(const FGLFWWindow& window) {
     Unused(window);
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformMouse::ClientToScreen(const FGLFWWindow& window, int* x, int *y) {
@@ -225,7 +225,7 @@ void FGLFWPlatformMouse::CenterCursorOnWindow(const FGLFWWindow& window) {
 //----------------------------------------------------------------------------
 void FGLFWPlatformMouse::SetCursorPosition(int screenX, int screenY) {
     Unused(screenX, screenY);
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 FEventHandle FGLFWPlatformMouse::SetupMessageHandler(FGLFWWindow& window, FMouseState* mouse) {

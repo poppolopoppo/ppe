@@ -12,6 +12,7 @@
 
 #include "Diagnostic/Logger.h"
 
+#include <malloc.h>
 #include <pthread.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -81,14 +82,29 @@ static FLinuxPlatformMemory::FConstants FetchConstants_() {
     }
 
     cst.CacheLineSize = ::sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
+    if (cst.CacheLineSize > 0) {
+        Assert_NoAssume(Meta::IsPow2(cst.CacheLineSize));
+    }
+    else {
+        PPE_LOG(HAL, Error, "sysconf(_SC_LEVEL1_DCACHE_LINESIZE) failed with errno: {0}", FErrno{});
+        cst.CacheLineSize = CACHELINE_SIZE;
+    }
+
     cst.PageSize = ::sysconf(_SC_PAGE_SIZE);
+    if (cst.PageSize > 0) {
+        Assert_NoAssume(Meta::IsPow2(cst.PageSize));
+    }
+    else {
+        PPE_LOG(HAL, Error, "sysconf(_SC_PAGE_SIZE) failed with errno: {0}", FErrno{});
+        cst.PageSize = PAGE_SIZE;
+    }
 
     // fetch huge page size (no C clean API for this :/)
-    if (FILE* globalMemStats = ProcFS_Open_("/proc/meminfo")) {
+    if (FILE* fdMeminfo = ProcFS_Open_("/proc/meminfo")) {
         char buf[256];
 
         size_t numParsed = 0;
-        while (char* ln = ::fgets(buf, lengthof(buf), globalMemStats)) {
+        while (char* ln = ::fgets(buf, lengthof(buf), fdMeminfo)) {
             numParsed += size_t(
                 ProcFS_ParseULLONG_kB(&cst.AllocationGranularity, "Hugepagesize:", ln) );
 
@@ -99,7 +115,7 @@ static FLinuxPlatformMemory::FConstants FetchConstants_() {
         if (!numParsed)
             cst.AllocationGranularity = cst.PageSize;
 
-        Verify(0 == ::fclose(globalMemStats));
+        Verify(0 == ::fclose(fdMeminfo));
     }
     else {
         cst.AllocationGranularity = cst.PageSize;
@@ -111,17 +127,33 @@ static FLinuxPlatformMemory::FConstants FetchConstants_() {
 }
 //----------------------------------------------------------------------------
 static void* VMPageAlloc_(size_t sizeInBytes, bool commit) {
-    int protectionMode = (commit ? PROT_WRITE | PROT_READ : PROT_NONE);
-    void* const ptr = ::mmap(nullptr, sizeInBytes,
-        protectionMode,
-        MAP_ANONYMOUS | MAP_PRIVATE,
-        -1, 0 );
+    Assert_NoAssume(Meta::IsAlignedPow2(FPlatformMemory::PageSize, sizeInBytes));
 
-    if (ptr != MAP_FAILED) {
-        Assert(Meta::IsAlignedPow2(PAGE_SIZE, ptr));
-        return ptr;
+    void* result = nullptr;
+
+    const int prot = commit ? PROT_WRITE | PROT_READ : PROT_NONE;
+
+    // first try with huge pages (better for TLB if available)
+    int flags = (MAP_ANONYMOUS | MAP_PRIVATE | MAP_HUGETLB);
+
+    // if block is smaller than allocation granularity, don't use huge pages
+    if (sizeInBytes < FPlatformMemory::AllocationGranularity)
+        goto TRY_MMAP_SMALL_ALLOCATION;
+
+TRY_MMAP_ALLOCATION:
+    result = ::mmap(nullptr, sizeInBytes, prot, flags, -1, 0 );
+
+    if (result != MAP_FAILED) {
+        Assert_NoAssume(Meta::IsAlignedPow2(Min(size_t(ALLOCATION_GRANULARITY), sizeInBytes), result));
+        return result;
     }
-    else {
+    // second try with regular pages (huge pages are limited)
+    else if (flags & MAP_HUGETLB) {
+TRY_MMAP_SMALL_ALLOCATION:
+        flags &= ~MAP_HUGETLB;
+        goto TRY_MMAP_ALLOCATION;
+    // when both huge and regular pages failed, also fails
+    } else {
         PPE_LOG(HAL, Error, "mmap() failed with errno: {0}", FErrno{});
         return nullptr;
     }
@@ -141,6 +173,8 @@ static bool VMPageProtect_(void* ptr, size_t sizeInBytes, bool read, bool write)
 }
 //----------------------------------------------------------------------------
 static void VMPageFree_(void* ptr, size_t sizeInBytes, bool release) {
+    Assert_NoAssume(Meta::IsAlignedPow2(Min(size_t(ALLOCATION_GRANULARITY), sizeInBytes), ptr));
+
     if (release) {
         if (::munmap(ptr, sizeInBytes) != 0)
             PPE_LOG(HAL, Fatal, "::munmap() failed with errno: {0}", FErrno{});
@@ -159,8 +193,8 @@ const size_t FLinuxPlatformMemory::AllocationGranularity{
 };
 //----------------------------------------------------------------------------
 auto FLinuxPlatformMemory::Constants() -> const FConstants& {
-    static const FConstants GConstants = FetchConstants_();
-    return GConstants;
+    ONE_TIME_INITIALIZE(const FConstants, gMemoryConstants, FetchConstants_());
+    return gMemoryConstants;
 }
 //----------------------------------------------------------------------------
 auto FLinuxPlatformMemory::Stats() -> FStats {
@@ -168,12 +202,12 @@ auto FLinuxPlatformMemory::Stats() -> FStats {
     char buf[200];
 
     // no clean C API for this, can't escape ProcFS :'(
-    if (FILE* globalMemStats = ProcFS_Open_("/proc/meminfo")) {
+    if (FILE* fdMeminfo = ProcFS_Open_("/proc/meminfo")) {
         st.AvailablePhysical = 0;
         u64 memFree = 0, cached = 0;
 
         size_t numParsed = 0;
-        while (char* ln = ::fgets(buf, lengthof(buf), globalMemStats)) {
+        while (char* ln = ::fgets(buf, lengthof(buf), fdMeminfo)) {
             numParsed += size_t(
                 // if we have MemAvailable, favor that (see http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=34e431b0ae398fc54ea69ff85ec700722c9da773)
                 ProcFS_ParseULLONG_kB(&st.AvailablePhysical, "MemAvailable:", ln) ||
@@ -191,7 +225,7 @@ auto FLinuxPlatformMemory::Stats() -> FStats {
 
         Assert(numParsed >= 3);
 
-        Verify(0 == ::fclose(globalMemStats));
+        Verify(0 == ::fclose(fdMeminfo));
     }
     else {
         st.AvailablePhysical = 0;
@@ -344,8 +378,8 @@ void FLinuxPlatformMemory::VirtualCommit(void* ptr, size_t sizeInBytes) {
 //----------------------------------------------------------------------------
 void FLinuxPlatformMemory::VirtualFree(void* ptr, size_t sizeInBytes, bool release) {
     Assert(ptr);
-    Assert(Meta::IsAlignedPow2(FPlatformMemory::AllocationGranularity, ptr));
-    Assert(Meta::IsAlignedPow2(FPlatformMemory::AllocationGranularity, sizeInBytes));
+    Assert(Meta::IsAlignedPow2(release ? FPlatformMemory::AllocationGranularity : PAGE_SIZE, ptr));
+    Assert(Meta::IsAlignedPow2(release ? FPlatformMemory::AllocationGranularity : PAGE_SIZE, sizeInBytes));
 
     VMPageFree_(ptr, sizeInBytes, release);
 }
@@ -369,6 +403,113 @@ void FLinuxPlatformMemory::OnOutOfMemory(size_t sizeInBytes, size_t alignment) {
     Unused(sizeInBytes);
     Unused(alignment);
 }
+//----------------------------------------------------------------------------
+// system allocator
+//----------------------------------------------------------------------------
+void* FLinuxPlatformMemory::SystemMalloc(size_t s) {
+    void* const result = ::malloc(s);
+
+#if USE_PPE_MEMORYDOMAINS
+    const size_t sys = ::malloc_usable_size(result);
+    MEMORYDOMAIN_TRACKING_DATA(SystemMalloc).Allocate(sys, sys);
+#endif
+
+    return result;
+}
+//----------------------------------------------------------------------------
+NODISCARD void* FLinuxPlatformMemory::SystemRealloc(void* p, size_t s) {
+#if USE_PPE_MEMORYDOMAINS
+    if (p) {
+        const size_t sys = ::malloc_usable_size(p);
+        MEMORYDOMAIN_TRACKING_DATA(SystemMalloc).Deallocate(sys, sys);
+    }
+#endif
+
+    void* const result = ::realloc(p, s);
+    Assert(0 == s || !!result);
+
+#if USE_PPE_MEMORYDOMAINS
+    if (result) {
+        const size_t sys = ::malloc_usable_size(result);
+        MEMORYDOMAIN_TRACKING_DATA(SystemMalloc).Allocate(sys, sys);
+    }
+#endif
+
+    return result;
+}
+//----------------------------------------------------------------------------,
+void FLinuxPlatformMemory::SystemFree(void* p) {
+    Assert(p);
+
+#if USE_PPE_MEMORYDOMAINS
+    const size_t sys = ::malloc_usable_size(p);
+    MEMORYDOMAIN_TRACKING_DATA(SystemMalloc).Deallocate(sys, sys);
+#endif
+
+    ::free(p);
+}
+//----------------------------------------------------------------------------
+// system allocator aligned
+//----------------------------------------------------------------------------
+NODISCARD void* FLinuxPlatformMemory::SystemAlignedMalloc(size_t s, size_t boundary) {
+    void* const result = ::aligned_alloc(boundary, s);
+    Assert(result);
+
+#if USE_PPE_MEMORYDOMAINS
+    const size_t sys = ::malloc_usable_size(result);
+    MEMORYDOMAIN_TRACKING_DATA(SystemMalloc).Allocate(sys, sys);
+#endif
+
+    return result;
+}
+//----------------------------------------------------------------------------
+NODISCARD void* FLinuxPlatformMemory::SystemAlignedRealloc(void* p, size_t s, size_t boundary) {
+#if 0
+#if USE_PPE_MEMORYDOMAINS
+    if (p) {
+        const size_t sys = ::malloc_usable_size();
+        MEMORYDOMAIN_TRACKING_DATA(SystemMalloc).Deallocate(sys, sys);
+    }
+#endif
+
+    void* const result = ::aligned_realloc(/* NOT AVAILABLE ON LINUX */);
+    Assert(0 == s || !!result);
+
+#if USE_PPE_MEMORYDOMAINS
+    if (result) {
+        const size_t sys = ::malloc_usable_size(result);
+        MEMORYDOMAIN_TRACKING_DATA(SystemMalloc).Allocate(sys, sys);
+    }
+#endif
+
+    return result;
+#else
+    Unused(p, s, boundary);
+    AssertNotImplemented();
+#endif
+}
+//----------------------------------------------------------------------------
+void FLinuxPlatformMemory::SystemAlignedFree(void* p, size_t boundary) {
+    Assert(p);
+    Unused(boundary);
+
+#if USE_PPE_MEMORYDOMAINS
+    const size_t sys = ::malloc_usable_size(p);
+    MEMORYDOMAIN_TRACKING_DATA(SystemMalloc).Deallocate(sys, sys);
+#else
+    Unused(boundary);
+#endif
+
+    ::free(p);
+}
+//----------------------------------------------------------------------------
+#if !USE_PPE_FINAL_RELEASE
+size_t FLinuxPlatformMemory::SystemAlignedRegionSize(void* p, size_t boundary) {
+    Assert(p);
+    Unused(boundary);
+    return ::malloc_usable_size(p);
+}
+#endif
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

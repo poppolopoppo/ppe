@@ -5,7 +5,6 @@
 #include "Diagnostic/Logger_fwd.h"
 #include "IO/StaticString.h"
 #include "Meta/Enum.h"
-#include "Memory/RefPtr.h"
 #include "Time/Timestamp.h"
 
 #define USE_PPE_LOGCHECK_ENSURE (0) // trigger an ensure when PPE_LOG_CHECK() fails %_NOCOMMIT%
@@ -269,7 +268,7 @@ public:
 #define PPE_LOG(_CATEGORY, _LEVEL, ...) do { \
     _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
         EXPAND( _PPE_LOG_VALIDATEFORMAT(__VA_ARGS__) ) \
-        ::PPE::FLogger::LogFmtT( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
+        ::PPE::FLogger::LogFmtT( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), ## __VA_ARGS__ ); \
     } } while(0)
 
 #define PPE_LOG_ARGS(_CATEGORY, _LEVEL, _FORMAT, _FORMAT_ARG_LIST) do { \
@@ -279,22 +278,22 @@ public:
 
 #define PPE_SLOG(_CATEGORY, _LEVEL, ...) do { \
     _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
-        ::PPE::FLogger::LogStructured( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
+        ::PPE::FLogger::LogStructured( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), ## __VA_ARGS__ ); \
     } } while(0)
 
 #define PPE_LOG_DIRECT(_CATEGORY, _LEVEL, ...) do { \
     _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
-        ::PPE::FLogger::LogDirect( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
+        ::PPE::FLogger::LogDirect( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), ## __VA_ARGS__ ); \
     } } while(0)
 
 #define PPE_LOG_PRINTF(_CATEGORY, _LEVEL, ...) do { \
     _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
-        ::PPE::FLogger::Printf( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
+        ::PPE::FLogger::Printf( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), ## __VA_ARGS__ ); \
     } } while(0)
 
 #define PPE_LOG_RECORD(_CATEGORY, _LEVEL, ...) do { \
     _PPE_LOG_IF_SHOULDCOMPILE(_LEVEL) { \
-        ::PPE::FLogger::RecordArgsT( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), __VA_ARGS__ ); \
+        ::PPE::FLogger::RecordArgsT( _PPE_LOG_MAKESITE(_CATEGORY, _LEVEL), ## __VA_ARGS__ ); \
     } } while(0)
 
 #define PPE_LOG_FLUSH() \
@@ -356,7 +355,7 @@ public:
 #define PPE_LOG_CHECKVOID( _CATEGORY, ... ) PPE_LOG_CHECKEX( _CATEGORY, void(), __VA_ARGS__ )
 
 #define PPE_LOG_UNSUPPORTED_FUNCTION( _CATEGORY ) \
-    LOG( _CATEGORY, Warning, _PPE_LOG_STRING("unsupported: {0}, at {1}:{2}"), \
+    PPE_LOG( _CATEGORY, Warning, _PPE_LOG_STRING("unsupported: {0}, at {1}:{2}"), \
         ::PPE::MakeStringView(PPE_PRETTY_FUNCTION), \
         _PPE_LOG_STRING(__FILE__), \
         __LINE__ )

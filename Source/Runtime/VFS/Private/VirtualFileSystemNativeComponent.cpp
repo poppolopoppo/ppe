@@ -168,7 +168,6 @@ FVirtualFileSystemNativeComponent::FVirtualFileSystemNativeComponent(const FDirp
 ,   _target(std::move(target)) {
     Assert(!_target.empty());
     Verify(FPlatformFile::NormalizePath(_target));
-    Assert(FPlatformFile::PathSeparator != _target.back());
     _target += FPlatformFile::PathSeparator;
 }
 //----------------------------------------------------------------------------

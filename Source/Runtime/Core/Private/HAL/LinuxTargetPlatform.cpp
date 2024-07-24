@@ -23,7 +23,7 @@ FString FLinuxTargetPlatform::FullName() const {
 }
 //----------------------------------------------------------------------------
 FString FLinuxTargetPlatform::ShortName() const {
-    return "Win";
+    return "Linux";
 }
 //----------------------------------------------------------------------------
 bool FLinuxTargetPlatform::RequiresFeature(EPlatformFeature feature) const {

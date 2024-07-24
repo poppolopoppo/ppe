@@ -41,7 +41,7 @@ public:
     NODISCARD size_t size() const { return _size; }
 
     NODISCARD FORCE_INLINE bool Get(size_t index) const { return 0 != (Word_(index) & IndexFlag_(index)); }
-    NODISCARD FORCE_INLINE void Set(size_t index, bool value) { if (value) SetTrue(index); else SetFalse(index); }
+    FORCE_INLINE void Set(size_t index, bool value) { if (value) SetTrue(index); else SetFalse(index); }
 
     FORCE_INLINE void SetTrue(size_t index) { Word_(index) |= IndexFlag_(index); }
     FORCE_INLINE void SetFalse(size_t index) { Word_(index) &= ~IndexFlag_(index); }

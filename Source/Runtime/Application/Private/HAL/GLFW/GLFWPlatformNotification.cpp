@@ -17,18 +17,18 @@ LOG_CATEGORY(, Notification)
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void FGLFWPlatformNotification::ShowSystray() {
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 void FGLFWPlatformNotification::HideSystray() {
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 void FGLFWPlatformNotification::NotifySystray(ENotificationIcon icon, const FWStringView& title, const FWStringView& text) {
     Unused(icon);
     Unused(title);
     Unused(text);
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 size_t FGLFWPlatformNotification::AddSystrayCommand(
@@ -38,25 +38,25 @@ size_t FGLFWPlatformNotification::AddSystrayCommand(
     Unused(category);
     Unused(label);
     Unused(cmd);
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
     return INDEX_NONE;
 }
 //----------------------------------------------------------------------------
 bool FGLFWPlatformNotification::RemoveSystrayCommand(size_t index) {
     Unused(index);
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
     return false;
 }
 //----------------------------------------------------------------------------
 void FGLFWPlatformNotification::SetTaskbarState(ETaskbarState state) {
     Unused(state);
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 void FGLFWPlatformNotification::SetTaskbarProgress(size_t completed, size_t total) {
     Unused(completed);
     Unused(total);
-    LOG_UNSUPPORTED_FUNCTION(HAL);
+    PPE_LOG_UNSUPPORTED_FUNCTION(HAL);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

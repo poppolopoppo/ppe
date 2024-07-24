@@ -6,6 +6,8 @@
 #include "Memory/MemoryView.h"
 #include "IO/String_fwd.h"
 
+#include <variant> // std::monostate
+
 namespace PPE {
 namespace Opaq {
 //----------------------------------------------------------------------------

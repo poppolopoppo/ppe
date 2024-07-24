@@ -21,37 +21,51 @@ struct TRelativeView {
     using difference_type = intptr_t;
     using memory_view = TMemoryView<T>;
 
-    struct iterator { // custom iterator to work with offsets instead of pointers
-        using iterator_category = std::random_access_iterator_tag;
+    typedef typename std::random_access_iterator_tag iterator_category;
 
-        TPtrRef<const TRelativeView> owner;
-        u32 index{ 0 };
+    // custom iterator to work with offsets instead of pointers
+    struct iterator : std::iterator<iterator_category, value_type> {
+        using typename std::iterator<iterator_category, value_type>::iterator_category;
+        using typename std::iterator<iterator_category, value_type>::value_type;
+        using typename std::iterator<iterator_category, value_type>::pointer;
+        using typename std::iterator<iterator_category, value_type>::reference;
 
-        CONSTEXPR iterator& operator++() /* prefix */ { ++index; return *this; }
-        CONSTEXPR iterator& operator--() /* prefix */ { --index; return *this; }
+        TPtrRef<const TRelativeView> _owner;
+        u32 _index{ 0 };
 
-        CONSTEXPR iterator operator++(int) /* postfix */ { const iterator prev(*this); ++index; return prev; }
-        CONSTEXPR iterator operator--(int) /* postfix */ { const iterator prev(*this); --index; return prev; }
+        iterator() = default;
 
-        CONSTEXPR iterator& operator+=(difference_type n) { index += n; return *this; }
-        CONSTEXPR iterator& operator-=(difference_type n) { index -= n; return *this; }
+        CONSTEXPR iterator(TPtrRef<const TRelativeView> owner, u32 index)
+        :   _owner(owner)
+        ,   _index(index)
+        {}
 
-        NODISCARD CONSTEXPR iterator operator+(difference_type n) const { return iterator(owner, index + n); }
-        NODISCARD CONSTEXPR iterator operator-(difference_type n) const { return iterator(owner, index - n); }
+        CONSTEXPR iterator& operator++() /* prefix */ { ++_index; return *this; }
+        CONSTEXPR iterator& operator--() /* prefix */ { --_index; return *this; }
 
-        NODISCARD CONSTEXPR reference operator*() const { return owner->at(index); }
-        NODISCARD CONSTEXPR pointer operator->() const { return (&owner->at(index)); }
+        CONSTEXPR iterator operator++(int) /* postfix */ { const iterator prev(*this); ++_index; return prev; }
+        CONSTEXPR iterator operator--(int) /* postfix */ { const iterator prev(*this); --_index; return prev; }
 
-        NODISCARD CONSTEXPR reference operator[](difference_type n) const { return owner->at(index + n); }
+        CONSTEXPR iterator& operator+=(difference_type n) { _index += n; return *this; }
+        CONSTEXPR iterator& operator-=(difference_type n) { _index -= n; return *this; }
 
-        NODISCARD CONSTEXPR difference_type operator-(const iterator& other) const { return checked_cast<difference_type>(index - other.index); }
+        NODISCARD CONSTEXPR iterator operator+(difference_type n) const { return iterator(_owner, _index + n); }
+        NODISCARD CONSTEXPR iterator operator-(difference_type n) const { return iterator(_owner, _index - n); }
 
-        NODISCARD CONSTEXPR bool operator==(const iterator& other) const { Assert(owner.get() == other.owner.get()); return (index == other.index); }
+        NODISCARD CONSTEXPR reference operator*() const { return _owner->at(_index); }
+        NODISCARD CONSTEXPR pointer operator->() const { return (&_owner->at(_index)); }
+
+        NODISCARD CONSTEXPR reference operator[](difference_type n) const { return _owner->at(_index + n); }
+
+        NODISCARD CONSTEXPR difference_type operator-(const iterator& other) const { return checked_cast<difference_type>(_index - other._index); }
+
+        NODISCARD CONSTEXPR bool operator==(const iterator& other) const { Assert(_owner.get() == other._owner.get()); return (_index == other._index); }
         NODISCARD CONSTEXPR bool operator!=(const iterator& other) const { return not operator ==(other); }
 
-        NODISCARD CONSTEXPR bool operator< (const iterator& other) const { Assert(owner.get() == other.owner.get()); return (index < other.index); }
+        NODISCARD CONSTEXPR bool operator< (const iterator& other) const { Assert(_owner.get() == other._owner.get()); return (_index < other._index); }
         NODISCARD CONSTEXPR bool operator>=(const iterator& other) const { return not operator < (other); }
     };
+    STATIC_ASSERT(std::is_same_v<typename std::iterator_traits<iterator>::iterator_category, std::random_access_iterator_tag>);
 
     i32 Offset{ 0 };
     u32 Count{ 0 };
@@ -82,8 +96,8 @@ struct TRelativeView {
     NODISCARD operator memory_view () const { return MakeView(); }
     NODISCARD memory_view MakeView() const { return { data(), Count }; }
 
-    NODISCARD iterator begin() const { return { this, 0 }; }
-    NODISCARD iterator end() const { return { this, Count }; }
+    NODISCARD iterator begin() const { return iterator(this, 0); }
+    NODISCARD iterator end() const { return iterator(this, Count); }
 
     void reset() {
         Offset = 0;

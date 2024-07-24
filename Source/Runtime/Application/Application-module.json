@@ -14,8 +14,8 @@
 			]
 		},
 		"Linux": {
-			"CompilerOptions": [
-				"-lglfw3"
+			"Libraries": [
+				"glfw"
 			]
 		}
 	}

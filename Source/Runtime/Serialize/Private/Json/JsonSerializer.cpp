@@ -26,6 +26,7 @@
 #include "IO/Dirpath.h"
 #include "IO/Filename.h"
 #include "IO/Format.h"
+#include "IO/FormatHelpers.h"
 #include "IO/TextFormat.h"
 #include "IO/StreamProvider.h"
 #include "IO/StringBuilder.h"
@@ -34,8 +35,6 @@
 
 #include "TransactionLinker.h"
 #include "TransactionSaver.h"
-#include "External/glslang/glslang.zip/windows-x64-Release/include/glslang/SPIRV/SpvBuilder.h"
-#include "IO/FormatHelpers.h"
 
 namespace PPE {
 namespace Serialize {

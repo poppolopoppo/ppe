@@ -990,7 +990,7 @@ inline CONSTEXPR u324 FThreefy_4x32::threefry4x32_UniformI(counter_t* inout, u32
 }
 //----------------------------------------------------------------------------
 template <size_t _NRounds>
-inline CONSTEXPR float4 FThreefy_4x32::threefry4x32_Gaussian(counter_t* inout, float E, float V) NOEXCEPT {
+inline CONSTEXPR float4 FThreefy_4x32::threefry4x32_Gaussian(counter_t* inout, float e, float V) NOEXCEPT {
     Assert(inout);
 
     const counter_t ctr = *inout;
@@ -1021,10 +1021,10 @@ inline CONSTEXPR float4 FThreefy_4x32::threefry4x32_Gaussian(counter_t* inout, f
     }
 
     return float4{
-        FPlatformMaths::Cos(2.f * PI * r1) * FPlatformMaths::Sqrt(-2.f * FPlatformMaths::Loge(r2)) * V + E ,// return a pseudo sequence of normal distribution using two above uniform noise data
-        FPlatformMaths::Cos(2.f * PI * r3) * FPlatformMaths::Sqrt(-2.f * FPlatformMaths::Loge(r4)) * V + E ,// return a pseudo sequence of normal distribution using two above uniform noise data
-        FPlatformMaths::Cos(2.f * PI * r5) * FPlatformMaths::Sqrt(-2.f * FPlatformMaths::Loge(r6)) * V + E ,// return a pseudo sequence of normal distribution using two above uniform noise data
-        FPlatformMaths::Cos(2.f * PI * r7) * FPlatformMaths::Sqrt(-2.f * FPlatformMaths::Loge(r8)) * V + E };// return a pseudo sequence of normal distribution using two above uniform noise data
+        FPlatformMaths::Cos(2.f * PI * r1) * FPlatformMaths::Sqrt(-2.f * FPlatformMaths::Loge(r2)) * V + e ,// return a pseudo sequence of normal distribution using two above uniform noise data
+        FPlatformMaths::Cos(2.f * PI * r3) * FPlatformMaths::Sqrt(-2.f * FPlatformMaths::Loge(r4)) * V + e ,// return a pseudo sequence of normal distribution using two above uniform noise data
+        FPlatformMaths::Cos(2.f * PI * r5) * FPlatformMaths::Sqrt(-2.f * FPlatformMaths::Loge(r6)) * V + e ,// return a pseudo sequence of normal distribution using two above uniform noise data
+        FPlatformMaths::Cos(2.f * PI * r7) * FPlatformMaths::Sqrt(-2.f * FPlatformMaths::Loge(r8)) * V + e };// return a pseudo sequence of normal distribution using two above uniform noise data
 }
 //----------------------------------------------------------------------------
 template <size_t _NRounds>
@@ -1043,8 +1043,8 @@ inline CONSTEXPR u324 FThreefy_4x32::UniformI(u32 inf, u32 sup) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <size_t _NRounds>
-inline CONSTEXPR float4 FThreefy_4x32::Gaussian(float E, float V) NOEXCEPT {
-    return threefry4x32_Gaussian<_NRounds>(&State, E, V);
+inline CONSTEXPR float4 FThreefy_4x32::Gaussian(float e, float V) NOEXCEPT {
+    return threefry4x32_Gaussian<_NRounds>(&State, e, V);
 }
 //----------------------------------------------------------------------------
 inline CONSTEXPR u32 FThreefy_4x32::operator ()() NOEXCEPT {

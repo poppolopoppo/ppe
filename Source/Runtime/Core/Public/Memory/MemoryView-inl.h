@@ -7,10 +7,6 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR TMemoryView<T>::TMemoryView() NOEXCEPT
-:   _storage(nullptr), _size(0) {}
-//----------------------------------------------------------------------------
-template <typename T>
 CONSTEXPR TMemoryView<T>::TMemoryView(pointer storage, size_type size) NOEXCEPT
 :   _storage(storage), _size(size) {
     Assert(storage || 0 == size);

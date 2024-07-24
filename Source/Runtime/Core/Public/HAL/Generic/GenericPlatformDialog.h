@@ -25,7 +25,7 @@ public: // must be defined for every platform
         Information,
     };
 
-    enum EResult : size_t
+    enum EResult : u32
     {
         None = 0,
         Ok = 1 << 0,
@@ -41,17 +41,17 @@ public: // must be defined for every platform
     };
     ENUM_FLAGS_FRIEND(EResult);
 
-    enum EType
+    enum EType : u32
     {
-        kNotify = size_t(EResult::Ok),
-        kOkCancel = size_t(EResult::Ok) | size_t(EResult::Cancel),
-        kAbortRetryIgnore = size_t(EResult::Abort) | size_t(EResult::Retry) | size_t(EResult::Ignore),
-        kYesNoCancel = size_t(EResult::Yes) | size_t(EResult::No) | size_t(EResult::Cancel),
-        kYesNo = size_t(EResult::Yes) | size_t(EResult::No),
-        kRetryCancel = size_t(EResult::Retry) | size_t(EResult::Cancel),
-        kCancelTryContinue = size_t(EResult::Cancel) | size_t(EResult::TryAgain) | size_t(EResult::Continue),
-        kIgnoreOnceAlwaysAbort = size_t(EResult::Ignore) | size_t(EResult::IgnoreAlways) | size_t(EResult::Abort),
-        kIgnoreOnceAlwaysAbortRetry = size_t(kIgnoreOnceAlwaysAbort) | size_t(EResult::Retry),
+        kNotify = u32(EResult::Ok),
+        kOkCancel = u32(EResult::Ok) | u32(EResult::Cancel),
+        kAbortRetryIgnore = u32(EResult::Abort) | u32(EResult::Retry) | u32(EResult::Ignore),
+        kYesNoCancel = u32(EResult::Yes) | u32(EResult::No) | u32(EResult::Cancel),
+        kYesNo = u32(EResult::Yes) | u32(EResult::No),
+        kRetryCancel = u32(EResult::Retry) | u32(EResult::Cancel),
+        kCancelTryContinue = u32(EResult::Cancel) | u32(EResult::TryAgain) | u32(EResult::Continue),
+        kIgnoreOnceAlwaysAbort = u32(EResult::Ignore) | u32(EResult::IgnoreAlways) | u32(EResult::Abort),
+        kIgnoreOnceAlwaysAbortRetry = u32(kIgnoreOnceAlwaysAbort) | u32(EResult::Retry),
     };
 
     using FDialogHandle = uintptr_t;
@@ -79,6 +79,14 @@ public: // generic helpers
     static EResult IgnoreOnceAlwaysAbort(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Error);
     static EResult IgnoreOnceAlwaysAbortRetry(const FWStringView& text, const FWStringView& caption, EIcon iconType = EIcon::Error);
 };
+//----------------------------------------------------------------------------
+NODISCARD inline CONSTEXPR bool operator &(FGenericPlatformDialog::EType type, FGenericPlatformDialog::EResult result) {
+    return Meta::EnumHas(type, u32(result));
+}
+//----------------------------------------------------------------------------
+NODISCARD inline CONSTEXPR bool operator &(FGenericPlatformDialog::EResult result, FGenericPlatformDialog::EType type) {
+    return Meta::EnumHas(result, u32(type));
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

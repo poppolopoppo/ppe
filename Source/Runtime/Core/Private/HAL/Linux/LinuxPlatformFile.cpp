@@ -234,12 +234,18 @@ bool FLinuxPlatformFile::Stat(FStat* pstat, const char_type* filename) {
 
     pstat->UID = checked_cast<u16>(fs.st_uid);
     pstat->GID = checked_cast<u16>(fs.st_gid);
-    pstat->Link = checked_cast<u16>(fs.st_nlink);
-    pstat->Mode = checked_cast<u16>(fs.st_mode);
     pstat->SizeInBytes = checked_cast<u64>(fs.st_size);
     pstat->CreatedAt.SetValue(fs.st_ctime);
     pstat->LastAccess.SetValue(fs.st_atime);
     pstat->LastModified.SetValue(fs.st_mtime);
+
+    pstat->Mode = Zero;
+    if (fs.st_mode & S_IFCHR   ) pstat->Mode += FStat::Device;
+    if (fs.st_mode & S_IFDIR   ) pstat->Mode += FStat::Directory;
+    if (fs.st_mode & S_IFREG   ) pstat->Mode += FStat::RegularFile;
+    if (fs.st_mode & S_IREAD   ) pstat->Mode += FStat::Read;
+    if (fs.st_mode & S_IWRITE  ) pstat->Mode += FStat::Write;
+    if (fs.st_mode & S_IEXEC   ) pstat->Mode += FStat::Execute;
 
     return true;
 }

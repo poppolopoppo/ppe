@@ -8,7 +8,7 @@
 #include "HAL/TargetPlatform.h"
 
 #include "Diagnostic/Logger.h"
-#include "Input/GamepadState.h"
+#include "Input/Device/GamepadState.h"
 #include "Maths/PackingHelpers.h"
 
 namespace PPE {
