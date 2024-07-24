@@ -2,6 +2,7 @@
 
 # Build system configuration
 PPE.exe
+PPE
 
 # Ignore everything sitting in Output/**
 Output/**
