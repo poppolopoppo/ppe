@@ -24,11 +24,12 @@ struct TRelativeView {
     typedef typename std::random_access_iterator_tag iterator_category;
 
     // custom iterator to work with offsets instead of pointers
-    struct iterator : std::iterator<iterator_category, value_type> {
-        using typename std::iterator<iterator_category, value_type>::iterator_category;
-        using typename std::iterator<iterator_category, value_type>::value_type;
-        using typename std::iterator<iterator_category, value_type>::pointer;
-        using typename std::iterator<iterator_category, value_type>::reference;
+    struct iterator {
+        using iterator_category = typename TRelativeView<T>::iterator_category;
+        using value_type = typename TRelativeView<T>::value_type;
+        using pointer = typename TRelativeView<T>::pointer;
+        using reference = typename TRelativeView<T>::reference;
+        using difference_type = typename TRelativeView<T>::difference_type;
 
         TPtrRef<const TRelativeView> _owner;
         u32 _index{ 0 };

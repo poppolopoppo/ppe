@@ -4,6 +4,7 @@
 #include "Meta/TypeTraits.h"
 
 #include <cassert> // for early assertions
+#include <bit> // for std::bit_cast<>
 #include <new>
 
 #include "Assert.h"
