@@ -3,6 +3,7 @@
 #include "Diagnostic/CurrentProcess.h"
 
 #include "CoreModule.h"
+#include "Diagnostic/BuildVersion.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformDebug.h"
 #include "HAL/PlatformFile.h"
@@ -227,7 +228,7 @@ void FCurrentProcess::DumpProcessInfos(FTextWriter& oss) const {
             Format(oss, "   [{0:2}] '{1}'", i, _args[i]) << Eol;
     }
     {
-        const FBuildVersion& build = FCoreModule::StaticInfo.BuildVersion;
+        const FBuildVersion build = CurrentBuildVersion();
         Format(oss, "build version =") << Eol;
         Format(oss, "   branch = {0}", build.Branch) << Eol;
         Format(oss, "   revision = {0}", build.Revision) << Eol;
