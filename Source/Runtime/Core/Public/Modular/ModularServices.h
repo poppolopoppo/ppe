@@ -28,6 +28,16 @@ public:
     }
 
     template <typename _Interface>
+    NODISCARD operator _Interface& () const NOEXCEPT {
+        return Get<_Interface>();
+    }
+
+    template <typename _Interface>
+    NODISCARD operator Meta::TOptionalReference<_Interface> () const NOEXCEPT {
+        return GetIFP<_Interface>();
+    }
+
+    template <typename _Interface>
     NODISCARD _Interface& Get() const NOEXCEPT {
         auto* const p = GetIFP<_Interface>();
         AssertRelease(p);
@@ -46,7 +56,7 @@ public:
 #if USE_PPE_LOGGER
         LogServiceAdd_(Meta::type_info<_Interface>.name.MakeView(), Meta::type_info<_Service>.name.MakeView());
 #endif
-        _services.Add<_Interface>(std::forward<_Service>(rservice));
+        _services.Add<_Interface>(std::move(rservice));
     }
 
     template <typename _Interface>
