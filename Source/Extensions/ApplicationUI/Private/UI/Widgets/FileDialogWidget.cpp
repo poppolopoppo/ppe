@@ -5,6 +5,12 @@
 #include "UI/ImGui.h"
 #include "imgui-internal.h"
 
+#include "UI/UIService.h"
+#include "Input/Action/InputListener.h"
+#include "Input/InputService.h"
+
+#include "Application/ApplicationService.h"
+
 #include "Color/Color.h"
 #include "Diagnostic/Logger.h"
 #include "HAL/PlatformFile.h"
@@ -15,6 +21,9 @@
 #include "IO/Format.h"
 #include "IO/FormatHelpers.h"
 #include "IO/StringBuilder.h"
+#include "Modular/ModularDomain.h"
+
+#include "VFSModule.h"
 #include "VirtualFileSystem_fwd.h"
 
 namespace PPE {
@@ -667,11 +676,20 @@ bool FFileDialogWidget::Show() {
     if (not ImGui::Begin(*Title, &WindowVisible, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar))
         return false;
 
-    if (InitialDirectory.empty())
-        ChangeDirectory(L"Data://Fonts/Icons");
+    InnerDraw();
 
-    if (NeedRefresh)
+    return true;
+}
+//----------------------------------------------------------------------------
+void FFileDialogWidget::InnerDraw() {
+    if (InitialDirectory.empty()) {
+        const auto& vfs = FVFSModule::Get(FModularDomain::Get());
+        ChangeDirectory(FDirpath(vfs.DataDir()));
+    }
+
+    if (NeedRefresh) {
         RefreshVisibleEntries();
+    }
 
     if (ImGui::BeginMenuBar()) {
         DEFERRED{ ImGui::EndMenuBar(); };
@@ -805,13 +823,84 @@ bool FFileDialogWidget::Show() {
         ImGui::AlignTextToFramePadding();
         ImGui::Text("%u element%s", VisibleEntries.size(), VisibleEntries.size() < 2 ? "" : "s");
     }
-
-    return false;
 }
 //----------------------------------------------------------------------------
-bool FOpenFileDialogWidget::Show() {
-    return FFileDialogWidget::Show();
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+bool FOpenFileDialogWidget::PopupModal(const FModalEvent& onResult) {
+    // Always center this window when appearing
+    const ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(500, 440), ImGuiCond_FirstUseEver);
+
+    if (not ImGui::BeginPopupModal(*Title, &WindowVisible, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoScrollbar))
+        return false;
+    DEFERRED{ ImGui::EndPopup(); };
+
+    FFileDialogWidget::InnerDraw();
+
+    ImGui::SameLine();
+
+    ImGui::BeginDisabled(SelectedEntries.empty());
+    if (ImGui::Button("OK", {120, 0})) {
+        ImGui::CloseCurrentPopup();
+
+        VECTORINSITU(UI, FEntry, 3) selection;
+        selection.reserve(SelectedEntries.size());
+        for (u32 index : SelectedEntries)
+            selection.push_back(VisibleEntries[index]);
+
+        onResult(true, FSelection{selection});
+    }
+    ImGui::EndDisabled();
+
+    ImGui::SetItemDefaultFocus();
+    ImGui::SameLine();
+
+    if (ImGui::Button("Cancel", {120, 0})) {
+        ImGui::CloseCurrentPopup();
+
+        onResult(false, FSelection{});
+    }
+
+    return true;
 }
+//----------------------------------------------------------------------------
+void FOpenFileDialogWidget::OpenModal(IApplicationService& app, FStringView title, const FDirectory& path, FModalEvent&& onResult) {
+    const EInputListenerEvent originalInputMode = app.Services().Get<IUIService>().ToggleFocus(
+        app.Services(),
+        EInputListenerEvent::Consumed );
+
+    TRefPtr widget = NEW_REF(UI, FOpenFileDialogWidget);
+    widget->Title.assign(title);
+    widget->InitialDirectory = path;
+    widget->Multiselect = false;
+
+    widget->_onResult = std::move(onResult);
+    app.OnApplicationTick().Emplace([widget, originalInputMode](const IApplicationService& app, FTimespan dt) -> bool {
+        Unused(app, dt);
+
+        ImGui::OpenPopup(*widget->Title, ImGuiPopupFlags_NoOpenOverExistingPopup);
+
+        bool bKeepAlive = true;
+        widget->PopupModal([widget{widget.get()}, &bKeepAlive](bool validated, const FSelection& selection) {
+            widget->_onResult(validated, selection);
+            bKeepAlive = false;
+        });
+
+        if (not ImGui::IsPopupOpen(*widget->Title))
+            bKeepAlive = false;
+
+        if (not bKeepAlive)
+            app.Services().Get<IUIService>().ToggleFocus(
+                app.Services(),
+                originalInputMode );
+
+        return bKeepAlive;
+    });
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 bool FSaveFileDialogWidget::Show() {
     return FFileDialogWidget::Show();

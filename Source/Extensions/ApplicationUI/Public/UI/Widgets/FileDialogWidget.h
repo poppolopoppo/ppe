@@ -2,12 +2,15 @@
 
 #include "UI/ImGui.h"
 
+#include "Container/Enumerable.h"
 #include "Container/FlatSet.h"
 #include "Container/Vector.h"
 #include "IO/Filename.h"
 #include "IO/Dirpath.h"
 #include "IO/String.h"
+#include "Memory/RefPtr.h"
 #include "Time/Timestamp.h"
+#include "Misc/Function.h"
 #include "Misc/Event.h"
 
 namespace PPE {
@@ -84,17 +87,30 @@ public:
 
     NODISCARD PPE_APPLICATIONUI_API bool Show();
 
+    void InnerDraw();
+
     PPE_APPLICATIONUI_API void ChangeDirectory(const FDirpath& in);
     PPE_APPLICATIONUI_API bool GoBackInHistory();
     PPE_APPLICATIONUI_API bool GoForwardInHistory();
     PPE_APPLICATIONUI_API void RefreshVisibleEntries();
 };
 //----------------------------------------------------------------------------
-class FOpenFileDialogWidget : public FFileDialogWidget {
+class FOpenFileDialogWidget : public FRefCountable, public FFileDialogWidget {
 public:
     FOpenFileDialogWidget() = default;
 
-    NODISCARD PPE_APPLICATIONUI_API bool Show();
+    using typename FFileDialogWidget::FEntry;
+    using FSelection = TEnumerable<const FEntry>;
+    using FModalEvent = TFunction<void(bool validated, const FSelection& selection)>;
+
+    using FFileDialogWidget::Show;
+
+    PPE_APPLICATIONUI_API bool PopupModal(const FModalEvent& onResult);
+
+    PPE_APPLICATIONUI_API static void OpenModal(IApplicationService& app, FStringView title, const FDirectory& path, FModalEvent&& onResult);
+
+private:
+    FModalEvent _onResult;
 };
 //----------------------------------------------------------------------------
 class FSaveFileDialogWidget : public FFileDialogWidget {
