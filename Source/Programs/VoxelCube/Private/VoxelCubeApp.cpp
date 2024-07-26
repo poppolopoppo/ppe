@@ -1,4 +1,4 @@
-﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
+// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 #include "VoxelCubeApp.h"
 
@@ -72,7 +72,7 @@ void FVoxelCubeApp::Start() {
     Input().AddInputMapping(_cameraInputs, -1);
 
     _OnApplicationTick.Emplace([frameRateOverlay(MakeUnique<Application::FFrameRateOverlayWidget>(this))](const IApplicationService&, FTimespan) {
-        Unused(frameRateOverlay->Show());
+        return frameRateOverlay->Show();
     });
 
     marquee.Print("Reloading assets content..."_view);

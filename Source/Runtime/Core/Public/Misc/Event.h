@@ -148,7 +148,14 @@ public:
     void Invoke(_Args... args) {
         const auto delegatesRW = _delegates.LockExclusive();
         delegatesRW->RemoveIf([&](FDelegate& fn) -> bool {
-            fn(std::forward<_Args>(args)...);
+            using result_t = decltype(fn(std::forward<_Args>(args)...));
+            IF_CONSTEXPR(std::is_integral_v<result_t>) {
+                if (not fn(std::forward<_Args>(args)...))
+                    return true;
+            }
+            else {
+                fn(std::forward<_Args>(args)...);
+            }
             return fn.IsFireAndForget();
         });
     }

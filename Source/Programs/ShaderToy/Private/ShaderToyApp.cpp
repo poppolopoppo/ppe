@@ -503,11 +503,11 @@ void FShaderToyApp::StartInterafaceWidgets_() {
 #endif
 
     _OnApplicationTick.Emplace([consoleWidget(MakeUnique<Application::FConsoleWidget>())](const IApplicationService&, FTimespan) {
-        Unused(consoleWidget->Show());
+        return consoleWidget->Show();
     });
 
     _OnApplicationTick.Emplace([frameRateOverlay(MakeUnique<Application::FFrameRateOverlayWidget>(this))](const IApplicationService&, FTimespan) {
-        Unused(frameRateOverlay->Show());
+        return frameRateOverlay->Show();
     });
 }
 //----------------------------------------------------------------------------

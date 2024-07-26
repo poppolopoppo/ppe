@@ -47,7 +47,7 @@ public: // for all services
     THREADSAFE_EVENT(OnApplicationBeginTick, FApplicationEvent);
     THREADSAFE_EVENT(OnApplicationEndTick, FApplicationEvent);
 
-    using FApplicationTickEvent = TFunction<void(const IApplicationService&, FTimespan dt)>;
+    using FApplicationTickEvent = TFunction<bool(const IApplicationService&, FTimespan dt)>;
 
     THREADSAFE_EVENT(OnApplicationTick, FApplicationTickEvent);
 };
