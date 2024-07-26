@@ -360,10 +360,25 @@ public:
     explicit TAllocatedRingBuffer(size_t capacity = _DefaultCapacity)
     :   parent_type(allocator_traits::template AllocateT<T>(static_cast<_Allocator&>(*this), capacity))
     {}
+
     TAllocatedRingBuffer(size_t capacity, allocator_type&& rallocator)
     :   allocator_type(std::move(rallocator))
     ,   parent_type(allocator_traits::template AllocateT<T>(static_cast<_Allocator&>(*this), capacity))
     {}
+
+    TAllocatedRingBuffer(std::initializer_list<T> init, size_t capacity = _DefaultCapacity)
+    :   TAllocatedRingBuffer(capacity) {
+        Assert(parent_type::capacity() >= init.size());
+        for (const T& it : init)
+            parent_type::push_back(it);
+    }
+
+    TAllocatedRingBuffer(std::initializer_list<T> init, size_t capacity, allocator_type&& rallocator)
+    :   TAllocatedRingBuffer(capacity, std::move(rallocator)) {
+        Assert(parent_type::capacity() >= init.size());
+        for (const T& it : init)
+            parent_type::push_back(it);
+    }
 
     ~TAllocatedRingBuffer() {
         allocator_traits::template DeallocateT<T>(static_cast<_Allocator&>(*this), parent_type::data(), parent_type::capacity());
