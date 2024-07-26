@@ -16,11 +16,29 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+enum class EInputListenerEvent : u8 {
+    // listener do not trigger any mapping
+    Unhandled           = 0,
+    // listener trigger at least one mapping, but did not consume the input
+    Handled,
+    // listener trigger at least one mapping, and input was consumed (message won't be handled by any other listener)
+    Consumed,
+
+    Unknown             = Unhandled,
+};
+//----------------------------------------------------------------------------
 class FInputListener : public FRefCountable {
 public:
     FInputListener() = default;
 
-    NODISCARD PPE_APPLICATION_API bool HasMapping(const PInputMapping& mapping) const NOEXCEPT;
+    NODISCARD PPE_APPLICATION_API bool HasMapping(const PCInputMapping& mapping) const NOEXCEPT;
+
+    NODISCARD EInputListenerEvent Mode() const {
+        return _data.LockShared()->Mode;
+    }
+    void SetMode(EInputListenerEvent value) {
+        _data.LockExclusive()->Mode = value;
+    }
 
     PPE_APPLICATION_API void AddMapping(const PInputMapping& mapping, i32 priority);
     PPE_APPLICATION_API bool RemoveMapping(const PInputMapping& mapping);
@@ -29,18 +47,23 @@ public:
     NODISCARD PPE_APPLICATION_API bool IsKeyHandledByAction(const FInputKey& key) const NOEXCEPT;
     NODISCARD PPE_APPLICATION_API FInputValue ActionValue(const PInputAction& action) const NOEXCEPT;
 
-    PPE_APPLICATION_API bool InputKey(const FInputMessage& message);
+    PPE_APPLICATION_API EInputListenerEvent InputKey(const FInputMessage& message);
 
 private:
     struct FInputMappingWPriority {
         PInputMapping InputMapping;
         i32 Priority{ 0 };
 
-        bool operator ==(const FInputMappingWPriority& other) const {
+        NODISCARD bool operator ==(const PCInputMapping& mapping) const NOEXCEPT {
+            return (InputMapping == mapping);
+        }
+        NODISCARD bool operator ==(const FInputMappingWPriority& other) const NOEXCEPT {
             return (InputMapping == other.InputMapping);
         }
-        bool operator < (const FInputMappingWPriority& other) const {
-            return (Priority > other.Priority);
+        NODISCARD bool operator < (const FInputMappingWPriority& other) const NOEXCEPT {
+            return (Priority == other.Priority
+                ? InputMapping.get() < other.InputMapping.get()
+                : Priority > other.Priority);
         }
     };
 
@@ -56,10 +79,11 @@ private:
         FInputMappingsWPriority Mappings;
         FInputActionInstances ActionInstances;
         MULTIMAP(Input, FInputKey, FInputBinding) Keys;
+        EInputListenerEvent Mode{ EInputListenerEvent::Consumed };
     };
 
     static void RebuildKeyMappings_(FInternalData_& data);
-    static const FInputActionKeyMapping& KeyMapping_(const FInternalData_& data, FInputBinding binding);
+    NODISCARD static const FInputActionKeyMapping& KeyMapping_(const FInternalData_& data, FInputBinding binding);
 
     TThreadSafe<FInternalData_, EThreadBarrier::DataRaceCheck> _data;
 };

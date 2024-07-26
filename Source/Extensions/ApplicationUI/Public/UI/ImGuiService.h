@@ -10,6 +10,7 @@
 #include "RHI/ResourceId.h"
 
 #include "Meta/Optional.h"
+#include "Misc/Event.h"
 #include "Misc/EventHandle.h"
 #include "Modular/ModularDomain.h"
 
@@ -38,8 +39,9 @@ public:
     void OnWindowResized(const IRHIService& rhi, const FRHISurfaceCreateInfo& surface);
 
 public: // IUIService
+    using IUIService::EInputMode;
 
-    virtual void ToggleFocus(IInputService& inputs, bool selected, int priority = 0) override;
+    virtual EInputMode ToggleFocus(IInputService& inputs, EInputMode mode) override;
 
 private:
     void InitializeImGuiStyle_();
@@ -56,6 +58,7 @@ private:
     NODISCARD RHI::PPipelineResources FindOrAddTextureResources_(RHI::IFrameGraph& fg, const RHI::FImageID& texture);
     void GCUnusedTextureResources_(RHI::IFrameGraph& fg);
 
+    FInputListener _inputListener;
     PInputMapping _inputMapping;
     PInputAction _inputSink;
 

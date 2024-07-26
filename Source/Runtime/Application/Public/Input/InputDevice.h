@@ -12,7 +12,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-enum EInputMessageEvent : u8 {
+enum class EInputMessageEvent : u8 {
     Pressed             = 0,
     Released,
     Repeat,
@@ -28,11 +28,11 @@ struct FInputMessage {
     FInputDeviceID DeviceId;
     EInputMessageEvent Event;
 
-    NODISCARD bool IsPressed() const { return (Event == Pressed); }
-    NODISCARD bool IsReleased() const { return (Event == Released); }
-    NODISCARD bool IsRepeat() const { return (Event == Repeat); }
-    NODISCARD bool IsDoubleClick() const { return (Event == DoubleClick); }
-    NODISCARD bool IsAxis() const { return (Event == Axis); }
+    NODISCARD bool IsPressed() const { return (Event == EInputMessageEvent::Pressed); }
+    NODISCARD bool IsReleased() const { return (Event == EInputMessageEvent::Released); }
+    NODISCARD bool IsRepeat() const { return (Event == EInputMessageEvent::Repeat); }
+    NODISCARD bool IsDoubleClick() const { return (Event == EInputMessageEvent::DoubleClick); }
+    NODISCARD bool IsAxis() const { return (Event == EInputMessageEvent::Axis); }
 
     NODISCARD FInputDigital Digital() const { return std::get<FInputDigital>(Value); }
     NODISCARD FInputAxis1D Axis1D() const { return std::get<FInputAxis1D>(Value); }

@@ -10,11 +10,8 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-bool FInputListener::HasMapping(const PInputMapping& mapping) const NOEXCEPT {
-    return (!!_data.LockShared()->Mappings.GetIFP(FInputMappingWPriority {
-        .InputMapping = mapping,
-        .Priority = 0 // priority is ignored by FInputMappingWPriority::operator ==
-    }));
+bool FInputListener::HasMapping(const PCInputMapping& mapping) const NOEXCEPT {
+    return Contains(_data.LockShared()->Mappings.Vector(), mapping);
 }
 //----------------------------------------------------------------------------
 void FInputListener::AddMapping(const PInputMapping& mapping, i32 priority) {
@@ -31,11 +28,10 @@ void FInputListener::AddMapping(const PInputMapping& mapping, i32 priority) {
 bool FInputListener::RemoveMapping(const PInputMapping& mapping) {
     const auto exclusiveData = _data.LockExclusive();
 
-    if (exclusiveData->Mappings.Erase(FInputMappingWPriority{
-        .InputMapping = mapping,
-        .Priority = 0 // priority is ignored by FInputMappingWPriority::operator ==
-    })) {
+    if (const size_t index = IndexOf(exclusiveData->Mappings.Vector(), mapping); index != INDEX_NONE) {
+        exclusiveData->Mappings.Erase(exclusiveData->Mappings.begin() + index);
         RebuildKeyMappings_(*exclusiveData);
+
         return true;
     }
 
@@ -57,13 +53,13 @@ FInputValue FInputListener::ActionValue(const PInputAction& action) const NOEXCE
     return _data.LockShared()->ActionInstances[action].ActionValue();
 }
 //----------------------------------------------------------------------------
-bool FInputListener::InputKey(const FInputMessage& message) {
+EInputListenerEvent FInputListener::InputKey(const FInputMessage& message) {
     AssertMessage_NoAssume("AnyKey is not supported as input", message.Key != EInputKey::AnyKey);
     const auto exclusiveData = _data.LockExclusive();
 
     const auto range = exclusiveData->Keys.equal_range(message.Key);
     if (range.first == range.second)
-        return false;
+        return EInputListenerEvent::Unhandled;
 
     forrange(it, range.first, range.second) {
         const FInputActionKeyMapping& keyMapping = KeyMapping_(*exclusiveData, it->second);
@@ -77,7 +73,7 @@ bool FInputListener::InputKey(const FInputMessage& message) {
         keyMapping._Modifiers(message.DeltaTime, instance._value);
 
         switch (message.Event) {
-        case Pressed:
+        case EInputMessageEvent::Pressed:
             instance._triggerState = EInputTriggerEvent::Started;
             instance._elapsedTriggeredTime = message.DeltaTime;
 
@@ -85,7 +81,7 @@ bool FInputListener::InputKey(const FInputMessage& message) {
             instance._sourceAction->_OnStarted(instance, message.Key);
             break;
 
-        case Repeat:
+        case EInputMessageEvent::Repeat:
             instance._triggerState = EInputTriggerEvent::Triggered;
             instance._elapsedTriggeredTime += message.DeltaTime;
 
@@ -93,7 +89,7 @@ bool FInputListener::InputKey(const FInputMessage& message) {
             instance._sourceAction->_OnTriggered(instance, message.Key);
             break;
 
-        case Released:
+        case EInputMessageEvent::Released:
             instance._triggerState = EInputTriggerEvent::Completed;
 
             keyMapping._OnCompleted(instance, message.Key);
@@ -102,8 +98,9 @@ bool FInputListener::InputKey(const FInputMessage& message) {
             instance._elapsedTriggeredTime = 0;
             break;
 
-        case DoubleClick: FALLTHROUGH();
-        case Axis:
+        case EInputMessageEvent::DoubleClick:
+            FALLTHROUGH();
+        case EInputMessageEvent::Axis:
             instance._triggerState = EInputTriggerEvent::Triggered;
             instance._elapsedTriggeredTime = message.DeltaTime;
 
@@ -113,7 +110,7 @@ bool FInputListener::InputKey(const FInputMessage& message) {
         }
     }
 
-    return true;
+    return exclusiveData->Mode;
 }
 //----------------------------------------------------------------------------
 const FInputActionKeyMapping& FInputListener::KeyMapping_(const FInternalData_& data, FInputBinding binding) {

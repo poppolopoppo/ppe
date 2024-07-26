@@ -34,11 +34,11 @@ void FKeyboardDevice::PostInputMessages(FTimespan dt, TAppendable<FInputMessage>
     };
 
     for (const EKeyboardKey key : _state.KeysDown())
-        postKeyMessage(key, Pressed);
+        postKeyMessage(key, EInputMessageEvent::Pressed);
     for (const EKeyboardKey key : _state.KeysPressed())
-        postKeyMessage(key, Repeat);
+        postKeyMessage(key, EInputMessageEvent::Repeat);
     for (const EKeyboardKey key : _state.KeysUp())
-        postKeyMessage(key, Released);
+        postKeyMessage(key, EInputMessageEvent::Released);
 }
 //----------------------------------------------------------------------------
 void FKeyboardDevice::FlushInputKeys() {

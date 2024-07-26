@@ -34,11 +34,11 @@ void FMouseDevice::PostInputMessages(FTimespan dt, TAppendable<FInputMessage> me
     };
 
     for (const EMouseButton button : _state.ButtonsDown())
-        postKeyMessage(button, Pressed);
+        postKeyMessage(button, EInputMessageEvent::Pressed);
     for (const EMouseButton button : _state.ButtonsPressed())
-        postKeyMessage(button, Repeat);
+        postKeyMessage(button, EInputMessageEvent::Repeat);
     for (const EMouseButton button : _state.ButtonsUp())
-        postKeyMessage(button, Released);
+        postKeyMessage(button, EInputMessageEvent::Released);
 
     if (_state.HasMoved()) {
         messages.push_back(FInputMessage{
@@ -49,7 +49,7 @@ void FMouseDevice::PostInputMessages(FTimespan dt, TAppendable<FInputMessage> me
                 },
                 .DeltaTime = dt,
                 .DeviceId = _deviceId,
-                .Event = Axis,
+                .Event = EInputMessageEvent::Axis,
             });
     }
     if (const float delta = _state.WheelX().Delta(); Abs(delta) > SmallEpsilon) {
@@ -61,7 +61,7 @@ void FMouseDevice::PostInputMessages(FTimespan dt, TAppendable<FInputMessage> me
                 },
                 .DeltaTime = dt,
                 .DeviceId = _deviceId,
-                .Event = Axis,
+                .Event = EInputMessageEvent::Axis,
             });
     }
     if (const float delta = _state.WheelY().Delta(); Abs(delta) > SmallEpsilon) {
@@ -73,7 +73,7 @@ void FMouseDevice::PostInputMessages(FTimespan dt, TAppendable<FInputMessage> me
                 },
                 .DeltaTime = dt,
                 .DeviceId = _deviceId,
-                .Event = Axis,
+                .Event = EInputMessageEvent::Axis,
             });
     }
 }

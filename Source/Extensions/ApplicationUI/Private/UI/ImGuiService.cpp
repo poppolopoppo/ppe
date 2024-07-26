@@ -247,7 +247,8 @@ static void ImGuiMemFree_(void* ptr, void* user_data) {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FImGuiService::FImGuiService()
-:   _inputMapping(NEW_REF(ImGui, FInputMapping, "ImGui"))
+:   _inputListener()
+,   _inputMapping(NEW_REF(ImGui, FInputMapping, "ImGui"))
 ,   _inputSink(NEW_REF(ImGui, FInputAction, "ImGuiSink"))
 ,   _clearColor(0.45f, 0.55f, 0.60f, 1.00f) {
     IMGUI_CHECKVERSION();
@@ -268,6 +269,8 @@ FImGuiService::FImGuiService()
     _inputSink->OnCompleted().Emplace<&PostInputMessageToImGui>();
 
     _inputMapping->MapKey(_inputSink, EInputKey::AnyKey);
+
+    _inputListener.AddMapping(_inputMapping, 0);
 }
 //----------------------------------------------------------------------------
 FImGuiService::~FImGuiService() {
@@ -276,9 +279,9 @@ FImGuiService::~FImGuiService() {
 }
 //----------------------------------------------------------------------------
 bool FImGuiService::Construct(IApplicationService& app, IInputService& input, IRHIService& rhi) {
-    Assert(not _onInputUpdate);
-    Assert(not _onRenderFrame);
-    Assert(_textureResources.empty());
+    Assert_NoAssume(not _onInputUpdate);
+    Assert_NoAssume(not _onRenderFrame);
+    Assert_NoAssume(_textureResources.empty());
 
     PPE_LOG(UI, Info, "creating ImGui service");
 
@@ -319,14 +322,14 @@ bool FImGuiService::Construct(IApplicationService& app, IInputService& input, IR
             static_cast<float>(swapchain.Dimensions.y) };
 
         // setup text and icons fonts (last will become the default)
-        ImGui::GImGuiService_MonospaceFont = LoadImGuiFonts_(L"Data://Fonts/PragmataPro.ttf", 13.f);
+        ImGui::GImGuiService_MonospaceFont = LoadImGuiFonts_(L"Data:/Fonts/PragmataPro.ttf", 13.f);
         PPE_LOG_CHECK(UI, ImGui::GImGuiService_MonospaceFont != nullptr);
 
-        ImGui::GImGuiService_LargeFont = LoadImGuiFonts_(L"Data://Fonts/FiraSansExtraCondensed-Bold.ttf", 19.f);
+        ImGui::GImGuiService_LargeFont = LoadImGuiFonts_(L"Data:/Fonts/FiraSansExtraCondensed-Bold.ttf", 19.f);
         PPE_LOG_CHECK(UI, ImGui::GImGuiService_LargeFont != nullptr);
 
-        ImGui::GImGuiService_SmallFont = LoadImGuiFonts_(L"Data://Fonts/FiraSansExtraCondensed-Regular.ttf", 17.f);
-        //ImGui::GImGuiService_SmallFont = LoadImGuiFonts_(L"Data://Fonts/BarlowCondensed-Regular.ttf", 17.f);
+        ImGui::GImGuiService_SmallFont = LoadImGuiFonts_(L"Data:/Fonts/FiraSansExtraCondensed-Regular.ttf", 17.f);
+        //ImGui::GImGuiService_SmallFont = LoadImGuiFonts_(L"Data:/Fonts/BarlowCondensed-Regular.ttf", 17.f);
         PPE_LOG_CHECK(UI, ImGui::GImGuiService_SmallFont != nullptr);
     }
 
@@ -352,14 +355,16 @@ bool FImGuiService::Construct(IApplicationService& app, IInputService& input, IR
     _onRenderFrame = rhi.OnRenderFrame().Bind<&FImGuiService::OnRenderFrame>(this);
     _onWindowResized = rhi.OnWindowResized().Bind<&FImGuiService::OnWindowResized>(this);
 
-    input.AddInputMapping(_inputMapping, 0); // input key sink for ImGui
+    _inputListener.SetMode(EInputMode::Handled);
+    input.PushInputListener(&_inputListener);
+
     return true;
 }
 //----------------------------------------------------------------------------
 void FImGuiService::TearDown(IApplicationService& app, IInputService& input, IRHIService& rhi) {
     PPE_LOG(UI, Info, "destroying imgui service");
 
-    Verify(input.RemoveInputMapping(_inputMapping));
+    input.PopInputListener(&_inputListener);
 
     app.OnApplicationBeginTick().Remove(_onBeginTick);
     app.OnApplicationEndTick().Remove(_onEndTick);
@@ -400,9 +405,11 @@ void FImGuiService::OnBeginTick(const IApplicationService& app) {
     ImGui::NewFrame();
 }
 //----------------------------------------------------------------------------
-void FImGuiService::OnEndTick(const IApplicationService& ) {
-    if (not _wasFrameRendered)
-        ImGui::EndFrame();
+void FImGuiService::OnEndTick(const IApplicationService& app) {
+    if (_wasFrameRendered)
+        return;
+
+    ImGui::EndFrame();
 }
 //----------------------------------------------------------------------------
 void FImGuiService::OnUpdateInput(const IInputService& input, FTimespan dt) {
@@ -459,11 +466,8 @@ void FImGuiService::OnWindowResized(const IRHIService&, const FRHISurfaceCreateI
         static_cast<float>(surface.Dimensions.y) };
 }
 //----------------------------------------------------------------------------
-void FImGuiService::ToggleFocus(IInputService& inputs, bool selected, int priority/* = 0 */) {
-    if (selected)
-        inputs.AddInputMapping(_inputMapping, priority);
-    else
-        inputs.RemoveInputMapping(_inputMapping);
+auto FImGuiService::ToggleFocus(IInputService& inputs, EInputMode mode) -> EInputMode {
+    return inputs.ToggleFocus(&_inputListener, mode);
 }
 //----------------------------------------------------------------------------
 RHI::PFrameTask FImGuiService::PrepareRenderCommand_(

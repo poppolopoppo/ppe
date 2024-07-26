@@ -31,13 +31,14 @@ class FGamepadState;
 class FMouseState;
 //----------------------------------------------------------------------------
 PPE_STRONGLYTYPED_NUMERIC_DEF(u32, FInputDeviceID);
-enum EInputMessageEvent : u8;
+enum class EInputMessageEvent : u8;
 class IInputDevice;
 struct FInputKey;
 struct FInputValue;
 struct FInputMessage;
 //----------------------------------------------------------------------------
 enum class EInputActionFlags : u8;
+enum class EInputListenerEvent : u8;
 enum class EInputValueType : u8;
 class FInputActionInstance;
 struct FInputActionKeyMapping;

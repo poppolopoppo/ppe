@@ -41,9 +41,13 @@ public:
     virtual void FlushInputKeys() = 0;
     virtual void SupportedInputKeys(TAppendable<Application::FInputKey> keys) const NOEXCEPT = 0;
 
-    virtual void AddInputListener(const Application::SInputListener& listener) = 0;
-    virtual bool RemoveInputListener(const Application::SInputListener& listener) = 0;
+    NODISCARD virtual bool HasInputListener(const Application::SCInputListener& listener) const NOEXCEPT = 0;
+    virtual void PushInputListener(const Application::SInputListener& listener) = 0;
+    virtual bool PopInputListener(const Application::SInputListener& listener) = 0;
 
+    virtual Application::EInputListenerEvent ToggleFocus(const Application::SInputListener& listener, Application::EInputListenerEvent mode) = 0;
+
+    NODISCARD virtual bool HasInputMapping(const Application::PCInputMapping& mapping) const NOEXCEPT = 0;
     virtual void AddInputMapping(const Application::PInputMapping& mapping, i32 priority) = 0;
     virtual bool RemoveInputMapping(const Application::PInputMapping& mapping) = 0;
 

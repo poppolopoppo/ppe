@@ -51,11 +51,11 @@ void FGamepadDevice::PostInputMessages(FTimespan dt, TAppendable<FInputMessage> 
     };
 
     for (const EGamepadButton button : _state.ButtonsDown())
-        postKeyMessage(button, Pressed);
+        postKeyMessage(button, EInputMessageEvent::Pressed);
     for (const EGamepadButton button : _state.ButtonsPressed())
-        postKeyMessage(button, Repeat);
+        postKeyMessage(button, EInputMessageEvent::Repeat);
     for (const EGamepadButton button : _state.ButtonsUp())
-        postKeyMessage(button, Released);
+        postKeyMessage(button, EInputMessageEvent::Released);
 
     if (const float2 value = _state.LeftStick(); AnyGreater(Abs(value), float2::Zero)) {
         messages.push_back(FInputMessage{
@@ -66,7 +66,7 @@ void FGamepadDevice::PostInputMessages(FTimespan dt, TAppendable<FInputMessage> 
                 },
                 .DeltaTime = dt,
                 .DeviceId = _deviceId,
-                .Event = Axis,
+                .Event = EInputMessageEvent::Axis,
             });
     }
     if (const float2 value = _state.RightStick(); AnyGreater(Abs(value), float2::Zero)) {
@@ -78,7 +78,7 @@ void FGamepadDevice::PostInputMessages(FTimespan dt, TAppendable<FInputMessage> 
                 },
                 .DeltaTime = dt,
                 .DeviceId = _deviceId,
-                .Event = Axis,
+                .Event = EInputMessageEvent::Axis,
             });
     }
     if (const float value = _state.LeftTrigger(); Abs(value) > 0) {
@@ -90,7 +90,7 @@ void FGamepadDevice::PostInputMessages(FTimespan dt, TAppendable<FInputMessage> 
                 },
                 .DeltaTime = dt,
                 .DeviceId = _deviceId,
-                .Event = Axis,
+                .Event = EInputMessageEvent::Axis,
             });
     }
     if (const float value = _state.RightTrigger(); Abs(value) > SmallEpsilon) {
@@ -102,7 +102,7 @@ void FGamepadDevice::PostInputMessages(FTimespan dt, TAppendable<FInputMessage> 
                 },
                 .DeltaTime = dt,
                 .DeviceId = _deviceId,
-                .Event = Axis,
+                .Event = EInputMessageEvent::Axis,
             });
     }
 }

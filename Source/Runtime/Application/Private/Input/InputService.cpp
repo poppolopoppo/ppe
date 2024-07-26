@@ -11,6 +11,7 @@
 #include "HAL/PlatformWindow.h"
 
 #include "Container/Array.h"
+#include "Container/Vector.h"
 #include "Time/Timeline.h"
 #include "Thread/ReadWriteLock.h"
 
@@ -43,11 +44,15 @@ public:
     virtual void FlushInputKeys() override final;
     virtual void SupportedInputKeys(TAppendable<FInputKey> keys) const NOEXCEPT override final;
 
-    virtual void AddInputListener(const SInputListener& listener) override final;
-    virtual bool RemoveInputListener(const SInputListener& listener) override final;
+    NODISCARD virtual bool HasInputListener(const SCInputListener& listener) const NOEXCEPT override final;
+    virtual void PushInputListener(const SInputListener& listener) override final;
+    virtual bool PopInputListener(const SInputListener& listener) override final;
 
-    virtual void AddInputMapping(const Application::PInputMapping& mapping, i32 priority) override final;
-    virtual bool RemoveInputMapping(const Application::PInputMapping& mapping) override final;
+    virtual EInputListenerEvent ToggleFocus(const SInputListener& listener, EInputListenerEvent mode) override final;
+
+    NODISCARD virtual bool HasInputMapping(const PCInputMapping& mapping) const NOEXCEPT override final;
+    virtual void AddInputMapping(const PInputMapping& mapping, i32 priority) override final;
+    virtual bool RemoveInputMapping(const PInputMapping& mapping) override final;
 
 private:
     FReadWriteLock _barrierRW;
@@ -61,7 +66,7 @@ private:
             return MakeStaticArray<FGamepadDevice>(idx...);
         });
 
-    VECTORINSITU(Input, SInputListener, 1) _listeners = { &_mainListener };
+    VECTORINSITU(Input, SInputListener, 3) _listeners = { &_mainListener };
 
     FPlatformWindow* _focusedWindow{ nullptr };
     FPlatformWindow* _nextFocusedWindow{ nullptr };
@@ -170,9 +175,11 @@ void FDefaultInputService_::PostInputMessages(const FTimeline& time) {
     for (const FInputMessage& message : frameMessages) {
         bool unhandled = true;
         for (const SInputListener& listener : _listeners) {
-            if (listener->InputKey(message)) {
+            const EInputListenerEvent result = listener->InputKey(message);
+            if (result != EInputListenerEvent::Unhandled) {
                 unhandled = false;
-                break;
+                if (result == EInputListenerEvent::Consumed)
+                    break;
             }
         }
 
@@ -208,27 +215,75 @@ void FDefaultInputService_::SupportedInputKeys(TAppendable<FInputKey> keys) cons
         gamepad.SupportedInputKeys(keys);
 }
 //----------------------------------------------------------------------------
-void FDefaultInputService_::AddInputListener(const SInputListener& listener) {
+bool FDefaultInputService_::HasInputListener(const SCInputListener& listener) const NOEXCEPT {
+    Assert(listener);
+    READSCOPELOCK(_barrierRW);
+
+    return Contains(_listeners, listener);
+}
+//----------------------------------------------------------------------------
+void FDefaultInputService_::PushInputListener(const SInputListener& listener) {
     Assert(listener);
     WRITESCOPELOCK(_barrierRW);
 
-    Add_AssertUnique(_listeners, listener);
+    // check if listener already registered
+    const auto it = std::find(_listeners.begin(), _listeners.end(), listener);
+    if (_listeners.end() != it) {
+        // early-out if listener is already on top
+        if (_listeners.front() == listener)
+            return;
+
+        _listeners.erase(it);
+    }
+
+    // put new listener on top of input stack
+    _listeners.insert(_listeners.begin(), listener);
 }
 //----------------------------------------------------------------------------
-bool FDefaultInputService_::RemoveInputListener(const SInputListener& listener) {
+bool FDefaultInputService_::PopInputListener(const SInputListener& listener) {
     Assert(listener);
     WRITESCOPELOCK(_barrierRW);
 
     return Remove_ReturnIfExists(_listeners, listener);
 }
 //----------------------------------------------------------------------------
-void FDefaultInputService_::AddInputMapping(const Application::PInputMapping& mapping, i32 priority) {
+EInputListenerEvent FDefaultInputService_::ToggleFocus(const SInputListener& listener, EInputListenerEvent mode) {
+    EInputListenerEvent previousMode = listener->Mode();
+    if (not HasInputListener(listener))
+        previousMode = EInputListenerEvent::Unhandled;
+
+    if (mode != previousMode) {
+        listener->SetMode(mode);
+
+        switch (mode) {
+        case EInputListenerEvent::Handled:
+            FALLTHROUGH();
+        case EInputListenerEvent::Consumed:
+            PushInputListener(listener);
+            break;
+        case EInputListenerEvent::Unhandled:
+            PopInputListener(listener);
+            break;
+        }
+    }
+
+    return previousMode;
+}
+//----------------------------------------------------------------------------
+bool FDefaultInputService_::HasInputMapping(const PCInputMapping& mapping) const NOEXCEPT {
+    Assert(mapping);
+    READSCOPELOCK(_barrierRW);
+
+    return _mainListener.HasMapping(mapping);
+}
+//----------------------------------------------------------------------------
+void FDefaultInputService_::AddInputMapping(const PInputMapping& mapping, i32 priority) {
     WRITESCOPELOCK(_barrierRW);
 
     _mainListener.AddMapping(mapping, priority);
 }
 //----------------------------------------------------------------------------
-bool FDefaultInputService_::RemoveInputMapping(const Application::PInputMapping& mapping) {
+bool FDefaultInputService_::RemoveInputMapping(const PInputMapping& mapping) {
     WRITESCOPELOCK(_barrierRW);
 
     return _mainListener.RemoveMapping(mapping);
