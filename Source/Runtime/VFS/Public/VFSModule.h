@@ -22,6 +22,24 @@ public:
 
     virtual void DutyCycle(FModularDomain& domain) override;
     virtual void ReleaseMemory(FModularDomain& domain) NOEXCEPT override;
+
+public:
+    static FVFSModule& Get(const FModularDomain& domain);
+
+    // project data directory
+    NODISCARD FMountingPoint DataDir() const;
+    // current process executable directory
+    NODISCARD FMountingPoint ProcessDir() const;
+    // saved directory
+    NODISCARD FMountingPoint SavedDir() const;
+    // operating system path
+    NODISCARD FMountingPoint SystemDir() const;
+    // system temporary path
+    NODISCARD FMountingPoint TmpDir() const;
+    // user profile path
+    NODISCARD FMountingPoint UserDir() const;
+    // current process working directory
+    NODISCARD FMountingPoint WorkingDir() const;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

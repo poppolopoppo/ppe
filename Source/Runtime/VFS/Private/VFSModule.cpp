@@ -2,6 +2,7 @@
 
 #include "VFSModule.h"
 
+#include "Modular/ModularDomain.h"
 #include "Modular/ModuleRegistration.h"
 
 #include "VirtualFileSystem.h"
@@ -31,9 +32,48 @@ const FModuleInfo FVFSModule::StaticInfo{
         CurrentBuildVersion() )
 };
 //----------------------------------------------------------------------------
+FVFSModule& FVFSModule::Get(const FModularDomain& domain) {
+    return domain.ModuleChecked<FVFSModule>(STRINGIZE(BUILD_TARGET_NAME));
+}
+//----------------------------------------------------------------------------
 FVFSModule::FVFSModule() NOEXCEPT
 :   IModuleInterface(StaticInfo)
 {}
+//----------------------------------------------------------------------------
+FMountingPoint FVFSModule::DataDir() const {
+    ONE_TIME_INITIALIZE(const FMountingPoint, gMountingPoint, L"Data:"_view);
+    return gMountingPoint;
+}
+//----------------------------------------------------------------------------
+FMountingPoint FVFSModule::ProcessDir() const {
+    ONE_TIME_INITIALIZE(const FMountingPoint, gMountingPoint, L"Process:"_view);
+    return gMountingPoint;
+}
+//----------------------------------------------------------------------------
+FMountingPoint FVFSModule::SavedDir() const {
+    ONE_TIME_INITIALIZE(const FMountingPoint, gMountingPoint, L"Saved:"_view);
+    return gMountingPoint;
+}
+//----------------------------------------------------------------------------
+FMountingPoint FVFSModule::SystemDir() const {
+    ONE_TIME_INITIALIZE(const FMountingPoint, gMountingPoint, L"System:"_view);
+    return gMountingPoint;
+}
+//----------------------------------------------------------------------------
+FMountingPoint FVFSModule::TmpDir() const {
+    ONE_TIME_INITIALIZE(const FMountingPoint, gMountingPoint, L"Tmp:"_view);
+    return gMountingPoint;
+}
+//----------------------------------------------------------------------------
+FMountingPoint FVFSModule::UserDir() const {
+    ONE_TIME_INITIALIZE(const FMountingPoint, gMountingPoint, L"User:"_view);
+    return gMountingPoint;
+}
+//----------------------------------------------------------------------------
+FMountingPoint FVFSModule::WorkingDir() const {
+    ONE_TIME_INITIALIZE(const FMountingPoint, gMountingPoint, L"Working:"_view);
+    return gMountingPoint;
+}
 //----------------------------------------------------------------------------
 void FVFSModule::Start(FModularDomain& domain) {
     IModuleInterface::Start(domain);
@@ -43,39 +83,13 @@ void FVFSModule::Start(FModularDomain& domain) {
     auto& vfs = FVirtualFileSystem::Get();
     auto& process = FCurrentProcess::Get();
 
-    // /!\ MOUNTING POINT ORDER OF DECLARATION MATTERS !!!
-    // - FVirtualFileSystemTrie is managing a trie with a global sort index and
-    //   first level of the trie division will dictate whole space partitioning
-    // - The ideal order will split the range in 2 event parts each time:
-    //   [1] Data:
-    //   [3] Process:
-    //   [5] Saved:
-    //   [0] System:
-    //   [4] Tmp:
-    //   [6] User:
-    //   [2] Working:
-    // - See FFileSystemTrie::GetOrCreate_() for concrete code
-
-    // data directory
-    vfs.MountNativePath(MakeStringView(L"Data:/"), process.DataPath());
-
-    // current process executable directory
-    vfs.MountNativePath(L"Process:/", process.Directory());
-
-    // saved directory
-    vfs.MountNativePath(MakeStringView(L"Saved:/"), process.SavedPath());
-
-    // system path
-    vfs.MountNativePath(L"System:/", FPlatformFile::SystemDirectory());
-
-    // system temporary path
-    vfs.MountNativePath(L"Tmp:/", FPlatformFile::TemporaryDirectory());
-
-    // user profile path
-    vfs.MountNativePath(L"User:/", FPlatformFile::UserDirectory());
-
-    // current process working directory
-    vfs.MountNativePath(L"Working:/", FPlatformFile::WorkingDirectory());
+    vfs.MountNativePath(FDirpath(DataDir()), process.DataPath());
+    vfs.MountNativePath(FDirpath(ProcessDir()), process.Directory());
+    vfs.MountNativePath(FDirpath(SavedDir()), process.SavedPath());
+    vfs.MountNativePath(FDirpath(SystemDir()), FPlatformFile::SystemDirectory());
+    vfs.MountNativePath(FDirpath(TmpDir()), FPlatformFile::TemporaryDirectory());
+    vfs.MountNativePath(FDirpath(UserDir()), FPlatformFile::UserDirectory());
+    vfs.MountNativePath(FDirpath(WorkingDir()), FPlatformFile::WorkingDirectory());
 }
 //----------------------------------------------------------------------------
 void FVFSModule::Shutdown(FModularDomain& domain) {
