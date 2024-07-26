@@ -1,4 +1,4 @@
-// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
+﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 #include "VoxelCubeApp.h"
 
@@ -11,6 +11,7 @@
 
 #include "UI/ImGui.h"
 #include "UI/Widgets/FrameRateOverlayWidget.h"
+#include "UI/Widgets/FileDialogWidget.h"
 
 #include "Input/InputService.h"
 #include "Window/MainWindow.h"
@@ -43,7 +44,8 @@ struct FGaussianSplatNode3 {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FVoxelCubeApp::FVoxelCubeApp(FModularDomain& domain)
-:   parent_type(domain, "Tools/VoxelCube", true) {
+:   parent_type(domain, "Tools/VoxelCube", true)
+,   _meshSourceFile(L"Data:/Models/dragon_5k.ply") {
 
     FRHIModule& rhiModule = FRHIModule::Get(domain);
     rhiModule.SetStagingBufferSize(8_MiB);
@@ -109,12 +111,47 @@ void FVoxelCubeApp::Render(RHI::IFrameGraph& fg, FTimespan dt) {
     _viewport->Update(dt, _freeLookCamera);
 
     if (ImGui::BeginMainMenuBar()) {
-        if (ImGui::MenuItem("Reload"))
-            ReloadContent_(fg);
+        ImGui::Text(ICON_FK_CUBE);
 
-        ImGui::MenuItem("Recompute normals", nullptr, &_bRecomputeNormals);
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem(ICON_CI_FILE " Open...")) {
+                Application::FOpenFileDialogWidget::OpenModal(*this, "Load Mesh"_view, L"Data:/Models",
+                    [this](bool validated, const Application::FOpenFileDialogWidget::FSelection& selection) {
+                        if (validated) {
+                            _bNeedToReload = true;
+                            selection.Each([](void* userData, const Application::FOpenFileDialogWidget::FEntry& it) -> bool {
+                                static_cast<FVoxelCubeApp*>(userData)->_meshSourceFile = it.Name;
+                                return false;
+                            }, this);
+                        }
+                    });
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::MenuItem(ICON_KI_RELOAD " Reload")) {
+                _bNeedToReload = true;
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("View")) {
+            bool bDrawTriangles = not _bDrawPoints;
+            ImGui::MenuItem(ICON_CI_CLOUD " Points", nullptr, &_bDrawPoints, not _bDrawPoints);
+            if (ImGui::MenuItem(ICON_CI_TRIANGLE_UP " Triangles", nullptr, &bDrawTriangles, not bDrawTriangles))
+                _bDrawPoints = not bDrawTriangles;
+            ImGui::Separator();
+            ImGui::MenuItem(ICON_CI_SCREEN_NORMAL " Recompute normals", nullptr, &_bRecomputeNormals);
+
+            ImGui::EndMenu();
+        }
 
         ImGui::EndMainMenuBar();
+    }
+
+    if (_bNeedToReload) {
+        _bNeedToReload = not ReloadContent_(fg);
     }
 
     FUniformData uniformData;
@@ -155,8 +192,7 @@ void FVoxelCubeApp::Render(RHI::IFrameGraph& fg, FTimespan dt) {
     FSubmitRenderPass submit{ renderPass };
     submit.DependsOn(tUpdateUniform);
 
-    static bool bDrawPoints = true;
-    if (bDrawPoints) {
+    if (_bDrawPoints) {
         cmd->Task(renderPass, FDrawVertices{}
             .SetPipeline(*_graphicsPpln)
             .SetTopology(EPrimitiveTopology::Point)
@@ -225,7 +261,7 @@ bool FVoxelCubeApp::CreateMeshBuffers_(RHI::IFrameGraph& fg) {
     settings.RecomputeTangentSpace = ContentPipeline::ERecomputeMode::Remove;
     settings.RemoveUnusedVertices = false;
 
-    ContentPipeline::FMeshBuilderResult result = meshBuilder.ImportGenericMesh(L"Data:/Models/statue_mid.ply", settings);
+    ContentPipeline::FMeshBuilderResult result = meshBuilder.ImportGenericMesh(_meshSourceFile, settings);
     PPE_LOG_CHECK(VoxelCube, result.has_value());
 
     _genericMesh = std::move(result.value());

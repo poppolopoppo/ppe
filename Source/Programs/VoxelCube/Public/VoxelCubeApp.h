@@ -71,7 +71,10 @@ private:
     Application::PInputMapping _cameraInputs;
 
     ContentPipeline::FGenericMesh _genericMesh;
+    FFilename _meshSourceFile;
 
+    bool _bDrawPoints{ false };
+    bool _bNeedToReload{ false };
     bool _bRecomputeNormals{ false };
 };
 //----------------------------------------------------------------------------
