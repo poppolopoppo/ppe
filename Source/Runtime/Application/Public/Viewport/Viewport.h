@@ -30,7 +30,7 @@ public:
     NODISCARD const PMainWindow& Window() const { return _data.LockShared()->Window; }
 
     NODISCARD const FRectangle2i& ClientRect() const { return _data.LockShared()->ClientRect; }
-    void SetClientRect(const FRectangle2i& value) { _data.LockExclusive()->ClientRect = value; }
+    PPE_APPLICATION_API void SetClientRect(const FRectangle2i& value);
 
     NODISCARD EViewportFlags Flags() const { return _data.LockShared()->Flags; }
     void SetFlags(EViewportFlags value) { _data.LockExclusive()->Flags = value; }

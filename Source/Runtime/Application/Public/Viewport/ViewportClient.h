@@ -3,6 +3,7 @@
 #include "Application_fwd.h"
 
 #include "Viewport/Viewport.h"
+#include "Window/WindowListener.h"
 
 #include "Maths/ScalarRectangle.h"
 #include "Meta/Optional.h"
@@ -15,7 +16,7 @@ namespace Application {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class EMPTY_BASES FViewportClient : public FRefCountable {
+class EMPTY_BASES FViewportClient : public FRefCountable, private IWindowListener {
 public:
     FViewportClient() = default;
     PPE_APPLICATION_API virtual ~FViewportClient();
@@ -67,9 +68,13 @@ public:
 
     PPE_APPLICATION_API virtual void Update(FTimespan dt, ICameraController& controller, Meta::TOptional<FRectangle2i> clientRect = std::nullopt);
 
+private: // IWindowListener interface
+    virtual void OnWindowResize(const uint2& size) NOEXCEPT override;
+
 private:
     PCamera _camera;
     FViewport _viewport;
+    Meta::TOptional<uint2> _windowResized;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

@@ -22,10 +22,13 @@ FViewportClient::FViewportClient(
     Meta::TOptional<FRectangle2i> clientRect,
     EViewportFlags viewportFlags) NOEXCEPT
 :   _camera(camera)
-,   _viewport(window, clientRect.value_or(FRectangle2i{int2(window->Dimensions())}), viewportFlags)
-{}
+,   _viewport(window, clientRect.value_or(FRectangle2i{int2(window->Dimensions())}), viewportFlags) {
+    _viewport.Window()->AddListener(this);
+}
 //----------------------------------------------------------------------------
-FViewportClient::~FViewportClient() = default;
+FViewportClient::~FViewportClient() {
+    _viewport.Window()->RemoveListener(this);
+}
 //----------------------------------------------------------------------------
 float3 FViewportClient::WorldToClip(const float3& worldPos) const NOEXCEPT {
     return TransformPosition3(_camera->ViewProjection(), worldPos);
@@ -91,13 +94,25 @@ FRay FViewportClient::ScreenToWorld(const int2& screenPos) const NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void FViewportClient::Update(FTimespan dt, ICameraController& controller, Meta::TOptional<FRectangle2i> clientRect) {
+    // update client rect if window was resized
+    if (_windowResized.has_value()) {
+        _viewport.SetClientRect(FRectangle2i(checked_cast<int>(*_windowResized)));
+        _windowResized.reset();
+    }
+
+    // update client rect if client specified one
+    if (clientRect.has_value()) {
+        _viewport.SetClientRect(*clientRect);
+    }
+
     FCameraModel model = _camera->CurrentState().Model;
     controller.UpdateCamera(dt, model);
 
-    if (clientRect.has_value())
-        _viewport.SetClientRect(*clientRect);
-
     _camera->UpdateModel(model, FRectangle2f{ float2(_viewport.ClientRect().Extents()) });
+}
+//----------------------------------------------------------------------------
+void FViewportClient::OnWindowResize(const uint2& size) NOEXCEPT {
+    _windowResized = size;
 }
 //----------------------------------------------------------------------------
 const PMainWindow& FViewportClient::Window() const NOEXCEPT {

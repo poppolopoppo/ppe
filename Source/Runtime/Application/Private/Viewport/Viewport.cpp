@@ -20,6 +20,15 @@ FViewport::FViewport(const PMainWindow& window, const FRectangle2i& clientRect, 
     }}
 {}
 //----------------------------------------------------------------------------
+void FViewport::SetClientRect(const FRectangle2i& value) {
+    const auto exclusiveData = _data.LockExclusive();
+    Assert(exclusiveData->Window);
+    Assert_NoAssume(FRectangle2i{exclusiveData->ClientRect.Extents()}.Contains(value.Min()));
+    Assert_NoAssume(FRectangle2i{exclusiveData->ClientRect.Extents()}.Contains(value.Max()));
+
+    exclusiveData->ClientRect = value;
+}
+//----------------------------------------------------------------------------
 FRectangle2f FViewport::WindowClip() const NOEXCEPT {
     const auto sharedData = _data.LockShared();
     Assert(sharedData->Window);
