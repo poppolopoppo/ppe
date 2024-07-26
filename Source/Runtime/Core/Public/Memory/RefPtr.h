@@ -176,21 +176,21 @@ public:
     TRefPtr(const TRefPtr& other);
     TRefPtr& operator =(const TRefPtr& other);
 
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     TRefPtr(const TRefPtr<U>& other);
 
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     TRefPtr& operator =(const TRefPtr<U>& other);
 
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     TRefPtr(TRefPtr<U>&& rvalue) NOEXCEPT;
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     TRefPtr& operator =(TRefPtr<U>&& rvalue) NOEXCEPT;
 
     NODISCARD FORCE_INLINE T* get() const { return _ptr; }
     void reset(T* ptr = nullptr) NOEXCEPT;
 
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     NODISCARD U *as() const { return checked_cast<U*>(_ptr); }
 
     T& operator *() const { Assert(_ptr); return *_ptr; }
@@ -199,7 +199,7 @@ public:
     NODISCARD bool valid() const { return (!!_ptr); }
     PPE_FAKEBOOL_OPERATOR_DECL() { return valid(); }
 
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     void Swap(TRefPtr<U>& other) NOEXCEPT;
 
     friend void swap(TRefPtr& lhs, TRefPtr& rhs) NOEXCEPT {
@@ -228,42 +228,42 @@ NODISCARD TRefPtr<_Dst> checked_cast(const TRefPtr<_Src>& refptr) NOEXCEPT {
     return { refptr.template as<_Dst>() };
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+template <typename _Lhs, typename _Rhs, class _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
 NODISCARD bool operator ==(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) NOEXCEPT {
-    return (lhs.get() == rhs.get());
+    return (static_cast<_CommonPtr>(lhs.get()) == static_cast<_CommonPtr>(rhs.get()) );
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+template <typename _Lhs, typename _Rhs, class _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
 NODISCARD bool operator !=(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) NOEXCEPT {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+template <typename _Lhs, typename _Rhs, class _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
 NODISCARD bool operator ==(const TRefPtr<_Lhs>& lhs, _Rhs* rhs) NOEXCEPT {
-    return (lhs.get() == rhs);
+    return (static_cast<_CommonPtr>(lhs.get()) == static_cast<_CommonPtr>(rhs) );
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+template <typename _Lhs, typename _Rhs, class _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
 NODISCARD bool operator !=(const TRefPtr<_Lhs>& lhs, _Rhs* rhs) NOEXCEPT {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+template <typename _Lhs, typename _Rhs, class _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
 NODISCARD bool operator ==(_Lhs* lhs, const TRefPtr<_Rhs>& rhs) NOEXCEPT {
-    return (lhs == rhs.get());
+    return (static_cast<_CommonPtr>(lhs) == static_cast<_CommonPtr>(rhs.get()) );
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+template <typename _Lhs, typename _Rhs, class _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
 NODISCARD bool operator !=(_Lhs* lhs, const TRefPtr<_Rhs>& rhs) NOEXCEPT {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+template <typename _Lhs, typename _Rhs, class _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
 NODISCARD bool operator <(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) {
-    return (lhs.get() < static_cast<const _Lhs*>(rhs.get()) );
+    return (static_cast<_CommonPtr>(lhs.get()) < static_cast<_CommonPtr>(rhs.get()) );
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs, class = Meta::TEnableIf<Meta::has_common_type_v<_Lhs*, _Rhs*>> >
+template <typename _Lhs, typename _Rhs, class _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
 NODISCARD bool operator >=(const TRefPtr<_Lhs>& lhs, const TRefPtr<_Rhs>& rhs) {
     return !operator <(lhs, rhs);
 }
@@ -288,19 +288,19 @@ public:
     TSafePtr(const TSafePtr& other) NOEXCEPT;
     TSafePtr& operator =(const TSafePtr& other) NOEXCEPT;
 
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     TSafePtr(const TSafePtr<U>& other) NOEXCEPT;
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     TSafePtr& operator =(const TSafePtr<U>& other) NOEXCEPT;
 
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     TSafePtr(TSafePtr<U>&& rvalue) NOEXCEPT;
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     TSafePtr& operator =(TSafePtr<U>&& rvalue) NOEXCEPT;
 
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     TSafePtr(const TRefPtr<U>& refptr) NOEXCEPT : TSafePtr(refptr.get()) {}
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     TSafePtr& operator =(const TRefPtr<U>&& refptr) NOEXCEPT { return operator =(refptr.get()); }
 
     NODISCARD T* get() const NOEXCEPT { return _ptr; }
@@ -321,7 +321,7 @@ public:
 
     operator T* () const NOEXCEPT { return _ptr; }
 
-    template <typename U>
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     void Swap(TSafePtr<U>& other) NOEXCEPT;
 
     friend void swap(TSafePtr& lhs, TSafePtr& rhs) NOEXCEPT {
@@ -360,19 +360,19 @@ NODISCARD TSafePtr<_Dst> checked_cast(const TSafePtr<_Src>& safeptr) NOEXCEPT {
     return { safeptr.template as<_Dst>() };
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
+template <typename _Lhs, typename _Rhs, typename _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
 NODISCARD bool operator ==(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) NOEXCEPT {
-    return (lhs.get() == reinterpret_cast<_Lhs*>(rhs.get()) );
+    return (static_cast<_CommonPtr>(lhs.get()) == static_cast<_CommonPtr>(rhs.get()) );
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
+template <typename _Lhs, typename _Rhs, typename _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
 NODISCARD bool operator !=(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) NOEXCEPT {
     return !operator ==(lhs, rhs);
 }
 //----------------------------------------------------------------------------
-template <typename _Lhs, typename _Rhs>
+template <typename _Lhs, typename _Rhs, typename _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
 NODISCARD bool operator <(const TSafePtr<_Lhs>& lhs, const TSafePtr<_Rhs>& rhs) {
-    return (lhs.get() < reinterpret_cast<_Lhs*>(rhs.get()) );
+    return (static_cast<_CommonPtr>(lhs.get()) < static_cast<_CommonPtr>(rhs.get()) );
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs>

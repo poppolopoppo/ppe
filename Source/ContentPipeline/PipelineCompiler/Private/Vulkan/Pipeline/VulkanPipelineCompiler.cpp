@@ -1088,7 +1088,7 @@ bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader
                     &shaderId ));
                 Assert(VK_NULL_HANDLE != shaderId);
 
-                PShaderModule shaderModule;
+                PVulkanDebuggableShaderModule shaderModule;
                 switch (Meta::EnumAnd(sh->first, EShaderLangFormat::_DebugModeMask)) {
 #if USE_PPE_RHIDEBUG
                 case EShaderLangFormat::EnableDebugTrace:
@@ -1096,22 +1096,21 @@ bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader
                 case EShaderLangFormat::EnableTimeMap:
                 {
                     auto* const debuggableSpirv = checked_cast<const FVulkanDebuggableShaderSPIRV*>(spirvData.get());
-                    TRefPtr<FVulkanDebuggableShaderModule> vulkanShaderModule = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, shaderId, *debuggableSpirv);
-                    PPE_LOG_CHECK(RHI, vulkanShaderModule->Construct(_device ARGS_IF_RHIDEBUG(debuggableSpirv->DebugName().MakeView(), debuggableSpirv->DebugInfo())));
-                    shaderModule = std::move(vulkanShaderModule);
+                    shaderModule = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, shaderId, *debuggableSpirv);
+                    PPE_LOG_CHECK(RHI, shaderModule->Construct(_device ARGS_IF_RHIDEBUG(debuggableSpirv->DebugName().MakeView(), debuggableSpirv->DebugInfo())));
                     break;
                 }
 #endif
                 case EShaderLangFormat::Unknown:
                 default:
                 {
-                    TRefPtr<FVulkanDebuggableShaderModule> vulkanShaderModule = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, shaderId, spirvData);
-                    PPE_LOG_CHECK(RHI, vulkanShaderModule->Construct(_device ARGS_IF_RHIDEBUG(spirvData->DebugName().MakeView(), PVulkanSharedDebugUtils{})));
-                    shaderModule = std::move(vulkanShaderModule);
+                    shaderModule = NEW_REF(PipelineCompiler, FVulkanDebuggableShaderModule, shaderId, spirvData);
+                    PPE_LOG_CHECK(RHI, shaderModule->Construct(_device ARGS_IF_RHIDEBUG(spirvData->DebugName().MakeView(), PVulkanSharedDebugUtils{})));
                     break;
                 }
                 }
 
+                Assert(!!shaderModule);
                 it = shaderCache.insert({ spirvData, std::move(shaderModule) }).first;
             }
 

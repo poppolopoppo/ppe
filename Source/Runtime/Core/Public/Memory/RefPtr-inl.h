@@ -226,14 +226,14 @@ auto TRefPtr<T>::operator =(const TRefPtr& other) -> TRefPtr& {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, class>
 TRefPtr<T>::TRefPtr(const TRefPtr<U>& other)
 :   _ptr(checked_cast<T *>(other.get())) {
     IncRefCountIFP(_ptr);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, class>
 auto TRefPtr<T>::operator =(const TRefPtr<U>& other) -> TRefPtr& {
     T* const otherT = checked_cast<T*>(other.get());
     if (otherT != _ptr) {
@@ -246,14 +246,14 @@ auto TRefPtr<T>::operator =(const TRefPtr<U>& other) -> TRefPtr& {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, class>
 TRefPtr<T>::TRefPtr(TRefPtr<U>&& rvalue) NOEXCEPT
 :   _ptr(checked_cast<T*>(rvalue.get())) {
     rvalue._ptr = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, class>
 auto TRefPtr<T>::operator =(TRefPtr<U>&& rvalue) NOEXCEPT -> TRefPtr& {
     DecRefCountIFP(_ptr);
     _ptr = checked_cast<T *>(rvalue.get());
@@ -272,7 +272,7 @@ void TRefPtr<T>::reset(T* ptr/* = nullptr */) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, class>
 void TRefPtr<T>::Swap(TRefPtr<U>& other) NOEXCEPT {
     using std::swap;
     swap(other._ptr, _ptr);
@@ -349,7 +349,7 @@ auto TSafePtr<T>::operator =(const TSafePtr& other) NOEXCEPT -> TSafePtr& {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, class>
 TSafePtr<T>::TSafePtr(const TSafePtr<U>& other) NOEXCEPT
 :   _ptr(checked_cast<T *>(other.get())) {
 #if USE_PPE_SAFEPTR
@@ -358,7 +358,7 @@ TSafePtr<T>::TSafePtr(const TSafePtr<U>& other) NOEXCEPT
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, class>
 auto TSafePtr<T>::operator =(const TSafePtr<U>& other) NOEXCEPT -> TSafePtr& {
 #if USE_PPE_SAFEPTR
     T* const otherT = checked_cast<T*>(other.get());
@@ -375,14 +375,14 @@ auto TSafePtr<T>::operator =(const TSafePtr<U>& other) NOEXCEPT -> TSafePtr& {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, class>
 TSafePtr<T>::TSafePtr(TSafePtr<U>&& rvalue) NOEXCEPT
 :   _ptr(checked_cast<T *>(rvalue.get())) {
     rvalue._ptr = nullptr;
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, class>
 auto TSafePtr<T>::operator =(TSafePtr<U>&& rvalue) NOEXCEPT -> TSafePtr& {
 #if USE_PPE_SAFEPTR
     DecRefCountIFP(_ptr);
@@ -407,7 +407,7 @@ void TSafePtr<T>::reset(T* ptr/* = nullptr */) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-template <typename U>
+template <typename U, class>
 void TSafePtr<T>::Swap(TSafePtr<U>& other) NOEXCEPT {
     std::swap(other._ptr, _ptr);
 }

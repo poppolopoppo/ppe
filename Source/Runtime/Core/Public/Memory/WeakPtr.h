@@ -237,14 +237,14 @@ public:
 
     TWeakPtr() NOEXCEPT : _ptr(nullptr) {}
 
-    template <typename U, class = TEnableIfWeakRefCountable<U> >
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     explicit TWeakPtr(const TRefPtr<U>& refptr) NOEXCEPT;
 
     void reset() NOEXCEPT;
-    template <typename U, class = TEnableIfWeakRefCountable<U> >
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     void reset(const TRefPtr<U>& refptr) NOEXCEPT;
 
-    template <typename U, class = TEnableIfWeakRefCountable<U> >
+    template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     NODISCARD bool TryLock(TRefPtr<U>* pLocked) const NOEXCEPT;
 
     NODISCARD TRefPtr<T> Pin() const NOEXCEPT {
@@ -258,25 +258,25 @@ public:
         return hash_ptr(weakPtr._ptr);
     }
 
-    template <typename U>
+    template <typename U, class _CommonPtr = std::common_type_t<T*, U*> >
     NODISCARD friend bool operator ==(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
-        return (lhs._ptr == rhs._ptr);
+        return (static_cast<_CommonPtr>(lhs._ptr) == static_cast<_CommonPtr>(rhs._ptr));
     }
-    template <typename U>
+    template <typename U, class _CommonPtr = std::common_type_t<T*, U*> >
     NODISCARD friend bool operator !=(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
         return (not operator ==(lhs, rhs));
     }
 
-    template <typename U>
+    template <typename U, class _CommonPtr = std::common_type_t<T*, U*> >
     NODISCARD friend bool operator <(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
-        return (lhs._ptr < rhs._ptr);
+        return (static_cast<_CommonPtr>(lhs._ptr) < static_cast<_CommonPtr>(rhs._ptr));
     }
-    template <typename U>
+    template <typename U, class _CommonPtr = std::common_type_t<T*, U*> >
     NODISCARD friend bool operator >=(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) NOEXCEPT {
         return (not operator <(lhs, rhs));
     }
 
-    template <typename U>
+    template <typename U, class _CommonPtr = std::common_type_t<T*, U*> >
     friend void swap(const TWeakPtr& lhs, const TWeakPtr<U>& rhs) {
         using std::swap;
         swap(lhs._ptr, rhs._ptr);
