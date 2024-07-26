@@ -32,6 +32,8 @@ public:
 
     using FEnumerableFunc = void (*)(TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData);
 
+    CONSTEXPR TEnumerable() = default;
+
     CONSTEXPR TEnumerable(void* internal, FEnumerableFunc enumerate) NOEXCEPT
     :   _internal(internal)
     ,   _enumerate(enumerate) {
@@ -41,7 +43,7 @@ public:
 
     template <typename _Allocator>
     CONSTEXPR TEnumerable(TVector<T, _Allocator>& vector)
-    :   TEnumerable(const_cast<void*>(&vector), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
+    :   TEnumerable(bit_cast<void*>(&vector), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
         auto& view = (*static_cast<TVector<T, _Allocator>*>(self._internal));
         for (reference it : view) {
             if (not each(userData, it))
@@ -52,7 +54,7 @@ public:
 
     template <typename _Allocator>
     CONSTEXPR TEnumerable(const TVector<Meta::TRemoveConst<T>, _Allocator>& vector)
-    :   TEnumerable(const_cast<void*>(&vector), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
+    :   TEnumerable(bit_cast<void*>(&vector), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
         auto& view = (*static_cast<const TVector<Meta::TRemoveConst<T>, _Allocator>*>(self._internal));
         for (reference it : view) {
             if (not each(userData, it))
@@ -62,7 +64,7 @@ public:
     {}
 
     CONSTEXPR TEnumerable(const TMemoryView<T>& view)
-    :   TEnumerable(const_cast<void*>(&view), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
+    :   TEnumerable(bit_cast<void*>(&view), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
         const auto& view = (*static_cast<const TMemoryView<T>*>(self._internal));
         for (reference it : view) {
             if (not each(userData, it))
@@ -73,7 +75,7 @@ public:
 
     template <typename _It, Meta::TEnableIf<std::is_same_v<typename Meta::TIteratorTraits<_It>::value_type, value_type>>* = nullptr>
     CONSTEXPR TEnumerable(const TIterable<_It>& iterable) NOEXCEPT
-    :   TEnumerable(const_cast<void*>(&iterable), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
+    :   TEnumerable(bit_cast<void*>(&iterable), [](TEnumerable<T> self, bool (*each)(void* userData, reference it), void* userData){
         const auto& iterable = (*static_cast<const TIterable<_It>*>(self._internal));
         for (reference it : iterable) {
             if (not each(userData, it))
@@ -88,9 +90,12 @@ public:
     TEnumerable(TEnumerable&&) = default;
     TEnumerable& operator =(TEnumerable&&) = default;
 
-    CONSTEXPR void Each(bool (*each)(void* userData, reference it), void* userData = nullptr) {
-        Assert(_internal && _enumerate);
-        _enumerate(*this, each, userData);
+    NODISCARD CONSTEXPR bool Valid() const { return (_internal && _enumerate); }
+    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
+
+    CONSTEXPR void Each(bool (*each)(void* userData, reference it), void* userData = nullptr) const {
+        if (Valid())
+            _enumerate(*this, each, userData);
     }
 
     friend CONSTEXPR bool operator ==(const TEnumerable& lhs, const TEnumerable& rhs) {
