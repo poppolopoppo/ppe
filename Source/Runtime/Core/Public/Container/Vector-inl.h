@@ -699,7 +699,7 @@ bool Contains(const TVector<T, _Allocator>& v, const U& elt) {
 template <typename T, typename _Allocator, typename U>
 size_t IndexOf(const TVector<T, _Allocator>& v, const U& elt) {
     const auto it = std::find(v.begin(), v.end(), elt);
-    return (v.end() == it ? std::distance(v.begin(), it) : INDEX_NONE);
+    return (v.end() != it ? std::distance(v.begin(), it) : INDEX_NONE);
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
