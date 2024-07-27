@@ -406,6 +406,7 @@ void FImGuiService::OnBeginTick(const IApplicationService& app) {
 }
 //----------------------------------------------------------------------------
 void FImGuiService::OnEndTick(const IApplicationService& app) {
+    Unused(app);
     if (_wasFrameRendered)
         return;
 
