@@ -258,4 +258,4 @@ EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TScalarBoxWExtent<double, 4>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 } //!namespace PPE
-#endif
+#endif //!EXPORT_PPE_RUNTIME_CORE_SCALARBOUNDINGBOX
