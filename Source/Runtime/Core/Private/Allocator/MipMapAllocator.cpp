@@ -22,7 +22,8 @@ struct ALIGN(64) FMipmapPool {
         + sizeof(size_t) // canary
 #endif
     };
-    Meta::TAlignedStorage<ALLOCATION_GRANULARITY - sizeof(Pages) - HeaderSize, alignof(void*)> Padding_;
+
+    ALIGNED_STORAGE(ALLOCATION_GRANULARITY - sizeof(Pages) - HeaderSize, alignof(void*)) Padding_;
 
     std::atomic<u32> NumBusy{ 0 };
     std::atomic<u32> NumRegistered{ 0 };
