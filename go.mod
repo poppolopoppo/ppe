@@ -22,7 +22,7 @@ require (
 	github.com/mholt/archiver/v3 v3.5.1 // indirect
 	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/nwaples/rardecode v1.1.3 // indirect
-	github.com/onsi/ginkgo/v2 v2.19.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.19.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/profile v1.7.0 // indirect
 	github.com/quic-go/quic-go v0.45.1 // indirect
