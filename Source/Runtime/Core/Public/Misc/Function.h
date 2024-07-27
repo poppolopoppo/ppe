@@ -604,7 +604,6 @@ class TBaseFunction {
     STATIC_ASSERT(is_function_v<_Impl>);
 public:
     using traits_type = _Traits;
-    using embed_type = std::aligned_storage_t<_InSitu>;
     using native_type = typename traits_type::native_type;
     using wrapper_type = typename traits_type::wrapper_type;
     using vtable_type = typename traits_type::vtable_type;
@@ -613,15 +612,15 @@ public:
 
 private:
     Meta::TPointerWFlags<const vtable_type> _vtable;
-    embed_type _embed;
+    alignas(std::max_align_t) std::byte _embed[_InSitu];
 
     STATIC_ASSERT(u32(EFunctionFlags::FitInSitu) == 2);
     void SetFitInSitu_(bool enabled) { _vtable.SetFlag1(enabled); }
 
 protected:
     CONSTEXPR const vtable_type& VTable_() const NOEXCEPT { return *_vtable; }
-    CONSTEXPR embed_type* EmbedPtr_() NOEXCEPT { return std::addressof(_embed); }
-    CONSTEXPR const embed_type* EmbedPtr_() const NOEXCEPT { return std::addressof(_embed); }
+    CONSTEXPR void* EmbedPtr_() NOEXCEPT { return std::addressof(_embed); }
+    CONSTEXPR const void* EmbedPtr_() const NOEXCEPT { return std::addressof(_embed); }
 
 public:
     CONSTEXPR TBaseFunction() NOEXCEPT : TBaseFunction(&traits_type::dummy_vtable) {}
