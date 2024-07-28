@@ -182,7 +182,7 @@ using TConstReference = TAddReference< TAddConst< TDecay<T> > >;
 template <typename T>
 CONSTEVAL bool is_pod_type(T*) NOEXCEPT { return std::is_trivial_v<T> && std::is_standard_layout_v<T>; }
 template <typename T>
-CONSTEXPR bool is_pod_v{ is_pod_type(static_cast<T*>(nullptr)) };
+inline CONSTEXPR bool is_pod_v{ is_pod_type(static_cast<T*>(nullptr)) };
 //----------------------------------------------------------------------------
 template <typename T>
 using has_trivial_constructor = std::bool_constant<std::is_trivially_constructible<T>::value || is_pod_v<T> >;
@@ -203,7 +203,7 @@ using has_trivial_move = std::bool_constant<(std::is_trivially_move_constructibl
 template <typename T>
 CONSTEVAL bool is_pointer_type(T*) NOEXCEPT { return std::is_pointer_v<T>; }
 template <typename T>
-CONSTEXPR bool is_pointer_v{ is_pointer_type(static_cast< Meta::TDecay<T> *>(nullptr)) };
+inline CONSTEXPR bool is_pointer_v{ is_pointer_type(static_cast< Meta::TDecay<T> *>(nullptr)) };
 //----------------------------------------------------------------------------
 // Uses SFINAE to determine if T has a compatible constructor
 //----------------------------------------------------------------------------
@@ -219,10 +219,18 @@ using has_default_constructor = typename std::is_constructible<T>::type;
 //      => ONCE UNDEFINED, NEVER DEFINED
 //----------------------------------------------------------------------------
 template<typename, size_t _Seed = 0, typename = void>
-CONSTEXPR bool is_type_complete_v = false;
+inline CONSTEXPR bool is_type_complete_v = false;
 //----------------------------------------------------------------------------
 template<typename T, size_t _Seed>
-CONSTEXPR bool is_type_complete_v<T, _Seed, std::void_t<decltype(sizeof(T))>> = true;
+inline CONSTEXPR bool is_type_complete_v<T, _Seed, std::void_t<decltype(sizeof(T))>> = true;
+//----------------------------------------------------------------------------
+// Test if a type is eligible to Empty Base Class Optimization
+//----------------------------------------------------------------------------
+template <typename T>
+using is_ebco_eligible = std::bool_constant<std::is_empty_v<T> && !std::is_final_v<T>>;
+//----------------------------------------------------------------------------
+template <typename T>
+inline CONSTEXPR bool is_ebco_eligible_v = is_ebco_eligible<T>::value;
 //----------------------------------------------------------------------------
 // Test is a class/struct is defining a using/function/typedef/value/enum ...
 // Ex:  // test for a using/typedef
@@ -242,13 +250,13 @@ template <template<class> class _Using, typename T>
 using has_defined_t = decltype(details::has_defined_<_Using, T>(0));
 //----------------------------------------------------------------------------
 template <template<class> class _Using, typename T>
-CONSTEXPR bool has_defined_v = has_defined_t<_Using, T>::value;
+inline CONSTEXPR bool has_defined_v = has_defined_t<_Using, T>::value;
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR bool has_type_v = has_defined_t<details::get_type_t_, T>::value;
+inline CONSTEXPR bool has_type_v = has_defined_t<details::get_type_t_, T>::value;
 //----------------------------------------------------------------------------
 template <typename U, typename V>
-CONSTEXPR bool has_common_type_v = has_type_v<std::common_type<U, V>>;
+inline CONSTEXPR bool has_common_type_v = has_type_v<std::common_type<U, V>>;
 //----------------------------------------------------------------------------
 namespace details {
 template <template<class> class _Using, class _Fallback, typename T>
