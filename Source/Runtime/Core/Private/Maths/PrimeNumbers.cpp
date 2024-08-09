@@ -11,17 +11,18 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 static size_t ClosestPrimeIndexFloor_(const T (&primes)[_Dim], T v) {
-    const auto it = Meta::LowerBound(std::begin(primes), std::end(primes), v);
+    const auto it = Meta::LowerBound(std::begin(primes), std::end(primes), v, Meta::TLessEqual{});
     Assert(it != std::end(primes));
+    Assert_NoAssume(*it <= v);
     return std::distance(std::begin(primes), it);
 }
 //----------------------------------------------------------------------------
 template <typename T, size_t _Dim>
 static size_t ClosestPrimeIndexCeil_(const T(&primes)[_Dim], T v) {
-    Assert_NoAssume(v >= 2);
-    const size_t i = ClosestPrimeIndexFloor_(primes, v);
-    Assert_NoAssume(i > 0);
-    return (v == primes[i] ? i : i - 1);
+    const auto it = Meta::UpperBound(std::begin(primes), std::end(primes), v, Meta::TLessEqual{});
+    Assert(it != std::end(primes));
+    Assert_NoAssume(*it >= v);
+    return std::distance(std::begin(primes), it);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -47,6 +48,59 @@ u32 FPrimeNumberU32::ClosestFloor(u32 v) {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+u32 FGoodHashTablePrimesU32::ClosestCeil(u32 v) {
+    return Values[ClosestPrimeIndexCeil_(Values, v)];
+}
+//----------------------------------------------------------------------------
+u32 FGoodHashTablePrimesU32::ClosestFloor(u32 v) {
+    return Values[ClosestPrimeIndexFloor_(Values, v)];
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+// https://planetmath.org/goodhashtableprimes
+/*
+The following is such a list. It has the properties that:
+    1. each number in the list is prime
+    2. each number is slightly less than twice the size of the previous
+    3. each number is as far as possible from the nearest two powers of two
+
+Using primes for hash tables is a good idea because it minimizes clustering in the hashed table.
+Item (2) is nice because it is convenient for growing a hash table in the face of expanding data.
+Item (3) has, allegedly, been shown to yield especially good results in practice.
+ */
+PPE_CORE_API const u32 FGoodHashTablePrimesU32::Values[29] = {
+    7,
+    13,
+    23,
+    53,
+    97,
+    193,
+    389,
+    769,
+    1543,
+    3079,
+    6151,
+    12289,
+    24593,
+    49157,
+    98317,
+    196613,
+    393241,
+    786433,
+    1572869,
+    3145739,
+    6291469,
+    12582917,
+    25165843,
+    50331653,
+    100663319,
+    201326611,
+    402653189,
+    805306457,
+    1610612741,
+};
 //----------------------------------------------------------------------------
 PPE_CORE_API const u16 FPrimeNumberU16::Values[6542] = {
 0x0002u, 0x0003u, 0x0005u, 0x0007u, 0x000Bu, 0x000Du, 0x0011u, 0x0013u, 0x0017u,

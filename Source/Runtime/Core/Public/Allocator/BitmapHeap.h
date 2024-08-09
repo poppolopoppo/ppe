@@ -52,19 +52,23 @@ struct TBitmapCpuTraits {
     static FMemoryTracking& TrackingData() NOEXCEPT { return domain_tag::TrackingData(); }
     static void PageCommit(void* ptr, size_t sizeInBytes) {
         FVirtualMemory::PageCommit(ptr, sizeInBytes, TrackingData());
+        FPlatformMemory::Memuninitialized(ptr, sizeInBytes);
         PPE_DEBUG_POISONMEMORY(ptr, sizeInBytes); // ASAN
     }
     static void PageDecommit(void* ptr, size_t sizeInBytes) {
         PPE_DEBUG_UNPOISONMEMORY(ptr, sizeInBytes); // ASAN
+        FPlatformMemory::Memdeadbeef(ptr, sizeInBytes);
         FVirtualMemory::PageDecommit(ptr, sizeInBytes, TrackingData());
     }
     static void OnUserAlloc(void* ptr, size_t sizeInBytes) {
         Unused(ptr);
         PPE_DEBUG_UNPOISONMEMORY(ptr, sizeInBytes); // ASAN
+        FPlatformMemory::Memuninitialized(ptr, sizeInBytes);
         TrackingData().AllocateUser(sizeInBytes);
     }
     static void OnUserFree(void* ptr, size_t sizeInBytes) {
         Unused(ptr);
+        FPlatformMemory::Memdeadbeef(ptr, sizeInBytes);
         PPE_DEBUG_POISONMEMORY(ptr, sizeInBytes); // ASAN
         TrackingData().DeallocateUser(sizeInBytes);
     }
@@ -215,7 +219,11 @@ struct TBitmapHeap : Meta::FNonCopyableNorMovable {
     size_t DebugInfo(FBitmapHeapInfo* pinfo) const NOEXCEPT;
 
     static size_t SnapSize(size_t sz) NOEXCEPT {
-        return page_type::SnapSize(checked_cast<u32>(sz));
+        const size_t result = page_type::SnapSize(checked_cast<u32>(sz));
+        Assert_NoAssume(result >= sz);
+        Assert_NoAssume(result <= MaxAllocSize);
+        Assert_NoAssume(result >= MinAllocSize);
+        return result;
     }
 
 private:

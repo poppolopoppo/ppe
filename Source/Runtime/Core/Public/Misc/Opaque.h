@@ -23,8 +23,8 @@ namespace Opaq {
 //----------------------------------------------------------------------------
 // can provide a format function to generate non-trivial strings
 //----------------------------------------------------------------------------
-using string_format = TTinyFunction<void(FTextWriter&)>;
-using wstring_format = TTinyFunction<void(FWTextWriter&)>;
+using string_format = TFunctionRef<void(FTextWriter&)>;
+using wstring_format = TFunctionRef<void(FWTextWriter&)>;
 //----------------------------------------------------------------------------
 template <typename T>
 string_format Format(const T& value) {

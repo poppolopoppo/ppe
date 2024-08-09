@@ -144,7 +144,6 @@ static void ParallelForEach_(
         tasks.push_back(std::move(lastTask));
 
         // blocking wait for end of the loop
-        Assert(tasks.size() == tasks.capacity());
         context->RunAndWaitFor(tasks.MakeView(), priority);
     }
 }

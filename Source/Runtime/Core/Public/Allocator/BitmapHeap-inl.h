@@ -291,9 +291,9 @@ void* TBitmapHeap<_Traits>::Allocate(size_t sizeInBytes) {
     Assert(sizeInBytes <= MaxAllocSize);
     Assert_NoAssume(Meta::IsAlignedPow2(Granularity, sizeInBytes));
 
-    FStackMRU& hint = FStackMRU::Tls();
+    void* result = nullptr;
 
-    void* result;
+    FStackMRU& hint = FStackMRU::Tls();
 
     // first try to fetch from hint or from a page already allocated
     {

@@ -385,7 +385,7 @@ void FRTTIAtomRandomizer_::Randomize(RTTI::FMetaObject* pobject, const RTTI::FMe
 
     for (const auto* prop : metaClass->AllProperties()) {
         RTTI::FAtom atom = prop->Get(*pobject);
-        AssertRelease(atom);
+        PPE_LOG_CHECKVOID(Test_RTTI, atom);
         atom.Accept(this);
     }
 
@@ -504,26 +504,26 @@ static NO_INLINE void Test_Any_() {
     anyAny.Assign(toto);
     RTTI::FAtom dico2_anyAny = dico2->Find(datom2.Data(), anyAny);
     PPE_LOG(Test_RTTI, Debug, "dico2_anyAny: {0}", dico2_anyAny.TypedConstData<float3>());
-    AssertRelease(RTTI::MakeAny(float3(1, 2, 3)).InnerAtom().Equals(dico2_anyAny));
-    //AssertRelease(dico2_anyAny.Equals(RTTI::MakeAny(float3(1, 2, 3)))); #TODO
+    PPE_LOG_CHECKVOID(Test_RTTI, RTTI::MakeAny(float3(1, 2, 3)).InnerAtom().Equals(dico2_anyAny));
+    //PPE_LOG_CHECKVOID(Test_RTTI, dico2_anyAny.Equals(RTTI::MakeAny(float3(1, 2, 3)))); #TODO
 
     RTTI::FAny anyAny2{ RTTI::ENativeType::Any };
-    AssertRelease(not anyAny.IsDefaultValue());
-    AssertRelease(&anyAny2 == anyAny2.InnerAtom().Data());
+    PPE_LOG_CHECKVOID(Test_RTTI, not anyAny.IsDefaultValue());
+    PPE_LOG_CHECKVOID(Test_RTTI, &anyAny2 == anyAny2.InnerAtom().Data());
     VerifyRelease(anyAny.PromoteCopy(anyAny2.InnerAtom()));
-    AssertRelease(anyAny2.Equals(anyAny));
+    PPE_LOG_CHECKVOID(Test_RTTI, anyAny2.Equals(anyAny));
     print_atom(anyAny2);
 
     anyAny.Reset();
-    AssertRelease(not anyAny);
-    AssertRelease(anyAny.IsDefaultValue());
-    AssertRelease(not anyAny2.IsDefaultValue());
+    PPE_LOG_CHECKVOID(Test_RTTI, not anyAny);
+    PPE_LOG_CHECKVOID(Test_RTTI, anyAny.IsDefaultValue());
+    PPE_LOG_CHECKVOID(Test_RTTI, not anyAny2.IsDefaultValue());
     VerifyRelease(anyAny2.PromoteMove(anyAny.InnerAtom()));
     print_atom(anyAny2);
     print_atom(anyAny);
-    AssertRelease(anyAny2);
-    AssertRelease(not anyAny.IsDefaultValue());
-    AssertRelease(anyAny.Equals(anyAny2));
+    PPE_LOG_CHECKVOID(Test_RTTI, anyAny2);
+    PPE_LOG_CHECKVOID(Test_RTTI, not anyAny.IsDefaultValue());
+    PPE_LOG_CHECKVOID(Test_RTTI, anyAny.Equals(anyAny2));
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_CircularReferences_() {
@@ -549,7 +549,7 @@ static NO_INLINE void Test_CircularReferences_() {
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Serialize::ISerializer& serializer, const FFilename& filename) {
-    Assert_NoAssume(not input.empty());
+    PPE_LOG_CHECKVOID(Test_RTTI, not input.empty());
 
     const FFilename fname_binz = filename.WithReplacedExtension(FFS::Z());
     const FFilename& fname_raw = filename;
@@ -586,18 +586,18 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
 
     {
         const Meta::TOptional<FUniqueBuffer> compressed = VFS_ReadAll(fname_binz, EAccessPolicy::Binary);
-        AssertRelease(compressed);
+        PPE_LOG_CHECKVOID(Test_RTTI, compressed);
 
         FUniqueBuffer decompressed = Compression::DecompressBuffer( *compressed);
-        AssertRelease(checked_cast<size_t>(uncompressed.SizeInBytes()) == decompressed.SizeInBytes());
-        AssertRelease(uncompressed.MakeView().RangeEqual(decompressed.MakeView()));
+        PPE_LOG_CHECKVOID(Test_RTTI, checked_cast<size_t>(uncompressed.SizeInBytes()) == decompressed.SizeInBytes());
+        PPE_LOG_CHECKVOID(Test_RTTI, uncompressed.MakeView().RangeEqual(decompressed.MakeView()));
 
         Serialize::FTransactionLinker linker{ filename };
         Serialize::ISerializer::Deserialize(serializer, decompressed.MakeView(), &linker);
         linker.Resolve(output);
     }
 
-    AssertRelease(input.TopObjects().size() == output.TopObjects().size());
+    PPE_LOG_CHECKVOID(Test_RTTI, input.TopObjects().size() == output.TopObjects().size());
 
     if (false == input.DeepEquals(output))
         AssertNotReached();
@@ -779,7 +779,7 @@ static NO_INLINE void Test_InteractiveConsole_() {
                 input.Parse(&lexer);
 
                 Parser::PCParseExpression expr = Serialize::FGrammarStartup::ParseExpression(input);
-                AssertRelease(expr);
+                PPE_LOG_CHECKVOID(Test_RTTI, expr);
 
                 const RTTI::FAtom value = expr->Eval(&globalContext);
 
@@ -966,8 +966,8 @@ static NO_INLINE void Test_Serialize_() {
     {
         const FStringLiteral RTTITestSimple_{ FRTTITestSimple_::RTTI_FMetaClass::Get()->Name() };
         const FStringLiteral RTTITest_{ FRTTITest_::RTTI_FMetaClass::Get()->Name() };
-        AssertRelease(RTTITestSimple_ == "RTTITestSimple_");
-        AssertRelease(RTTITest_ == "RTTITest_");
+        PPE_LOG_CHECKVOID(Test_RTTI, RTTITestSimple_ == "RTTITestSimple_");
+        PPE_LOG_CHECKVOID(Test_RTTI, RTTITest_ == "RTTITest_");
     }
     {
         Test_TransactionSerialization_<FRTTITestSimple_>();
@@ -989,7 +989,7 @@ static bool EvalExpr_(Parser::FParseContext* context, FStringLiteral input) {
         parser.Parse(&lexer);
 
         Parser::PCParseExpression expr = Serialize::FGrammarStartup::ParseExpression(parser);
-        AssertRelease(expr);
+        PPE_LOG_CHECK(Test_RTTI, expr);
 
         const RTTI::FAtom result = expr->Eval(context);
 

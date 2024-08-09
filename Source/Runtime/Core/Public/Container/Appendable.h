@@ -24,18 +24,17 @@ public:
     using reference = T&;
     using const_reference = const T&;
 
-    using FPushBackFunc = void (*)(void*, T&&);
+    using FPushBackFunc = TFunctionRef<void(T&&)>;
 
     TAppendable() = default;
 
-    CONSTEXPR TAppendable(FNoFunction)
-    :   TAppendable(nullptr, [](void*, T&&) NOEXCEPT {})
+    CONSTEXPR TAppendable(Meta::FDefaultValue) NOEXCEPT
+    :   TAppendable([](T&&) CONSTEXPR NOEXCEPT {})
     {}
 
-    CONSTEXPR TAppendable(void* userData, FPushBackFunc pushBack)
-    :   _userData(userData)
-    ,   _pushBack(pushBack) {
-        Assert_NoAssume(_pushBack);
+    CONSTEXPR TAppendable(FPushBackFunc&& pushBack) NOEXCEPT
+    :   _pushBack(std::move(pushBack)) {
+        Assert_NoAssume(_pushBack.Valid());
     }
 
     TAppendable(const TAppendable&) = default;
@@ -44,10 +43,8 @@ public:
     TAppendable(TAppendable&&) = default;
     TAppendable& operator =(TAppendable&&) = default;
 
-    CONSTEXPR void* UserData() const { return _userData; }
-
-    CONSTEXPR void push_back(const T& value) const { _pushBack(_userData, T(value)); }
-    CONSTEXPR void push_back(T&& rvalue) const { _pushBack(_userData, std::move(rvalue)); }
+    CONSTEXPR void push_back(const T& value) const { _pushBack(T(value)); }
+    CONSTEXPR void push_back(T&& rvalue) const { _pushBack(std::move(rvalue)); }
 
     template <typename... _Args, class = Meta::TEnableIf<std::is_constructible_v<T, _Args&&...>> >
     CONSTEXPR void emplace_back(_Args&&... args) const { push_back(T{ std::forward<_Args>(args)... }); }
@@ -81,52 +78,39 @@ public:
     }
 
 private:
-    void* _userData{ nullptr };
-    FPushBackFunc _pushBack{ nullptr };
+    FPushBackFunc _pushBack{};
 };
 //----------------------------------------------------------------------------
 template <typename _Char>
 TAppendable<_Char> MakeAppendable(TBasicString<_Char>& str) {
-    return { &str, [](void* userData, _Char&& rvalue) NOEXCEPT {
-        static_cast<TBasicString<_Char>*>(userData)->push_back(std::move(rvalue));
-    } };
+    return typename TAppendable<_Char>::FPushBackFunc{ Meta::StaticFunction<&TBasicString<_Char>::push_back>, &str };
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 TAppendable<T> MakeAppendable(TStack<T, _IsPod>& stack) {
-    return { &stack, [](void* userData, T&& rvalue) NOEXCEPT {
-        static_cast<TStack<T, _IsPod>*>(userData)->Push(std::move(rvalue));
-    } };
+    return typename TAppendable<T>::FPushBackFunc{ Meta::StaticFunction<&TStack<T, _IsPod>::template Push<T&&> >, &stack };
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TAppendable<T> MakeAppendable(TSparseArray<T, _Allocator>& sparse) {
-    return { &sparse, [](void* userData, T&& rvalue) NOEXCEPT {
-        static_cast<TSparseArray<T, _Allocator>*>(userData)->Emplace(std::move(rvalue));
-    } };
+    return typename TAppendable<T>::FPushBackFunc{ Meta::StaticFunction<&TSparseArray<T, _Allocator>::template Emplace<T&&> >, &sparse };
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TAppendable<T> MakeAppendable(TVector<T, _Allocator>& vector) {
-    return { &vector, [](void* userData, T&& rvalue) NOEXCEPT {
-        static_cast<TVector<T, _Allocator>*>(userData)->push_back(std::move(rvalue));
-    } };
+    return typename TAppendable<T>::FPushBackFunc{ Meta::StaticFunction<&TVector<T, _Allocator>::template emplace_back<T&&> >, &vector };
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Lambda,
-    decltype(std::declval<_Lambda&>()(std::declval<T&&>()))* = nullptr >
+    decltype(typename TAppendable<T>::FPushBackFunc{ std::declval<_Lambda&>() })* = nullptr >
 TAppendable<T> MakeAppendable(_Lambda& lambda) {
-    return { &lambda, [](void* userData, T&& rvalue) NOEXCEPT {
-        (*static_cast<_Lambda*>(userData))(std::move(rvalue));
-    } };
+    return typename TAppendable<T>::FPushBackFunc{ lambda };
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Lambda,
     decltype(std::declval<const _Lambda&>()(std::declval<T&&>()))* = nullptr >
 TAppendable<T> MakeAppendable(const _Lambda& lambda) {
-    return { const_cast<_Lambda*>(&lambda), [](void* userData, T&& rvalue) NOEXCEPT {
-        (*static_cast<const _Lambda*>(userData))(std::move(rvalue));
-    } };
+    return typename TAppendable<T>::FPushBackFunc{ lambda };
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

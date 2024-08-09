@@ -5,6 +5,7 @@
 #include "IO/Format.h"
 #include "IO/StreamProvider.h"
 
+#include "Container/Stack.h"
 #include "Maths/Units.h"
 #include "Memory/MemoryProvider.h"
 
@@ -350,21 +351,17 @@ void Base64Encode(const FRawMemoryConst& src, const TAppendable<wchar_t>& dst) N
 void Base64Encode(const FRawMemoryConst& src, const TMemoryView<char>& dst) NOEXCEPT {
     Assert(Base64EncodeSize(src) == dst.size());
 
-    char* it = dst.data();
-    Base64Encode_(src, TAppendable<char>{ &it, [](void* user, char&& ch) {
-        *(*static_cast<char**>(user))++ = ch;
-    } });
-    Assert_NoAssume(it == dst.data() + dst.size());
+    TPodStack<char> stack{ dst };
+    Base64Encode_(src, MakeAppendable(stack));
+    Assert_NoAssume(stack.size() == dst.size());
 }
 //----------------------------------------------------------------------------
 void Base64Encode(const FRawMemoryConst& src, const TMemoryView<wchar_t>& dst) NOEXCEPT {
     Assert(Base64EncodeSize(src) == dst.size());
 
-    wchar_t* it = dst.data();
-    Base64Encode_(src, TAppendable<wchar_t>{ &it, [](void* user, wchar_t&& ch) {
-        *(*static_cast<wchar_t**>(user))++ = ch;
-    } });
-    Assert_NoAssume(it == dst.data() + dst.size());
+    TPodStack<wchar_t> stack{ dst };
+    Base64Encode_(src, MakeAppendable(stack));
+    Assert_NoAssume(stack.size() == dst.size());
 }
 //----------------------------------------------------------------------------
 size_t Base64DecodeSize(const FStringView& src) NOEXCEPT {
@@ -386,36 +383,36 @@ bool Base64Decode(const FWStringView& src, const TAppendable<u8>& dst) NOEXCEPT 
 bool Base64Decode(const FStringView& src, const TMemoryView<u8>& dst) NOEXCEPT {
     Assert(Base64DecodeSize(src) == dst.size());
 
-    u8* it = dst.data();
-    const bool result = Base64Decode_(src, TAppendable<u8>{ &it, [](void* user, u8&& raw) {
-        *(*static_cast<u8**>(user))++ = raw;
-    } });
-    Assert_NoAssume(it == dst.data() + dst.size());
+    TPodStack<u8> stack{ dst };
+    const bool result = Base64Decode_(src, MakeAppendable(stack));
+    Assert_NoAssume(stack.size() == dst.size());
     return result;
 }
 //----------------------------------------------------------------------------
 bool Base64Decode(const FWStringView& src, const TMemoryView<u8>& dst) NOEXCEPT {
     Assert(Base64DecodeSize(src) == dst.size());
 
-    u8* it = dst.data();
-    const bool result = Base64Decode_(src, TAppendable<u8>{ &it, [](void* user, u8&& raw) {
-        *(*static_cast<u8**>(user))++ = raw;
-    } });
-    Assert_NoAssume(it == dst.data() + dst.size());
+    TPodStack<u8> stack{ dst };
+    const bool result = Base64Decode_(src, MakeAppendable(stack));
+    Assert_NoAssume(stack.size() == dst.size());
     return result;
 }
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const Fmt::FBase64& b64) {
-    Base64Encode(b64.RawData, { &oss, [](void* user, char&& ch) {
-        static_cast<FTextWriter*>(user)->Put(ch);
-    }});
+    constexpr auto sfn = Meta::StaticFunction<static_cast<void (FTextWriter::*)(char)>(&FTextWriter::Put)>;
+    TFunctionRef<void(char&&)> rfn(
+        sfn,
+        &oss
+    );
+    Base64Encode(b64.RawData, TAppendable<char>(std::move(rfn)));
     return oss;
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FBase64& b64) {
-    Base64Encode(b64.RawData, { &oss, [](void* user, wchar_t&& wch) {
-        static_cast<FWTextWriter*>(user)->Put(wch);
-    }});
+    Base64Encode(b64.RawData, TAppendable<char>(TFunctionRef<void(wchar_t&&)>{
+        Meta::StaticFunction<static_cast<void (FWTextWriter::*)(wchar_t)>(&FWTextWriter::Put)>,
+        &oss
+    }));
     return oss;
 }
 //----------------------------------------------------------------------------

@@ -2,6 +2,7 @@
 
 #include "HAL/PlatformMemory.h"
 #include "Meta/AlignedStorage.h"
+#include "Meta/Clonable.h"
 #include "Meta/TypeTraits.h"
 
 #include <memory>
@@ -17,93 +18,184 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T>
+template <typename T, size_t _InSituSize = sizeof(T), bool _bAlwaysTrivial = false>
 struct TInSituPtr {
-#ifdef ARCH_X86
-    STATIC_CONST_INTEGRAL(intptr_t, NullMagick, 0xDEADF001ul);
-#else
-    STATIC_CONST_INTEGRAL(intptr_t, NullMagick, 0xDEADF001DEADF001ull);
-#endif
-    union {
-        intptr_t VTable;
-        POD_STORAGE(T) InSitu;
-    };
+    STATIC_ASSERT(std::is_base_of_v<Meta::IClonable, T>);
+    STATIC_ASSERT(std::has_virtual_destructor_v<T>);
+    STATIC_ASSERT(_InSituSize >= sizeof(T));
 
-    CONSTEXPR explicit TInSituPtr(Meta::FNoInit) NOEXCEPT {}
+    alignas(T) std::byte Raw[_InSituSize];
 
-    CONSTEXPR TInSituPtr() NOEXCEPT : VTable(NullMagick) {}
+    ~TInSituPtr() {
+        Meta::Destroy(get());
 
-    NODISCARD CONSTEXPR bool Valid() const { return (VTable != NullMagick); }
-    PPE_FAKEBOOL_OPERATOR_DECL() { return Valid(); }
-
-    NODISCARD CONSTEXPR T* get() {
-        Assert(Valid());
-        return reinterpret_cast<T*>(std::addressof(InSitu));
-    }
-    NODISCARD CONSTEXPR const T* get() const { return const_cast<TInSituPtr*>(this)->get(); }
-
-    NODISCARD CONSTEXPR T& operator *() { return *get(); }
-    NODISCARD CONSTEXPR const T& operator *() const { return *get(); }
-
-    CONSTEXPR T* operator ->() { return get(); }
-    CONSTEXPR const T* operator ->() const { return get(); }
-
-    template <typename U, typename... _Args>
-    CONSTEXPR U* Create(_Args&&... args) {
-        Assert(not Valid());
-        return Create_AssumeNotValid(std::forward<_Args>(args)...);
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(Raw, _InSituSize));
     }
 
-    template <typename U, typename... _Args>
-    CONSTEXPR U* Create_AssumeNotValid(_Args&&... args) {
-        STATIC_ASSERT(std::is_base_of<T, U>::value);
-        STATIC_ASSERT(sizeof(U) == sizeof(T));
-        U* const result = INPLACE_NEW(std::addressof(InSitu), U) { std::forward<_Args>(args)... };
-        Assert(Valid());
-        return result;
+    template <typename _Impl, std::enable_if_t<std::is_base_of_v<T, _Impl> && sizeof(_Impl) <= _InSituSize>* = nullptr>
+    CONSTEXPR TInSituPtr(_Impl&& impl) NOEXCEPT_IF(std::is_nothrow_move_constructible_v<_Impl>) {
+        ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(Raw, _InSituSize));
+
+        new (Block().Data) _Impl(std::move(impl));
     }
 
-    CONSTEXPR void CreateRawCopy(const T& src) {
-        STATIC_ASSERT(std::is_trivially_destructible_v<T>);
-        Assert(not Valid());
-        FPlatformMemory::Memcpy(&InSitu, static_cast<void*>(&src), sizeof(T));
-        Assert(Valid());
+    CONSTEXPR TInSituPtr(const TInSituPtr& impl) {
+        ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(Raw, _InSituSize));
+
+        static_cast<const Meta::IClonable*>(impl.get())->ConstructCopy(Block());
     }
 
-    CONSTEXPR void CreateRawCopy_AssumeNotInitialized(const T& src) {
-        FPlatformMemory::Memcpy(&InSitu, static_cast<void*>(&src), sizeof(T));
-        Assert(Valid());
+    CONSTEXPR TInSituPtr& operator =(const TInSituPtr& impl) {
+        Meta::Destroy(get());
+
+        ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(Raw, _InSituSize));
+
+        static_cast<const Meta::IClonable*>(impl.get())->ConstructCopy(Block());
+        return (*this);
     }
 
-    CONSTEXPR void Destroy() {
-        Assert(Valid());
-        get()->~T();
-        VTable = NullMagick;
+    CONSTEXPR TInSituPtr(TInSituPtr&& rimpl) NOEXCEPT {
+        ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(Raw, _InSituSize));
+
+        static_cast<Meta::IClonable*>(rimpl.get())->ConstructMove(Block());
     }
 
-    template <typename U, typename... _Args>
-    NODISCARD CONSTEXPR static TInSituPtr Make(_Args&&... args) {
-        TInSituPtr p(Meta::NoInit);
-        p.template Create_AssumeNotValid<U>(std::forward<_Args>(args)...);
-        return p;
+    CONSTEXPR TInSituPtr& operator =(TInSituPtr&& rimpl) NOEXCEPT {
+        Meta::Destroy(get());
+
+        ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(Raw, _InSituSize));
+
+        static_cast<Meta::IClonable*>(rimpl.get())->ConstructMove(Block());
+        return (*this);
     }
 
-    NODISCARD inline friend bool operator ==(const TInSituPtr& lhs, const TInSituPtr& rhs) {
-#if 0
-        STATIC_ASSERT(sizeof(lhs) == sizeof(intptr_t));
-        STATIC_ASSERT(sizeof(rhs) == sizeof(intptr_t));
-        return (lhs.VTable == rhs.VTable);
-#else
-        return (FPlatformMemory::Memcmp(&lhs, &rhs, sizeof(TInSituPtr)) == 0);
-
-#endif
+    NODISCARD CONSTEXPR FAllocatorBlock Block() NOEXCEPT {
+        return {&Raw[0], _InSituSize};
     }
-    NODISCARD inline friend bool operator !=(const TInSituPtr& lhs, const TInSituPtr& rhs) {
-        return (not operator ==(lhs, rhs));
+
+    NODISCARD T* get() NOEXCEPT {
+        return reinterpret_cast<T*>(&Raw[0]);
+    }
+    NODISCARD const T* get() const NOEXCEPT {
+        return reinterpret_cast<const T*>(&Raw[0]);
+    }
+
+    NODISCARD operator T* () NOEXCEPT {
+        return get();
+    }
+    NODISCARD operator T& () NOEXCEPT {
+        return (*get());
+    }
+
+    NODISCARD operator const T* () NOEXCEPT {
+        return get();
+    }
+    NODISCARD operator const T& () NOEXCEPT {
+        return (*get());
+    }
+
+    NODISCARD T* operator ->() NOEXCEPT {
+        return get();
+    }
+    NODISCARD T& operator *() NOEXCEPT {
+        return (*get());
+    }
+
+    NODISCARD const T* operator ->() const NOEXCEPT {
+        return get();
+    }
+    NODISCARD const T& operator *() const NOEXCEPT {
+        return (*get());
     }
 
     // Consider TInSituPtr<T> as POD if and only if T is considered as POD
-    NODISCARD friend CONSTEXPR bool is_pod_type(TInSituPtr*) { return Meta::is_pod_v<T>; }
+    NODISCARD friend CONSTEXPR bool is_pod_type(TInSituPtr*) {
+        return Meta::is_pod_v<T>;
+    }
+};
+//----------------------------------------------------------------------------
+template <typename T, size_t _InSituSize>
+struct TInSituPtr<T, _InSituSize, true> {
+    STATIC_ASSERT(_InSituSize >= sizeof(T));
+
+    alignas(T) std::byte Raw[_InSituSize];
+
+#if USE_PPE_ASSERT
+    ~TInSituPtr() {
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(Raw, _InSituSize));
+    }
+#endif
+
+    template <typename _Impl, std::enable_if_t<std::is_base_of_v<T, _Impl> && sizeof(_Impl) <= _InSituSize>* = nullptr>
+    CONSTEXPR TInSituPtr(_Impl&& impl) NOEXCEPT_IF(std::is_nothrow_move_constructible_v<_Impl>) {
+        ONLY_IF_ASSERT(FPlatformMemory::Memuninitialized(Raw, _InSituSize));
+
+        new (Block().Data) _Impl(std::move(impl));
+    }
+
+    CONSTEXPR TInSituPtr(const TInSituPtr& impl) {
+        FPlatformMemory::Memcpy(Raw, impl.Raw, _InSituSize);
+    }
+
+    CONSTEXPR TInSituPtr& operator =(const TInSituPtr& impl) {
+        FPlatformMemory::Memcpy(Raw, impl.Raw, _InSituSize);
+        return (*this);
+    }
+
+    CONSTEXPR TInSituPtr(TInSituPtr&& rimpl) NOEXCEPT {
+        FPlatformMemory::Memcpy(Raw, rimpl.Raw, _InSituSize);
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(rimpl.Raw, _InSituSize));
+    }
+
+    CONSTEXPR TInSituPtr& operator =(TInSituPtr&& rimpl) NOEXCEPT {
+        FPlatformMemory::Memcpy(Raw, rimpl.Raw, _InSituSize);
+        ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(rimpl.Raw, _InSituSize));
+        return (*this);
+    }
+
+    NODISCARD CONSTEXPR FAllocatorBlock Block() NOEXCEPT {
+        return {&Raw[0], _InSituSize};
+    }
+
+    NODISCARD T* get() NOEXCEPT {
+        return reinterpret_cast<T*>(&Raw[0]);
+    }
+    NODISCARD const T* get() const NOEXCEPT {
+        return reinterpret_cast<const T*>(&Raw[0]);
+    }
+
+    NODISCARD operator T* () NOEXCEPT {
+        return get();
+    }
+    NODISCARD operator T& () NOEXCEPT {
+        return (*get());
+    }
+
+    NODISCARD operator const T* () NOEXCEPT {
+        return get();
+    }
+    NODISCARD operator const T& () NOEXCEPT {
+        return (*get());
+    }
+
+    NODISCARD T* operator ->() NOEXCEPT {
+        return get();
+    }
+    NODISCARD T& operator *() NOEXCEPT {
+        return (*get());
+    }
+
+    NODISCARD const T* operator ->() const NOEXCEPT {
+        return get();
+    }
+    NODISCARD const T& operator *() const NOEXCEPT {
+        return (*get());
+    }
+
+    // Consider TInSituPtr<T> as POD if and only if T is considered as POD
+    NODISCARD friend CONSTEXPR bool is_pod_type(TInSituPtr*) {
+        return true;
+    }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

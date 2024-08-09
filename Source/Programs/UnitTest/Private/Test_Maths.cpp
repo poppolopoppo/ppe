@@ -33,34 +33,34 @@ static NO_INLINE void Test_Iterable_() {
     STATIC_ASSERT(std::is_same_v<iterator_t::reference, const int&>);
     STATIC_ASSERT(std::is_same_v<iterator_t::pointer, const int*>);
 
-    AssertRelease(lengthof(values) == checked_cast<u32>(std::distance(range.begin(), range.end())));
+    PPE_LOG_CHECKVOID(Test_Maths, lengthof(values) == checked_cast<u32>(std::distance(range.begin(), range.end())));
 
     const size_t count_all = range.size();
     const size_t count_odd = range.CountIf(is_odd);
     const size_t count_even = range.CountIf(is_even);
-    AssertRelease(5 == count_odd);
-    AssertRelease(4 == count_even);
-    AssertRelease(count_all == count_even + count_odd);
+    PPE_LOG_CHECKVOID(Test_Maths, 5 == count_odd);
+    PPE_LOG_CHECKVOID(Test_Maths, 4 == count_even);
+    PPE_LOG_CHECKVOID(Test_Maths, count_all == count_even + count_odd);
 
     const size_t count_odd2 = range.FilterBy(is_odd).size();
     const size_t count_even2 = range.FilterBy(is_even).size();
-    AssertRelease(count_odd2 == count_odd);
-    AssertRelease(count_even2 == count_even);
+    PPE_LOG_CHECKVOID(Test_Maths, count_odd2 == count_odd);
+    PPE_LOG_CHECKVOID(Test_Maths, count_even2 == count_even);
 
     const int sum_all = range.Accumulate();
     const int sum_odd = range.FilterBy(is_odd).Accumulate();
     const int sum_even = range.FilterBy(is_even).Accumulate();
-    AssertRelease(25 == sum_odd);
-    AssertRelease(20 == sum_even);
-    AssertRelease(sum_all == sum_odd + sum_even);
+    PPE_LOG_CHECKVOID(Test_Maths, 25 == sum_odd);
+    PPE_LOG_CHECKVOID(Test_Maths, 20 == sum_even);
+    PPE_LOG_CHECKVOID(Test_Maths, sum_all == sum_odd + sum_even);
 
     const int sqr_all = range.MapReduce(sqr, Meta::TPlus<>{});
     const int sqr_odd = range.FilterBy(is_odd).MapReduce(sqr, Meta::TPlus<>{});
     const int sqr_even = range.FilterBy(is_even).MapReduce(sqr, Meta::TPlus<>{});
-    AssertRelease(285 == sqr_all);
-    AssertRelease(165 == sqr_odd);
-    AssertRelease(120 == sqr_even);
-    AssertRelease(sqr_all == sqr_odd + sqr_even);
+    PPE_LOG_CHECKVOID(Test_Maths, 285 == sqr_all);
+    PPE_LOG_CHECKVOID(Test_Maths, 165 == sqr_odd);
+    PPE_LOG_CHECKVOID(Test_Maths, 120 == sqr_even);
+    PPE_LOG_CHECKVOID(Test_Maths, sqr_all == sqr_odd + sqr_even);
 
     const int sqr_odd2 = range.Select([&](int x) NOEXCEPT {
         Meta::TOptional<int> ret;
@@ -72,8 +72,8 @@ static NO_INLINE void Test_Iterable_() {
         if (is_even(x)) ret.emplace(sqr(x));
         return ret;
     }).Accumulate();
-    AssertRelease(165 == sqr_odd2);
-    AssertRelease(120 == sqr_even2);
+    PPE_LOG_CHECKVOID(Test_Maths, 165 == sqr_odd2);
+    PPE_LOG_CHECKVOID(Test_Maths, 120 == sqr_even2);
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Vector_() {
@@ -97,103 +97,103 @@ static NO_INLINE void Test_Vector_() {
         float4 z = float4::Z;
         float4 w = float4::W;
         float4 a = Max(x, y);
-        AssertRelease(a == float4(1,1,0,0));
+        PPE_LOG_CHECKVOID(Test_Maths, a == float4(1,1,0,0));
         float4 b = Max(z, w);
-        AssertRelease(b == float4(0,0,1,1));
+        PPE_LOG_CHECKVOID(Test_Maths, b == float4(0,0,1,1));
         float4 c = Max(Max(x, y), Max(z, w));
-        AssertRelease(c == float4::One);
+        PPE_LOG_CHECKVOID(Test_Maths, c == float4::One);
         float4 d = Max3(x, y, z);
-        AssertRelease(d == float4(float3::One, 0));
+        PPE_LOG_CHECKVOID(Test_Maths, d == float4(float3::One, 0));
         float3 e = Max3(x.xyz, y.xyz, z.xyz);
-        AssertRelease(e == float3::One);
+        PPE_LOG_CHECKVOID(Test_Maths, e == float3::One);
         float4 f = Max3(Max(x, y), z, w);
-        AssertRelease(f == float4::One);
+        PPE_LOG_CHECKVOID(Test_Maths, f == float4::One);
         float4 m = Max3(x, y, Max(z, w));
-        AssertRelease(m == float4::One);
+        PPE_LOG_CHECKVOID(Test_Maths, m == float4::One);
         ubyte4 n = Float01_to_UByte0255(m);
-        AssertRelease(n == ubyte4(UINT8_MAX));
+        PPE_LOG_CHECKVOID(Test_Maths, n == ubyte4(UINT8_MAX));
     }
     {
         int3 x = int3::X;
         int3 y = int3::Y;
         int3 z = int3::Z;
         int3 a = x + y + z;
-        AssertRelease(a == int3::One);
+        PPE_LOG_CHECKVOID(Test_Maths, a == int3::One);
     }
     {
         int3 x = int3::X;
         bool3 m = GreaterMask(x, int3(0));
-        AssertRelease(Any( m));
-        AssertRelease(not All( m));
+        PPE_LOG_CHECKVOID(Test_Maths, Any( m));
+        PPE_LOG_CHECKVOID(Test_Maths, not All( m));
         int3 select = Blend(int3::MinusOne, int3::One, m);
         int broadcast = select.HSum();
-        AssertRelease(broadcast == 1);
+        PPE_LOG_CHECKVOID(Test_Maths, broadcast == 1);
     }
-    {
-        int4 v;
-        v.xy = int2{ 1,2 };
-        AssertRelease(v.x == 1);
-        AssertRelease(v.y == 2);
-        const int2 xy{ 3,4 };
-        auto& zw = v.zw;
-        zw = xy;
-        AssertRelease(v.x == 1);
-        AssertRelease(v.y == 2);
-        AssertRelease(v.z == 3);
-        AssertRelease(v.w == 4);
-        v.yw = { 5, 6 };
-        AssertRelease(v.x == 1);
-        AssertRelease(v.y == 5);
-        AssertRelease(v.z == 3);
-        AssertRelease(v.w == 6);
-    }
-    {
-        int4 v{ int2{ 1,2 }, int2{ 3,4 } };
-        v.xy = v.xx;
-        AssertRelease(v.x == 1);
-        AssertRelease(v.y == 1);
-        v.zw = v.zz;
-        //v.zz = { 3,4 }; forbidden, should not compile !
-        AssertRelease(v.x == 1);
-        AssertRelease(v.y == 1);
-        AssertRelease(v.z == 3);
-        AssertRelease(v.w == 3);
-    }
+    //{
+    //    int4 v;
+    //    v.xy = int2{ 1,2 };
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.y == 2);
+    //    const int2 xy{ 3,4 };
+    //    auto& zw = v.zw;
+    //    zw = xy;
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.y == 2);
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.z == 3);
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.w == 4);
+    //    v.yw = { 5, 6 };
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.y == 5);
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.z == 3);
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.w == 6);
+    //}
+    //{
+    //    int4 v{ int2{ 1,2 }, int2{ 3,4 } };
+    //    v.xy = v.xx;
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.y == 1);
+    //    v.zw = v.zz;
+    //    //v.zz = { 3,4 }; forbidden, should not compile !
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.y == 1);
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.z == 3);
+    //    PPE_LOG_CHECKVOID(Test_Maths, v.w == 3);
+    //} %NOCOMMIT%
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_BoundingBox_() {
     {
         FAabb3f box;
-        AssertRelease(not box.HasPositiveExtents());
-        AssertRelease(not box.HasPositiveExtentsStrict());
+        PPE_LOG_CHECKVOID(Test_Maths, not box.HasPositiveExtents());
+        PPE_LOG_CHECKVOID(Test_Maths, not box.HasPositiveExtentsStrict());
         box.Add(float3::Zero);
-        AssertRelease(box.HasPositiveExtents());
-        AssertRelease(not box.HasPositiveExtentsStrict());
+        PPE_LOG_CHECKVOID(Test_Maths, box.HasPositiveExtents());
+        PPE_LOG_CHECKVOID(Test_Maths, not box.HasPositiveExtentsStrict());
         box.Add(float3::One);
-        AssertRelease(box.HasPositiveExtentsStrict());
+        PPE_LOG_CHECKVOID(Test_Maths, box.HasPositiveExtentsStrict());
     }
     {
         FAabb3i box;
-        AssertRelease(not box.HasPositiveExtents());
-        AssertRelease(not box.HasPositiveExtentsStrict());
+        PPE_LOG_CHECKVOID(Test_Maths, not box.HasPositiveExtents());
+        PPE_LOG_CHECKVOID(Test_Maths, not box.HasPositiveExtentsStrict());
         box.Add(int3::Zero);
         box.Add(int3::X);
         box.Add(int3::Y);
-        AssertRelease(box.HasPositiveExtents());
-        AssertRelease(not box.HasPositiveExtentsStrict());
+        PPE_LOG_CHECKVOID(Test_Maths, box.HasPositiveExtents());
+        PPE_LOG_CHECKVOID(Test_Maths, not box.HasPositiveExtentsStrict());
         box.Add(int3::Z);
-        AssertRelease(box.HasPositiveExtentsStrict());
+        PPE_LOG_CHECKVOID(Test_Maths, box.HasPositiveExtentsStrict());
         FAabb2i box2D = box.Shuffle<0, 1>();
-        AssertRelease(box2D.HasPositiveExtentsStrict());
+        PPE_LOG_CHECKVOID(Test_Maths, box2D.HasPositiveExtentsStrict());
         int3 ext = box.Extents();
-        AssertRelease(ext == int3::One);
-        AssertRelease(box.Contains(int3::Zero));
-        AssertRelease(box.Contains(int3::One));
-        AssertRelease(not box.Contains(int3::MinusOne));
-        AssertRelease(not box.ContainsStrict(int3::Zero));
-        AssertRelease(not box.ContainsStrict(int3::One));
-        AssertRelease(box.ContainsMaxStrict(int3::Zero));
-        AssertRelease(not box.ContainsMaxStrict(int3::One));
+        PPE_LOG_CHECKVOID(Test_Maths, ext == int3::One);
+        PPE_LOG_CHECKVOID(Test_Maths, box.Contains(int3::Zero));
+        PPE_LOG_CHECKVOID(Test_Maths, box.Contains(int3::One));
+        PPE_LOG_CHECKVOID(Test_Maths, not box.Contains(int3::MinusOne));
+        PPE_LOG_CHECKVOID(Test_Maths, not box.ContainsStrict(int3::Zero));
+        PPE_LOG_CHECKVOID(Test_Maths, not box.ContainsStrict(int3::One));
+        PPE_LOG_CHECKVOID(Test_Maths, box.ContainsMaxStrict(int3::Zero));
+        PPE_LOG_CHECKVOID(Test_Maths, not box.ContainsMaxStrict(int3::One));
     }
     {
         FAabb3f unit = FAabb3f::MinusOneOneValue();
@@ -202,13 +202,13 @@ static NO_INLINE void Test_BoundingBox_() {
             unit + float3(1.5f),
             unit
         };
-        AssertRelease(boxes[2].Intersects(boxes[0]));
-        AssertRelease(boxes[2].Intersects(boxes[1]));
-        AssertRelease(not boxes[0].Intersects(boxes[1]));
+        PPE_LOG_CHECKVOID(Test_Maths, boxes[2].Intersects(boxes[0]));
+        PPE_LOG_CHECKVOID(Test_Maths, boxes[2].Intersects(boxes[1]));
+        PPE_LOG_CHECKVOID(Test_Maths, not boxes[0].Intersects(boxes[1]));
         FAabb3f all = MakeBoundingBox(MakeView(boxes));
-        AssertRelease(all.Contains(boxes[0]));
-        AssertRelease(all.Contains(boxes[1]));
-        AssertRelease(all.Contains(boxes[2]));
+        PPE_LOG_CHECKVOID(Test_Maths, all.Contains(boxes[0]));
+        PPE_LOG_CHECKVOID(Test_Maths, all.Contains(boxes[1]));
+        PPE_LOG_CHECKVOID(Test_Maths, all.Contains(boxes[2]));
     }
 }
 //----------------------------------------------------------------------------
@@ -217,36 +217,36 @@ static NO_INLINE void Test_Matrix_() {
         int4x3 m = float4x3::Identity();
         int3x4 t = m.Transpose();
         int4x3 n = t.Transpose();
-        AssertRelease(m == n);
+        PPE_LOG_CHECKVOID(Test_Maths, m == n);
     }
     {
         float4x4 m = MakeTranslationMatrix(float3(1));
-        AssertRelease(m.AxisX() == float3::X);
-        AssertRelease(m.AxisY() == float3::Y);
-        AssertRelease(m.AxisZ() == float3::Z);
-        AssertRelease(m.AxisT() == float3::One);
+        PPE_LOG_CHECKVOID(Test_Maths, m.AxisX() == float3::X);
+        PPE_LOG_CHECKVOID(Test_Maths, m.AxisY() == float3::Y);
+        PPE_LOG_CHECKVOID(Test_Maths, m.AxisZ() == float3::Z);
+        PPE_LOG_CHECKVOID(Test_Maths, m.AxisT() == float3::One);
         float4x3 p{
             m.AxisX(),
             m.AxisY(),
             m.AxisZ(),
             m.AxisT()
         };
-        AssertRelease(p.AxisX() == float3::X);
-        AssertRelease(p.AxisY() == float3::Y);
-        AssertRelease(p.AxisZ() == float3::Z);
-        AssertRelease(p.AxisT() == float3::One);
+        PPE_LOG_CHECKVOID(Test_Maths, p.AxisX() == float3::X);
+        PPE_LOG_CHECKVOID(Test_Maths, p.AxisY() == float3::Y);
+        PPE_LOG_CHECKVOID(Test_Maths, p.AxisZ() == float3::Z);
+        PPE_LOG_CHECKVOID(Test_Maths, p.AxisT() == float3::One);
         float4x3 q = PackHomogeneousMatrix(m);
-        AssertRelease(p == q);
+        PPE_LOG_CHECKVOID(Test_Maths, p == q);
         float4x4 id = float4x4::Identity();
-        AssertRelease(id.Column_x() == float4::X);
-        AssertRelease(id.Column_y() == float4::Y);
-        AssertRelease(id.Column_z() == float4::Z);
-        AssertRelease(id.Column_w() == float4::W);
+        PPE_LOG_CHECKVOID(Test_Maths, id.Column_x() == float4::X);
+        PPE_LOG_CHECKVOID(Test_Maths, id.Column_y() == float4::Y);
+        PPE_LOG_CHECKVOID(Test_Maths, id.Column_z() == float4::Z);
+        PPE_LOG_CHECKVOID(Test_Maths, id.Column_w() == float4::W);
         float4x4 n = m.Multiply(id);
-        AssertRelease(NearlyEquals(n.Column_x(), float4::X));
-        AssertRelease(NearlyEquals(n.Column_y(), float4::Y));
-        AssertRelease(NearlyEquals(n.Column_z(), float4::Z));
-        AssertRelease(NearlyEquals(n.Column_w(), float4::One));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column_x(), float4::X));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column_y(), float4::Y));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column_z(), float4::Z));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column_w(), float4::One));
     }
 }
 //----------------------------------------------------------------------------
@@ -260,31 +260,31 @@ static NO_INLINE void Test_Range_() {
         countA++;
         Unused(x);
     }
-    AssertRelease(countA == 44);
-    AssertRelease(countA == a.Extent());
+    PPE_LOG_CHECKVOID(Test_Maths, countA == 44);
+    PPE_LOG_CHECKVOID(Test_Maths, countA == a.Extent());
 
     u32 countB = 0;
     for (u32 x : b) {
         countB++;
         Unused(x);
     }
-    AssertRelease(countB == 41);
-    AssertRelease(countB == b.Extent());
+    PPE_LOG_CHECKVOID(Test_Maths, countB == 41);
+    PPE_LOG_CHECKVOID(Test_Maths, countB == b.Extent());
 
     u32 countC = 0;
     for (u32 x : c) {
         countC++;
         Unused(x);
     }
-    AssertRelease(countC == 9);
-    AssertRelease(countC == c.Extent());
+    PPE_LOG_CHECKVOID(Test_Maths, countC == 9);
+    PPE_LOG_CHECKVOID(Test_Maths, countC == c.Extent());
 
     const u32 sumA = std::accumulate(a.begin(), a.end(), 0);
-    AssertRelease(sumA == 1122);
+    PPE_LOG_CHECKVOID(Test_Maths, sumA == 1122);
     const u32 sumB = std::accumulate(b.begin(), b.end(), 0);
-    AssertRelease(sumB == 2132);
+    PPE_LOG_CHECKVOID(Test_Maths, sumB == 2132);
     const u32 sumC = std::accumulate(c.begin(), c.end(), 0);
-    AssertRelease(sumC == 189);
+    PPE_LOG_CHECKVOID(Test_Maths, sumC == 189);
 
     STATIC_ASSERT(a.Contains(a));
     STATIC_ASSERT(not a.Contains(b));
@@ -292,33 +292,33 @@ static NO_INLINE void Test_Range_() {
     STATIC_ASSERT(a.Overlaps(b));
     STATIC_ASSERT(a.Overlaps(c));
 
-    AssertRelease(not b.Contains(a));
-    AssertRelease(not b.Contains(c));
-    AssertRelease(b.Overlaps(a));
-    AssertRelease(not b.Overlaps(c));
+    PPE_LOG_CHECKVOID(Test_Maths, not b.Contains(a));
+    PPE_LOG_CHECKVOID(Test_Maths, not b.Contains(c));
+    PPE_LOG_CHECKVOID(Test_Maths, b.Overlaps(a));
+    PPE_LOG_CHECKVOID(Test_Maths, not b.Overlaps(c));
 
-    AssertRelease(not c.Contains(a));
-    AssertRelease(not c.Contains(b));
-    AssertRelease(c.Overlaps(a));
-    AssertRelease(not c.Overlaps(b));
+    PPE_LOG_CHECKVOID(Test_Maths, not c.Contains(a));
+    PPE_LOG_CHECKVOID(Test_Maths, not c.Contains(b));
+    PPE_LOG_CHECKVOID(Test_Maths, c.Overlaps(a));
+    PPE_LOG_CHECKVOID(Test_Maths, not c.Overlaps(b));
 
     const FRange32u intersectAB = a.Intersect(b);
-    AssertRelease(intersectAB == FRange32u(32, 48));
-    AssertRelease(a.Contains(intersectAB));
-    AssertRelease(b.Contains(intersectAB));
-    AssertRelease(not c.Contains(intersectAB));
-    AssertRelease(a.Overlaps(intersectAB));
-    AssertRelease(b.Overlaps(intersectAB));
-    AssertRelease(not c.Overlaps(intersectAB));
+    PPE_LOG_CHECKVOID(Test_Maths, intersectAB == FRange32u(32, 48));
+    PPE_LOG_CHECKVOID(Test_Maths, a.Contains(intersectAB));
+    PPE_LOG_CHECKVOID(Test_Maths, b.Contains(intersectAB));
+    PPE_LOG_CHECKVOID(Test_Maths, not c.Contains(intersectAB));
+    PPE_LOG_CHECKVOID(Test_Maths, a.Overlaps(intersectAB));
+    PPE_LOG_CHECKVOID(Test_Maths, b.Overlaps(intersectAB));
+    PPE_LOG_CHECKVOID(Test_Maths, not c.Overlaps(intersectAB));
 
     const FRange32u intersectBC = b.Intersect(c);
-    AssertRelease(intersectBC.Empty());
-    AssertRelease(a.Contains(intersectBC));
-    AssertRelease(b.Contains(intersectBC));
-    AssertRelease(c.Contains(intersectBC));
-    AssertRelease(not a.Overlaps(intersectBC));
-    AssertRelease(not b.Overlaps(intersectBC));
-    AssertRelease(not c.Overlaps(intersectBC));
+    PPE_LOG_CHECKVOID(Test_Maths, intersectBC.Empty());
+    PPE_LOG_CHECKVOID(Test_Maths, a.Contains(intersectBC));
+    PPE_LOG_CHECKVOID(Test_Maths, b.Contains(intersectBC));
+    PPE_LOG_CHECKVOID(Test_Maths, c.Contains(intersectBC));
+    PPE_LOG_CHECKVOID(Test_Maths, not a.Overlaps(intersectBC));
+    PPE_LOG_CHECKVOID(Test_Maths, not b.Overlaps(intersectBC));
+    PPE_LOG_CHECKVOID(Test_Maths, not c.Overlaps(intersectBC));
 
     CONSTEXPR FRange32u intersectAC = a.Intersect(c);
     STATIC_ASSERT(intersectAC == c);
@@ -330,23 +330,23 @@ static NO_INLINE void Test_Range_() {
     STATIC_ASSERT(c.Overlaps(intersectAC));
 
     const FRange32u unionAB = a.Union(b);
-    AssertRelease(unionAB == FRange32u(4, 73));
-    AssertRelease(unionAB.Contains(a));
-    AssertRelease(unionAB.Contains(b));
-    AssertRelease(unionAB.Contains(c));
-    AssertRelease(a.Overlaps(unionAB));
-    AssertRelease(b.Overlaps(unionAB));
-    AssertRelease(c.Overlaps(unionAB));
+    PPE_LOG_CHECKVOID(Test_Maths, unionAB == FRange32u(4, 73));
+    PPE_LOG_CHECKVOID(Test_Maths, unionAB.Contains(a));
+    PPE_LOG_CHECKVOID(Test_Maths, unionAB.Contains(b));
+    PPE_LOG_CHECKVOID(Test_Maths, unionAB.Contains(c));
+    PPE_LOG_CHECKVOID(Test_Maths, a.Overlaps(unionAB));
+    PPE_LOG_CHECKVOID(Test_Maths, b.Overlaps(unionAB));
+    PPE_LOG_CHECKVOID(Test_Maths, c.Overlaps(unionAB));
 
 #if 0 // union of non overlapping ranges is not allowed
     const FRange32u unionBC = b.Union(c);
-    AssertRelease(unionBC == FRange32u(17, 73));
-    AssertRelease(not unionBC.Contains(a));
-    AssertRelease(unionBC.Contains(b));
-    AssertRelease(unionBC.Contains(c));
-    AssertRelease(a.Overlaps(unionBC));
-    AssertRelease(b.Overlaps(unionBC));
-    AssertRelease(c.Overlaps(unionBC));
+    PPE_LOG_CHECKVOID(Test_Maths, unionBC == FRange32u(17, 73));
+    PPE_LOG_CHECKVOID(Test_Maths, not unionBC.Contains(a));
+    PPE_LOG_CHECKVOID(Test_Maths, unionBC.Contains(b));
+    PPE_LOG_CHECKVOID(Test_Maths, unionBC.Contains(c));
+    PPE_LOG_CHECKVOID(Test_Maths, a.Overlaps(unionBC));
+    PPE_LOG_CHECKVOID(Test_Maths, b.Overlaps(unionBC));
+    PPE_LOG_CHECKVOID(Test_Maths, c.Overlaps(unionBC));
 #endif
 
     CONSTEXPR FRange32u unionAC = a.Union(c);

@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Meta/Aliases.h"
+#include "Meta/Assert.h"
 #include "Meta/Iterator.h"
 
 namespace PPE {

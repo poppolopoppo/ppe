@@ -515,13 +515,14 @@ void TVector<T, _Allocator>::resize(size_type count, const_reference value) {
 
     if (_numElements >= count) {
         Meta::Destroy(MakeView().CutStartingAt(count));
+        _numElements = checked_cast<u32>(count);
+        reserve_Exactly(count);
     }
     else {
         reserve(count);
         Meta::Construct(TMemoryView<T>(_data + _numElements, count - _numElements), value);
+        _numElements = checked_cast<u32>(count);
     }
-
-    _numElements = checked_cast<u32>(count);
     Assert_NoAssume(_numElements * sizeof(T) <= _allocationSize);
 }
 //----------------------------------------------------------------------------
@@ -530,12 +531,15 @@ void TVector<T, _Allocator>::resize_Uninitialized(size_type count) {
     if (_numElements == count)
         return;
 
-    if (_numElements >= count)
+    if (_numElements >= count) {
         Meta::Destroy(MakeView().CutStartingAt(count));
-    else
+        _numElements = checked_cast<u32>(count);
+        reserve_Exactly(count);
+    }
+    else {
         reserve(count);
-
-    _numElements = checked_cast<u32>(count);
+        _numElements = checked_cast<u32>(count);
+    }
     Assert_NoAssume(_numElements * sizeof(T) <= _allocationSize);
 }
 //----------------------------------------------------------------------------

@@ -16,8 +16,8 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <typename T, u32 _Width, u32 _Height>
 union ScalarMatrixData {
-    T m[_Width][_Height];
     T raw[_Width * _Height];
+    T m[_Width][_Height];
 };
 //----------------------------------------------------------------------------
 template <typename T, u32 _Width, u32 _Height>
@@ -32,33 +32,42 @@ public:
     typedef TScalarVector<T, _Width> row_type;
     typedef TScalarVector<T, _Height> column_type;
 
-    explicit TScalarMatrix(Meta::FForceInit);
-    explicit TScalarMatrix(Meta::FNoInit) NOEXCEPT {}
+    CONSTEXPR explicit TScalarMatrix(Meta::FForceInit) NOEXCEPT;
+    CONSTEXPR explicit TScalarMatrix(Meta::FNoInit) NOEXCEPT {}
 
     CONSTEXPR TScalarMatrix() NOEXCEPT
         : TScalarMatrix(Meta::ForceInit)
     {}
 
-    TScalarMatrix(T broadcast);
-    TScalarMatrix(std::initializer_list<T> values);
+    CONSTEXPR TScalarMatrix(T broadcast) NOEXCEPT;
 
-    TScalarMatrix(const column_type& x);
-    TScalarMatrix(const column_type& x, const column_type& y);
-    TScalarMatrix(const column_type& x, const column_type& y, const column_type& z);
-    TScalarMatrix(const column_type& x, const column_type& y, const column_type& z, const column_type& w);
+    template <typename... _Args, class = Meta::TEnableIf<
+        sizeof...(_Args) == Dim && (... && std::is_assignable_v<T&, _Args>)
+        >> CONSTEXPR TScalarMatrix(_Args&&... args) NOEXCEPT
+        :   _data{std::forward<_Args>(args)...}
+    {}
 
-    TScalarMatrix(const TScalarMatrix<T, _Width - 1, _Height>& other, const column_type& column);
-    TScalarMatrix(const TScalarMatrix<T, _Width, _Height - 1>& other, const row_type& row);
+    CONSTEXPR TScalarMatrix(const column_type& x) NOEXCEPT;
+    CONSTEXPR TScalarMatrix(const column_type& x, const column_type& y) NOEXCEPT;
+    CONSTEXPR TScalarMatrix(const column_type& x, const column_type& y, const column_type& z) NOEXCEPT;
+    CONSTEXPR TScalarMatrix(const column_type& x, const column_type& y, const column_type& z, const column_type& w) NOEXCEPT;
 
-    TScalarMatrix(const TMemoryView<const T>& data);
+    CONSTEXPR TScalarMatrix(const TScalarMatrix<T, _Width - 1, _Height>& other, const column_type& column) NOEXCEPT;
+    CONSTEXPR TScalarMatrix(const TScalarMatrix<T, _Width, _Height - 1>& other, const row_type& row) NOEXCEPT;
 
-    FORCE_INLINE TScalarMatrix(const TScalarMatrix& other) { operator =(other); }
-    TScalarMatrix& operator =(const TScalarMatrix& other);
+    TScalarMatrix(const TMemoryView<const T>& data) NOEXCEPT;
+
+    CONSTEXPR FORCE_INLINE TScalarMatrix(const TScalarMatrix& other) NOEXCEPT
+        : _data{other._data}
+    {}
+    CONSTEXPR TScalarMatrix& operator =(const TScalarMatrix& other) NOEXCEPT;
 
     template <typename U>
-    FORCE_INLINE TScalarMatrix(const TScalarMatrix<U, _Width, _Height>& other) { operator =(other); }
+    FORCE_INLINE TScalarMatrix(const TScalarMatrix<U, _Width, _Height>& other) NOEXCEPT {
+        operator =(other);
+    }
     template <typename U>
-    TScalarMatrix& operator =(const TScalarMatrix<U, _Width, _Height>& other);
+    TScalarMatrix& operator =(const TScalarMatrix<U, _Width, _Height>& other) NOEXCEPT;
 
 #if 0
     template <u32 _Idx>

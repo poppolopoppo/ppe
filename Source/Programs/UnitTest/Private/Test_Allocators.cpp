@@ -34,7 +34,7 @@
 #include "Allocator/SystemAllocator.h"
 #include "Container/Map.h"
 
-#define USE_TESTALLOCATOR_MEMSET (0) // we don't want to benchmark memset() performance
+#define USE_TESTALLOCATOR_MEMSET (USE_PPE_SANITIZER) // we don't want to benchmark memset() performance, unless we are using a sanitizer and want to check block bounds
 
 namespace PPE {
 namespace Test {
@@ -71,7 +71,7 @@ static NO_INLINE void Test_Allocator_ST_(const FWStringLiteral& category, const 
         for (size_t sz : blockSizes) {
             const FAllocatorBlock blk = allocator_traits::Allocate(allocator, sz);
 #if USE_TESTALLOCATOR_MEMSET
-            FPlatformMemory::Memset(blk.Data, 0xFA, blk.SizeInBytes);
+            FPlatformMemory::Memset(blk.Data, 0x11, blk.SizeInBytes);
 #endif
             allocator_traits::Deallocate(allocator, blk);
         }
@@ -90,7 +90,7 @@ static NO_INLINE void Test_Allocator_MT_(const FWStringLiteral& category, const 
             _Alloc alloc(allocator);
             const FAllocatorBlock blk = allocator_traits::Allocate(alloc, sz);
 #if USE_TESTALLOCATOR_MEMSET
-            FPlatformMemory::Memset(blk.Data, 0xFB, blk.SizeInBytes);
+            FPlatformMemory::Memset(blk.Data, 0x22, blk.SizeInBytes);
 #endif
             allocator_traits::Deallocate(alloc, blk);
         });
@@ -112,7 +112,7 @@ static NO_INLINE void Test_Allocator_Sliding_(const FWStringLiteral& category, c
         for(size_t sz : blockSizes) {
             FAllocatorBlock blk = allocator_traits::Allocate(allocator, sz);
 #if USE_TESTALLOCATOR_MEMSET
-            FPlatformMemory::Memset(blk.Data, 0xFC, blk.SizeInBytes);
+            FPlatformMemory::Memset(blk.Data, 0x33, blk.SizeInBytes);
 #endif
 
             if (blockAddrs.size() == window) {
@@ -144,10 +144,17 @@ static NO_INLINE void Test_Allocator_Trashing_(const FWStringLiteral& category, 
         forrange(i, 0, blockSizes.size()) {
             const size_t sz = blockSizes[i];
             blockAddrs[i] = allocator_traits::Allocate(allocator, sz);
+#if USE_TESTALLOCATOR_MEMSET
+            FPlatformMemory::Memset(blockAddrs[i].Data, 0x4A, blockAddrs[i].SizeInBytes);
+#endif
         }
 
-        forrange(i, 0, blockSizes.size())
+        forrange(i, 0, blockSizes.size()) {
+#if USE_TESTALLOCATOR_MEMSET
+            FPlatformMemory::Memset(blockAddrs[i].Data, 0x4B, blockAddrs[i].SizeInBytes);
+#endif
             allocator_traits::Deallocate(allocator, blockAddrs[i]);
+        }
     }
 }
 //----------------------------------------------------------------------------
@@ -184,12 +191,20 @@ static NO_INLINE void Test_Allocator_Dangling_(const FWStringLiteral& category, 
             break;
 
         allocateTasks.emplace_back_AssumeNoGrow([bbegin, bend, &payload](ITaskContext&) {
-            for (FAllocatorBlock& b : payload.Blocks.SubRange(bbegin, bend - bbegin))
+            for (FAllocatorBlock& b : payload.Blocks.SubRange(bbegin, bend - bbegin)) {
                 b = allocator_traits::Allocate(payload.Allocator, b.SizeInBytes);
+#if USE_TESTALLOCATOR_MEMSET
+                FPlatformMemory::Memset(b.Data, 0x5A, b.SizeInBytes);
+#endif
+            }
         });
         deallocateTasks.emplace_back_AssumeNoGrow([bbegin, bend, &payload](ITaskContext&) {
-            for (FAllocatorBlock& b : payload.Blocks.SubRange(bbegin, bend - bbegin))
+            for (FAllocatorBlock& b : payload.Blocks.SubRange(bbegin, bend - bbegin)) {
+#if USE_TESTALLOCATOR_MEMSET
+                FPlatformMemory::Memset(b.Data, 0x5B, b.SizeInBytes);
+#endif
                 allocator_traits::Deallocate(payload.Allocator, b);
+            }
         });
     }
 
@@ -219,14 +234,26 @@ static NO_INLINE void Test_Allocator_Realloc_(const FWStringLiteral& category, c
     using allocator_traits = TAllocatorTraits<_Alloc>;
 
     forrange(loop, 0, GLoopCount_) {
-        const size_t numWorkers = checked_cast<size_t>(std::thread::hardware_concurrency()) / 2;
+        const size_t numWorkers = 1; // checked_cast<size_t>(std::thread::hardware_concurrency()) / 2; %NOCOMMIT%
         ParallelFor(0, numWorkers, [&allocator, blockSizes](size_t) {
             for (u32 b = 0; b + 3 < blockSizes.size(); b += 4) {
                 FAllocatorBlock blk{};
                 allocator_traits::Reallocate(allocator, blk, blockSizes[b + 0]);
+#if USE_TESTALLOCATOR_MEMSET
+                FPlatformMemory::Memset(blk.Data, 0x6A, blk.SizeInBytes);
+#endif
                 allocator_traits::Reallocate(allocator, blk, blockSizes[b + 1]);
+#if USE_TESTALLOCATOR_MEMSET
+                FPlatformMemory::Memset(blk.Data, 0x6B, blk.SizeInBytes);
+#endif
                 allocator_traits::Reallocate(allocator, blk, blockSizes[b + 2]);
+#if USE_TESTALLOCATOR_MEMSET
+                FPlatformMemory::Memset(blk.Data, 0x6C, blk.SizeInBytes);
+#endif
                 allocator_traits::Reallocate(allocator, blk, blockSizes[b + 3]);
+#if USE_TESTALLOCATOR_MEMSET
+                FPlatformMemory::Memset(blk.Data, 0x6D, blk.SizeInBytes);
+#endif
                 allocator_traits::Deallocate(allocator, blk);
             }
         });
@@ -299,6 +326,7 @@ static NO_INLINE void Test_CompressedRadixTrie_() {
 
     FRandomGenerator rng;
     VECTOR(Benchmark, TPair<uintptr_t COMMA uintptr_t>) blocks;
+    HASHSET(Benchmark, uintptr_t) markForDelete;
 
     forrange(loop, 0, 30) {
         {
@@ -310,8 +338,9 @@ static NO_INLINE void Test_CompressedRadixTrie_() {
             rng.Shuffle(blocks.MakeView());
         }
 
-        for (const auto& it : blocks)
-            radixTrie.Insert(it.first, it.second);
+        for (const TPair<uintptr_t COMMA uintptr_t>& blk : blocks) {
+            radixTrie.Insert(blk.first, blk.second);
+        }
 
         auto blocksToDelete = blocks.MakeView().CutBefore(blocks.size() / 3);
         auto blocksToKeep = blocks.MakeView().CutStartingAt(blocks.size() / 3);
@@ -326,53 +355,53 @@ static NO_INLINE void Test_CompressedRadixTrie_() {
         u32 total = 0;
         radixTrie.Foreach([&total](uintptr_t, uintptr_t) {
             total++;
-            });
-        AssertRelease(total == blocks.size() + 3);
+        });
+        PPE_LOG_CHECKVOID(Test_Allocators, total == blocks.size() + 3);
 
-        AssertRelease(radixTrie.Lookup(1 << 8) == 0xABC0);
-        AssertRelease(radixTrie.Lookup(2 << 8) == 0xBCE0);
-        AssertRelease(radixTrie.Lookup(3 << 8) == 0xECF0);
+        PPE_LOG_CHECKVOID(Test_Allocators, radixTrie.Lookup(1 << 8) == 0xABC0);
+        PPE_LOG_CHECKVOID(Test_Allocators, radixTrie.Lookup(2 << 8) == 0xBCE0);
+        PPE_LOG_CHECKVOID(Test_Allocators, radixTrie.Lookup(3 << 8) == 0xECF0);
 
         uintptr_t value;
-        AssertRelease(radixTrie.Find(&value, 2 << 8));
-        AssertRelease(0xBCE0 == value);
-        AssertRelease(radixTrie.Find(&value, 3 << 8));
-        AssertRelease(0xECF0 == value);
+        PPE_LOG_CHECKVOID(Test_Allocators, radixTrie.Find(&value, 2 << 8));
+        PPE_LOG_CHECKVOID(Test_Allocators, 0xBCE0 == value);
+        PPE_LOG_CHECKVOID(Test_Allocators, radixTrie.Find(&value, 3 << 8));
+        PPE_LOG_CHECKVOID(Test_Allocators, 0xECF0 == value);
 
         radixTrie.Erase(1 << 8);
 
-        AssertRelease(not radixTrie.Find(&value, 1 << 8));
+        PPE_LOG_CHECKVOID(Test_Allocators, not radixTrie.Find(&value, 1 << 8));
 
         radixTrie.Erase(2 << 8);
         radixTrie.Erase(3 << 8);
+
+        markForDelete.clear();
+        markForDelete.reserve(blocksToDelete.size());
+        markForDelete.insert(MakeKeyIterator(blocksToDelete.begin()), MakeKeyIterator(blocksToDelete.end()));
 
         u32 hits = 0;
         total = 0;
         radixTrie.Foreach([=, &hits, &total](uintptr_t key, uintptr_t) {
             total++;
-            hits += (std::find_if(blocksToDelete.begin(), blocksToDelete.end(), [=](auto x) {
-                return x.first == key;
-                }) != blocksToDelete.end()) ? 1 : 0;
-            });
-        AssertRelease(blocks.size() == total);
-        AssertRelease(blocksToDelete.size() == hits);
+            hits += (markForDelete.Contains(key) ? 1 : 0);
+        });
+        PPE_LOG_CHECKVOID(Test_Allocators, blocks.size() == total);
+        PPE_LOG_CHECKVOID(Test_Allocators, blocksToDelete.size() == hits);
 
 #if 1
-        radixTrie.DeleteIf([=](uintptr_t key, uintptr_t) {
-            return std::find_if(blocksToDelete.begin(), blocksToDelete.end(), [=](auto x) {
-                return x.first == key;
-                }) != blocksToDelete.end();
-            });
+        radixTrie.DeleteIf([=](uintptr_t key, uintptr_t) NOEXCEPT -> bool {
+            return markForDelete.Contains(key);
+        });
 #else
         for (const auto& it : blocksToDelete)
-            AssertRelease(radixTrie.Erase(it.first) == it.second);
+            PPE_LOG_CHECKVOID(Test_Allocators, radixTrie.Erase(it.first) == it.second);
 #endif
 
         total = 0;
         radixTrie.Foreach([&total](uintptr_t, uintptr_t) {
             total++;
-            });
-        AssertRelease(total == blocksToKeep.size());
+        });
+        PPE_LOG_CHECKVOID(Test_Allocators, total == blocksToKeep.size());
 
         ParallelForEachRef(blocksToKeep.begin(), blocksToKeep.end(),
             [&radixTrie](const TPair<uintptr_t COMMA uintptr_t>& it) {
@@ -398,11 +427,11 @@ static NO_INLINE void Test_BitTree_Impl_(FWStringLiteral name, TMemoryView<const
         PPE_LOG(Test_Allocators, Emphasis, "testing {0} with size {1}", name, capacity);
 
         tree.SetupMemoryRequirements(capacity);
-        Assert_NoAssume(tree.DesiredSize == capacity);
+        PPE_LOG_CHECKVOID(Test_Allocators, tree.DesiredSize == capacity);
 
         if (tree.TotalNumWords() != alloc.Count)
             alloc.Relocate(tree.TotalNumWords(), false);
-        Assert_NoAssume(alloc.SizeInBytes() == tree.AllocationSize());
+        PPE_LOG_CHECKVOID(Test_Allocators, alloc.SizeInBytes() == tree.AllocationSize());
         ONLY_IF_ASSERT(FPlatformMemory::Memdeadbeef(alloc.data(), alloc.SizeInBytes()));
 
         tree.Initialize(alloc.data(), false);
@@ -418,21 +447,21 @@ static NO_INLINE void Test_BitTree_Impl_(FWStringLiteral name, TMemoryView<const
         }
 
         Unused(available);
-        AssertRelease_NoAssume(available == capacity);
-        AssertRelease_NoAssume(tree.Full());
-        AssertRelease_NoAssume(tree.CountOnes(capacity) == capacity);
+        PPE_LOG_CHECKVOID(Test_Allocators, available == capacity);
+        PPE_LOG_CHECKVOID(Test_Allocators, tree.Full());
+        PPE_LOG_CHECKVOID(Test_Allocators, tree.CountOnes(capacity) == capacity);
 
         const auto ids = tmpIds.MakeView().CutBefore(capacity);
         MakeInterval(capacity).CopyTo(ids.begin());
         rnd.Shuffle(ids);
 
         for (auto bit : ids) {
-            AssertRelease_NoAssume(tree.IsAllocated(bit));
+            PPE_LOG_CHECKVOID(Test_Allocators, tree.IsAllocated(bit));
             tree.Deallocate(bit);
         }
 
-        AssertRelease_NoAssume(not tree.Full());
-        AssertRelease_NoAssume(tree.CountOnes(capacity) == 0);
+        PPE_LOG_CHECKVOID(Test_Allocators, not tree.Full());
+        PPE_LOG_CHECKVOID(Test_Allocators, tree.CountOnes(capacity) == 0);
     }
 }
 //----------------------------------------------------------------------------
@@ -466,7 +495,8 @@ struct FDummyForPool_ {
     }
 
     ~FDummyForPool_() {
-        AssertRelease(CheckInvariants());
+        if (not CheckInvariants())
+            AssertNotReached();
     }
 
     bool CheckCanary() const NOEXCEPT {
@@ -520,7 +550,7 @@ static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* con
         ParallelFor(0, pool_type::Capacity,
             [&allocs, &pool](size_t i) {
                 allocs[i] = pool.Allocate();
-                AssertRelease(allocs[i]->CheckInvariants());
+                PPE_LOG_CHECKVOID(Test_Allocators, allocs[i]->CheckInvariants());
                 Verify( allocs[i]->AddRef() );
             }, priority, context);
 
@@ -529,7 +559,7 @@ static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* con
         ParallelFor(0, ToDeallocate,
             [&allocs, &pool](size_t i) {
                 Verify( allocs[i]->RemoveRef() );
-                AssertRelease(allocs[i]->CheckInvariants());
+                PPE_LOG_CHECKVOID(Test_Allocators, allocs[i]->CheckInvariants());
                 pool.Release(allocs[i]);
             }, priority, context);
 
@@ -538,7 +568,7 @@ static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* con
         ParallelFor(0, ToDeallocate,
             [&allocs, &pool](size_t i) {
                 allocs[i] = pool.Allocate();
-                AssertRelease(allocs[i]->CheckInvariants());
+                PPE_LOG_CHECKVOID(Test_Allocators, allocs[i]->CheckInvariants());
                 Verify( allocs[i]->AddRef() );
             }, priority, context);
 
@@ -547,7 +577,7 @@ static NO_INLINE void Test_AtomicPool_(ETaskPriority priority, ITaskContext* con
         ParallelFor(0, pool_type::Capacity,
             [&allocs, &pool](size_t i) {
                 Verify( allocs[i]->RemoveRef() );
-                AssertRelease(allocs[i]->CheckInvariants());
+                PPE_LOG_CHECKVOID(Test_Allocators, allocs[i]->CheckInvariants());
                 pool.Release(allocs[i]);
             }, priority, context);
 
@@ -577,14 +607,14 @@ static NO_INLINE void Test_MemoryPool_Impl_(FWStringLiteral name, ETaskPriority 
 
     pool_type pool;
     forrange(loop, 0, numLoops) {
-        Assert_NoAssume(pool.CheckInvariants());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool.CheckInvariants());
 
         ParallelFor(0, pool_type::MaxSize,
             [&allocs, &pool](size_t i) {
                 allocs[i] = pool.Allocate();
             }, priority, context);
 
-        Assert_NoAssume(pool.CheckInvariants());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool.CheckInvariants());
 
         rng.Shuffle(allocs.MakeView());
 
@@ -593,14 +623,14 @@ static NO_INLINE void Test_MemoryPool_Impl_(FWStringLiteral name, ETaskPriority 
                 pool.Deallocate(allocs[i]);
             }, priority, context);
 
-        Assert_NoAssume(pool.CheckInvariants());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool.CheckInvariants());
 
         ParallelFor(0, ToDeallocate,
             [&allocs, &pool](size_t i) {
                 allocs[i] = pool.Allocate();
             }, priority, context);
 
-        Assert_NoAssume(pool.CheckInvariants());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool.CheckInvariants());
 
         rng.Shuffle(allocs.MakeView());
 
@@ -609,7 +639,7 @@ static NO_INLINE void Test_MemoryPool_Impl_(FWStringLiteral name, ETaskPriority 
                 pool.Deallocate(allocs[i]);
             }, priority, context);
 
-        Assert_NoAssume(pool.CheckInvariants());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool.CheckInvariants());
 
         pool.Clear_AssertCompletelyEmpty();
     }
@@ -644,8 +674,8 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
     using index_type = typename pool_type::index_type;
 
     STATIC_CONST_INTEGRAL(u32, ToDeallocate, u32((pool_type::MaxSize * 2) / 3));
-    AssertRelease(uniq.size() == pool_type::MaxSize);
-    AssertRelease(shuf.size() == pool_type::MaxSize);
+    PPE_LOG_CHECKVOID(Test_Allocators, uniq.size() == pool_type::MaxSize);
+    PPE_LOG_CHECKVOID(Test_Allocators, shuf.size() == pool_type::MaxSize);
 
     STACKLOCAL_POD_ARRAY(index_type, uniqAllocs, pool_type::MaxSize);
     STACKLOCAL_POD_ARRAY(index_type, shufAllocs, pool_type::MaxSize);
@@ -659,14 +689,14 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
     BENCHMARK_SCOPE(L"Pool", name.MakeView());
 
     forrange(loop, 0, numLoops) {
-        AssertRelease(0 == pool.NumCachedBlocks());
+        PPE_LOG_CHECKVOID(Test_Allocators, 0 == pool.NumCachedBlocks());
 
         rng.Shuffle(reorder);
 
         ParallelFor(0, uniq.size(),
             [&](size_t i) {
                 pool.FindOrAdd(FDummyForPool_{ uniq[reorder[i]] }, [&](const FDummyForPool_* pblock, index_type id, bool exist) {
-                    AssertRelease(not exist);
+                    PPE_LOG_CHECKVOID(Test_Allocators, not exist);
                     Assert(pblock->CheckCanary());
                     Assert(uniq[reorder[i]] == *pblock);
                     VerifyRelease(pblock->AddRef());
@@ -674,13 +704,13 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
                 });
             }, priority, context);
 
-        AssertRelease(pool_type::MaxSize == pool.NumCachedBlocks());
-        Assert_NoAssume(pool.CheckInvariants());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool_type::MaxSize == pool.NumCachedBlocks());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool.CheckInvariants());
 
         ParallelFor(0, shuf.size(),
             [&](size_t i) {
                 pool.FindOrAdd(FDummyForPool_{ shuf[reorder[i]] }, [&](const FDummyForPool_* pblock, index_type id, bool exist) {
-                    AssertRelease(exist);
+                    PPE_LOG_CHECKVOID(Test_Allocators, exist);
                     Assert(pblock->CheckCanary());
                     Assert(shuf[reorder[i]] == *pblock);
                     VerifyRelease(not pblock->AddRef());
@@ -688,8 +718,8 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
                 });
             }, priority, context);
 
-        AssertRelease(pool_type::MaxSize == pool.NumCachedBlocks());
-        Assert_NoAssume(pool.CheckInvariants());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool_type::MaxSize == pool.NumCachedBlocks());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool.CheckInvariants());
 
         ParallelFor(0, shuf.size(),
             [&](size_t i) {
@@ -702,8 +732,8 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
                 });
             }, priority, context);
 
-        AssertRelease(pool_type::MaxSize == pool.NumCachedBlocks());
-        Assert_NoAssume(pool.CheckInvariants());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool_type::MaxSize == pool.NumCachedBlocks());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool.CheckInvariants());
 
         ParallelFor(0, ToDeallocate,
             [&](size_t i) {
@@ -716,14 +746,14 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
                 });
             }, priority, context);
 
-        AssertRelease(pool_type::MaxSize - ToDeallocate == pool.NumCachedBlocks());
-        Assert_NoAssume(pool.CheckInvariants());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool_type::MaxSize - ToDeallocate == pool.NumCachedBlocks());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool.CheckInvariants());
 
         ParallelFor(0, ToDeallocate,
             [&](size_t i) {
-                Assert_NoAssume(UMax == uniqAllocs[i]);
+                PPE_LOG_CHECKVOID(Test_Allocators, UMax == uniqAllocs[i]);
                 pool.FindOrAdd(FDummyForPool_{ uniq[reorder[i]] }, [&](const FDummyForPool_* pblock, index_type id, bool exist) {
-                    AssertRelease(not exist);
+                    PPE_LOG_CHECKVOID(Test_Allocators, not exist);
                     Assert(pblock->CheckCanary());
                     Assert(uniq[reorder[i]] == *pblock);
                     VerifyRelease(pblock->AddRef());
@@ -731,8 +761,8 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
                 });
             }, priority, context);
 
-        AssertRelease(pool_type::MaxSize == pool.NumCachedBlocks());
-        Assert_NoAssume(pool.CheckInvariants());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool_type::MaxSize == pool.NumCachedBlocks());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool.CheckInvariants());
 
         ParallelFor(0, uniq.size(),
             [&](size_t i) {
@@ -745,14 +775,14 @@ static NO_INLINE void Test_CachedMemoryPool_Impl_(
                 });
             }, priority, context);
 
-        AssertRelease(0 == pool.NumCachedBlocks());
-        Assert_NoAssume(pool.CheckInvariants());
+        PPE_LOG_CHECKVOID(Test_Allocators, 0 == pool.NumCachedBlocks());
+        PPE_LOG_CHECKVOID(Test_Allocators, pool.CheckInvariants());
 
 #if USE_PPE_DEBUG
         for (index_type id : uniqAllocs)
-            Assert_NoAssume(UMax == id);
+            PPE_LOG_CHECKVOID(Test_Allocators, UMax == id);
         for (index_type id : shufAllocs)
-            Assert_NoAssume(UMax == id);
+            PPE_LOG_CHECKVOID(Test_Allocators, UMax == id);
 #endif
 
         pool.Clear_AssertCompletelyEmpty();
@@ -826,19 +856,19 @@ NO_INLINE void Test_SlabHeap_() {
     make_canary(canary0, seed0);
 
     const auto canary1 = heap.AllocateT<hash_t>(13);
-    AssertRelease(test_canary(canary0, seed0));
+    PPE_LOG_CHECKVOID(Test_Allocators, test_canary(canary0, seed0));
 
     make_canary(canary1, seed1);
 
     const auto canary2 = heap.AllocateT<hash_t>(16);
-    AssertRelease(test_canary(canary0, seed0));
-    AssertRelease(test_canary(canary1, seed1));
+    PPE_LOG_CHECKVOID(Test_Allocators, test_canary(canary0, seed0));
+    PPE_LOG_CHECKVOID(Test_Allocators, test_canary(canary1, seed1));
 
     make_canary(canary2, seed2);
 
-    AssertRelease(test_canary(canary0, seed0));
-    AssertRelease(test_canary(canary1, seed1));
-    AssertRelease(test_canary(canary2, seed2));
+    PPE_LOG_CHECKVOID(Test_Allocators, test_canary(canary0, seed0));
+    PPE_LOG_CHECKVOID(Test_Allocators, test_canary(canary1, seed1));
+    PPE_LOG_CHECKVOID(Test_Allocators, test_canary(canary2, seed2));
 
     Unused(canary0, canary1, canary2);
 
@@ -901,7 +931,7 @@ NO_INLINE void Test_SlabHeapStress_() {
     forrange(i, 0, 5000) {
         const FAllocatorBlock block = allocator.Allocate(
             rng.Next(ALLOCATION_BOUNDARY, maxBlockSize));
-        AssertRelease(block);
+        PPE_LOG_CHECKVOID(Test_Allocators, block);
 
         FPlatformMemory::Memset(block.Data, 0xAB_u8, block.SizeInBytes);
 
@@ -909,7 +939,7 @@ NO_INLINE void Test_SlabHeapStress_() {
             const size_t removeIndex = rng.Next(liveBlocks.size());
             const FAllocatorBlock removeBlock = liveBlocks[removeIndex];
 
-            AssertRelease(block);
+            PPE_LOG_CHECKVOID(Test_Allocators, block);
             FPlatformMemory::Memset(block.Data, 0xDE_u8, block.SizeInBytes);
 
             allocator.Deallocate(removeBlock);

@@ -179,15 +179,15 @@ struct TScalarVectorShuffle {
 
     T data[_Dim];
 
-    template <u32 N>
-    using shuffle_type = Meta::TDecay<decltype(data[N])>;
+    //template <u32 N>
+    //using shuffle_type = Meta::TDecay<decltype(data[N])>;
 
-    inline CONSTEXPR TScalarVectorShuffle() = default;
-    inline CONSTEXPR TScalarVectorShuffle(shuffle_type<_Shuffle>... args) {
-        Meta::static_for<sizeof...(_Shuffle)>([&](auto... idx) {
-            FOLD_EXPR(Get(idx) = args);
-        });
-    }
+    //inline CONSTEXPR TScalarVectorShuffle() = default;
+    //inline CONSTEXPR TScalarVectorShuffle(shuffle_type<_Shuffle>... args) {
+    //    Meta::static_for<sizeof...(_Shuffle)>([&](auto... idx) {
+    //        FOLD_EXPR(Get(idx) = args);
+    //    });
+    //}
 
     NODISCARD inline CONSTEXPR T& Get(u32 index) {
         return data[component_indices[index]];
@@ -200,8 +200,8 @@ template <typename T, u32 _Dim, u32... _Shuffle>
 using TScalarVectorShuffleExpr = TScalarVectorExpr<T, (sizeof...(_Shuffle)),
     TScalarVectorShuffle<T, _Dim, _Shuffle...>>;
 template <typename T, u32 _Dim, u32... _Shuffle>
-using TScalarVectorShuffleAssignable = TScalarVectorExpr<T, (sizeof...(_Shuffle)),
-    TScalarVectorAssignable<T, (sizeof...(_Shuffle)), TScalarVectorShuffle<T, _Dim, _Shuffle...>>>;
+using TScalarVectorShuffleAssignable = TScalarVectorShuffleExpr <T, _Dim, _Shuffle...>;/*TScalarVectorExpr<T, (sizeof...(_Shuffle)),
+    TScalarVectorAssignable<T, (sizeof...(_Shuffle)), TScalarVectorShuffle<T, _Dim, _Shuffle...>>>;  %NOCOMMIT%  */
 } //!namespace details
 //----------------------------------------------------------------------------
 // TScalarVectorStorage<T, N>

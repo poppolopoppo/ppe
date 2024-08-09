@@ -56,8 +56,12 @@ float2 OctahedralNormalEncode(const float3& n/* [-1,1], should be normalized */)
 //----------------------------------------------------------------------------
 float3 OctahedralNormalDecode(const float2& v) NOEXCEPT {
     float3 n{ v, 1.f - Abs(v.template Get<0>()) - Abs(v.template Get<1>()) };
-    if (n.z < 0)
-        n.xy = float2((1.f - Abs(n.yx)) * SignNotZero(n.xy));
+    if (n.z < 0) {
+        //n.xy = float2((1.f - Abs(n.yx)) * SignNotZero(n.xy)); %NOCOMMIT%
+        const float2 tmp((1.f - Abs(n.yx)) * SignNotZero(n.xy));
+        n.x = tmp.x;
+        n.y = tmp.y;
+    }
     return Normalize(n);
 }
 //----------------------------------------------------------------------------

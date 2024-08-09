@@ -61,6 +61,16 @@ CONSTEXPR CONSTF _It LowerBound(_It first, _It last, const _Value& value) NOEXCE
     return std::lower_bound(first, last, value, Meta::TLess{});
 }
 //----------------------------------------------------------------------------
+template <typename _It, typename _Value, typename _Pred>
+CONSTEXPR CONSTF _It UpperBound(_It first, _It last, const _Value& value, _Pred pred) NOEXCEPT {
+    return std::upper_bound(first, last, value, pred);
+}
+//----------------------------------------------------------------------------
+template <typename _It, typename _Value>
+CONSTEXPR CONSTF _It UpperBound(_It first, _It last, const _Value& value) NOEXCEPT {
+    return std::upper_bound(first, last, value, Meta::TLess{});
+}
+//----------------------------------------------------------------------------
 // Constexpr lexicographical compare
 //----------------------------------------------------------------------------
 template <typename _It, typename _Jt, typename _Less>

@@ -10,7 +10,7 @@
 #include "Allocator/SlabAllocator.h"
 #include "Container/HashSet.h"
 #include "Container/SparseArray.h"
-#include "Memory/InSituPtr.h"
+#include "Meta/Optional.h"
 
 namespace PPE {
 namespace RHI {
@@ -43,8 +43,8 @@ private:
             static_cast<_Visitor*>(visitor)->Visit(*pActual);
     }
 
-    TInSituPtr<FSearchableNodes> _nodes;
-    TInSituPtr<FEntries> _entries;
+    Meta::TOptional<FSearchableNodes> _nodes;
+    Meta::TOptional<FEntries> _entries;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

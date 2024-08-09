@@ -85,7 +85,7 @@ FWorkerContext_::~FWorkerContext_() {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(this == _gInstanceTLS);
     Assert(_fiberToRelease); // last fiber used to switch back to thread fiber
-    Assert_NoAssume(not _postWork); // can't handle post work delegate here !
+    Assert_NoAssume(not _postWork.Valid()); // can't handle post work delegate here !
     Assert_NoAssume(not FFiber::IsInFiber());
 
     _gInstanceTLS = nullptr;
@@ -94,7 +94,7 @@ FWorkerContext_::~FWorkerContext_() {
 }
 //----------------------------------------------------------------------------
 bool FWorkerContext_::SetPostTaskDelegate(FTaskFunc&& postWork) {
-    Assert_NoAssume(postWork);
+    Assert_NoAssume(postWork.Valid());
 #if USE_PPE_MEMORY_DEBUGGING
     // disable fiber work stealing when debugging
     Unused(postWork);
@@ -127,11 +127,11 @@ void FWorkerContext_::PostWork() {
         ctx.DutyCycle_();
 
     // special tasks can inject a postfix callback to avoid skipping the decref
-    if (ctx._postWork) {
+    if (ctx._postWork.Valid()) {
         // need to reset _postWork before yielding, or it could be executed
         // more than once since it's stored in the thread and not in the fiber
         const FTaskFunc postWorkCpy{ std::move(ctx._postWork) };
-        Assert_NoAssume(not ctx._postWork);
+        Assert_NoAssume(not ctx._postWork.Valid());
         postWorkCpy(ctx._pimpl);
     }
 }
@@ -157,7 +157,7 @@ void FWorkerContext_::ExitWorkerTask(ITaskContext&) {
     Assert(self);
 
     FWorkerContext_& worker = Get();
-    AssertRelease(not worker._postWork);
+    AssertRelease(not worker._postWork.Valid());
     Assert(nullptr == worker._fiberToRelease);
     worker._fiberToRelease = self; // released in worker context destructor ^^^
 
@@ -190,7 +190,7 @@ static void WorkerFiberCallback_() {
 
                 ITaskContext& ctx = FWorkerContext_::Consume(&task);
                 Assert(task.Pending.Valid());
-                task.Pending.Invoke(ctx);
+                task.Pending(ctx);
             }
 
             // Decrement the counter and resume waiting tasks if any.
@@ -269,16 +269,20 @@ public:
     static void Broadcast(FTaskManagerImpl& pimpl, const FTaskFunc& task, ETaskPriority priority) {
         Assert_NoAssume(not FFiber::IsInFiber());
 
-        const FTaskFunc broadcast = [&pimpl, &task](ITaskContext& ctx) {
+        ONLY_IF_ASSERT(std::atomic<i32> numPending = static_cast<i32>(pimpl.WorkerCount()));
+        const FTaskFunc broadcast = [&pimpl, &task ARGS_IF_ASSERT(&numPending)](ITaskContext& ctx) {
+            DEFERRED {
+                --numPending;
+                pimpl.Sync().Wait(); // wait for all threads
+            };
             task(ctx);
-            pimpl.Sync().Wait(); // wait for all threads
         };
-        Assert_NoAssume(broadcast.FitInSitu());
 
         forrange(n, 0, pimpl.WorkerCount())
             pimpl.Scheduler().Produce(priority, broadcast, nullptr);
 
         pimpl.Sync().Wait(); // all threads synchronized passed this line
+        Assert_NoAssume(numPending == 0); // %NOCOMMIT%
     }
 
     static void Wait(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority) {
@@ -403,7 +407,7 @@ size_t FTaskManagerImpl::WorkerCount() const NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::Run(FAggregationPort& ap, FTaskFunc&& rtask, ETaskPriority priority) {
-    Assert_NoAssume(rtask);
+    Assert_NoAssume(rtask.Valid());
 
     _scheduler.Produce(priority, std::move(rtask), ap.Increment(1));
 }
@@ -421,7 +425,7 @@ void FTaskManagerImpl::Run(FAggregationPort& ap, const TMemoryView<const FTaskFu
 }
 //----------------------------------------------------------------------------
 void FTaskManagerImpl::Run(FCompletionPort* cp, FTaskFunc&& rtask, ETaskPriority priority) {
-    Assert_NoAssume(rtask);
+    Assert_NoAssume(rtask.Valid());
 
     _scheduler.Produce(priority, std::move(rtask), StartPortIFN_(cp, 1));
 }
@@ -596,7 +600,7 @@ void FTaskManager::Shutdown() {
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Run(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
-    Assert(rtask);
+    Assert(rtask.Valid());
     Assert(_pimpl);
 
     _pimpl->Run(nullptr, std::move(rtask), priority);
@@ -617,7 +621,7 @@ void FTaskManager::Run(const TMemoryView<const FTaskFunc>& tasks, ETaskPriority 
 }
 //----------------------------------------------------------------------------
 void FTaskManager::Run(FAggregationPort& ap, FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
-    Assert(rtask);
+    Assert(rtask.Valid());
     Assert(_pimpl);
 
     _pimpl->Run(ap, std::move(rtask), priority);
@@ -638,7 +642,7 @@ void FTaskManager::Run(FAggregationPort& ap, const TMemoryView<const FTaskFunc>&
 }
 //----------------------------------------------------------------------------
 void FTaskManager::RunAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority /* = ETaskPriority::Normal */) const {
-    Assert_NoAssume(rtask);
+    Assert_NoAssume(rtask.Valid());
     Assert(_pimpl);
 
     if (FFiber::IsInFiber())
@@ -662,7 +666,7 @@ void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, ETaskPrio
 void FTaskManager::RunAndWaitFor(const TMemoryView<FTaskFunc>& rtasks, const FTaskFunc& whileWaiting, ETaskPriority priority/* = ETaskPriority::Normal */) const {
     Assert_NoAssume(not FFiber::IsInFiber());
     Assert_NoAssume(not rtasks.empty());
-    Assert(whileWaiting);
+    Assert(whileWaiting.Valid());
     Assert(_pimpl);
 
     auto waitfor = [rtasks, &whileWaiting, priority](ITaskContext& ctx) {
@@ -702,7 +706,7 @@ void FTaskManager::RunInWorker(FTaskFunc&& rtask, ETaskPriority priority /* = ET
 }
 //----------------------------------------------------------------------------
 void FTaskManager::BroadcastAndWaitFor(FTaskFunc&& rtask, ETaskPriority priority/* = ETaskPriority::Normal */) const {
-    Assert_NoAssume(rtask);
+    Assert_NoAssume(rtask.Valid());
     Assert(_pimpl);
 
     if (FFiber::IsInFiber())

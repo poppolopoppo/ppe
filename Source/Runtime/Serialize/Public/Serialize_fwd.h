@@ -9,10 +9,9 @@
 #endif
 
 #include "Memory/RefPtr.h"
+#include "Memory/InSituPtr.h"
 
 namespace PPE {
-template <typename T>
-struct TInSituPtr;
 namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

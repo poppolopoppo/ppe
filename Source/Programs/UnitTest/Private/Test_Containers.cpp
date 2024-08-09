@@ -8,6 +8,8 @@
 #include "Container/Appendable.h"
 #include "Container/AssociativeVector.h"
 #include "Container/BurstTrie.h"
+#include "Container/DenseHashMap.h"
+#include "Container/DenseHashSet.h"
 #include "Container/FixedSizeHashTable.h"
 #include "Container/FlatMap.h"
 #include "Container/FlatSet.h"
@@ -121,18 +123,18 @@ struct TSamplePool {
 #if (!USE_PPE_CONTAINERS_DEBUGGING)
             for (const auto& it : Insert) {
                 c.insert(it);
-                Assert_NoAssume(c.find(it) != c.end());
+                PPE_LOG_CHECKVOID(Test_Containers, c.find(it) != c.end());
             }
 #else
             forrange(i, 0, Insert.size()) {
                 c.insert(Insert[i]);
-                Assert_NoAssume(c.size() == i + 1);
+                PPE_LOG_CHECKVOID(Test_Containers, c.size() == i + 1);
 
                 for (u32 j = 0; j <= i; ++j)
-                    AssertRelease(c.find(Insert[j]) != c.end());
+                    PPE_LOG_CHECKVOID(Test_Containers, c.find(Insert[j]) != c.end());
             }
 #endif
-            Assert_NoAssume(c.size() == Insert.size());
+            PPE_LOG_CHECKVOID(Test_Containers, c.size() == Insert.size());
         }
 
         template <typename _Container>
@@ -142,7 +144,7 @@ struct TSamplePool {
             for (const auto& it : Sparse)
                 Verify(c.erase(it));
 
-            Assert_NoAssume(c.size() == Insert.size() - Sparse.size());
+            PPE_LOG_CHECKVOID(Test_Containers, c.size() == Insert.size() - Sparse.size());
         }
     };
 
@@ -201,7 +203,7 @@ struct TSamplePool {
         STACKLOCAL_STACK(_Container, tables, Series.size());
 
         for (const FSampleData& series : Series) {
-            Assert_NoAssume(series.Insert.size() >= n);
+            PPE_LOG_CHECKVOID(Test_Containers, series.Insert.size() >= n);
 
             tables.Push(archetype);
             auto& h = *tables.Peek();
@@ -252,7 +254,7 @@ struct TSamplePool {
             const size_t jitteredSamples = jitter ? rnd(
                 checked_cast<u32>(numSamples - jitter),
                 checked_cast<u32>(numSamples + jitter) ) : numSamples;
-            Assert_NoAssume(jitteredSamples > 0);
+            PPE_LOG_CHECKVOID(Test_Containers, jitteredSamples > 0);
 
             Series.emplace_back_AssumeNoGrow();
             FSampleData& s = Series.back();
@@ -469,13 +471,13 @@ public:
 
 #if 0
                 auto it = c.insert(item);
-                Assert_NoAssume(it.second);
+                PPE_LOG_CHECKVOID(Test_Containers, it.second);
 
                 FBenchmark::DoNotOptimize(*it.first);
 #else
                 for (const auto& item : insert) {
                     auto it = c.insert(item);
-                    Assert_NoAssume(it.second);
+                    PPE_LOG_CHECKVOID(Test_Containers, it.second);
                     FBenchmark::DoNotOptimize(*it.first);
                 }
 
@@ -508,13 +510,13 @@ public:
 
 #if 0
                 auto it = c.insert(item);
-                Assert_NoAssume(it.second);
+                PPE_LOG_CHECKVOID(Test_Containers, it.second);
 
                 FBenchmark::DoNotOptimize(*it.first);
 #else
                 for (const auto& item : insert) {
                     auto it = c.insert(item);
-                    Assert_NoAssume(it.second);
+                    PPE_LOG_CHECKVOID(Test_Containers, it.second);
                     FBenchmark::DoNotOptimize(*it.first);
                 }
 
@@ -540,12 +542,12 @@ public:
 
                 size_t n = 0;
                 for (const auto& it : c) {
-                    Assert_NoAssume(n < c.size());
+                    PPE_LOG_CHECKVOID(Test_Containers, n < c.size());
                     FBenchmark::DoNotOptimize(it);
                     n++;
                 }
 
-                Assert_NoAssume(c.size() == n);
+                PPE_LOG_CHECKVOID(Test_Containers, c.size() == n);
                 FBenchmark::DoNotOptimize(n);
             }
         });
@@ -571,7 +573,7 @@ public:
                     n++;
                 }
 
-                Assert_NoAssume(c.size() == n);
+                PPE_LOG_CHECKVOID(Test_Containers, c.size() == n);
                 FBenchmark::DoNotOptimize(n);
             }
         });
@@ -625,7 +627,7 @@ public:
                     if (jt != cend) hit++;
                 }
 
-                Assert_NoAssume(0 == hit);
+                PPE_LOG_CHECKVOID(Test_Containers, 0 == hit);
                 FBenchmark::DoNotOptimize(hit);
             }
         });
@@ -645,16 +647,16 @@ public:
 
                 state.ResetTiming();
 
-                ONLY_IF_ASSERT(size_t n = 0);
+                size_t n = 0;
                 uintptr_t h = 0;
                 for (const auto& it : s.Dense) {
                     auto jt = c.find(it);
                     FContainerBenchmark::DoNotOptimize(jt);
                     h += uintptr_t(&*jt);
-                    ONLY_IF_ASSERT(n++);
+                    n++;
                 }
 
-                Assert_NoAssume(s.Dense.size() == n);
+                PPE_LOG_CHECKVOID(Test_Containers, s.Dense.size() == n);
                 FBenchmark::DoNotOptimize(h);
             }
         });
@@ -682,7 +684,7 @@ public:
                     if (jt != cend) hit++;
                 }
 
-                Assert_NoAssume(0 == hit);
+                PPE_LOG_CHECKVOID(Test_Containers, 0 == hit);
                 FBenchmark::DoNotOptimize(hit);
             }
         });
@@ -1188,7 +1190,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
 #if 0//!PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             THopscotchHashSet<T> Hopscotch;
-            bm.Run("Hopscotch", Hopscotch, input);
+            bm.Run("Hopscotch"_view, Hopscotch, input);
         }
 #   if USE_PPE_CONTAINERS_MEMOIZER
         {
@@ -1227,7 +1229,7 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
             bm.Run("SSEHashSet2"_view, set, input);
         }
 #endif
-#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+#if 0//!PPE_RUN_BENCHMARK_ONE_CONTAINER
         {
             TSSEHashSet2<T, Meta::TCRC32<T> > set;
             bm.Run("SSEHashSet2_CRC32"_view, set, input);
@@ -1267,6 +1269,18 @@ NO_INLINE static void Test_PODSet_(const FString& name, const _Generator& sample
         {
             TSSEHashSet6<T, Meta::TCRC32<T>> set;
             bm.Run("SSEHashSet6_CRC32", set, input);
+        }
+#endif
+#if 1//!PPE_RUN_BENCHMARK_ONE_CONTAINER
+        {
+            TDenseHashSet<T> set;
+            bm.Run("TDenseHashSet"_view, set, input);
+        }
+#endif
+#if !PPE_RUN_BENCHMARK_ONE_CONTAINER
+        {
+            TDenseHashSet<T, Meta::TCRC32<T> > set;
+            bm.Run("TDenseHashSet_CRC32"_view, set, input);
         }
 #endif
 #if !PPE_RUN_BENCHMARK_ONE_CONTAINER && !PPE_DONT_USE_STD_UNORDEREDSET
@@ -1797,8 +1811,8 @@ NO_INLINE void Test_MinMaxHeap_() {
     int vmax;
     VerifyRelease(heap.PopMax(&vmax));
 
-    AssertRelease(vmin == 0);
-    AssertRelease(vmax == 3);
+    PPE_LOG_CHECKVOID(Test_Containers, vmin == 0);
+    PPE_LOG_CHECKVOID(Test_Containers, vmax == 3);
 
     PPE_LOG(Test_Containers, Emphasis, "MinMax heap: {0} -> [{1}, {2}]", heap.MakeView(), vmin, vmax);
 }
@@ -1813,13 +1827,13 @@ NO_INLINE void Test_SSEHashSet() {
 NO_INLINE void Test_Appendable() {
     TVector<int> vector;
     MakeAppendable(vector).push_back(42);
-    AssertRelease(vector.back() == 42);
+    PPE_LOG_CHECKVOID(Test_Containers, vector.back() == 42);
     TSparseArray<int> sparse;
     MakeAppendable(sparse).emplace_back(69);
-    AssertRelease(sparse.size() == 1);
+    PPE_LOG_CHECKVOID(Test_Containers, sparse.size() == 1);
     TFixedSizeStack<int, 8> fixed;
     MakeAppendable(fixed) << 1 << 2 << 3;
-    AssertRelease(fixed.size() == 3);
+    PPE_LOG_CHECKVOID(Test_Containers, fixed.size() == 3);
 }
 //----------------------------------------------------------------------------
 template <size_t _Dim, typename T = size_t>
@@ -1829,7 +1843,7 @@ static void Test_BitSetImpl_() {
     FRandomGenerator rng;
     forrange(loop, 0, 10) {
         TFixedSizeBitMask<_Dim, T> bits0{ Meta::ForceInit };
-        AssertRelease(bits0.AllFalse());
+        PPE_LOG_CHECKVOID(Test_Containers, bits0.AllFalse());
         for (u32& bit : trueBits) {
             for (;;) {
                 bit = rng.NextU32(_Dim);
@@ -1838,41 +1852,41 @@ static void Test_BitSetImpl_() {
             }
             bits0.SetTrue(bit);
         }
-        AssertRelease(bits0.Count() == lengthof(trueBits));
+        PPE_LOG_CHECKVOID(Test_Containers, bits0.Count() == lengthof(trueBits));
         std::sort(std::begin(trueBits), std::end(trueBits));
         TFixedSizeBitMask<_Dim, T> bits{ std::begin(trueBits), std::end(trueBits) };
-        AssertRelease(bits.AnyTrue());
-        AssertRelease(bits.AnyFalse());
-        AssertRelease(bits == bits0);
+        PPE_LOG_CHECKVOID(Test_Containers, bits.AnyTrue());
+        PPE_LOG_CHECKVOID(Test_Containers, bits.AnyFalse());
+        PPE_LOG_CHECKVOID(Test_Containers, bits == bits0);
         TFixedSizeBitMask<_Dim, T> bits2 = bits.Invert();
         for (auto bit : trueBits) {
-            AssertRelease(bits[bit]);
-            AssertRelease(not bits2[bit]);
+            PPE_LOG_CHECKVOID(Test_Containers, bits[bit]);
+            PPE_LOG_CHECKVOID(Test_Containers, not bits2[bit]);
             bits.SetFalse(bit);
             bits2.SetTrue(bit);
         }
-        AssertRelease(bits.AllFalse());
-        AssertRelease(not bits.AnyTrue());
-        AssertRelease(bits.AnyFalse());
+        PPE_LOG_CHECKVOID(Test_Containers, bits.AllFalse());
+        PPE_LOG_CHECKVOID(Test_Containers, not bits.AnyTrue());
+        PPE_LOG_CHECKVOID(Test_Containers, bits.AnyFalse());
         bits.SetTrue(_Dim - 1);
-        AssertRelease(bits.AnyTrue());
-        AssertRelease(not bits.AllFalse());
-        AssertRelease(bits2.AllTrue());
-        AssertRelease(not bits2.AnyFalse());
-        AssertRelease(bits2.AnyTrue());
+        PPE_LOG_CHECKVOID(Test_Containers, bits.AnyTrue());
+        PPE_LOG_CHECKVOID(Test_Containers, not bits.AllFalse());
+        PPE_LOG_CHECKVOID(Test_Containers, bits2.AllTrue());
+        PPE_LOG_CHECKVOID(Test_Containers, not bits2.AnyFalse());
+        PPE_LOG_CHECKVOID(Test_Containers, bits2.AnyTrue());
         bits2.SetFalse(_Dim - 1);
-        AssertRelease(not bits2.AllTrue());
-        AssertRelease(bits2.AnyFalse());
+        PPE_LOG_CHECKVOID(Test_Containers, not bits2.AllTrue());
+        PPE_LOG_CHECKVOID(Test_Containers, bits2.AnyFalse());
         TFixedSizeBitMask<_Dim, T> bits3{ std::begin(trueBits), std::end(trueBits) };
         T prev = 0;
         forrange(i, 0, lengthof(trueBits)) {
             auto in = bits3.PopFront(prev);
-            AssertRelease(in);
-            AssertRelease(bits3.Count() == lengthof(trueBits) - i - 1);
-            AssertRelease(trueBits[i] + 1 == in);
+            PPE_LOG_CHECKVOID(Test_Containers, in);
+            PPE_LOG_CHECKVOID(Test_Containers, bits3.Count() == lengthof(trueBits) - i - 1);
+            PPE_LOG_CHECKVOID(Test_Containers, trueBits[i] + 1 == in);
             prev = in - 1;
         }
-        AssertRelease(bits3.AllFalse());
+        PPE_LOG_CHECKVOID(Test_Containers, bits3.AllFalse());
     }
 }
 //----------------------------------------------------------------------------
@@ -1926,7 +1940,7 @@ NO_INLINE void Test_TupleVector() {
     VerifyRelease(dummySum2 == dummySum);
 
     TUPLEVECTOR(Container, int, dummy_t_, double) vec3{ vec };
-    AssertRelease(vec2.size() == vec3.size());
+    PPE_LOG_CHECKVOID(Test_Containers, vec2.size() == vec3.size());
     VerifyRelease(std::equal(vec.begin(), vec.end(), vec3.begin(), vec3.end() ));
     VerifyRelease(vec.MakeIterable<2, 0, 1>().Equals(vec3.MakeIterable<2, 0, 1>()));
 
