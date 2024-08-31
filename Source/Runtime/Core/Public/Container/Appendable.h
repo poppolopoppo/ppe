@@ -83,34 +83,34 @@ private:
 //----------------------------------------------------------------------------
 template <typename _Char>
 TAppendable<_Char> MakeAppendable(TBasicString<_Char>& str) {
-    return typename TAppendable<_Char>::FPushBackFunc{ Meta::StaticFunction<&TBasicString<_Char>::push_back>, &str };
+    return typename TAppendable<_Char>::FPushBackFunc( Meta::StaticFunction<&TBasicString<_Char>::push_back>, &str );
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
 TAppendable<T> MakeAppendable(TStack<T, _IsPod>& stack) {
-    return typename TAppendable<T>::FPushBackFunc{ Meta::StaticFunction<&TStack<T, _IsPod>::template Push<T&&> >, &stack };
+    return typename TAppendable<T>::FPushBackFunc( Meta::StaticFunction<&TStack<T, _IsPod>::template Push<T&&> >, &stack );
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TAppendable<T> MakeAppendable(TSparseArray<T, _Allocator>& sparse) {
-    return typename TAppendable<T>::FPushBackFunc{ Meta::StaticFunction<&TSparseArray<T, _Allocator>::template Emplace<T&&> >, &sparse };
+    return typename TAppendable<T>::FPushBackFunc( Meta::StaticFunction<&TSparseArray<T, _Allocator>::template Emplace<T&&> >, &sparse );
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
 TAppendable<T> MakeAppendable(TVector<T, _Allocator>& vector) {
-    return typename TAppendable<T>::FPushBackFunc{ Meta::StaticFunction<&TVector<T, _Allocator>::template emplace_back<T&&> >, &vector };
+    return typename TAppendable<T>::FPushBackFunc( Meta::StaticFunction<&TVector<T, _Allocator>::template emplace_back<T&&> >, &vector );
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Lambda,
     decltype(typename TAppendable<T>::FPushBackFunc{ std::declval<_Lambda&>() })* = nullptr >
 TAppendable<T> MakeAppendable(_Lambda& lambda) {
-    return typename TAppendable<T>::FPushBackFunc{ lambda };
+    return typename TAppendable<T>::FPushBackFunc( lambda );
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Lambda,
     decltype(std::declval<const _Lambda&>()(std::declval<T&&>()))* = nullptr >
 TAppendable<T> MakeAppendable(const _Lambda& lambda) {
-    return typename TAppendable<T>::FPushBackFunc{ lambda };
+    return typename TAppendable<T>::FPushBackFunc( lambda );
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

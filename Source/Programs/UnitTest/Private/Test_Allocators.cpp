@@ -234,7 +234,7 @@ static NO_INLINE void Test_Allocator_Realloc_(const FWStringLiteral& category, c
     using allocator_traits = TAllocatorTraits<_Alloc>;
 
     forrange(loop, 0, GLoopCount_) {
-        const size_t numWorkers = 1; // checked_cast<size_t>(std::thread::hardware_concurrency()) / 2; %NOCOMMIT%
+        const size_t numWorkers = checked_cast<size_t>(std::thread::hardware_concurrency()) / 2;
         ParallelFor(0, numWorkers, [&allocator, blockSizes](size_t) {
             for (u32 b = 0; b + 3 < blockSizes.size(); b += 4) {
                 FAllocatorBlock blk{};

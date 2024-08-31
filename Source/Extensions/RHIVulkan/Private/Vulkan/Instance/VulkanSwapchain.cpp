@@ -731,7 +731,7 @@ bool FVulkanSwapchain::FInternalData_::CreateImages_(FVulkanResourceManager& res
         ONLY_IF_RHIDEBUG(debugName[lengthof(debugName) - 2] = static_cast<char>('0' + i));
 
         ImageIds.Push(resources.CreateImage(
-            desc, NoFunction
+            desc, Default
             ARGS_IF_RHIDEBUG(debugName) ));
 
         PPE_LOG_CHECK(RHI, ImageIds[i].Valid());

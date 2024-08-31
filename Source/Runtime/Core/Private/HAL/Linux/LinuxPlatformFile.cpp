@@ -270,16 +270,16 @@ bool FLinuxPlatformFile::FileExists(const char_type* filename, EExistPolicy poli
     return (::stat(WCHAR_TO_UTF_8<MaxPathLength>(filename), &fs) == 0 && S_ISREG(fs.st_mode));
 }
 //----------------------------------------------------------------------------
-void FLinuxPlatformFile::EnumerateDir(const char_type* dirpath, const TFunction<void(const FWStringView&)>& onFile, const TFunction<void(const FWStringView&)>& onSubDir) {
+void FLinuxPlatformFile::EnumerateDir(const char_type* dirpath, const TFunctionRef<void(const FWStringView&)>& onFile, const TFunctionRef<void(const FWStringView&)>& onSubDir) {
     Assert(dirpath);
-    Assert(onSubDir || onFile);
+    Assert(onSubDir.Valid() || onFile.Valid());
 
     EnumerateDirNonRecursive_(dirpath,
         [&onFile](const FWStringView& file) { if (onFile) onFile(file); },
         [&onSubDir](const FWStringView& subdir) { if (onSubDir) onSubDir(subdir); });
 }
 //----------------------------------------------------------------------------
-void FLinuxPlatformFile::EnumerateFiles(const char_type* dirpath, bool recursive, const TFunction<void(const FWStringView&)>& onFile) {
+void FLinuxPlatformFile::EnumerateFiles(const char_type* dirpath, bool recursive, const TFunctionRef<void(const FWStringView&)>& onFile) {
     Assert(dirpath);
     Assert(onFile);
 
@@ -316,7 +316,7 @@ void FLinuxPlatformFile::EnumerateFiles(const char_type* dirpath, bool recursive
     }
 }
 //----------------------------------------------------------------------------
-void FLinuxPlatformFile::GlobFiles(const char_type* dirpath, const char_type* pattern, bool recursive, const TFunction<void(const FWStringView&)>& onMatch) {
+void FLinuxPlatformFile::GlobFiles(const char_type* dirpath, const char_type* pattern, bool recursive, const TFunctionRef<void(const FWStringView&)>& onMatch) {
     Assert(dirpath);
     Assert(pattern);
     Assert(onMatch);

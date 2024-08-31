@@ -21,21 +21,16 @@ public:
     PPE_DEFAULT_EXCEPTION_DESCRIPTION(FJsonSerializerException);
 };
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FJsonSerializer final : public ISerializer {
+class FJsonSerializer final : public ISerializer {
+    explicit FJsonSerializer(bool minify = true);
+    
 public:
-    virtual ~FJsonSerializer();
-
-    static FExtname Extname();
-    static PSerializer Get();
+    NODISCARD PPE_SERIALIZE_API static FExtname Extname();
+    NODISCARD PPE_SERIALIZE_API static USerializer Get();
 
 public: // ISerializer
     virtual void Deserialize(IStreamReader& input, FTransactionLinker* linker) const override final;
     virtual void Serialize(const FTransactionSaver& saver, IStreamWriter* output) const override final;
-
-private:
-    friend struct TInSituPtr<ISerializer>;
-
-    explicit FJsonSerializer(bool minify = true);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

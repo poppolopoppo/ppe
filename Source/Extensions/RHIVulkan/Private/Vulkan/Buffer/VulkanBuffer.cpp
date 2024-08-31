@@ -282,7 +282,7 @@ void FVulkanBuffer::TearDown(FVulkanResourceManager& resources) {
     }
 
     if (exclusiveData->IsExternal) {
-        if (exclusiveData->OnRelease)
+        if (exclusiveData->OnRelease.Valid())
             exclusiveData->OnRelease(FVulkanExternalObject(exclusiveData->vkBuffer).ExternalBuffer());
     }
     else

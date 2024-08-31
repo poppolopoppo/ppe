@@ -399,19 +399,15 @@ bool Base64Decode(const FWStringView& src, const TMemoryView<u8>& dst) NOEXCEPT 
 }
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, const Fmt::FBase64& b64) {
-    constexpr auto sfn = Meta::StaticFunction<static_cast<void (FTextWriter::*)(char)>(&FTextWriter::Put)>;
-    TFunctionRef<void(char&&)> rfn(
-        sfn,
-        &oss
-    );
-    Base64Encode(b64.RawData, TAppendable<char>(std::move(rfn)));
+    Base64Encode(b64.RawData, TFunctionRef([&](char&& ch) {
+        oss.Put(ch);
+    }));
     return oss;
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::FBase64& b64) {
-    Base64Encode(b64.RawData, TAppendable<char>(TFunctionRef<void(wchar_t&&)>{
-        Meta::StaticFunction<static_cast<void (FWTextWriter::*)(wchar_t)>(&FWTextWriter::Put)>,
-        &oss
+    Base64Encode(b64.RawData, TFunctionRef([&](wchar_t&& wch) {
+        oss.Put(wch);
     }));
     return oss;
 }

@@ -7,10 +7,6 @@
 #include "Misc/Function.h"
 #include "Thread/ThreadSafe.h"
 
-#if USE_PPE_ASSERT
-#   include "Meta/ThreadResource.h"
-#endif
-
 #define PUBLIC_EVENT(_NAME, ...) \
     protected: \
         mutable ::PPE::TEvent< __VA_ARGS__ , false > CONCAT(_, _NAME); \
@@ -54,10 +50,10 @@ public:
     :   _delegates(std::move(*rvalue._delegates.LockExclusive()))
     {}
 
-    bool empty() const { return _delegates.LockShared()->empty(); }
+    NODISCARD bool empty() const NOEXCEPT { return _delegates.LockShared()->empty(); }
 
     FHandle Add(FDelegate&& rfunc) {
-        Assert(rfunc);
+        Assert(rfunc.Valid());
         const auto delegatesRW = _delegates.LockExclusive();
         return FHandle(delegatesRW->Emplace(std::move(rfunc)));
     }
@@ -68,7 +64,7 @@ public:
     }
 
     void Emplace(FDelegate&& rfunc) {
-        Assert(rfunc);
+        Assert(rfunc.Valid());
         const auto delegatesRW = _delegates.LockExclusive();
         delegatesRW->EmplaceIt(std::move(rfunc));
     }
@@ -78,24 +74,10 @@ public:
         Emplace(FDelegate::template Bind<_OtherFunc>(std::forward<_Extra>(extra)...));
     }
 
-    void FireAndForget(FDelegate&& rfunc) {
-        Assert(rfunc);
-        const auto delegatesRW = _delegates.LockExclusive();
-        delegatesRW->EmplaceIt(std::move(rfunc))->SetFireAndForget(true);
-    }
-
     void Remove(FHandle& handle) {
         Assert(handle);
         const auto delegatesRW = _delegates.LockExclusive();
         VerifyRelease(delegatesRW->Remove(handle.Forget()));
-    }
-
-    size_t RemoveAll(const FDelegate& func) {
-        Assert(func);
-        const auto delegatesRW = _delegates.LockExclusive();
-        return delegatesRW->RemoveIf([&func](const FDelegate& registered) {
-            return (registered == func);
-        });
     }
 
 protected:
@@ -104,8 +86,8 @@ protected:
         : EThreadBarrier::DataRaceCheck )> _delegates;
 };
 //----------------------------------------------------------------------------
-template <typename _Delegate, bool _ThreadSafe, typename T, class = Meta::TEnableIf<_Delegate::template is_callable_v<T>> >
-TPublicEvent<_Delegate, _ThreadSafe>& operator <<(TPublicEvent<_Delegate, _ThreadSafe>& publicEvent, T&& rcallback) {
+template <typename _Delegate, bool _ThreadSafe>
+TPublicEvent<_Delegate, _ThreadSafe>& operator <<(TPublicEvent<_Delegate, _ThreadSafe>& publicEvent, _Delegate&& rcallback) {
     publicEvent.Emplace(std::move(rcallback));
     return publicEvent;
 }
@@ -117,11 +99,11 @@ class TEvent;
 template <typename T>
 using TThreadSafeEvent = TEvent< T, true >;
 //----------------------------------------------------------------------------
-template <typename _Ret, typename... _Args, size_t _InSitu, bool _ThreadSafe>
-class TEvent< TFunction<_Ret(_Args...), _InSitu>, _ThreadSafe >
-:   public TPublicEvent< TFunction<_Ret(_Args...), _InSitu>, _ThreadSafe > {
+template <typename F, size_t _InSitu, typename _Ret, typename... _Args, bool _ThreadSafe>
+class TEvent< TFunction<F, _InSitu, _Ret(_Args...)>, _ThreadSafe >
+:   public TPublicEvent< TFunction<F, _InSitu, _Ret(_Args...)>, _ThreadSafe > {
 public:
-    using public_event_t = TPublicEvent< TFunction<_Ret(_Args...), _InSitu>, _ThreadSafe >;
+    using public_event_t = TPublicEvent< TFunction<F, _InSitu, _Ret(_Args...)>, _ThreadSafe >;
 
     using typename public_event_t::FDelegate;
     using typename public_event_t::FHandle;
@@ -133,19 +115,18 @@ public:
     using public_event_t::Add;
     using public_event_t::Emplace;
     using public_event_t::Remove;
-    using public_event_t::RemoveAll;
 
-    public_event_t& Public() NOEXCEPT { return *this; }
+    NODISCARD public_event_t& Public() NOEXCEPT { return *this; }
 
     PPE_FAKEBOOL_OPERATOR_DECL() {
         return _delegates.LockShared()->empty();
     }
 
-    void operator ()(_Args... args) {
+    void operator ()(_Args... args) NOEXCEPT_IF(FDelegate::is_noexcept_v) {
         Invoke(std::forward<_Args>(args)...);
     }
 
-    void Invoke(_Args... args) {
+    void Invoke(_Args... args) NOEXCEPT_IF(FDelegate::is_noexcept_v) {
         const auto delegatesRW = _delegates.LockExclusive();
         delegatesRW->RemoveIf([&](FDelegate& fn) -> bool {
             using result_t = decltype(fn(std::forward<_Args>(args)...));
@@ -156,64 +137,11 @@ public:
             else {
                 fn(std::forward<_Args>(args)...);
             }
-            return fn.IsFireAndForget();
+            return false;
         });
     }
 
-    void FireAndForget(_Args... args) {
-        const auto delegatesRW = _delegates.LockExclusive();
-        delegatesRW->RemoveIf([&](const FDelegate& fn) -> bool {
-            fn(std::forward<_Args>(args)...);
-            return true; // remove all functions while iterating
-        });
-    }
-
-    void Clear() {
-        const auto delegatesRW = _delegates.LockExclusive();
-        delegatesRW->Clear();
-    }
-
-private:
-    using public_event_t::_delegates;
-};
-//----------------------------------------------------------------------------
-template <typename _Ret, typename... _Args, size_t _InSitu, bool _ThreadSafe>
-class TEvent< TFunction<_Ret(_Args...) NOEXCEPT, _InSitu>, _ThreadSafe >
-:   public TPublicEvent< TFunction<_Ret(_Args...) NOEXCEPT, _InSitu>, _ThreadSafe > {
-public:
-    using public_event_t = TPublicEvent< TFunction<_Ret(_Args...) NOEXCEPT, _InSitu>, _ThreadSafe >;
-
-    using typename public_event_t::FDelegate;
-    using typename public_event_t::FHandle;
-    using typename public_event_t::FInvocationList;
-
-    TEvent() = default;
-    TEvent(TEvent&&) = default;
-
-    using public_event_t::Add;
-    using public_event_t::Emplace;
-    using public_event_t::Remove;
-    using public_event_t::RemoveAll;
-
-    public_event_t& Public() NOEXCEPT { return *this; }
-
-    PPE_FAKEBOOL_OPERATOR_DECL() {
-        return (not _delegates.LockShared()->empty());
-    }
-
-    void operator ()(_Args... args) NOEXCEPT {
-        Invoke(std::forward<_Args>(args)...);
-    }
-
-    void Invoke(_Args... args) NOEXCEPT {
-        const auto delegatesRW = _delegates.LockExclusive();
-        delegatesRW->RemoveIf([&](FDelegate& fn) -> bool {
-            fn(std::forward<_Args>(args)...);
-            return fn.IsFireAndForget();
-        });
-    }
-
-    void FireAndForget(_Args... args) NOEXCEPT {
+    void FireAndForget(_Args... args) NOEXCEPT_IF(FDelegate::is_noexcept_v) {
         const auto delegatesRW = _delegates.LockExclusive();
         delegatesRW->RemoveIf([&](const FDelegate& fn) -> bool {
             fn(std::forward<_Args>(args)...);

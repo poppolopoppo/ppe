@@ -28,7 +28,7 @@ TRefPtr<T> FWeakRefCountable::NewRefImpl(void* p, deleter_func deleter, _Args&&.
 
     static_cast<FWeakRefCountable*>(x)->_cnt = FWeakRefCounter::Allocate(deleter ARGS_IF_ASSERT(x));
 
-    return { x };
+    return TRefPtr<T>{ x };
 }
 //----------------------------------------------------------------------------
 // provide a custom allocator, deleter will be exported in the counter

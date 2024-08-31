@@ -54,15 +54,15 @@ private:
 //----------------------------------------------------------------------------
 class FLambdaReferenceCollector : public FBaseReferenceCollector {
 public:
-    using FOnReference = TFunction<bool(const ITypeTraits&, FMetaObject&)>;
+    using FOnReference = TFunctionRef<bool(const ITypeTraits&, FMetaObject&)>;
 
     FLambdaReferenceCollector() = default;
     explicit FLambdaReferenceCollector(EVisitorFlags flags) NOEXCEPT
         : FBaseReferenceCollector(flags)
     {}
 
-    void Collect(const FMetaObject& root, FOnReference&& prefix, FOnReference&& postfix = NoFunction);
-    void Collect(const TMemoryView<const PMetaObject>& roots, FOnReference&& prefix, FOnReference&& postfix = NoFunction);
+    void Collect(const FMetaObject& root, const FOnReference& prefix, const FOnReference& postfix = Default);
+    void Collect(const TMemoryView<const PMetaObject>& roots, const FOnReference& prefix, const FOnReference& postfix = Default);
 
 protected:
     virtual bool Visit(const IScalarTraits* scalar, PMetaObject& pobj) override final;

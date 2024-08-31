@@ -187,7 +187,7 @@ public:
 
     virtual FAtom At(void* data, size_t index) const NOEXCEPT = 0;
 
-    typedef TFunction<bool(const FAtom&)> foreach_fun;
+    typedef TFunctionRef<bool(const FAtom&)> foreach_fun;
     virtual bool ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT = 0;
 };
 //----------------------------------------------------------------------------
@@ -219,7 +219,7 @@ public: // IListTraits
     virtual void Clear(void* data) const = 0;
     virtual void Empty(void* data, size_t capacity) const = 0;
 
-    typedef TFunction<bool(const FAtom&)> foreach_fun;
+    typedef TFunctionRef<bool(const FAtom&)> foreach_fun;
     virtual bool ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT = 0;
 
 };
@@ -253,7 +253,7 @@ public: // IDicoTraits
     virtual void Clear(void* data) const = 0;
     virtual void Empty(void* data, size_t capacity) const = 0;
 
-    typedef TFunction<bool(const FAtom&, const FAtom&)> foreach_fun;
+    typedef TFunctionRef<bool(const FAtom&, const FAtom&)> foreach_fun;
     virtual bool ForEach(void* data, const foreach_fun& foreach) const NOEXCEPT = 0;
 };
 //----------------------------------------------------------------------------

@@ -98,8 +98,9 @@ void FTransactionSerializer::BuildTransaction(FSources& sources) {
 
     ParallelFor(0, sources.size(), [&linkers, &sources](size_t i) {
         FTransactionLinker linker(sources[i]);
-        const PSerializer serializer = ISerializer::FromExtname(linker.Filename().Extname());
 
+        const USerializer serializer = ISerializer::FromExtname(linker.Filename().Extname());
+        
         for (;;) {
             // using deferred IO to avoid blocking workers on IO
             const auto reader{ VFS_OpenBinaryReadable(linker.Filename()) };
@@ -127,7 +128,8 @@ void FTransactionSerializer::SaveTransaction() {
     Assert_NoAssume(_transaction->IsLoaded() || _transaction->IsMounted());
 
     FTransactionSaver saver(*_transaction, IdToTransaction(_id));
-    const PSerializer serializer = ISerializer::FromExtname(saver.Filename().Extname());
+    const USerializer serializer = ISerializer::FromExtname(saver.Filename().Extname());
+    AssertRelease(serializer.Valid());
 
     if (_options & ETransactionOptions::Compressed) {
         FFilename fnameZ{ saver.Filename() };
@@ -163,7 +165,8 @@ void FTransactionSerializer::LoadTransaction() {
     Assert(not _transaction);
 
     FTransactionLinker linker(IdToTransaction(_id));
-    const PSerializer serializer = ISerializer::FromExtname(linker.Filename().Extname());
+    const USerializer serializer = ISerializer::FromExtname(linker.Filename().Extname());
+    AssertRelease(serializer.Valid());
 
     if (_options & ETransactionOptions::Compressed) {
         FFilename fnameZ{ linker.Filename() };

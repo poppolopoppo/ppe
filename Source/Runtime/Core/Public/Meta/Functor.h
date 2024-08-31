@@ -254,9 +254,9 @@ TCallableObject(const T& ) NOEXCEPT -> TCallableObject<T>;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// TStaticFunction<> avoid storing a pointer by using retrieving the function from its type
+// TStaticFunction<> avoid storing an additional pointer by retrieving the function statically
 //----------------------------------------------------------------------------
-template <auto _Callable, decltype(TCallableObject{ _Callable })* = nullptr>
+template <auto _Callable>
 struct TStaticFunction {
     using callable_type = decltype(TCallableObject{ _Callable });
 
@@ -276,7 +276,7 @@ struct TStaticFunction {
     }
 
     template <typename... _Args>
-    CONSTEXPR auto operator ()(_Args&&... args) const NOEXCEPT_IF(callable_type::is_noexcept_v) {
+    CONSTEXPR return_type operator ()(_Args&&... args) const NOEXCEPT_IF(callable_type::is_noexcept_v) {
         return (callable_type{ _Callable })(std::forward<_Args>(args)...);
     }
 };
@@ -292,8 +292,8 @@ template <typename _Functor, typename... _Args, class _Callable = decltype(TCall
 CONSTEXPR auto VariadicFunctor(_Functor&& rfunc, _Args&&... args) NOEXCEPT_IF(_Callable::is_noexcept_v) {
     _Callable callable{ rfunc };
     return Meta::static_for<_Callable::arity_v>([&](auto... index) {
-        auto full_args = std::forward_as_tuple(std::forward<_Args>(args)...);
-        auto call_args = std::forward_as_tuple(std::move(rfunc), std::get<index>(full_args)...);
+        auto full_args = std::forward_as_tuple(std::forward<_Functor>(rfunc), std::forward<_Args>(args)...);
+        auto call_args = std::forward_as_tuple(std::get<index>(full_args)...);
 
         IF_CONSTEXPR(std::is_void_v<typename _Callable::return_type>) {
             std::apply(callable, std::move(call_args));

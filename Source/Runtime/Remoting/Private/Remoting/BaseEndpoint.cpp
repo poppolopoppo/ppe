@@ -91,7 +91,7 @@ struct FMetaEndpointCall_ {
         Context.Failed(Network::EHttpStatus::InternalServerError, ToString(e.What()));
     }
 
-    void SyncedCall(const FRemotingServer&) NOEXCEPT {
+    bool SyncedCall(const FRemotingServer&) NOEXCEPT {
         AssertIsMainThread();
 
         const RTTI::FMetaFunction& func = Function();
@@ -107,7 +107,7 @@ struct FMetaEndpointCall_ {
             Collect(parsedAtoms, [this, &linker](size_t i, RTTI::FAtom* dst) {
                 *dst = Values[i].InnerAtom();
 
-                if (Inputs[i] && not Inputs[i](dst, linker))
+                if (Inputs[i].Valid() and not Inputs[i](dst, linker))
                     PPE_THROW_IT(Serialize::FJsonException{ "failed to parse argument" });
             });
 
@@ -123,6 +123,8 @@ struct FMetaEndpointCall_ {
             Response.Clear_ReleaseMemory();
             OnException(e);
         })
+
+        return true; // fire and forget
     }
 
     bool Process() NOEXCEPT {
@@ -161,7 +163,7 @@ struct FMetaEndpointCall_ {
             const auto it = Args.find(prm);
             if (Args.end() == it) {
                 if (not prm.Required) {
-                    Inputs.emplace_back_AssumeNoGrow(NoFunction);
+                    Inputs.emplace_back_AssumeNoGrow(Default);
                     continue;
                 }
                 return false;
@@ -193,14 +195,14 @@ struct FMetaEndpointCall_ {
                 if (not dst.FromString(it->second))
                     return false;
 
-                Inputs.emplace_back_AssumeNoGrow(NoFunction);
+                Inputs.emplace_back_AssumeNoGrow(Default);
             }
         }
 
         if (func.HasReturnValue())
             Values.emplace_back_AssumeNoGrow(func.Result());
 
-        Context.WaitForSync(FRemotingCallback::Bind<&FMetaEndpointCall_::SyncedCall>(this));
+        Context.WaitForSync(FRemotingCallback::Bind<&FMetaEndpointCall_::SyncedCall>( MakePtrRef(this) ));
 
         if (Likely(not Context.pResponse->Failed())) {
             Context.pResponse->SetStatus(Network::EHttpStatus::OK);
@@ -487,8 +489,8 @@ void FBaseEndpoint::PrivateEndpointOpenAPI(FOpenAPI& api) const {
     const RTTI::FMetaClass& class_ = *RTTI_Class();
 
     api.Tag(class_.Name().MakeLiteral(),
-            RTTI::FDescriptionFacet::GetIFP(class_),
-            NoFunction);
+        RTTI::FDescriptionFacet::GetIFP(class_),
+        Default);
 
     for (const auto& it : _operations) {
         ExportAPI(api, _endpointPrefix, it.first, it.second, {

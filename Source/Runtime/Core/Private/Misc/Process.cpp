@@ -13,11 +13,11 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
-static size_t BlockingReadPipe_(const FRawMemory& outp, FProcess::FPipeHandle pipe) {
+static size_t BlockingReadPipe_(FProcess::FPipeHandle pipe, const FRawMemory& outp) {
     return FPlatformProcess::ReadPipe(pipe, outp);
 }
 //----------------------------------------------------------------------------
-static size_t ReadPipe_(const FRawMemory& outp, FProcess::FPipeHandle pipe) NOEXCEPT {
+static size_t ReadPipe_(FProcess::FPipeHandle pipe, const FRawMemory& outp) NOEXCEPT {
     size_t total = 0;
 
     while (size_t toRead = FPlatformProcess::PeekPipe(pipe)) {
@@ -35,7 +35,7 @@ static size_t ReadPipe_(const FRawMemory& outp, FProcess::FPipeHandle pipe) NOEX
     return total;
 }
 //----------------------------------------------------------------------------
-static bool ReadPipe_(FProcess::FRawStorage& outp, FProcess::FPipeHandle pipe) {
+static bool ReadPipe_(FProcess::FPipeHandle pipe, FProcess::FRawStorage& outp) {
     size_t total = 0;
     size_t offset = outp.size();
 
@@ -152,24 +152,24 @@ size_t FProcess::WriteStdin(const FRawMemoryConst& buffer) {
 //----------------------------------------------------------------------------
 size_t FProcess::ReadStderr(const FRawMemory& buffer) {
     Assert(_hStderrRead);
-    return ReadPipe_(buffer, _hStderrRead);
+    return ReadPipe_(_hStderrRead, buffer);
 }
 //----------------------------------------------------------------------------
 size_t FProcess::ReadStdout(const FRawMemory& buffer) {
     Assert(_hStdoutRead);
-    return ReadPipe_(buffer, _hStdoutRead);
+    return ReadPipe_(_hStdoutRead, buffer);
 }
 //----------------------------------------------------------------------------
 bool FProcess::ReadStderr(FRawStorage* outp) {
     Assert(outp);
     Assert(_hStderrRead);
-    return ReadPipe_(*outp, _hStderrRead);
+    return ReadPipe_(_hStderrRead, *outp);
 }
 //----------------------------------------------------------------------------
 bool FProcess::ReadStdout(FRawStorage* outp) {
     Assert(outp);
     Assert(_hStdoutRead);
-    return ReadPipe_(*outp, _hStdoutRead);
+    return ReadPipe_(_hStdoutRead, *outp);
 }
 //----------------------------------------------------------------------------
 void FProcess::WaitFor() {
@@ -330,21 +330,31 @@ int FProcess::CaptureOutput(
     IBufferedStreamWriter::read_f fStderr;
 
     if (pStdout)
-        fStdout = IBufferedStreamWriter::read_f::Bind<&BlockingReadPipe_>(proc._hStdoutRead);
+        fStdout = { Meta::StaticFunction<&BlockingReadPipe_>, proc._hStdoutRead };
     if (pStderr)
-        fStderr = IBufferedStreamWriter::read_f::Bind<&BlockingReadPipe_>(proc._hStderrRead);
+        fStderr = { Meta::StaticFunction<&BlockingReadPipe_>, proc._hStderrRead };
 
     STATIC_CONST_INTEGRAL(size_t, BlockSize, PAGE_SIZE);
 
-    // this variant uses blocking reads to avoid wasting CPU spin waiting
-    do {
-        if (pStdout) pStdout->StreamCopy(fStdout, BlockSize);
-        if (pStderr) pStderr->StreamCopy(fStderr, BlockSize);
+    if (!!pStdout || !!pStderr) {
+        // this variant uses blocking reads to avoid wasting CPU spin waiting
+        do {
+            if (pStdout) 
+                pStdout->StreamCopy(fStdout, BlockSize);
+            if (pStderr) 
+                pStderr->StreamCopy(fStderr, BlockSize);
 
-    } while (proc.IsAlive());
+        } while (proc.IsAlive());
 
-    if (pStdout) pStdout->StreamCopy(fStdout, BlockSize);
-    if (pStderr) pStderr->StreamCopy(fStderr, BlockSize);
+        if (pStdout) 
+            pStdout->StreamCopy(fStdout, BlockSize);
+        if (pStderr) 
+            pStderr->StreamCopy(fStderr, BlockSize);
+    }
+    else {
+        // this variant uses blocking wait
+        proc.WaitFor();
+    }
 
     return proc.ExitCode();
 }

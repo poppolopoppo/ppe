@@ -367,10 +367,15 @@ static TBasicTextWriter<_Char>& Print_(TBasicTextWriter<_Char>& oss, const RTTI:
     Format(oss, STRING_LITERAL(_Char, "{0} {1}({2}) [{3}]"),
         fun.Result() ? fun.Result()->TypeName() : "void",
         fun.Name(),
-        Fmt::Join(fun.Parameters().Map([](const RTTI::FMetaParameter& prm) {
-            return Fmt::Formator<wchar_t>([&prm](FWTextWriter& o) {
-                o << prm.Name() << STRING_LITERAL(_Char, " : ") << prm.Traits()->TypeName() << STRING_LITERAL(_Char, " <") << prm.Flags() << STRING_LITERAL(_Char, '>');
-            }); }), STRING_LITERAL(_Char, ", ")),
+        Fmt::Join(fun.Parameters().Map(
+            [](const RTTI::FMetaParameter& prm) -> TBasicTextManipulator<_Char> {
+                return [&prm](TBasicTextWriter<_Char>& o) -> TBasicTextWriter<_Char>& {
+                    return o << prm.Name() << STRING_LITERAL(_Char, " : ") 
+                            << prm.Traits()->TypeName() << STRING_LITERAL(_Char, " <") 
+                            << prm.Flags() << STRING_LITERAL(_Char, '>');
+                }; 
+            }),  
+            STRING_LITERAL(_Char, ", ")),
         fun.Flags() );
     return oss;
 }

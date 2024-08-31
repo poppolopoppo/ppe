@@ -122,7 +122,6 @@ static void GlobFilesNonRecursive_(
     const _OnMatch& onMatch ) {
     Assert(path);
     Assert(pattern);
-    Assert(onMatch);
 
     ::WIN32_FIND_DATAW ffd;
 
@@ -352,18 +351,18 @@ bool FWindowsPlatformFile::FileExists(const char_type* filename, EExistPolicy po
     return (FPlatformLowLevelIO::Access(filename, policy) && not ::PathIsDirectoryW(filename));
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformFile::EnumerateDir(const char_type* dirpath, const TFunction<void(const FWStringView&)>& onFile, const TFunction<void(const FWStringView&)>& onSubDir) {
+void FWindowsPlatformFile::EnumerateDir(const char_type* dirpath, const TFunctionRef<void(const FWStringView&)>& onFile, const TFunctionRef<void(const FWStringView&)>& onSubDir) {
     Assert(dirpath);
-    Assert(onSubDir || onFile);
+    Assert(onSubDir.Valid() || onFile.Valid());
 
-    EnumerateDirNonRecursive_(dirpath,
-        [&onFile](const FWStringView& file) { if (onFile) onFile(file); },
-        [&onSubDir](const FWStringView& subdir) { if (onSubDir) onSubDir(subdir); });
+    EnumerateDirNonRecursive_(dirpath, 
+        onFile.Valid() ? onFile : [](const FWStringView& ) {}, 
+        onSubDir.Valid() ? onSubDir : [](const FWStringView& ) {});
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformFile::EnumerateFiles(const char_type* dirpath, bool recursive, const TFunction<void(const FWStringView&)>& onFile) {
+void FWindowsPlatformFile::EnumerateFiles(const char_type* dirpath, bool recursive, const TFunctionRef<void(const FWStringView&)>& onFile) {
     Assert(dirpath);
-    Assert(onFile);
+    Assert(onFile.Valid());
 
     if (recursive) {
         char_type buffer[MaxPathLength];
@@ -398,10 +397,10 @@ void FWindowsPlatformFile::EnumerateFiles(const char_type* dirpath, bool recursi
     }
 }
 //----------------------------------------------------------------------------
-void FWindowsPlatformFile::GlobFiles(const char_type* dirpath, const char_type* pattern, bool recursive, const TFunction<void(const FWStringView&)>& onMatch) {
+void FWindowsPlatformFile::GlobFiles(const char_type* dirpath, const char_type* pattern, bool recursive, const TFunctionRef<void(const FWStringView&)>& onMatch) {
     Assert(dirpath);
     Assert(pattern);
-    Assert(onMatch);
+    Assert(onMatch.Valid());
 
     if (recursive) {
         struct FGlobContext_ {

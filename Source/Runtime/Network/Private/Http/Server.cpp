@@ -50,7 +50,7 @@ void FHttpServer::Start(size_t workerCount) {
 
     _service = NEW_REF(Socket, FHandShaker, _name, workerCount,
         FListener{ Localhost() },
-        FServicingTask::Bind<&FHttpServer::Servicing_ReturnKeepAlive_>(this) );
+        FServicingTask::Bind<&FHttpServer::Servicing_ReturnKeepAlive_>( MakePtrRef(this) ) );
 
     _service->Start();
 

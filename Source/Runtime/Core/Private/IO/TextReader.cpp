@@ -84,7 +84,7 @@ bool TextReader_ReadFloat_(TBasicTextReader<_Char>& r, T* p) {
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-bool TextReader_ReadLine_(IBufferedStreamReader& iss, const TAppendable<_Char>& outp) {
+bool TextReader_AppendLine_(IBufferedStreamReader& iss, const TAppendable<_Char>& outp) {
     Assert_NoAssume(iss.IsSeekableI());
 
     bool success = false;
@@ -119,13 +119,13 @@ template <typename _Char>
 bool TextReader_ReadLine_(IBufferedStreamReader& iss, TBasicString<_Char>* s) {
     if (!!s) {
         s->clear();
-        return TextReader_ReadLine_(iss, MakeAppendable(*s));
+        return TextReader_AppendLine_(iss, MakeAppendable(*s));
     }
-    return TextReader_ReadLine_<_Char>(iss, NoFunction);
+    return TextReader_AppendLine_<_Char>(iss, Default);
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-bool TextReader_ReadWord_(IBufferedStreamReader& iss, const TAppendable<_Char>& outp) {
+bool TextReader_AppendWord_(IBufferedStreamReader& iss, const TAppendable<_Char>& outp) {
     bool success = false;
 
     _Char ch; // skip spaces
@@ -146,9 +146,9 @@ template <typename _Char>
 bool TextReader_ReadWord_(IBufferedStreamReader& iss, TBasicString<_Char>* s) {
     if (!!s) {
         s->clear();
-        return TextReader_ReadWord_(iss, MakeAppendable(*s));
+        return TextReader_AppendWord_(iss, MakeAppendable(*s));
     }
-    return TextReader_ReadWord_<_Char>(iss, NoFunction);
+    return TextReader_AppendWord_<_Char>(iss, Default);
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -166,7 +166,7 @@ bool TextReader_SkipCharset_(IBufferedStreamReader& iss, bool (*charset)(_Char c
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-bool TextReader_ReadCharset_(IBufferedStreamReader& iss, const TAppendable<_Char>& outp, bool (*charset)(_Char ch) NOEXCEPT) {
+bool TextReader_AppendCharset_(IBufferedStreamReader& iss, const TAppendable<_Char>& outp, bool (*charset)(_Char ch) NOEXCEPT) {
     bool success = false;
 
     _Char ch;
@@ -185,9 +185,9 @@ template <typename _Char>
 bool TextReader_ReadCharset_(IBufferedStreamReader& iss, TBasicString<_Char>* s, bool (*charset)(_Char ch) NOEXCEPT) {
     if (!!s) {
         s->clear();
-        return TextReader_ReadCharset_(iss, MakeAppendable(*s), charset);
+        return TextReader_AppendCharset_(iss, MakeAppendable(*s), charset);
     }
-    return TextReader_ReadCharset_<_Char>(iss, NoFunction, charset);
+    return TextReader_AppendCharset_<_Char>(iss, Default, charset);
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -239,10 +239,10 @@ template <> bool TBasicTextReader<char>::ReadLine(string_type* line) { return Te
 template <> bool TBasicTextReader<char>::ReadWord(string_type* word) { return TextReader_ReadWord_(*_istream, word); }
 template <> bool TBasicTextReader<char>::ReadIdentifier(string_type* id) { return TextReader_ReadCharset_(*_istream, id, &IsIdentifier); }
 template <> bool TBasicTextReader<char>::ReadCharset(string_type* parsed, charset_func charset) { return TextReader_ReadCharset_(*_istream, parsed, charset); }
-template <> bool TBasicTextReader<char>::ReadLine(const stringappendable_type& line) { return TextReader_ReadLine_(*_istream, line); }
-template <> bool TBasicTextReader<char>::ReadWord(const stringappendable_type& word) { return TextReader_ReadWord_(*_istream, word); }
-template <> bool TBasicTextReader<char>::ReadIdentifier(const stringappendable_type& id) { SkipSpaces(); return TextReader_ReadCharset_(*_istream, id, &IsIdentifier); }
-template <> bool TBasicTextReader<char>::ReadCharset(const stringappendable_type& parsed, charset_func charset) { return TextReader_ReadCharset_(*_istream, parsed, charset); }
+template <> bool TBasicTextReader<char>::ReadLine(const stringappendable_type& line) { return TextReader_AppendLine_(*_istream, line); }
+template <> bool TBasicTextReader<char>::ReadWord(const stringappendable_type& word) { return TextReader_AppendWord_(*_istream, word); }
+template <> bool TBasicTextReader<char>::ReadIdentifier(const stringappendable_type& id) { SkipSpaces(); return TextReader_AppendCharset_(*_istream, id, &IsIdentifier); }
+template <> bool TBasicTextReader<char>::ReadCharset(const stringappendable_type& parsed, charset_func charset) { return TextReader_AppendCharset_(*_istream, parsed, charset); }
 template <> bool TBasicTextReader<char>::ReadCharset(stringconversion_type* parsed, charset_func charset) {
     if (TextReader_ReadCharset_(*_istream, &_read, charset)) {
         *parsed = stringconversion_type{ _read, _base };
@@ -271,10 +271,10 @@ template <> bool TBasicTextReader<wchar_t>::ReadLine(string_type* line) { return
 template <> bool TBasicTextReader<wchar_t>::ReadWord(string_type* word) { return TextReader_ReadWord_(*_istream, word); }
 template <> bool TBasicTextReader<wchar_t>::ReadIdentifier(string_type* id) { return TextReader_ReadCharset_(*_istream, id, &IsIdentifier); }
 template <> bool TBasicTextReader<wchar_t>::ReadCharset(string_type* parsed, charset_func charset) { return TextReader_ReadCharset_(*_istream, parsed, charset); }
-template <> bool TBasicTextReader<wchar_t>::ReadLine(const stringappendable_type& line) { return TextReader_ReadLine_(*_istream, line); }
-template <> bool TBasicTextReader<wchar_t>::ReadWord(const stringappendable_type& word) { return TextReader_ReadWord_(*_istream, word); }
-template <> bool TBasicTextReader<wchar_t>::ReadIdentifier(const stringappendable_type& id) { SkipSpaces(); return TextReader_ReadCharset_(*_istream, id, &IsIdentifier); }
-template <> bool TBasicTextReader<wchar_t>::ReadCharset(const stringappendable_type& parsed, charset_func charset) { return TextReader_ReadCharset_(*_istream, parsed, charset); }
+template <> bool TBasicTextReader<wchar_t>::ReadLine(const stringappendable_type& line) { return TextReader_AppendLine_(*_istream, line); }
+template <> bool TBasicTextReader<wchar_t>::ReadWord(const stringappendable_type& word) { return TextReader_AppendWord_(*_istream, word); }
+template <> bool TBasicTextReader<wchar_t>::ReadIdentifier(const stringappendable_type& id) { SkipSpaces(); return TextReader_AppendCharset_(*_istream, id, &IsIdentifier); }
+template <> bool TBasicTextReader<wchar_t>::ReadCharset(const stringappendable_type& parsed, charset_func charset) { return TextReader_AppendCharset_(*_istream, parsed, charset); }
 template <> bool TBasicTextReader<wchar_t>::ReadCharset(stringconversion_type* parsed, charset_func charset) {
     if (TextReader_ReadCharset_(*_istream, &_read, charset)) {
         *parsed = stringconversion_type{ _read, _base };

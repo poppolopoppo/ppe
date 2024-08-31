@@ -31,8 +31,8 @@ public:
     const FParseContext* GlobalScope() const;
     const local_scope_t& LocalScope() const { return _localScope; }
 
-    RTTI::FMetaObject* ScopeObject() const { return _scopeObject.get(); }
-    void SetScopeObject(RTTI::FMetaObject *object);
+    NODISCARD RTTI::SMetaObject ScopeObject() const { return _scopeObject; }
+    void SetScopeObject(RTTI::PMetaObject&& robject);
 
     RTTI::FAtom GetLocal(const RTTI::FName& name) const;
 

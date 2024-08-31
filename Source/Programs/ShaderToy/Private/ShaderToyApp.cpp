@@ -502,12 +502,12 @@ void FShaderToyApp::StartInterafaceWidgets_() {
     _logViewer->RegisterLogger(true);
 #endif
 
-    _OnApplicationTick.Emplace([consoleWidget(MakeUnique<Application::FConsoleWidget>())](const IApplicationService&, FTimespan) {
-        return consoleWidget->Show();
+    _OnApplicationTick.Emplace([consoleWidget(Application::FConsoleWidget{})](const IApplicationService&, FTimespan) mutable {
+        return consoleWidget.Show();
     });
 
-    _OnApplicationTick.Emplace([frameRateOverlay(MakeUnique<Application::FFrameRateOverlayWidget>(this))](const IApplicationService&, FTimespan) {
-        return frameRateOverlay->Show();
+    _OnApplicationTick.Emplace([frameRateOverlay(Application::FFrameRateOverlayWidget{this})](const IApplicationService&, FTimespan) mutable {
+        return frameRateOverlay.Show();
     });
 }
 //----------------------------------------------------------------------------

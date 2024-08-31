@@ -300,7 +300,7 @@ inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, F
     Assert_NoAssume(rtask.Valid());
 
     _numTasks.fetch_add(1);
-    _queue.Produce(u32(priority), FTaskQueued{ std::move(rtask), pport });
+    _queue.Produce(u32(priority), FTaskQueued{ std::move(rtask), MakeSafePtr(pport) });
 }
 //----------------------------------------------------------------------------
 inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {

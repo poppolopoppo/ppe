@@ -32,7 +32,7 @@ class TGenericVertexSubPart;
 //----------------------------------------------------------------------------
 enum class ERecomputeMode : u8;
 struct FMeshBuilderSettings;
-FWD_INTEFARCE_INSITUPTR(MeshFormat);
+FWD_PUREINTEFACE_PTR(MeshFormat);
 //----------------------------------------------------------------------------
 typedef TGenericVertexSubPart<float3> FPositions3f;
 typedef TGenericVertexSubPart<float4> FPositions4f;

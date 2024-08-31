@@ -42,27 +42,27 @@ bool VFS_FileExists(const FFilename& filename, EExistPolicy policy/* = ExistPoli
     return VFS().FileExists(filename, policy);
 }
 //----------------------------------------------------------------------------
-size_t VFS_EnumerateMountingPoints(const TFunction<void(const FMountingPoint&)>& foreach) {
+size_t VFS_EnumerateMountingPoints(const TFunctionRef<void(const FMountingPoint&)>& foreach) {
     return VFS().EnumerateMountingPoints(foreach);
 }
 //----------------------------------------------------------------------------
-size_t VFS_EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunction<void(const FDirpath&)>& onDirectory, const TFunction<void(const FFilename&)>& onFile) {
+size_t VFS_EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunctionRef<void(const FDirpath&)>& onDirectory, const TFunctionRef<void(const FFilename&)>& onFile) {
     return VFS().EnumerateDir(dirpath, recursive, onDirectory, onFile);
 }
 //----------------------------------------------------------------------------
-size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
+size_t VFS_EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) {
     return VFS().EnumerateFiles(dirpath, recursive, foreach);
 }
 //----------------------------------------------------------------------------
-size_t VFS_GlobFiles(const FDirpath& dirpath, FWStringLiteral pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
+size_t VFS_GlobFiles(const FDirpath& dirpath, FWStringLiteral pattern, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) {
     return VFS().GlobFiles(dirpath, pattern, recursive, foreach);
 }
 //----------------------------------------------------------------------------
-size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
+size_t VFS_GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) {
     return VFS().GlobFiles(dirpath, pattern, recursive, foreach);
 }
 //----------------------------------------------------------------------------
-size_t VFS_MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
+size_t VFS_MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) {
     return VFS().MatchFiles(dirpath, re, recursive, foreach);
 }
 //----------------------------------------------------------------------------

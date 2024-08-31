@@ -492,7 +492,7 @@ static void FileDialog_ShowDirectoryBreadCrumbs_(FFileDialogWidget& dialog, cons
                         if (ImGui::MenuItem(tmpStringBuf))
                             dialog.ChangeDirectory(directory);
                     },
-                    NoFunction);
+                    Default );
             }
             else {
                 VFS_EnumerateMountingPoints([&](const FMountingPoint& mount) {

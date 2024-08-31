@@ -851,16 +851,16 @@ static NO_INLINE void Test_TransactionSerialization_() {
     {
         const FWString basePath = StringFormat(L"Saved:/RTTI/UnitTest_Import_{0}", RTTI::MetaClass<T>()->Name());
         {
-            Serialize::PSerializer bin{ Serialize::FBinarySerializer::Get() };
+            Serialize::USerializer bin{ Serialize::FBinarySerializer::Get() };
             Test_Serializer_(import, *bin, basePath + L"_bin.bin");
         }
         {
-            Serialize::PSerializer json{ Serialize::FJsonSerializer::Get() };
+            Serialize::USerializer json{ Serialize::FJsonSerializer::Get() };
             json->SetMinify(minify);
             Test_Serializer_(import, *json, basePath + L"_json.json");
         }
         {
-            Serialize::PSerializer text{ Serialize::FTextSerializer::Get() };
+            Serialize::USerializer text{ Serialize::FTextSerializer::Get() };
             text->SetMinify(minify);
             Test_Serializer_(import, *text, basePath + L"_text.txt");
         }
@@ -881,16 +881,16 @@ static NO_INLINE void Test_TransactionSerialization_() {
     {
         const FWString basePath = StringFormat(L"Saved:/RTTI/UnitTest_Input_{0}", RTTI::MetaClass<T>()->Name());
         {
-            Serialize::PSerializer bin{ Serialize::FBinarySerializer::Get() };
+            Serialize::USerializer bin{ Serialize::FBinarySerializer::Get() };
             Test_Serializer_(input, *bin, basePath + L"_bin.bin");
         }
         {
-            Serialize::PSerializer json{ Serialize::FJsonSerializer::Get() };
+            Serialize::USerializer json{ Serialize::FJsonSerializer::Get() };
             json->SetMinify(minify);
             Test_Serializer_(input, *json, basePath + L"_json.json");
         }
         {
-            Serialize::PSerializer text{ Serialize::FTextSerializer::Get() };
+            Serialize::USerializer text{ Serialize::FTextSerializer::Get() };
             text->SetMinify(minify);
             Test_Serializer_(input, *text, basePath + L"_text.txt");
         }

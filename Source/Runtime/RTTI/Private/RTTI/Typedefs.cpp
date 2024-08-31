@@ -24,29 +24,24 @@ STATIC_ASSERT(Meta::is_pod_v<RTTI::FLazyName>);
 STATIC_ASSERT(Meta::is_pod_v<RTTI::FLazyPathName>);
 STATIC_ASSERT(Meta::is_pod_v<RTTI::FPathName>);
 //----------------------------------------------------------------------------
-static FTextWriter& FormatPath_(FTextWriter& oss, const FStringView& namespace_, const FStringView& id) {
+template <typename _Char>
+static TBasicTextWriter<_Char>& FormatPath_(TBasicTextWriter<_Char>& oss, const FStringView& namespace_, const FStringView& id) {
     if (not namespace_.empty())
-        oss << "$/" << namespace_ << '/';
-    return oss << id;
-}
-//----------------------------------------------------------------------------
-static FWTextWriter& FormatPath_(FWTextWriter& oss, const FStringView& namespace_, const FStringView& id) {
-    if (not namespace_.empty())
-        oss << L"$/" << namespace_ << L'/';
+        oss << STRING_LITERAL(_Char, "$/") << namespace_ << STRING_LITERAL(_Char, '/');
     return oss << id;
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-static bool ParseBinaryData_(const TBasicStringConversion<_Char>& src, FBinaryData* dst) {
+NODISCARD static bool ParseBinaryData_(const TBasicStringConversion<_Char>& src, FBinaryData* dst) {
     Assert(dst);
 
     const size_t len = Base64DecodeSize(src.Input);
     dst->Resize_DiscardData(len);
 
-    u8* it = dst->data();
-    return Base64Decode(src.Input, { &it, [](void* user, u8&& bin) {
-        *(*static_cast<u8**>(user))++ = bin;
-    } });
+    TMemoryView<u8> writer{ dst->MakeView() };
+    return Base64Decode(src.Input, TFunctionRef([&writer](u8&& bin) {
+        writer.ShiftFront().back() = bin;
+    }));
 }
 //----------------------------------------------------------------------------
 } //!namespace

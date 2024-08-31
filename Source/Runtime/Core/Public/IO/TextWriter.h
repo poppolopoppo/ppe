@@ -23,9 +23,14 @@ class IBufferedStreamWriter;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
-using TBasicTextManipulator = TFunction<TBasicTextWriter<_Char>&(TBasicTextWriter<_Char>&)>;
+using TBasicTextManipulator = TFunction<TBasicTextWriter<_Char>& (TBasicTextWriter<_Char>&)>;
 using FTextManipulator = TBasicTextManipulator<char>;
 using FWTextManipulator = TBasicTextManipulator<wchar_t>;
+//----------------------------------------------------------------------------
+template <typename _Char>
+using TBasicTextManipulatorRef = TFunctionRef<TBasicTextWriter<_Char>& (TBasicTextWriter<_Char>&)>;
+using FTextManipulatorRef = TBasicTextManipulatorRef<char>;
+using FWTextManipulatorRef = TBasicTextManipulatorRef<wchar_t>;
 //----------------------------------------------------------------------------
 class PPE_CORE_API FTextFormat {
 public:
@@ -68,7 +73,7 @@ public:
 
     STATIC_CONST_INTEGRAL(size_t, GFloatDefaultPrecision, std::numeric_limits<long double>::digits10 + 1);
 
-    FTextFormat() {
+    CONSTEXPR FTextFormat() NOEXCEPT {
         _base = Decimal;
         _case = Original;
         _float = DefaultFloat;
@@ -78,31 +83,31 @@ public:
         _precision = GFloatDefaultPrecision;
     }
 
-    CONSTF EBase Base() const { return _base; }
-    CONSTF ECase Case() const { return _case; }
-    CONSTF EFloat Float() const { return _float; }
-    CONSTF EPadding Padding() const { return _padding; }
-    CONSTF EMisc Misc() const { return _misc; }
-    CONSTF size_t Width() const { return _width; }
-    CONSTF size_t Precision() const { return _precision; }
+    CONSTEXPR CONSTF EBase Base() const NOEXCEPT { return _base; }
+    CONSTEXPR CONSTF ECase Case() const NOEXCEPT { return _case; }
+    CONSTEXPR CONSTF EFloat Float() const NOEXCEPT { return _float; }
+    CONSTEXPR CONSTF EPadding Padding() const NOEXCEPT { return _padding; }
+    CONSTEXPR CONSTF EMisc Misc() const NOEXCEPT { return _misc; }
+    CONSTEXPR CONSTF size_t Width() const NOEXCEPT { return _width; }
+    CONSTEXPR CONSTF size_t Precision() const NOEXCEPT { return _precision; }
 
-    void SetBase(EBase v) { _base = v; Assert(v == _base); }
-    void SetCase(ECase v) { _case = v; Assert(v == _case); }
-    void SetFloat(EFloat v) { _float = v; Assert(v == _float); }
-    void SetMisc(EMisc v, bool enabled = true) { _misc = (enabled ? _misc + v : _misc - v); }
-    void SetPadding(EPadding v) { _padding = v; Assert(v == _padding); }
-    void SetWidth(size_t v) { _width = u8(v); Assert(v == _width); } // reset after each output
-    void SetPrecision(size_t v) { _precision = u8(v); Assert(v == _precision); }
+    CONSTEXPR void SetBase(EBase v) NOEXCEPT { _base = v; Assert(v == _base); }
+    CONSTEXPR void SetCase(ECase v) NOEXCEPT { _case = v; Assert(v == _case); }
+    CONSTEXPR void SetFloat(EFloat v) NOEXCEPT { _float = v; Assert(v == _float); }
+    CONSTEXPR void SetMisc(EMisc v, bool enabled = true) NOEXCEPT { _misc = (enabled ? _misc + v : _misc - v); }
+    CONSTEXPR void SetPadding(EPadding v) NOEXCEPT { _padding = v; Assert(v == _padding); }
+    CONSTEXPR void SetWidth(size_t v) NOEXCEPT { _width = u8(v); Assert(v == _width); } // reset after each output
+    CONSTEXPR void SetPrecision(size_t v) NOEXCEPT { _precision = u8(v); Assert(v == _precision); }
 
-    bool Equals(const FTextFormat& other) const {
-        return (reinterpret_cast<const u32&>(*this) == reinterpret_cast<const u32&>(other));
+    CONSTEXPR bool Equals(const FTextFormat& other) const NOEXCEPT {
+        return (_raw == other._raw);
     }
 
-    inline friend bool operator ==(const FTextFormat& lhs, const FTextFormat& rhs) { return lhs.Equals(rhs); }
-    inline friend bool operator !=(const FTextFormat& lhs, const FTextFormat& rhs) { return not lhs.Equals(rhs); }
+    CONSTEXPR inline friend bool operator ==(const FTextFormat& lhs, const FTextFormat& rhs) NOEXCEPT { return lhs.Equals(rhs); }
+    CONSTEXPR inline friend bool operator !=(const FTextFormat& lhs, const FTextFormat& rhs) NOEXCEPT { return not lhs.Equals(rhs); }
 
-    inline friend void swap(FTextFormat& lhs, FTextFormat& rhs) NOEXCEPT {
-        std::swap(reinterpret_cast<u32&>(lhs), reinterpret_cast<u32&>(rhs));
+    CONSTEXPR inline friend void swap(FTextFormat& lhs, FTextFormat& rhs) NOEXCEPT {
+        std::swap(lhs._raw, rhs._raw);
     }
 
     static FTextWriter& DontPad(FTextWriter& s);
@@ -139,13 +144,20 @@ public:
     }
 
 private:
-    EBase _base         : 2;
-    ECase _case         : 2;
-    EFloat _float       : 2;
-    EPadding _padding   : 3;
-    EMisc _misc         : 7;
-    u32 _width          : 8;
-    u32 _precision      : 8;
+    union {
+        struct {
+            EBase _base         : 2;
+            ECase _case         : 2;
+            EFloat _float       : 2;
+            EPadding _padding   : 3;
+            EMisc _misc         : 7;
+            
+            u32 _width          : 8;
+            u32 _precision      : 8;
+        };
+
+        u32 _raw;
+    };
 };
 STATIC_ASSERT(sizeof(FTextFormat) == sizeof(u32));
 //----------------------------------------------------------------------------
@@ -385,9 +397,11 @@ TBasicTextWriter<_Char>& operator >>(TBasicTextWriter<_Char>& s, FTextFormat::EM
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& writer, const FTextManipulator& manip);
+PPE_CORE_API FTextWriter& operator <<(FTextWriter& writer, const FTextManipulatorRef& manip);
 inline FTextWriter& operator <<(FTextWriter& w, FTextWriter& (*f)(FTextWriter&)) { return f(w); }
 //----------------------------------------------------------------------------
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& writer, const FWTextManipulator& manip);
+PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& writer, const FWTextManipulatorRef& manip);
 inline FWTextWriter& operator <<(FWTextWriter& w, FWTextWriter& (*f)(FWTextWriter&)) { return f(w); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

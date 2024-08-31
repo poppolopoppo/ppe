@@ -79,8 +79,8 @@ template <typename _Predicate>
 static size_t EnumerateFilesNonRec_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
-    const TFunction<void(const FDirpath&)>& onDirectory,
-    const TFunction<void(const FFilename&)>& onFile,
+    const TFunctionRef<void(const FDirpath&)>& onDirectory,
+    const TFunctionRef<void(const FFilename&)>& onFile,
     _Predicate&& pred ) {
     size_t total = 0;
 
@@ -108,8 +108,8 @@ template <typename _Predicate>
 static size_t EnumerateFilesRec_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
-    const TFunction<void(const FDirpath&)>& onDirectory,
-    const TFunction<void(const FFilename&)>& onFile,
+    const TFunctionRef<void(const FDirpath&)>& onDirectory,
+    const TFunctionRef<void(const FFilename&)>& onFile,
     _Predicate&& pred ) {
     size_t total = 0;
     VECTORINSITU(FileSystem, FDirpath, 16) subDirectories;
@@ -136,7 +136,7 @@ static size_t EnumerateFilesRec_(
                 subDirectories.emplace_back(dirpath, FDirname(subdir));
 
                 if (onDirectory.Valid())
-                    onDirectory.Invoke(subDirectories.back());
+                    onDirectory(subDirectories.back());
             });
 
     } while (not subDirectories.empty());
@@ -148,8 +148,8 @@ template <typename _Predicate>
 static size_t EnumerateDir_(
     const FDirpath& aliased,
     const FDirpath& alias, const FWString& target,
-    const TFunction<void(const FDirpath&)>& onDirectory,
-    const TFunction<void(const FFilename&)>& onFile,
+    const TFunctionRef<void(const FDirpath&)>& onDirectory,
+    const TFunctionRef<void(const FFilename&)>& onFile,
     bool recursive,
     _Predicate&& pred
 ) {
@@ -227,7 +227,7 @@ bool FVirtualFileSystemNativeComponent::FileStats(FFileStat* pstat, const FFilen
     return FPlatformFile::Stat(pstat, nativeFilename);
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemNativeComponent::EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunction<void(const FDirpath&)>& onDirectory, const TFunction<void(const FFilename&)>& onFile) {
+size_t FVirtualFileSystemNativeComponent::EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunctionRef<void(const FDirpath&)>& onDirectory, const TFunctionRef<void(const FFilename&)>& onFile) {
     Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
 
     const size_t n = EnumerateDir_(dirpath, _alias, _target, onDirectory, onFile, recursive, [](const FWStringView&) {
@@ -238,10 +238,10 @@ size_t FVirtualFileSystemNativeComponent::EnumerateDir(const FDirpath& dirpath, 
     return n;
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemNativeComponent::EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
+size_t FVirtualFileSystemNativeComponent::EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) {
     Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
 
-    const size_t n = EnumerateDir_(dirpath, _alias, _target, NoFunction, foreach, recursive, [](const FWStringView&) {
+    const size_t n = EnumerateDir_(dirpath, _alias, _target, Default, foreach, recursive, [](const FWStringView&) {
         return true;
     });
     PPE_LOG(VFS, Debug, "enumerated {0} files in native directory '{1}' (recursive={2:A})", n, dirpath, recursive);
@@ -249,11 +249,11 @@ size_t FVirtualFileSystemNativeComponent::EnumerateFiles(const FDirpath& dirpath
     return n;
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
+size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) {
     Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
     Assert_NoAssume(not pattern.empty());
 
-    const size_t n = EnumerateDir_(dirpath, _alias, _target, NoFunction, foreach, recursive, [&pattern](const FWStringView& fname) {
+    const size_t n = EnumerateDir_(dirpath, _alias, _target, Default, foreach, recursive, [&pattern](const FWStringView& fname) {
         return WildMatchI(pattern, fname);
     });
     PPE_LOG(VFS, Debug, "globbed {0} files with pattern '{1}' in native directory '{2}' (recursive={3:A})", n, pattern, dirpath, recursive);
@@ -261,10 +261,10 @@ size_t FVirtualFileSystemNativeComponent::GlobFiles(const FDirpath& dirpath, con
     return n;
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemNativeComponent::MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) {
+size_t FVirtualFileSystemNativeComponent::MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) {
     Assert_NoAssume(_openMode ^ EOpenPolicy::Readable);
 
-    const size_t n = EnumerateDir_(dirpath, _alias, _target, NoFunction, foreach, recursive, [&re](const FWStringView& fname) {
+    const size_t n = EnumerateDir_(dirpath, _alias, _target, Default, foreach, recursive, [&re](const FWStringView& fname) {
         return re.Match(fname);
     });
     PPE_LOG(VFS, Debug, "matched {0} files with regex in native directory '{1}' (recursive={2:A})", n, dirpath, recursive);

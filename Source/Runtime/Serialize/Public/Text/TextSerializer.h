@@ -15,21 +15,16 @@ public:
     FTextSerializerException(const char* what) : FSerializeException(what) {}
 };
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FTextSerializer final : public ISerializer {
+class FTextSerializer final : public ISerializer {
+    explicit FTextSerializer(bool minify = true);
+    
 public:
-    virtual ~FTextSerializer() override;
-
-    static FExtname Extname();
-    static PSerializer Get();
+    NODISCARD PPE_SERIALIZE_API static FExtname Extname();
+    NODISCARD PPE_SERIALIZE_API static USerializer Get();
 
 public: // ISerializer
     virtual void Deserialize(IStreamReader& input, FTransactionLinker* linker) const override final;
     virtual void Serialize(const FTransactionSaver& saver, IStreamWriter* output) const override final;
-
-private:
-    friend struct TInSituPtr<ISerializer>;
-
-    explicit FTextSerializer(bool minify = true);
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

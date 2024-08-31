@@ -29,7 +29,7 @@ class IRemotingEndpoint;
 //----------------------------------------------------------------------------
 using FRemotingRequest = Network::FHttpRequest;
 using FRemotingResponse = Network::FHttpResponse;
-using FRemotingCallback = TFunction< void(const FRemotingServer&) NOEXCEPT >;
+using FRemotingCallback = TFunction< bool(const FRemotingServer&) NOEXCEPT >;
 //----------------------------------------------------------------------------
 FWD_REFPTR(BaseEndpoint);
 //----------------------------------------------------------------------------

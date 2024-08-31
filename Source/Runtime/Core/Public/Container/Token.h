@@ -300,7 +300,7 @@ PPE_ASSUME_TEMPLATE_AS_POD(
     typename _TokenTraits)
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
-bool operator >>(const TBasicStringConversion<_Char>& iss, TToken<_Tag, _Char, _Sensitive, _TokenTraits>* token) {
+NODISCARD bool operator >>(const TBasicStringConversion<_Char>& iss, TToken<_Tag, _Char, _Sensitive, _TokenTraits>* token) {
     Assert(token);
 
     if (TToken<_Tag, _Char, _Sensitive, _TokenTraits>::IsValidToken(iss.Input)) {
@@ -436,7 +436,7 @@ PPE_ASSUME_TEMPLATE_AS_POD(
     typename _TokenTraits )
 //----------------------------------------------------------------------------
 template <typename _Tag, typename _Char, ECase _Sensitive, typename _TokenTraits>
-bool operator >>(const TBasicStringConversion<_Char>& iss, TLazyToken<_Tag, _Char, _Sensitive, _TokenTraits>* token) {
+NODISCARD bool operator >>(const TBasicStringConversion<_Char>& iss, TLazyToken<_Tag, _Char, _Sensitive, _TokenTraits>* token) {
     Assert(token);
 
     if (TLazyToken<_Tag, _Char, _Sensitive, _TokenTraits>::IsValidToken(iss.Input)) {

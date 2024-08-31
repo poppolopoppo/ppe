@@ -808,8 +808,8 @@ FMultiSamples RHICast(VkSampleCountFlagBits samples) {
     if (0 == samples)
         return 1_samples;
 
-    Assert(Meta::IsPow2(samples));
-    return FMultiSamples(u32(samples));
+    Assert(Meta::IsPow2(static_cast<VkFlags>(samples)));
+    return FMultiSamples(static_cast<VkFlags>(samples));
 }
 //----------------------------------------------------------------------------
 EImageAspect RHICast(VkImageAspectFlagBits flags) {

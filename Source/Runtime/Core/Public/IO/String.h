@@ -550,87 +550,87 @@ void Resize_DiscardData(TBasicString<_Char>& str, size_t size) {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
-PPE_CORE_API size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr);
-PPE_CORE_API size_t ToCStr(char *dst, size_t capacity, const FWString& wstr);
-PPE_CORE_API FStringView ToCStr(const TMemoryView<char>& dst, const FWStringView& wstr);
+NODISCARD PPE_CORE_API size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
+NODISCARD PPE_CORE_API size_t ToCStr(char *dst, size_t capacity, const wchar_t *wcstr);
+NODISCARD PPE_CORE_API size_t ToCStr(char *dst, size_t capacity, const FWString& wstr);
+NODISCARD PPE_CORE_API FStringView ToCStr(const TMemoryView<char>& dst, const FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_CORE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr, size_t length);
-PPE_CORE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr);
-PPE_CORE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const FString& str);
-PPE_CORE_API FWStringView ToWCStr(const TMemoryView<wchar_t>& dst, const FStringView& str);
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-size_t ToCStr(char(&dst)[_Dim], const wchar_t *wcstr) { return ToCStr(dst, _Dim, wcstr); }
+NODISCARD PPE_CORE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr, size_t length);
+NODISCARD PPE_CORE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const char *cstr);
+NODISCARD PPE_CORE_API size_t ToWCStr(wchar_t *dst, size_t capacity, const FString& str);
+NODISCARD PPE_CORE_API FWStringView ToWCStr(const TMemoryView<wchar_t>& dst, const FStringView& str);
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-size_t ToWCStr(wchar_t(&dst)[_Dim], const char *cstr) { return ToWCStr(dst, _Dim, cstr); }
+NODISCARD size_t ToCStr(char(&dst)[_Dim], const wchar_t *wcstr) { return ToCStr(dst, _Dim, wcstr); }
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+NODISCARD size_t ToWCStr(wchar_t(&dst)[_Dim], const char *cstr) { return ToWCStr(dst, _Dim, cstr); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
-PPE_CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr);
-PPE_CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const FWString& wstr);
-PPE_CORE_API FStringView WCHAR_to_CHAR(ECodePage codePage, const TMemoryView<char>& dst, const FWStringView& wstr);
+NODISCARD PPE_CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr, size_t length);
+NODISCARD PPE_CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const wchar_t *wcstr);
+NODISCARD PPE_CORE_API size_t WCHAR_to_CHAR(ECodePage codePage, char *dst, size_t capacity, const FWString& wstr);
+NODISCARD PPE_CORE_API FStringView WCHAR_to_CHAR(ECodePage codePage, const TMemoryView<char>& dst, const FWStringView& wstr);
 //----------------------------------------------------------------------------
-PPE_CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const char *cstr, size_t length);
-PPE_CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const char *cstr);
-PPE_CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const FString& str);
-PPE_CORE_API FWStringView CHAR_to_WCHAR(ECodePage codePage, const TMemoryView<wchar_t>& dst, const FStringView& str);
-//----------------------------------------------------------------------------
-template <size_t _Dim>
-size_t WCHAR_to_CHAR(ECodePage codePage, char(&dst)[_Dim], const wchar_t *wcstr) { return WCHAR_to_CHAR(codePage, dst, _Dim, wcstr); }
+NODISCARD PPE_CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const char *cstr, size_t length);
+NODISCARD PPE_CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const char *cstr);
+NODISCARD PPE_CORE_API size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t *dst, size_t capacity, const FString& str);
+NODISCARD PPE_CORE_API FWStringView CHAR_to_WCHAR(ECodePage codePage, const TMemoryView<wchar_t>& dst, const FStringView& str);
 //----------------------------------------------------------------------------
 template <size_t _Dim>
-size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t(&dst)[_Dim], const char *cstr) { return CHAR_to_WCHAR(codePage, dst, _Dim, cstr); }
+NODISCARD size_t WCHAR_to_CHAR(ECodePage codePage, char(&dst)[_Dim], const wchar_t *wcstr) { return WCHAR_to_CHAR(codePage, dst, _Dim, wcstr); }
+//----------------------------------------------------------------------------
+template <size_t _Dim>
+NODISCARD size_t CHAR_to_WCHAR(ECodePage codePage, wchar_t(&dst)[_Dim], const char *cstr) { return CHAR_to_WCHAR(codePage, dst, _Dim, cstr); }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_CORE_API FString ToString(const wchar_t *wcstr, size_t length);
-PPE_CORE_API FString ToString(const wchar_t *wcstr);
-PPE_CORE_API FString ToString(const FWString& wstr);
-inline const FString& ToString(const FString& str) { return str; }
-PPE_CORE_API FString ToString(const TMemoryView<const char>& strview);
-PPE_CORE_API FString ToString(const TMemoryView<const wchar_t>& strview);
+NODISCARD PPE_CORE_API FString ToString(const wchar_t *wcstr, size_t length);
+NODISCARD PPE_CORE_API FString ToString(const wchar_t *wcstr);
+NODISCARD PPE_CORE_API FString ToString(const FWString& wstr);
+NODISCARD inline const FString& ToString(const FString& str) { return str; }
+NODISCARD PPE_CORE_API FString ToString(const TMemoryView<const char>& strview);
+NODISCARD PPE_CORE_API FString ToString(const TMemoryView<const wchar_t>& strview);
 //----------------------------------------------------------------------------
-PPE_CORE_API FWString ToWString(const char *cstr, size_t length);
-PPE_CORE_API FWString ToWString(const char *cstr);
-PPE_CORE_API FWString ToWString(const FString& str);
-inline const FWString& ToWString(const FWString& wstr) { return wstr; }
-PPE_CORE_API FWString ToWString(const TMemoryView<const wchar_t>& strview);
-PPE_CORE_API FWString ToWString(const TMemoryView<const char>& strview);
+NODISCARD PPE_CORE_API FWString ToWString(const char *cstr, size_t length);
+NODISCARD PPE_CORE_API FWString ToWString(const char *cstr);
+NODISCARD PPE_CORE_API FWString ToWString(const FString& str);
+NODISCARD inline const FWString& ToWString(const FWString& wstr) { return wstr; }
+NODISCARD PPE_CORE_API FWString ToWString(const TMemoryView<const wchar_t>& strview);
+NODISCARD PPE_CORE_API FWString ToWString(const TMemoryView<const char>& strview);
 //----------------------------------------------------------------------------
 template <typename _Char, size_t _Dim>
-TBasicString<_Char> ToString(const _Char (&str)[_Dim]) {
+NODISCARD TBasicString<_Char> ToString(const _Char (&str)[_Dim]) {
     return ToString(MakeStringView(str));
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-FString ToString(const TBasicStringView<_Char>& str) {
+NODISCARD FString ToString(const TBasicStringView<_Char>& str) {
     return ToString(str.MakeView());
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-FWString ToWString(const TBasicStringView<_Char>& str) {
+NODISCARD FWString ToWString(const TBasicStringView<_Char>& str) {
     return ToWString(str.MakeView());
 }
 //----------------------------------------------------------------------------
-inline bool operator >>(const FStringConversion& conv, FString* dst) {
+NODISCARD inline bool operator >>(const FStringConversion& conv, FString* dst) {
     dst->assign(conv.Input);
     return (not dst->empty());
 }
 //----------------------------------------------------------------------------
-inline bool operator >>(const FStringConversion& conv, FWString* dst) {
+NODISCARD inline bool operator >>(const FStringConversion& conv, FWString* dst) {
     dst->assign(ToWString(conv.Input));
     return (not dst->empty());
 }
 //----------------------------------------------------------------------------
-inline bool operator >>(const FWStringConversion& conv, FWString* dst) {
+NODISCARD inline bool operator >>(const FWStringConversion& conv, FWString* dst) {
     dst->assign(conv.Input);
     return (not dst->empty());
 }
 //----------------------------------------------------------------------------
-inline bool operator >>(const FWStringConversion& conv, FString* dst) {
+NODISCARD inline bool operator >>(const FWStringConversion& conv, FString* dst) {
     dst->assign(ToString(conv.Input));
     return (not dst->empty());
 }
@@ -639,27 +639,27 @@ inline bool operator >>(const FWStringConversion& conv, FString* dst) {
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TStringEqualTo : TStringViewEqualTo <_Char, _Sensitive> {
-    bool operator ()(const TBasicString<_Char>& lhs, const TBasicString<_Char>& rhs) const {
+    NODISCARD bool operator ()(const TBasicString<_Char>& lhs, const TBasicString<_Char>& rhs) const {
         return TStringViewEqualTo<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
     }
-    bool operator ()(const TBasicString<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
+    NODISCARD bool operator ()(const TBasicString<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
         return TStringViewEqualTo<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs);
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TStringLess : TStringViewLess <_Char, _Sensitive> {
-    bool operator ()(const TBasicString<_Char>& lhs, const TBasicString<_Char>& rhs) const {
+    NODISCARD bool operator ()(const TBasicString<_Char>& lhs, const TBasicString<_Char>& rhs) const {
         return TStringViewLess<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs.MakeView());
     }
-    bool operator ()(const TBasicString<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
+    NODISCARD bool operator ()(const TBasicString<_Char>& lhs, const TBasicStringView<_Char>& rhs) const {
         return TStringViewLess<_Char, _Sensitive>::operator ()(lhs.MakeView(), rhs);
     }
 };
 //----------------------------------------------------------------------------
 template <typename _Char, ECase _Sensitive>
 struct TStringHasher : TStringViewHasher<_Char, _Sensitive> {
-    size_t operator ()(const TBasicString<_Char>& str) const {
+    NODISCARD size_t operator ()(const TBasicString<_Char>& str) const {
         return TStringViewHasher<_Char, _Sensitive>::operator ()(str.MakeView());
     }
 };

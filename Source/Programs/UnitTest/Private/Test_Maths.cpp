@@ -129,36 +129,36 @@ static NO_INLINE void Test_Vector_() {
         int broadcast = select.HSum();
         PPE_LOG_CHECKVOID(Test_Maths, broadcast == 1);
     }
-    //{
-    //    int4 v;
-    //    v.xy = int2{ 1,2 };
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.y == 2);
-    //    const int2 xy{ 3,4 };
-    //    auto& zw = v.zw;
-    //    zw = xy;
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.y == 2);
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.z == 3);
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.w == 4);
-    //    v.yw = { 5, 6 };
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.y == 5);
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.z == 3);
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.w == 6);
-    //}
-    //{
-    //    int4 v{ int2{ 1,2 }, int2{ 3,4 } };
-    //    v.xy = v.xx;
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.y == 1);
-    //    v.zw = v.zz;
-    //    //v.zz = { 3,4 }; forbidden, should not compile !
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.y == 1);
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.z == 3);
-    //    PPE_LOG_CHECKVOID(Test_Maths, v.w == 3);
-    //} %NOCOMMIT%
+    {
+       int4 v;
+       v.xy = int2{ 1,2 };
+       PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
+       PPE_LOG_CHECKVOID(Test_Maths, v.y == 2);
+       const int2 xy{ 3,4 };
+       auto& zw = v.zw;
+       zw = xy;
+       PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
+       PPE_LOG_CHECKVOID(Test_Maths, v.y == 2);
+       PPE_LOG_CHECKVOID(Test_Maths, v.z == 3);
+       PPE_LOG_CHECKVOID(Test_Maths, v.w == 4);
+       v.yw = { 5, 6 };
+       PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
+       PPE_LOG_CHECKVOID(Test_Maths, v.y == 5);
+       PPE_LOG_CHECKVOID(Test_Maths, v.z == 3);
+       PPE_LOG_CHECKVOID(Test_Maths, v.w == 6);
+    }
+    {
+       int4 v{ int2{ 1,2 }, int2{ 3,4 } };
+       v.xy = v.xx;
+       PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
+       PPE_LOG_CHECKVOID(Test_Maths, v.y == 1);
+       v.zw = v.zz;
+       //v.zz = { 3,4 }; forbidden, should not compile !
+       PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
+       PPE_LOG_CHECKVOID(Test_Maths, v.y == 1);
+       PPE_LOG_CHECKVOID(Test_Maths, v.z == 3);
+       PPE_LOG_CHECKVOID(Test_Maths, v.w == 3);
+    }
 }
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_BoundingBox_() {

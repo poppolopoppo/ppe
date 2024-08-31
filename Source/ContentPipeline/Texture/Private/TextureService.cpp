@@ -77,7 +77,7 @@ public: // ITextureService
         for (const TPair<const EImageFormat, UImageFormat>& it : *_imageFormats.LockShared()) {
             outImageFormats.emplace_back(it.second);
             numImageFormats++;
-        }
+        } 
         return numImageFormats;
     }
 

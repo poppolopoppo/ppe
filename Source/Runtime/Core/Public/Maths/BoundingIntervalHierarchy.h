@@ -65,10 +65,10 @@ public:
         u32 Item;
     };
 
-    typedef TFunction<void(const FHitResult&/* hit */)> onhit_delegate;
-    typedef TFunction<void(size_t/* begin */, size_t/* end */, EContainmentType/* collision */)> hitrange_delegate;
-    typedef TFunction<bool(const FRay&/* ray */, size_t/* begin */, size_t/* end */, FHitResult* /* firstHit */)> raycast_item_delegate;
-    typedef TFunction<bool(const FRay&/* ray */, size_t/* begin */, size_t/* end */, const onhit_delegate&/* onhit */)> raycast_onhit_delegate;
+    typedef TFunctionRef<void(const FHitResult&/* hit */)> onhit_delegate;
+    typedef TFunctionRef<void(size_t/* begin */, size_t/* end */, EContainmentType/* collision */)> hitrange_delegate;
+    typedef TFunctionRef<bool(const FRay&/* ray */, size_t/* begin */, size_t/* end */, FHitResult* /* firstHit */)> raycast_item_delegate;
+    typedef TFunctionRef<bool(const FRay&/* ray */, size_t/* begin */, size_t/* end */, const onhit_delegate&/* onhit */)> raycast_onhit_delegate;
 
     void Build(
         size_t maxItemsPerLeaf,

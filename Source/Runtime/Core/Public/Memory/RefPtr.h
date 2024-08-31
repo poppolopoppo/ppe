@@ -166,9 +166,14 @@ public:
     template <typename U>
     friend class TRefPtr;
 
-    TRefPtr();
-    TRefPtr(T* ptr);
+    CONSTEXPR TRefPtr() = default;
+
+    explicit TRefPtr(T* ptr) NOEXCEPT;
     ~TRefPtr();
+
+    CONSTEXPR TRefPtr(std::nullptr_t ) NOEXCEPT 
+        : TRefPtr()
+    {}
 
     TRefPtr(TRefPtr&& rvalue) NOEXCEPT;
     TRefPtr& operator =(TRefPtr&& rvalue) NOEXCEPT;
@@ -211,7 +216,7 @@ protected:
     static void DecRefCountIFP(T* ptr) NOEXCEPT;
 
 private:
-    T* _ptr;
+    T* _ptr{ nullptr };
 };
 STATIC_ASSERT(sizeof(TRefPtr<FRefCountable>) == sizeof(FRefCountable*));
 //----------------------------------------------------------------------------
@@ -225,7 +230,7 @@ NODISCARD hash_t hash_value(const TRefPtr<T>& refPtr) NOEXCEPT {
 //----------------------------------------------------------------------------
 template <typename _Dst, typename _Src>
 NODISCARD TRefPtr<_Dst> checked_cast(const TRefPtr<_Src>& refptr) NOEXCEPT {
-    return { refptr.template as<_Dst>() };
+    return TRefPtr<_Dst>( refptr.template as<_Dst>() );
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs, class _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >
@@ -278,9 +283,14 @@ public:
     template <typename U>
     friend class TSafePtr;
 
-    TSafePtr() NOEXCEPT;
-    TSafePtr(T* ptr) NOEXCEPT;
+    CONSTEXPR TSafePtr() = default;
+
+    explicit TSafePtr(T* ptr) NOEXCEPT;
     ~TSafePtr();
+
+    CONSTEXPR TSafePtr(std::nullptr_t ) NOEXCEPT 
+        : TSafePtr()
+    {}
 
     TSafePtr(TSafePtr&& rvalue) NOEXCEPT;
     TSafePtr& operator =(TSafePtr&& rvalue) NOEXCEPT;
@@ -334,7 +344,7 @@ protected:
     static void DecRefCountIFP(T* ptr) NOEXCEPT;
 #endif //!USE_PPE_SAFEPTR
 private:
-    T* _ptr;
+    T* _ptr{ nullptr };
 };
 //----------------------------------------------------------------------------
 template <typename T> struct IsSafePtr : public std::false_type {};
@@ -357,7 +367,7 @@ NODISCARD hash_t hash_value(const TSafePtr<T>& TSafePtr) NOEXCEPT {
 //----------------------------------------------------------------------------
 template <typename _Dst, typename _Src>
 NODISCARD TSafePtr<_Dst> checked_cast(const TSafePtr<_Src>& safeptr) NOEXCEPT {
-    return { safeptr.template as<_Dst>() };
+    return TSafePtr<_Dst>( safeptr.template as<_Dst>() );
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs, typename _CommonPtr = std::common_type_t<_Lhs*, _Rhs*> >

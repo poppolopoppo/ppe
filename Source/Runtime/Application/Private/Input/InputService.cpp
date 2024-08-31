@@ -66,7 +66,9 @@ private:
             return MakeStaticArray<FGamepadDevice>(idx...);
         });
 
-    VECTORINSITU(Input, SInputListener, 3) _listeners = { &_mainListener };
+    VECTORINSITU(Input, SInputListener, 3) _listeners = { 
+        MakeSafePtr(&_mainListener) 
+    };
 
     FPlatformWindow* _focusedWindow{ nullptr };
     FPlatformWindow* _nextFocusedWindow{ nullptr };

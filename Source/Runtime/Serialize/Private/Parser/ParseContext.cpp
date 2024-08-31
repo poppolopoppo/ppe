@@ -47,9 +47,9 @@ const FParseContext* FParseContext::GlobalScope() const {
     return ctx;
 }
 //----------------------------------------------------------------------------
-void FParseContext::SetScopeObject(RTTI::FMetaObject *object) {
-    Assert(_scopeObject.get() != object);
-    _scopeObject = object;
+void FParseContext::SetScopeObject(RTTI::PMetaObject&& robject) {
+    Assert(_scopeObject != robject);
+    _scopeObject = std::move(robject);
 }
 //----------------------------------------------------------------------------
 RTTI::FAtom FParseContext::GetLocal(const RTTI::FName& name) const {

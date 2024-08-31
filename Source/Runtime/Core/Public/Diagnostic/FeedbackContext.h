@@ -85,7 +85,7 @@ public:
         Close();
     }
 
-    PPE_CORE_API void Inc() const;
+    PPE_CORE_API void Inc() const;  
     PPE_CORE_API void Set(size_t at) const;
     PPE_CORE_API void Print(const FStringView& text) const;
     PPE_CORE_API void IncPrint(const FStringView& text) const;

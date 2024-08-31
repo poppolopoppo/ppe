@@ -10,15 +10,15 @@ namespace RHI {
 //----------------------------------------------------------------------------
 template <typename _Visitor>
 void TVulkanTaskGraph<_Visitor>::Construct(const SLAB_ALLOCATOR(RHICommand)& allocator) {
-    _nodes.Create_AssumeNotValid<FSearchableNodes>(allocator);
-    _entries.Create_AssumeNotValid<FEntries>(allocator);
+    _nodes.emplace(allocator);
+    _entries.emplace(allocator);
     _entries->Reserve(64);
 }
 //----------------------------------------------------------------------------
 template <typename _Visitor>
 void TVulkanTaskGraph<_Visitor>::TearDown() {
-    _nodes.Destroy();
-    _entries.Destroy();
+    _nodes.reset();
+    _entries.reset();
 }
 //----------------------------------------------------------------------------
 template <typename _Visitor>

@@ -348,7 +348,7 @@ FReadBuffer& FReadBuffer::SetBuffer(FRawBufferID buffer, size_t offset, size_t s
 }
 //----------------------------------------------------------------------------
 FReadBuffer& FReadBuffer::SetCallback(FCallback&& rcallback) {
-    Assert(rcallback);
+    Assert(rcallback.Valid());
     Callback = std::move(rcallback);
     return (*this);
 }
@@ -419,7 +419,7 @@ FReadImage& FReadImage::SetImage(FRawImageID image, const int2& offset, const ui
 }
 //----------------------------------------------------------------------------
 FReadImage& FReadImage::SetCallback(FCallback&& rcallback) {
-    Assert(rcallback);
+    Assert(rcallback.Valid());
     Callback = std::move(rcallback);
     return (*this);
 }

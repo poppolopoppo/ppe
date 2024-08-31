@@ -16,7 +16,7 @@ namespace ContentPipeline {
 using FTextureImporterResult = Meta::TOptional<FBulkData>;
 //----------------------------------------------------------------------------
 // Should be state-less
-class IImageFormat : Meta::FNonCopyableNorMovable {
+class IImageFormat {
 public:
     virtual ~IImageFormat() = default;
 

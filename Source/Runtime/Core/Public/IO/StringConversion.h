@@ -41,9 +41,9 @@ struct TBasicStringConversion {
     TBasicStringConversion(iterator first, iterator last) NOEXCEPT : Input(first, last) {}
     TBasicStringConversion(const TPair<iterator, iterator>& span) NOEXCEPT : Input(span) {}
 
-    bool empty() const { return Input.empty(); }
+    NODISCARD bool empty() const { return Input.empty(); }
 
-    bool operator >>(bool* dst) const NOEXCEPT {
+    NODISCARD bool operator >>(bool* dst) const NOEXCEPT {
         if (EqualsI(Input, MakeStringView(STRING_LITERAL(_Char, "true"))) ||
             EqualsI(Input, MakeStringView(STRING_LITERAL(_Char, "1"))) ) {
             *dst = true;
@@ -57,27 +57,27 @@ struct TBasicStringConversion {
         return false;
     }
 
-    bool operator >>(i32* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
-    bool operator >>(i64* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
+    NODISCARD bool operator >>(i32* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
+    NODISCARD bool operator >>(i64* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
 
-    bool operator >>(u32* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
-    bool operator >>(u64* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
+    NODISCARD bool operator >>(u32* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
+    NODISCARD bool operator >>(u64* dst) const NOEXCEPT { return Atoi(dst, Input, Base); }
 
-    bool operator >>(i8* dst) const NOEXCEPT { return CheckedIntConversion_(dst); }
-    bool operator >>(i16* dst) const NOEXCEPT { return CheckedIntConversion_(dst); }
-    bool operator >>(u8* dst) const NOEXCEPT { return CheckedIntConversion_(dst); }
-    bool operator >>(u16* dst) const NOEXCEPT { return CheckedIntConversion_(dst); }
+    NODISCARD bool operator >>(i8* dst) const NOEXCEPT { return CheckedIntConversion_(dst); }
+    NODISCARD bool operator >>(i16* dst) const NOEXCEPT { return CheckedIntConversion_(dst); }
+    NODISCARD bool operator >>(u8* dst) const NOEXCEPT { return CheckedIntConversion_(dst); }
+    NODISCARD bool operator >>(u16* dst) const NOEXCEPT { return CheckedIntConversion_(dst); }
 
-    bool operator >>(float* dst) const NOEXCEPT { return Atof(dst, Input); }
-    bool operator >>(double* dst) const NOEXCEPT { return Atod(dst, Input); }
+    NODISCARD bool operator >>(float* dst) const NOEXCEPT { return Atof(dst, Input); }
+    NODISCARD bool operator >>(double* dst) const NOEXCEPT { return Atod(dst, Input); }
 
-    bool operator >>(stringview_type* dst) const NOEXCEPT { *dst = Input; return true; }
+    NODISCARD bool operator >>(stringview_type* dst) const NOEXCEPT { *dst = Input; return true; }
 
     template <typename T>
     using if_has_stringconversion_t = decltype(std::declval<const TBasicStringConversion&>() >> std::declval<T*>());
 
     template <typename T, if_has_stringconversion_t<T>* = nullptr >
-    bool operator >>(Meta::TOptional<T>* dst) const NOEXCEPT {
+    NODISCARD bool operator >>(Meta::TOptional<T>* dst) const NOEXCEPT {
         T tmp{ Default };
         if (operator >>(&tmp)) {
             dst->emplace(std::move(tmp));
@@ -87,20 +87,20 @@ struct TBasicStringConversion {
     }
 
     template <typename T, if_has_stringconversion_t<T>* = nullptr >
-    T ConvertTo() const {
+    NODISCARD T ConvertTo() const {
         T result = Meta::MakeForceInit<T>();
         VerifyRelease( ConvertTo(&result) );
         return result;
     }
 
     template <typename T, if_has_stringconversion_t<T>* = nullptr >
-    bool ConvertTo(T* dst) const {
+    NODISCARD bool ConvertTo(T* dst) const {
         Assert(dst);
         return (*this >> dst); // Can be expanded thanks to ADL
     }
 
     template <typename T>
-    bool ConvertToIFP(T* dst) const {
+    NODISCARD bool ConvertToIFP(T* dst) const {
         Assert(dst);
         IF_CONSTEXPR(Meta::has_defined_v<if_has_stringconversion_t, T>) {
             return (*this >> dst); // Can be expanded thanks to ADL
@@ -112,7 +112,7 @@ struct TBasicStringConversion {
 
 private:
     template <typename _Int>
-    bool CheckedIntConversion_(_Int* dst) const NOEXCEPT {
+    NODISCARD bool CheckedIntConversion_(_Int* dst) const NOEXCEPT {
         Meta::TConditional<std::is_signed_v<_Int>, i64, u64> tmp;
         if (Atoi(&tmp, Input, Base)) {
             *dst = checked_cast<_Int>(tmp);

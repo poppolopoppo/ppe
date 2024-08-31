@@ -227,6 +227,11 @@ private:
 #endif
 };
 //----------------------------------------------------------------------------
+template <typename T>
+NODISCARD Meta::TEnableIf< IsWeakRefCountable<T>::value, TSafePtr<T> > MakeSafePtr(T* ptr) NOEXCEPT {
+    return TSafePtr<T>(ptr);
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
@@ -235,7 +240,11 @@ public:
     template <typename U>
     friend class TWeakPtr;
 
-    TWeakPtr() NOEXCEPT : _ptr(nullptr) {}
+    CONSTEXPR TWeakPtr() = default;
+
+    CONSTEXPR TWeakPtr(std::nullptr_t ) NOEXCEPT 
+        : TWeakPtr()
+    {}
 
     template <typename U, class = Meta::TEnableIf<std::is_assignable_v<T*&, U*>> >
     explicit TWeakPtr(const TRefPtr<U>& refptr) NOEXCEPT;
@@ -284,7 +293,7 @@ public:
     }
 
 private:
-    T* _ptr;
+    T* _ptr{ nullptr };
     PWeakRefCounter _cnt;
 };
 //----------------------------------------------------------------------------

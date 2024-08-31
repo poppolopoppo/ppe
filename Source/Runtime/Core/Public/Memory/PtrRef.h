@@ -26,6 +26,11 @@ struct TPtrRef {
     CONSTEXPR TPtrRef(T& ref) NOEXCEPT : Ptr(std::addressof(ref)) {}
     CONSTEXPR TPtrRef& operator =(T& ref) NOEXCEPT { Ptr = std::addressof(ref); return (*this); }
 
+    template <typename U, Meta::TEnableIf<std::is_assignable_v<T*&, U*>>* = nullptr>
+    CONSTEXPR TPtrRef(const TPtrRef<U>& other) 
+        : Ptr(other.Ptr)
+    {}
+
     CONSTEXPR TPtrRef(const TPtrRef&) NOEXCEPT = default;
     CONSTEXPR TPtrRef& operator =(const TPtrRef&) NOEXCEPT = default;
 

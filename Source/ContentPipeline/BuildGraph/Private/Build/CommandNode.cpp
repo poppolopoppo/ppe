@@ -161,7 +161,7 @@ EBuildResult FCommandNode::Clean(FCleanContext& ctx) {
 void FCommandNode::SetInput(FBuildNode* input) NOEXCEPT {
     Assert(input);
 
-    _input = input;
+    _input.reset(input);
 }
 //----------------------------------------------------------------------------
 void FCommandNode::SetExecutable(

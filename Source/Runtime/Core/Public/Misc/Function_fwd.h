@@ -7,7 +7,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-// TFunctionRef<> is wrapping references callable objects, it cannot be stored!
+// TFunctionRef<> is wrapping references callable objects, it can't outlive referenced values!
 //----------------------------------------------------------------------------
 template <class T, class = typename decltype(Meta::TCallableObject{ std::declval<T>() })::function_type >
 class TFunctionRef;

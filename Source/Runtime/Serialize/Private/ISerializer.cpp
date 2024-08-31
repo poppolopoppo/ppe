@@ -98,7 +98,7 @@ FExtname ISerializer::Extname(ESerializeFormat fmt) {
     }
 }
 //----------------------------------------------------------------------------
-PSerializer ISerializer::FromExtname(const FExtname& ext) {
+USerializer ISerializer::FromExtname(const FExtname& ext) {
     Assert(not ext.empty());
 
     if (ext == FBinarySerializer::Extname())
@@ -108,10 +108,10 @@ PSerializer ISerializer::FromExtname(const FExtname& ext) {
     else if (ext == FTextSerializer::Extname())
         return FTextSerializer::Get();
 
-    return PSerializer(); // unknown extension
+    return Default; // unknown extension
 }
 //----------------------------------------------------------------------------
-PSerializer ISerializer::FromFormat(ESerializeFormat fmt) {
+USerializer ISerializer::FromFormat(ESerializeFormat fmt) {
     switch (fmt) {
     case PPE::Serialize::ESerializeFormat::Binary:
         return FBinarySerializer::Get();
@@ -121,9 +121,8 @@ PSerializer ISerializer::FromFormat(ESerializeFormat fmt) {
         AssertNotImplemented(); // #TODO
     case PPE::Serialize::ESerializeFormat::Script:
         return FTextSerializer::Get();
-    default:
-        AssertNotReached();
     }
+    AssertNotReached();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

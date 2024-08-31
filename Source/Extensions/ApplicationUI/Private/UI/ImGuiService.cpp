@@ -356,7 +356,7 @@ bool FImGuiService::Construct(IApplicationService& app, IInputService& input, IR
     _onWindowResized = rhi.OnWindowResized().Bind<&FImGuiService::OnWindowResized>(this);
 
     _inputListener.SetMode(EInputMode::Handled);
-    input.PushInputListener(&_inputListener);
+    input.PushInputListener(MakeSafePtr(&_inputListener));
 
     return true;
 }
@@ -364,7 +364,7 @@ bool FImGuiService::Construct(IApplicationService& app, IInputService& input, IR
 void FImGuiService::TearDown(IApplicationService& app, IInputService& input, IRHIService& rhi) {
     PPE_LOG(UI, Info, "destroying imgui service");
 
-    input.PopInputListener(&_inputListener);
+    input.PopInputListener(MakeSafePtr(&_inputListener));
 
     app.OnApplicationBeginTick().Remove(_onBeginTick);
     app.OnApplicationEndTick().Remove(_onEndTick);
@@ -468,7 +468,7 @@ void FImGuiService::OnWindowResized(const IRHIService&, const FRHISurfaceCreateI
 }
 //----------------------------------------------------------------------------
 auto FImGuiService::ToggleFocus(IInputService& inputs, EInputMode mode) -> EInputMode {
-    return inputs.ToggleFocus(&_inputListener, mode);
+    return inputs.ToggleFocus(MakeSafePtr(&_inputListener), mode);
 }
 //----------------------------------------------------------------------------
 RHI::PFrameTask FImGuiService::PrepareRenderCommand_(

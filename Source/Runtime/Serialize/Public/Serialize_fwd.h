@@ -19,8 +19,7 @@ namespace Serialize {
 enum class ESerializeFlags : u32;
 enum class ESerializeFormat : u32;
 //----------------------------------------------------------------------------
-class ISerializer;
-using PSerializer = TInSituPtr<ISerializer>;
+FWD_PUREINTEFACE_PTR(Serializer);
 //----------------------------------------------------------------------------
 class FTransactionLinker;
 class FTransactionSaver;

@@ -264,8 +264,6 @@ FTextSerializer::FTextSerializer(bool minify/* = true */) {
     SetMinify(minify);
 }
 //----------------------------------------------------------------------------
-FTextSerializer::~FTextSerializer() = default;
-//----------------------------------------------------------------------------
 void FTextSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);
 
@@ -306,8 +304,8 @@ FExtname FTextSerializer::Extname() {
     return FFSConstNames::Txt();
 }
 //----------------------------------------------------------------------------
-PSerializer FTextSerializer::Get() {
-    return PSerializer::Make<FTextSerializer>();
+USerializer FTextSerializer::Get() {
+    return FTextSerializer();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

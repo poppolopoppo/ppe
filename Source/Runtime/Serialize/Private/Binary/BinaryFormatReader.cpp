@@ -463,7 +463,7 @@ void FBinaryFormatReader::Read_(const RTTI::IScalarTraits* traits, RTTI::PMetaOb
     if (refData.IsImport) {
         Assert_NoAssume(not refData.IsNull());
 
-        obj = _contents.Imports[refData.ObjectIndex];
+        obj.reset(_contents.Imports[refData.ObjectIndex]);
     }
     else if (not refData.IsNull()) {
 

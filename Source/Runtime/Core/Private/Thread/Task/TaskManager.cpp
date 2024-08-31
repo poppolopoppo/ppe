@@ -282,7 +282,6 @@ public:
             pimpl.Scheduler().Produce(priority, broadcast, nullptr);
 
         pimpl.Sync().Wait(); // all threads synchronized passed this line
-        Assert_NoAssume(numPending == 0); // %NOCOMMIT%
     }
 
     static void Wait(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority) {
@@ -808,7 +807,7 @@ ITaskContext& ITaskContext::Get() NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 FTaskFunc FInterruptedTask::ResumeTask(const FInterruptedTask& task) {
-    return [resume{ static_cast<FTaskFiberPool::FHandleRef>(task.Fiber()) }](ITaskContext&) {
+    return [resume{ static_cast<const FTaskFiberPool::FHandle*>(task.Fiber()) }](ITaskContext&) {
         FTaskFiberPool::YieldCurrentFiber(resume, true/* release current fiber */);
     };
 }

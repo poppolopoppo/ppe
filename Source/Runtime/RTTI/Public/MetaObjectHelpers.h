@@ -89,14 +89,14 @@ bool CreateMetaObject(PMetaObject& dst, bool resetToDefaultValue) {
 //----------------------------------------------------------------------------
 PPE_RTTI_API size_t CollectReferences(
     const FMetaObject& root,
-    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& prefix,
-    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& postfix,
+    const TFunctionRef<bool(const ITypeTraits&, FMetaObject&)>& prefix,
+    const TFunctionRef<bool(const ITypeTraits&, FMetaObject&)>& postfix,
     EVisitorFlags flags);
 //----------------------------------------------------------------------------
 PPE_RTTI_API size_t CollectReferences(
     const TMemoryView<const PMetaObject>& roots,
-    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& prefix,
-    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& postfix,
+    const TFunctionRef<bool(const ITypeTraits&, FMetaObject&)>& prefix,
+    const TFunctionRef<bool(const ITypeTraits&, FMetaObject&)>& postfix,
     EVisitorFlags flags);
 //----------------------------------------------------------------------------
 PPE_RTTI_API bool CheckCircularReferences(const FMetaObject& root);

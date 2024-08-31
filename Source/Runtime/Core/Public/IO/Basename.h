@@ -118,8 +118,8 @@ inline hash_t hash_value(const FBasename& token) NOEXCEPT {
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FBasename& basename);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FBasename& basename);
 //----------------------------------------------------------------------------
-PPE_CORE_API bool operator >>(const FStringConversion& iss, FBasename* basename);
-PPE_CORE_API bool operator >>(const FWStringConversion& iss, FBasename* basename);
+NODISCARD PPE_CORE_API bool operator >>(const FStringConversion& iss, FBasename* basename);
+NODISCARD PPE_CORE_API bool operator >>(const FWStringConversion& iss, FBasename* basename);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

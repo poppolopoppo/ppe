@@ -200,8 +200,12 @@ template <typename T, u32 _Dim, u32... _Shuffle>
 using TScalarVectorShuffleExpr = TScalarVectorExpr<T, (sizeof...(_Shuffle)),
     TScalarVectorShuffle<T, _Dim, _Shuffle...>>;
 template <typename T, u32 _Dim, u32... _Shuffle>
-using TScalarVectorShuffleAssignable = TScalarVectorShuffleExpr <T, _Dim, _Shuffle...>;/*TScalarVectorExpr<T, (sizeof...(_Shuffle)),
-    TScalarVectorAssignable<T, (sizeof...(_Shuffle)), TScalarVectorShuffle<T, _Dim, _Shuffle...>>>;  %NOCOMMIT%  */
+using TScalarVectorShuffleAssignable = 
+#if 0
+    TScalarVectorShuffleExpr <T, _Dim, _Shuffle...>;
+#else
+    TScalarVectorExpr<T, (sizeof...(_Shuffle)), TScalarVectorAssignable<T, (sizeof...(_Shuffle)), TScalarVectorShuffle<T, _Dim, _Shuffle...>>>;
+#endif
 } //!namespace details
 //----------------------------------------------------------------------------
 // TScalarVectorStorage<T, N>

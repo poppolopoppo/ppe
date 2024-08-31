@@ -70,7 +70,7 @@ struct CACHELINE_ALIGNED FTaskFiberPool::FHandle {
 namespace {
 //----------------------------------------------------------------------------
 void STDCALL TaskFiberEntryPoint_(void* arg) {
-    FTaskFiberPool::FHandleRef const self = static_cast<FTaskFiberPool::FHandleRef>(arg);
+    FTaskFiberPool::FHandleRef const self = static_cast<const FTaskFiberPool::FHandle*>(arg);
 
 #if USE_PPE_SANITIZER
     const void* asan_oldStackBottom;
@@ -119,7 +119,8 @@ static void YieldTaskFiber_(FTaskFiberPool::FHandleRef self, FTaskFiberPool::FHa
     Assert(to != self);
 
     if (release) {
-        TFunctionRef<void()> wakeUp{ Meta::StaticFunction<&FTaskFiberPool::FHandle::ReleaseFiber>, self };
+        constexpr auto staticFn = Meta::StaticFunction<&FTaskFiberPool::FHandle::ReleaseFiber>; 
+        FTaskFiberPool::FHandle::FWakeUpCallback wakeUp( staticFn, self.get() );
         to->AttachWakeUpCallback(std::move(wakeUp));
     }
 
@@ -195,7 +196,7 @@ bool FTaskFiberPool::OwnsFiber(FHandleRef handle) const NOEXCEPT {
 //----------------------------------------------------------------------------
 auto FTaskFiberPool::AcquireFiber() -> FHandleRef {
     for (FHandleRef freeFiber = _freeFibers.load(std::memory_order_relaxed); freeFiber;) {
-        if (Likely(freeFiber && _freeFibers.compare_exchange_weak(freeFiber, freeFiber->NextHandle,
+        if (Likely(freeFiber && _freeFibers.compare_exchange_weak(*freeFiber.ref(), freeFiber->NextHandle,
             std::memory_order_release, std::memory_order_relaxed))) {
             freeFiber->NextHandle = nullptr;
 
@@ -227,7 +228,7 @@ void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
     Assert_NoAssume(nullptr == handle->NextHandle);
 
     for (handle->NextHandle = _freeFibers.load(std::memory_order_relaxed);;) {
-        if (_freeFibers.compare_exchange_weak(handle->NextHandle, handle,
+        if (_freeFibers.compare_exchange_weak(*handle->NextHandle.ref(), handle,
             std::memory_order_release, std::memory_order_relaxed)) {
             ONLY_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(Fibers).DeallocateUser(FHandle::StackSize));
 
@@ -241,13 +242,13 @@ void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
 //----------------------------------------------------------------------------
 void FTaskFiberPool::ReleaseMemory() {
     for (FHandleRef freeFiber = _freeFibers.load(std::memory_order_relaxed); freeFiber; ) {
-        if (_freeFibers.compare_exchange_weak(freeFiber, freeFiber->NextHandle,
+        if (_freeFibers.compare_exchange_weak(*freeFiber.ref(), freeFiber->NextHandle,
             std::memory_order_release, std::memory_order_relaxed)) {
 
             Assert_NoAssume(OwnsFiber(freeFiber));
             Assert_NoAssume(not freeFiber->OnWakeUp.Valid());
 
-            FHandle* const releasedFiber = const_cast<FHandle*>(freeFiber);
+            FHandle* const releasedFiber = const_cast<FHandle*>(freeFiber.get());
             freeFiber = freeFiber->NextHandle;
 
             releasedFiber->Fiber.Destroy(FHandle::StackSize);
@@ -272,7 +273,7 @@ void FTaskFiberPool::YieldFiber(FHandleRef self, FHandleRef to, bool release) {
     YieldTaskFiber_(self, to, release);
 }
 //----------------------------------------------------------------------------
-void FTaskFiberPool::AttachWakeUpCallback(FHandleRef fiber, TFunction<void()>&& onWakeUp) {
+void FTaskFiberPool::AttachWakeUpCallback(FHandleRef fiber, TFunctionRef<void()>&& onWakeUp) {
     fiber->AttachWakeUpCallback(std::move(onWakeUp));
 }
 //----------------------------------------------------------------------------

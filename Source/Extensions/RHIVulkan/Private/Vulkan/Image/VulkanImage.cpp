@@ -317,7 +317,7 @@ void FVulkanImage::TearDown(FVulkanResourceManager& resources) {
     }
 
     if (exclusiveData->Desc.IsExternal) {
-        if (exclusiveData->OnRelease)
+        if (exclusiveData->OnRelease.Valid())
             exclusiveData->OnRelease(FVulkanExternalObject(exclusiveData->vkImage).ExternalImage());
     }
     else
@@ -332,7 +332,7 @@ void FVulkanImage::TearDown(FVulkanResourceManager& resources) {
     exclusiveData->AspectMask = Zero;
     exclusiveData->DefaultLayout = Zero;
     exclusiveData->QueueFamilyMask = Default;
-    exclusiveData->OnRelease = NoFunction;
+    exclusiveData->OnRelease.Reset();
 
     ONLY_IF_RHIDEBUG(_debugName.Clear());
 }

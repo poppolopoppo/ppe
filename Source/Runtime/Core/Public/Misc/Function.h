@@ -14,7 +14,8 @@
 #include <tuple>
 
 /*
-// https://godbolt.org/z/88oqEYq3j
+// Prototype:
+// https://godbolt.org/z/dqjMcbjz7
 */
 
 namespace PPE {
@@ -32,6 +33,14 @@ struct FFunctionRefBase {
         void (*_fp)();
 
         CONSTEXPR storage_t() NOEXCEPT = default;
+
+        CONSTEXPR storage_t(void* p) NOEXCEPT
+            : _p(p)
+        {}
+
+        CONSTEXPR storage_t(const void* cp) NOEXCEPT
+            : _cp(cp)
+        {}
 
         template <typename T, std::enable_if_t<std::is_object_v<T>>* = nullptr>
         CONSTEXPR storage_t(T* p) NOEXCEPT
@@ -60,7 +69,7 @@ struct FFunctionRefBase {
     NODISCARD CONSTEXPR static auto get(storage_t obj) NOEXCEPT {
         IF_CONSTEXPR(std::is_const_v<T>)
             return static_cast<T*>(obj._cp);
-        else IF_CONSTEXPR(std::is_object_v<T>)
+        else IF_CONSTEXPR(std::is_object_v<T> || std::is_void_v<T>)
             return static_cast<T*>(obj._p);
         else
             return reinterpret_cast<T*>(obj._fp);
@@ -72,11 +81,6 @@ struct FFunctionRefBase {
 template <typename _Function, typename _Return, typename... _Args>
 class TFunctionRef<_Function, _Return(_Args...)> : private details::FFunctionRefBase {
     using callable_type = Meta::TCallableObject<_Function, void>;
-
-    static constexpr bool is_noexcept_v = callable_type::is_noexcept_v;
-    template <typename... T>
-    static constexpr bool is_invocable_v = callable_type::template is_invocable_v<T...>;
-
     template <typename T>
     using value_type = callable_type::template value_type<T>;
     template <typename T>
@@ -84,9 +88,14 @@ class TFunctionRef<_Function, _Return(_Args...)> : private details::FFunctionRef
     template <typename T>
     using reference = value_type<T> &;
 
-    using forward_f = _Return (*)(storage_t, _Args...) NOEXCEPT_IF(is_noexcept_v);
+    using forward_f = _Return (*)(storage_t, _Args...) NOEXCEPT_IF(callable_type::is_noexcept_v);
 
 public:
+    static constexpr bool is_noexcept_v = callable_type::is_noexcept_v;
+    
+    template <typename... T>
+    static constexpr bool is_invocable_v = callable_type::template is_invocable_v<T...>;
+
     CONSTEXPR TFunctionRef() NOEXCEPT = default;
 
     CONSTEXPR TFunctionRef(const TFunctionRef& ) NOEXCEPT = default;
@@ -95,12 +104,12 @@ public:
     CONSTEXPR TFunctionRef(TFunctionRef&& rvalue) NOEXCEPT
         : _fwd(std::move(rvalue._fwd))
         , _obj(std::move(rvalue._obj)) {
-        rvalue = {};
+        rvalue.Reset();
     }
     CONSTEXPR TFunctionRef& operator =(TFunctionRef&& rvalue) NOEXCEPT {
         _fwd = std::move(rvalue._fwd);
         _obj = std::move(rvalue._obj);
-        rvalue = {};
+        rvalue.Reset();
         return (*this);
     }
 
@@ -114,9 +123,9 @@ public:
     {}
 
     template <auto F, std::enable_if_t<is_invocable_v<decltype(F)>>* = nullptr>
-    CONSTEXPR TFunctionRef(Meta::TStaticFunction<F>) NOEXCEPT
+    CONSTEXPR TFunctionRef(Meta::TStaticFunction<F> ) NOEXCEPT
         : _fwd(
-            [](storage_t fn, _Args... args) NOEXCEPT_IF(is_noexcept_v) {
+            [](storage_t , _Args... args) NOEXCEPT_IF(is_noexcept_v) {
                 return Meta::StaticFunction<F>(std::forward<_Args>(args)...);
             })
     {}
@@ -142,18 +151,19 @@ public:
     template <typename _Lambda, std::enable_if_t<is_invocable_v<const _Lambda&>>* = nullptr>
     CONSTEXPR TFunctionRef(const _Lambda& lambda) NOEXCEPT
         : _fwd(
-            [](storage_t lambda, _Args... args) NOEXCEPT_IF(is_noexcept_v) {
-                return (*get<_Lambda>(lambda))(std::forward<_Args>(args)...);
+            [](storage_t fn, _Args... args) NOEXCEPT_IF(is_noexcept_v) {
+                return (*get<_Lambda>(fn))(std::forward<_Args>(args)...);
             })
         , _obj(std::addressof(lambda))
     {}
 
     CONSTEXPR _Return operator ()(_Args... args) const NOEXCEPT_IF(is_noexcept_v) {
+        Assert_NoAssume(Valid());
         return _fwd(_obj, std::forward<_Args>(args)...);
     }
 
     CONSTEXPR _Return FireAndForget(_Args... args) NOEXCEPT_IF(is_noexcept_v) {
-        TFunctionRef tmp{ std::move(this) };
+        TFunctionRef tmp{ std::move(*this) };
         return tmp(std::forward<_Args>(args)...);
     }
 
@@ -162,7 +172,8 @@ public:
     }
 
     CONSTEXPR void Reset() NOEXCEPT {
-        *this = {};
+        _fwd = {};
+        _obj = {};
     }
 
     NODISCARD inline friend CONSTEXPR hash_t hash_value(const TFunctionRef& fn) NOEXCEPT {
@@ -195,6 +206,11 @@ TFunctionRef(const _Lambda& ) -> TFunctionRef<typename decltype(Meta::TCallableO
 template <typename _Function, class _>
 TFunctionRef(const TFunctionRef<_Function, _>& ) -> TFunctionRef<_Function, _>;
 //----------------------------------------------------------------------------
+template <auto F, typename... _Extras>
+NODISCARD CONSTEXPR decltype(auto) MakeFunctionRef(_Extras&&... extras) {
+    return TFunctionRef{ Meta::StaticFunction<F>, std::forward<_Extras>(extras)... };
+}
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // TFunction<>
@@ -218,12 +234,6 @@ struct TFunctionPayloadExtra<void*> {
 template <typename T>
 struct TFunctionPayloadExtra<T&&> {
     using type = T;
-};
-//----------------------------------------------------------------------------
-// Wraps references with pointers to keep value semantics :
-template <typename T>
-struct TFunctionPayloadExtra<T&> {
-    using type = TPtrRef<T>;
 };
 //----------------------------------------------------------------------------
 // Wraps FRefCountable* within TSafePtr<T> to check for lifetime :
@@ -274,43 +284,59 @@ class TFunction<_Function, _InSituSize, _Return(_Args...)> {
     using callable_type = Meta::TCallableObject<_Function, void>;
     using return_type = _Return;
 
+public:
     static constexpr bool is_noexcept_v = callable_type::is_noexcept_v;
 
-public:
+    template <typename F, typename... _Extras>
+    static constexpr bool is_imvocable_v = std::is_invocable_r_v<_Return, F, _Extras..., _Args...>;
+
     CONSTEXPR TFunction() NOEXCEPT
-        : _invokable{FBadInvocable_{}}
+        : _invocable{FBadInvocable_{}}
     {}
 
     CONSTEXPR TFunction(Meta::FDefaultValue ) NOEXCEPT
         : TFunction()
     {}
 
-    template <typename _Callable, typename... _Extras, decltype( Meta::TCallableObject{std::declval<_Callable>()}(std::declval<_Extras&&>()..., std::declval<_Args>()...) )* = nullptr>
-    CONSTEXPR TFunction(_Callable callable, _Extras&&... extras) NOEXCEPT_IF(std::is_nothrow_constructible_v<decltype(_invokable), decltype(TInvocable_{ Meta::TCallableObject{ callable }, std::forward<_Extras>(extras)... })>)
-        : _invokable{TInvocable_{Meta::TCallableObject{ callable }, std::forward<_Extras>(extras)...}}
+    template <typename _Callable, typename... _Extras, std::enable_if_t< std::is_invocable_r_v<_Return, decltype(Meta::TCallableObject{std::declval<_Callable>()}), _Extras&&..., _Args...> >* = nullptr>
+    CONSTEXPR TFunction(_Callable callable, _Extras&&... extras) NOEXCEPT_IF(std::is_nothrow_constructible_v<decltype(_invocable), decltype(TInvocable_{ Meta::TCallableObject{ callable }, std::forward<_Extras>(extras)... })>)
+        : _invocable{TInvocable_{
+            Meta::TCallableObject{ callable }, 
+            std::forward<_Extras>(extras)...
+        }}
     {}
 
-    template <auto _FunctionPtr, typename... _Extras, decltype( std::declval<Meta::TStaticFunction<_FunctionPtr>>()(std::declval<_Extras&&>()..., std::declval<_Args>()...) )* = nullptr>
-    CONSTEXPR TFunction(Meta::TStaticFunction<_FunctionPtr> staticFunction, _Extras&&... extras) NOEXCEPT_IF(std::is_nothrow_constructible_v<decltype(_invokable), decltype(TInvocable_{ staticFunction, std::forward<_Extras>(extras)... })>)
-        : _invokable(TInvocable_{staticFunction, std::forward<_Extras>(extras)...})
+    template <auto _FunctionPtr, typename... _Extras, std::enable_if_t< std::is_invocable_r_v<_Return, Meta::TStaticFunction<_FunctionPtr>, _Extras&&..., _Args...> >* = nullptr>
+    CONSTEXPR TFunction(Meta::TStaticFunction<_FunctionPtr> staticFunction, _Extras&&... extras) NOEXCEPT_IF(std::is_nothrow_constructible_v<decltype(_invocable), decltype(TInvocable_{ std::move(staticFunction), std::forward<_Extras>(extras)... })>)
+        : _invocable(TInvocable_{
+            std::move(staticFunction), 
+            std::forward<_Extras>(extras)...
+        })
     {}
 
-    template <typename _Lambda, std::enable_if_t<std::is_class_v<std::decay_t<_Lambda>>, decltype( std::declval<_Lambda&&>()(std::declval<_Args>()...) )>* = nullptr>
-    CONSTEXPR TFunction(_Lambda&& lambda) NOEXCEPT_IF(std::is_nothrow_constructible_v<decltype(_invokable), decltype(TInvocable_{ std::move(lambda) })>)
-        : _invokable{TInvocable_{std::move(lambda)}}
+    template <typename _Lambda, std::enable_if_t< std::is_class_v<std::decay_t<_Lambda>> && std::is_invocable_r_v<_Return, _Lambda&, _Args...> >* = nullptr>
+    CONSTEXPR TFunction(_Lambda&& lambda) NOEXCEPT_IF(std::is_nothrow_constructible_v<decltype(_invocable), decltype(TInvocable_{ std::move(lambda) })>)
+        : _invocable{TInvocable_/*< not std::is_invocable_r_v<_Return, const _Lambda&, _Args...>, _Lambda >*/{
+            std::move(lambda)
+        }}
     {}
 
-    template <auto _FunctionPtr, typename... _Extras, decltype( std::declval<Meta::TStaticFunction<_FunctionPtr>>()(std::declval<_Extras&&>()..., std::declval<_Args&&>()...) )* = nullptr>
+    template <auto _FunctionPtr, typename... _Extras, std::enable_if_t< std::is_invocable_r_v<_Return, Meta::TStaticFunction<_FunctionPtr>, _Extras&&..., _Args...> >* = nullptr>
     NODISCARD CONSTEXPR static TFunction Bind(_Extras&&... extras) NOEXCEPT_IF(std::is_nothrow_constructible_v<TFunction, Meta::TStaticFunction<_FunctionPtr>, _Extras&&...>) {
-        return TFunction{ Meta::TStaticFunction<_FunctionPtr>{}, std::forward<_Extras>(extras)... };
+        return TFunction{ Meta::StaticFunction<_FunctionPtr>, std::forward<_Extras>(extras)... };
     }
 
     NODISCARD bool Valid() const NOEXCEPT {
-        return _invokable->Valid();
+        return _invocable->Valid();
+    }
+
+    void Reset() {
+        _invocable = FBadInvocable_{};
     }
 
     _Return operator ()(_Args... args) const NOEXCEPT_IF(is_noexcept_v) {
-        return _invokable->Invoke(std::forward_as_tuple(std::forward<_Args>(args)...));
+        Assert_NoAssume(Valid());
+        return _invocable->Invoke(std::forward_as_tuple(std::forward<_Args>(args)...));
     }
 
 private:
@@ -323,18 +349,45 @@ private:
     template <typename _Payload>
     struct EMPTY_BASES TPayloadWithVTable_ : IInvocable_, _Payload {};
 
-    TInSituPtr<IInvocable_, _InSituSize + sizeof(TPayloadWithVTable_<std::tuple</* empty */>>)/* sizeof VTable */> _invokable;
+    TInSituPtr<IInvocable_, _InSituSize + sizeof(TPayloadWithVTable_<std::tuple</* empty */>>)/* sizeof VTable */> _invocable;
 
     template <typename _Payload>
-    NODISCARD static CONSTEVAL bool IsPayloadNotFittingInSitu_() {
-        return (sizeof(TPayloadWithVTable_<_Payload>) > sizeof(_invokable));
+    NODISCARD static CONSTEVAL bool PayloadNonCopyable_() {
+        PPE_COMPILER_WARNING("5337", "non-copyable or non-movable objects must always be allocated\n\twhile compiling " PPE_PRETTY_FUNCTION);
+        return true;
     }
 
     template <typename _Payload>
-    using TPayloadStorage_ = details::TFunctionPayload<_Payload, IsPayloadNotFittingInSitu_<_Payload>()>;
+    NODISCARD static CONSTEVAL bool PayloadIsMutable_() {
+        PPE_COMPILER_WARNING("5338", "mutable objects must always be allocated\n\twhile compiling " PPE_PRETTY_FUNCTION);
+        return true;
+    }
 
-    template <typename _Callable, typename... _Extras>
-    using TPayload_ = TPayloadStorage_<decltype(std::make_tuple(
+    template <bool _bMutable, typename _Payload>
+    NODISCARD static CONSTEVAL bool IsPayloadNotFittingInSitu_() {
+        IF_CONSTEXPR(std::is_copy_constructible_v<_Payload> and std::is_move_constructible_v<_Payload>) {
+            IF_CONSTEXPR(sizeof(TPayloadWithVTable_<_Payload>) <= sizeof(_invocable)) {
+                IF_CONSTEXPR(_bMutable) {
+                    return PayloadIsMutable_<_Payload>();
+                }
+                else {
+                    return false; // fits in situ
+                }
+            }
+            else {
+                return true; // does not fit in situ
+            }
+        }
+        else {
+            return PayloadNonCopyable_<_Payload>();
+        }
+    }
+
+    template <bool _bMutable, typename _Payload>
+    using TPayloadStorage_ = details::TFunctionPayload<_Payload, IsPayloadNotFittingInSitu_<_bMutable, _Payload>()>;
+
+    template <bool _bMutable, typename _Callable, typename... _Extras>
+    using TPayload_ = TPayloadStorage_<_bMutable, decltype(std::make_tuple(
         std::declval<_Callable>(),
         std::make_tuple(typename details::TFunctionPayloadExtra<_Extras>::type{ std::declval<_Extras&&>() }...)
     ))>;
@@ -349,52 +402,66 @@ private:
 
         // IClonable interface
 
-        virtual void ConstructMove(FAllocatorBlock dst) NOEXCEPT override final {
-            new (dst.Data) _Crtp{ std::move(*static_cast<_Crtp*>(this)) };
-        }
-
         virtual void ConstructCopy(FAllocatorBlock dst) const override final {
             new (dst.Data) _Crtp{ *static_cast<const _Crtp*>(this) };
         }
+
+        virtual void ConstructMove(FAllocatorBlock dst) NOEXCEPT override final {
+            new (dst.Data) _Crtp{ std::move(*static_cast<_Crtp*>(this)) };
+        }
     };
 
-    template <typename _Callable, typename... _Extras>
-    struct EMPTY_BASES TInvocable_ final : public TBasicInvocable_<TInvocable_<_Callable, _Extras...>>, private TPayload_<_Callable, _Extras...> {
-        using payload_type = TPayload_<_Callable, _Extras...>;
-
-        CONSTEXPR explicit TInvocable_(_Callable callable, _Extras&&... extras) noexcept(std::is_nothrow_constructible_v<payload_type, _Callable, decltype(std::make_tuple(std::forward<_Extras>(extras)...))>)
-            : payload_type{std::forward<_Callable>(callable), std::make_tuple(std::forward<_Extras>(extras)...)}
+    template <typename _Payload>
+    struct EMPTY_BASES TInvocable_ final : public TBasicInvocable_<TInvocable_<_Payload>>, private _Payload {
+        
+        template <typename _Callable, typename... _Extras>
+        CONSTEXPR explicit TInvocable_(_Callable&& callable, _Extras&&... extras) NOEXCEPT_IF(std::is_nothrow_constructible_v<_Payload, _Callable&&, decltype(std::make_tuple(std::forward<_Extras>(extras)...))>)
+            : _Payload{ 
+                std::move(callable),
+                std::make_tuple(std::forward<_Extras>(extras)...)
+            }
         {}
 
         // IInvocable interface
 
         virtual _Return Invoke(args_tuple&& args) const NOEXCEPT_IF(is_noexcept_v) override final {
-            const auto& payload = payload_type::get();
+            auto& payload = _Payload::get();
             return std::apply(std::get<0>(payload), std::tuple_cat(std::get<1>(payload), std::move(args)));
         }
     };
 
+    template <typename _Callable, typename... _Extras>
+    TInvocable_(_Callable&& callable, _Extras&&... extras) -> TInvocable_<TPayload_<
+        // check if can be called from a const reference, if not it is a mutable lambda and needs a dynamic payload (which is always mutable)
+        not std::is_invocable_r_v<_Return, const _Callable&, _Extras&&..., _Args...>,
+        _Callable, _Extras...>>;
+
     struct FBadInvocable_ final : public TBasicInvocable_<FBadInvocable_, false> {
         // IInvocable interface
 
+PRAGMA_MSVC_WARNING_PUSH()
+PRAGMA_MSVC_WARNING_DISABLE(4297) // function assumed not to throw an exception does
         virtual _Return Invoke(args_tuple&& ) const NOEXCEPT_IF(is_noexcept_v) override final {
-            IF_CONSTEXPR(not std::is_same_v<void, _Return>)
-                throw std::bad_function_call{};
+            throw std::bad_function_call{};
         }
+PRAGMA_MSVC_WARNING_POP()
     };
 
-    template <typename _Callable, typename... _Extras>
-    TInvocable_(_Callable callable, _Extras&&... extras) -> TInvocable_<_Callable, _Extras...>;
 };
 //----------------------------------------------------------------------------
 template <typename _Callable, typename... _Extras>
-TFunction(_Callable callable, _Extras&&... extras) -> TFunction<typename decltype(Meta::TCallableObject{ callable })::function_type, GFunctionInSitu>;
+TFunction(_Callable callable, _Extras&&... extras) -> TFunction<typename decltype(Meta::TCallableObject{ callable })::function_type>;
 //----------------------------------------------------------------------------
 template <auto _FunctionPtr, typename... _Extras>
-TFunction(Meta::TStaticFunction<_FunctionPtr> staticFunction, _Extras&&... extras) -> TFunction<typename Meta::TStaticFunction<_FunctionPtr>::function_type, GFunctionInSitu>;
+TFunction(Meta::TStaticFunction<_FunctionPtr> staticFunction, _Extras&&... extras) -> TFunction<typename Meta::TStaticFunction<_FunctionPtr>::function_type>;
 //----------------------------------------------------------------------------
 template <typename _Lambda>
-TFunction(_Lambda&& lambda) -> TFunction<typename decltype(Meta::TCallableObject{ lambda })::function_type, GFunctionInSitu>;
+TFunction(_Lambda&& lambda) -> TFunction<typename decltype(Meta::TCallableObject{ lambda })::function_type>;
+//----------------------------------------------------------------------------
+template <auto F, typename... _Extras>
+NODISCARD CONSTEXPR decltype(auto) MakeFunction(_Extras&&... extras) {
+    return TFunction{ Meta::StaticFunction<F>, std::forward<_Extras>(extras)... };
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
