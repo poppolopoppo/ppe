@@ -133,7 +133,7 @@ TMemoryView<const SCMetaTransaction> FMetaDatabase::TransactionIFP(const FLazyNa
 //----------------------------------------------------------------------------
 // Objects
 //----------------------------------------------------------------------------
-void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
+void FMetaDatabase::RegisterObject(const SMetaObject& metaObject) {
     Assert(metaObject);
     Assert_NoAssume(metaObject->RTTI_Outer());
     Assert_NoAssume(metaObject->RTTI_Outer()->IsMounting());
@@ -153,10 +153,10 @@ void FMetaDatabase::RegisterObject(FMetaObject* metaObject) {
 
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
-    Insert_AssertUnique(_objects, exportPath, SMetaObject(metaObject));
+    Insert_AssertUnique(_objects, exportPath, metaObject);
 }
 //----------------------------------------------------------------------------
-void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
+void FMetaDatabase::UnregisterObject(const SMetaObject& metaObject) {
     Assert(metaObject);
     Assert_NoAssume(metaObject->RTTI_Outer());
     Assert_NoAssume(metaObject->RTTI_Outer()->IsUnmounting());
@@ -177,7 +177,7 @@ void FMetaDatabase::UnregisterObject(FMetaObject* metaObject) {
     PPE_LEAKDETECTOR_WHITELIST_SCOPE();
 
 #if USE_PPE_ASSERT
-    Remove_AssertExistsAndSameValue(_objects, exportPath, SMetaObject{ metaObject });
+    Remove_AssertExistsAndSameValue(_objects, exportPath, metaObject);
 #else
     _objects.erase(exportPath);
 #endif
@@ -197,14 +197,14 @@ FMetaObject& FMetaDatabase::Object(const FPathName& pathName) const {
 #endif
 }
 //----------------------------------------------------------------------------
-FMetaObject* FMetaDatabase::ObjectIFP(const FPathName& pathName) const {
+SMetaObject FMetaDatabase::ObjectIFP(const FPathName& pathName) const {
     Assert(not pathName.empty());
     Assert(not pathName.Namespace.empty());
 
     const auto it = _objects.find(pathName);
     if (_objects.end() != it) {
         Assert_NoAssume(it->second->RTTI_IsLoaded());
-        return it->second.get();
+        return it->second;
     }
     else {
 #if USE_PPE_ASSERT
@@ -215,7 +215,7 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FPathName& pathName) const {
     }
 }
 //----------------------------------------------------------------------------
-FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& text) const {
+SMetaObject FMetaDatabase::ObjectIFP(const FStringView& text) const {
     Assert(not text.empty());
 
     FLazyPathName pathName;
@@ -224,22 +224,22 @@ FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& text) const {
     return ObjectIFP(pathName);
 }
 //----------------------------------------------------------------------------
-FMetaObject* FMetaDatabase::ObjectIFP(const FStringView& namespace_, const FStringView& identifier) const {
+SMetaObject FMetaDatabase::ObjectIFP(const FStringView& namespace_, const FStringView& identifier) const {
     return ObjectIFP(FLazyPathName{ FLazyName(namespace_),FLazyName(identifier) });
 }
 //----------------------------------------------------------------------------
-FMetaObject* FMetaDatabase::ObjectIFP(const FLazyName& namespace_, const FLazyName& identifier) const {
+SMetaObject FMetaDatabase::ObjectIFP(const FLazyName& namespace_, const FLazyName& identifier) const {
     return ObjectIFP(FLazyPathName{ namespace_, identifier });
 }
 //----------------------------------------------------------------------------
-FMetaObject* FMetaDatabase::ObjectIFP(const FLazyPathName& pathName) const {
+SMetaObject FMetaDatabase::ObjectIFP(const FLazyPathName& pathName) const {
 	Assert(not pathName.empty());
 	Assert(not pathName.Namespace.empty());
 
 	const auto it = _objects.find_like(pathName, hash_value(pathName));
 	if (_objects.end() != it) {
 		Assert_NoAssume(it->second->RTTI_IsLoaded());
-		return it->second.get();
+		return it->second;
 	}
 	else {
 #if USE_PPE_ASSERT

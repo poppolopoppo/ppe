@@ -268,7 +268,7 @@ bool FVulkanCommandBuffer::BuildCommandBuffers_(FInternalData& data) {
 }
 //----------------------------------------------------------------------------
 bool FVulkanCommandBuffer::ProcessTasks_(FInternalData& data, VkCommandBuffer cmd) {
-    FVulkanTaskProcessor processor{this, cmd};
+    FVulkanTaskProcessor processor{ MakeSafePtr(this), cmd };
 
     STATIC_CONST_INTEGRAL(u32, visitorId, 1);
     EVulkanExecutionOrder executionOrder{EVulkanExecutionOrder::First};
@@ -1276,7 +1276,7 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
 
         FDispatchCompute cs;
         cs.SetPipeline(ppln).SetLocalSize({ 32, 1, 1 }).Dispatch({ (ssbDim.y + 31) / 32, 1, 1 });
-        cs.AddResources(descriptorSetId0, resources.get());
+        cs.AddResources(descriptorSetId0, resources);
         cs.Dependencies.Assign(dependsOn.begin(), dependsOn.end());
 
         pPreviousTask = Task(cs);
@@ -1291,7 +1291,7 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
 
         FDispatchCompute cs;
         cs.SetPipeline(ppln).SetLocalSize(uint3::One).Dispatch(uint3::One);
-        cs.AddResources(descriptorSetId0, resources.get());
+        cs.AddResources(descriptorSetId0, resources);
         cs.DependsOn(pPreviousTask);
 
         pPreviousTask = Task(cs);
@@ -1306,7 +1306,7 @@ PFrameTask FVulkanCommandBuffer::EndShaderTimeMap(
 
         FDispatchCompute cs;
         cs.SetPipeline(ppln).SetLocalSize({ 8, 8, 1 }).Dispatch({ (desc.Dimensions.xy + 7u) / 8u });
-        cs.AddResources(descriptorSetId0, resources.get());
+        cs.AddResources(descriptorSetId0, resources);
         cs.DependsOn(pPreviousTask);
 
         pPreviousTask = Task(cs);

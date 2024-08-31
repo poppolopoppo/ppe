@@ -242,7 +242,7 @@ bool ObjectFromString(const IScalarTraits& self, PMetaObject* dst, const FString
     FLazyPathName pathName;
     if (iss >> &pathName) {
         FMetaDatabaseReadable db;
-        *dst = db->ObjectIFP(pathName);
+        dst->reset(db->ObjectIFP(pathName).get());
         if (!!*dst) {
             return ((*dst)->RTTI_Traits().PTraits == &self);
         }

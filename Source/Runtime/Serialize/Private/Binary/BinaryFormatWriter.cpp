@@ -108,7 +108,7 @@ void FBinaryFormatWriter::Append(const RTTI::FMetaObject* obj) {
     Assert_NoAssume(obj);
 
     Insert_AssertUnique(_contents.Objects, obj,
-        FObjectRef_{ FDataIndex{ checked_cast<u32>(_contents.Objects.size()) }, obj });
+        FObjectRef_{ FDataIndex{ checked_cast<u32>(_contents.Objects.size()) }, MakeSafePtr(obj) });
 
     FBinaryFormat::FObjectData objData;
     objData.NumProperties = 0;

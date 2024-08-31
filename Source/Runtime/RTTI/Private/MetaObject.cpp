@@ -85,11 +85,11 @@ FMetaObject::~FMetaObject() {
     Assert(nullptr == _outer);
 }
 //----------------------------------------------------------------------------
-void FMetaObject::RTTI_SetOuter(const FMetaTransaction* outer, const FMetaTransaction* prevOuterForDbg/* = nullptr */) {
+void FMetaObject::RTTI_SetOuter(TPtrRef<const FMetaTransaction> outer, const FMetaTransaction* prevOuterForDbg/* = nullptr */) NOEXCEPT {
     Assert_NoAssume(RTTI_IsLoaded());
-    Assert(prevOuterForDbg == _outer);
+    Assert(prevOuterForDbg == _outer.get());
 
-    _outer = outer;
+    _outer = MakeSafePtr(outer.get());
 }
 //----------------------------------------------------------------------------
 FPathName FMetaObject::RTTI_PathName() const {
@@ -99,19 +99,19 @@ FPathName FMetaObject::RTTI_PathName() const {
     return FPathName::FromObject(*this);
 }
 //----------------------------------------------------------------------------
-bool FMetaObject::RTTI_IsA(const FMetaClass& metaClass) const {
+bool FMetaObject::RTTI_IsA(const FMetaClass& metaClass) const NOEXCEPT {
     return (RTTI_Class() == &metaClass);
 }
 //----------------------------------------------------------------------------
-bool FMetaObject::RTTI_CastTo(const FMetaClass& metaClass) const {
+bool FMetaObject::RTTI_CastTo(const FMetaClass& metaClass) const NOEXCEPT {
     return RTTI_Class()->CastTo(metaClass);
 }
 //----------------------------------------------------------------------------
-bool FMetaObject::RTTI_InheritsFrom(const FMetaClass& metaClass) const {
+bool FMetaObject::RTTI_InheritsFrom(const FMetaClass& metaClass) const NOEXCEPT {
     return RTTI_Class()->InheritsFrom(metaClass);
 }
 //----------------------------------------------------------------------------
-bool FMetaObject::RTTI_IsAssignableFrom(const FMetaClass& metaClass) const {
+bool FMetaObject::RTTI_IsAssignableFrom(const FMetaClass& metaClass) const NOEXCEPT {
     return RTTI_Class()->IsAssignableFrom(metaClass);
 }
 //----------------------------------------------------------------------------

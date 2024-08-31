@@ -297,7 +297,7 @@ RTTI::PMetaObject FRTTIEndpoint::Object(const FString& path) const {
     RTTI::FLazyPathName key;
     if (RTTI::FLazyPathName::Parse(&key, path)) {
         const RTTI::FMetaDatabaseReadable db;
-        return db->ObjectIFP(key);
+        return RTTI::PMetaObject(db->ObjectIFP(key));
     }
 
     PPE_THROW_IT(RTTI::FRTTIException("object not found"));

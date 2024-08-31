@@ -57,7 +57,7 @@ void FVulkanCommandBatch::Construct(EQueueType type, TMemoryView<const SCommandB
     SetState_(EState::Uninitialized, EState::Initial);
 
     for (const SCommandBatch& dep : dependsOn) {
-        if (SVulkanCommandBatch batch = checked_cast<FVulkanCommandBatch>(dep))
+        if (SVulkanCommandBatch batch{ checked_cast<FVulkanCommandBatch>(dep) })
             exclusiveData->Dependencies.Push(std::move(batch));
         else
             AssertNotReached();

@@ -73,11 +73,11 @@ inline void FRefCountable::operator delete(void* p, std::size_t ) {
 template <typename T, typename... _Args>
 #if USE_PPE_MEMORYDOMAINS
 NODISCARD TRefPtr< TEnableIfRefCountable<T> > NewRef(FMemoryTracking& trackingData, _Args&&... args) {
-    return TRefPtr<T>{ new (tracking_malloc(trackingData, sizeof(T))) T{ std::forward<_Args>(args)... } };
+    return TRefPtr<T>( new (tracking_malloc(trackingData, sizeof(T))) T{ std::forward<_Args>(args)... } );
 }
 #else
 NODISCARD TRefPtr< TEnableIfRefCountable<T> > NewRef(_Args&&... args) {
-    return TRefPtr<T>{ new (PPE::malloc(sizeof(T))) T{ std::forward<_Args>(args)... } };
+    return TRefPtr<T>( new (PPE::malloc(sizeof(T))) T{ std::forward<_Args>(args)... } );
 }
 #endif
 //----------------------------------------------------------------------------
@@ -182,11 +182,7 @@ inline void FRefCountable::DecSafeRefCount() const NOEXCEPT {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename T>
-TRefPtr<T>::TRefPtr()
-:   _ptr(nullptr) {}
-//----------------------------------------------------------------------------
-template <typename T>
-TRefPtr<T>::TRefPtr(T* ptr)
+TRefPtr<T>::TRefPtr(T* ptr) NOEXCEPT
 :   _ptr(ptr) {
     IncRefCountIFP(_ptr);
 }
@@ -291,10 +287,6 @@ void TRefPtr<T>::DecRefCountIFP(T* ptr) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-template <typename T>
-TSafePtr<T>::TSafePtr() NOEXCEPT
-:   _ptr(nullptr) {}
 //----------------------------------------------------------------------------
 template <typename T>
 TSafePtr<T>::TSafePtr(T* ptr) NOEXCEPT

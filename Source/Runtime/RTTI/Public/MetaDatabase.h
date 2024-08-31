@@ -45,15 +45,15 @@ public:
 
     /* Objects */
 
-    void RegisterObject(FMetaObject* metaObject);
-    void UnregisterObject(FMetaObject* metaObject);
+    void RegisterObject(const SMetaObject& metaObject);
+    void UnregisterObject(const SMetaObject& metaObject);
 
     FMetaObject& Object(const FPathName& pathName) const;
-    FMetaObject* ObjectIFP(const FPathName& pathName) const;
-    FMetaObject* ObjectIFP(const FStringView& text) const;
-    FMetaObject* ObjectIFP(const FStringView& namespace_, const FStringView& identifier) const;
-    FMetaObject* ObjectIFP(const FLazyName& namespace_, const FLazyName& identifier) const;
-    FMetaObject* ObjectIFP(const FLazyPathName& pathName) const;
+    SMetaObject ObjectIFP(const FPathName& pathName) const;
+    SMetaObject ObjectIFP(const FStringView& text) const;
+    SMetaObject ObjectIFP(const FStringView& namespace_, const FStringView& identifier) const;
+    SMetaObject ObjectIFP(const FLazyName& namespace_, const FLazyName& identifier) const;
+    SMetaObject ObjectIFP(const FLazyPathName& pathName) const;
 
     const auto& Objects() const NOEXCEPT;
 

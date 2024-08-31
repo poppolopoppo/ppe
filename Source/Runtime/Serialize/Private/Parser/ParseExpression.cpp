@@ -139,13 +139,13 @@ RTTI::FAtom FObjectDefinition::Eval(FParseContext* context) const {
     Verify(metaclass->CreateInstance(obj, true));
     Assert(obj);
 
-    const RTTI::PMetaObject parent = context->ScopeObject();
-    context->SetScopeObject(obj.get());
+    RTTI::PMetaObject parent{ context->ScopeObject() };
+    context->SetScopeObject(RTTI::PMetaObject(obj));
 
     for (const PCParseStatement& statement : _statements)
         statement->Execute(context);
 
-    context->SetScopeObject(parent.get());
+    context->SetScopeObject(std::move(parent));
 
     return context->CreateAtomFrom(std::move(obj));
 }

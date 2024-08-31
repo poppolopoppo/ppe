@@ -127,7 +127,7 @@ void FVulkanFrameGraph::TearDown() {
         _vkQueryPool = VK_NULL_HANDLE;
     }
 
-    _shaderDebugCallback = NoFunction;
+    _shaderDebugCallback.Reset();
 #endif
 
     _resourceManager.TearDown();
@@ -551,13 +551,13 @@ FCommandBufferBatch FVulkanFrameGraph::Begin(const FCommandBufferDesc& desc, TMe
     Assert(static_cast<u32>(desc.QueueType) < _queueMap.size());
     Assert_NoAssume(IsInitialized_());
 
-    PVulkanCommandBuffer cmd = _cmdBufferPool.Allocate(this);
+    PVulkanCommandBuffer cmd = _cmdBufferPool.Allocate(MakeSafePtr(this));
     AssertReleaseMessage("command buffer pool overflow !", cmd);
 
     FQueueData& queue = QueueData_(desc.QueueType);
     Assert(queue.Ptr);
 
-    PVulkanCommandBatch batch = _cmdBatchPool.Allocate(this);
+    PVulkanCommandBatch batch = _cmdBatchPool.Allocate(MakeSafePtr(this));
     AssertReleaseMessage("command batch pool overflow !", batch);
 
     batch->Construct(queue.Type, dependsOn);
