@@ -142,7 +142,7 @@ FAllocatorBlock TGenericStringBuilder<_Char, _Allocator>::StealDataUnsafe(size_t
 namespace details {
 // Skip in-situ storage when debugging memory
 #if USE_PPE_MEMORY_DEBUGGING
-template <typename _Char, typename _Allocator>
+template <typename _Char>
 using TStringBuilderAllocator = FStringAllocator;
 #else
 template <typename _Char> struct header_unit_workaround_insitu_ {};
@@ -167,10 +167,11 @@ public:
     TBasicStringBuilder() = default;
     virtual ~TBasicStringBuilder() override {
         // this predicate is needed to steal from/to TBasicString<> !
-        using allocator_t = typename stream_type::allocator_type;
 #if USE_PPE_MEMORY_DEBUGGING && USE_PPE_BASICSTRING_SBO
+        using allocator_t = typename stream_type::allocator_type;
         STATIC_ASSERT(allocator_t::Threshold == string_type::SmallCapacity * sizeof(_Char));
 #elif !USE_PPE_MEMORY_DEBUGGING
+        using allocator_t = typename stream_type::allocator_type;
         STATIC_ASSERT(Meta::TCheckSameSize<
             Meta::TArray<u8, allocator_t::Threshold>,
             Meta::TArray<_Char, string_type::SmallCapacity>

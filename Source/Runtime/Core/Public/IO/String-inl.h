@@ -340,10 +340,10 @@ void TBasicString<_Char>::assign(TBasicStringBuilder<_Char>&& sb) {
         return;
     }
 
+#if USE_PPE_BASICSTRING_SBO
     const stringview_type written = sb.Written();
     AssertRelease_NoAssume(written.back() == _Char(0));
 
-#if USE_PPE_BASICSTRING_SBO
     if (written.size() <= FSmallString_::GCapacity) {
         clear_ReleaseMemory();
 
