@@ -27,6 +27,13 @@ static PPE_CORE_API u32 ClosestCeil(u32 v);
 static PPE_CORE_API u32 ClosestFloor(u32 v);
 };
 //----------------------------------------------------------------------------
+struct FGoodHashTablePrimesU32 {
+using type = u32;
+static PPE_CORE_API const u32 Values[29];
+static PPE_CORE_API u32 ClosestCeil(u32 v);
+static PPE_CORE_API u32 ClosestFloor(u32 v);
+};
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Prime number product :

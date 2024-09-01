@@ -73,7 +73,7 @@ public:
         else if (_newPageAllocated) {
             newNode = _newPageAllocated;
             STATIC_ASSERT(Meta::IsPow2(PageSize));
-            if (!((uintptr_t)(++_newPageAllocated + 1/* last block used for bookkeeping */) & (PageSize - 1)))
+            if (Meta::IsAlignedPow2(PageSize, ++_newPageAllocated + 1/* last block used for bookkeeping */))
                 _newPageAllocated = nullptr; // will request for a new page on next alloc
         }
         else {
