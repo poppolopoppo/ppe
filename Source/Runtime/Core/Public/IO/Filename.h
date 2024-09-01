@@ -154,8 +154,8 @@ inline hash_t hash_value(const FFilename& filename) NOEXCEPT {
 PPE_CORE_API FTextWriter& operator <<(FTextWriter& oss, const FFilename& filename);
 PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const FFilename& filename);
 //----------------------------------------------------------------------------
-PPE_CORE_API bool operator >>(const FStringConversion& iss, FFilename* filename);
-PPE_CORE_API bool operator >>(const FWStringConversion& iss, FFilename* filename);
+NODISCARD PPE_CORE_API bool operator >>(const FStringConversion& iss, FFilename* filename);
+NODISCARD PPE_CORE_API bool operator >>(const FWStringConversion& iss, FFilename* filename);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

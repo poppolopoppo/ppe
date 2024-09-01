@@ -165,27 +165,27 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline FAny& MakeAny(FAny& any) {
+NODISCARD inline FAny& MakeAny(FAny& any) NOEXCEPT {
     return any;
 }
 ////----------------------------------------------------------------------------
 template <typename T, class = FAny::TWrapable<T> >
-FAny MakeAny(T&& rvalue) {
+NODISCARD FAny MakeAny(T&& rvalue) {
     return FAny(std::move(rvalue));
 }
 //----------------------------------------------------------------------------
 template <typename T, class = FAny::TWrapable<T> >
-FAny MakeAny(const T& value) {
+NODISCARD FAny MakeAny(const T& value) {
     return FAny(value);
 }
 //----------------------------------------------------------------------------
 template <typename T>
-T* Cast(const FAny& any) {
+NODISCARD T* Cast(const FAny& any) {
     return Cast<T>(any.InnerAtom());
 }
 //----------------------------------------------------------------------------
 template <typename T>
-T& CastChecked(const FAny& any) {
+NODISCARD T& CastChecked(const FAny& any) {
     return *CastChecked<T>(any.InnerAtom());
 }
 //----------------------------------------------------------------------------
@@ -199,7 +199,7 @@ TBasicTextWriter<_Char>& operator << (TBasicTextWriter<_Char>& oss, const FAny& 
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-bool operator >> (const TBasicStringConversion<_Char>& iss, FAny* any) {
+NODISCARD bool operator >> (const TBasicStringConversion<_Char>& iss, FAny* any) {
     Assert(any);
 
     if (any->Valid()) {

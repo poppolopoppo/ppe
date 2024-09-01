@@ -122,14 +122,14 @@ PPE_RTTI_API FWTextWriter& operator <<(FWTextWriter& oss, const FPathName& pathN
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-PPE_RTTI_API bool operator >>(const FStringConversion& iss, FBinaryData* bindata);
-PPE_RTTI_API bool operator >>(const FWStringConversion& iss, FBinaryData* bindata);
+NODISCARD PPE_RTTI_API bool operator >>(const FStringConversion& iss, FBinaryData* bindata);
+NODISCARD PPE_RTTI_API bool operator >>(const FWStringConversion& iss, FBinaryData* bindata);
 //----------------------------------------------------------------------------
-PPE_RTTI_API bool operator >>(const FStringConversion& iss, FLazyPathName* pathName);
-PPE_RTTI_API bool operator >>(const FWStringConversion& iss, FLazyPathName* pathName);
+NODISCARD PPE_RTTI_API bool operator >>(const FStringConversion& iss, FLazyPathName* pathName);
+NODISCARD PPE_RTTI_API bool operator >>(const FWStringConversion& iss, FLazyPathName* pathName);
 //----------------------------------------------------------------------------
-PPE_RTTI_API bool operator >>(const FStringConversion& iss, FPathName* pathName);
-PPE_RTTI_API bool operator >>(const FWStringConversion& iss, FPathName* pathName);
+NODISCARD PPE_RTTI_API bool operator >>(const FStringConversion& iss, FPathName* pathName);
+NODISCARD PPE_RTTI_API bool operator >>(const FWStringConversion& iss, FPathName* pathName);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

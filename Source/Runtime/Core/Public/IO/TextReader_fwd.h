@@ -15,33 +15,33 @@ using FTextReader = TBasicTextReader<char>;
 using FWTextReader = TBasicTextReader<wchar_t>;
 //----------------------------------------------------------------------------
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, bool* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, bool* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, i8* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, i8* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, i16* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, i16* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, i32* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, i32* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, i64* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, i64* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, u8* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, u8* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, u16* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, u16* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, u32* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, u32* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, u64* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, u64* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, float* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, float* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, double* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, double* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, TBasicString<_Char>* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, TBasicString<_Char>* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, long* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, long* p);
 template <typename _Char>
-bool operator >>(TBasicTextReader<_Char>& w, unsigned long* p);
+NODISCARD bool operator >>(TBasicTextReader<_Char>& w, unsigned long* p);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -20,38 +20,38 @@ struct enum_info_t {
     TMemoryView<const FStringView> names;
     size_t num{ 0 };
 
-    constexpr size_t index_from_value(u64 value) const {
+    NODISCARD constexpr size_t index_from_value(u64 value) const {
         return IndexOf(values, value);
     }
 
-    constexpr size_t index_from_name(const FStringView& name) const {
+    NODISCARD constexpr size_t index_from_name(const FStringView& name) const {
         return IndexOf(names, name);
     }
 
-    constexpr size_t index_from_name_i(const FStringView& name) const {
+    NODISCARD constexpr size_t index_from_name_i(const FStringView& name) const {
         const auto it = names.FindIf([&](const FStringView& other) -> bool {
             return EqualsI(name, other);
         });
         return std::distance(names.begin(), it);
     }
 
-    constexpr FStringView value_to_name(u64 value) const {
+    NODISCARD constexpr FStringView value_to_name(u64 value) const {
         const size_t id = index_from_value(value);
         return (id < num ? names[id] : FStringView{});
     }
 
     template <typename T, std::enable_if_t<std::is_enum_v<T>>* = nullptr>
-    constexpr size_t index_from_value(T value) const {
+    NODISCARD constexpr size_t index_from_value(T value) const {
         return index_from_value(static_cast<u64>(value));
     }
 
     template <typename T, std::enable_if_t<std::is_enum_v<T>>* = nullptr>
-    constexpr FStringView value_to_name(T value) const {
+    NODISCARD constexpr FStringView value_to_name(T value) const {
         return value_to_name(static_cast<u64>(value));
     }
 
     template <typename _Char>
-    bool read_index(TBasicTextReader<_Char>& iss, size_t* pIndex) const {
+    NODISCARD bool read_index(TBasicTextReader<_Char>& iss, size_t* pIndex) const {
         TFixedSizeStack<_Char, 50> tmp;
         if (iss.ReadIdentifier(MakeAppendable(tmp))) {
             *pIndex = index_from_name_i(tmp.MakeView());
@@ -66,7 +66,7 @@ struct enum_info_t {
     }
 
     template <typename _Char, typename T, std::enable_if_t<std::is_enum_v<T>>* = nullptr>
-    bool read(TBasicTextReader<_Char>& iss, T* pValue) const {
+    NODISCARD bool read(TBasicTextReader<_Char>& iss, T* pValue) const {
         if (size_t id; read_index(iss, &id)) {
             *pValue = static_cast<T>(values[id]);
             return true;
@@ -123,18 +123,18 @@ struct autoenum_name_t {
         using enum _NAME; \
         static constexpr std::array values = { PP_FOREACH_ARGS(_PPE_DETAILS_AUTOENUM_VALUE_DECL, __VA_ARGS__) }; \
         static constexpr std::array names = { PP_FOREACH_ARGS(_PPE_DETAILS_AUTOENUM_NAME_DECL, __VA_ARGS__) }; \
-        static consteval ::PPE::Meta::enum_info_t get() { return { \
+        NODISCARD static consteval ::PPE::Meta::enum_info_t get() { return { \
             .values = values, \
             .names = names, \
             .num = names.size(), \
         }; }\
     }; \
     } /*!namespace Meta*/ \
-    inline consteval ::PPE::Meta::enum_info_t enum_info(_NAME) { \
+    NODISCARD inline consteval ::PPE::Meta::enum_info_t enum_info(_NAME) { \
         return details::CONCAT(_NAME, _info_t)::get(); \
     } \
     template <typename _Char> \
-    inline bool operator >>(TBasicTextReader<_Char>& iss, _NAME* value) { \
+    NODISCARD inline bool operator >>(TBasicTextReader<_Char>& iss, _NAME* value) { \
         return enum_info(_NAME{}).read(iss, value); \
     } \
     template <typename _Char> \
