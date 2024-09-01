@@ -5,6 +5,7 @@
 #include "Allocator/SlabHeap.h"
 #include "HAL/Windows/GlobalAllocator.h"
 
+#include "Container/HashHelpers.h"
 #include "IO/ConstChar.h"
 #include "Thread/ConcurrentHashMap.h"
 #include "Thread/ThreadSafe.h"

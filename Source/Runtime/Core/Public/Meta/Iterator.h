@@ -255,6 +255,29 @@ CONSTEXPR TCheckedArrayIterator<T> MakeCheckedIterator(T (&staticArray)[_Dim], s
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T>
+struct TInputIteratorPointer final {
+    using value_type = T;
+    using pointer = Meta::TAddPointer<T>;
+    using reference = Meta::TAddReference<T>;
+
+    value_type Value;
+
+    CONSTEXPR TInputIteratorPointer(value_type&& value) NOEXCEPT_IF(std::is_nothrow_move_constructible_v<value_type>)
+    :   Value(std::move(value))
+    {}
+
+    NODISCARD CONSTEXPR pointer operator ->() NOEXCEPT {
+        return std::addressof(Value);
+    }
+
+    NODISCARD CONSTEXPR reference operator *() NOEXCEPT {
+        return Value;
+    }
+};
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
 template <typename _Int, _Int _Inc = _Int(1)>
 class TCountingIterator : public Meta::TIterator<_Int, std::random_access_iterator_tag> {
 public:
@@ -305,7 +328,15 @@ private:
 //----------------------------------------------------------------------------
 template <typename _Int, _Int _Inc = _Int(1)>
 CONSTEXPR TCountingIterator<_Int, _Inc> MakeCountingIterator(_Int it) {
-    return TCountingIterator<_Int, _Inc>(it);
+    return TCountingIterator<_Int, _Inc>{it};
+}
+//----------------------------------------------------------------------------
+template <typename _Int, _Int _Inc = _Int(1)>
+using TIotaIterator = TCountingIterator<_Int, _Inc>;
+//----------------------------------------------------------------------------
+template <typename _Int, _Int _Inc = _Int(1)>
+CONSTEXPR TIotaIterator<_Int, _Inc> MakeIotaIterator(_Int it) {
+    return TIotaIterator<_Int, _Inc>{it};
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

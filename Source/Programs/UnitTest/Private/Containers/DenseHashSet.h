@@ -23,7 +23,7 @@ template <
     , typename _Hash = Meta::THash<_Key>
     , typename _EqualTo = Meta::TEqualTo<_Key>
     , typename _Allocator = ALLOCATOR(Container)
->   class TDenseHashSet :_Allocator {
+>   class TDenseHashSet_Legacy :_Allocator {
 public:
     using allocator_type = _Allocator;
     using allocator_traits = TAllocatorTraits<_Allocator>;
@@ -44,21 +44,21 @@ public:
     using iterator = TCheckedArrayIterator<_Key>;
     using const_iterator = TCheckedArrayIterator<const _Key>;
 
-    TDenseHashSet()
+    TDenseHashSet_Legacy()
         : _size(0)
         , _capacity(0)
         , _elements(nullptr)
         , _states(nullptr)
     {}
 
-    ~TDenseHashSet() {
+    ~TDenseHashSet_Legacy() {
         clear_ReleaseMemory();
     }
 
-    TDenseHashSet(const TDenseHashSet& other) : TDenseHashSet() {
+    TDenseHashSet_Legacy(const TDenseHashSet_Legacy& other) : TDenseHashSet_Legacy() {
         operator =(other);
     }
-    TDenseHashSet& operator =(const TDenseHashSet& other) {
+    TDenseHashSet_Legacy& operator =(const TDenseHashSet_Legacy& other) {
         clear();
         if (other.size()) {
             reserve(other.size());
@@ -68,13 +68,13 @@ public:
         return (*this);
     }
 
-    TDenseHashSet(TDenseHashSet&& rvalue) : TDenseHashSet() {
+    TDenseHashSet_Legacy(TDenseHashSet_Legacy&& rvalue) : TDenseHashSet_Legacy() {
         std::swap(_size, rvalue._size);
         std::swap(_capacity, rvalue._capacity);
         std::swap(_elements, rvalue._elements);
         std::swap(_states, rvalue._states);
     }
-    TDenseHashSet& operator =(TDenseHashSet&& rvalue) {
+    TDenseHashSet_Legacy& operator =(TDenseHashSet_Legacy&& rvalue) {
         clear_ReleaseMemory();
         std::swap(_size, rvalue._size);
         std::swap(_capacity, rvalue._capacity);
