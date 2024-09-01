@@ -26,7 +26,7 @@ EXTERN_LOG_CATEGORY(PPE_TEXTURE_API, Texture);
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 enum class EImageFormat : u8;
-FWD_INTEFARCE_INSITUPTR(ImageFormat);
+FWD_PUREINTEFACE_PTR(ImageFormat);
 //----------------------------------------------------------------------------
 enum class ETextureSourceCompression : u8;
 enum class ETextureSourceFlags : u8;
@@ -37,7 +37,7 @@ FWD_REFPTR(TextureSource);
 //----------------------------------------------------------------------------
 enum class ETextureCompressionQuality : u8;
 class FTextureCompressionSettings;
-FWD_INTEFARCE_INSITUPTR(TextureCompression);
+FWD_PUREINTEFACE_PTR(TextureCompression);
 //----------------------------------------------------------------------------
 enum class ETextureMipGeneration : u8;
 class FTextureGeneration;

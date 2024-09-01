@@ -15,10 +15,6 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FBinarySerializer::FBinarySerializer() = default;
-//----------------------------------------------------------------------------
-FBinarySerializer::~FBinarySerializer() = default;
-//----------------------------------------------------------------------------
 void FBinarySerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);
 
@@ -43,8 +39,8 @@ FExtname FBinarySerializer::Extname() {
     return FFSConstNames::Bnx();
 }
 //----------------------------------------------------------------------------
-PSerializer FBinarySerializer::Get() {
-    return PSerializer::Make<FBinarySerializer>();
+USerializer FBinarySerializer::Get() {
+    return FBinarySerializer();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

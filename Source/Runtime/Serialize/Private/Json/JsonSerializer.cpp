@@ -62,8 +62,6 @@ FJsonSerializer::FJsonSerializer(bool minify/* = true */) {
     SetMinify(minify);
 }
 //----------------------------------------------------------------------------
-FJsonSerializer::~FJsonSerializer() = default;
-//----------------------------------------------------------------------------
 void FJsonSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);
 
@@ -95,8 +93,8 @@ FExtname FJsonSerializer::Extname() {
     return FFSConstNames::Json();
 }
 //----------------------------------------------------------------------------
-PSerializer FJsonSerializer::Get() {
-    return PSerializer::Make<FJsonSerializer>();
+USerializer FJsonSerializer::Get() {
+    return FJsonSerializer();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

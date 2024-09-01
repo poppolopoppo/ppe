@@ -20,7 +20,7 @@ public:
     ETextureCompressionQuality Quality{ Default };
 };
 //----------------------------------------------------------------------------
-class ITextureCompression : Meta::FNonCopyableNorMovable {
+class ITextureCompression {
 public:
     virtual ~ITextureCompression() = default;
 

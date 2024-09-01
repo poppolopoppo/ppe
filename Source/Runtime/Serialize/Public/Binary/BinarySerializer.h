@@ -19,21 +19,16 @@ public:
     PPE_DEFAULT_EXCEPTION_DESCRIPTION(FBinarySerializerException)
 };
 //----------------------------------------------------------------------------
-class PPE_SERIALIZE_API FBinarySerializer final : public ISerializer {
-public:
-    virtual ~FBinarySerializer();
+class FBinarySerializer final : public ISerializer {
+    FBinarySerializer() = default;
 
-    static FExtname Extname();
-    static PSerializer Get();
+public:
+    NODISCARD PPE_SERIALIZE_API static FExtname Extname();
+    NODISCARD PPE_SERIALIZE_API static USerializer Get();
 
 public: // ISerializer
     virtual void Deserialize(IStreamReader& input, FTransactionLinker* linker) const override final;
     virtual void Serialize(const FTransactionSaver& saver, IStreamWriter* output) const override final;
-
-private:
-    friend struct TInSituPtr<ISerializer>;
-
-    FBinarySerializer();
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

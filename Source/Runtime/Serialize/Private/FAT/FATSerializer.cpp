@@ -11,10 +11,6 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FFATSerializer::FFATSerializer() {}
-//----------------------------------------------------------------------------
-FFATSerializer::~FFATSerializer() = default;
-//----------------------------------------------------------------------------
 void FFATSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);
 
@@ -49,8 +45,8 @@ FExtname FFATSerializer::Extname() {
     return FFSConstNames::Z(); // #TODO
 }
 //----------------------------------------------------------------------------
-PSerializer FFATSerializer::Get() {
-    return PSerializer::Make<FFATSerializer>();
+USerializer FFATSerializer::Get() {
+    return FFATSerializer();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
