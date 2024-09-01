@@ -8,6 +8,7 @@
 #include "HAL/PlatformMemory.h"
 #include "Memory/MemoryView.h"
 #include "Meta/Functor.h"
+#include "Meta/Utility.h"
 #include "Thread/ThreadSafe.h"
 
 #if USE_PPE_MEMORYDOMAINS
@@ -102,7 +103,7 @@ private:
 
     struct FPoolChunk_;
 
-    FORCE_INLINE static FPoolNode_* PoolNode_(FPoolChunk_** const pChunks, const index_type id) {
+    FORCE_INLINE static FPoolNode_* PoolNode_(FPoolChunk_* const* const pChunks, const index_type id) {
         Assert(pChunks);
         Assert(id < MaxSize);
         const index_type ch = (id / ChunkSize);
@@ -111,7 +112,7 @@ private:
         Assert_NoAssume(pChunks[ch]->ChunkIndex == ch);
         return reinterpret_cast<FPoolNode_*>(pChunks[ch]->BundleData() + (id - ch * ChunkSize));
     }
-    FORCE_INLINE static FPoolNode_* PoolNodeIFP_(FPoolChunk_** const pChunks, const index_type id) {
+    FORCE_INLINE static FPoolNode_* PoolNodeIFP_(FPoolChunk_* const* const pChunks, const index_type id) {
         if (pChunks && id < MaxSize) {
             const index_type ch = (id / ChunkSize);
             if (ch < MaxChunks && pChunks[ch]) {
@@ -157,7 +158,7 @@ private:
             ++Count;
         }
 
-        FORCE_INLINE index_type PopHead(FPoolChunk_** pChunks) {
+        FORCE_INLINE index_type PopHead(FPoolChunk_* const* const pChunks) {
             Assert(UMax != Head);
             Assert(Count > 0);
 
@@ -502,13 +503,13 @@ private:
         return static_cast<u32>(seed % ThreadGranularity);
     }
 
-    void InitializeInternalPool_(FInternalPool_& pool);
-    NODISCARD NO_INLINE index_type AllocateFromNewBundle_AssumeUnlocked_(u32 firstBucket);
-    NO_INLINE void RecyclePartialBundle_AssumeUnlocked_(u32 bucket, index_type block, FPoolNode_* node);
-    FORCE_INLINE void Clear_ReleaseMemory_AssumeLocked_(FInternalPool_& pool);
-
     class CACHELINE_ALIGNED FPoolBucket_ : public TThreadSafe<FFreeBlockList_, EThreadBarrier::CriticalSection>
     {};
+
+    void InitializeInternalPool_(FInternalPool_& pool);
+    NODISCARD NO_INLINE index_type AllocateFromNewBundle_AssumeLocked_(FFreeBlockList_& bucket);
+    NODISCARD NO_INLINE index_type RecyclePartialBundle_AssumeLocked_(FFreeBlockList_& bucket, index_type block, FPoolNode_* node);
+    FORCE_INLINE void Clear_ReleaseMemory_AssumeLocked_(FInternalPool_& pool);
 
     CACHELINE_ALIGNED TThreadSafe<FInternalPool_, EThreadBarrier::CriticalSection> _pool;
     TStaticArray<FPoolBucket_, ThreadGranularity> _buckets;
@@ -582,36 +583,45 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Initia
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
-auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Allocate(u32 bucket) -> index_type {
-    const index_type freeBlock = _buckets[bucket].LockExclusive()->PopFromFront(_pool.Value_Unsafe().pChunks);
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Allocate(u32 seed) -> index_type {
+    forrange(i, 0, ThreadGranularity) {
+        const size_t bucket = ((seed + i) % ThreadGranularity);
 
-    if (UMax != freeBlock) {
-        ONLY_IF_MEMORYDOMAINS( _pool.Value_Unsafe().TrackingData.AllocateUser(BlockSize) );
-        ONLY_IF_ASSERT( _pool.Value_Unsafe().NumLiveBlocks.fetch_add(1, std::memory_order_relaxed) );
+        const auto exclusiveBucket = _buckets[bucket].LockExclusive();
+        index_type freeBlock = exclusiveBucket->PopFromFront(_pool.Value_Unsafe().pChunks);
 
-        return freeBlock;
+        if (freeBlock == UMax)
+            freeBlock = AllocateFromNewBundle_AssumeLocked_(*exclusiveBucket);
+
+        if (freeBlock != UMax) {
+            ONLY_IF_ASSERT( _pool.Value_Unsafe().NumLiveBlocks.fetch_add(1, std::memory_order_relaxed) );
+            ONLY_IF_MEMORYDOMAINS( _pool.Value_Unsafe().TrackingData.AllocateUser(BlockSize) );
+
+            return freeBlock;
+        }
     }
 
-    return AllocateFromNewBundle_AssumeUnlocked_(bucket);
+    //AssertReleaseFailed("Out-of-memory: can't allocate a new chunk and all buckets are empty");
+    return UMax;
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
 void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Deallocate(index_type block, u32 bucket) {
     Assert(block < MaxSize);
 
-    FPoolNode_* node;
-    {
-        node = PoolNode_(_pool.Value_Unsafe().pChunks, block);
-        ONLY_IF_ASSERT( FPlatformMemory::Memdeadbeef(node, BlockSize) );
+    FPoolNode_* const node = PoolNode_(_pool.Value_Unsafe().pChunks, block);
+    ONLY_IF_ASSERT( FPlatformMemory::Memdeadbeef(node, BlockSize) );
 
-        if (_buckets[bucket].LockExclusive()->PushToFront(block, node)) {
-            ONLY_IF_MEMORYDOMAINS( _pool.Value_Unsafe().TrackingData.DeallocateUser(BlockSize) );
-            Assert_NoAssume( _pool.Value_Unsafe().NumLiveBlocks.fetch_sub(1, std::memory_order_relaxed) > 0 );
-            return;
-        }
+    const auto exclusiveBucket = _buckets[bucket].LockExclusive();
+    if (exclusiveBucket ->PushToFront(block, node)) {
+        ONLY_IF_MEMORYDOMAINS( _pool.Value_Unsafe().TrackingData.DeallocateUser(BlockSize) );
+        Assert_NoAssume( _pool.Value_Unsafe().NumLiveBlocks.fetch_sub(1, std::memory_order_relaxed) > 0 );
+        return;
     }
 
-    RecyclePartialBundle_AssumeUnlocked_(bucket, block, node);
+    const index_type needRecycling = RecyclePartialBundle_AssumeLocked_(*exclusiveBucket, block, node);;
+    if (Unlikely(UMax != needRecycling))
+        _pool.LockExclusive()->ReleaseBundle(needRecycling);
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
@@ -667,67 +677,42 @@ void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::Releas
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
-auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::AllocateFromNewBundle_AssumeUnlocked_(u32 firstBucket) -> index_type {
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::AllocateFromNewBundle_AssumeLocked_(FFreeBlockList_& bucket) -> index_type {
+    // first, try to recycle a bundle without locking whole allocator exclusively
+    if (bucket.ObtainPartial(_pool.Value_Unsafe().pChunks, _recycler)) {
+        Assert_NoAssume(not bucket.PartialBundle.Empty());
+        return bucket.PopFromFront(_pool.Value_Unsafe().pChunks);
+    }
+
+    Assert_NoAssume(bucket.PartialBundle.Empty());
+    Assert_NoAssume(bucket.FullBundle.Empty());
+
     const auto exclusivePool = _pool.LockExclusive();
 
-    forrange(i, 0, ThreadGranularity) {
-        const auto bucket = ((firstBucket + i) % ThreadGranularity);
-        const auto exclusiveBucket = _buckets[bucket].LockExclusive();
-
-        if (exclusiveBucket->ObtainPartial(exclusivePool->pChunks, _recycler)) {
-            Assert_NoAssume(not exclusiveBucket->PartialBundle.Empty());
-
-            const index_type freeBlock = exclusiveBucket->PopFromFront(exclusivePool->pChunks);
-            if (UMax != freeBlock) {
-                ONLY_IF_MEMORYDOMAINS( exclusivePool->TrackingData.AllocateUser(BlockSize) );
-                ONLY_IF_ASSERT( exclusivePool->NumLiveBlocks.fetch_add(1, std::memory_order_relaxed) );
-
-                return freeBlock;
-            }
-
-            AssertNotReached(); // but we just recycled a bundle?!
-        }
-
-        Assert_NoAssume(exclusiveBucket->PartialBundle.Empty());
-        Assert_NoAssume(exclusiveBucket->FullBundle.Empty());
-
+    { // next, try to allocate a new bundle exclusively
         FPoolBundle_ bundle = exclusivePool->AllocateBundle();
+
         if (Likely(not bundle.Empty())) {
-            exclusiveBucket->PushBundle(std::move(bundle));
-
-            const index_type freeBlock = exclusiveBucket->PopFromFront(exclusivePool->pChunks);
-            Assert(UMax != freeBlock);
-            ONLY_IF_MEMORYDOMAINS( exclusivePool->TrackingData.AllocateUser(BlockSize) );
-            ONLY_IF_ASSERT( exclusivePool->NumLiveBlocks.fetch_add(1, std::memory_order_relaxed) );
-
-            return freeBlock;
-        }
-        else {
-            // high memory pressure: let the thread pick in other buckets
+            bucket.PushBundle(std::move(bundle));
+            return bucket.PopFromFront(exclusivePool->pChunks);
         }
     }
 
-    AssertReleaseFailed("Out-of-memory: can't allocate a new chunk and all buckets are empty");
+    return UMax;
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
-void TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::RecyclePartialBundle_AssumeUnlocked_(u32 bucket, index_type block, FPoolNode_* node) {
+auto TMemoryPool<_BlockSize, _Align, _ChunkSize, _MaxChunks, _Allocator>::RecyclePartialBundle_AssumeLocked_(FFreeBlockList_& bucket, index_type block, FPoolNode_* node) -> index_type {
     Assert(node);
 
-    index_type needRecycling = UMax;
-    {
-        const auto exclusiveBucket = _buckets[bucket].LockExclusive();
+    const index_type needRecycling = bucket.RecycleFull(_pool.Value_Unsafe().pChunks, _recycler);
 
-        needRecycling  = exclusiveBucket->RecycleFull(_pool.Value_Unsafe().pChunks, _recycler);
+    Verify( bucket.PushToFront(block, node) );
 
-        Verify( exclusiveBucket->PushToFront(block, node) );
+    ONLY_IF_MEMORYDOMAINS( _pool.Value_Unsafe().TrackingData.DeallocateUser(BlockSize) );
+    Assert_NoAssume( _pool.Value_Unsafe().NumLiveBlocks.fetch_sub(1, std::memory_order_relaxed) > 0 );
 
-        ONLY_IF_MEMORYDOMAINS( _pool.Value_Unsafe().TrackingData.DeallocateUser(BlockSize) );
-        Assert_NoAssume( _pool.Value_Unsafe().NumLiveBlocks.fetch_sub(1, std::memory_order_relaxed) > 0 );
-    }
-
-    if (Unlikely(UMax != needRecycling))
-        _pool.LockExclusive()->ReleaseBundle(needRecycling);
+    return needRecycling;
 }
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>
