@@ -692,7 +692,7 @@ FRawImageID FVulkanResourceManager::CreateImage(
     EResourceState defaultState
     ARGS_IF_RHIDEBUG(FConstChar debugName)) {
     Assert(externalImage);
-    Assert(onRelease);
+    Assert(onRelease.Valid());
 
     FRawImageID imageId;
     TResourceProxy<FVulkanImage>* const pImage = CreatePooledResource_(&imageId);
@@ -766,7 +766,7 @@ FRawBufferID FVulkanResourceManager::CreateBuffer(
     TMemoryView<const u32> queueFamilyIndices
     ARGS_IF_RHIDEBUG(FConstChar debugName) ) {
     Assert(externalBuffer);
-    Assert(onRelease);
+    Assert(onRelease.Valid());
 
     FRawBufferID bufferId;
     TResourceProxy<FVulkanBuffer>* const pBuffer = CreatePooledResource_(&bufferId);

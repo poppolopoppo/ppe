@@ -430,26 +430,22 @@ TBasicTextWriter<_Char>& TextFormat_DontPad_(TBasicTextWriter<_Char>& s) {
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicTextManipulator<_Char> TextFormat_Pad_(FTextFormat::EPadding padding, size_t width, _Char fill) {
-    return [padding, width, fill](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char> & {
-        s.Format().SetPadding(padding);
+TBasicTextWriter<_Char>& TextFormat_Pad_(size_t width, FTextFormat::EPadding padding, _Char fill, TBasicTextWriter<_Char>& s) {
+    s.Format().SetPadding(padding);
 
-        if (INDEX_NONE != width)
-            s.Format().SetWidth(width);
+    if (INDEX_NONE != width)
+        s.Format().SetWidth(width);
 
-        if (_Char() != fill)
-            s.SetFillChar(fill);
+    if (_Char() != fill)
+        s.SetFillChar(fill);
 
-        return s;
-    };
+    return s;
 }
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicTextManipulator<_Char> TextFormat_SetFill_(_Char ch) {
-    return [ch](TBasicTextWriter<_Char>& s) -> TBasicTextWriter<_Char> & {
-        s.SetFillChar(ch);
-        return s;
-    };
+TBasicTextWriter<_Char>& TextFormat_SetFill_(_Char ch, TBasicTextWriter<_Char>& s) {
+    s.SetFillChar(ch);
+    return s;
 }
 //----------------------------------------------------------------------------
 } //!namespace
@@ -461,23 +457,23 @@ FTextWriter& FTextFormat::DontPad(FTextWriter& s) {
 }
 //----------------------------------------------------------------------------
 FTextManipulator FTextFormat::Pad(EPadding padding, size_t width, char fill) {
-    return TextFormat_Pad_(padding, width, fill);
+    return FTextManipulator::Bind< &TextFormat_Pad_<char> >(width, padding, fill);
 }
 //----------------------------------------------------------------------------
 FTextManipulator FTextFormat::PadCenter(size_t width, char fill) {
-    return TextFormat_Pad_(Padding_Center, width, fill);
+    return Pad(Padding_Center, width, fill);
 }
 //----------------------------------------------------------------------------
 FTextManipulator FTextFormat::PadLeft(size_t width, char fill) {
-    return TextFormat_Pad_(Padding_Left, width, fill);
+    return Pad(Padding_Left, width, fill);
 }
 //----------------------------------------------------------------------------
 FTextManipulator FTextFormat::PadRight(size_t width, char fill) {
-    return TextFormat_Pad_(Padding_Right, width, fill);
+    return Pad(Padding_Right, width, fill);
 }
 //----------------------------------------------------------------------------
 FTextManipulator FTextFormat::SetFill(char ch) {
-    return TextFormat_SetFill_(ch);
+    return FTextManipulator::Bind< &TextFormat_SetFill_<char> >(ch);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -487,23 +483,23 @@ FWTextWriter& FTextFormat::DontPad(FWTextWriter& s) {
 }
 //----------------------------------------------------------------------------
 FWTextManipulator FTextFormat::Pad(EPadding padding, size_t width, wchar_t fill) {
-    return TextFormat_Pad_(padding, width, fill);
+    return FWTextManipulator::Bind< &TextFormat_Pad_<wchar_t> >(width, padding, fill);
 }
 //----------------------------------------------------------------------------
 FWTextManipulator FTextFormat::PadCenter(size_t width, wchar_t fill) {
-    return TextFormat_Pad_(Padding_Center, width, fill);
+    return Pad(Padding_Center, width, fill);
 }
 //----------------------------------------------------------------------------
 FWTextManipulator FTextFormat::PadLeft(size_t width, wchar_t fill) {
-    return TextFormat_Pad_(Padding_Left, width, fill);
+    return Pad(Padding_Left, width, fill);
 }
 //----------------------------------------------------------------------------
 FWTextManipulator FTextFormat::PadRight(size_t width, wchar_t fill) {
-    return TextFormat_Pad_(Padding_Right, width, fill);
+    return Pad(Padding_Right, width, fill);
 }
 //----------------------------------------------------------------------------
 FWTextManipulator FTextFormat::SetFill(wchar_t ch) {
-    return TextFormat_SetFill_(ch);
+    return FWTextManipulator::Bind< &TextFormat_SetFill_<wchar_t> >(ch);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -512,7 +508,15 @@ FTextWriter& operator <<(FTextWriter& writer, const FTextManipulator& manip) {
     return manip(writer);
 }
 //----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& writer, const FTextManipulatorRef& manip) {
+    return manip(writer);
+}
+//----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& writer, const FWTextManipulator& manip) {
+    return manip(writer);
+}
+//----------------------------------------------------------------------------
+FWTextWriter& operator <<(FWTextWriter& writer, const FWTextManipulatorRef& manip) {
     return manip(writer);
 }
 //----------------------------------------------------------------------------

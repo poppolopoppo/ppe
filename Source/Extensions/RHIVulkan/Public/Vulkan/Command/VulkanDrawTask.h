@@ -285,7 +285,7 @@ public:
         const FCustomDraw& desc, FProcessFunc pass1, FProcessFunc pass2 ) NOEXCEPT;
     ~TVulkanDrawTask();
 
-    bool Valid() const { return (!!Callback); }
+    bool Valid() const { return Callback.Valid(); }
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

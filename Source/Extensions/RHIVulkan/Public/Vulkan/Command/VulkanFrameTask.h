@@ -460,7 +460,7 @@ public:
     TVulkanFrameTask(FVulkanCommandBuffer& cmd, const FCustomTask& desc, FProcessFunc process) NOEXCEPT;
     ~TVulkanFrameTask();
 
-    bool Valid() const { return (!!Callback); }
+    bool Valid() const { return Callback.Valid(); }
 
 #if USE_PPE_RHIDEBUG
     virtual FVulkanFrameTaskRef DebugRef() const NOEXCEPT override final { return this; }

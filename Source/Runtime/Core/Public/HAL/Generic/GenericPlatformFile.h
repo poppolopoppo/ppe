@@ -68,9 +68,9 @@ public: // must be defined for every platform
     static bool DirectoryExists(const char_type* dirpath, EExistPolicy policy) = delete;
     static bool FileExists(const char_type* filename, EExistPolicy policy) = delete;
 
-    static void EnumerateDir(const char_type* dirpath, const TFunction<void(const FWStringView&)>& onFile, const TFunction<void(const FWStringView&)>& onSubDir) = delete;
-    static void EnumerateFiles(const char_type* dirpath, bool recursive, const TFunction<void(const FWStringView&)>& onFile) = delete;
-    static void GlobFiles(const char_type* dirpath, const char_type* pattern, bool recursive, const TFunction<void(const FWStringView&)>& onMatch) = delete;
+    static void EnumerateDir(const char_type* dirpath, const TFunctionRef<void(const FWStringView&)>& onFile, const TFunctionRef<void(const FWStringView&)>& onSubDir) = delete;
+    static void EnumerateFiles(const char_type* dirpath, bool recursive, const TFunctionRef<void(const FWStringView&)>& onFile) = delete;
+    static void GlobFiles(const char_type* dirpath, const char_type* pattern, bool recursive, const TFunctionRef<void(const FWStringView&)>& onMatch) = delete;
 
     static bool CreateDirectory(const char_type* dirpath, bool* existed) = delete;
     static bool CreateDirectoryRecursively(const char_type* dirpath, bool* existed) = delete;

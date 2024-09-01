@@ -316,7 +316,7 @@ bool FBasicBIHTree::Intersects(const FRay& ray, size_t count, const raycast_item
 //----------------------------------------------------------------------------
 bool FBasicBIHTree::Intersects(const FRay& ray, FHitResult* firstHit, size_t count, const raycast_item_delegate& raycast) const {
     Assert(_root);
-    Assert(raycast);
+    Assert(raycast.Valid());
 
     if (0 == count)
         return false;
@@ -397,8 +397,8 @@ bool FBasicBIHTree::Intersects(const FRay& ray, FHitResult* firstHit, size_t cou
 //----------------------------------------------------------------------------
 bool FBasicBIHTree::Intersects(const FRay& ray, const onhit_delegate& onHit, size_t count, const raycast_onhit_delegate& raycast) const {
     Assert(_root);
-    Assert(onHit);
-    Assert(raycast);
+    Assert(onHit.Valid());
+    Assert(raycast.Valid());
 
     if (0 == count)
         return false;

@@ -36,7 +36,7 @@ class PPE_RHI_API IPipelineCompiler : public FRefCountable {
 public:
     virtual ~IPipelineCompiler() = default;
 
-    using FLogger = TFunction<void(
+    using FLogger = TFunctionRef<void(
         ELoggerVerbosity verbosity,
         const FConstChar& source, u32 line,
         const FStringView& text,

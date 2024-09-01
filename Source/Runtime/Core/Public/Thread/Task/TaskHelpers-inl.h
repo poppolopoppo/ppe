@@ -69,7 +69,7 @@ namespace details {
 template <typename _It, typename _Value>
 static void ParallelForEach_(
     _It first, _It last,
-    const TFunction<void(_Value)>& foreach,
+    const TFunctionRef<void(_Value)>& foreach,
     ETaskPriority priority,
     ITaskContext* context ) {
     STATIC_ASSERT(Meta::is_random_access_iterator<_It>::value);
@@ -93,9 +93,9 @@ static void ParallelForEach_(
 
     // less space needed to pass arguments to TFunction<> (debug iterators can be huge)
     const struct loop_t_ {
-        const TFunction<void(_Value)>& foreach;
+        const TFunctionRef<void(_Value)>& foreach;
         _It first, last;
-        void Task(ITaskContext&, u32 off, u32 num) const {
+        void Task(u32 off, u32 num, ITaskContext& ) const {
             const _It cend = first + (off + num);
             Assert_NoAssume(not (last < cend));
             for(_It it = first + off; it != cend; ++it) {
@@ -144,7 +144,6 @@ static void ParallelForEach_(
         tasks.push_back(std::move(lastTask));
 
         // blocking wait for end of the loop
-        Assert(tasks.size() == tasks.capacity());
         context->RunAndWaitFor(tasks.MakeView(), priority);
     }
 }
@@ -153,7 +152,7 @@ static void ParallelForEach_(
 template <typename _It>
 void ParallelForEach(
     _It first, _It last,
-    const TFunction<void(_It)>& foreach_it,
+    const TFunctionRef<void(_It)>& foreach_it,
     ETaskPriority priority/* = ETaskPriority::Normal */,
     ITaskContext* context/* = nullptr *//* uses FGlobalThreadPool by default */) {
     details::ParallelForEach_(first, last, foreach_it, priority, context);
@@ -162,7 +161,7 @@ void ParallelForEach(
 template <typename _It>
 void ParallelForEachValue(
     _It first, _It last,
-    const TFunction<void(typename Meta::TIteratorTraits<_It>::value_type)>& foreach_value,
+    const TFunctionRef<void(typename Meta::TIteratorTraits<_It>::value_type)>& foreach_value,
     ETaskPriority priority/* = ETaskPriority::Normal */,
     ITaskContext* context/* = nullptr *//* uses FGlobalThreadPool by default */) {
     details::ParallelForEach_(first, last, foreach_value, priority, context);
@@ -171,7 +170,7 @@ void ParallelForEachValue(
 template <typename _It>
 void ParallelForEachRef(
     _It first, _It last,
-    const TFunction<void(typename Meta::TIteratorTraits<_It>::reference)>& foreach_ref,
+    const TFunctionRef<void(typename Meta::TIteratorTraits<_It>::reference)>& foreach_ref,
     ETaskPriority priority/* = ETaskPriority::Normal */,
     ITaskContext* context/* = nullptr *//* uses FGlobalThreadPool by default */) {
     details::ParallelForEach_(first, last, foreach_ref, priority, context);
@@ -220,7 +219,7 @@ NODISCARD _Result ParallelMapReduce(
 
         TThreadSafe<Meta::TOptional<_Result>, EThreadBarrier::CriticalSection> Result;
 
-        void Task(ITaskContext&, u32 off, u32 num) {
+        void Task(u32 off, u32 num, ITaskContext& ) {
             Assert(num > 0);
             const _It cend = First + (off + num);
             Assert_NoAssume(Last >= cend);

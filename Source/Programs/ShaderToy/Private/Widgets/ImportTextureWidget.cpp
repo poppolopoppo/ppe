@@ -39,11 +39,11 @@ void FImportTextureWidget::Import(const FFilename& filename, FTextureEvent&& onS
     bVisible = true;
     CurrentFile = filename;
 
-    if (onSuccess)
-        OnImportSuccess().FireAndForget(std::move(onSuccess));
+    if (onSuccess.Valid())
+        OnImportSuccess().Emplace(std::move(onSuccess));
 
-    if (onFailure)
-        OnImportFailure().FireAndForget(std::move(onFailure));
+    if (onFailure.Valid())
+        OnImportFailure().Emplace(std::move(onFailure));
 }
 //----------------------------------------------------------------------------
 bool FImportTextureWidget::Show() {

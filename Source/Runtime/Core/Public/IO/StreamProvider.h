@@ -109,7 +109,7 @@ class PPE_CORE_API IBufferedStreamWriter : public IStreamWriter {
     virtual class IBufferedStreamWriter* ToBufferedO() NOEXCEPT override final { return this; }
 
 public:
-    using read_f = TFunction<size_t(const FRawMemory&)>;
+    using read_f = TFunctionRef<size_t(const FRawMemory&)>;
     virtual size_t StreamCopy(const read_f& read, size_t blockSz) = 0;
 
     virtual void Flush() = 0;

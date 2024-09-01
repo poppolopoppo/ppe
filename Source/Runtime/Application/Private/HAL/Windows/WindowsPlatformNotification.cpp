@@ -71,14 +71,12 @@ public:
 
     using FUserCommands = SPARSEARRAY_INSITU(Window, FUserCmd);
 
-    void Commands(TTinyFunction<void(FUserCommands& cmds)>&& event) {
-        Assert_NoAssume(event.FitInSitu());
+    void Commands(TFunctionRef<void(FUserCommands& cmds)>&& event) {
         const Meta::FLockGuard scopeLock(_barrier);
         event(_commands);
     }
 
-    void Taskbar(TTinyFunction<void(::ITaskbarList3& taskbar, ::HWND window) > && event) {
-        Assert_NoAssume(event.FitInSitu());
+    void Taskbar(TFunctionRef<void(::ITaskbarList3& taskbar, ::HWND window) > && event) {
         AsyncSyscall([this, event(std::move(event))](ITaskContext&) {
             const Meta::FLockGuard scopeLock(_barrier);
 
@@ -96,7 +94,7 @@ public:
             }
 
             if (Likely(_windowsTaskbarPtr->IsValid() && hWindow != NULL))
-                event.Invoke(*_windowsTaskbarPtr->Get(), hWindow);
+                event(*_windowsTaskbarPtr->Get(), hWindow);
 
         }, ETaskPriority::Normal);
     }
@@ -440,7 +438,7 @@ size_t FWindowsPlatformNotification::AddSystrayCommand(
     FSystrayDelegate&& cmd ) {
     Assert(not category.empty());
     Assert(not label.empty());
-    Assert(cmd);
+    Assert(cmd.Valid());
 
     FSparseDataId cmdIndex = Default;
     FWindowsTaskbar_::Get().Commands([&](FWindowsTaskbar_::FUserCommands& cmds) {

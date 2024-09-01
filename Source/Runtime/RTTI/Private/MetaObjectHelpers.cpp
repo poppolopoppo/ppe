@@ -252,21 +252,21 @@ void CheckMetaClassAllocation(const FMetaClass* metaClass) {
 //----------------------------------------------------------------------------
 size_t CollectReferences(
     const FMetaObject& root,
-    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& prefix,
-    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& postfix,
+    const TFunctionRef<bool(const ITypeTraits&, FMetaObject&)>& prefix,
+    const TFunctionRef<bool(const ITypeTraits&, FMetaObject&)>& postfix,
     EVisitorFlags flags) {
     FLambdaReferenceCollector collector{ flags };
-    collector.Collect(root, std::move(prefix), std::move(postfix));
+    collector.Collect(root, prefix, postfix);
     return collector.NumReferences();
 }
 //----------------------------------------------------------------------------
 size_t CollectReferences(
     const TMemoryView<const PMetaObject>& roots,
-    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& prefix,
-    TFunction<bool(const ITypeTraits&, FMetaObject&)>&& postfix,
+    const TFunctionRef<bool(const ITypeTraits&, FMetaObject&)>& prefix,
+    const TFunctionRef<bool(const ITypeTraits&, FMetaObject&)>& postfix,
     EVisitorFlags flags) {
     FLambdaReferenceCollector collector{ flags };
-    collector.Collect(roots, std::move(prefix), std::move(postfix));
+    collector.Collect(roots, prefix, postfix);
     return collector.NumReferences();
 }
 //----------------------------------------------------------------------------

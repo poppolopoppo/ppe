@@ -297,10 +297,10 @@ inline bool FTaskScheduler::HasPendingTask() const NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 inline void FTaskScheduler::Produce(ETaskPriority priority, FTaskFunc&& rtask, FCompletionPort* pport) {
-    Assert_NoAssume(rtask);
+    Assert_NoAssume(rtask.Valid());
 
     _numTasks.fetch_add(1);
-    _queue.Produce(u32(priority), FTaskQueued{ std::move(rtask), pport });
+    _queue.Produce(u32(priority), FTaskQueued{ std::move(rtask), MakeSafePtr(pport) });
 }
 //----------------------------------------------------------------------------
 inline void FTaskScheduler::Consume(size_t workerIndex, FTaskQueued* pop) {
@@ -346,7 +346,7 @@ inline void FTaskScheduler::Produce(ETaskPriority priority, const TMemoryView<co
 }
 //----------------------------------------------------------------------------
 inline void FTaskScheduler::Produce(ETaskPriority priority, const FTaskFunc& task, FCompletionPort* pport) {
-    Assert_NoAssume(task);
+    Assert_NoAssume(task.Valid());
 
     Produce(priority, FTaskFunc{ task }, pport);
 }

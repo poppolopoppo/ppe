@@ -31,12 +31,12 @@ public:
     bool FileExists(const FFilename& filename, EExistPolicy policy = EExistPolicy::Exists) const;
     bool FileStats(FFileStat* pstat, const FFilename& filename) const;
 
-    size_t EnumerateMountingPoints(const TFunction<void(const FMountingPoint&)>& foreach) const;
-    size_t EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunction<void(const FDirpath&)>& onDirectory, const TFunction<void(const FFilename&)>& onFile) const;
-    size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) const;
-    size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) const;
-    size_t GlobFiles(const FDirpath& dirpath, FWStringLiteral pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) const { return GlobFiles(dirpath, pattern.MakeView(), recursive, foreach); }
-    size_t MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) const;
+    size_t EnumerateMountingPoints(const TFunctionRef<void(const FMountingPoint&)>& foreach) const;
+    size_t EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunctionRef<void(const FDirpath&)>& onDirectory, const TFunctionRef<void(const FFilename&)>& onFile) const;
+    size_t EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) const;
+    size_t GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) const;
+    size_t GlobFiles(const FDirpath& dirpath, FWStringLiteral pattern, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) const { return GlobFiles(dirpath, pattern.MakeView(), recursive, foreach); }
+    size_t MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) const;
 
     bool CreateDirectory(const FDirpath& dirpath) const;
     bool MoveFile(const FFilename& src, const FFilename& dst) const;

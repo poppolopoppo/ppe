@@ -82,7 +82,7 @@ bool FVirtualFileSystemTrie::FileStats(FFileStat* pstat, const FFilename& filena
         : false;
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemTrie::EnumerateMountingPoints(const TFunction<void(const FMountingPoint&)>& foreach) const {
+size_t FVirtualFileSystemTrie::EnumerateMountingPoints(const TFunctionRef<void(const FMountingPoint&)>& foreach) const {
     READSCOPELOCK(_barrier);
 
     size_t total = 0;
@@ -94,7 +94,7 @@ size_t FVirtualFileSystemTrie::EnumerateMountingPoints(const TFunction<void(cons
     return total;
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemTrie::EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunction<void(const FDirpath&)>& onDirectory, const TFunction<void(const FFilename&)>& onFile) const {
+size_t FVirtualFileSystemTrie::EnumerateDir(const FDirpath& dirpath, bool recursive, const TFunctionRef<void(const FDirpath&)>& onDirectory, const TFunctionRef<void(const FFilename&)>& onFile) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
     return (readable)
@@ -102,7 +102,7 @@ size_t FVirtualFileSystemTrie::EnumerateDir(const FDirpath& dirpath, bool recurs
         : 0;
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemTrie::EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunction<void(const FFilename&)>& foreach) const {
+size_t FVirtualFileSystemTrie::EnumerateFiles(const FDirpath& dirpath, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
     return (readable)
@@ -110,7 +110,7 @@ size_t FVirtualFileSystemTrie::EnumerateFiles(const FDirpath& dirpath, bool recu
         : 0;
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemTrie::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunction<void(const FFilename&)>& foreach) const {
+size_t FVirtualFileSystemTrie::GlobFiles(const FDirpath& dirpath, const FWStringView& pattern, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
     return (readable)
@@ -118,7 +118,7 @@ size_t FVirtualFileSystemTrie::GlobFiles(const FDirpath& dirpath, const FWString
         : 0;
 }
 //----------------------------------------------------------------------------
-size_t FVirtualFileSystemTrie::MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunction<void(const FFilename&)>& foreach) const {
+size_t FVirtualFileSystemTrie::MatchFiles(const FDirpath& dirpath, const FWRegexp& re, bool recursive, const TFunctionRef<void(const FFilename&)>& foreach) const {
     READSCOPELOCK(_barrier);
     IVirtualFileSystemComponentReadable* const readable = ReadableComponent_(dirpath.MountingPoint(), _nodes);
     return (readable)

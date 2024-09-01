@@ -56,7 +56,7 @@ private:
             _Context& root = const_cast<_Context&>(action).Root();
             _pool.Run(_global, [&root, deps](ITaskContext& task) {
                 _Context local(root);
-                Parallelize_<_Context>(task, local, deps, nullptr);
+                Parallelize_<_Context>(local, deps, nullptr, task);
             },  PriorityFromArity_(deps.size()) );
         }
     }
@@ -67,7 +67,7 @@ private:
             _Context local(action);
             volatile EBuildResult result = EBuildResult::Unbuilt;
             _pool.RunInWorker(
-                FTaskFunc::Bind< Parallelize_<_Context> >(&local, deps, &result),
+                FTaskFunc::Bind< &Parallelize_<_Context> >(&local, deps, &result),
                 PriorityFromArity_(deps.size()) );
             return result;
         }
@@ -88,7 +88,7 @@ private:
     }
 
     template <typename _Context>
-    static void DispatchNode_(ITaskContext&, _Context& action, const SBuildNode& node) {
+    static void DispatchNode_(_Context& action, const SBuildNode& node, ITaskContext& ) {
         Assert(node);
 
         FBuildState& st = node->State();
@@ -118,7 +118,7 @@ private:
     FAggregationPort _global;
 
     template <typename _Context>
-    static void Parallelize_(ITaskContext& task, _Context& action, const TMemoryView<const PBuildNode>& deps, volatile EBuildResult* pResult) {
+    static void Parallelize_(_Context& action, const TMemoryView<const PBuildNode>& deps, volatile EBuildResult* pResult, ITaskContext& task) {
         STATIC_ASSERT(std::is_base_of_v<FPipelineContext, _Context>);
         Assert(deps.data());
         Assert_NoAssume(not deps.empty());

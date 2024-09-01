@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "Container/Stack.h"
+#include "Memory/PtrRef.h"
 #include "Meta/Singleton.h"
 #include "Meta/ThreadResource.h"
 #include "Misc/Function.h"
@@ -21,9 +22,9 @@ class FTaskFiberPool : Meta::FNonCopyableNorMovable {
 public:
     struct FHandle;
     friend struct FHandle;
-    using FHandleRef = const FHandle*;
+    using FHandleRef = TPtrRef<const FHandle>;
 
-    using FCallback = void(*)();
+    using FCallback = void (*)();
 
     explicit FTaskFiberPool(FCallback&& callback) NOEXCEPT;
     ~FTaskFiberPool();
@@ -44,20 +45,18 @@ public:
     void UsageStats(size_t* reserved, size_t* inUse) NOEXCEPT;
 #endif
 
-    static void AttachWakeUpCallback(FHandleRef fiber, TFunction<void()>&& onWakeUp);
+    static void AttachWakeUpCallback(FHandleRef fiber, TFunctionRef<void()>&& onWakeUp);
     static size_t ReservedStackSize() NOEXCEPT;
     static void ResetWakeUpCallback(FHandleRef fiber);
     static void YieldCurrentFiber(FHandleRef to, bool release);
 
     static FHandleRef CurrentHandleRef() {
-        auto* h = static_cast<FHandleRef>(FFiber::CurrentFiberData()); // @FHandle is passed down as each fiber data
-        Assert(h);
-        return h;
+        return static_cast<const FHandle*>(FFiber::CurrentFiberData()); // @FHandle is passed down as each fiber data
     }
 
 private:
     const FCallback _callback;
-    std::atomic<FHandleRef> _freeFibers;
+    std::atomic<const FHandle*> _freeFibers;
 
 #if !USE_PPE_FINAL_RELEASE
     std::atomic<int> _numFibersAvailable;

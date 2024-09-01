@@ -56,7 +56,7 @@ public: // IStreamReader interface
 
 private:
     TPtrRef<IStreamReader> _reader;
-    FOnRead _onRead{ NoFunction };
+    FOnRead _onRead{ Default };
     mutable std::streamoff _position{ 0 };
 };
 //----------------------------------------------------------------------------
@@ -102,7 +102,7 @@ public: // IStreamWriter interface
 
 private:
     TPtrRef<IStreamWriter> _writer;
-    FOnWrite _onWrite{ NoFunction };
+    FOnWrite _onWrite{ Default };
     mutable std::streamoff _position{ 0 };
 };
 //----------------------------------------------------------------------------

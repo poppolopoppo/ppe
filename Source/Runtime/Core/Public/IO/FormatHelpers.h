@@ -530,29 +530,6 @@ PPE_CORE_API FWTextWriter& operator <<(FWTextWriter& oss, const Fmt::TBasicInden
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace Fmt {
-template <typename _Char>
-using TBasicFormator = TFunction<void (TBasicTextWriter<_Char>&)>;
-using FFormator = TBasicFormator<char>;
-using FWFormator = TBasicFormator<wchar_t>;
-template <typename _Char, typename _Lambda>
-TBasicFormator<_Char> Formator(_Lambda&& lmb) {
-    return TBasicFormator<_Char>{ std::move(lmb) };
-}
-} //!namespace Fmt
-//----------------------------------------------------------------------------
-inline FTextWriter& operator <<(FTextWriter& oss, const Fmt::FFormator& formator) {
-    formator(oss);
-    return oss;
-}
-//----------------------------------------------------------------------------
-inline FWTextWriter& operator <<(FWTextWriter& woss, const Fmt::FWFormator& wformator) {
-    wformator(woss);
-    return woss;
-}
-//----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
-//----------------------------------------------------------------------------
-namespace Fmt {
     enum EChar {
         LBrace,
         RBrace,

@@ -600,7 +600,7 @@ bool FVulkanCommandBatch::AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataR
 }
 //----------------------------------------------------------------------------
 void FVulkanCommandBatch::AddDataLoadedEvent(FOnBufferDataLoadedEvent&& revent) {
-    Assert(revent.Callback);
+    Assert(revent.Callback.Valid());
     Assert_NoAssume(not revent.Parts.empty());
 
     const auto exclusiveData = _data.LockExclusive();
@@ -609,7 +609,7 @@ void FVulkanCommandBatch::AddDataLoadedEvent(FOnBufferDataLoadedEvent&& revent) 
 }
 //----------------------------------------------------------------------------
 void FVulkanCommandBatch::AddDataLoadedEvent(FOnImageDataLoadedEvent&& revent) {
-    Assert(revent.Callback);
+    Assert(revent.Callback.Valid());
     Assert_NoAssume(not revent.Parts.empty());
 
     const auto exclusiveData = _data.LockExclusive();
@@ -1068,7 +1068,7 @@ void FVulkanCommandBatch::ParseDebugOutput_(const FShaderDebugCallback& callback
 #if USE_PPE_RHIDEBUG
 bool FVulkanCommandBatch::ParseDebugOutput2_(FDebugStrings* pDump, const FShaderDebugCallback& callback, const FDebugMode& dbg) const {
     Assert(pDump);
-    Assert(callback);
+    Assert(callback.Valid());
 
     if (dbg.Mode == EShaderDebugMode::Timemap)
         return true;

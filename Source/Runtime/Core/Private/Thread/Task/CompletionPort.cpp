@@ -42,10 +42,12 @@ void FCompletionPort::AttachCurrentFiber(FTaskFiberLocalCache& fibers, ETaskPrio
     // the actual call to Queue(). If by this time the counter would have been
     // already finished then we'd switch directly back to the original fiber.
 
-    FTaskFiberPool::AttachWakeUpCallback(preparedFiber,
-        TFunction<void()>::Bind<&FCompletionPort::QueueWaitingFiber_>(MakePtrRef(this), FInterruptedTask{
+    const auto queueWaitingFiber = [&]() {
+        QueueWaitingFiber_(this, FInterruptedTask{
             ITaskContext::Get(), FTaskFiberPool::CurrentHandleRef(), priority
-        }));
+        });
+    };
+    FTaskFiberPool::AttachWakeUpCallback(preparedFiber, queueWaitingFiber);
 
     _barrier.Lock();
 

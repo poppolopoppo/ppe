@@ -445,7 +445,7 @@ bool FVulkanSpirvCompiler::Compile(
                 break;
 
             default:
-                compilationContext.Log->Invoke(ELoggerVerbosity::Error, compilationContext.SourceFile, 0, "unsupported shader debug mode"_view, {
+                (*compilationContext.Log)(ELoggerVerbosity::Error, compilationContext.SourceFile, 0, "unsupported shader debug mode"_view, {
                     {"DebugMode", Meta::EnumOrd(mode)}
                 });
                 break;
@@ -530,7 +530,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
         shProfile = ECoreProfile;
         break;
     default:
-        ctx.Log->Invoke(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported source shader format"_view, {
+        (*ctx.Log)(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported source shader format"_view, {
             {"Format", Meta::EnumOrd(Meta::EnumAnd(srcShaderFormat, EShaderLangFormat::_ApiMask))}
         });
         return false;
@@ -565,7 +565,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
             ctx.SpirvTargetEnvironment = SPV_ENV_VULKAN_1_3;
             break;
         default:
-            ctx.Log->Invoke(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported vulkan version"_view, {
+            (*ctx.Log)(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported vulkan version"_view, {
                 {"Version", dstVersion}
             });
             return false;
@@ -581,7 +581,7 @@ bool FVulkanSpirvCompiler::ParseGLSL_(
         break;
     }
     default:
-        ctx.Log->Invoke(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported source shader format"_view, {
+        (*ctx.Log)(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported source shader format"_view, {
             {"Format", Meta::EnumOrd(Meta::EnumAnd(srcShaderFormat, EShaderLangFormat::_ApiMask))}
         });
         return false;
@@ -719,7 +719,7 @@ bool FVulkanSpirvCompiler::CompileSPIRV_(FRawData* outSPIRV, const FCompilationC
             verbosity = ELoggerVerbosity::Error;
         }
 
-        ctx.Log->Invoke(verbosity, ctx.SourceFile, 0, messageLine, {});
+        (*ctx.Log)(verbosity, ctx.SourceFile, 0, messageLine, {});
     }
 
 #ifdef INCLUDE_SPIRV_TOOLS_OPTIMIZER_HPP_
@@ -754,13 +754,13 @@ void FVulkanSpirvCompiler::OnCompilationFailed_(
             if (error.Filename.empty() and error.SourceIndex < sourceFiles.size())
                 sourceFile = sourceFiles[error.SourceIndex];
 
-            ctx.Log->Invoke(
+            (*ctx.Log)(
                 error.IsError ? ELoggerVerbosity::Error : ELoggerVerbosity::Warning,
                 sourceFile, error.Line,
                 error.Description, {});
         }
         else {
-            ctx.Log->Invoke(ELoggerVerbosity::Info, sourceFiles[0], 0, line, {});
+            (*ctx.Log)(ELoggerVerbosity::Info, sourceFiles[0], 0, line, {});
         }
     }
 }
@@ -804,7 +804,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
 
         const FStringView id = EatDigits(it);
         if (id.empty() || EatSpaces(it).empty()) {
-            ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "expected a set index"_view, {});
+            (*ctx.Log)(ELoggerVerbosity::Error, sourceFile, sourceLine, "expected a set index"_view, {});
             return false;
         }
 
@@ -813,21 +813,21 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
             it.Eat(1);
             name = EatUntil(it, '"');
             if (name.empty() || not Equals(it.Eat(1), "\"")) {
-                ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "unterminated string quote found in set identifier"_view, {});
+                (*ctx.Log)(ELoggerVerbosity::Error, sourceFile, sourceLine, "unterminated string quote found in set identifier"_view, {});
                 return false;
             }
         }
         else {
             name = EatIdentifier(it);
             if (name.empty()) {
-                ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "empty set identifier"_view, {});
+                (*ctx.Log)(ELoggerVerbosity::Error, sourceFile, sourceLine, "empty set identifier"_view, {});
                 return false;
             }
         }
 
         u32 index{ INDEX_NONE };
         if (not Atoi(&index, id, 10)) {
-            ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "invalid number for set index"_view, {
+            (*ctx.Log)(ELoggerVerbosity::Error, sourceFile, sourceLine, "invalid number for set index"_view, {
                 {"Index", id}
             });
             return false;
@@ -839,7 +839,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                     return (ds.BindingIndex == index);
                 });
         if (not ds) {
-            ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "no descriptor set description found with this binding index"_view, {
+            (*ctx.Log)(ELoggerVerbosity::Error, sourceFile, sourceLine, "no descriptor set description found with this binding index"_view, {
                 {"Index", index},
             });
             return false;
@@ -864,7 +864,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
             const FStringView word = EatIdentifier(it);
             if (word.empty()) {
                 if (Equals(it.Eat(1), "}")) {
-                    ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "unterminated uniform declaration scope, expected '}'"_view, {});
+                    (*ctx.Log)(ELoggerVerbosity::Error, sourceFile, sourceLine, "unterminated uniform declaration scope, expected '}'"_view, {});
                     return false;
                 }
                 continue;
@@ -899,7 +899,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
             }
 
             if (name.empty()) {
-                ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "found an empty uniform name"_view, {});
+                (*ctx.Log)(ELoggerVerbosity::Error, sourceFile, sourceLine, "found an empty uniform name"_view, {});
                 return false;
             }
 
@@ -919,7 +919,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                     found = Meta::Visit(jt->second.Data,
                         [&](FPipelineDesc::FImage& image) {
                             if (annotations & EShaderAnnotation::DynamicOffset)
-                                ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "@dynamic-offset is only supported on buffers, but found on image"_view, {
+                                (*ctx.Log)(ELoggerVerbosity::Warning, sourceFile, sourceLine, "@dynamic-offset is only supported on buffers, but found on image"_view, {
                                     {"ResourceName", name},
                                 });
                             if (annotations & EShaderAnnotation::WriteDiscard)
@@ -930,7 +930,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                             if (annotations & EShaderAnnotation::DynamicOffset)
                                 ubo.State |= EResourceFlags::BufferDynamicOffset;
                             if (annotations & EShaderAnnotation::WriteDiscard)
-                                ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "@write-discard is only supported on images or storage buffers, but found on uniform buffer"_view, {
+                                (*ctx.Log)(ELoggerVerbosity::Warning, sourceFile, sourceLine, "@write-discard is only supported on images or storage buffers, but found on uniform buffer"_view, {
                                     {"ResourceName", name},
                                 });
                             return true;
@@ -943,28 +943,28 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
                             return true;
                         },
                         [&](FPipelineDesc::FTexture&) {
-                            ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on texture"_view, {
+                            (*ctx.Log)(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on texture"_view, {
                                 {"ResourceName", name},
                                 {"Annotations", ToString(annotations)},
                             });
                             return false;
                         },
                         [&](FPipelineDesc::FSampler&) {
-                            ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on sampler"_view, {
+                            (*ctx.Log)(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on sampler"_view, {
                                 {"ResourceName", name},
                                 {"Annotations", ToString(annotations)},
                             });
                             return false;
                         },
                         [&](FPipelineDesc::FSubpassInput&) {
-                            ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on sub-pass input"_view, {
+                            (*ctx.Log)(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on sub-pass input"_view, {
                                 {"ResourceName", name},
                                 {"Annotations", ToString(annotations)},
                             });
                             return false;
                         },
                         [&](FPipelineDesc::FRayTracingScene&) {
-                            ctx.Log->Invoke(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on ray-tracing scene"_view, {
+                            (*ctx.Log)(ELoggerVerbosity::Warning, sourceFile, sourceLine, "unsupported annotations found on ray-tracing scene"_view, {
                                 {"ResourceName", name},
                                 {"Annotations", ToString(annotations)},
                             });
@@ -1035,7 +1035,7 @@ bool FVulkanSpirvCompiler::ParseAnnotations_(const FCompilationContext& ctx, FSt
         if (Equals(id, "dynamic-offset"))
             annotations |= EShaderAnnotation::DynamicOffset;
         else {
-            ctx.Log->Invoke(ELoggerVerbosity::Error, sourceFile, sourceLine, "unknown shader annotation"_view, {
+            (*ctx.Log)(ELoggerVerbosity::Error, sourceFile, sourceLine, "unknown shader annotation"_view, {
                 {"Annotation", id},
             });
             return false;
@@ -1190,7 +1190,7 @@ EImageSampler FVulkanSpirvCompiler::ExtractImageSampler_(const FCompilationConte
         }
         else {
             const TString samplerDesc = sampler.getString();
-            ctx.Log->Invoke(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported image value type"_view, {
+            (*ctx.Log)(ELoggerVerbosity::Error, ctx.SourceFile, 0, "unsupported image value type"_view, {
                 {"Sampler", FStringView{ samplerDesc.c_str(), samplerDesc.size() }}
             });
             return Default;
@@ -1351,7 +1351,7 @@ bool FVulkanSpirvCompiler::CalculateStructSize_(
             subMatrixLayout != ElmNone
                 ? subMatrixLayout == ElmRowMajor
                 : bufferType.getQualifier().layoutMatrix == ElmRowMajor );
-        Assert(Meta::IsPow2(memberAlignment));
+        Assert(Meta::IsPow2(checked_cast<unsigned>(memberAlignment)));
 
         if (memberQualifier.hasOffset()) {
             Assert(glslang::IsMultipleOfPow2(memberQualifier.layoutOffset, memberAlignment));
@@ -1602,7 +1602,7 @@ void FVulkanSpirvCompiler::MergeWithGeometryInputPrimitive_(
     case TLayoutGeometry::ElgQuads:
     case TLayoutGeometry::ElgIsolines:
     case TLayoutGeometry::ElgNone:
-        ctx.Log->Invoke(ELoggerVerbosity::Error, ctx.SourceFile, 0, "invalid geometry input primitive type!"_view, {
+        (*ctx.Log)(ELoggerVerbosity::Error, ctx.SourceFile, 0, "invalid geometry input primitive type!"_view, {
             {"GeometryType", Meta::EnumOrd(geometryType)},
         });
         break;

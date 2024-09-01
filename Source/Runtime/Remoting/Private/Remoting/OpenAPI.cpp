@@ -33,7 +33,7 @@ static void DefineNativeSchema_(
 
     api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            std::move(description), "boolean", "", NoFunction );
+            std::move(description), "boolean", "", Default );
     });
 }
 //----------------------------------------------------------------------------
@@ -53,7 +53,7 @@ static void DefineNativeSchema_(
         else // OAS doesn't support unsigned integers bcoz JS/JSON encoding long on 53 bits
             format = (sizeof(T) > sizeof(u32) ? "int64" : "int32");
 
-        *schema = api->Scalar(std::move(description), "integer", format, NoFunction);
+        *schema = api->Scalar(std::move(description), "integer", format, Default);
 
         IF_CONSTEXPR(std::is_unsigned_v<T>)
             schema->emplace_back("minimum"_json, 0);
@@ -73,7 +73,7 @@ static void DefineNativeSchema_(
         *schema = api->Scalar(
             std::move(description), "number", std::is_same_v<float, T>
                 ? FStringLiteral("float")
-                : FStringLiteral("double"), NoFunction );
+                : FStringLiteral("double"), Default );
     });
 }
 //----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ static void DefineNativeSchema_(
 
     api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            std::move(description), "string", "", NoFunction );
+            std::move(description), "string", "", Default );
     });
 }
 //----------------------------------------------------------------------------
@@ -102,7 +102,7 @@ static void DefineNativeSchema_(
 
     api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            std::move(description), "string", "token", NoFunction );
+            std::move(description), "string", "token", Default );
     });
 }
 //----------------------------------------------------------------------------
@@ -116,7 +116,7 @@ static void DefineNativeSchema_(
 
     api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            std::move(description), "string", "path", NoFunction );
+            std::move(description), "string", "path", Default );
     });
 }
 //----------------------------------------------------------------------------
@@ -130,7 +130,7 @@ static void DefineNativeSchema_(
 
     api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            std::move(description), "string", "filename", NoFunction );
+            std::move(description), "string", "filename", Default );
     });
 }
 //----------------------------------------------------------------------------
@@ -144,7 +144,7 @@ static void DefineNativeSchema_(
 
     api->Schema(std::move(name), [&](FOpenAPI::FSchema* schema) {
         *schema = api->Scalar(
-            std::move(description), "string", "binary", NoFunction );
+            std::move(description), "string", "binary", Default );
     });
 }
 //----------------------------------------------------------------------------
@@ -534,7 +534,7 @@ FOpenAPI::FSchema FOpenAPI::Scalar(FText&& description, FText&& type, FText&& fo
 }
 //----------------------------------------------------------------------------
 FOpenAPI::FSchema FOpenAPI::Scalar(FText&& description, FText&& type, FText&& format) {
-    return Scalar(std::move(description), std::move(type), std::move(format), NoFunction);
+    return Scalar(std::move(description), std::move(type), std::move(format), Default);
 }
 //----------------------------------------------------------------------------
 // Tag
@@ -565,7 +565,7 @@ const FOpenAPI::FRef& FOpenAPI::Schema(
     FSchemaFunc&& definition,
     bool force_override/* = false */) {
     Assert(not name.empty());
-    Assert(definition);
+    Assert(definition.Valid());
 
     const auto it = Refs.Find(name);
     if (it == Refs.end() || force_override) {

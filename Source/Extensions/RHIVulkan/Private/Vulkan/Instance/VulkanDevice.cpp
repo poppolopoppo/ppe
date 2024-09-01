@@ -67,56 +67,60 @@ FVulkanDevice::FVulkanDevice(const FVulkanDeviceInfo& info)
     SetupDeviceFeatures_();
     SetupDeviceFlags_();
 
-    PPE_LOG(RHI, Info, "finished setup for new vulkan device:{0}",
-        Fmt::Formator<wchar_t>([this](FWTextWriter& log) {
-            log << Eol << FTextFormat::BoolAlpha
-            << Tab << L"VendorName:               " << vkVendorId() << Eol
-            << Tab << L"DeviceName:               " << MakeCStringView(Properties().deviceName) << Eol
-            << Tab << L"ApiVersion:               " << VK_VERSION_MAJOR( Properties().apiVersion ) << L'.'
-                                                    << VK_VERSION_MINOR( Properties().apiVersion ) << L'.'
-                                                    << VK_VERSION_PATCH( Properties().apiVersion ) << Eol
-            << Tab << L"DriverVersion:            " << VK_VERSION_MAJOR( Properties().driverVersion ) << L'.'
-                                                    << VK_VERSION_PATCH( Properties().driverVersion ) << Eol
-            << Tab << L">---------- 1.1 ----------" << Eol
-            << Tab << L"BindMemory2:              " << Enabled().BindMemory2 << Eol
-            << Tab << L"DedicatedAllocation:      " << Enabled().DedicatedAllocation << Eol
-            << Tab << L"DescriptorUpdateTemplate: " << Enabled().DescriptorUpdateTemplate << Eol
-            << Tab << L"ImageViewUsage:           " << Enabled().ImageViewUsage << Eol
-            << Tab << L"CommandPoolTrim:          " << Enabled().CommandPoolTrim << Eol
-            << Tab << L"DispatchBase:             " << Enabled().DispatchBase << Eol
-            << Tab << L"Array2DCompatible:        " << Enabled().Array2DCompatible << Eol
-            << Tab << L"BlockTexelView:           " << Enabled().BlockTexelView << Eol
-            << Tab << L"Maintenance3:             " << Enabled().Maintenance3 << Eol
-            << Tab << L">---------- 1.2 ----------" << Eol
-            << Tab << L"SamplerMirrorClamp:       " << Enabled().SamplerMirrorClamp << Eol
-            << Tab << L"ShaderAtomicInt64:        " << Enabled().ShaderAtomicInt64 << Eol
-            << Tab << L"Float16Arithmetic:        " << Enabled().Float16Arithmetic << Eol
-            << Tab << L"BufferAddress:            " << Enabled().BufferAddress << Eol
-            << Tab << L"DescriptorIndexing:       " << Enabled().DescriptorIndexing << Eol
-            << Tab << L"RenderPass2:              " << Enabled().RenderPass2 << Eol
-            << Tab << L"DepthStencilResolve:      " << Enabled().DepthStencilResolve << Eol
-            << Tab << L"DrawIndirectCount:        " << Enabled().DrawIndirectCount << Eol
-            << Tab << L"Spirv14:                  " << Enabled().Spirv14 << Eol
-            << Tab << L"MemoryModel:              " << Enabled().MemoryModel << Eol
-            << Tab << L"SamplerFilterMinmax       " << Enabled().SamplerFilterMinmax << Eol
-            << Tab << L">---------- Ext ----------" << Eol
-            << Tab << L"Surface:                  " << Enabled().Surface << Eol
-            << Tab << L"SurfaceCaps2:             " << Enabled().SurfaceCaps2 << Eol
-            << Tab << L"Swapchain:                " << Enabled().Swapchain << Eol
-            << Tab << L"Debug_utils:              " << Enabled().DebugUtils << Eol
-            << Tab << L"MeshShaderNV:             " << Enabled().MeshShaderNV << Eol
-            << Tab << L"RayTracingNV:             " << Enabled().RayTracingNV << Eol
-            << Tab << L"ShadingRateImageNV:       " << Enabled().ShadingRateImageNV << Eol
-            << Tab << L"InlineUniformBlock:       " << Enabled().InlineUniformBlock << Eol
-            << Tab << L"ShaderClock:              " << Enabled().ShaderClock << Eol
-            << Tab << L"TimelineSemaphore:        " << Enabled().TimelineSemaphore << Eol
-            << Tab << L"PushDescriptor:           " << Enabled().PushDescriptor << Eol
-            << Tab << L"Robustness2:              " << Enabled().Robustness2 << Eol
-            << Tab << L"ShaderStencilExport:      " << Enabled().ShaderStencilExport << Eol
-            << Tab << L"ExtendedDynamicState:     " << Enabled().ExtendedDynamicState << Eol
-            << Tab << L"RayTracingKHR:            " << Enabled().RayTracingKHR << Eol
-            << Tab << L"--------------------------";
-        }));
+    PPE_SLOG(RHI, Info, "finished setup for new vulkan device", {
+        { "VendorName", Opaq::Format(vkVendorId()) },
+        { "DeviceName", Opaq::Format(MakeCStringView(Properties().deviceName)) },
+        { "ApiVersion", [apiVersion{Properties().apiVersion}](FTextWriter& oss) {
+            oss << VK_VERSION_MAJOR( apiVersion ) << '.'
+                << VK_VERSION_MINOR( apiVersion ) << '.'
+                << VK_VERSION_PATCH( apiVersion );
+        }},
+        { "DriverVersion", [driverVersion{Properties().driverVersion}](FTextWriter& oss) {
+            oss << VK_VERSION_MAJOR( driverVersion ) << '.'
+                << VK_VERSION_PATCH( driverVersion );
+        }},
+        { "1.1", Opaq::object_init{
+            { "BindMemory2", Enabled().BindMemory2 },
+            { "DedicatedAllocation", Enabled().DedicatedAllocation },
+            { "DescriptorUpdateTemplate", Enabled().DescriptorUpdateTemplate },
+            { "ImageViewUsage", Enabled().ImageViewUsage },
+            { "CommandPoolTrim", Enabled().CommandPoolTrim },
+            { "DispatchBase", Enabled().DispatchBase },
+            { "Array2DCompatible", Enabled().Array2DCompatible },
+            { "BlockTexelView", Enabled().BlockTexelView },
+            { "Maintenance3", Enabled().Maintenance3 },
+        }},
+        { "1.2", Opaq::object_init{
+            { "SamplerMirrorClamp", Enabled().SamplerMirrorClamp },
+            { "ShaderAtomicInt64", Enabled().ShaderAtomicInt64 },
+            { "Float16Arithmetic", Enabled().Float16Arithmetic },
+            { "BufferAddress", Enabled().BufferAddress },
+            { "DescriptorIndexing", Enabled().DescriptorIndexing },
+            { "RenderPass2", Enabled().RenderPass2 },
+            { "DepthStencilResolve", Enabled().DepthStencilResolve },
+            { "DrawIndirectCount", Enabled().DrawIndirectCount },
+            { "Spirv14", Enabled().Spirv14 },
+            { "MemoryModel", Enabled().MemoryModel },
+            { "SamplerFilterMinmax", Enabled().SamplerFilterMinmax },
+        }},
+        { "Ext", Opaq::object_init{
+            { "Surface", Enabled().Surface },
+            { "SurfaceCaps2", Enabled().SurfaceCaps2 },
+            { "Swapchain", Enabled().Swapchain },
+            { "Debug_utils", Enabled().DebugUtils },
+            { "MeshShaderNV", Enabled().MeshShaderNV },
+            { "RayTracingNV", Enabled().RayTracingNV },
+            { "ShadingRateImageNV", Enabled().ShadingRateImageNV },
+            { "InlineUniformBlock", Enabled().InlineUniformBlock },
+            { "ShaderClock", Enabled().ShaderClock },
+            { "TimelineSemaphore", Enabled().TimelineSemaphore },
+            { "PushDescriptor", Enabled().PushDescriptor },
+            { "Robustness2", Enabled().Robustness2 },
+            { "ShaderStencilExport", Enabled().ShaderStencilExport },
+            { "ExtendedDynamicState", Enabled().ExtendedDynamicState },
+            { "RayTracingKHR", Enabled().RayTracingKHR },
+        }},
+    });
 
     // validate device limits
     AssertRelease(_caps.Properties.limits.maxPushConstantsSize >= MaxPushConstantsSize);
@@ -134,7 +138,6 @@ FVulkanDevice::FVulkanDevice(const FVulkanDeviceInfo& info)
 FVulkanDevice::~FVulkanDevice() {
     PPE_LOG(RHI, Info, "destroying vulkan device...");
 
-
     FRHIVulkanModule::Get(FModularDomain::Get()).DeviceTearDown(*this);
 }
 //----------------------------------------------------------------------------
@@ -142,7 +145,7 @@ const FVulkanDeviceQueue& FVulkanDevice::DeviceQueue(EVulkanQueueFamily familyIn
     const auto ptr = _vkQueues.MakeView().Any([familyIndex](const FVulkanDeviceQueue& q) NOEXCEPT {
         return (q.FamilyIndex == familyIndex);
     });
-    Assert(ptr);
+    AssertRelease(ptr);
     return *ptr;
 }
 //----------------------------------------------------------------------------

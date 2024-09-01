@@ -97,12 +97,11 @@ struct value_printer {
         EndScope(endScope);
     }
 
-    template <size_t _InSitu>
-    void Yield(TFunction<void(TBasicTextWriter<_Char>&), _InSitu> fmt) {
+    void Yield(TFunctionRef<void(TBasicTextWriter<_Char>&)> fmt) {
         fmt(*Output);
     }
-    template <typename _Char2, size_t _InSitu>
-    void Yield(TFunction<void(TBasicTextWriter<_Char2>&), _InSitu> fmt) {
+    template <typename _Char2>
+    void Yield(TFunctionRef<void(TBasicTextWriter<_Char2>&)> fmt) {
         MEMORYSTREAM_STACKLOCAL() tmp;
         TBasicTextWriter<_Char2> oss(&tmp);
         fmt(oss);

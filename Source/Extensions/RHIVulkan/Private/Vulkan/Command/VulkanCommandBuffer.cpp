@@ -649,7 +649,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FPresent& task) {
 }
 //----------------------------------------------------------------------------
 PFrameTask FVulkanCommandBuffer::Task(const FCustomTask& task) {
-    Assert(task.Callback);
+    Assert(task.Callback.Valid());
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
@@ -1168,7 +1168,7 @@ void FVulkanCommandBuffer::Task(FLogicalPassID renderPass, const FDrawMeshesIndi
 }
 //----------------------------------------------------------------------------
 void FVulkanCommandBuffer::Task(FLogicalPassID renderPass, const FCustomDraw& draw) {
-    Assert(draw.Callback);
+    Assert(draw.Callback.Valid());
 
     const auto exclusive = Write();
     Assert_NoAssume(EState::Recording == exclusive->State);
@@ -1620,7 +1620,8 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
 }
 //----------------------------------------------------------------------------
 PFrameTask FVulkanCommandBuffer::MakeReadBufferTask_(FInternalData& data, const FReadBuffer& task) {
-    Assert(task.SrcBuffer && task.Callback);
+    Assert(task.Callback.Valid());
+    Assert(task.SrcBuffer.Valid());
 
     using FOnDataLoadedEvent = FVulkanCommandBatch::FOnBufferDataLoadedEvent;
 
@@ -1665,7 +1666,8 @@ PFrameTask FVulkanCommandBuffer::MakeReadBufferTask_(FInternalData& data, const 
 }
 //----------------------------------------------------------------------------
 PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const FReadImage& task) {
-    Assert(task.SrcImage && task.Callback);
+    Assert(task.Callback.Valid());
+    Assert(task.SrcImage.Valid());
     Assert(Any(GreaterMask(task.ImageSize, uint3::Zero)));
 
     using FOnDataLoadedEvent = FVulkanCommandBatch::FOnImageDataLoadedEvent;

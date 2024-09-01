@@ -96,7 +96,7 @@ public:
     void Out(float f, FString& str) { str = ToString(f); }
     void OutConst(float f, FString& str) const { str = ToString(f); }
     RTTI::PMetaObject OutConstReturn(float f, FString& str) const { str = ToString(f); return NEW_RTTI(FTiti); }
-    void SetToto(FToto* toto) { _toto = toto; }
+    void SetToto(FToto* toto) { _toto.reset(toto); }
     const PToto& Toto() const { return _toto; }
 private:
     int _count;
@@ -180,7 +180,7 @@ class FToto2 : public FToto {
 public:
     FToto2() {}
     virtual ~FToto2() = default;
-    void SetParent1(FToto* parent) { _parent1 = parent; }
+    void SetParent1(FToto* parent) { _parent1.reset(parent); }
     const PToto& Parent1() const { return _parent1; }
     RTTI_CLASS_HEADER(, FToto2, FToto);
 private:
@@ -216,12 +216,13 @@ static void RTTIPrintClass_() {
         PPE_LOG(RTTI_UnitTest, Verbose, "   - FUNC {0} {1}({2}) : <{3}>",
             it->HasReturnValue() ? it->Result()->TypeName() : "void",
             it->Name(),
-            Fmt::FWFormator([&it](FWTextWriter& oss) {
+            FTextManipulator([&it](FTextWriter& oss) -> FTextWriter& {
                 const auto& prms = it->Parameters();
                 forrange(i, 0, prms.size()) {
-                    if (i > 0) oss << L", ";
-                    oss << prms[i].Name() << L" : " << prms[i].Traits()->TypeName() << L" <" << prms[i].Flags() << L'>';
+                    if (i > 0) oss << ", ";
+                    oss << prms[i].Name() << " : " << prms[i].Traits()->TypeName() << " <" << prms[i].Flags() << '>';
                 }
+                return oss;
             }),
             it->Flags() );
     }

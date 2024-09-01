@@ -84,10 +84,10 @@ bool FDirectReferenceCollector::Visit(const IScalarTraits* scalar, PMetaObject& 
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FLambdaReferenceCollector::Collect(const FMetaObject& root, FOnReference&& prefix, FOnReference&& postfix /* = NoFunction */) {
-    Assert((!!prefix) || (!!postfix));
-    Assert_NoAssume(not _prefix);
-    Assert_NoAssume(not _postfix);
+void FLambdaReferenceCollector::Collect(const FMetaObject& root, const FOnReference& prefix, const FOnReference& postfix /* = NoFunction */) {
+    Assert(prefix.Valid() || postfix.Valid());
+    Assert_NoAssume(not _prefix.Valid());
+    Assert_NoAssume(not _postfix.Valid());
 
     _prefix = std::move(prefix);
     _postfix = std::move(postfix);
@@ -98,10 +98,10 @@ void FLambdaReferenceCollector::Collect(const FMetaObject& root, FOnReference&& 
     _postfix.Reset();
 }
 //----------------------------------------------------------------------------
-void FLambdaReferenceCollector::Collect(const TMemoryView<const PMetaObject>& roots, FOnReference&& prefix, FOnReference&& postfix /* = NoFunction */) {
-    Assert((!!prefix) || (!!postfix));
-    Assert_NoAssume(not _prefix);
-    Assert_NoAssume(not _postfix);
+void FLambdaReferenceCollector::Collect(const TMemoryView<const PMetaObject>& roots, const FOnReference& prefix, const FOnReference& postfix /* = NoFunction */) {
+    Assert(prefix.Valid() || postfix.Valid());
+    Assert_NoAssume(not _prefix.Valid());
+    Assert_NoAssume(not _postfix.Valid());
 
     _prefix = std::move(prefix);
     _postfix = std::move(postfix);
@@ -117,10 +117,10 @@ bool FLambdaReferenceCollector::Visit(const IScalarTraits* scalar, PMetaObject& 
 
     if (pobj) {
         // doesn't call _postfix() if _prefix() failed !
-        if (not _prefix || _prefix(*scalar, *pobj)) {
+        if (not _prefix.Valid() or _prefix(*scalar, *pobj)) {
             result = FBaseReferenceCollector::Visit(scalar, pobj);
 
-            if (_postfix && not _postfix(*scalar, *pobj))
+            if (_postfix.Valid() and not _postfix(*scalar, *pobj))
                 result = false;
         }
     }

@@ -48,9 +48,10 @@ void FRemotingContext::NotFound(const FStringView& what) const {
 void FRemotingContext::WaitForSync(FRemotingCallback&& callback) const NOEXCEPT {
     FCompletionPort cp;
     cp.Start(1);
-    Sync.FireAndForget([&cp, &callback](const FRemotingServer& srv) NOEXCEPT {
-        callback(srv);
+    Sync.Emplace([&cp, &callback](const FRemotingServer& srv) NOEXCEPT -> bool {
+        const bool bKeepAlive = callback(srv);
         cp.OnJobComplete(); // resume remoting job on worker thread
+        return bKeepAlive;
     });
     ITaskContext::Get().WaitFor(cp);
 }
