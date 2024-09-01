@@ -172,15 +172,14 @@ void FMemoryTracking::EndFrame() NOEXCEPT {
 //----------------------------------------------------------------------------
 FMemoryTracking::FMemoryTracking(
     const char* optionalName /*= "unknown"*/,
-    FMemoryTracking* optionalParent /*= nullptr*/) NOEXCEPT
-:   Node{ nullptr, nullptr } {
+    FMemoryTracking* optionalParent /*= nullptr*/) NOEXCEPT {
     Reparent(optionalName, optionalParent);
 }
 //----------------------------------------------------------------------------
 bool FMemoryTracking::IsChildOf(const FMemoryTracking& other) const {
     if (&other == this)
         return true;
-    if (_parent.Get())
+    if (_parent != nullptr)
         return _parent->IsChildOf(other);
 
     return false;

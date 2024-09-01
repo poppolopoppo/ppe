@@ -78,8 +78,8 @@ public:
     const char* Name() const { return _name; }
     size_t Level() const { return _level; }
 
-    FMemoryTracking* Parent() { return _parent.Get(); }
-    const FMemoryTracking* Parent() const { return _parent.Get(); }
+    FMemoryTracking* Parent() { return _parent; }
+    const FMemoryTracking* Parent() const { return _parent; }
 
     FSnapshot User() const { return _user.Snapshot(); }
     FSnapshot System() const { return _system.Snapshot(); }
@@ -110,7 +110,7 @@ public:
     // should be called only *before* registration!
     void Reparent(const char* newName, FMemoryTracking* parent) NOEXCEPT {
         _name = newName;
-        _parent.Reset(parent, false/* unused */, false/* unused */);
+        _parent = parent;
         _level = (parent ? parent->_level + 1 : 0);
     }
 
@@ -153,12 +153,12 @@ private:
     FCounters _user;
     FCounters _system;
 
-    const char* _name;
-    size_t _level;
-    Meta::TPointerWFlags<FMemoryTracking> _parent;
+    const char* _name{};
+    size_t _level{};
+    FMemoryTracking* _parent{};
 
 public:
-    TIntrusiveListNode<FMemoryTracking> Node;
+    TIntrusiveListNode<FMemoryTracking> Node{};
 };
 //----------------------------------------------------------------------------
 class PPE_CORE_API FAutoRegisterMemoryTracking : public FMemoryTracking {
