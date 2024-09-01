@@ -19,71 +19,71 @@ static NO_INLINE void Test_SharedBuffer_() {
     FStringView source = dynamicString;
 
     FSharedBuffer notOwnedImmutable = FSharedBuffer::MakeView(MakeRawConstView(source));
-    AssertRelease_NoAssume(notOwnedImmutable.IsValid());
-    AssertRelease_NoAssume(not notOwnedImmutable.IsOwned());
-    AssertRelease_NoAssume(notOwnedImmutable.IsImmutable());
-    AssertRelease_NoAssume(notOwnedImmutable.IsMaterialized());
-    AssertRelease_NoAssume(notOwnedImmutable.MakeView() == MakeRawConstView(source));
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsValid());
+    PPE_LOG_CHECKVOID(Test_Memory, not notOwnedImmutable.IsOwned());
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsImmutable());
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsMaterialized());
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.MakeView() == MakeRawConstView(source));
 
     FSharedBuffer ownedShared = notOwnedImmutable.MakeOwned();
-    AssertRelease_NoAssume(ownedShared.IsValid());
-    AssertRelease_NoAssume(ownedShared.IsOwned());
-    AssertRelease_NoAssume(not ownedShared.IsImmutable());
-    AssertRelease_NoAssume(ownedShared.IsMaterialized());
-    AssertRelease_NoAssume(ownedShared.MakeView() != MakeRawConstView(source));
-    AssertRelease_NoAssume(Memcmp(ownedShared.MakeView(), MakeRawConstView(source)) == 0);
+    PPE_LOG_CHECKVOID(Test_Memory, ownedShared.IsValid());
+    PPE_LOG_CHECKVOID(Test_Memory, ownedShared.IsOwned());
+    PPE_LOG_CHECKVOID(Test_Memory, not ownedShared.IsImmutable());
+    PPE_LOG_CHECKVOID(Test_Memory, ownedShared.IsMaterialized());
+    PPE_LOG_CHECKVOID(Test_Memory, ownedShared.MakeView() != MakeRawConstView(source));
+    PPE_LOG_CHECKVOID(Test_Memory, Memcmp(ownedShared.MakeView(), MakeRawConstView(source)) == 0);
 
-    AssertRelease_NoAssume(notOwnedImmutable.IsValid());
-    AssertRelease_NoAssume(not notOwnedImmutable.IsOwned());
-    AssertRelease_NoAssume(notOwnedImmutable.IsImmutable());
-    AssertRelease_NoAssume(notOwnedImmutable.IsMaterialized());
-    AssertRelease_NoAssume(notOwnedImmutable.MakeView() == MakeRawConstView(source));
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsValid());
+    PPE_LOG_CHECKVOID(Test_Memory, not notOwnedImmutable.IsOwned());
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsImmutable());
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsMaterialized());
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.MakeView() == MakeRawConstView(source));
 
     FWeakSharedBuffer ownedWeak = ownedShared;
     {
         const FSharedBuffer ownedPinned = ownedWeak.Pin();
-        AssertRelease_NoAssume(ownedPinned.IsValid());
-        AssertRelease_NoAssume(ownedPinned == ownedShared);
-        AssertRelease_NoAssume(ownedPinned.IsOwned());
-        AssertRelease_NoAssume(not ownedPinned.IsImmutable());
-        AssertRelease_NoAssume(ownedPinned.IsMaterialized());
+        PPE_LOG_CHECKVOID(Test_Memory, ownedPinned.IsValid());
+        PPE_LOG_CHECKVOID(Test_Memory, ownedPinned == ownedShared);
+        PPE_LOG_CHECKVOID(Test_Memory, ownedPinned.IsOwned());
+        PPE_LOG_CHECKVOID(Test_Memory, not ownedPinned.IsImmutable());
+        PPE_LOG_CHECKVOID(Test_Memory, ownedPinned.IsMaterialized());
 
-        AssertRelease_NoAssume(notOwnedImmutable.IsValid());
-        AssertRelease_NoAssume(not notOwnedImmutable.IsOwned());
-        AssertRelease_NoAssume(notOwnedImmutable.IsImmutable());
-        AssertRelease_NoAssume(notOwnedImmutable.IsMaterialized());
-        AssertRelease_NoAssume(notOwnedImmutable.MakeView() == MakeRawConstView(source));
+        PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsValid());
+        PPE_LOG_CHECKVOID(Test_Memory, not notOwnedImmutable.IsOwned());
+        PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsImmutable());
+        PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsMaterialized());
+        PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.MakeView() == MakeRawConstView(source));
     }
 
     FUniqueBuffer ownedUnique = ownedShared.MoveToUnique();
-    AssertRelease_NoAssume(ownedUnique.IsValid());
-    AssertRelease_NoAssume(ownedUnique.IsOwned());
-    AssertRelease_NoAssume(not ownedUnique.IsImmutable());
-    AssertRelease_NoAssume(ownedUnique.IsMaterialized());
-    AssertRelease_NoAssume(MakeRawConstView(ownedUnique.MakeView()) != MakeRawConstView(source));
-    AssertRelease_NoAssume(Memcmp(MakeRawConstView(ownedUnique.MakeView()), MakeRawConstView(source)) == 0);
+    PPE_LOG_CHECKVOID(Test_Memory, ownedUnique.IsValid());
+    PPE_LOG_CHECKVOID(Test_Memory, ownedUnique.IsOwned());
+    PPE_LOG_CHECKVOID(Test_Memory, not ownedUnique.IsImmutable());
+    PPE_LOG_CHECKVOID(Test_Memory, ownedUnique.IsMaterialized());
+    PPE_LOG_CHECKVOID(Test_Memory, MakeRawConstView(ownedUnique.MakeView()) != MakeRawConstView(source));
+    PPE_LOG_CHECKVOID(Test_Memory, Memcmp(MakeRawConstView(ownedUnique.MakeView()), MakeRawConstView(source)) == 0);
 
-    AssertRelease_NoAssume(not ownedShared.IsValid());
-    AssertRelease_NoAssume(ownedShared.IsImmutable());
-    AssertRelease_NoAssume(ownedShared.IsMaterialized());
+    PPE_LOG_CHECKVOID(Test_Memory, not ownedShared.IsValid());
+    PPE_LOG_CHECKVOID(Test_Memory, ownedShared.IsImmutable());
+    PPE_LOG_CHECKVOID(Test_Memory, ownedShared.IsMaterialized());
 
-    AssertRelease_NoAssume(ownedWeak.Pin() == ownedUnique);
+    PPE_LOG_CHECKVOID(Test_Memory, ownedWeak.Pin() == ownedUnique);
 
-    AssertRelease_NoAssume(notOwnedImmutable.IsValid());
-    AssertRelease_NoAssume(not notOwnedImmutable.IsOwned());
-    AssertRelease_NoAssume(notOwnedImmutable.IsImmutable());
-    AssertRelease_NoAssume(notOwnedImmutable.IsMaterialized());
-    AssertRelease_NoAssume(notOwnedImmutable.MakeView() == MakeRawConstView(source));
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsValid());
+    PPE_LOG_CHECKVOID(Test_Memory, not notOwnedImmutable.IsOwned());
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsImmutable());
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.IsMaterialized());
+    PPE_LOG_CHECKVOID(Test_Memory, notOwnedImmutable.MakeView() == MakeRawConstView(source));
 
     ownedUnique.Reset();
 
-    AssertRelease_NoAssume(not ownedWeak.Pin().IsValid());
+    PPE_LOG_CHECKVOID(Test_Memory, not ownedWeak.Pin().IsValid());
 
-    AssertRelease_NoAssume(not ownedUnique.IsValid());
-    AssertRelease_NoAssume(ownedUnique.IsOwned());
-    AssertRelease_NoAssume(ownedUnique.IsImmutable());
-    AssertRelease_NoAssume(ownedUnique.IsMaterialized());
-    AssertRelease_NoAssume(ownedUnique.MakeView() == Default);
+    PPE_LOG_CHECKVOID(Test_Memory, not ownedUnique.IsValid());
+    PPE_LOG_CHECKVOID(Test_Memory, ownedUnique.IsOwned());
+    PPE_LOG_CHECKVOID(Test_Memory, ownedUnique.IsImmutable());
+    PPE_LOG_CHECKVOID(Test_Memory, ownedUnique.IsMaterialized());
+    PPE_LOG_CHECKVOID(Test_Memory, ownedUnique.MakeView() == Default);
 }
 //----------------------------------------------------------------------------
 void Test_Memory() {

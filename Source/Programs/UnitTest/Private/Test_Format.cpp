@@ -42,7 +42,7 @@ static void TestFormat_(const FStringView& expected, FStringLiteral format, _Arg
         "Expected    = '{2}' => {3:A}",
         format, str, expected, match );
 
-    AssertRelease(match);
+    PPE_LOG_CHECKVOID(Test_Format, match);
 }
 //----------------------------------------------------------------------------
 static void Test_Format_() {
@@ -125,41 +125,41 @@ static void Test_TextReader_Impl_() {
 
     TBasicString<_Char> str;
     VerifyRelease(r >> &str);
-    AssertRelease(str == STRING_LITERAL(_Char, "f"));
+    PPE_LOG_CHECKVOID(Test_Format, str == STRING_LITERAL(_Char, "f"));
 
     i8 i0; u16 i1; i32 i2;
     VerifyRelease(r >> &i0);
-    AssertRelease(i0 == 123);
+    PPE_LOG_CHECKVOID(Test_Format, i0 == 123);
     VerifyRelease(r.Expect(STRING_LITERAL(_Char, '/')));
     VerifyRelease(r >> &i1);
-    AssertRelease(i1 == 2707);
+    PPE_LOG_CHECKVOID(Test_Format, i1 == 2707);
     VerifyRelease(r.Expect(STRING_LITERAL(_Char, '/')));
     VerifyRelease(r >> &i2);
-    AssertRelease(i2 == -4613243);
+    PPE_LOG_CHECKVOID(Test_Format, i2 == -4613243);
 
     VerifyRelease(r >> &str);
-    AssertRelease(str == STRING_LITERAL(_Char, "vt"));
+    PPE_LOG_CHECKVOID(Test_Format, str == STRING_LITERAL(_Char, "vt"));
 
     float f0; double f1;
     VerifyRelease(r >> &f0);
-    AssertRelease(f0 == 0.972642f);
+    PPE_LOG_CHECKVOID(Test_Format, f0 == 0.972642f);
     VerifyRelease(r >> &f1);
-    AssertRelease(f1 == 0.024023);
+    PPE_LOG_CHECKVOID(Test_Format, f1 == 0.024023);
 
     VerifyRelease(r >> &str);
-    AssertRelease(str == STRING_LITERAL(_Char, "vt"));
+    PPE_LOG_CHECKVOID(Test_Format, str == STRING_LITERAL(_Char, "vt"));
 
     VerifyRelease(r >> &f0);
-    AssertRelease(f0 == 0.950977f);
+    PPE_LOG_CHECKVOID(Test_Format, f0 == 0.950977f);
     VerifyRelease(r >> &f1);
-    AssertRelease(f1 == -0.024023);
+    PPE_LOG_CHECKVOID(Test_Format, f1 == -0.024023);
 
     VerifyRelease(r >> &str);
-    AssertRelease(str == STRING_LITERAL(_Char, "done"));
+    PPE_LOG_CHECKVOID(Test_Format, str == STRING_LITERAL(_Char, "done"));
 
     r.SkipSpaces();
 
-    AssertRelease(r.Eof());
+    PPE_LOG_CHECKVOID(Test_Format, r.Eof());
 }
 static void Test_TextReader_() {
     Test_TextReader_Impl_<char>();
@@ -217,7 +217,7 @@ static void Test_StringEscaping_(TBasicStringView<_SrcChar> input, EEscape escap
 
     PPE_LOG(Test_Format, Info, "Src: {0}\n{1}", Fmt::Quoted(input, L'"'), Fmt::HexDump(input.MakeView()) );
     PPE_LOG(Test_Format, Info, "Dst: {0}\n{1}", Fmt::Quoted(output, L'"'), Fmt::HexDump(output.MakeView()) );
-    AssertRelease(output == input);
+    PPE_LOG_CHECKVOID(Test_Format, output == input);
 }
 static void Test_StringEscaping_() {
     Test_StringEscaping_<char>(MakeStringView("This\t\x10\nescaPed\23\b\r\n\"123"), EEscape::Octal);
@@ -227,11 +227,11 @@ static void Test_StringEscaping_() {
     Test_StringEscaping_<wchar_t>(MakeStringView(L"This\t\x10\nescaPed\23\b\r\n\"123\u1FA4unicode"), EEscape::Unicode);
 
     const FWString escaped = StringFormat(L"escaped = {:\\}", L"\t\r\n\u1FA4"_view);
-    AssertRelease(escaped == L"escaped = \\t\\r\\n\u1FA4"_view);
+    PPE_LOG_CHECKVOID(Test_Format, escaped == L"escaped = \\t\\r\\n\u1FA4"_view);
     Unused(escaped);
 
     const FWString escapedAndQuoted = StringFormat(L"escaped = {:q\\}", L"\t\r\n\u1FA4"_view);
-    AssertRelease(escapedAndQuoted == L"escaped = \"\\t\\r\\n\u1FA4\""_view);
+    PPE_LOG_CHECKVOID(Test_Format, escapedAndQuoted == L"escaped = \"\\t\\r\\n\u1FA4\""_view);
     Unused(escapedAndQuoted);
 }
 //----------------------------------------------------------------------------
@@ -254,38 +254,38 @@ static void Test_Base64_() {
 
         FRawStorage chk;
         chk.Resize_DiscardData(Base64DecodeSize(dst.MakeView()));
-        AssertRelease(chk.SizeInBytes() == src.SizeInBytes());
+        PPE_LOG_CHECKVOID(Test_Format, chk.SizeInBytes() == src.SizeInBytes());
         VerifyRelease(Base64Decode(dst.MakeView(), chk.MakeView()));
 
-        AssertRelease(0 == FPlatformMemory::Memcmp(src.data(), chk.data(), src.SizeInBytes()));
+        PPE_LOG_CHECKVOID(Test_Format, 0 == FPlatformMemory::Memcmp(src.data(), chk.data(), src.SizeInBytes()));
     }
 }
 //----------------------------------------------------------------------------
 static void Test_Conversion_() {
     bool b;
     VerifyRelease( FStringConversion{ "true" } >> &b );
-    AssertRelease( b );
+    PPE_LOG_CHECKVOID(Test_Format,  b );
     VerifyRelease( FStringConversion{ "1" } >> &b );
-    AssertRelease( b );
+    PPE_LOG_CHECKVOID(Test_Format,  b );
     VerifyRelease( FStringConversion{ "false" } >> &b );
-    AssertRelease( not b );
+    PPE_LOG_CHECKVOID(Test_Format,  not b );
     VerifyRelease( FStringConversion{ "0" } >> &b );
-    AssertRelease( not b );
+    PPE_LOG_CHECKVOID(Test_Format,  not b );
     int i;
     VerifyRelease( FStringConversion{ "123456" } >> &i );
-    AssertRelease( i == 123456 );
+    PPE_LOG_CHECKVOID(Test_Format,  i == 123456 );
     VerifyRelease( FStringConversion{ "-420314152" } >> &i );
-    AssertRelease( i == -420314152 );
+    PPE_LOG_CHECKVOID(Test_Format,  i == -420314152 );
     float f;
     VerifyRelease( FStringConversion{ "2.123456" } >> &f );
-    AssertRelease( f == 2.123456f );
+    PPE_LOG_CHECKVOID(Test_Format,  f == 2.123456f );
     VerifyRelease( FStringConversion{ "-120.3" } >> &f );
-    AssertRelease( f == -120.3f );
+    PPE_LOG_CHECKVOID(Test_Format,  f == -120.3f );
     double d;
     VerifyRelease( FStringConversion{ "2.123456789" } >> &d );
-    AssertRelease( d == 2.123456789 );
+    PPE_LOG_CHECKVOID(Test_Format,  d == 2.123456789 );
     VerifyRelease( FStringConversion{ "-1420.314156" } >> &d );
-    AssertRelease( d == -1420.314156 );
+    PPE_LOG_CHECKVOID(Test_Format,  d == -1420.314156 );
 }
 //----------------------------------------------------------------------------
 static void Test_Regexp_() {
