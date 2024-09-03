@@ -77,7 +77,7 @@ void* TSlabHeap<_Allocator>::Allocate(size_t size) {
 
     void* newp = nullptr;
     FBlockHeader upperBlock{};
-    upperBlock.BlockSize = checked_cast<u32>(size);
+    upperBlock.BlockSize = checked_cast<u32>(SnapSize(size));
     if (FBlockHeader* const upperBound = _freeBlocks.UpperBound(upperBlock); upperBound) {
         Assert(upperBound);
         newp = FSlab::Allocate(*this, upperBound, size);
@@ -374,6 +374,7 @@ void* TSlabHeap<_Allocator>::FSlab::Allocate(TSlabHeap& heap, FBlockHeader* bloc
     Assert(block);
     Assert_NoAssume(block->Available);
     Assert_NoAssume(block->BlockSize >= userSize);
+    Assert_NoAssume(userSize == SnapSize(userSize));
 
     heap._freeBlocks.Erase(block);
 
