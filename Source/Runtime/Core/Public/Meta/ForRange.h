@@ -10,14 +10,30 @@ namespace Meta {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 namespace details {
-template <class F, u32... Is>
-FORCE_INLINE constexpr auto expand_indices_seq(F f, std::integer_sequence<u32, Is...>) {
-    return f(std::integral_constant<u32, Is> {}...);
+template <typename T, class F, T... Is>
+FORCE_INLINE constexpr auto expand_indices_seq(F f, std::integer_sequence<T, Is...>) {
+    return f(std::integral_constant<T, Is> {}...);
+}
+template <typename T, T M, class F, T... Is>
+FORCE_INLINE constexpr auto expand_indices_seq(F f, std::integer_sequence<T, Is...>) {
+    return f(std::make_pair(std::integral_constant<T, Is / M>{}, std::integral_constant<T, Is % M>{})...);
 }
 }//!details
 template <size_t N, class F>
 FORCE_INLINE constexpr auto static_for(F f) {
-    return details::expand_indices_seq(f, std::make_integer_sequence<u32, N>{});
+    return details::expand_indices_seq<size_t>(f, std::make_integer_sequence<size_t, N>{});
+}
+template <typename T, T N, class F>
+FORCE_INLINE constexpr auto static_for(F f) {
+    return details::expand_indices_seq<T>(f, std::make_integer_sequence<T, N>{});
+}
+template <size_t N, size_t M, class F>
+FORCE_INLINE constexpr auto static_for(F f) {
+    return details::expand_indices_seq<size_t, M>(f, std::make_integer_sequence<size_t, N * M>{});
+}
+template <typename T, T N, T M, class F>
+FORCE_INLINE constexpr auto static_for(F f) {
+    return details::expand_indices_seq<T, M>(f, std::make_integer_sequence<T, N * M>{});
 }
 //----------------------------------------------------------------------------
 namespace details {
