@@ -118,10 +118,6 @@ public:
 
     NODISCARD public_event_t& Public() NOEXCEPT { return *this; }
 
-    PPE_FAKEBOOL_OPERATOR_DECL() {
-        return _delegates.LockShared()->empty();
-    }
-
     void operator ()(_Args... args) NOEXCEPT_IF(FDelegate::is_noexcept_v) {
         Invoke(std::forward<_Args>(args)...);
     }
@@ -147,6 +143,7 @@ public:
             fn(std::forward<_Args>(args)...);
             return true; // remove all functions while iterating
         });
+        Assert_NoAssume(delegatesRW->empty());
     }
 
     void Clear() {

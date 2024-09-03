@@ -45,7 +45,11 @@ private:
     lambda_type _lambda;
 
 public:
-    template <typename... _Args, Meta::TEnableIf<std::is_constructible_v<lambda_type, _Args&&...>>* = nullptr >
+    CONSTEXPR TProduction(lambda_type&& lambda) NOEXCEPT_IF(std::is_nothrow_move_constructible_v<lambda_type>)
+    :   _lambda(std::move(lambda))
+    {}
+
+    template <typename... _Args>
     CONSTEXPR TProduction(_Args&&... args) NOEXCEPT_IF(std::is_nothrow_constructible_v<lambda_type, _Args&&...>)
     :   _lambda(std::forward<_Args>(args)...)
     {}

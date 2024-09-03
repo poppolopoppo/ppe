@@ -45,7 +45,7 @@ struct FMeshBuilderSettings {
 };
 //----------------------------------------------------------------------------
 // Should be state-less8
-class IMeshFormat : Meta::FNonCopyableNorMovable {
+class IMeshFormat {
 public:
     virtual ~IMeshFormat() = default;
 

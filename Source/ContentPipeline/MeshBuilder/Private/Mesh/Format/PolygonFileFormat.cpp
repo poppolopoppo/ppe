@@ -700,7 +700,7 @@ bool FPolygonFileFormat::Save(const FGenericMesh& src, const FFilename& filename
         << "comment Source file: " << filename << Eol
         << "format " << format.Format << " 1.0" << Eol
         << "element vertex " << src.VertexCount() << Eol
-        << Fmt::Formator<char>([&](FTextWriter& oss) {
+        << FTextManipulatorRef([&](FTextWriter& oss) -> FTextWriter& {
             if (positions0) {
                 oss << "property " << PLY::EType::Float << " " << PLY::EProperty::X << Eol
                     << "property " << PLY::EType::Float << " " << PLY::EProperty::Y << Eol
@@ -723,6 +723,7 @@ bool FPolygonFileFormat::Save(const FGenericMesh& src, const FFilename& filename
                 if (texcoords3)
                     oss << "property " << PLY::EType::Float << " " << PLY::EProperty::Texcoord_w << Eol;
             }
+            return oss;
         })
         << "element face " << src.TriangleCount() << Eol
         << "property list uchar uint vertex_indices" << Eol

@@ -263,6 +263,11 @@ public:
     void Write(const TBasicStringView<_Char>& v) { return FBaseTextWriter::BaseWrite(this, v); }
     void Write(const TBasicStringLiteral<_Char>& v) { return FBaseTextWriter::BaseWrite(this, v.MakeView()); }
 
+    template <typename _Value>
+    static TBasicTextWriter& WriteValue(TPtrRef<const _Value> value, TBasicTextWriter& oss) {
+        return (oss << (*value));
+    }
+
     inline friend void swap(TBasicTextWriter& lhs, TBasicTextWriter& rhs) NOEXCEPT {
         using std::swap;
         swap(lhs._ostream, rhs._ostream);

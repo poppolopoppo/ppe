@@ -8,6 +8,10 @@ namespace PPE {
 //----------------------------------------------------------------------------
 namespace {
 //----------------------------------------------------------------------------
+PRAGMA_CLANG_WARNING_PUSH()
+PRAGMA_CLANG_WARNING_IGNORE(-Wunused-function)
+PRAGMA_CLANG_WARNING_IGNORE(-Wunused-variable)
+//----------------------------------------------------------------------------
 struct foo_t {
     int mem(int n) {
         return 42 + n;
@@ -115,7 +119,8 @@ int test_function() {
     TFunction<int()> fnref2 = TFunction<int()>::Bind<&free_fun>();
     TFunction<int(foo_t&, int)> fnref3 = TFunction<int(foo_t&, int)>::Bind<&foo_t::mem>();
     TFunction<int(int)> fnref4 = TFunction<int(int)>::Bind<&foo_t::mem>(&foo);
-    TFunction<int(int)> fnref5 = fnref4;
+    TFunction<int(int)> fnref5_0( fnref4 );
+    TFunction<int(int)> fnref5_1 = fnref4;
     TFunction<void()> fnref6 = &hello_world;
     fnref6();
     TFunction<void()> fnref7;
@@ -135,29 +140,32 @@ int test_function() {
     }};
 
     fnref12();
-    TFunction<int()> fnref13 = [fnref10]() -> int {
-        return fnref10();
+    TFunction<double()> fnref13 = [fnref10]() -> double {
+        return double(fnref10());
     };
 
     fnref13();
     // // TStaticFunction<32> fn2;
     TCallableObject va2r{fref3};
     TFunction<int()> fnref14{ fref3 };
-    TFunction<int()> fnref15 = [fnref10, fnref11, fnref12, fnref13, fnref14]() -> int {
-        return fnref10() + fnref11() + fnref12() + fnref13() + fnref14();
+    TFunction<int()> fnref15 = [fnref10, fnref11, fnref12, fnref14]() -> int {
+        return fnref10() + fnref11() + fnref12() + fnref14();
     };
     fnref15();
 
-    TCallableObject var{fnref5};
-    var(fnref5, 1);
+    TCallableObject var{fnref5_1};
+    var(fnref5_1, 1);
     STATIC_ASSERT(Meta::TDecay<decltype(var)>::arity_v == 2);
-    VariadicFunctor(fnref5, 1, &fnref5, "anything", "you", "want");
+    VariadicFunctor(fnref5_1, 1, &fnref5_1, "anything", "you", "want");
 
     TCallableObject obj12{ fnref12 };
     obj12(&fnref12);
 
+    Unused(fref1, fref2, fref7, t1, t2, t3, va2r);
     return TFunctionRef{fnref15}();
 }
+//----------------------------------------------------------------------------
+PRAGMA_CLANG_WARNING_POP()
 //----------------------------------------------------------------------------
 } //!namespace
 //----------------------------------------------------------------------------

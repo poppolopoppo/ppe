@@ -37,10 +37,10 @@ namespace {
 //----------------------------------------------------------------------------
 struct FTask_Member_ : Meta::FNonCopyableNorMovable {
     void Task(ITaskContext&) {}
-    void Task_Extra(ITaskContext&, int, bool, float, void*) {}
+    void Task_Extra(int, bool, float, void*, ITaskContext&) {}
 
     void TaskConst(ITaskContext&) const {}
-    void TaskConst_Extra(ITaskContext&, int, bool, float, void*) const {}
+    void TaskConst_Extra(int, bool, float, void*, ITaskContext&) const {}
 };
 
 FWD_REFPTR(RefCountableTask_);
@@ -56,9 +56,9 @@ public:
 };
 
 void TaskFunc_(ITaskContext&) {}
-void TaskFunc_Extra_(ITaskContext&, int, bool, float, void*) {}
-void TaskFunc_ExtraRef_(ITaskContext&, FTask_Member_&) {}
-void TaskFunc_ExtraConstRef_(ITaskContext&, const FTask_Member_&) {}
+void TaskFunc_Extra_(int, bool, float, void*, ITaskContext&) {}
+void TaskFunc_ExtraRef_(FTask_Member_&, ITaskContext&) {}
+void TaskFunc_ExtraConstRef_(const FTask_Member_&, ITaskContext&) {}
 
 NO_INLINE void Test_Function_() {
     FTask_Member_ m;
@@ -504,7 +504,7 @@ private:
         batch.Join(ctx);
     }
 
-    void AsyncWork(ITaskContext& ctx, FGraphNode* node) {
+    void AsyncWork(FGraphNode* node, ITaskContext& ctx) {
         Assert(node);
 
         Graph->WorkerBegin();

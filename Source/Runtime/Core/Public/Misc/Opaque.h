@@ -28,11 +28,11 @@ using wstring_format = TFunctionRef<void(FWTextWriter&)>;
 //----------------------------------------------------------------------------
 template <typename T>
 string_format Format(const T& value) {
-    return [&value](FTextWriter& oss) { oss << value; };
+    return { Meta::StaticFunction<&FTextWriter::WriteValue<T>>, value };
 }
 template <typename T>
 wstring_format FormatW(const T& value) {
-    return [&value](FWTextWriter& oss) { oss << value; };
+    return { Meta::StaticFunction<&FWTextWriter::WriteValue<T>>, value };
 }
 //----------------------------------------------------------------------------
 // *_view variants are packed inside a single dynamically allocated block

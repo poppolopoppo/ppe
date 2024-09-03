@@ -237,10 +237,10 @@ struct TCallableObject : TCallableObject<_Operator, void> {
     static CONSTEXPR size_t arity_v = parent_type::arity_v;
     static CONSTEXPR bool is_noexcept_v = parent_type::is_noexcept_v;
 
-    template <typename T>
-    using value_type = typename parent_type::template value_type<T>;
-    template <typename... T>
-    static constexpr bool is_invocable_v = parent_type::template is_invocable_v<T...>;
+    template <typename U>
+    using value_type = typename parent_type::template value_type<U>;
+    template <typename... U>
+    static constexpr bool is_invocable_v = parent_type::template is_invocable_v<U...>;
 
     CONSTEXPR TCallableObject(const T& ) NOEXCEPT
         : parent_type(&T::operator ())

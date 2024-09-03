@@ -413,7 +413,7 @@ public: // TTable<>
             Entries.emplace_back(name);
 
             ForeachHeader([&](const auto& bench) {
-                PendingRuns.emplace_back(Meta::ForceInit/* remove capture size limit */,
+                PendingRuns.emplace_back(
                     [this, row, column, &bench, args...](ITaskContext&) {
                         FRun run = FBenchmark::Run(bench, args...);
                         Entries[row].Row[column] = std::move(run);

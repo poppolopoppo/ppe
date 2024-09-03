@@ -63,7 +63,7 @@ FRemotingServer::FRemotingServer() NOEXCEPT
 {}
 //----------------------------------------------------------------------------
 FRemotingServer::~FRemotingServer() NOEXCEPT {
-    Assert_NoAssume(not _sync); // should have already flush all callbacks :/
+    Assert_NoAssume(_sync.empty()); // should have already flush all callbacks :/
 }
 //----------------------------------------------------------------------------
 void FRemotingServer::Add(URemotingEndpoint&& endpoint) {
@@ -102,6 +102,7 @@ void FRemotingServer::Remove(const PBaseEndpoint& endpoint) {
 //----------------------------------------------------------------------------
 void FRemotingServer::Start() {
     AssertIsMainThread();
+    Assert_NoAssume(_sync.empty());
 
     Network::FHttpServer::Start(2);
 }
@@ -118,6 +119,8 @@ void FRemotingServer::Shutdown() {
     _sync.FireAndForget(*this);
 
     Network::FHttpServer::Shutdown();
+
+    Assert_NoAssume(_sync.empty());
 }
 //----------------------------------------------------------------------------
 bool FRemotingServer::OnRequest(Network::FServicingPort& port, const FRemotingRequest& request) const {

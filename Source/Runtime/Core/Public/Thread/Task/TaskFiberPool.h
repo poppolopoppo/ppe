@@ -25,6 +25,7 @@ public:
     using FHandleRef = TPtrRef<const FHandle>;
 
     using FCallback = void (*)();
+    using FWakeUpEvent = TFunction<void()>;
 
     explicit FTaskFiberPool(FCallback&& callback) NOEXCEPT;
     ~FTaskFiberPool();
@@ -45,7 +46,7 @@ public:
     void UsageStats(size_t* reserved, size_t* inUse) NOEXCEPT;
 #endif
 
-    static void AttachWakeUpCallback(FHandleRef fiber, TFunctionRef<void()>&& onWakeUp);
+    static void AttachWakeUpCallback(FHandleRef fiber, FWakeUpEvent&& onWakeUp);
     static size_t ReservedStackSize() NOEXCEPT;
     static void ResetWakeUpCallback(FHandleRef fiber);
     static void YieldCurrentFiber(FHandleRef to, bool release);

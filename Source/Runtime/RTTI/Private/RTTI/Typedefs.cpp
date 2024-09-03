@@ -38,9 +38,8 @@ NODISCARD static bool ParseBinaryData_(const TBasicStringConversion<_Char>& src,
     const size_t len = Base64DecodeSize(src.Input);
     dst->Resize_DiscardData(len);
 
-    TMemoryView<u8> writer{ dst->MakeView() };
-    return Base64Decode(src.Input, TFunctionRef([&writer](u8&& bin) {
-        writer.ShiftFront().back() = bin;
+    return Base64Decode(src.Input, TFunctionRef([writer{ dst->MakeView() }](u8&& bin) mutable {
+        writer.Eat(1).front() = bin;
     }));
 }
 //----------------------------------------------------------------------------

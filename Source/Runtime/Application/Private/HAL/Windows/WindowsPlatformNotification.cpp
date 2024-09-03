@@ -71,12 +71,12 @@ public:
 
     using FUserCommands = SPARSEARRAY_INSITU(Window, FUserCmd);
 
-    void Commands(TFunctionRef<void(FUserCommands& cmds)>&& event) {
+    void Commands(TFunction<void(FUserCommands& cmds)>&& event) {
         const Meta::FLockGuard scopeLock(_barrier);
         event(_commands);
     }
 
-    void Taskbar(TFunctionRef<void(::ITaskbarList3& taskbar, ::HWND window) > && event) {
+    void Taskbar(TFunction<void(::ITaskbarList3& taskbar, ::HWND window) > && event) {
         AsyncSyscall([this, event(std::move(event))](ITaskContext&) {
             const Meta::FLockGuard scopeLock(_barrier);
 

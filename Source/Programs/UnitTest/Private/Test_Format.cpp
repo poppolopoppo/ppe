@@ -192,7 +192,7 @@ static void Test_TextWriter_Impl_() {
     oss << (const void*)&oss << Eol;
     oss << heap << Eol;
     oss << STRING_LITERAL(_Char, '<')
-        << FTextFormat::PadCenter(77, L'-')
+        << FTextFormat::PadCenter(77, STRING_LITERAL(_Char, '-'))
         << FTextFormat::Uppercase
         << STRING_LITERAL(_Char, " Centered Uppercase ")
         << STRING_LITERAL(_Char, '>') << Endl;
