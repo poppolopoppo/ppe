@@ -546,7 +546,10 @@ static NO_INLINE void Test_CircularReferences_() {
     VerifyRelease(RTTI::CheckCircularReferences(MakeView(objs)));
 }
 //----------------------------------------------------------------------------
-static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Serialize::ISerializer& serializer, const FFilename& filename) {
+static NO_INLINE void Test_Serializer_(
+    const Serialize::FDeserializeContext& deserialize,
+    const Serialize::FSerializeContext& serialize,
+    const RTTI::FMetaTransaction& input, const Serialize::ISerializer& serializer, const FFilename& filename) {
     PPE_LOG_CHECKVOID(Test_RTTI, not input.empty());
 
     const FFilename fname_binz = filename.WithReplacedExtension(FFS::Z());
@@ -555,7 +558,7 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
     MEMORYSTREAM(Stream) uncompressed;
     {
         Serialize::FTransactionSaver saver{ input, filename };
-        serializer.Serialize(saver, &uncompressed);
+        serializer.Serialize(serialize, saver, &uncompressed);
 #if 0
         auto compressed = VFS_OpenBinaryWritable(filename, EAccessPolicy::Truncate);
         LZJB::CompressMemory(compressed.get(), uncompressed.MakeView());
@@ -591,7 +594,7 @@ static NO_INLINE void Test_Serializer_(const RTTI::FMetaTransaction& input, Seri
         PPE_LOG_CHECKVOID(Test_RTTI, uncompressed.MakeView().RangeEqual(decompressed.MakeView()));
 
         Serialize::FTransactionLinker linker{ filename };
-        Serialize::ISerializer::Deserialize(serializer, decompressed.MakeView(), &linker);
+        Serialize::ISerializer::Deserialize(deserialize, serializer, decompressed.MakeView(), &linker);
         linker.Resolve(output);
     }
 
@@ -661,7 +664,8 @@ public:
 
     RTTI::PMetaObject object(const RTTI::FPathName& path) const {
         const RTTI::FMetaDatabaseReadable db;
-        return db->ObjectIFP(path);
+        RTTI::PMetaObject result{ db->ObjectIFP(path) };
+        return result;
     }
 
     RTTI::FPathName share(const RTTI::PMetaObject& obj) const {
@@ -669,7 +673,7 @@ public:
             return RTTI::FPathName{};
 
         const RTTI::FMetaDatabaseReadWritable db;
-        db->RegisterObject(obj.get());
+        db->RegisterObject(obj);
 
         return RTTI::FPathName::FromObject(*obj);
     }
@@ -833,6 +837,10 @@ static NO_INLINE void Test_TransactionSerialization_() {
 
     FRTTIAtomRandomizer_ rand(test_count, 0xabadcafedeadbeefull);
 
+    Serialize::FDeserializeContext deserialize{};
+    Serialize::FSerializeContext serialize{};
+    serialize.SetMinify(minify);
+
     RTTI::FMetaTransaction import(RTTI::FName(MakeStringView("UnitTest_Import")));
     {
         FWStringBuilder oss;
@@ -850,17 +858,15 @@ static NO_INLINE void Test_TransactionSerialization_() {
         const FWString basePath = StringFormat(L"Saved:/RTTI/UnitTest_Import_{0}", RTTI::MetaClass<T>()->Name());
         {
             Serialize::USerializer bin{ Serialize::FBinarySerializer::Get() };
-            Test_Serializer_(import, *bin, basePath + L"_bin.bin");
+            Test_Serializer_(deserialize, serialize, import, *bin, basePath + L"_bin.bin");
         }
         {
             Serialize::USerializer json{ Serialize::FJsonSerializer::Get() };
-            json->SetMinify(minify);
-            Test_Serializer_(import, *json, basePath + L"_json.json");
+            Test_Serializer_(deserialize, serialize, import, *json, basePath + L"_json.json");
         }
         {
             Serialize::USerializer text{ Serialize::FTextSerializer::Get() };
-            text->SetMinify(minify);
-            Test_Serializer_(import, *text, basePath + L"_text.txt");
+            Test_Serializer_(deserialize, serialize, import, *text, basePath + L"_text.txt");
         }
     }
 
@@ -880,17 +886,15 @@ static NO_INLINE void Test_TransactionSerialization_() {
         const FWString basePath = StringFormat(L"Saved:/RTTI/UnitTest_Input_{0}", RTTI::MetaClass<T>()->Name());
         {
             Serialize::USerializer bin{ Serialize::FBinarySerializer::Get() };
-            Test_Serializer_(input, *bin, basePath + L"_bin.bin");
+            Test_Serializer_(deserialize, serialize, input, *bin, basePath + L"_bin.bin");
         }
         {
             Serialize::USerializer json{ Serialize::FJsonSerializer::Get() };
-            json->SetMinify(minify);
-            Test_Serializer_(input, *json, basePath + L"_json.json");
+            Test_Serializer_(deserialize, serialize, input, *json, basePath + L"_json.json");
         }
         {
             Serialize::USerializer text{ Serialize::FTextSerializer::Get() };
-            text->SetMinify(minify);
-            Test_Serializer_(input, *text, basePath + L"_text.txt");
+            Test_Serializer_(deserialize, serialize, input, *text, basePath + L"_text.txt");
         }
     }
 }
@@ -903,10 +907,10 @@ static NO_INLINE void Test_TransactionSerializer_() {
         { L"Saved:/RTTI" } );
 
     Serialize::FTransactionSources importSources;
-    import.BuildTransaction(importSources);
-    import.SaveTransaction();
+    import.BuildTransaction({}, importSources);
+    import.SaveTransaction({});
     import.UnloadTransaction();
-    import.LoadTransaction();
+    import.LoadTransaction({});
     import.MountToDB();
 
     Serialize::FDirectoryTransaction input(
@@ -916,10 +920,10 @@ static NO_INLINE void Test_TransactionSerializer_() {
         { L"Saved:/RTTI" });
 
     Serialize::FTransactionSources inputSources;
-    input.BuildTransaction(inputSources);
-    input.SaveTransaction();
+    input.BuildTransaction({}, inputSources);
+    input.SaveTransaction({});
     input.UnloadTransaction();
-    input.LoadTransaction();
+    input.LoadTransaction({});
     input.MountToDB();
 
     input.UnmountFromDB();

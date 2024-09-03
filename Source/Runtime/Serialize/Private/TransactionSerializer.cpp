@@ -80,7 +80,7 @@ FTransactionSerializer::~FTransactionSerializer() {
     Assert(not _transaction);
 }
 //----------------------------------------------------------------------------
-void FTransactionSerializer::BuildTransaction(FSources& sources) {
+void FTransactionSerializer::BuildTransaction(const FDeserializeContext& ctx, FSources& sources) {
     if (_transaction)
         UnloadTransaction();
 
@@ -96,7 +96,7 @@ void FTransactionSerializer::BuildTransaction(FSources& sources) {
     VECTOR(Transient, FTransactionLinker) linkers;
     linkers.resize(sources.size());
 
-    ParallelFor(0, sources.size(), [&linkers, &sources](size_t i) {
+    ParallelFor(0, sources.size(), [&ctx, &linkers, &sources](size_t i) {
         FTransactionLinker linker(sources[i]);
 
         const USerializer serializer = ISerializer::FromExtname(linker.Filename().Extname());
@@ -105,7 +105,7 @@ void FTransactionSerializer::BuildTransaction(FSources& sources) {
             // using deferred IO to avoid blocking workers on IO
             const auto reader{ VFS_OpenBinaryReadable(linker.Filename()) };
             const bool succeed = UsingDeferredStream(reader.get(), [&](IBufferedStreamReader* async) {
-                return ISerializer::InteractiveDeserialize(*serializer, *async, &linker);
+                return ISerializer::InteractiveDeserialize(ctx, *serializer, *async, &linker);
             });
 
             // interactive de-serialization allows for retrying when serializer failed
@@ -123,7 +123,7 @@ void FTransactionSerializer::BuildTransaction(FSources& sources) {
     _transaction->Load();
 }
 //----------------------------------------------------------------------------
-void FTransactionSerializer::SaveTransaction() {
+void FTransactionSerializer::SaveTransaction(const FSerializeContext& ctx) {
     Assert(_transaction);
     Assert_NoAssume(_transaction->IsLoaded() || _transaction->IsMounted());
 
@@ -139,7 +139,7 @@ void FTransactionSerializer::SaveTransaction() {
             _id, _namespace, fnameZ);
 
         MEMORYSTREAM(Transient) raw;
-        serializer->Serialize(saver, &raw);
+        serializer->Serialize(ctx, saver, &raw);
 
         RAWSTORAGE(Transient, u8) compressed;
         const size_t compressedSize = Compression::CompressMemory(compressed, raw.MakeView(), Compression::HighCompression);
@@ -156,12 +156,12 @@ void FTransactionSerializer::SaveTransaction() {
 
         const auto writer{ VFS_OpenBinaryWritable(saver.Filename(), EAccessPolicy::Truncate) };
         UsingDeferredStream(writer.get(), [&](IBufferedStreamWriter* async) {
-            serializer->Serialize(saver, async);
+            serializer->Serialize(ctx, saver, async);
         });
     }
 }
 //----------------------------------------------------------------------------
-void FTransactionSerializer::LoadTransaction() {
+void FTransactionSerializer::LoadTransaction(const FDeserializeContext& ctx) {
     Assert(not _transaction);
 
     FTransactionLinker linker(IdToTransaction(_id));
@@ -188,7 +188,7 @@ void FTransactionSerializer::LoadTransaction() {
         VerifyRelease(Compression::DecompressMemory(raw.MakeView(), compressed.MakeView()));
         compressed.clear_ReleaseMemory();
 
-        serializer->Deserialize(raw, &linker);
+        serializer->Deserialize(ctx, raw, &linker);
     }
     else {
         PPE_LOG(Serialize, Emphasis, "loading transaction '{0}' with namespace <{1}> from '{2}' ...",
@@ -196,7 +196,7 @@ void FTransactionSerializer::LoadTransaction() {
 
         const auto reader{ VFS_OpenBinaryReadable(linker.Filename()) };
         UsingDeferredStream(reader.get(), [&](IBufferedStreamReader* async) {
-            serializer->Deserialize(*async, &linker);
+            serializer->Deserialize(ctx, *async, &linker);
         });
     }
 
@@ -244,15 +244,22 @@ void FTransactionSerializer::RTTI_Load(RTTI::ILoadContext& context) {
 
     if (_options ^ ETransactionOptions::AutoBuild &&
         not VFS_FileExists(IdToTransaction(_id))) {
+
+        FDeserializeContext deserialize{};
         FSources sources;
-        BuildTransaction(sources);
-        SaveTransaction();
+        BuildTransaction(deserialize, sources);
+
+        FSerializeContext serialize{};
+        if (_options ^ ETransactionOptions::Compressed)
+            serialize.SetMinify(true);
+
+        SaveTransaction(serialize);
         UnloadTransaction();
     }
 
     if (_options ^ ETransactionOptions::AutoImport ||
         _options ^ ETransactionOptions::AutoMount )
-        LoadTransaction();
+        LoadTransaction(FDeserializeContext{});
 
     if (_options ^ ETransactionOptions::AutoMount)
         MountToDB();

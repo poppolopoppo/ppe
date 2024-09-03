@@ -15,8 +15,9 @@ namespace Serialize {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FBinarySerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
+void FBinarySerializer::Deserialize(const FDeserializeContext& ctx, IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);
+    Unused(ctx);
 
     UsingBufferedStream(&input, [linker](IBufferedStreamReader* buffered) {
         FBinaryFormatReader reader;
@@ -24,8 +25,9 @@ void FBinarySerializer::Deserialize(IStreamReader& input, FTransactionLinker* li
     });
 }
 //----------------------------------------------------------------------------
-void FBinarySerializer::Serialize(const FTransactionSaver& saver, IStreamWriter* output) const {
+void FBinarySerializer::Serialize(const FSerializeContext& ctx, const FTransactionSaver& saver, IStreamWriter* output) const {
     Assert(output);
+    Unused(ctx);
 
     FBinaryFormatWriter writer;
     writer.Append(saver);

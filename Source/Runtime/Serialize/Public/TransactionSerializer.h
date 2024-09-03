@@ -61,10 +61,10 @@ public:
 
     using FSources = FTransactionSources;
 
-    void BuildTransaction(FSources& sources);
-    void SaveTransaction();
+    void BuildTransaction(const FDeserializeContext& ctx, FSources& sources);
+    void SaveTransaction(const FSerializeContext& ctx);
 
-    void LoadTransaction();
+    void LoadTransaction(const FDeserializeContext& ctx);
     void UnloadTransaction();
 
     void MountToDB();

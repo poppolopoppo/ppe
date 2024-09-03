@@ -58,12 +58,9 @@ struct FDiscardJson_ {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FJsonSerializer::FJsonSerializer(bool minify/* = true */) {
-    SetMinify(minify);
-}
-//----------------------------------------------------------------------------
-void FJsonSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
+void FJsonSerializer::Deserialize(const FDeserializeContext& ctx, IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);
+    Unused(ctx);
 
     FDiscardJson_ doc;
 
@@ -76,16 +73,16 @@ void FJsonSerializer::Deserialize(IStreamReader& input, FTransactionLinker* link
         PPE_THROW_IT(FJsonSerializerException("failed to convert Json to RTTI"));
 }
 //----------------------------------------------------------------------------
-void FJsonSerializer::Serialize(const FTransactionSaver& saver, IStreamWriter* output) const {
+void FJsonSerializer::Serialize(const FSerializeContext& ctx, const FTransactionSaver& saver, IStreamWriter* output) const {
     Assert(output);
 
     FDiscardJson_ doc;
 
     RTTI_to_Json(saver, &doc.json);
 
-    UsingBufferedStream(output, [this, &doc](IBufferedStreamWriter* buffered) {
+    UsingBufferedStream(output, [&doc, &ctx](IBufferedStreamWriter* buffered) {
         FTextWriter oss(buffered);
-        doc.json.ToStream(oss, Minify());
+        doc.json.ToStream(oss, ctx.Minify());
     });
 }
 //----------------------------------------------------------------------------

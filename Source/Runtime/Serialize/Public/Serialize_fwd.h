@@ -19,6 +19,8 @@ namespace Serialize {
 enum class ESerializeFlags : u32;
 enum class ESerializeFormat : u32;
 //----------------------------------------------------------------------------
+struct FDeserializeContext;
+struct FSerializeContext;
 FWD_PUREINTEFACE_PTR(Serializer);
 //----------------------------------------------------------------------------
 class FTransactionLinker;

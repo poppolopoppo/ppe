@@ -260,11 +260,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextSerializer::FTextSerializer(bool minify/* = true */) {
-    SetMinify(minify);
-}
-//----------------------------------------------------------------------------
-void FTextSerializer::Deserialize(IStreamReader& input, FTransactionLinker* linker) const {
+void FTextSerializer::Deserialize(const FDeserializeContext& ctx, IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);
 
     const FWString fname = linker->Filename().ToWString();
@@ -291,11 +287,11 @@ void FTextSerializer::Deserialize(IStreamReader& input, FTransactionLinker* link
     }
 }
 //----------------------------------------------------------------------------
-void FTextSerializer::Serialize(const FTransactionSaver& saver, IStreamWriter* output) const {
+void FTextSerializer::Serialize(const FSerializeContext& ctx, const FTransactionSaver& saver, IStreamWriter* output) const {
     Assert(output);
 
-    UsingBufferedStream(output, [this, &saver](IBufferedStreamWriter* buffered) {
-        FTextSerialize_ visitor(*buffered, Minify());
+    UsingBufferedStream(output, [&saver, &ctx](IBufferedStreamWriter* buffered) {
+        FTextSerialize_ visitor(*buffered, ctx.Minify());
         visitor.Append(saver.LoadedRefs());
     });
 }

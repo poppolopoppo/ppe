@@ -52,20 +52,22 @@ static NO_INLINE FPlatformDialog::EResult ShowSerializeException_(const FTransac
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void ISerializer::Deserialize(
+    const FDeserializeContext& ctx,
     const ISerializer& serializer,
     const TMemoryView<const u8>& rawData,
     FTransactionLinker* linker ) {
     Assert(not rawData.empty());
 
     FMemoryViewReader reader(rawData);
-    serializer.Deserialize(reader, linker);
+    serializer.Deserialize(ctx, reader, linker);
 }
 //----------------------------------------------------------------------------
 bool ISerializer::InteractiveDeserialize(
+    const FDeserializeContext& ctx,
     const ISerializer& serializer,
     IStreamReader& input, FTransactionLinker* linker) {
     PPE_TRY {
-        serializer.Deserialize(input, linker);
+        serializer.Deserialize(ctx, input, linker);
         return true;
     }
     PPE_CATCH(const FSerializeException& e)

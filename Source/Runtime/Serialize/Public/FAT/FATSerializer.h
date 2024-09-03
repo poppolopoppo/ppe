@@ -27,8 +27,8 @@ public:
     NODISCARD PPE_SERIALIZE_API static USerializer Get();
 
 public: // ISerializer
-    virtual void Deserialize(IStreamReader& input, FTransactionLinker* linker) const override final;
-    virtual void Serialize(const FTransactionSaver& saver, IStreamWriter* output) const override final;
+    virtual void Deserialize(const FDeserializeContext& ctx, IStreamReader& input, FTransactionLinker* linker) const override final;
+    virtual void Serialize(const FSerializeContext& ctx, const FTransactionSaver& saver, IStreamWriter* output) const override final;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
