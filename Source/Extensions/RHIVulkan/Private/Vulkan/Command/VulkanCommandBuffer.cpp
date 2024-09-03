@@ -955,9 +955,9 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
         Assert(pLocalGeom);
 
         dst.BlasHandle = pLocalGeom->BLAS();
-        dst.TransformRow0 = src.Transform.Row_x(); // decompose for row-major order
-        dst.TransformRow1 = src.Transform.Row_y();
-        dst.TransformRow2 = src.Transform.Row_z();
+        dst.TransformRow0 = src.Transform.Row<0>(); // decompose for row-major order
+        dst.TransformRow1 = src.Transform.Row<1>();
+        dst.TransformRow2 = src.Transform.Row<2>();
         dst.CustomIndex = src.CustomId;
         dst.Mask = src.Mask;
         dst.InstanceOffset = pBuildTask->MaxHitShaderCount;

@@ -43,7 +43,7 @@
 //#define NOCTLMGR				// Control and Dialog routines
 #define NODRAWTEXT				// DrawText() and DT_*
 //#define NOGDI					// All GDI #defines and routines
-#define NOKERNwindows minimalEL				// All KERNEL #defines and routines
+#define NOKERNwindows minimalEL	// All KERNEL #defines and routines
 //#define NOUSER				// All USER #defines and routines
 //#define NONLS					// All NLS #defines and routines
 //#define NOMB					// MB_* and MessageBox()
@@ -96,3 +96,5 @@ struct IUnknown;
 #undef RemoveDirectory
 #undef Yield
 #undef small
+//#undef near // can't undef those two, #TODO: remove Windows.h from default includes
+//#undef far

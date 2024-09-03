@@ -79,7 +79,9 @@ public:
     void SetSpeedMultiplierMinMax(const float2& value) { _speedMultiplierMinMax = value; }
 
     PPE_APPLICATION_API void SetFov(float value) NOEXCEPT;
-    PPE_APPLICATION_API void LookAt(const float3& position, float heading, float pitch, bool bTeleport = false) NOEXCEPT;
+
+    PPE_APPLICATION_API void LookAt(const float3& eye, const float3& target, const float3& up, bool bTeleport = false) NOEXCEPT;
+    PPE_APPLICATION_API void LookAt(const float3& eye, float heading, float pitch, bool bTeleport = false) NOEXCEPT;
 
     void Translate(const float3& translate) { _deltaPosition += translate; }
     void Rotate(const float2& angle) { _deltaRotation += angle; }

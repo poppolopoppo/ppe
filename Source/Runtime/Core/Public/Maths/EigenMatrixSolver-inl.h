@@ -98,14 +98,14 @@ template <typename T, size_t N>
 void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) const
 {
     // Start with the identity matrix.
-    eigenvectors = matrix_type::Identity();
+    eigenvectors = matrix_type::Identity;
 
     // Multiply the Householder reflections using backward accumulation.
     int r, c;
     for (int i = int(N) - 3, rmin = i + 1; i >= 0; --i, --rmin)
     {
         // Copy the v vector and 2/Dot(v,v) from the matrix.
-        T const* column = &_matrix.data().raw[i];
+        T const* column = &_matrix.data[i];
         T twoinvvdv = column[N*(i + 1)];
         for (r = 0; r < i + 1; ++r)
         {
@@ -123,7 +123,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) con
             _vectorW[r] = (T)0;
             for (c = rmin; c < int(N); ++c)
             {
-                _vectorW[r] += _vectorV[c]*eigenvectors.data().raw[r + N*c];
+                _vectorW[r] += _vectorV[c]*eigenvectors.data[r + N*c];
             }
             _vectorW[r] *= twoinvvdv;
         }
@@ -133,7 +133,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) con
         {
             for (c = 0; c < int(N); ++c)
             {
-                eigenvectors.data().raw[c + N*r] -= _vectorV[r]*_vectorW[c];
+                eigenvectors.data[c + N*r] -= _vectorV[r]*_vectorW[c];
             }
         }
     }
@@ -144,8 +144,8 @@ void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) con
         for (r = 0; r < int(N); ++r)
         {
             int j = givens.index + N*r;
-            T& q0 = eigenvectors.data().raw[j];
-            T& q1 = eigenvectors.data().raw[j + 1];
+            T& q0 = eigenvectors.data[j];
+            T& q1 = eigenvectors.data[j + 1];
             T prd0 = givens.cs * q0 - givens.sn * q1;
             T prd1 = givens.sn * q0 + givens.cs * q1;
             q0 = prd0;
@@ -167,22 +167,22 @@ void TSymmetricEigensolver<T, N>::GetEigenvectors(matrix_type& eigenvectors) con
                 int start = i, current = i, j, next;
                 for (j = 0; j < int(N); ++j)
                 {
-                    _vectorP[j] = eigenvectors.data().raw[i + N*j];
+                    _vectorP[j] = eigenvectors.data[i + N*j];
                 }
                 while ((next = _permutation[current]) != start)
                 {
                     _visited[current] = 1;
                     for (j = 0; j < int(N); ++j)
                     {
-                        eigenvectors.data().raw[current + N*j] =
-                            eigenvectors.data().raw[next + N*j];
+                        eigenvectors.data[current + N*j] =
+                            eigenvectors.data[next + N*j];
                     }
                     current = next;
                 }
                 _visited[current] = 1;
                 for (j = 0; j < int(N); ++j)
                 {
-                    eigenvectors.data().raw[current + N*j] = _vectorP[j];
+                    eigenvectors.data[current + N*j] = _vectorP[j];
                 }
             }
         }
@@ -262,7 +262,7 @@ void TSymmetricEigensolver<T, N>::GetEigenvector(int c, vector_type& eigenvector
         for (int i = int(N) - 3; i >= 0; --i)
         {
             // Get the Householder vector v.
-            T const* column = &_matrix.data().raw[i];
+            T const* column = &_matrix.data[i];
             T twoinvvdv = column[N*(i + 1)];
             int r;
             for (r = 0; r < i + 1; ++r)
@@ -337,7 +337,7 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
         }
         for (r = ip1; r < int(N); ++r)
         {
-            T vr = _matrix.data().raw[r + N*i];
+            T vr = _matrix.data[r + N*i];
             _vectorV[r] = vr;
             length += vr * vr;
         }
@@ -366,11 +366,11 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
             _vectorP[r] = (T)0;
             for (c = i; c < r; ++c)
             {
-                _vectorP[r] += _matrix.data().raw[r + N*c] * _vectorV[c];
+                _vectorP[r] += _matrix.data[r + N*c] * _vectorV[c];
             }
             for (/**/; c < int(N); ++c)
             {
-                _vectorP[r] += _matrix.data().raw[c + N*r] * _vectorV[c];
+                _vectorP[r] += _matrix.data[c + N*r] * _vectorV[c];
             }
             _vectorP[r] *= twoinvvdv;
             pdvtvdv += _vectorP[r] * _vectorV[r];
@@ -388,11 +388,11 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
             T vr = _vectorV[r];
             T wr = _vectorW[r];
             T offset = vr * wr * (T)2;
-            _matrix.data().raw[r + N*r] -= offset;
+            _matrix.data[r + N*r] -= offset;
             for (c = r + 1; c < int(N); ++c)
             {
                 offset = vr * _vectorW[c] + wr * _vectorV[c];
-                _matrix.data().raw[c + N*r] -= offset;
+                _matrix.data[c + N*r] -= offset;
             }
         }
 
@@ -401,10 +401,10 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
         // index i+1 is also not stored; instead, the quantity 2/Dot(v,v) is
         // stored for use in eigenvector construction. That construction must
         // take into account the implied components that are not stored.
-        _matrix.data().raw[i + N*ip1] = twoinvvdv;
+        _matrix.data[i + N*ip1] = twoinvvdv;
         for (r = ip1 + 1; r < int(N); ++r)
         {
-            _matrix.data().raw[i + N*r] = _vectorV[r];
+            _matrix.data[i + N*r] = _vectorV[r];
         }
     }
 
@@ -413,10 +413,10 @@ void TSymmetricEigensolver<T, N>::Tridiagonalize()
     int k, ksup = int(N) - 1, index = 0, delta = N + 1;
     for (k = 0; k < ksup; ++k, index += delta)
     {
-        mDiagonal[k] = _matrix.data().raw[index];
-        _superdiagonal[k] = _matrix.data().raw[index + 1];
+        mDiagonal[k] = _matrix.data[index];
+        _superdiagonal[k] = _matrix.data[index + 1];
     }
-    mDiagonal[k] = _matrix.data().raw[index];
+    mDiagonal[k] = _matrix.data[index];
 }
 PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------

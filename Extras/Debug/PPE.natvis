@@ -1045,16 +1045,39 @@
       </Synthetic>
     </Expand>
   </Type>
-  <Type Name="PPE::TScalarMatrix&lt;*, *, *&gt;">
+  <Type Name="PPE::details::TScalarMatrixStorage&lt;*, *, *&gt;">
+    <DisplayString>[{$T2},{$T3}] {rows,na}</DisplayString>
     <Expand>
       <ArrayItems>
         <Direction>Forward</Direction>
-        <Rank>2</Rank>
-        <Size>$T3</Size>
-        <ValuePointer>_data.raw</ValuePointer>
+        <Size>$T2</Size>
+        <ValuePointer>rows</ValuePointer>
       </ArrayItems>
     </Expand>
   </Type>
+  <Type Name="PPE::FQuaternion">
+    <DisplayString>{vec}</DisplayString>
+    <Expand>
+      <ExpandedItem>vec</ExpandedItem>
+    </Expand>
+  </Type>
+  <!--<Type Name="PPE::details::TScalarMatrixExpr&lt;*, *, *, *&gt;" Priority="Low">
+    <DisplayString>[{$T2}x{$T3}]</DisplayString>
+    <Expand>
+      <CustomListItems>
+        <Variable Name="row" InitialValue="0" />
+          <Loop>
+            <If Condition="row == $T3">
+              <Break />
+            </If>
+            <Item Name="[{row}]">
+              Get(0, row), Get(1, row), Get(2, row)
+            </Item>
+            <Exec>++row</Exec>
+          </Loop>
+      </CustomListItems>
+    </Expand>
+  </Type>-->
   <!--
     Token
     ================================================================================

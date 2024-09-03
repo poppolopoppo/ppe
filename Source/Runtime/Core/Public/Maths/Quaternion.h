@@ -11,61 +11,62 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-class PPE_CORE_API FQuaternion {
+class FQuaternion {
 public:
-    CONSTEXPR FQuaternion() NOEXCEPT : data{} {}
+    CONSTEXPR FQuaternion() NOEXCEPT : vec{} {}
     FORCE_INLINE FQuaternion(Meta::FNoInit) NOEXCEPT {}
-    FQuaternion(Meta::FForceInit);
-    explicit FQuaternion(float broadcast);
-    explicit FQuaternion(const float4& value);
-    FQuaternion(const float3& value, float w);
-    FQuaternion(const float2& xy, float z, float w);
-    FQuaternion(float x, float y, float z, float w);
 
-    FQuaternion(const FQuaternion& other);
-    FQuaternion& operator =(const FQuaternion& other);
+    CONSTEXPR FQuaternion(Meta::FForceInit) NOEXCEPT;
+    CONSTEXPR explicit FQuaternion(float broadcast) NOEXCEPT;
+    CONSTEXPR explicit FQuaternion(const float4& value) NOEXCEPT;
+    CONSTEXPR FQuaternion(const float3& value, float w) NOEXCEPT;
+    CONSTEXPR FQuaternion(const float2& xy, float z, float w) NOEXCEPT;
+    CONSTEXPR FQuaternion(float x, float y, float z, float w) NOEXCEPT;
 
-    bool IsIdentity() const;
-    bool IsNormalized() const;
+    CONSTEXPR FQuaternion(const FQuaternion& other) NOEXCEPT;
+    CONSTEXPR FQuaternion& operator =(const FQuaternion& other) NOEXCEPT;
 
-    float Angle() const;
-    float3 Axis() const;
+    PPE_CORE_API NODISCARD bool IsIdentity() const;
+    PPE_CORE_API NODISCARD bool IsNormalized() const;
 
-    float Length() const;
-    float LengthSq() const;
+    PPE_CORE_API NODISCARD float Angle() const;
+    PPE_CORE_API NODISCARD float3 Axis() const;
 
-    FQuaternion Conjugate() const;
-    FQuaternion Exponential() const;
-    FQuaternion Logarithm() const;
-    FQuaternion Invert() const;
-    FQuaternion Negate() const;
-    FQuaternion Normalize() const;
-    FQuaternion NormalizeInvert() const;
+    NODISCARD float Length() const;
+    NODISCARD float LengthSq() const;
 
-    float3 Transform(const float3& value) const;
-    float3 InvertTransform(const float3& value) const;
+    NODISCARD FQuaternion Conjugate() const;
+    PPE_CORE_API NODISCARD FQuaternion Exponential() const;
+    PPE_CORE_API NODISCARD FQuaternion Logarithm() const;
+    PPE_CORE_API NODISCARD FQuaternion Invert() const;
+    NODISCARD FQuaternion Negate() const;
+    PPE_CORE_API NODISCARD FQuaternion Normalize() const;
+    PPE_CORE_API NODISCARD FQuaternion NormalizeInvert() const;
 
-    bool operator ==(const FQuaternion& other) const { return (data == other.data); }
-    bool operator !=(const FQuaternion& other) const { return !operator ==(other); }
+    PPE_CORE_API NODISCARD float3 Transform(const float3& value) const;
+    PPE_CORE_API NODISCARD float3 InvertTransform(const float3& value) const;
+
+    NODISCARD bool operator ==(const FQuaternion& other) const { return (vec == other.vec); }
+    NODISCARD bool operator !=(const FQuaternion& other) const { return !operator ==(other); }
 
     FQuaternion& operator +=(const FQuaternion& other);
     FQuaternion& operator -=(const FQuaternion& other);
 
-    FQuaternion operator +(const FQuaternion& other) const;
-    FQuaternion operator -(const FQuaternion& other) const;
+    NODISCARD FQuaternion operator +(const FQuaternion& other) const;
+    NODISCARD FQuaternion operator -(const FQuaternion& other) const;
 
     FQuaternion& operator *=(float scale);
-    FQuaternion operator *(float scale) const;
+    NODISCARD FQuaternion operator *(float scale) const;
 
     FQuaternion& operator *=(const FQuaternion& other);
-    FQuaternion operator *(const FQuaternion& other) const;
+    NODISCARD FQuaternion operator *(const FQuaternion& other) const;
 
     static const FQuaternion Identity;
     static const FQuaternion One;
     static const FQuaternion Zero;
 
     union {
-        float4 data;
+        float4 vec;
         struct {
             // to have FQuaternion.x
             float x, y, z, w;
@@ -73,7 +74,7 @@ public:
     };
 };
 //----------------------------------------------------------------------------
-FQuaternion operator *(float scale, const FQuaternion& quaternion);
+NODISCARD FQuaternion operator *(float scale, const FQuaternion& quaternion) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -167,11 +167,9 @@ inline bool NearlyEquals(float A, float B, float maxRelDiff/* = Epsilon */) NOEX
 
     // Calculate the difference.
     const float diff = Abs(A - B);
-    A = Abs(A);
-    B = Abs(B);
 
     // Find the largest
-    float largest = (B > A) ? B : A;
+    const float largest = Max3(Abs(A), Abs(B), maxRelDiff);
 
     return (diff <= largest * maxRelDiff);
 }
@@ -181,11 +179,9 @@ inline bool NearlyEquals(double A, double B, double maxRelDiff/* = D_Epsilon */)
 
     // Calculate the difference.
     const double diff = Abs(A - B);
-    A = Abs(A);
-    B = Abs(B);
 
     // Find the largest
-    double largest = (B > A) ? B : A;
+    const double largest = Max3(Abs(A), Abs(B), maxRelDiff);
 
     return (diff <= largest * maxRelDiff);
 }

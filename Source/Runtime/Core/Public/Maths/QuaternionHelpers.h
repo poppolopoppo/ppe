@@ -39,8 +39,6 @@ NODISCARD PPE_CORE_API FQuaternion MakeAxisQuaternion(const float3& axis, float 
 //----------------------------------------------------------------------------
 NODISCARD PPE_CORE_API FQuaternion MakeAxisQuaternion(const float3& axis, float fsin, float fcos);
 //----------------------------------------------------------------------------
-NODISCARD PPE_CORE_API FQuaternion MakeQuaternionFromRotationMatrix(const float4x4& matrix);
-//----------------------------------------------------------------------------
 NODISCARD PPE_CORE_API FQuaternion MakeYawPitchRollQuaternion(float yaw, float pitch, float roll);
 //----------------------------------------------------------------------------
 NODISCARD PPE_CORE_API FQuaternion Make3AxisQuaterion(const float3& axisx, const float3& axisy, const float3& axisz);
@@ -53,18 +51,18 @@ NODISCARD PPE_CORE_API FQuaternion MakeBarycentricQuaternion(
     float amount13 );
 //----------------------------------------------------------------------------
 NODISCARD inline float Dot(const FQuaternion& lhs, const FQuaternion& rhs) {
-    return Dot(lhs.data, rhs.data);
+    return Dot(lhs.vec, rhs.vec);
 }
 //----------------------------------------------------------------------------
 NODISCARD inline bool NearlyEquals(const FQuaternion& a, const FQuaternion& b, float maxRelDiff = Epsilon) {
-    return NearlyEquals(a.data, b.data, maxRelDiff);
+    return NearlyEquals(a.vec, b.vec, maxRelDiff);
 }
 //----------------------------------------------------------------------------
-NODISCARD inline bool IsINF(const FQuaternion& q) { return (IsINF(q.data)); }
+NODISCARD inline bool IsINF(const FQuaternion& q) { return (IsINF(q.vec)); }
 //----------------------------------------------------------------------------
-NODISCARD inline bool IsNAN(const FQuaternion& q) { return (IsNAN(q.data)); }
+NODISCARD inline bool IsNAN(const FQuaternion& q) { return (IsNAN(q.vec)); }
 //----------------------------------------------------------------------------
-NODISCARD inline bool IsNANorINF(const FQuaternion& q) { return (IsNANorINF(q.data)); }
+NODISCARD inline bool IsNANorINF(const FQuaternion& q) { return (IsNANorINF(q.vec)); }
 //----------------------------------------------------------------------------
 // Packing tangent space in a quaternion
 // https://www.benicourt.com/blender/wp-content/uploads/2015/03/gdc2015_rendering_the_world_of_far_cry_4.pdf

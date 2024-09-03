@@ -2,12 +2,14 @@
 
 #define EXPORT_PPE_RUNTIME_CORE_SCALARVECTOR
 #define EXPORT_PPE_RUNTIME_CORE_SCALARBOUNDINGBOX
+#define EXPORT_PPE_RUNTIME_CORE_SCALARMATRIX
 
 #include "Maths/PackedVectors.h"
 #include "Maths/PackingHelpers.h"
 #include "Maths/ScalarBoundingBox.h"
 #include "Maths/ScalarRectangle.h"
 #include "Maths/ScalarVector.h"
+#include "Maths/ScalarMatrix.h"
 
 PRAGMA_DISABLE_RUNTIMECHECKS
 
@@ -29,6 +31,11 @@ STATIC_ASSERT(Meta::TCheckSameSize<float[2], float2>::value);
 STATIC_ASSERT(Meta::TCheckSameSize<float[3], float3>::value);
 STATIC_ASSERT(Meta::TCheckSameSize<float[4], float4>::value);
 STATIC_ASSERT(Meta::TCheckSameSize<u32[2], u322>::value);
+//----------------------------------------------------------------------------
+STATIC_ASSERT(Meta::TCheckSameSize<float[4], float2x2>::value);
+STATIC_ASSERT(Meta::TCheckSameSize<float[9], float3x3>::value);
+STATIC_ASSERT(Meta::TCheckSameSize<float[12], float4x3>::value);
+STATIC_ASSERT(Meta::TCheckSameSize<float[16], float4x4>::value);
 //----------------------------------------------------------------------------
 namespace Constants {
     const float2 Float2_One     = float2(1.0f);
@@ -131,6 +138,32 @@ EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 1>;
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 2>;
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 3>;
 EXTERN_TEMPLATE_CLASS_DEF(PPE_CORE_API) TScalarBoxWExtent<double, 4>;
+//----------------------------------------------------------------------------
+// TScalarMatrix
+//----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(int, 2, 2);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(int, 3, 3);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(int, 4, 3);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(int, 3, 4);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(int, 4, 4);
+//----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(unsigned int, 2, 2);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(unsigned int, 3, 3);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(unsigned int, 4, 3);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(unsigned int, 3, 4);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(unsigned int, 4, 4);
+//----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(float, 2, 2);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(float, 3, 3);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(float, 4, 3);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(float, 3, 4);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(float, 4, 4);
+//----------------------------------------------------------------------------
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(double, 2, 2);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(double, 3, 3);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(double, 4, 3);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(double, 3, 4);
+EXTERN_RUNTIME_CORE_SCALARMATRIX_DEF(double, 4, 4);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

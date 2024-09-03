@@ -49,7 +49,7 @@ void FGaussianMixtureModels3f::InitializeRandomMixtures(FRandomGenerator& rng, c
     // generate X uniq random sample indices
     rng.RandomizeUniq(reservoir, checked_cast<u32>(samples.size()));
 
-    const FGaussian3f g = FGaussian3f::FromEllipsoid(float3::Zero, radii, float3x3::Identity());
+    const FGaussian3f g = FGaussian3f::FromEllipsoid(float3::Zero, radii, float3x3::Identity);
 
     forrange(i, 0, Mixtures.size()) {
         FGaussian3f& mixture = Mixtures[i];

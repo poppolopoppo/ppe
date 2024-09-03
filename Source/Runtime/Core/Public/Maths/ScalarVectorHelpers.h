@@ -203,7 +203,7 @@ template <typename T, u32 _Dim, typename _Expr>
 CONSTEXPR auto Normalize(const details::TScalarVectorExpr<T, _Dim, _Expr>& v) NOEXCEPT {
 #if USE_PPE_ASSERT
     const T norm = Length(v);
-    Assert(norm);
+    Assert(Abs(norm) > SmallEpsilon);
     return (v / norm);
 #else
     return (v * RSqrt(LengthSq(v)));
@@ -216,10 +216,21 @@ CONSTEXPR TScalarVector<T, _Dim> SafeNormalize(const details::TScalarVectorExpr<
     if (Likely(normSQ > EpsilonSQ))
         return (v * RSqrt(normSQ));
 
-    TScalarVector<T, _Dim> safe(v);
-    const u32 maxAxis = Abs(safe).MaxComponentIndex();
+    TScalarVector<T, _Dim> safe = TScalarVector<T, _Dim>::Zero;
+    const u32 maxAxis = Abs(v).MaxComponentIndex();
     safe[maxAxis] = static_cast<T>(v[maxAxis] > 0 ? 1 : -1);
     return safe;
+}
+//----------------------------------------------------------------------------
+template <typename T, u32 _Dim, typename _Input, typename _Safe>
+CONSTEXPR TScalarVector<T, _Dim> SafeNormalizeOr(
+    const details::TScalarVectorExpr<T, _Dim, _Input>& v,
+    const details::TScalarVectorExpr<T, _Dim, _Safe>& safe ) NOEXCEPT {
+    const T normSQ = LengthSq(v);
+    if (Likely(normSQ > EpsilonSQ))
+        return (v * RSqrt(normSQ));
+    else
+        return safe;
 }
 //----------------------------------------------------------------------------
 template <u32 _Dim>

@@ -7,7 +7,7 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 inline FFrustum::FFrustum() {
-    SetMatrix(float4x4::Identity());
+    SetMatrix(float4x4::Identity);
 }
 //----------------------------------------------------------------------------
 inline FFrustum::FFrustum(float4x4& viewProjection) {
@@ -27,11 +27,11 @@ inline bool FFrustum::Intersects(const FFrustum& frustum) const {
 }
 //----------------------------------------------------------------------------
 inline float3 FFrustum::GetZoomToExtentsShiftVector(const TMemoryView<const float3>& points) {
-    return Near().Normal() *  GetZoomToExtentsShiftDistance(points);
+    return Near().Normal() * GetZoomToExtentsShiftDistance(points);
 }
 //----------------------------------------------------------------------------
 inline float3 FFrustum::GetZoomToExtentsShiftVector(const FBoundingBox& box) {
-    return Near().Normal() *  GetZoomToExtentsShiftDistance(box);
+    return Near().Normal() * GetZoomToExtentsShiftDistance(box);
 }
 //----------------------------------------------------------------------------
 inline FFrustum FFrustum::FromCameraParams(const FFrustumCameraParams& params) {

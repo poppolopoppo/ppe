@@ -17,7 +17,7 @@ STATIC_ASSERT(sizeof(u32) == sizeof(UX10Y10Z10W2N));
 // https://www.benicourt.com/blender/wp-content/uploads/2015/03/gdc2015_rendering_the_world_of_far_cry_4.pdf
 //----------------------------------------------------------------------------
 UX10Y10Z10W2N Quaternion_to_UX10Y10Z10W2N(const FQuaternion& quaternion) NOEXCEPT {
-    float4 q = quaternion.data;
+    float4 q = quaternion.vec;
     const size_t index = q.xyz.MaxComponentIndex();
     if (0 == index) q = q.yzwx;
     if (1 == index) q = q.xzwy;

@@ -102,8 +102,8 @@ void FPlane::Transform(const TMemoryView<FPlane>& planes, const FQuaternion& rot
     }
 }
 //----------------------------------------------------------------------------
-FPlane FPlane::Transform(const FPlane& plane, const Matrix& transformation) {
-    Matrix inverse = Invert(transformation);
+FPlane FPlane::Transform(const FPlane& plane, const FMatrix& transformation) {
+    FMatrix inverse = Invert(transformation);
 
     float x = plane.Normal().x;
     float y = plane.Normal().y;
@@ -111,20 +111,20 @@ FPlane FPlane::Transform(const FPlane& plane, const Matrix& transformation) {
     float d = plane.D();
 
     const float3 normal(
-        (((x * inverse._11()) + (y * inverse._12())) + (z * inverse._13())) + (d * inverse._14()),
-        (((x * inverse._21()) + (y * inverse._22())) + (z * inverse._23())) + (d * inverse._24()),
-        (((x * inverse._31()) + (y * inverse._32())) + (z * inverse._33())) + (d * inverse._34()) );
+        (((x * inverse.m[0][0]) + (y * inverse.m[0][1])) + (z * inverse.m[0][2])) + (d * inverse.m[0][3]),
+        (((x * inverse.m[1][0]) + (y * inverse.m[2][1])) + (z * inverse.m[2][2])) + (d * inverse.m[2][3]),
+        (((x * inverse.m[2][0]) + (y * inverse.m[2][1])) + (z * inverse.m[2][2])) + (d * inverse.m[2][3]) );
 
     return FPlane(
         normal,
-        (((x * inverse._41()) + (y * inverse._42())) + (z * inverse._43())) + (d * inverse._44()) );
+        (((x * inverse.m[3][0]) + (y * inverse.m[3][1])) + (z * inverse.m[3][2])) + (d * inverse.m[3][3]) );
 }
 //----------------------------------------------------------------------------
-void FPlane::Transform(const TMemoryView<FPlane>& planes, const Matrix& transformation) {
+void FPlane::Transform(const TMemoryView<FPlane>& planes, const FMatrix& transformation) {
     if (planes.empty())
         return;
 
-    Matrix inverse = Invert(transformation);
+    FMatrix inverse = Invert(transformation);
 
     for (FPlane& plane : planes) {
         float x = plane.Normal().x;
@@ -132,10 +132,10 @@ void FPlane::Transform(const TMemoryView<FPlane>& planes, const Matrix& transfor
         float z = plane.Normal().z;
         float d = plane.D();
 
-        plane.Normal().x = (((x * inverse._11()) + (y * inverse._12())) + (z * inverse._13())) + (d * inverse._14());
-        plane.Normal().y = (((x * inverse._21()) + (y * inverse._22())) + (z * inverse._23())) + (d * inverse._24());
-        plane.Normal().z = (((x * inverse._31()) + (y * inverse._32())) + (z * inverse._33())) + (d * inverse._34());
-        plane.D() = (((x * inverse._41()) + (y * inverse._42())) + (z * inverse._43())) + (d * inverse._44());
+        plane.Normal().x = (((x * inverse.m[0][0]) + (y * inverse.m[0][1])) + (z * inverse.m[0][2])) + (d * inverse.m[0][3]);
+        plane.Normal().y = (((x * inverse.m[1][0]) + (y * inverse.m[2][1])) + (z * inverse.m[2][2])) + (d * inverse.m[2][3]);
+        plane.Normal().z = (((x * inverse.m[2][0]) + (y * inverse.m[2][1])) + (z * inverse.m[2][2])) + (d * inverse.m[2][3]);
+        plane.D() = (((x * inverse.m[3][0]) + (y * inverse.m[3][1])) + (z * inverse.m[3][2])) + (d * inverse.m[3][3]);
     }
 }
 //----------------------------------------------------------------------------

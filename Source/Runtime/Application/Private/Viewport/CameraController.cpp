@@ -53,16 +53,35 @@ void FFreeLookCameraController::SetFov(float value) NOEXCEPT {
     _fov.Reset(value);
 }
 //----------------------------------------------------------------------------
-void FFreeLookCameraController::LookAt(const float3& position, float heading, float pitch, bool bTeleport) NOEXCEPT {
-    Assert_NoAssume(not IsNANorINF(position));
+void FFreeLookCameraController::LookAt(const float3& eye, const float3& target, const float3& up, bool bTeleport) NOEXCEPT {
+    Assert_NoAssume(not IsNANorINF(eye));
+    Assert_NoAssume(not IsNANorINF(target));
+
+    const float4x4 m = MakeLootAtMatrix(eye, target, up);
+    const float3 position = m.Column<3, 3>();
+    const FQuaternion rotation = MakeQuaternionFromRotationMatrix(m.Crop<3, 3>());
 
     if (bTeleport) {
         _bTeleported = true;
         _position.Reset(position);
-        _rotation.Reset(MakeYawPitchRollQuaternion(heading, pitch, 0.f));
+        _rotation.Reset(rotation);
     }
     else {
         _position.SetRaw(position);
+        _rotation.SetRaw(rotation);
+    }
+}
+//----------------------------------------------------------------------------
+void FFreeLookCameraController::LookAt(const float3& eye, float heading, float pitch, bool bTeleport) NOEXCEPT {
+    Assert_NoAssume(not IsNANorINF(eye));
+
+    if (bTeleport) {
+        _bTeleported = true;
+        _position.Reset(eye);
+        _rotation.Reset(MakeYawPitchRollQuaternion(heading, pitch, 0.f));
+    }
+    else {
+        _position.SetRaw(eye);
         _rotation.SetRaw(MakeYawPitchRollQuaternion(heading, pitch, 0.f));
     }
 }

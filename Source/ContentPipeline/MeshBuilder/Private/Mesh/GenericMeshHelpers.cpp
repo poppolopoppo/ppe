@@ -186,6 +186,10 @@ FAabb3f ComputeBounds(const FGenericMesh& mesh, size_t index) {
     return bounds;
 }
 //----------------------------------------------------------------------------
+FAabb2f ComputeSubPartBounds(const TGenericVertexSubPart<float2>& subPart) {
+    return ComputeSubPartBounds_<2>(subPart);
+}
+//----------------------------------------------------------------------------
 FAabb3f ComputeSubPartBounds(const TGenericVertexSubPart<float3>& subPart) {
     return ComputeSubPartBounds_<3>(subPart);
 }
@@ -513,7 +517,7 @@ void TangentSpaceToQuaternion(const FGenericMesh& mesh, const FNormals3f& normal
     TMemoryView<float4> q = quaternions.MakeView();
 
     ParallelFor(0, vertexCount, [&](size_t v) {
-        q[v] = PPE::TangentSpaceToQuaternion(t[v], b[v], n[v]).data;
+        q[v] = PPE::TangentSpaceToQuaternion(t[v], b[v], n[v]).vec;
     });
 }
 //----------------------------------------------------------------------------
@@ -531,7 +535,7 @@ void TangentSpaceToQuaternion(const FGenericMesh& mesh, const FNormals3f& normal
         const float3 binormal = Normalize(Cross(tangent.xyz, normal)) *
             (tangent.w > 0 ? -1.f : 1.f);
 
-        q[v] = PPE::TangentSpaceToQuaternion(tangent.xyz, binormal, normal).data;
+        q[v] = PPE::TangentSpaceToQuaternion(tangent.xyz, binormal, normal).vec;
     });
 }
 //----------------------------------------------------------------------------
@@ -973,7 +977,7 @@ void Transform(FGenericMesh& mesh, size_t index, const float4x4& transform) {
 
     if (const TGenericVertexSubPart<float3> sp_normal3f = mesh.Normal3f_IFP(index)) {
         ParallelForEachRef(sp_normal3f.MakeView().begin(), sp_normal3f.MakeView().end(), [&](float3& p) {
-            p = Normalize(TransformVector3(transform, p));
+            p = Normalize(Transform3(transform, p));
         });
     }
     else if (const TGenericVertexSubPart<float4> sp_normal4f = mesh.Normal4f_IFP(index)) {
@@ -982,24 +986,24 @@ void Transform(FGenericMesh& mesh, size_t index, const float4x4& transform) {
         FQuaternion rotation;
         Decompose(transform, scale, rotation, translation);
         ParallelForEachRef(sp_normal4f.MakeView().begin(), sp_normal4f.MakeView().end(), [&](float4& p) {
-            p = (rotation * FQuaternion(p)).Normalize().data;
+            p = (rotation * FQuaternion(p)).Normalize().vec;
         });
     }
 
     if (const TGenericVertexSubPart<float3> sp_tangent3f = mesh.Tangent3f_IFP(index)) {
         ParallelForEachRef(sp_tangent3f.MakeView().begin(), sp_tangent3f.MakeView().end(), [&](float3& p) {
-            p = Normalize(TransformVector3(transform, p));
+            p = Normalize(Transform3(transform, p));
         });
     }
     else if (const TGenericVertexSubPart<float4> sp_tangent4f = mesh.Tangent4f_IFP(index)) {
         ParallelForEachRef(sp_tangent4f.MakeView().begin(), sp_tangent4f.MakeView().end(), [&](float4& p) {
-            p = float4(Normalize(TransformVector3<float>(transform, p.xyz)), p.w);
+            p = float4(Normalize(Transform3<float>(transform, p.xyz)), p.w);
         });
     }
 
     if (const TGenericVertexSubPart<float3> sp_binormal3f = mesh.Binormal3f_IFP(index)) {
         ParallelForEachRef(sp_binormal3f.MakeView().begin(), sp_binormal3f.MakeView().end(), [&](float3& p) {
-            p = Normalize(TransformVector3(transform, p));
+            p = Normalize(Transform3(transform, p));
         });
     }
 }
@@ -1025,7 +1029,7 @@ void Transform(FGenericMesh& mesh, size_t index, const FTransform& transform) {
     }
     else if (const TGenericVertexSubPart<float4> sp_normal4f = mesh.Normal4f_IFP(index)) {
         ParallelForEachRef(sp_normal4f.MakeView().begin(), sp_normal4f.MakeView().end(), [&](float4& p) {
-            p = (transform.Rotation() * FQuaternion(p)).data;
+            p = (transform.Rotation() * FQuaternion(p)).vec;
         });
     }
 

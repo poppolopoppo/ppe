@@ -44,8 +44,7 @@ bool LeastSquaresFittingGaussian2(float2& center, float2& axis0, float2& axis1, 
 
     // Solve the eigensystem.
     TSymmetricEigensolver<float, 2> es(32);
-    float2x2 M =
-    {
+    float2x2 M{
         covar00, covar01,
         covar01, covar11
     };
@@ -57,13 +56,13 @@ bool LeastSquaresFittingGaussian2(float2& center, float2& axis0, float2& axis1, 
 
     if (es.IsRotation())
     {
-        axis0 = float2(R.data().raw[0], R.data().raw[2]);
-        axis1 = float2(R.data().raw[1], R.data().raw[3]);
+        axis0 = float2(R.data[0], R.data[2]);
+        axis1 = float2(R.data[1], R.data[3]);
     }
     else
     {
-        axis0 = float2(R.data().raw[1], R.data().raw[3]);
-        axis1 = float2(R.data().raw[0], R.data().raw[2]);
+        axis0 = float2(R.data[1], R.data[3]);
+        axis1 = float2(R.data[0], R.data[2]);
     }
 
     center = mean;
@@ -120,15 +119,15 @@ bool LeastSquaresFittingGaussian3(float3& center, float3& axis0, float3& axis1, 
 
     if (es.IsRotation())
     {
-        axis0 = float3(R.data().raw[0], R.data().raw[3], R.data().raw[6]);
-        axis1 = float3(R.data().raw[1], R.data().raw[4], R.data().raw[7]);
-        axis2 = float3(R.data().raw[2], R.data().raw[5], R.data().raw[8]);
+        axis0 = float3(R.data[0], R.data[3], R.data[6]);
+        axis1 = float3(R.data[1], R.data[4], R.data[7]);
+        axis2 = float3(R.data[2], R.data[5], R.data[8]);
     }
     else
     {
-        axis0 = float3(R.data().raw[0], R.data().raw[3], R.data().raw[6]);
-        axis1 = float3(R.data().raw[2], R.data().raw[5], R.data().raw[8]);
-        axis2 = float3(R.data().raw[1], R.data().raw[4], R.data().raw[7]);
+        axis0 = float3(R.data[0], R.data[3], R.data[6]);
+        axis1 = float3(R.data[2], R.data[5], R.data[8]);
+        axis2 = float3(R.data[1], R.data[4], R.data[7]);
     }
 
     center = mean;
@@ -521,7 +520,7 @@ bool LeastSquaresFittingOrthogonalLine2(float2& origin, float2& direction, const
     // The line direction is the eigenvector in the direction of largest
     // variance of the points.
     origin = mean;
-    direction = float2(R.data().raw[1], R.data().raw[3]);
+    direction = float2(R.data[1], R.data[3]);
 
     // The fitted line is unique when the maximum eigenvalue has
     // multiplicity 1.
@@ -575,7 +574,7 @@ bool LeastSquaresFittingOrthogonalLine3(float3& origin, float3& direction, const
     // The line direction is the eigenvector in the direction of largest
     // variance of the points.
     origin = mean;
-    direction = float3(R.data().raw[2], R.data().raw[5], R.data().raw[8]);
+    direction = float3(R.data[2], R.data[5], R.data[8]);
 
     // The fitted line is unique when the maximum eigenvalue has
     // multiplicity 1.
@@ -622,7 +621,7 @@ bool LeastSquaresFittingOrthogonalPlane3(FPlane& plane, const TMemoryView<const 
 
     // The plane normal is the eigenvector in the direction of smallest
     // variance of the points.
-    const float3 normal(R.data().raw[0], R.data().raw[3], R.data().raw[6]);
+    const float3 normal(R.data[0], R.data[3], R.data[6]);
     plane = FPlane(normal, mean);
 
     // The fitted plane is unique when the minimum eigenvalue has

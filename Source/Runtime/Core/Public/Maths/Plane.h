@@ -10,9 +10,7 @@
 namespace PPE {
 template <typename T>
 class TMemoryView;
-
 class FQuaternion;
-
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -26,42 +24,46 @@ public:
     FPlane(const FPlane& other);
     FPlane& operator =(const FPlane& other);
 
-    float3& Normal() { return _normal; }
-    const float3& Normal() const { return _normal; }
+    NODISCARD float3& Normal() { return _normal; }
+    NODISCARD const float3& Normal() const { return _normal; }
 
-    float& D() { return _d; }
-    float D() const { return _d; }
+    NODISCARD float& D() { return _d; }
+    NODISCARD float D() const { return _d; }
 
-    float3 PointOnPlane() const;
+    NODISCARD float4 Vec() const {
+        return { _normal, _d };
+    }
 
-    FPlane Normalize() const;
+    NODISCARD float3 PointOnPlane() const;
 
-    float DistanceToPoint(const float3& point) const;
-    EPlaneIntersectionType Intersects(const float3& point) const;
+    NODISCARD FPlane Normalize() const;
 
-    bool Intersects(const FRay& ray) const;
-    bool Intersects(const FRay& ray, float* distance) const;
-    bool Intersects(const FRay& ray, float3* point) const;
+    NODISCARD float DistanceToPoint(const float3& point) const;
+    NODISCARD EPlaneIntersectionType Intersects(const float3& point) const;
 
-    bool Intersects(const FPlane& plane) const;
-    bool Intersects(const FPlane& plane, FRay* line) const;
+    NODISCARD bool Intersects(const FRay& ray) const;
+    NODISCARD bool Intersects(const FRay& ray, float* distance) const;
+    NODISCARD bool Intersects(const FRay& ray, float3* point) const;
 
-    EPlaneIntersectionType Intersects(const float3& triangle1, const float3& triangle2, const float3& triangle3) const;
-    EPlaneIntersectionType Intersects(const FBoundingBox& box) const;
-    EPlaneIntersectionType Intersects(const FSphere& sphere) const;
+    NODISCARD bool Intersects(const FPlane& plane) const;
+    NODISCARD bool Intersects(const FPlane& plane, FRay* line) const;
 
-    static FPlane Make(const float3& pos, const float3& normal);
+    NODISCARD EPlaneIntersectionType Intersects(const float3& triangle1, const float3& triangle2, const float3& triangle3) const;
+    NODISCARD EPlaneIntersectionType Intersects(const FBoundingBox& box) const;
+    NODISCARD EPlaneIntersectionType Intersects(const FSphere& sphere) const;
 
-    static FPlane FromTriangle(const float3& a, const float3& b, const float3& c);
+    NODISCARD static FPlane Make(const float3& pos, const float3& normal);
 
-    static FPlane Transform(const FPlane& plane, const FQuaternion& rotation);
+    NODISCARD static FPlane FromTriangle(const float3& a, const float3& b, const float3& c);
+
+    NODISCARD static FPlane Transform(const FPlane& plane, const FQuaternion& rotation);
     static void Transform(const TMemoryView<FPlane>& planes, const FQuaternion& rotation);
 
-    static FPlane Transform(const FPlane& plane, const Matrix& transformation);
-    static void Transform(const TMemoryView<FPlane>& planes, const Matrix& transformation);
+    NODISCARD static FPlane Transform(const FPlane& plane, const FMatrix& transformation);
+    static void Transform(const TMemoryView<FPlane>& planes, const FMatrix& transformation);
 
-    static float3 Get3PlanesInterPoint(const FPlane& p1, const FPlane& p2, const FPlane& p3);
-    static EPlaneIntersectionType PointsIntersection(const FPlane& plane, const TMemoryView<const float3>& points);
+    NODISCARD static float3 Get3PlanesInterPoint(const FPlane& p1, const FPlane& p2, const FPlane& p3);
+    NODISCARD static EPlaneIntersectionType PointsIntersection(const FPlane& plane, const TMemoryView<const float3>& points);
 
 private:
     float3 _normal;

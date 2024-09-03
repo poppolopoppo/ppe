@@ -9,6 +9,12 @@ namespace Meta {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
+template <typename T, T _First, T _Second>
+struct integral_constant_pair {
+    std::integral_constant<T, _First> first;
+    std::integral_constant<T, _Second> second;
+};
+//----------------------------------------------------------------------------
 namespace details {
 template <typename T, class F, T... Is>
 FORCE_INLINE constexpr auto expand_indices_seq(F f, std::integer_sequence<T, Is...>) {
@@ -16,7 +22,7 @@ FORCE_INLINE constexpr auto expand_indices_seq(F f, std::integer_sequence<T, Is.
 }
 template <typename T, T M, class F, T... Is>
 FORCE_INLINE constexpr auto expand_indices_seq(F f, std::integer_sequence<T, Is...>) {
-    return f(std::make_pair(std::integral_constant<T, Is / M>{}, std::integral_constant<T, Is % M>{})...);
+    return f(integral_constant_pair<T, Is / M, Is % M>{}...);
 }
 }//!details
 template <size_t N, class F>

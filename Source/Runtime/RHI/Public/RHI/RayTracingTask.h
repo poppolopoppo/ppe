@@ -125,7 +125,7 @@ struct FBuildRayTracingScene final : details::TFrameTaskDesc<FBuildRayTracingSce
     struct FInstance {
         FInstanceID InstanceId;
         FRawRTGeometryID GeometryId;
-        float4x3 Transform{ float4x3::Identity() };
+        float3x4 Transform{ float3x4::Identity };
         u32 CustomId{ 0 }; // 'gl_InstanceCustomIndexNV' in the shader
         EFlags Flags{ Default };
         u8 Mask{ UMax };
@@ -136,7 +136,7 @@ struct FBuildRayTracingScene final : details::TFrameTaskDesc<FBuildRayTracingSce
         FInstance& SetInstanceId(const FInstanceID& value);
         FInstance& SetGeometryId(const FRawRTGeometryID& value);
         FInstance& SetInstanceIndex(u32 value) { CustomId = value; return (*this); }
-        FInstance& SetTransform(const float4x3& value) { Transform = value; return (*this); }
+        FInstance& SetTransform(const float3x4& value) { Transform = value; return (*this); }
         FInstance& AddFlags(EFlags value) { Flags = Flags | value; return (*this); }
         FInstance& SetMask(u8 value) { Mask = value; return (*this); }
     };

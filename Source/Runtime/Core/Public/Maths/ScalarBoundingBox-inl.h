@@ -171,7 +171,7 @@ template <typename T, u32 _Dim>
 auto TScalarBoundingBox<T, _Dim>::Corner(u32 index) const -> vector_type {
     Assert(index < (1_u32 << _Dim));
 
-    return Meta::static_for<_Dim>([&](auto... c) {
+    return Meta::static_for<u32, _Dim>([&](auto... c) {
         return vector_type{
             (index & (1_u32 << c) ? _max : _min).template Get<c>()...
         };
@@ -183,7 +183,7 @@ void TScalarBoundingBox<T, _Dim>::MakeCorners(const TMemoryView<vector_type>& po
     CONSTEXPR const u32 numPoints = (1_u32 << _Dim);
     Assert(points.size() == numPoints);
 
-    Meta::static_for<numPoints>([&](auto... i) {
+    Meta::static_for<u32, numPoints>([&](auto... i) {
         (void)((points[i] = Corner(i), true) && ...);
     });
 }

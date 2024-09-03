@@ -6,38 +6,38 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-inline FQuaternion::FQuaternion(Meta::FForceInit)
-:   data(0.0f, 0.0f, 0.0f, 1.0f) {}
+CONSTEXPR inline FQuaternion::FQuaternion(Meta::FForceInit) NOEXCEPT
+:   vec(float4::W) {}
 //----------------------------------------------------------------------------
-inline FQuaternion::FQuaternion(float broadcast)
-:   data(broadcast) {}
+CONSTEXPR inline FQuaternion::FQuaternion(float broadcast) NOEXCEPT
+:   vec(broadcast) {}
 //----------------------------------------------------------------------------
-inline FQuaternion::FQuaternion(const float4& value)
-:   data(value) {}
+CONSTEXPR inline FQuaternion::FQuaternion(const float4& value) NOEXCEPT
+:   vec(value) {}
 //----------------------------------------------------------------------------
-inline FQuaternion::FQuaternion(const float3& value, float w)
-:   data(value, w) {}
+CONSTEXPR inline FQuaternion::FQuaternion(const float3& value, float w) NOEXCEPT
+:   vec(value, w) {}
 //----------------------------------------------------------------------------
-inline FQuaternion::FQuaternion(const float2& xy, float z, float w)
-:   data(xy, z, w) {}
+CONSTEXPR inline FQuaternion::FQuaternion(const float2& xy, float z, float w) NOEXCEPT
+:   vec(xy, z, w) {}
 //----------------------------------------------------------------------------
-inline FQuaternion::FQuaternion(float x, float y, float z, float w)
-:   data(x, y, z, w) {}
+CONSTEXPR inline FQuaternion::FQuaternion(float x, float y, float z, float w) NOEXCEPT
+:   vec(x, y, z, w) {}
 //----------------------------------------------------------------------------
-inline FQuaternion::FQuaternion(const FQuaternion& other)
-:   data(other.data) {}
+CONSTEXPR inline FQuaternion::FQuaternion(const FQuaternion& other) NOEXCEPT
+:   vec(other.vec) {}
 //----------------------------------------------------------------------------
-inline FQuaternion& FQuaternion::operator =(const FQuaternion& other) {
-    data = other.data;
+CONSTEXPR inline FQuaternion& FQuaternion::operator =(const FQuaternion& other) NOEXCEPT {
+    vec = other.vec;
     return *this;
 }
 //----------------------------------------------------------------------------
 inline float FQuaternion::Length() const {
-    return PPE::Length(data);
+    return PPE::Length(vec);
 }
 //----------------------------------------------------------------------------
 inline float FQuaternion::LengthSq() const {
-    return PPE::LengthSq(data);
+    return PPE::LengthSq(vec);
 }
 //----------------------------------------------------------------------------
 inline FQuaternion FQuaternion::Conjugate() const {
@@ -45,37 +45,37 @@ inline FQuaternion FQuaternion::Conjugate() const {
 }
 //----------------------------------------------------------------------------
 inline FQuaternion FQuaternion::Negate() const {
-    return FQuaternion(-data);
+    return FQuaternion(-vec);
 }
 //----------------------------------------------------------------------------
 inline FQuaternion& FQuaternion::operator +=(const FQuaternion& other) {
-    data += other.data;
+    vec += other.vec;
     return *this;
 }
 //----------------------------------------------------------------------------
 inline FQuaternion& FQuaternion::operator -=(const FQuaternion& other) {
-    data -= other.data;
+    vec -= other.vec;
     return *this;
 }
 //----------------------------------------------------------------------------
 inline FQuaternion FQuaternion::operator +(const FQuaternion& other) const {
-    return FQuaternion(data + other.data);
+    return FQuaternion(vec + other.vec);
 }
 //----------------------------------------------------------------------------
 inline FQuaternion FQuaternion::operator -(const FQuaternion& other) const {
-    return FQuaternion(data - other.data);
+    return FQuaternion(vec - other.vec);
 }
 //----------------------------------------------------------------------------
 inline FQuaternion& FQuaternion::operator *=(float scale) {
-    data *= scale;
+    vec *= scale;
     return *this;
 }
 //----------------------------------------------------------------------------
 inline FQuaternion FQuaternion::operator *(float scale) const {
-    return FQuaternion(data * scale);
+    return FQuaternion(vec * scale);
 }
 //----------------------------------------------------------------------------
-inline FQuaternion operator *(float scale, const FQuaternion& quaternion) {
+inline FQuaternion operator *(float scale, const FQuaternion& quaternion) NOEXCEPT {
     return quaternion * scale;
 }
 //----------------------------------------------------------------------------

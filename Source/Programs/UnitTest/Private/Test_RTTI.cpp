@@ -305,10 +305,8 @@ private:
 
     template <typename T, size_t _Width, size_t _Height>
     void Randomize_(TScalarMatrix<T, _Width, _Height>& value) {
-        ScalarMatrixData<T, _Width, _Height>& data = value.data();
-        const size_t dim = _Width*_Height;
-        for (size_t i = 0; i < dim; ++i)
-            _rand.Randomize(data.raw[i]);
+        for (T& it : value.data)
+            _rand.Randomize(it);
     }
 
     void Randomize_(FString& str) {

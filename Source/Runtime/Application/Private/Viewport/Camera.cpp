@@ -30,12 +30,12 @@ void FCamera::UpdateModel(const FCameraModel& model, const FRectangle2f& viewpor
     const float3 cameraTarget{ model.Position + model.Forward };
 
     exclusiveData->CurrentState.Model = model;
-    exclusiveData->CurrentState.View = MakeLookAtRHMatrix(model.Position, cameraTarget, model.Up);
+    exclusiveData->CurrentState.View = MakeLootAtMatrix(model.Position, cameraTarget, model.Up);
     Assert_NoAssume(not IsNANorINF(exclusiveData->CurrentState.View));
 
     switch (exclusiveData->Mode) {
     case ECameraProjection::Orthographic:
-        exclusiveData->CurrentState.Projection = MakeOrthographicOffCenterRHMatrix(
+        exclusiveData->CurrentState.Projection = MakeOrthoProjectionMatrix(
             viewport.Left(),
             viewport.Right(),
             viewport.Bottom(),
@@ -45,7 +45,7 @@ void FCamera::UpdateModel(const FCameraModel& model, const FRectangle2f& viewpor
         break;
 
     case ECameraProjection::Perspective:
-        exclusiveData->CurrentState.Projection = MakePerspectiveFovRHMatrix(
+        exclusiveData->CurrentState.Projection = MakePerspectiveProjectionMatrix(
             model.Fov,
             viewport.AspectRatio(),
             model.ZNear,
@@ -54,11 +54,11 @@ void FCamera::UpdateModel(const FCameraModel& model, const FRectangle2f& viewpor
     }
     Assert_NoAssume(not IsNANorINF(exclusiveData->CurrentState.Projection));
 
-    const float4x4 viewProjection = exclusiveData->CurrentState.View * exclusiveData->CurrentState.Projection;
+    const float4x4 viewProjection = exclusiveData->CurrentState.Projection * exclusiveData->CurrentState.View;
     Assert_NoAssume(not IsNANorINF(viewProjection));
     exclusiveData->CurrentState.Frustum.SetMatrix(viewProjection);
 
-    exclusiveData->CurrentState.InvertView = Invert(exclusiveData->CurrentState.View);
+    exclusiveData->CurrentState.InvertView = Invert_AssumeHomogeneous(exclusiveData->CurrentState.View);
     exclusiveData->CurrentState.InvertProjection = Invert(exclusiveData->CurrentState.Projection);
     exclusiveData->CurrentState.InvertViewProjection = Invert(viewProjection);
 }

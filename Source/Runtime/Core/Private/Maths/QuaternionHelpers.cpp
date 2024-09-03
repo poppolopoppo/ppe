@@ -79,9 +79,9 @@ void SQuadSetup(FQuaternion *p0, FQuaternion *p1, FQuaternion *p2,
     Assert(p1);
     Assert(p2);
 
-    FQuaternion q0((v0 + v1).LengthSq() < (v0 - v1).LengthSq() ? -v0.data : v0.data);
-    FQuaternion q2((v1 + v2).LengthSq() < (v1 - v2).LengthSq() ? -v2.data : v2.data);
-    FQuaternion q3((v2 + v3).LengthSq() < (v2 - v3).LengthSq() ? -v3.data : v3.data);
+    FQuaternion q0((v0 + v1).LengthSq() < (v0 - v1).LengthSq() ? -v0.vec : v0.vec);
+    FQuaternion q2((v1 + v2).LengthSq() < (v1 - v2).LengthSq() ? -v2.vec : v2.vec);
+    FQuaternion q3((v2 + v3).LengthSq() < (v2 - v3).LengthSq() ? -v3.vec : v3.vec);
     FQuaternion q1 = v1;
 
     const FQuaternion q1Exp = q1.Exponential();
@@ -98,7 +98,7 @@ void Extract3AxisFromQuaternion(float3 *paxisx, float3 *paxisy, float3 *paxisz,
     Assert(paxisy);
     Assert(paxisz);
 
-    const float4& q = quaternion.data;
+    const float4& q = quaternion.vec;
 
     *paxisx     =   float3( 1.0f, 0.0f, 0.0f)
                 +   float3(-2.0f, 2.0f, 2.0f) * q.y * q.yxw
@@ -169,53 +169,6 @@ FQuaternion MakeAxisQuaternion(const float3& axis, float fsin, float fcos) {
         axis.y * fsin,
         axis.z * fsin,
         fcos );
-
-    return FQuaternion(result);
-}
-//----------------------------------------------------------------------------
-FQuaternion MakeQuaternionFromRotationMatrix(const float4x4& matrix) {
-    float sqrt;
-    float half;
-    float scale = matrix._11() + matrix._22() + matrix._33();
-
-    float4 result;
-
-    if (scale > 0.0f) {
-        sqrt = FPlatformMaths::Sqrt(scale + 1.0f);
-        result.w = sqrt * 0.5f;
-        sqrt = 0.5f / sqrt;
-
-        result.x = (matrix._23() - matrix._32()) * sqrt;
-        result.y = (matrix._31() - matrix._13()) * sqrt;
-        result.z = (matrix._12() - matrix._21()) * sqrt;
-    }
-    else if ((matrix._11() >= matrix._22()) && (matrix._11() >= matrix._33())) {
-        sqrt = FPlatformMaths::Sqrt(1.0f + matrix._11() - matrix._22() - matrix._33());
-        half = 0.5f / sqrt;
-
-        result.x = 0.5f * sqrt;
-        result.y = (matrix._12() + matrix._21()) * half;
-        result.z = (matrix._13() + matrix._31()) * half;
-        result.w = (matrix._23() - matrix._32()) * half;
-    }
-    else if (matrix._22() > matrix._33()) {
-        sqrt = FPlatformMaths::Sqrt(1.0f + matrix._22() - matrix._11() - matrix._33());
-        half = 0.5f / sqrt;
-
-        result.x = (matrix._21() + matrix._12()) * half;
-        result.y = 0.5f * sqrt;
-        result.z = (matrix._32() + matrix._23()) * half;
-        result.w = (matrix._31() - matrix._13()) * half;
-    }
-    else {
-        sqrt = FPlatformMaths::Sqrt(1.0f + matrix._33() - matrix._11() - matrix._22());
-        half = 0.5f / sqrt;
-
-        result.x = (matrix._31() + matrix._13()) * half;
-        result.y = (matrix._32() + matrix._23()) * half;
-        result.z = 0.5f * sqrt;
-        result.w = (matrix._12() - matrix._21()) * half;
-    }
 
     return FQuaternion(result);
 }

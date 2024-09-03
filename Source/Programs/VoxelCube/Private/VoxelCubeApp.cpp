@@ -155,10 +155,11 @@ void FVoxelCubeApp::Render(RHI::IFrameGraph& fg, FTimespan dt) {
     }
 
     FUniformData uniformData;
-    uniformData.View = _viewport->Camera()->View();
-    uniformData.Projection = _viewport->Camera()->Projection();
-    uniformData.ViewProjection = _viewport->Camera()->ViewProjection();
-    uniformData.InvertViewProjection = _viewport->Camera()->InvertViewProjection();
+    // GLSL is using column major representation, but TScalarMatrix<> is row major (for cache friendliness)
+    uniformData.View = _viewport->Camera()->View().transposed;
+    uniformData.Projection = _viewport->Camera()->Projection().transposed;
+    uniformData.ViewProjection = _viewport->Camera()->ViewProjection().transposed;
+    uniformData.InvertViewProjection = _viewport->Camera()->InvertViewProjection().transposed;
 
     _resources->BindBuffer("uCamera"_uniform, _uniformBuffer);
 

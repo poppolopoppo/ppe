@@ -108,7 +108,7 @@ float4 FTransform::InvertTransformNoScale(const float4& v) const {
 float4x4 FTransform::ToMatrixNoScale() const {
     Assert(not IsNAN(*this));
 
-    return Make3DTransformMatrix(_translation, 1.f, _rotation);
+    return Make3DTransformMatrix(_translation, float3::One, _rotation);
 }
 //----------------------------------------------------------------------------
 float4x4 FTransform::ToMatrixWithScale() const {
@@ -124,7 +124,7 @@ float4x4 FTransform::ToInvertMatrixWithScale() const {
 }
 //----------------------------------------------------------------------------
 bool FTransform::Equals(const FTransform& other, float espilon/* = Epsilon */) const {
-    return (NearlyEquals(_rotation.data, other._rotation.data, espilon) &&
+    return (NearlyEquals(_rotation.vec, other._rotation.vec, espilon) &&
             NearlyEquals(_translation, other._translation, espilon) &&
             NearlyEquals(_scale, other._scale, espilon) );
 }
@@ -144,7 +144,7 @@ FTransform& FTransform::Accumulate(const FTransform& delta) {
 FTransform& FTransform::AccumulateWithShortestRotation(const FTransform& delta) {
     Assert(not IsNAN(*this));
 
-    if (Dot(_rotation.data, delta._rotation.data) < 0.f) {
+    if (Dot(_rotation.vec, delta._rotation.vec) < 0.f) {
         _rotation.x -= delta._rotation.x;
         _rotation.y -= delta._rotation.y;
         _rotation.z -= delta._rotation.z;

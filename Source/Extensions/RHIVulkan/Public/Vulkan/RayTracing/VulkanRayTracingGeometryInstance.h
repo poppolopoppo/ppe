@@ -8,7 +8,7 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FVulkanRayTracingGeometryInstance {
-    // 4x3 row-major matrix
+    // 3x4 row-major matrix
     float4 TransformRow0;
     float4 TransformRow1;
     float4 TransformRow2;

@@ -376,9 +376,8 @@ FFrustum FFrustum::FromCamera(const float3& cameraPos, const float3& lookDir, co
 
     FFrustum result;
 
-    result._matrix = (
-        MakeLookAtLHMatrix(cameraPos, float3(cameraPos + lookDir * 10.f), upDir) *
-        MakePerspectiveFovLHMatrix(fov, aspect, znear, zfar));
+    result._matrix = (MakePerspectiveProjectionMatrix(fov, aspect, znear, zfar) *
+                      MakeLootAtMatrix(cameraPos, float3(cameraPos + lookDir * 10.f), upDir));
 
     result._planes[static_cast<size_t>(EFrustumPlane::Near)]      = FPlane::FromTriangle(Near1, Near2, Near3).Normalize();
     result._planes[static_cast<size_t>(EFrustumPlane::Far)]       = FPlane::FromTriangle(Far3, Far2, Far1).Normalize();

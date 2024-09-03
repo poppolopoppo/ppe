@@ -41,13 +41,13 @@ public:
     struct FState {
         FFrustum Frustum;
 
-        float4x4 Projection{ float4x4::Identity() };
-        float4x4 View{ float4x4::Identity() };
+        float4x4 Projection{ float4x4::Identity };
+        float4x4 View{ float4x4::Identity };
 
-        float4x4 InvertProjection{ float4x4::Identity() };
-        float4x4 InvertView{ float4x4::Identity() };
+        float4x4 InvertProjection{ float4x4::Identity };
+        float4x4 InvertView{ float4x4::Identity };
 
-        float4x4 InvertViewProjection{ float4x4::Identity() };
+        float4x4 InvertViewProjection{ float4x4::Identity };
 
         FCameraModel Model;
     };

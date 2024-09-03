@@ -13,10 +13,7 @@ const FQuaternion FQuaternion::One      (1, 1, 1, 1);
 const FQuaternion FQuaternion::Zero     (0, 0, 0, 0);
 //----------------------------------------------------------------------------
 bool FQuaternion::IsIdentity() const {
-    return  data.x == 0 &&
-            data.y == 0 &&
-            data.z == 0 &&
-            data.w == 1;
+    return NearlyEquals(vec, float4::W);
 }
 //----------------------------------------------------------------------------
 bool FQuaternion::IsNormalized() const {
@@ -24,15 +21,14 @@ bool FQuaternion::IsNormalized() const {
 }
 //----------------------------------------------------------------------------
 float FQuaternion::Angle() const {
-    Assert(Abs(Dot(data, data)) > SmallEpsilon);
-    return (2.0f * FPlatformMaths::Acos(data.w));
+    Assert(Abs(Dot2(vec)) > SmallEpsilon);
+    return (2.0f * FPlatformMaths::Acos(vec.w));
 }
 //----------------------------------------------------------------------------
 float3 FQuaternion::Axis() const {
-    const float length = Dot(data, data);
+    const float length = Dot2(vec);
     Assert(Abs(length) > SmallEpsilon);
-    const float inv = 1.0f / length;
-    return float3(inv * data.x, inv * data.y, inv * data.z);
+    return (vec.xyz * Rcp(length));
 }
 //----------------------------------------------------------------------------
 FQuaternion FQuaternion::Exponential() const {
@@ -42,38 +38,32 @@ FQuaternion FQuaternion::Exponential() const {
     float4 result;
 
     if (Abs(fsin) > SmallEpsilon) {
-        float coeff = fsin / angle;
-        result.x = coeff * data.x;
-        result.y = coeff * data.y;
-        result.z = coeff * data.z;
+        result.xyz = (fsin / angle) * vec.xyz;
     }
     else {
-        result = data;
+        result = vec;
     }
 
-    result.w = FPlatformMaths::Cos(angle);
+    result.w = Cos(angle);
     return FQuaternion(result);
 }
 //----------------------------------------------------------------------------
 FQuaternion FQuaternion::Logarithm() const {
     float4 result;
 
-    if (Abs(data.w) < 1.0f) {
-        float angle = FPlatformMaths::Acos(data.w);
+    if (Abs(vec.w) < 1.0f + Epsilonf) {
+        float angle = FPlatformMaths::Acos(Min(vec.w, 1.f));
         float fsin = FPlatformMaths::Sin(angle);
 
         if (Abs(fsin) > SmallEpsilon) {
-            float coeff = angle / fsin;
-            result.x = coeff * data.x;
-            result.y = coeff * data.y;
-            result.z = coeff * data.z;
+            result.xyz = (angle / fsin) * vec.xyz;
         }
         else {
-            result = data;
+            result = vec;
         }
     }
     else {
-        result = data;
+        result = vec;
     }
 
     result.w = 0.0f;
@@ -81,11 +71,11 @@ FQuaternion FQuaternion::Logarithm() const {
 }
 //----------------------------------------------------------------------------
 FQuaternion FQuaternion::Invert() const {
-    return FQuaternion(-data.x, -data.y, -data.z, data.w);
+    return FQuaternion(-vec.xyz, vec.w);
 }
 //----------------------------------------------------------------------------
 FQuaternion FQuaternion::Normalize() const {
-    return FQuaternion(data * Rcp(Length()));
+    return FQuaternion(vec * Rcp(Length()));
 }
 //----------------------------------------------------------------------------
 FQuaternion FQuaternion::NormalizeInvert() const {
@@ -94,18 +84,18 @@ FQuaternion FQuaternion::NormalizeInvert() const {
 //----------------------------------------------------------------------------
 float3 FQuaternion::Transform(const float3& value) const {
     float3 vector;
-    float vx = data.x + data.x;
-    float vy = data.y + data.y;
-    float vz = data.z + data.z;
-    float vwx = data.w * vx;
-    float vwy = data.w * vy;
-    float vwz = data.w * vz;
-    float vxx = data.x * vx;
-    float vxy = data.x * vy;
-    float vxz = data.x * vz;
-    float vyy = data.y * vy;
-    float vyz = data.y * vz;
-    float vzz = data.z * vz;
+    float vx = vec.x + vec.x;
+    float vy = vec.y + vec.y;
+    float vz = vec.z + vec.z;
+    float vwx = vec.w * vx;
+    float vwy = vec.w * vy;
+    float vwz = vec.w * vz;
+    float vxx = vec.x * vx;
+    float vxy = vec.x * vy;
+    float vxz = vec.x * vz;
+    float vyy = vec.y * vy;
+    float vyz = vec.y * vz;
+    float vzz = vec.z * vz;
 
     vector.x = ((value.x * ((1.0f - vyy) - vzz)) + (value.y * (vxy - vwz))) + (value.z * (vxz + vwy));
     vector.y = ((value.x * (vxy + vwz)) + (value.y * ((1.0f - vxx) - vzz))) + (value.z * (vyz - vwx));
@@ -115,40 +105,40 @@ float3 FQuaternion::Transform(const float3& value) const {
 }
 //----------------------------------------------------------------------------
 float3 FQuaternion::InvertTransform(const float3& value) const {
-    const float3 q(-data.x, -data.y, data.z); // Inverse
+    const float3 q(-vec.xy, vec.z); // Inverse
     const float3 t = 2.f * Cross(q, value);
-    return value + (data.w * t) + Cross(q, t);
+    return value + (vec.w * t) + Cross(q, t);
 }
 //----------------------------------------------------------------------------
 FQuaternion& FQuaternion::operator *=(const FQuaternion& other) {
-    float lx = data.x;
-    float ly = data.y;
-    float lz = data.z;
-    float lw = data.w;
+    float lx = vec.x;
+    float ly = vec.y;
+    float lz = vec.z;
+    float lw = vec.w;
 
-    float rx = other.data.x;
-    float ry = other.data.y;
-    float rz = other.data.z;
-    float rw = other.data.w;
+    float rx = other.vec.x;
+    float ry = other.vec.y;
+    float rz = other.vec.z;
+    float rw = other.vec.w;
 
-    data.x = (rx * lw + lx * rw + ry * lz) - (rz * ly);
-    data.y = (ry * lw + ly * rw + rz * lx) - (rx * lz);
-    data.z = (rz * lw + lz * rw + rx * ly) - (ry * lx);
-    data.w = (rw * lw) - (rx * lx + ry * ly + rz * lz);
+    vec.x = (rx * lw + lx * rw + ry * lz) - (rz * ly);
+    vec.y = (ry * lw + ly * rw + rz * lx) - (rx * lz);
+    vec.z = (rz * lw + lz * rw + rx * ly) - (ry * lx);
+    vec.w = (rw * lw) - (rx * lx + ry * ly + rz * lz);
 
     return *this;
 }
 //----------------------------------------------------------------------------
 FQuaternion FQuaternion::operator *(const FQuaternion& other) const {
-    float lx = data.x;
-    float ly = data.y;
-    float lz = data.z;
-    float lw = data.w;
+    float lx = vec.x;
+    float ly = vec.y;
+    float lz = vec.z;
+    float lw = vec.w;
 
-    float rx = other.data.x;
-    float ry = other.data.y;
-    float rz = other.data.z;
-    float rw = other.data.w;
+    float rx = other.vec.x;
+    float ry = other.vec.y;
+    float rz = other.vec.z;
+    float rw = other.vec.w;
 
     return FQuaternion( (rx * lw + lx * rw + ry * lz) - (rz * ly),
                         (ry * lw + ly * rw + rz * lx) - (rx * lz),

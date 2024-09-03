@@ -22,7 +22,7 @@ struct FGaussian2f {
     FGaussian2f() = default;
     FGaussian2f(const float2& mean, const float2& std_dev, const float2x2& rotation) NOEXCEPT
     :   Mean(mean)
-    ,   Covariance(rotation.Multiply(MakeDiagonalMatrix(std_dev)).Multiply(rotation.Transpose()))
+    ,   Covariance(rotation.Multiply(float2x2(std_dev)).Multiply(rotation.transposed))
     {}
 
     void ToEllipse(float2* outOrigin, float2* outRadii, float* outOrientation, const size_t maxIterations = 50) const NOEXCEPT {
@@ -69,7 +69,7 @@ struct FGaussian3f {
     FGaussian3f() = default;
     FGaussian3f(const float3& mean, const float3& std_dev, const float3x3& rotation) NOEXCEPT
     :   Mean(mean)
-    ,   Covariance(rotation.Multiply(MakeDiagonalMatrix(std_dev)).Multiply(rotation.Transpose()))
+    ,   Covariance(rotation.Multiply(float3x3(std_dev)).Multiply(rotation.transposed))
     {}
 
     void ToEllipsoid(float3* outOrigin, float3* outRadii, float3x3* outRotation, const size_t maxIterations = 50) const NOEXCEPT {
@@ -96,7 +96,7 @@ struct FGaussianRandom3f {
     FGaussianRandom3f() = default;
     FGaussianRandom3f(const FGaussian3f& g) NOEXCEPT
     :   Mean(g.Mean)
-    ,   L(float3x3::Zero()) {
+    ,   L(float3x3::Zero) {
         // Cholesky decomposition to extract lower triangular matrix L
         L.SetDiagonal(Sqrt(g.Covariance.Diagonal()));
 

@@ -30,7 +30,7 @@ static void TransformIFP_(
 
         if (useTransform) {
             forrange(i, 0, transformed.size())
-                transformed[i] = TransformVector3(transform, normalizeds[i]);
+                transformed[i] = Transform3(transform, normalizeds[i]);
         }
         else {
             Copy(transformed, normalizeds);
@@ -38,7 +38,7 @@ static void TransformIFP_(
     }
     else if (useTransform) {
         for (float3& p : normalizeds)
-            p = TransformVector3(transform, p);
+            p = Transform3(transform, p);
     }
 }
 //----------------------------------------------------------------------------
@@ -120,7 +120,7 @@ static void Cube_(
 } //!namespace
 //----------------------------------------------------------------------------
 void Cube(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords) {
-    Cube_(mesh, positions, texcoords, float4x4::Identity(), false);
+    Cube_(mesh, positions, texcoords, float4x4::Identity, false);
 }
 //----------------------------------------------------------------------------
 void Cube(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords, const float4x4& transform) {
@@ -166,7 +166,7 @@ static void Pyramid_(
 } //!namespace
 //----------------------------------------------------------------------------
 void Pyramid(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords) {
-    Pyramid_(mesh, positions, texcoords, float4x4::Identity(), false);
+    Pyramid_(mesh, positions, texcoords, float4x4::Identity, false);
 }
 //----------------------------------------------------------------------------
 void Pyramid(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords, const float4x4& transform) {
@@ -217,7 +217,7 @@ static void Octahedron_(
 } //!namespace
 //----------------------------------------------------------------------------
 void Octahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords) {
-    Octahedron_(mesh, positions, texcoords, float4x4::Identity(), false);
+    Octahedron_(mesh, positions, texcoords, float4x4::Identity, false);
 }
 //----------------------------------------------------------------------------
 void Octahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords, const float4x4& transform) {
@@ -289,7 +289,7 @@ static void Icosahedron_(
 } //!namespace
 //----------------------------------------------------------------------------
 void Icosahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords) {
-    Icosahedron_(mesh, positions, texcoords, float4x4::Identity(), false);
+    Icosahedron_(mesh, positions, texcoords, float4x4::Identity, false);
 }
 //----------------------------------------------------------------------------
 void Icosahedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords, const float4x4& transform) {
@@ -370,7 +370,7 @@ static void ContellatedTetraHedron_(
 } //!namespace
 //----------------------------------------------------------------------------
 void ContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords) {
-    ContellatedTetraHedron_(mesh, positions, texcoords, float4x4::Identity(), false);
+    ContellatedTetraHedron_(mesh, positions, texcoords, float4x4::Identity, false);
 }
 //----------------------------------------------------------------------------
 void ContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords, const float4x4& transform) {
@@ -430,7 +430,7 @@ static void HemiContellatedTetraHedron_(
 } //!namespace
 //----------------------------------------------------------------------------
 void HemiContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords) {
-    HemiContellatedTetraHedron_(mesh, positions, texcoords, float4x4::Identity(), false);
+    HemiContellatedTetraHedron_(mesh, positions, texcoords, float4x4::Identity, false);
 }
 //----------------------------------------------------------------------------
 void HemiContellatedTetraHedron(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords, const float4x4& transform) {
@@ -450,7 +450,7 @@ void Geosphere_(
     Assert(divisions);
     Assert(mesh.empty());
 
-    Icosahedron_(mesh, positions, texcoords, float4x4::Identity(), false);
+    Icosahedron_(mesh, positions, texcoords, float4x4::Identity, false);
 
     FNormals3f normals = mesh.Normal3f(0);
 
@@ -479,7 +479,7 @@ void Geosphere_(
 } //!namespace
 //----------------------------------------------------------------------------
 void Geosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords, size_t divisions) {
-    Geosphere_(mesh, positions, texcoords, divisions, float4x4::Identity(), false);
+    Geosphere_(mesh, positions, texcoords, divisions, float4x4::Identity, false);
 }
 //----------------------------------------------------------------------------
 void Geosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords, size_t divisions, const float4x4& transform) {
@@ -499,7 +499,7 @@ void HemiGeosphere_(
     Assert(divisions);
     Assert(mesh.empty());
 
-    Pyramid_(mesh, positions, texcoords, float4x4::Identity(), false);
+    Pyramid_(mesh, positions, texcoords, float4x4::Identity, false);
 
     FNormals3f normals = mesh.Normal3f(0);
 
@@ -528,7 +528,7 @@ void HemiGeosphere_(
 } //!namespace
 //----------------------------------------------------------------------------
 void HemiGeosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords, size_t divisions) {
-    HemiGeosphere_(mesh, positions, texcoords, divisions, float4x4::Identity(), false);
+    HemiGeosphere_(mesh, positions, texcoords, divisions, float4x4::Identity, false);
 }
 //----------------------------------------------------------------------------
 void HemiGeosphere(FGenericMesh& mesh, const FPositions3f& positions, const FTexcoords3f& texcoords, size_t divisions, const float4x4& transform) {

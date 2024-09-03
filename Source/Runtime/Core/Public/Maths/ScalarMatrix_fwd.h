@@ -6,11 +6,25 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename T, u32 _Width, u32 _Height>
-class TScalarMatrix;
+namespace details {
+template <typename T, u32 _Rows, u32 _Cols, typename _Expr>
+struct TScalarMatrixExpr;
+template <typename T, u32 _Rows, u32 _Cols, typename _Expr>
+struct TScalarMatrixAssignable;
+template <typename T, u32 _Rows, u32 _Cols>
+struct TScalarMatrixStorage;
+} //!namespace details
+//----------------------------------------------------------------------------
+template <typename T, u32 _Rows, u32 _Cols>
+using TScalarMatrix = details::TScalarMatrixExpr<T, _Rows, _Cols,
+    details::TScalarMatrixAssignable<T, _Rows, _Cols,
+        details::TScalarMatrixStorage<T, _Rows, _Cols>
+    >
+>;
 //----------------------------------------------------------------------------
 #define DECL_SCALARMATRIX_ALIAS(_Scalar, _ALIAS) \
     typedef TScalarMatrix<_Scalar, 2, 2> CONCAT(_ALIAS, 2x2); \
+    typedef TScalarMatrix<_Scalar, 2, 3> CONCAT(_ALIAS, 2x3); \
     typedef TScalarMatrix<_Scalar, 3, 3> CONCAT(_ALIAS, 3x3); \
     typedef TScalarMatrix<_Scalar, 4, 3> CONCAT(_ALIAS, 4x3); \
     typedef TScalarMatrix<_Scalar, 3, 4> CONCAT(_ALIAS, 3x4); \
@@ -33,7 +47,7 @@ DECL_SCALARMATRIX(double)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-typedef float4x4 Matrix;
+typedef float4x4 FMatrix;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

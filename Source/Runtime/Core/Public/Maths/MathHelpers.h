@@ -62,6 +62,7 @@ struct FConstantNumber {
 #define PPE_CONSTANTNUMBER_DEF(_Name, ...) \
     inline CONSTEXPR FConstantNumber _Name{ __VA_ARGS__ }; \
     template <typename T> inline CONSTEXPR FConstantNumber::TInvalid<T> CONCAT(_Name, _v); \
+    inline CONSTEXPR float CONCAT(_Name, f){ _Name }; \
     template <> inline CONSTEXPR float CONCAT(_Name, _v)<float>{ _Name }; \
     template <> inline CONSTEXPR double CONCAT(_Name, _v)<double>{ _Name }
 

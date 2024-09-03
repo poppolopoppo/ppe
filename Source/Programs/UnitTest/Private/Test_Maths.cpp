@@ -1,6 +1,8 @@
 ﻿// PPE - PoPpOlOpOPpo Engine. All Rights Reserved.
 
 
+#include "Maths/Plane.h"
+#include "Maths/Quaternion.h"
 #include "Maths/Range.h"
 #include "Maths/ScalarVectorHelpers.h"
 #include "Maths/ScalarBoundingBoxHelpers.h"
@@ -119,6 +121,7 @@ static NO_INLINE void Test_Vector_() {
         int3 z = int3::Z;
         int3 a = x + y + z;
         PPE_LOG_CHECKVOID(Test_Maths, a == int3::One);
+        a += a;
     }
     {
         int3 x = int3::X;
@@ -141,7 +144,7 @@ static NO_INLINE void Test_Vector_() {
        PPE_LOG_CHECKVOID(Test_Maths, v.y == 2);
        PPE_LOG_CHECKVOID(Test_Maths, v.z == 3);
        PPE_LOG_CHECKVOID(Test_Maths, v.w == 4);
-       v.yw = { 5, 6 };
+       v.yw = int2{ 5, 6 };
        PPE_LOG_CHECKVOID(Test_Maths, v.x == 1);
        PPE_LOG_CHECKVOID(Test_Maths, v.y == 5);
        PPE_LOG_CHECKVOID(Test_Maths, v.z == 3);
@@ -214,39 +217,409 @@ static NO_INLINE void Test_BoundingBox_() {
 //----------------------------------------------------------------------------
 static NO_INLINE void Test_Matrix_() {
     {
-        int4x3 m = float4x3::Identity();
-        int3x4 t = m.Transpose();
-        int4x3 n = t.Transpose();
+        float3x3 m1{ float3::X, float3::Y, float3::Z };
+        PPE_LOG_CHECKVOID(Test_Maths, m1.Diagonal() == float3::One);
+        float3x3 m2 = float3x3::Identity;
+        PPE_LOG_CHECKVOID(Test_Maths, m1 == m2);
+        float3x3 m3 = float3(1,2,3);
+        PPE_LOG_CHECKVOID(Test_Maths, m3.Diagonal() == float3(1,2,3));
+        float3x3 m4 = m3.transposed;
+        PPE_LOG_CHECKVOID(Test_Maths, m4.Diagonal() == m3.Diagonal());
+    }
+    {
+        int4x3 m = int4x3::Identity;
+        int3x4 t = m.transposed;
+        int4x3 n = t.transposed;
         PPE_LOG_CHECKVOID(Test_Maths, m == n);
+        int4 c0 = n.Column<0>();
+        int3 c1 = t.Column<0>();
+        PPE_LOG_CHECKVOID(Test_Maths, c0.xyz == c1);
     }
     {
         float4x4 m = MakeTranslationMatrix(float3(1));
-        PPE_LOG_CHECKVOID(Test_Maths, m.AxisX() == float3::X);
-        PPE_LOG_CHECKVOID(Test_Maths, m.AxisY() == float3::Y);
-        PPE_LOG_CHECKVOID(Test_Maths, m.AxisZ() == float3::Z);
-        PPE_LOG_CHECKVOID(Test_Maths, m.AxisT() == float3::One);
-        float4x3 p{
-            m.AxisX(),
-            m.AxisY(),
-            m.AxisZ(),
-            m.AxisT()
+        PPE_LOG_CHECKVOID(Test_Maths, m.Column<0>() == float3::X.Extend(0));
+        PPE_LOG_CHECKVOID(Test_Maths, m.Column<1>() == float3::Y.Extend(0));
+        PPE_LOG_CHECKVOID(Test_Maths, m.Column<2>() == float3::Z.Extend(0));
+        PPE_LOG_CHECKVOID(Test_Maths, m.Column<3>() == float4::One);
+        float3x4 p{
+            m.rows[0],
+            m.rows[1],
+            m.rows[2],
         };
-        PPE_LOG_CHECKVOID(Test_Maths, p.AxisX() == float3::X);
-        PPE_LOG_CHECKVOID(Test_Maths, p.AxisY() == float3::Y);
-        PPE_LOG_CHECKVOID(Test_Maths, p.AxisZ() == float3::Z);
-        PPE_LOG_CHECKVOID(Test_Maths, p.AxisT() == float3::One);
-        float4x3 q = PackHomogeneousMatrix(m);
+        PPE_LOG_CHECKVOID(Test_Maths, p.rows[0].xyz == float3::X);
+        PPE_LOG_CHECKVOID(Test_Maths, p.rows[1].xyz == float3::Y);
+        PPE_LOG_CHECKVOID(Test_Maths, p.rows[2].xyz == float3::Z);
+        float3x4 q = PackHomogeneousMatrix(m);
+        float4x4 r = UnpackHomogeneousMatrix(q);
         PPE_LOG_CHECKVOID(Test_Maths, p == q);
-        float4x4 id = float4x4::Identity();
-        PPE_LOG_CHECKVOID(Test_Maths, id.Column_x() == float4::X);
-        PPE_LOG_CHECKVOID(Test_Maths, id.Column_y() == float4::Y);
-        PPE_LOG_CHECKVOID(Test_Maths, id.Column_z() == float4::Z);
-        PPE_LOG_CHECKVOID(Test_Maths, id.Column_w() == float4::W);
+        PPE_LOG_CHECKVOID(Test_Maths, r == m);
+        float4x4 id = float4x4::Identity;
+        PPE_LOG_CHECKVOID(Test_Maths, id.rows[0] == float4::X);
+        PPE_LOG_CHECKVOID(Test_Maths, id.rows[1] == float4::Y);
+        PPE_LOG_CHECKVOID(Test_Maths, id.rows[2] == float4::Z);
+        PPE_LOG_CHECKVOID(Test_Maths, id.rows[3] == float4::W);
         float4x4 n = m.Multiply(id);
-        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column_x(), float4::X));
-        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column_y(), float4::Y));
-        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column_z(), float4::Z));
-        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column_w(), float4::One));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column<0>(), float4::X));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column<1>(), float4::Y));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column<2>(), float4::Z));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(n.Column<3>(), float4::One));
+    }
+    {
+        float3x3 m{
+            {1, 2, 3},
+            {2, 7, 6},
+            {3, 6, 9}
+        };
+        PPE_LOG_CHECKVOID(Test_Maths, IsSymmetric(m));
+        float2x3 p = PackSymmetricMatrix(m);
+        float3x3 r = UnpackSymmetricMatrix(p);
+        PPE_LOG_CHECKVOID(Test_Maths, r == m);
+    }
+    {
+        float3x3 m = float3x3::Identity;
+        float3 v = {1,2,3};
+        float3 r0 = m * v;
+        float3 r1 = v * m;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r0, v));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r1, v));
+    }
+    {
+        float4x4 m = float4x4::Identity;
+        float4x4 n = float4x4::Identity;
+        float4x4 r = m * n;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r, m));
+        PPE_LOG_CHECKVOID(Test_Maths, IsHomogeneous(r));
+    }
+    {
+        float3x3 m{ {1.f,2.f,3.f},
+                    {4.f,5.f,6.f},
+                    {7.f,8.f,9.f} };
+        float3x3 p{ float3(1.f,2.f,3.f),
+                    float3(4.f,5.f,6.f),
+                    float3(7.f,8.f,9.f) };
+        float3x3 q{ 1.f,2.f,3.f,
+                    4.f,5.f,6.f,
+                    7.f,8.f,9.f };
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(m, p));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(p, q));
+    }
+    {
+        float3x3 m( {1,2,3},
+                    {4,5,6},
+                    {7,8,9} );
+        float3x3 n{ {9,8,7},
+                    {6,5,4},
+                    {3,2,1} };
+        float3x3 r0 = m * n;
+        float3x3 r1 = n * m;
+        float3x3 e0{{30, 24, 18},
+                    {84, 69, 54},
+                    {138, 114, 90} };
+        float3x3 e1{{90, 114, 138},
+                    {54, 69, 84},
+                    {18, 24, 30}} ;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r0, e0));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r1, e1));
+    }
+    {
+        float4x3 m = float4x3::Identity;
+        float3x4 n = float3x4::Identity;
+        float4x3 t = n.transposed;
+        float4x4 r0 = m * n;
+        float3x3 r1 = n * m;
+        float4 v0 = m.Multiply(float3::One);
+        float3 v1 = n.Multiply(float4::One);
+        float4x4 h0 = m.OneExtend();
+        float4x4 h1 = n.OneExtend();
+        float4x4 h2 = r1.Homogeneous();
+    }
+    {
+        float3x3 a = Make3DRotationMatrixAroundX(.33f);
+        float3x3 t0 = a.transposed;
+        float3x3 t1 = a.Transpose();
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(t0, t1));
+        float3x3 b = t0.transposed;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(a, b));
+    }
+    {
+        float4x4 a = Make3DTransformMatrix(float3(1,2,3), float3(2,3,4), Make3DRotationMatrixAroundX(.33f));
+        float3x4 b = PackHomogeneousMatrix(a);
+        float4x3 t0 = b.transposed;
+        float4x3 t1 = b.Transpose();
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(t0, t1));
+        float3x4 c = t0.transposed;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(b, c));
+    }
+    {
+        float3x3 a = Make3DRotationMatrixAroundX(.33f);
+        float3x3 b = Make3DRotationMatrixAroundY(.22f);
+        float3x3 c = Make3DRotationMatrixAroundZ(.44f);
+        float3x3 r0 = a * (b + c);
+        float3x3 r1 = a * b + a * c;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r0, r1));
+    }
+    {
+        float3x3 a = Make3DRotationMatrixAroundX(.33f);
+        float3x3 b = Make3DRotationMatrixAroundY(.22f);
+        float3x3 c = Make3DRotationMatrixAroundZ(.44f);
+        float3x3 r0 = (b + c) * a;
+        float3x3 r1 = b * a + c * a;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r0, r1));
+    }
+    {
+        float3x3 a = Make3DRotationMatrixAroundX(.33f);
+        float3x3 b = Make3DRotationMatrixAroundY(.22f);
+        float3x3 r0 = (a * b).transposed;
+        float3x3 r1 = b.transposed * a.transposed;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r0, r1));
+    }
+    {
+        float4x4 a = Make3DTransformMatrix(float3(1,2,3), float3(2,3,4), Make3DRotationMatrixAroundX(.33f));
+        float4x4 i = Invert(a);
+        float4x4 r0 = a * i;
+        float4x4 r1 = i * a;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r0, float4x4::Identity));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r1, float4x4::Identity));
+    }
+    {
+        float3x3 a = Make3DRotationMatrixAroundX(.33f);
+        float3x3 b = Make3DRotationMatrixAroundY(.22f);
+        float3x3 r0 = Invert(a * b);
+        float3x3 r1 = Invert(b) * Invert(a);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r0, r1));
+    }
+    {
+        float4x4 a = Make3DTransformMatrix(float3(1,2,3), float3(2,3,4), Make3DRotationMatrixAroundX(.33f));
+        float4x4 r0 = Invert(a.Transpose());
+        float4x4 r1 = Invert(a).transposed;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r0, r1));
+    }
+    {
+        float4x4 a = Make3DTransformMatrix(float3(1,2,3), float3(2,3,4), Make3DRotationMatrixAroundX(.33f));
+        float4x4 r0 = (a * 3).Transpose();
+        float4x4 r1 = a.transposed * 3;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r0, r1));
+    }
+    {
+        float4x4 a = Make3DTransformMatrix(float3(1,2,3), float3(2,3,4), Make3DRotationMatrixAroundX(.33f));
+        float4x4 i = Invert(a);
+        float4x4 r = Invert(i);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r, a));
+    }
+    {
+        float4x4 a{ {1,0,0,1},
+                    {0,1,0,2},
+                    {0,0,1,3},
+                    {0,0,0,1}};
+        float4x4 i = Invert(a);
+        float4x4 n{ {1,0,0,-1},
+                    {0,1,0,-2},
+                    {0,0,1,-3},
+                    {0,0,0,1}};
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(i, n));
+        float4 p{1,2,3,1};
+        float4 r = a * p;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r, float4(2,4,6,1)));
+        float4 o = i * r;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(o, p));
+    }
+    {
+        float4x4 a{ {1,0,0,1},
+                    {0,1,0,2},
+                    {0,0,1,3},
+                    {0,0,0,1}};
+        float4x4 i = Invert_AssumeHomogeneous(a);
+        float4x4 n{ {1,0,0,-1},
+                    {0,1,0,-2},
+                    {0,0,1,-3},
+                    {0,0,0,1}};
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(i, n));
+        float4 p{1,2,3,1};
+        float4 r = a * p;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r, float4(2,4,6,1)));
+        float4 o = i * r;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(o, p));
+    }
+    {
+        float3 o = {1,2,3};
+        float4x4 t = MakeTranslationMatrix(o);
+        float3 p = t.Multiply_OneExtend(float3::Zero).xyz;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(p, o));
+    }
+    {
+        float3 s = {1,2,3};
+        float4x4 t = MakeScalingMatrix(s);
+        float3 p = t.Multiply_OneExtend(float3::One).xyz;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(p, s));
+    }
+    {
+        float3 o = {1,2,3};
+        float3 s = {1,2,3};
+        float4x4 t = MakeScalingMatrix(s) * MakeTranslationMatrix(o);
+        float3 p = t.Multiply_OneExtend(float3::One).xyz;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(p, float3{2,6,12}));
+    }
+    {
+        float3 o = {1,2,3};
+        float3 s = {1,2,3};
+        float4x4 t = MakeTranslationMatrix(o) * MakeScalingMatrix(s);
+        float3 p = t.Multiply_OneExtend(float3::One).xyz;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(p, float3{2,4,6}));
+    }
+    {
+        FQuaternion q = FQuaternion::Identity;
+        PPE_LOG_CHECKVOID(Test_Maths, q.IsIdentity());
+        float3x3 r = Make3DRotationMatrixFromQuaternion(q);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r, float3x3::Identity));
+    }
+    {
+        float3x3 m = float3x3::Identity;
+        FQuaternion q = MakeQuaternionFromRotationMatrix(m);
+        PPE_LOG_CHECKVOID(Test_Maths, q.IsIdentity());
+        float3x3 r = Make3DRotationMatrixFromQuaternion(q);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r, float3x3::Identity));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(m, r));
+    }
+    {
+        float3 u = float3::Y;
+        float3x3 t = Make3DRotationMatrixAroundX(PIf);
+        float3 v = t.Multiply(u);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(v, -u));
+        FQuaternion q = MakeQuaternionFromRotationMatrix(t);
+        float3x3 m = Make3DRotationMatrixFromQuaternion(q);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(t, m));
+        float3 w = q.Transform(u);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(v, w));
+    }
+    {
+        float3 u = float3::X;
+        float3x3 t = Make3DRotationMatrixAroundY(PIf);
+        float3 v = t.Multiply(u);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(v, -u));
+        FQuaternion q = MakeQuaternionFromRotationMatrix(t);
+        float3x3 m = Make3DRotationMatrixFromQuaternion(q);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(t, m));
+        float3 w = q.Transform(u);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(v, w));
+    }
+    {
+        float3 u = float3::X;
+        float3x3 t = Make3DRotationMatrixAroundZ(PIf);
+        float3 v = t.Multiply(u);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(v, -u));
+        FQuaternion q = MakeQuaternionFromRotationMatrix(t);
+        float3x3 m = Make3DRotationMatrixFromQuaternion(q);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(t, m));
+        float3 w = q.Transform(u);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(v, w));
+    }
+    {
+        float3x3 mrot = Make3DRotationMatrixAroundX(.33f);
+        FQuaternion qrot = MakeQuaternionFromRotationMatrix(mrot);
+        float3x3 test = Make3DRotationMatrixFromQuaternion(qrot);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(mrot, test));
+    }
+    {
+        float3x3 mrot = Make3DRotationMatrixAroundY(.33f);
+        FQuaternion qrot = MakeQuaternionFromRotationMatrix(mrot);
+        float3x3 test = Make3DRotationMatrixFromQuaternion(qrot);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(mrot, test));
+    }
+    {
+        float3x3 mrot = Make3DRotationMatrixAroundZ(.33f);
+        FQuaternion qrot = MakeQuaternionFromRotationMatrix(mrot);
+        float3x3 test = Make3DRotationMatrixFromQuaternion(qrot);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(mrot, test));
+    }
+    {
+        float3x3 mrot = Make3DRotationMatrixAroundX(.33f) *
+                        Make3DRotationMatrixAroundY(.22f) *
+                        Make3DRotationMatrixAroundZ(.44f);
+        FQuaternion qrot = MakeQuaternionFromRotationMatrix(mrot);
+        float3x3 test = Make3DRotationMatrixFromQuaternion(qrot);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(mrot, test));
+        float3 translate{ 1, 2, 3 };
+        float3 scale{ 2, 3, 4 };
+        float4x4 transform = Make3DTransformMatrix(translate, scale, qrot);
+        float3 t, s;
+        FQuaternion q;
+        Decompose(transform, s, q, t);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(t, translate));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(s, scale));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(q.vec, qrot.vec));
+    }
+    {
+        float4x4 a = Make3DTransformMatrix(float3(1,2,3), float3(2,3,4), Make3DRotationMatrixAroundX(.33f));
+        float4x4 i = Invert_AssumeHomogeneous(a);
+        float4x4 n = Invert(a);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(i, n));
+        float4x4 r = Invert_AssumeHomogeneous(i);
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(r, a));
+    }
+    {
+        const float left = -7.f;
+        const float right = 9.f;
+        const float top = 11.f;
+        const float bottom = -13.f;
+        const float znear = -3.f;
+        const float zfar = 31.f;
+        float4x4 projection = MakeOrthoProjectionMatrix(left, right, bottom, top, znear, zfar);
+        {
+            const float3 viewPos{left,bottom,znear};
+            float4 clipPos = projection * viewPos.Extend(1);
+            clipPos.xyz /= clipPos.w;
+            PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(clipPos.xyz, float3{-1,-1,-1}));
+        }
+        {
+            const float3 viewPos{right,bottom,znear};
+            float4 clipPos = projection * viewPos.Extend(1);
+            clipPos.xyz /= clipPos.w;
+            PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(clipPos.xyz, float3{1,-1,-1}));
+        }
+        {
+            const float3 viewPos{left,top,znear};
+            float4 clipPos = projection * viewPos.Extend(1);
+            clipPos.xyz /= clipPos.w;
+            PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(clipPos.xyz, float3{-1,1,-1}));
+        }
+        {
+            const float3 viewPos{right,top,znear};
+            float4 clipPos = projection * viewPos.Extend(1);
+            clipPos.xyz /= clipPos.w;
+            PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(clipPos.xyz, float3{1,1,-1}));
+        }
+        {
+            const float3 viewPos{left,bottom,zfar};
+            float4 clipPos = projection * viewPos.Extend(1);
+            clipPos.xyz /= clipPos.w;
+            PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(clipPos.xyz, float3{-1,-1,1}));
+        }
+        {
+            const float3 viewPos{right,bottom,zfar};
+            float4 clipPos = projection * viewPos.Extend(1);
+            clipPos.xyz /= clipPos.w;
+            PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(clipPos.xyz, float3{1,-1,1}));
+        }
+        {
+            const float3 viewPos{left,top,zfar};
+            float4 clipPos = projection * viewPos.Extend(1);
+            clipPos.xyz /= clipPos.w;
+            PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(clipPos.xyz, float3{-1,1,1}));
+        }
+        {
+            const float3 viewPos{right,top,zfar};
+            float4 clipPos = projection * viewPos.Extend(1);
+            clipPos.xyz /= clipPos.w;
+            PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(clipPos.xyz, float3{1,1,1}));
+        }
+    }
+    {
+        float4 viewPos{ float3::Z, 1 };
+        float4x4 projection = MakePerspectiveProjectionMatrix(Radians(75.f), 1.f, Epsilon_v<float>, 2.f);
+        float4 screenPos = projection * viewPos;
+        screenPos.xyz /= screenPos.w;
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(screenPos.xy, float2::Zero));
+        PPE_LOG_CHECKVOID(Test_Maths, NearlyEquals(screenPos.z, 0.f));
     }
 }
 //----------------------------------------------------------------------------
