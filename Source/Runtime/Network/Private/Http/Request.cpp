@@ -10,11 +10,13 @@
 #include "Socket/SocketBuffered.h"
 #include "Uri.h"
 
+#include "Diagnostic/Logger.h"
 #include "IO/Format.h"
 #include "IO/TextWriter.h"
 
 namespace PPE {
 namespace Network {
+EXTERN_LOG_CATEGORY(PPE_NETWORK_API, Network)
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -124,37 +126,38 @@ bool FHttpRequest::Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t 
     return true;
 }
 //----------------------------------------------------------------------------
-void FHttpRequest::Write(FSocketBuffered* psocket, const FHttpRequest& request) {
+bool FHttpRequest::Write(FSocketBuffered* psocket, const FHttpRequest& request) {
     Assert(psocket);
-    Assert(psocket->IsConnected());
+    if (not psocket->IsConnected())
+        return false;
 
     // method :
-    psocket->Write(HttpMethodToCStr(request._method));
-    psocket->Put(' ');
+    PPE_LOG_CHECK(Network, psocket->Write(HttpMethodToCStr(request._method)));
+    PPE_LOG_CHECK(Network, psocket->Put(' '));
 
     // path :
     if (request._uri.Path().size()) {
-        psocket->Write(request._uri.Path());
+        PPE_LOG_CHECK(Network, psocket->Write(request._uri.Path()));
     }
     else {
-        psocket->Put('/');
+        PPE_LOG_CHECK(Network, psocket->Put('/'));
     }
     if (request._uri.Query().size()) {
-        psocket->Put('?');
-        psocket->Write(request._uri.Query());
+        PPE_LOG_CHECK(Network, psocket->Put('?'));
+        PPE_LOG_CHECK(Network, psocket->Write(request._uri.Query()));
     }
-    psocket->Put(' ');
+    PPE_LOG_CHECK(Network, psocket->Put(' '));
 
     // protocol :
-    psocket->Write(FHttpHeader::ProtocolVersion());
-    psocket->Write("\r\n");
+    PPE_LOG_CHECK(Network, psocket->Write(FHttpHeader::ProtocolVersion()));
+    PPE_LOG_CHECK(Network, psocket->Write("\r\n"));
 
     // headers :
     for (const auto& it : request.Headers()) {
-        psocket->Write(it.first.MakeView());
-        psocket->Write(": ");
-        psocket->Write(it.second.MakeView());
-        psocket->Write("\r\n");
+        PPE_LOG_CHECK(Network, psocket->Write(it.first.MakeView()));
+        PPE_LOG_CHECK(Network, psocket->Write(": "));
+        PPE_LOG_CHECK(Network, psocket->Write(it.second.MakeView()));
+        PPE_LOG_CHECK(Network, psocket->Write("\r\n"));
     }
 
     // add content-length header if omitted :
@@ -164,19 +167,19 @@ void FHttpRequest::Write(FSocketBuffered* psocket, const FHttpRequest& request) 
         FFixedSizeTextWriter oss(tmp);
         Format(oss, "{0}", request.Body().SizeInBytes());
 
-        psocket->Write(FHttpHeaders::ContentLength().MakeView());
-        psocket->Write(": ");
-        psocket->Write(oss.Written());
-        psocket->Write("\r\n");
+        PPE_LOG_CHECK(Network, psocket->Write(FHttpHeaders::ContentLength().MakeView()));
+        PPE_LOG_CHECK(Network, psocket->Write(": "));
+        PPE_LOG_CHECK(Network, psocket->Write(oss.Written()));
+        PPE_LOG_CHECK(Network, psocket->Write("\r\n"));
     }
 
-    psocket->Write("\r\n");
+    PPE_LOG_CHECK(Network, psocket->Write("\r\n"));
 
     // body :
     if (not request.Body().empty())
-        psocket->Write(request.Body().MakeView());
+        PPE_LOG_CHECK(Network, psocket->Write(request.Body().MakeView()));
 
-    psocket->FlushWrite();
+    return psocket->FlushWrite();
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

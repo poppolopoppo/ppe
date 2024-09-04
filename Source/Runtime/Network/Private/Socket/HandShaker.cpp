@@ -87,7 +87,8 @@ void FHandShaker::PollingTask_(ITaskContext& ctx) {
 
             PPE_LOG(Network, Verbose, "HandShaker: <{0}> accepted a new connection {1}", _workers.Name(), socket.Remote());
 
-            socket.SetTimeout(_acceptTimeout);
+            if (not socket.SetTimeout(_acceptTimeout))
+                PPE_LOG(Network, Warning, "HandShaker: <{0}> failed to set accept-timeout {1}", _workers.Name(), socket.Remote());
 
             FServicingPort::Queue(ctx, NEW_REF(Socket, FServicingPort, *this, std::move(socket)));
         }

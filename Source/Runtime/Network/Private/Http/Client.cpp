@@ -117,8 +117,8 @@ void FHttpClient::Process(FHttpResponse* presponse, const FHttpRequest& request)
     Assert(presponse);
     Assert(_socket.IsConnected());
 
-    FHttpRequest::Write(&_socket, request);
-    FHttpResponse::Read(presponse, _socket, _maxContentLength);
+    PPE_LOG_CHECKVOID(Network, FHttpRequest::Write(&_socket, request));
+    PPE_LOG_CHECKVOID(Network, FHttpResponse::Read(presponse, _socket, _maxContentLength));
 
     if (not FHttpHeader::UnpackCookie(&_cookie, *presponse))
         _cookie.clear_ReleaseMemory();

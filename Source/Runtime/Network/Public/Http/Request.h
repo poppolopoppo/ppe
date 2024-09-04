@@ -29,7 +29,7 @@ public:
     bool AskToKeepAlive() const NOEXCEPT;
 
     NODISCARD static bool Read(FHttpRequest* prequest, FSocketBuffered& socket, size_t maxContentLength);
-    static void Write(FSocketBuffered* psocket, const FHttpRequest& request);
+    NODISCARD static bool Write(FSocketBuffered* psocket, const FHttpRequest& request);
 
 private:
     EHttpMethod _method;

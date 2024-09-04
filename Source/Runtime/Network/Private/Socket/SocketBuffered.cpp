@@ -12,22 +12,11 @@ namespace Network {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FSocketBuffered::FSocketBuffered()
-:   _sizeI(0)
-,   _offsetI(0)
-,   _sizeO(0)
-,   _bufferCapacity(DefaultBufferSize) {}
-//----------------------------------------------------------------------------
 FSocketBuffered::FSocketBuffered(FSocket&& socket, size_t capacity/* = DefaultBufferSize */)
 :   _socket(std::move(socket))
-,   _sizeI(0)
-,   _offsetI(0)
-,   _sizeO(0)
 ,   _bufferCapacity(capacity) {
     Assert(_bufferCapacity > 0);
 }
-//----------------------------------------------------------------------------
-FSocketBuffered::~FSocketBuffered() = default;
 //----------------------------------------------------------------------------
 FSocketBuffered::FSocketBuffered(FSocketBuffered&& rvalue) NOEXCEPT {
     operator =(std::move(rvalue));
@@ -50,8 +39,8 @@ FSocketBuffered& FSocketBuffered::operator =(FSocketBuffered&& rvalue) NOEXCEPT 
 
     rvalue._sizeI = rvalue._offsetI = rvalue._sizeO = 0;
 
-    Assert(_bufferI.empty() || _bufferI.SizeInBytes() == _bufferCapacity);
-    Assert(_bufferO.empty() || _bufferO.SizeInBytes() == _bufferCapacity);
+    Assert(not _bufferI.IsValid() || _bufferI.SizeInBytes() == _bufferCapacity);
+    Assert(not _bufferO.IsValid() || _bufferO.SizeInBytes() == _bufferCapacity);
 
     return (*this);
 }
@@ -125,15 +114,16 @@ size_t FSocketBuffered::Write(const TMemoryView<const u8>& rawData) {
     else {
         if (toWrite > _bufferCapacity - _sizeO)
             FlushWrite();
-
-        if (nullptr == _bufferO)
-            _bufferO = NEW_ARRAY(Socket, u8, _bufferCapacity);
-
         Assert(toWrite <= _bufferCapacity - _sizeO);
 
-        FPlatformMemory::Memcpy(_bufferO.data() + _sizeO, rawData.data(), toWrite);
-        _sizeO += toWrite;
+        if (not _bufferO)
+            _bufferO = FUniqueBuffer::Allocate(_bufferCapacity);
 
+        const FRawMemory dst = _bufferO.MakeView().SubRange(_sizeO, toWrite);
+        const FRawMemoryConst src = rawData.SubRange(0, toWrite);
+        FPlatformMemory::Memcpy(dst.data(), src.data(), toWrite);
+
+        _sizeO += toWrite;
         return toWrite;
     }
 }
@@ -170,17 +160,18 @@ void FSocketBuffered::FlushRead(bool block/* = false */) {
         Assert(_bufferI);
 
         const size_t toRead = _sizeI - _offsetI;
-
-        ::memmove(_bufferI.data(), _bufferI.data() + _offsetI, toRead);
+        const FRawMemory dst = _bufferI.MakeView().SubRange(0, toRead);
+        const FRawMemoryConst src = _bufferI.MakeView().SubRange(_offsetI, toRead);
+        ::memmove(dst.data(), src.data(), toRead);
 
         _sizeI = toRead;
         _offsetI = 0;
     }
     else if (not _bufferI) {
-        _bufferI = NEW_ARRAY(Socket, u8, _bufferCapacity);
+        _bufferI = FUniqueBuffer::Allocate(_bufferCapacity);
     }
 
-    const TMemoryView<u8> rawData = _bufferI.CutStartingAt(_offsetI);
+    const FRawMemory rawData = _bufferI.MakeView().CutStartingAt(_offsetI);
     if (rawData.size())
         _sizeI += _socket.Read(rawData, block);
 }
@@ -191,7 +182,7 @@ bool FSocketBuffered::FlushWrite() {
 
     Assert(_bufferO);
 
-    if (_socket.Write(_bufferO.CutBefore(_sizeO)) != _sizeO)
+    if (_socket.Write(_bufferO.MakeView().CutBefore(_sizeO)) != _sizeO)
         return false;
 
     _sizeO = 0;
@@ -215,7 +206,7 @@ bool FSocketBuffered::MakeConnection(FSocketBuffered& buffered, const FAddress& 
 size_t FSocketBuffered::ReadFromBuffer_(const TMemoryView<u8>& rawData) {
     const size_t read = Min(rawData.SizeInBytes(), _sizeI - _offsetI);
 
-    _bufferI.SubRange(_offsetI, read).CopyTo(rawData.CutBefore(read));
+    _bufferI.MakeView().SubRange(_offsetI, read).CopyTo(rawData.CutBefore(read));
     _offsetI += read;
 
     return read;

@@ -149,7 +149,7 @@ static void Test_SocketAccept_() {
     bool succeed = false;
     forrange(i, 0, 20) {
         FSocketBuffered socket;
-        socket.SetTimeout(FSeconds(0.3));
+        Unused(socket.SetTimeout(FSeconds(0.3)));
 
         PPE_LOG(Test_Network, Info, "Listening on '{0}'...", listener.Listening());
 

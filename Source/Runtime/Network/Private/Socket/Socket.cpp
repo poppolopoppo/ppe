@@ -373,7 +373,7 @@ bool FSocket::SetTimeout(const FMilliseconds& timeout) {
     if (IsConnected()) {
         SOCKET sockfd = UnpackSocket_(_handle);
 
-#ifdef PLATFORM_WINDOWS
+#ifdef PLATFORM_WINDOWS // #TODO: use HAL abstraction instead of inlining this platform dependency
         // setup a DWORD in milliseconds
         ::DWORD time_to_wait = ::DWORD(_timeout.Value());
 
