@@ -1246,11 +1246,10 @@
       <ExpandedItem>($T1*)(&amp;Storage),na</ExpandedItem>
     </Expand>
   </Type>
-  <Type Name="PPE::TInSituPtr&lt;* &gt;">
-    <DisplayString Condition="VTable != 0xDEADF001DEADF001ull &amp;&amp; VTable != 0xDEADF001ul">{($T1*)(&amp;InSitu),na}</DisplayString>
-    <DisplayString>nullptr</DisplayString>
+  <Type Name="PPE::TInSituPtr&lt;*, *, *&gt;">
+    <DisplayString>{($T1 *)(&amp;Raw)}</DisplayString>
     <Expand>
-      <ExpandedItem Condition="VTable != 0xDEADF001DEADF001ull &amp;&amp; VTable != 0xDEADF001ul">($T1*)(&amp;InSitu),na</ExpandedItem>
+      <ExpandedItem>($T1*)(&amp;Raw)</ExpandedItem>
     </Expand>
   </Type>
   <!--
