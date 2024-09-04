@@ -31,7 +31,7 @@ const FModuleInfo FApplicationUIModule::StaticInfo{
         STRINGIZE(BUILD_TARGET_NAME),
         EModulePhase::System,
         EModuleUsage::Runtime,
-        EModuleSource::Extensions,
+        EModuleSource::Extension,
         BUILD_TARGET_ORDINAL,
         Generated::DependencyList,
         CurrentBuildVersion() )

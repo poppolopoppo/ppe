@@ -32,7 +32,7 @@ TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, const FInputKey
             oss << key;
         },
         [&oss](std::monostate) {
-            oss << "nil";
+            oss << STRING_LITERAL(_Char, "nil");
         });
     return oss;
 }

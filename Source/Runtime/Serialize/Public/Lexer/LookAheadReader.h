@@ -5,6 +5,7 @@
 #include "Lexer/Location.h"
 #include "IO/StringView.h"
 #include "IO/String_fwd.h"
+#include "Meta/Optional.h"
 
 namespace PPE {
 class IBufferedStreamReader;
@@ -24,15 +25,17 @@ public:
 
     FLocation SourceSite() const;
 
-    bool Eof() const;
+    NODISCARD bool Eof() const;
     void SkipFwd(size_t offset);
     void Reset(const FLocation& site);
 
-    char Peek(size_t n = 0) const;
+    NODISCARD Meta::TOptional<char> Peek(size_t n = 0) const;
 
-    char Read();
-    bool ReadUntil(FString& dst, char expected);
-    bool SkipUntil(char expected);
+    NODISCARD Meta::TOptional<char> Read();
+
+    NODISCARD bool ReadUntil(FString& dst, char expected);
+    NODISCARD bool SkipUntil(char expected);
+
     void EatWhiteSpaces();
 
 private:

@@ -32,7 +32,7 @@ FLocation FLookAheadReader::SourceSite() const {
 //----------------------------------------------------------------------------
 void FLookAheadReader::SkipFwd(size_t offset) {
     while (offset--)
-        Read(); // keep location coherent with the stream
+        Unused(Read()); // need to parse source line to keep location coherent with the stream
 }
 //----------------------------------------------------------------------------
 void FLookAheadReader::Reset(const FLocation& site) {
@@ -43,7 +43,7 @@ void FLookAheadReader::Reset(const FLocation& site) {
     _sourceColumn = site.Column;
 }
 //----------------------------------------------------------------------------
-char FLookAheadReader::Peek(size_t n/* = 0 */) const {
+Meta::TOptional<char> FLookAheadReader::Peek(size_t n/* = 0 */) const {
     char ch;
     bool result;
     if (n == 0) {
@@ -55,13 +55,15 @@ char FLookAheadReader::Peek(size_t n/* = 0 */) const {
         result = _input.Peek(ch);
         _input.SeekI(origin, ESeekOrigin::Begin);
     }
-    return (result ? ch : '\0');
+    if (result)
+        return ch;
+    return std::nullopt;
 }
 //----------------------------------------------------------------------------
-char FLookAheadReader::Read() {
+Meta::TOptional<char> FLookAheadReader::Read() {
     char ch;
     if (not _input.ReadPOD(&ch))
-        return '\0';
+        return std::nullopt;
 
     if ('\n' == ch) {
         ++_sourceLine;
@@ -75,28 +77,28 @@ char FLookAheadReader::Read() {
 }
 //----------------------------------------------------------------------------
 bool FLookAheadReader::ReadUntil(FString& dst, char expected) {
-    while (char read = Peek()) {
-        if (expected == read)
+    while (const Meta::TOptional<char> read = Peek()) {
+        if (expected == read.value())
             return true;
 
-        dst += Read();
+        dst += Read().value();
     }
     return false;
 }
 //----------------------------------------------------------------------------
 bool FLookAheadReader::SkipUntil(char expected) {
-    while (char read = Peek()) {
-        if (expected == read)
+    while (const Meta::TOptional<char> read = Peek()) {
+        if (expected == read.value())
             return true;
 
-        Read();
+        Unused(Read()); // need to parse source line to keep location coherent with the stream
     }
     return false;
 }
 //----------------------------------------------------------------------------
 void FLookAheadReader::EatWhiteSpaces() {
-    while (IsSpace(Peek(0)))
-        Read();
+    while (IsSpace(Peek(0).value_or('\0')))
+        Unused(Read()); // need to parse source line to keep location coherent with the stream
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

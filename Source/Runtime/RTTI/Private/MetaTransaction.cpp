@@ -448,58 +448,57 @@ namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionFlags flags) {
-    auto sep = Fmt::NotFirstTime('|');
+namespace {
+//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------
+template <typename _Char>
+static TBasicTextWriter<_Char>& FormatEnum_(TBasicTextWriter<_Char>& oss, RTTI::ETransactionFlags flags) {
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (flags == RTTI::ETransactionFlags::Default)
-        return oss << "Default";
+        return oss << STRING_LITERAL(_Char, "Default");
     if (flags ^ RTTI::ETransactionFlags::KeepDeprecated)
-        oss << sep << "KeepDeprecated";
+        oss << sep << STRING_LITERAL(_Char, "KeepDeprecated");
     if (flags ^ RTTI::ETransactionFlags::KeepTransient)
-        oss << sep << "KeepTransient";
+        oss << sep << STRING_LITERAL(_Char, "KeepTransient");
 
     return oss;
 }
 //----------------------------------------------------------------------------
+template <typename _Char>
+static TBasicTextWriter<_Char>& FormatEnum_(TBasicTextWriter<_Char>& oss, RTTI::ETransactionState state) {
+    switch (state) {
+    case RTTI::ETransactionState::Unloaded:     return oss << STRING_LITERAL(_Char, "Unloaded");
+    case RTTI::ETransactionState::Loading:      return oss << STRING_LITERAL(_Char, "Loading");
+    case RTTI::ETransactionState::Loaded:       return oss << STRING_LITERAL(_Char, "Loaded");
+    case RTTI::ETransactionState::Mounting:     return oss << STRING_LITERAL(_Char, "Mounting");
+    case RTTI::ETransactionState::Mounted:      return oss << STRING_LITERAL(_Char, "Mounted");
+    case RTTI::ETransactionState::Unmounting:   return oss << STRING_LITERAL(_Char, "Unmounting");
+    case RTTI::ETransactionState::Unloading:    return oss << STRING_LITERAL(_Char, "Unloading");
+    }
+    AssertNotReached();
+}
+//----------------------------------------------------------------------------
+} //!namespace
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionFlags flags) {
+    return FormatEnum_(oss, flags);
+}
+//----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionFlags flags) {
-    auto sep = Fmt::NotFirstTime('|');
-
-    if (flags == RTTI::ETransactionFlags::Default)
-        return oss << "Default";
-    if (flags ^ RTTI::ETransactionFlags::KeepDeprecated)
-        oss << sep << "KeepDeprecated";
-    if (flags ^ RTTI::ETransactionFlags::KeepTransient)
-        oss << sep << "KeepTransient";
-
-    return oss;
+    return FormatEnum_(oss, flags);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 FTextWriter& operator <<(FTextWriter& oss, RTTI::ETransactionState state) {
-    switch (state) {
-    case RTTI::ETransactionState::Unloaded:     return oss << "Unloaded";
-    case RTTI::ETransactionState::Loading:      return oss << "Loading";
-    case RTTI::ETransactionState::Loaded:       return oss << "Loaded";
-    case RTTI::ETransactionState::Mounting:     return oss << "Mounting";
-    case RTTI::ETransactionState::Mounted:      return oss << "Mounted";
-    case RTTI::ETransactionState::Unmounting:   return oss << "Unmounting";
-    case RTTI::ETransactionState::Unloading:    return oss << "Unloading";
-    }
-    AssertNotReached();
+    return FormatEnum_(oss, state);
 }
 //----------------------------------------------------------------------------
 FWTextWriter& operator <<(FWTextWriter& oss, RTTI::ETransactionState state) {
-    switch (state) {
-    case RTTI::ETransactionState::Unloaded:     return oss << "Unloaded";
-    case RTTI::ETransactionState::Loading:      return oss << "Loading";
-    case RTTI::ETransactionState::Loaded:       return oss << "Loaded";
-    case RTTI::ETransactionState::Mounting:     return oss << "Mounting";
-    case RTTI::ETransactionState::Mounted:      return oss << "Mounted";
-    case RTTI::ETransactionState::Unmounting:   return oss << "Unmounting";
-    case RTTI::ETransactionState::Unloading:    return oss << "Unloading";
-    }
-    AssertNotReached();
+    return FormatEnum_(oss, state);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

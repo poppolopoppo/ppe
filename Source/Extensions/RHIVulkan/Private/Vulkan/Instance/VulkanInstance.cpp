@@ -1097,7 +1097,7 @@ bool FVulkanInstance::Construct(
 
             PPE_LOG(RHI, Debug, "listed {0} available physical devices for vulkan:\n {1}",
                 numPhysicalDevices,
-                Fmt::Join(_physicalDevices.MakeView(), L"\n"));
+                Fmt::Join(_physicalDevices.MakeView(), Fmt::Eol));
 
             return true;
         }

@@ -1018,6 +1018,8 @@ static bool EvalExpr_(Parser::FParseContext* context, FStringLiteral input) {
 //----------------------------------------------------------------------------
 static void Test_Grammar_() {
     Parser::FParseContext context(Meta::ForceInit);
+    VerifyRelease(EvalExpr_(&context, "true"));
+    VerifyRelease(EvalExpr_(&context, "false"));
     VerifyRelease(EvalExpr_(&context, "2*(3+5)"));
     VerifyRelease(EvalExpr_(&context, "(1)"));
     VerifyRelease(EvalExpr_(&context, "('foo','bar')"));

@@ -32,8 +32,6 @@ TBasicTextWriter<char>& Tab(TBasicTextWriter<char>& s);
 TBasicTextWriter<wchar_t>& Tab(TBasicTextWriter<wchar_t>& s);
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, bool v);
-template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, i8 v);
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, i16 v);
@@ -54,8 +52,6 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, float v);
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, double v);
 template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const void* v);
-template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const TBasicStringView<_Char>& v);
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, long v);
@@ -66,12 +62,24 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const _Char(&v)
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, _Char v);
 //----------------------------------------------------------------------------
+// Use SFINAE to avoid accepting every unknown pointer through this function: it should always explicitly be a boolean
+template <typename _Char, typename T>
+Meta::TEnableIf<std::is_same_v<T, bool>, TBasicTextWriter<_Char>&> operator <<(TBasicTextWriter<_Char>& w, T&& v);
+//----------------------------------------------------------------------------
+// Use SFINAE to avoid accepting every unknown pointer through this function: it should always explicitly be a void pointer
+template <typename _Char, typename T>
+Meta::TEnableIf<std::is_void_v<T>, TBasicTextWriter<_Char>&> operator <<(TBasicTextWriter<_Char>& w, const T* v);
+//----------------------------------------------------------------------------
 template <typename _Char, typename T>
 Meta::TEnableIf< // removes ambiguity between const _Char (&)[] and _Char*
     std::is_same_v<const _Char*, T> &&
     std::is_array_v<T> == false,
     TBasicTextWriter<_Char>&
 >   operator <<(TBasicTextWriter<_Char>& w, T v);
+//----------------------------------------------------------------------------
+// Explicitly delete mismatched string operators, to ease mental overhead with less compiler error messages
+inline constexpr FTextWriter& operator <<(FTextWriter&, const wchar_t* wide_string_instead_of_ansi) = delete;
+inline constexpr FWTextWriter& operator <<(FWTextWriter&, const char* ansi_instead_of_wide_string) = delete;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

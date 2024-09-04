@@ -121,12 +121,10 @@ public:
     }
 
     template <typename _Pod>
-    TMemoryView& EatRaw(_Pod* pDst, size_t n = sizeof(_Pod)) {
+    Meta::TEnableIf<Meta::is_pod_v<_Pod>, TMemoryView&> EatRaw(_Pod* pDst, size_t n = (sizeof(_Pod) + sizeof(T) - 1) / sizeof(T)) NOEXCEPT {
         Assert(pDst);
-        Assert(n <= sizeof(_Pod));
-        STATIC_ASSERT(Meta::is_pod_v<_Pod>);
-        auto src = Eat(n);
-        src.CopyTo(TMemoryView<_Pod>(pDst, 1).template Cast<Meta::TRemoveConst<T>>());
+        Assert(n * sizeof(T) >= sizeof(_Pod));
+        Eat(n).CopyTo(TMemoryView<_Pod>(pDst, 1).template Cast<Meta::TRemoveConst<T>>());
         return (*this);
     }
 

@@ -79,7 +79,7 @@ FLastErrorException::FLastErrorException(const char* what, long errorCode)
 #if USE_PPE_EXCEPTION_DESCRIPTION
 FTextWriter& FLastErrorException::Description(FTextWriter& oss) const {
     return oss
-        << MakeCStringView(What()) << L": "
+        << MakeCStringView(What()) << ": "
         << FLastError(_errorCode);
 }
 #endif

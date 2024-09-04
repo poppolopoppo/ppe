@@ -312,9 +312,6 @@ EXTERN_TEMPLATE_CLASS_DECL(PPE_CORE_API) TBasicTextWriter<wchar_t>;
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, bool v) { w.Write(v); return w; }
-//----------------------------------------------------------------------------
-template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, i8 v) { w.Write(v); return w; }
 //----------------------------------------------------------------------------
 template <typename _Char>
@@ -343,9 +340,6 @@ TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, float v) { w.Wr
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, double v) { w.Write(v); return w; }
-//----------------------------------------------------------------------------
-template <typename _Char>
-TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const void* v) { w.Write(v); return w; }
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& operator <<(TBasicTextWriter<_Char>& w, const TBasicStringView<_Char>& v) { w.Write(v); return w; }
@@ -377,7 +371,24 @@ Meta::TEnableIf< // removes ambiguity between const _Char (&)[] and _Char*
     std::is_same_v<const _Char*, T> &&
     std::is_array_v<T> == false,
     TBasicTextWriter<_Char>&
->   operator <<(TBasicTextWriter<_Char>& w, T v) { w.Write(v); return w; }
+>   operator <<(TBasicTextWriter<_Char>& w, T v) {
+    w.Write(v);
+    return w;
+}
+//----------------------------------------------------------------------------
+// Use SFINAE to avoid accepting every unknown pointer through this function: it should always explicitly be a boolean
+template <typename _Char, typename T>
+Meta::TEnableIf<std::is_same_v<T, bool>, TBasicTextWriter<_Char>&> operator <<(TBasicTextWriter<_Char>& w, T&& v) {
+    w.Write(v);
+    return w;
+}
+//----------------------------------------------------------------------------
+// Use SFINAE to avoid accepting every unknown pointer through this function: it should always explicitly be a void pointer
+template <typename _Char, typename T>
+Meta::TEnableIf<std::is_void_v<T>, TBasicTextWriter<_Char>&> operator <<(TBasicTextWriter<_Char>& w, const T* v) {
+    w.Write(v);
+    return w;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------

@@ -283,7 +283,7 @@ bool HostnameToIPv4(FString& ip, const FStringView& hostname, size_t port) {
 
     struct ::addrinfo* serviceInfo = nullptr;
     if (int errorCode = ::getaddrinfo(nodeName, serviceName, &hints, &serviceInfo)) {
-        PPE_LOG(Network, Error, "getaddrinfo failed: <{0}> \"{1}\"", errorCode, ::gai_strerror(errorCode));
+        PPE_LOG(Network, Error, "getaddrinfo failed: <{0}> \"{1}\"", errorCode, MakeCStringView(::gai_strerror(errorCode)));
         return false;
     }
     Assert(serviceInfo);

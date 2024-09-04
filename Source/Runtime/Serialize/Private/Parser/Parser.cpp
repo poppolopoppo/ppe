@@ -14,12 +14,12 @@ namespace Parser {
 //----------------------------------------------------------------------------
 #if USE_PPE_EXCEPTION_DESCRIPTION
 FTextWriter& FParserException::Description(FTextWriter& oss) const {
-    oss << MakeCStringView(What()) << L": ";
+    oss << MakeCStringView(What()) << ": ";
 
     if (_item)
-        oss << _item->ToString().MakeView() << Eol;
+        oss << _item->ToString() << Eol;
 
-    return oss << L"\tat " << _site;
+    return oss << "\tat " << _site;
 }
 #endif
 //----------------------------------------------------------------------------
