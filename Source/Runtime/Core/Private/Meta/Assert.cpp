@@ -30,6 +30,8 @@ static FPlatformDialog::EResult AssertIgnoreOnceAlwaysAbortRetry_(
         << L"----------------------------------------------------------------" << Crlf
         << MakeCStringView(file) << L'(' << line << L"): " << MakeCStringView(msg);
 
+    PPE_LOG_FLUSH(); // flush log before continuing to get eventual log messages
+
     return FPlatformDialog::IgnoreOnceAlwaysAbortRetry(oss.ToString(), UTF_8_TO_WCHAR(title.MakeView()), icon);
 }
 //----------------------------------------------------------------------------
@@ -37,6 +39,8 @@ static bool ReportAssertionForDebug_(
     const FStringLiteral& level,
     const char* msg, const char* file, unsigned line) {
 #if USE_PPE_PLATFORM_DEBUG
+    PPE_LOG_FLUSH(); // flush log before continuing to get eventual log messages
+
     if (FCurrentProcess::StartedWithDebugger()) {
         char buf[1024];
         FFixedSizeTextWriter oss(buf);
@@ -85,7 +89,6 @@ static bool PPE_DEBUG_SECTION DefaultDebugAssertHandler_(const char* msg, const 
         PPE_LOG(Assertion, Error, "{3} '{0}' failed !\n\t{1}({2})",
             MakeCStringView(msg), MakeCStringView(file), line,
             isEnsure ? "ensure"_literal : "debug assert"_literal);
-        PPE_LOG_FLUSH(); // flush log before continuing to get eventual log messages
 
         switch (AssertIgnoreOnceAlwaysAbortRetry_(FPlatformDialog::Warning,
             (isEnsure ? "Ensure failed !"_literal : "Assert debug failed !"_literal),
@@ -209,7 +212,6 @@ static bool PPE_DEBUG_SECTION DefaultReleaseAssertHandler_(const char* msg, cons
 
     if (not ReportAssertionForDebug_("release assert", msg, file, line)) {
         PPE_LOG(Assertion, Error, "release assert '{0}' failed !\n\t{1}({2})", MakeCStringView(msg), MakeCStringView(file), line);
-        PPE_LOG_FLUSH(); // flush log before continuing to get eventual log messages
 
         switch (AssertIgnoreOnceAlwaysAbortRetry_(FPlatformDialog::Error, "Assert release failed !", msg, file, line)) {
         case FPlatformDialog::Abort:
