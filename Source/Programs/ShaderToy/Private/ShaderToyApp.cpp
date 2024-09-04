@@ -70,13 +70,11 @@ void FShaderToyApp::Start() {
         #extension GL_ARB_separate_shader_objects : enable
         #extension GL_ARB_shading_language_420pack : enable
 
-        layout(location=0) out struct {
-            vec2 vTexCoord;
-        }   Out;
+        layout(location=0) out vec2 vTexCoord;
 
         void main() {
-            Out.vTexCoord = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
-            gl_Position = vec4(Out.vTexCoord * vec2(2, -2) + vec2(-1, 1), 0.0, 1.0 );
+            vTexCoord = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+            gl_Position = vec4(vTexCoord * vec2(2, -2) + vec2(-1, 1), 0.0, 1.0 );
         }
         )#" ARGS_IF_RHIDEBUG("ShaderToy/VertexShader"));
 
