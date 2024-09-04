@@ -245,8 +245,6 @@ public:
     std::mutex Barrier;
     std::condition_variable OnFinished;
 
-    bool ActuallyReady{ false };
-
     explicit FWaitForTask_(FTaskFunc&& rtask) NOEXCEPT
         : Task(std::move(rtask))
     {}
@@ -254,8 +252,6 @@ public:
     NO_INLINE void Run(ITaskContext& ctx) {
         DEFERRED{
             const Meta::FLockGuard scopeLock(Barrier);
-            Assert_NoAssume(not ActuallyReady);
-            ActuallyReady = true;
     #if USE_PPE_SAFEPTR
             RemoveSafeRef(this);
     #endif
@@ -269,10 +265,8 @@ public:
     static void Broadcast(FTaskManagerImpl& pimpl, const FTaskFunc& task, ETaskPriority priority) {
         Assert_NoAssume(not FFiber::IsInFiber());
 
-        ONLY_IF_ASSERT(std::atomic<i32> numPending = static_cast<i32>(pimpl.WorkerCount()));
-        const FTaskFunc broadcast = [&pimpl, &task ARGS_IF_ASSERT(&numPending)](ITaskContext& ctx) {
+        const FTaskFunc broadcast = [&pimpl, &task](ITaskContext& ctx) {
             DEFERRED {
-                --numPending;
                 pimpl.Sync().Wait(); // wait for all threads
             };
             task(ctx);
@@ -305,9 +299,7 @@ public:
             nullptr);
 #endif
 
-        waitFor.OnFinished.wait(scopeLock, [&waitFor]() NOEXCEPT -> bool {
-            return waitFor.ActuallyReady;
-        });
+        waitFor.OnFinished.wait(scopeLock);
     }
 
     static bool WaitFor(FTaskManagerImpl& pimpl, FTaskFunc&& rtask, ETaskPriority priority, int timeoutMS) {
@@ -324,9 +316,7 @@ public:
 
         pimpl.Scheduler().Produce(priority, FTaskFunc::Bind<&FWaitForTask_::Run>(pWaitFor/* copy TRefPtr<> */), nullptr);
 
-        return pWaitFor->OnFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS), [&pWaitFor]() NOEXCEPT -> bool {
-            return pWaitFor->ActuallyReady;
-        });
+        return (pWaitFor->OnFinished.wait_for(scopeLock, std::chrono::milliseconds(timeoutMS)) == std::cv_status::no_timeout);
     }
 };
 //----------------------------------------------------------------------------
