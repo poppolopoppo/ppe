@@ -130,6 +130,11 @@ inline CONSTEXPR ImVec4  operator*(const ImVec4& lhs, const ImVec4& rhs)   { ret
 inline CONSTEXPR bool    operator==(const ImVec4& lhs, const ImVec4& rhs)  { return lhs.x == rhs.x && lhs.y == rhs.y && lhs.z == rhs.z && lhs.w == rhs.w; }
 inline CONSTEXPR bool    operator!=(const ImVec4& lhs, const ImVec4& rhs)  { return lhs.x != rhs.x || lhs.y != rhs.y || lhs.z != rhs.z || lhs.w != rhs.w; }
 
+// temporary workaround for imgui_widgets.cpp:5206 in 1.91.1 WIP (19104)
+inline CONSTEXPR ImGuiItemFlags_ operator |(int lhs, ImGuiItemFlags_ rhs) {
+    return ImGuiItemFlags_(lhs | PPE::Meta::EnumOrd(rhs));
+}
+
 #   include "External/imgui/implot.git/implot.h"
 // #   include "External/imgui/implot.git/implot_internal.h"
 

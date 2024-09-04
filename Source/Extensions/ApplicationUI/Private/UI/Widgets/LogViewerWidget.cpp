@@ -430,7 +430,7 @@ bool FLogViewerWidget::Show() {
     // Left
     if (ShowCategoriesPanel) {
         ImGui::BeginChild("##LogViewer::Categories", ImVec2(150, -ImGui::GetFrameHeightWithSpacing()), // Leave room for 1 line below us
-            ImGuiChildFlags_Border );
+            ImGuiChildFlags_Borders );
 
         LogViewer_ShowCategories_(*this);
 

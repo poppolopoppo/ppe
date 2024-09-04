@@ -813,7 +813,7 @@ void FShaderToyApp::Render(RHI::IFrameGraph& fg, FTimespan dt) {
     { // viewport
         ImGui::BeginChild("ShaderToy##Viewport",
             ImVec2(0, -ImGui::GetFrameHeightWithSpacing()), // Leave room for 1 line below us
-            ImGuiChildFlags_Border,
+            ImGuiChildFlags_Borders,
             ImGuiWindowFlags_NoBringToFrontOnFocus |
             ImGuiWindowFlags_NoNavFocus |
             ImGuiWindowFlags_NoScrollbar |

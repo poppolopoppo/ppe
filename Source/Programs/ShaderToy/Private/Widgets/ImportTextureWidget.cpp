@@ -327,7 +327,7 @@ bool FImportTextureWidget::Show() {
 
     if (TextureGenerated) {
         if (not TextureGenerated->Available()) {
-            ImGui::SetCursorPos(float2(ImGui::GetWindowContentRegionMin() + ImGui::GetWindowContentRegionMax()) / 2.f - 40.f);
+            ImGui::SetCursorPos(float2(ImGui::GetWindowViewport()->GetCenter()) - 40.f);
             ImGui::PushFont(ImGui::LargeFont());
             ImGui::Spinner("Compressing texture...", 40, 8, ImGui::GetColorU32(ImGuiCol_TitleBgActive));
             ImGui::PopFont();

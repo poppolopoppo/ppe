@@ -400,7 +400,7 @@ static void FileDialog_ShowLargeView_(FFileDialogWidget& dialog) {
 
                 {
                     ImGui::BeginChild(static_cast<ImGuiID>(entry.Name.HashValue()), child_sz + (imgui_style.WindowPadding * 2),
-                        ImGuiChildFlags_Border,
+                        ImGuiChildFlags_Borders,
                         ImGuiWindowFlags_NoScrollbar |
                         ImGuiWindowFlags_NoScrollWithMouse);
                     DEFERRED{ ImGui::EndChild(); };
