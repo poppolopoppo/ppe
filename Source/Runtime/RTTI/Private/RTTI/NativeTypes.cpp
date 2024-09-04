@@ -568,7 +568,7 @@ public:
             FStringView view = _outp.Written().Cast<const char>();
             FStringLiteral result;
             result.Data = view.data();
-            result.Length = view.size();
+            result.Length = (view.size() - 1/* \0 */);
             return result;
         }
 
