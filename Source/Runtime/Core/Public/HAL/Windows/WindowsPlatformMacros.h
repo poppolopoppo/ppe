@@ -13,13 +13,27 @@
 PPE_COMPILER_ERROR("Windows", "unsupported compiler for this platform")
 #endif
 
-#define PRAGMA_CLANG_WARNING_PUSH() __pragma(clang diagnostic push)
-#define PRAGMA_CLANG_WARNING_IGNORE(_WARNING_ID) __pragma(clang diagnostic ignored #_WARNING_ID)
-#define PRAGMA_CLANG_WARNING_POP() __pragma(clang diagnostic pop)
+// #TODO: move to HAL/Clang/ClangPlatformMacros.h
+#if defined(CPP_CLANG)
+#   define PRAGMA_CLANG_WARNING_PUSH() __pragma(clang diagnostic push)
+#   define PRAGMA_CLANG_WARNING_IGNORE(_WARNING_ID) __pragma(clang diagnostic ignored #_WARNING_ID)
+#   define PRAGMA_CLANG_WARNING_POP() __pragma(clang diagnostic pop)
+#else
+#   define PRAGMA_CLANG_WARNING_PUSH()
+#   define PRAGMA_CLANG_WARNING_IGNORE(_WARNING_ID)
+#   define PRAGMA_CLANG_WARNING_POP()
+#endif
 
-#define PRAGMA_MSVC_WARNING_PUSH() __pragma(warning(push))
-#define PRAGMA_MSVC_WARNING_DISABLE(_WARNING_CODE) __pragma(warning(disable: _WARNING_CODE))
-#define PRAGMA_MSVC_WARNING_POP() __pragma(warning(pop))
+// #TODO: move to HAL/Msvc/ClangPlatformMacros.h
+#if defined(CPP_VISUALSTUDIO)
+#   define PRAGMA_MSVC_WARNING_PUSH() __pragma(warning(push))
+#   define PRAGMA_MSVC_WARNING_DISABLE(_WARNING_CODE) __pragma(warning(disable: _WARNING_CODE))
+#   define PRAGMA_MSVC_WARNING_POP() __pragma(warning(pop))
+#else
+#   define PRAGMA_MSVC_WARNING_PUSH()
+#   define PRAGMA_MSVC_WARNING_DISABLE(_WARNING_CODE)
+#   define PRAGMA_MSVC_WARNING_POP()
+#endif
 
 // /W3
 #if !PPE_HAS_CXX17 // use IF_CONSTEXPR for C++-17
