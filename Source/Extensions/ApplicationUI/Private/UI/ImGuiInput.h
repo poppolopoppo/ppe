@@ -107,10 +107,10 @@ inline void PostInputMessageToImGui(const FInputActionInstance& action, const FI
                 break;
             }
             case EMouseAxis::ScrollWheelY:
-                io.AddMouseWheelEvent(0, action.Axis1D().Absolute);
+                io.AddMouseWheelEvent(0, action.Axis1D().Relative);
                 break;
             case EMouseAxis::ScrollWheelX:
-                io.AddMouseWheelEvent(action.Axis1D().Absolute, 0);
+                io.AddMouseWheelEvent(action.Axis1D().Relative, 0);
                 break;
             }
         },
