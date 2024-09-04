@@ -26,16 +26,16 @@ namespace PPE {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct CACHELINE_ALIGNED FTaskFiberPool::FHandle {
-    using FWakeUpCallback = TFunctionRef<void()>;
+    using FWakeUpEvent = FTaskFiberPool::FWakeUpEvent;
 
     STATIC_CONST_INTEGRAL(size_t, StackSize, 57344 /* Don't use multiples of 64K to avoid D-cache aliasing conflicts. */);
 
-    FFiber Fiber;
+    FFiber Fiber_DoNotUse;
     FTaskFiberPool* Pool{ nullptr };
 
-    mutable FHandleRef NextHandle{ nullptr };
+    mutable const FHandle* NextHandle{ nullptr };
 
-    mutable FWakeUpCallback OnWakeUp;
+    mutable FWakeUpEvent OnWakeUp;
 
 #if USE_PPE_SANITIZER
     mutable FHandleRef ASan_Predecessor{ nullptr };
@@ -47,7 +47,33 @@ struct CACHELINE_ALIGNED FTaskFiberPool::FHandle {
     mutable size_t ASan_OldStackSize{ 0 };
 #endif
 
-    void AttachWakeUpCallback(FWakeUpCallback&& onWakeUp) const {
+#if USE_PPE_ASSERT
+    enum EDebugState {
+        STATE_Free = 0,
+        STATE_Resuming,
+        STATE_Running,
+        STATE_Stalled,
+        STATE_Recycling,
+        STATE_Destroyed,
+    };
+
+    mutable std::atomic<EDebugState> DebugState{ STATE_Free };
+    bool AnyDebugState(std::initializer_list<EDebugState> any) const {
+        const EDebugState state = DebugState;
+        for (const EDebugState cmp : any) {
+            if (cmp == state)
+                return true;
+        }
+        return false;
+    }
+    EDebugState SetDebugState(EDebugState expected, EDebugState desired) const {
+        VerifyRelease( DebugState.compare_exchange_strong(expected, desired) );
+        return expected;
+    }
+#endif
+
+    void AttachWakeUpCallback(FWakeUpEvent&& onWakeUp) const {
+        Assert_NoAssume(STATE_Stalled == DebugState);
         Assert(onWakeUp.Valid());
         Assert_NoAssume(Pool);
         Assert_NoAssume(not OnWakeUp.Valid());
@@ -56,11 +82,22 @@ struct CACHELINE_ALIGNED FTaskFiberPool::FHandle {
     }
 
     NORETURN void FiberCallback() const {
+        Assert_NoAssume(STATE_Running == DebugState);
+
         Pool->_callback();
+
         AssertNotReached();
     }
 
+    void ResumeFiber() const {
+        ONLY_IF_ASSERT(SetDebugState(FHandle::STATE_Stalled, FHandle::STATE_Resuming));
+
+        Fiber_DoNotUse.Resume();
+    }
+
     void ReleaseFiber() const {
+        ONLY_IF_ASSERT(SetDebugState(FHandle::STATE_Stalled, FHandle::STATE_Recycling));
+
         Pool->ReleaseFiber(this);
     }
 };
@@ -72,23 +109,25 @@ namespace {
 void STDCALL TaskFiberEntryPoint_(void* arg) {
     FTaskFiberPool::FHandleRef const self = static_cast<const FTaskFiberPool::FHandle*>(arg);
 
+    ONLY_IF_ASSERT(self->SetDebugState(FTaskFiberPool::FHandle::STATE_Resuming, FTaskFiberPool::FHandle::STATE_Running));
+
 #if USE_PPE_SANITIZER
     const void* asan_oldStackBottom;
     size_t asan_oldStackSize;
     __sanitizer_finish_switch_fiber(nullptr/* first run for this fiber: no fake stack to restore */, &asan_oldStackBottom, &asan_oldStackSize);
 
-    if (self->ASan_Predecessor != nullptr) {
+    if (self->ASan_Predecessor.valid()) {
         AssertRelease_NoAssume(self->ASan_OldStackBottom == asan_oldStackBottom);
         AssertRelease_NoAssume(self->ASan_OldStackSize == asan_oldStackSize);
 
-        self->ASan_Predecessor = nullptr;
+        self->ASan_Predecessor.reset();
         self->ASan_OldStackBottom = nullptr;
         self->ASan_OldStackSize = 0;
     }
 
     const void* asan_newStackBottom;
     size_t asan_newStackSize;
-    self->Fiber.StackRegion(&asan_newStackBottom, &asan_newStackSize);
+    self->Fiber_DoNotUse.StackRegion(&asan_newStackBottom, &asan_newStackSize);
     AssertRelease_NoAssume(self->ASan_NewStackBottom == asan_newStackBottom);
     AssertRelease_NoAssume(self->ASan_NewStackSize == asan_newStackSize);
 
@@ -111,36 +150,37 @@ static void YieldTaskFiber_(FTaskFiberPool::FHandleRef self, FTaskFiberPool::FHa
     Assert_NoAssume(AllocaDepth() == 0); // can't switch fibers with live TLS block(s)
     Assert_NoAssume(not self->OnWakeUp.Valid());
 
+    ONLY_IF_ASSERT(self->SetDebugState(FTaskFiberPool::FHandle::STATE_Running, FTaskFiberPool::FHandle::STATE_Stalled));
+
     // prepare data for next fiber
     if (nullptr == to)
         to = self->Pool->AcquireFiber();
 
-    Assert(to && to->Fiber);
-    Assert(to != self);
+    Assert(to && to->Fiber_DoNotUse);
+    AssertRelease(to != self and to->Fiber_DoNotUse != self->Fiber_DoNotUse);
 
-    if (release) {
-        constexpr auto staticFn = Meta::StaticFunction<&FTaskFiberPool::FHandle::ReleaseFiber>;
-        FTaskFiberPool::FHandle::FWakeUpCallback wakeUp( staticFn, self.get() );
-        to->AttachWakeUpCallback(std::move(wakeUp));
-    }
+    if (release)
+        to->AttachWakeUpCallback(FTaskFiberPool::FWakeUpEvent::Bind<&FTaskFiberPool::FHandle::ReleaseFiber>( self.get() ));
 
 #if USE_PPE_SANITIZER
-    AssertRelease_NoAssume(to->ASan_Predecessor == nullptr);
+    AssertRelease_NoAssume(not to->ASan_Predecessor.valid());
 
     to->ASan_Predecessor = self;
-    to->Fiber.StackRegion(&to->ASan_NewStackBottom, &to->ASan_NewStackSize);
-    self->Fiber.StackRegion(&to->ASan_OldStackBottom, &to->ASan_OldStackSize);
+    to->Fiber_DoNotUse.StackRegion(&to->ASan_NewStackBottom, &to->ASan_NewStackSize);
+    self->Fiber_DoNotUse.StackRegion(&to->ASan_OldStackBottom, &to->ASan_OldStackSize);
 
     void* asan_selfFakeStack = nullptr;
     __sanitizer_start_switch_fiber(&asan_selfFakeStack, to->ASan_NewStackBottom, to->ASan_NewStackSize);
 #endif
 
     // <---- yield to another fiber
-    to->Fiber.Resume();
+    to->ResumeFiber();
     // ----> paused or released fiber gets resumed
 
+    ONLY_IF_ASSERT(self->SetDebugState(FTaskFiberPool::FHandle::STATE_Resuming, FTaskFiberPool::FHandle::STATE_Running));
+
 #if USE_PPE_SANITIZER
-    AssertRelease_NoAssume(self->ASan_Predecessor != nullptr);
+    AssertRelease_NoAssume(self->ASan_Predecessor.valid());
 
     const void* asan_oldStackBottom;
     size_t asan_oldStackSize;
@@ -148,13 +188,13 @@ static void YieldTaskFiber_(FTaskFiberPool::FHandleRef self, FTaskFiberPool::FHa
     AssertRelease_NoAssume(self->ASan_OldStackBottom == asan_oldStackBottom);
     AssertRelease_NoAssume(self->ASan_OldStackSize == asan_oldStackSize);
 
-    self->ASan_Predecessor = nullptr;
+    self->ASan_Predecessor.reset();
     self->ASan_OldStackBottom = nullptr;
     self->ASan_OldStackSize = 0;
 
     const void* asan_newStackBottom;
     size_t asan_newStackSize;
-    self->Fiber.StackRegion(&asan_newStackBottom, &asan_newStackSize);
+    self->Fiber_DoNotUse.StackRegion(&asan_newStackBottom, &asan_newStackSize);
     AssertRelease_NoAssume(self->ASan_NewStackBottom == asan_newStackBottom);
     AssertRelease_NoAssume(self->ASan_NewStackSize == asan_newStackSize);
 
@@ -195,27 +235,32 @@ bool FTaskFiberPool::OwnsFiber(FHandleRef handle) const NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 auto FTaskFiberPool::AcquireFiber() -> FHandleRef {
-    for (FHandleRef freeFiber = _freeFibers.load(std::memory_order_relaxed); freeFiber;) {
-        if (Likely(freeFiber && _freeFibers.compare_exchange_weak(*freeFiber.ref(), freeFiber->NextHandle,
+    for (const FHandle* freeFiber = _freeFibers.load(std::memory_order_relaxed); freeFiber; ) {
+        if (Likely(_freeFibers.compare_exchange_weak(freeFiber, freeFiber->NextHandle,
             std::memory_order_release, std::memory_order_relaxed))) {
+            ONLY_IF_ASSERT(freeFiber->SetDebugState(FHandle::STATE_Free, FHandle::STATE_Stalled));
+
             freeFiber->NextHandle = nullptr;
 
             ONLY_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(Fibers).AllocateUser(FHandle::StackSize));
 
 #if !USE_PPE_FINAL_RELEASE
-            _numFibersAvailable.fetch_sub(1);
+            Verify( _numFibersAvailable.fetch_sub(1) > 0 );
 #endif
             return freeFiber;
         }
     }
 
     FHandle* const newFiber = TRACKING_NEW(Fibers, FHandle);
+
     newFiber->Pool = this;
-    newFiber->Fiber.Create(&TaskFiberEntryPoint_, newFiber, FHandle::StackSize);
+    newFiber->Fiber_DoNotUse.Create(&TaskFiberEntryPoint_, newFiber, FHandle::StackSize);
 
 #if !USE_PPE_FINAL_RELEASE
     _numFibersReserved.fetch_add(1);
 #endif
+
+    ONLY_IF_ASSERT(newFiber->SetDebugState(FHandle::STATE_Free, FHandle::STATE_Stalled));
     ONLY_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(Fibers).AllocateUser(FHandle::StackSize));
 
     return newFiber;
@@ -227,13 +272,15 @@ void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
     Assert_NoAssume(not handle->OnWakeUp.Valid());
     Assert_NoAssume(nullptr == handle->NextHandle);
 
+    ONLY_IF_ASSERT(handle->SetDebugState(FHandle::STATE_Recycling, FHandle::STATE_Free));
+
     for (handle->NextHandle = _freeFibers.load(std::memory_order_relaxed);;) {
-        if (_freeFibers.compare_exchange_weak(*handle->NextHandle.ref(), handle,
+        if (_freeFibers.compare_exchange_weak(handle->NextHandle, handle,
             std::memory_order_release, std::memory_order_relaxed)) {
             ONLY_IF_MEMORYDOMAINS(MEMORYDOMAIN_TRACKING_DATA(Fibers).DeallocateUser(FHandle::StackSize));
 
 #if !USE_PPE_FINAL_RELEASE
-            _numFibersAvailable.fetch_add(1);
+            Verify( _numFibersAvailable.fetch_add(1) <= _numFibersReserved );
 #endif
             return;
         }
@@ -241,17 +288,19 @@ void FTaskFiberPool::ReleaseFiber(FHandleRef handle) {
 }
 //----------------------------------------------------------------------------
 void FTaskFiberPool::ReleaseMemory() {
-    for (FHandleRef freeFiber = _freeFibers.load(std::memory_order_relaxed); freeFiber; ) {
-        if (_freeFibers.compare_exchange_weak(*freeFiber.ref(), freeFiber->NextHandle,
+    for (const FHandle* freeFiber = _freeFibers.load(std::memory_order_relaxed); freeFiber; ) {
+        if (_freeFibers.compare_exchange_weak(freeFiber, freeFiber->NextHandle,
             std::memory_order_release, std::memory_order_relaxed)) {
+
+            ONLY_IF_ASSERT(freeFiber->SetDebugState(FHandle::STATE_Free, FHandle::STATE_Destroyed));
 
             Assert_NoAssume(OwnsFiber(freeFiber));
             Assert_NoAssume(not freeFiber->OnWakeUp.Valid());
 
-            FHandle* const releasedFiber = const_cast<FHandle*>(freeFiber.get());
+            FHandle* const releasedFiber = const_cast<FHandle*>(freeFiber);
             freeFiber = freeFiber->NextHandle;
 
-            releasedFiber->Fiber.Destroy(FHandle::StackSize);
+            releasedFiber->Fiber_DoNotUse.Destroy(FHandle::StackSize);
 
 #if !USE_PPE_FINAL_RELEASE
             VerifyRelease(_numFibersAvailable.fetch_sub(1) > 0);
@@ -273,7 +322,7 @@ void FTaskFiberPool::YieldFiber(FHandleRef self, FHandleRef to, bool release) {
     YieldTaskFiber_(self, to, release);
 }
 //----------------------------------------------------------------------------
-void FTaskFiberPool::AttachWakeUpCallback(FHandleRef fiber, TFunctionRef<void()>&& onWakeUp) {
+void FTaskFiberPool::AttachWakeUpCallback(FHandleRef fiber, FWakeUpEvent&& onWakeUp) {
     fiber->AttachWakeUpCallback(std::move(onWakeUp));
 }
 //----------------------------------------------------------------------------
@@ -291,16 +340,16 @@ void FTaskFiberPool::StartThread() {
     FHandleRef const workerFiber = AcquireFiber();
 
 #if USE_PPE_SANITIZER
-    AssertRelease_NoAssume(workerFiber->ASan_Predecessor == nullptr);
+    AssertRelease_NoAssume(not workerFiber->ASan_Predecessor.valid());
 
-    workerFiber->Fiber.StackRegion(&workerFiber->ASan_NewStackBottom, &workerFiber->ASan_NewStackSize);
+    workerFiber->Fiber_DoNotUse.StackRegion(&workerFiber->ASan_NewStackBottom, &workerFiber->ASan_NewStackSize);
 
     void* asan_threadFakeStack = nullptr;
     __sanitizer_start_switch_fiber(&asan_threadFakeStack, workerFiber->ASan_NewStackBottom, workerFiber->ASan_NewStackSize);
 #endif
 
     // <---- yield to a new fiber with a worker loop
-    workerFiber->Fiber.Resume();
+    workerFiber->ResumeFiber();
     // ----> leave fiber later when the worker loop broke
 
 #if USE_PPE_SANITIZER
@@ -313,8 +362,10 @@ void FTaskFiberPool::ShutdownThread() {
 
     const FFiber threadFiber = FFiber::ThreadFiber();
 
+    ONLY_IF_ASSERT(CurrentHandleRef()->SetDebugState(FHandle::STATE_Running, FHandle::STATE_Stalled));
+
 #if USE_PPE_SANITIZER
-    AssertRelease_NoAssume(CurrentHandleRef()->ASan_Predecessor == nullptr);
+    AssertRelease_NoAssume(not CurrentHandleRef()->ASan_Predecessor.valid());
 
     const void* asan_threadStackBottom;
     size_t asan_threadStackSize;
@@ -353,14 +404,14 @@ FTaskFiberLocalCache::~FTaskFiberLocalCache() {
 auto FTaskFiberLocalCache::AcquireFiber() -> FHandleRef {
     THIS_THREADRESOURCE_CHECKACCESS();
 
-    FHandleRef result = nullptr;
-    if (_lastFreeFiber == nullptr) {
-        result = _pool.AcquireFiber();
-    }
-    else {
-        result = _lastFreeFiber;
+    FHandleRef result = _lastFreeFiber;
+    if (result) {
+        ONLY_IF_ASSERT(result->SetDebugState(FTaskFiberPool::FHandle::STATE_Free, FTaskFiberPool::FHandle::STATE_Stalled));
+
         _lastFreeFiber = nullptr;
     }
+    else
+        result = _pool.AcquireFiber();
 
     Assert(result);
     Assert_NoAssume(_pool.OwnsFiber(result));
@@ -370,10 +421,13 @@ auto FTaskFiberLocalCache::AcquireFiber() -> FHandleRef {
 void FTaskFiberLocalCache::ReleaseFiber(FHandleRef handle) {
     THIS_THREADRESOURCE_CHECKACCESS();
     Assert(handle);
+    Assert_NoAssume(handle->Pool == &_pool);
     Assert_NoAssume(_pool.OwnsFiber(handle));
     Assert_NoAssume(not handle->OnWakeUp.Valid());
 
 #if 0
+    ONLY_IF_ASSERT(result->SetDebugState(FTaskFiberPool::FHandle::STATE_Recycling, FTaskFiberPool::FHandle::STATE_Free));
+
     // release all when full, to avoid releasing at every call
     if (_lastFreeFiber != nullptr)
         ReleaseMemory();
@@ -381,7 +435,7 @@ void FTaskFiberLocalCache::ReleaseFiber(FHandleRef handle) {
     _lastFreeFiber = handle;
 #else
     // always give back to global pool to avoid over allocation of fibers
-    _pool.ReleaseFiber(handle);
+    handle->ReleaseFiber();
 #endif
 }
 //----------------------------------------------------------------------------
@@ -389,7 +443,10 @@ void FTaskFiberLocalCache::ReleaseMemory() {
     THIS_THREADRESOURCE_CHECKACCESS();
 
     if (_lastFreeFiber != nullptr) {
-        _pool.ReleaseFiber(_lastFreeFiber);
+        Assert_NoAssume(_lastFreeFiber ->Pool == &_pool);
+        ONLY_IF_ASSERT(_lastFreeFiber->SetDebugState(FTaskFiberPool::FHandle::STATE_Free, FTaskFiberPool::FHandle::STATE_Stalled));
+
+        _lastFreeFiber->ReleaseFiber();
         _lastFreeFiber = nullptr;
     }
 }
