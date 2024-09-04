@@ -71,7 +71,7 @@ FORCE_INLINE static bool CONSTF CheckMemoryPredicates_(const FMemoryTracking::FC
 LOG_CATEGORY(, MemoryTracking)
 STATIC_CONST_INTEGRAL(size_t, SmallAllocationCountWarning, 2000);
 STATIC_CONST_INTEGRAL(size_t, SmallAllocationPercentThreshold, 20);
-STATIC_CONST_INTEGRAL(size_t, SmallAllocationSizeThreshold, CODE3264(16_b, 32_b));
+STATIC_CONST_INTEGRAL(size_t, SmallAllocationSizeThreshold, 16_b);
 static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTracking& domain, size_t totalAllocs, size_t smallAllocs) {
     if (ShouldIgnoreMemoryChecks_(domain))
         return;
@@ -202,7 +202,7 @@ void FMemoryTracking::Allocate(size_t userSize, size_t systemSize, const FMemory
 #endif
 
 #if USE_PPE_MEMORY_WARN_IF_MANY_SMALLALLOCS
-    if (Unlikely((!child) & (systemSize <= SmallAllocationSizeThreshold) & (_system.SmallAllocs.load(std::memory_order_relaxed) >= SmallAllocationCountWarning)))
+    if (Unlikely((!child) and (userSize <= SmallAllocationSizeThreshold) and (_system.SmallAllocs.load(std::memory_order_relaxed) >= SmallAllocationCountWarning)))
         CheckForSmallAllocs_(*this, _system);
 #endif
 
