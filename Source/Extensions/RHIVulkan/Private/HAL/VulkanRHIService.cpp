@@ -214,7 +214,9 @@ void FVulkanRHIService::TearDown() {
 
     RHI_LOG(Info, "destroying vulkan RHI service");
 
-    _frameGraph->WaitIdle(IFrameGraph::MaxTimeout);
+    if (_frameGraph) {
+        _frameGraph->WaitIdle(IFrameGraph::MaxTimeout);
+    }
 
     if (_swapchain.Valid()) {
         AssertRelease(_frameGraph);
