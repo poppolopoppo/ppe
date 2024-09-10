@@ -135,21 +135,26 @@ layout(set=0, binding=0, std140) uniform uPushConstant {
     vec4    iMouse;                 // xy = current pixel coords (if LMB is down). zw = click pixel
     vec4    iResolution;            // Width / Height / WidthOO / HeightOO
     vec4    iChannelResolution[4];  // Width / Height / WidthOO / HeightOO
-}   Un;
+};
 
 layout(set=0, binding=1) uniform sampler2D iChannel0;
 layout(set=0, binding=2) uniform sampler2D iChannel1;
 layout(set=0, binding=3) uniform sampler2D iChannel2;
 layout(set=0, binding=4) uniform sampler2D iChannel3;
 
-layout(location = 0) in struct {
-    vec2 TexCoord;
-}   In;
+layout(location = 0) in vec2 vTexCoord;
 
 void main() {
-    vec3 col = 0.5 + 0.5*cos(Un.iTime+In.TexCoord.xyx+vec3(0,2,4));
+    vec2 px = vTexCoord.xy * iResolution.xy;
+    vec2 uv = px / iChannelResolution[0].xy;
 
-    fragColor = vec4(col, 1.0);
+    vec2 axis = vec2(cos(iTime*.3), sin(iTime*.3));
+    uv = vec2(dot(axis, uv), dot(vec2(-axis.y, axis.x), uv));
+    uv *= pow(cos(iTime * .5) * .5 + .5, 2.) * 4.0 + .05;
+    uv += iTime * 0.1;
+
+    fragColor = texture(iChannel0, uv);
+    fragColor.rgb = pow(fragColor.rgb, vec3(1./2.2));
 }
 )#");
         PPE_LOG_CHECK(ShaderToy, VFS_WriteAll(FragmentSource, MakeRawView(defaultSource), EAccessPolicy::Create_Text));
