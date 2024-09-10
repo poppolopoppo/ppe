@@ -5,6 +5,9 @@
 #include "MeshBuilderService.h"
 #include "RHIModule.h"
 
+#include "Maths/Ray.h"
+#include "Maths/ScalarBoundingBox.h"
+
 #include "Mesh/Format/WaveFrontObj.h"
 #include "Mesh/GeometricPrimitives.h"
 #include "Mesh/GenericMeshHelpers.h"
@@ -141,7 +144,11 @@ void FVoxelCubeApp::Render(RHI::IFrameGraph& fg, FTimespan dt) {
             ImGui::MenuItem(ICON_CI_CLOUD " Points", nullptr, &_bDrawPoints, not _bDrawPoints);
             if (ImGui::MenuItem(ICON_CI_TRIANGLE_UP " Triangles", nullptr, &bDrawTriangles, not bDrawTriangles))
                 _bDrawPoints = not bDrawTriangles;
+
             ImGui::Separator();
+
+            if (ImGui::MenuItem(ICON_FK_CAMERA " Reset camera transform", "R"))
+                ResetCameraView_();
             ImGui::MenuItem(ICON_CI_SCREEN_NORMAL " Recompute normals", nullptr, &_bRecomputeNormals);
 
             ImGui::EndMenu();
@@ -226,7 +233,18 @@ bool FVoxelCubeApp::ReloadContent_(RHI::IFrameGraph& fg) {
     PPE_LOG_CHECK(VoxelCube, CreateUniformBuffers_(fg));
     PPE_LOG_CHECK(VoxelCube, CreateGraphicsPipeline_(fg));
     PPE_LOG_CHECK(VoxelCube, CreateMeshBuffers_(fg));
+
+    ResetCameraView_();
     return true;
+}
+//----------------------------------------------------------------------------
+void FVoxelCubeApp::ResetCameraView_() {
+    const FAabb3f bounds = ContentPipeline::ComputeSubPartBounds(_genericMesh.Position3f(0));
+    const float3 target = bounds.Center();
+    const float3 viewDir = Normalize(float3(0,1,1));
+    const float3 eye = target + viewDir * bounds.HalfExtents().MaxComponent() * 1.5f;
+
+    _freeLookCamera.LookAt(eye, target, float3::Y);
 }
 //----------------------------------------------------------------------------
 bool FVoxelCubeApp::CreateMeshBuffers_(RHI::IFrameGraph& fg) {
@@ -387,7 +405,7 @@ bool FVoxelCubeApp::CreateGraphicsPipeline_(RHI::IFrameGraph& fg) {
             Out.Color = aColor;
             //Out.Normal = oct_decode_dir(aNormal * 2.f - 1.f);
             Out.Normal = aNormal;
-            gl_Position = camera.ViewProjection * vec4(aPosition, 1.0);
+            gl_Position = camera.ViewProjection * vec4(aPosition, 1.f);
         })#" ARGS_IF_RHIDEBUG("VoxelCube/Test_VS"));
 
     desc.AddShader(RHI::EShaderType::Fragment, RHI::EShaderLangFormat::VKSL_100, "main", R"#(
@@ -401,7 +419,7 @@ bool FVoxelCubeApp::CreateGraphicsPipeline_(RHI::IFrameGraph& fg) {
 
         void main()
         {
-            float L = dot(normalize(In.Normal), normalize(vec3(1, -3, 2))) * 0.5 + 0.5;
+            float L = dot(normalize(In.Normal), normalize(vec3(1, -3, 2))) * .5f + .5f;
             out_Color0 = L * In.Color;
             //out_Color0 = vec4(vec3(L), 1);
             //out_Color0 = vec4(abs(normalize(In.Normal)), 1);

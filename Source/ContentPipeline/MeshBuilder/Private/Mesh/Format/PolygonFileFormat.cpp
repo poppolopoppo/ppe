@@ -269,28 +269,28 @@ struct FFormat {
 
                 switch (type) {
                 case EType::Char:
-                    text << src.Cast<const i8>().data();
+                    text << src.Cast<const i8>().front();
                     break;
                 case EType::UChar:
-                    text << src.Cast<const u8>().data();
+                    text << src.Cast<const u8>().front();
                     break;
                 case EType::Short:
-                    text << src.Cast<const i16>().data();
+                    text << src.Cast<const i16>().front();
                     break;
                 case EType::UShort:
-                    text << src.Cast<const u16>().data();
+                    text << src.Cast<const u16>().front();
                     break;
                 case EType::Int:
-                    text << src.Cast<const i32>().data();
+                    text << src.Cast<const i32>().front();
                     break;
                 case EType::UInt:
-                    text << src.Cast<const u32>().data();
+                    text << src.Cast<const u32>().front();
                     break;
                 case EType::Float:
-                    text << src.Cast<const float>().data();
+                    text << src.Cast<const float>().front();
                     break;
                 case EType::Double:
-                    text << src.Cast<const double>().data();
+                    text << src.Cast<const double>().front();
                     break;
 
                 case EType::List:

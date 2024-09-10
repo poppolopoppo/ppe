@@ -52,6 +52,8 @@ private:
     bool CreateUniformBuffers_(RHI::IFrameGraph& fg);
     bool CreateGraphicsPipeline_(RHI::IFrameGraph& fg);
 
+    void ResetCameraView_();
+
     RHI::TAutoResource<RHI::FImageID> _colorRT;
     RHI::TAutoResource<RHI::FImageID> _depthRT;
 

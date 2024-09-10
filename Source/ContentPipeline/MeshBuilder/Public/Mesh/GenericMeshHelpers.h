@@ -14,6 +14,7 @@ namespace ContentPipeline {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 NODISCARD PPE_MESHBUILDER_API FAabb3f ComputeBounds(const FGenericMesh& mesh, size_t index);
+NODISCARD PPE_MESHBUILDER_API FAabb2f ComputeSubPartBounds(const TGenericVertexSubPart<float2>& subPart);
 NODISCARD PPE_MESHBUILDER_API FAabb3f ComputeSubPartBounds(const TGenericVertexSubPart<float3>& subPart);
 NODISCARD PPE_MESHBUILDER_API FAabb4f ComputeSubPartBounds(const TGenericVertexSubPart<float4>& subPart);
 //----------------------------------------------------------------------------
