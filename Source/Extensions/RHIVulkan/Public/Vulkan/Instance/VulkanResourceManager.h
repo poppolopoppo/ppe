@@ -14,6 +14,7 @@
 #include "Vulkan/Memory/VulkanMemoryManager.h"
 #include "Vulkan/Memory/VulkanMemoryObject.h"
 #include "Vulkan/Pipeline/VulkanComputePipeline.h"
+#include "Vulkan/Pipeline/VulkanComputePipeline.h"
 #include "Vulkan/Pipeline/VulkanGraphicsPipeline.h"
 #include "Vulkan/Pipeline/VulkanMeshPipeline.h"
 #include "Vulkan/Pipeline/VulkanPipelineLayout.h"
@@ -198,50 +199,50 @@ public:
 
 private:
     struct FResources_ {
-        FImagePool ImagePool;
-        FBufferPool BufferPool;
-        FMemoryObjectPool MemoryObjectPool;
-        FSamplerCache SamplerCache;
-        FGPipelinePool GPipelinePool;
-        FCPipelinePool CPipelinePool;
-        FMPipelinePool MPipelinePool;
-        FRPipelinePool RPipelinePool;
-        FPplnLayoutCache PplnLayoutCache;
-        FDSLayoutCache DslayoutCache;
-        FPplnResourcesCache PplnResourcesCache;
-        FRTGeometryPool RtGeometryPool;
-        FRTScenePool RtScenePool;
-        FRTShaderTablePool RtShaderTablePool;
-        FRenderPassCache RenderPassCache;
-        FFramebufferCache FramebufferCache;
-        FSwapchainPool SwapchainPool;
+        TUniquePtr<FImagePool> ImagePool{ std::piecewise_construct };
+        TUniquePtr<FBufferPool> BufferPool{ std::piecewise_construct };
+        TUniquePtr<FMemoryObjectPool> MemoryObjectPool{ std::piecewise_construct };
+        TUniquePtr<FSamplerCache> SamplerCache{ std::piecewise_construct };
+        TUniquePtr<FGPipelinePool> GPipelinePool{ std::piecewise_construct };
+        TUniquePtr<FCPipelinePool> CPipelinePool{ std::piecewise_construct };
+        TUniquePtr<FMPipelinePool> MPipelinePool{ std::piecewise_construct };
+        TUniquePtr<FRPipelinePool> RPipelinePool{ std::piecewise_construct };
+        TUniquePtr<FPplnLayoutCache> PplnLayoutCache{ std::piecewise_construct };
+        TUniquePtr<FDSLayoutCache> DslayoutCache{ std::piecewise_construct };
+        TUniquePtr<FPplnResourcesCache> PplnResourcesCache{ std::piecewise_construct };
+        TUniquePtr<FRTGeometryPool> RtGeometryPool{ std::piecewise_construct };
+        TUniquePtr<FRTScenePool> RtScenePool{ std::piecewise_construct };
+        TUniquePtr<FRTShaderTablePool> RtShaderTablePool{ std::piecewise_construct };
+        TUniquePtr<FRenderPassCache> RenderPassCache{ std::piecewise_construct };
+        TUniquePtr<FFramebufferCache> FramebufferCache{ std::piecewise_construct };
+        TUniquePtr<FSwapchainPool> SwapchainPool{ std::piecewise_construct };
 
-        auto& Pool(FRawImageID) { return ImagePool; }
-        auto& Pool(FRawBufferID) { return BufferPool; }
-        auto& Pool(FRawMemoryID) { return MemoryObjectPool; }
-        auto& Pool(FRawSamplerID) { return SamplerCache; }
-        auto& Pool(FRawGPipelineID) { return GPipelinePool; }
-        auto& Pool(FRawCPipelineID) { return CPipelinePool; }
-        auto& Pool(FRawMPipelineID) { return MPipelinePool; }
-        auto& Pool(FRawRTPipelineID) { return RPipelinePool; }
-        auto& Pool(FRawPipelineLayoutID) { return PplnLayoutCache; }
-        auto& Pool(FRawDescriptorSetLayoutID) { return DslayoutCache; }
-        auto& Pool(FRawPipelineResourcesID) { return PplnResourcesCache; }
-        auto& Pool(FRawRTGeometryID) { return RtGeometryPool; }
-        auto& Pool(FRawRTSceneID) { return RtScenePool; }
-        auto& Pool(FRawRTShaderTableID) { return RtShaderTablePool; }
-        auto& Pool(FRawRenderPassID) { return RenderPassCache; }
-        auto& Pool(FRawFramebufferID) { return FramebufferCache; }
-        auto& Pool(FRawSwapchainID) { return SwapchainPool; }
+        NODISCARD auto& Pool(FRawImageID) NOEXCEPT { return *ImagePool; }
+        NODISCARD auto& Pool(FRawBufferID) NOEXCEPT { return *BufferPool; }
+        NODISCARD auto& Pool(FRawMemoryID) NOEXCEPT { return *MemoryObjectPool; }
+        NODISCARD auto& Pool(FRawSamplerID) NOEXCEPT { return *SamplerCache; }
+        NODISCARD auto& Pool(FRawGPipelineID) NOEXCEPT { return *GPipelinePool; }
+        NODISCARD auto& Pool(FRawCPipelineID) NOEXCEPT { return *CPipelinePool; }
+        NODISCARD auto& Pool(FRawMPipelineID) NOEXCEPT { return *MPipelinePool; }
+        NODISCARD auto& Pool(FRawRTPipelineID) NOEXCEPT { return *RPipelinePool; }
+        NODISCARD auto& Pool(FRawPipelineLayoutID) NOEXCEPT { return *PplnLayoutCache; }
+        NODISCARD auto& Pool(FRawDescriptorSetLayoutID) NOEXCEPT { return *DslayoutCache; }
+        NODISCARD auto& Pool(FRawPipelineResourcesID) NOEXCEPT { return *PplnResourcesCache; }
+        NODISCARD auto& Pool(FRawRTGeometryID) NOEXCEPT { return *RtGeometryPool; }
+        NODISCARD auto& Pool(FRawRTSceneID) NOEXCEPT { return *RtScenePool; }
+        NODISCARD auto& Pool(FRawRTShaderTableID) NOEXCEPT { return *RtShaderTablePool; }
+        NODISCARD auto& Pool(FRawRenderPassID) NOEXCEPT { return *RenderPassCache; }
+        NODISCARD auto& Pool(FRawFramebufferID) NOEXCEPT { return *FramebufferCache; }
+        NODISCARD auto& Pool(FRawSwapchainID) NOEXCEPT { return *SwapchainPool; }
 
         template <u32 _Uid>
-        const auto& PoolConst(details::TResourceId<_Uid> id) const {
+        NODISCARD const auto& PoolConst(details::TResourceId<_Uid> id) const NOEXCEPT {
             return const_cast<FResources_&>(*this).Pool(id);
         }
 
 #if USE_PPE_VULKAN_RESOURCETRACKING
         using FResourcesAlive = HASHSET(RHIDebug, FResourceHandle);
-        TThreadSafe<FResourcesAlive, EThreadBarrier::CriticalSection> PooledResourcesAlive_ForDebug;
+        TThreadSafe<FResourcesAlive, EThreadBarrier::RWLock> PooledResourcesAlive_ForDebug;
 
         void TrackPooledResource_ForDebug(FResourceHandle resource) {
             PooledResourcesAlive_ForDebug.LockExclusive()->emplace_AssertUnique(resource);
@@ -291,18 +292,12 @@ private:
     FVulkanMemoryManager _memoryManager;
     FVulkanDescriptorManager _descriptorManager;
 
-    FResources_ _resources;
-
-    std::atomic<u32> _submissionCounter;
-
-    TThreadSafe<FVulkanShaderRefs, EThreadBarrier::CriticalSection> _shaderCache;
-
-    FRawDescriptorSetLayoutID _emptyDSLayout;
+    TThreadSafe<FVulkanShaderRefs, EThreadBarrier::RWLock> _shaderCache;
 
     struct {
-        FStagingBufferPool Read;
-        FStagingBufferPool Write;
-        FStagingBufferPool Uniform;
+        TUniquePtr<FStagingBufferPool> Read{ std::piecewise_construct };
+        TUniquePtr<FStagingBufferPool> Write{ std::piecewise_construct };
+        TUniquePtr<FStagingBufferPool> Uniform{ std::piecewise_construct };
 
         size_t ReadPageSize{ 0 };
         size_t WritePageSize{ 0 };
@@ -310,15 +305,22 @@ private:
         size_t MaxStagingBufferMemory{ UMax };
     }   _staging;
 
-    const FBufferDesc _dummyBufferDesc;
-    const FImageDesc _dummyImageDesc;
-    const FSwapchainDesc _dummySwapchainDesc;
+    FRawDescriptorSetLayoutID _emptyDSLayout;
+    std::atomic<u32> _submissionCounter{ 0 };
+
+    struct {
+        const TUniquePtr<const FBufferDesc> BufferDesc{ std::piecewise_construct };
+        const TUniquePtr<const FImageDesc> ImageDesc{ std::piecewise_construct };
+        const TUniquePtr<const FSwapchainDesc> SwapchainDesc{ std::piecewise_construct };
+    }   _dummy;
 
     struct {
         FFramebufferCache::FGCHandle FrameBuffersGC;
         FPplnResourcesCache::FGCHandle PplnResourcesGC;
         FPplnResourcesCache::FGCHandle RenderPassGC;
     }   _validation;
+
+    FResources_ _resources;
 
 #if USE_PPE_RHIDEBUG
     using FDebugLayoutCache_ = HASHMAP(RHIResource, u32, FRawDescriptorSetLayoutID);
@@ -334,9 +336,7 @@ private:
     NODISCARD bool CreateTimemapRemapPipeline_();
 
     void TearDownShaderDebuggerResources_();
-
 #endif
-
 };
 //----------------------------------------------------------------------------
 template <u32 _Uid>
@@ -458,19 +458,19 @@ bool FVulkanResourceManager::ReleaseResource_(TCache<T, _ChunkSize, _MaxChunks>&
 inline const FBufferDesc& FVulkanResourceManager::ResourceDescription(FRawBufferID id) const {
     Assert(id.Valid());
     const FVulkanBuffer* const pBuffer = ResourceDataIFP(id);
-    return (pBuffer ? pBuffer->Desc() : _dummyBufferDesc);
+    return (pBuffer ? pBuffer->Desc() : *_dummy.BufferDesc);
 }
 //----------------------------------------------------------------------------
 inline const FImageDesc& FVulkanResourceManager::ResourceDescription(FRawImageID id) const {
     Assert(id.Valid());
     const FVulkanImage* const pImage = ResourceDataIFP(id);
-    return (pImage ? pImage->Desc() : _dummyImageDesc);
+    return (pImage ? pImage->Desc() : *_dummy.ImageDesc);
 }
 //----------------------------------------------------------------------------
 inline const FSwapchainDesc& FVulkanResourceManager::ResourceDescription(FRawSwapchainID id) const {
     Assert(id.Valid());
     const FVulkanSwapchain* const pSwapchain = ResourceDataIFP(id);
-    return (pSwapchain ? pSwapchain->Desc() : _dummySwapchainDesc);
+    return (pSwapchain ? pSwapchain->Desc() : *_dummy.SwapchainDesc);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

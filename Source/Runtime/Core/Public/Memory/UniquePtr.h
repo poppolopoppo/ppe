@@ -21,29 +21,25 @@ namespace PPE {
 template <typename T>
 class TUniquePtr : Meta::FNonCopyable {
 public:
-    typedef T value_type;
+    typedef Meta::TRemoveConst<T> value_type;
 
     template <typename U>
     friend class TUniquePtr;
 
-    struct FPointer {
-        T* Value;
-        CONSTEXPR operator T* () const NOEXCEPT {
-            return Value;
-        }
-    };
-
-    template <typename U = T, typename... _Args>
-    static Meta::TEnableIf<std::is_base_of_v<T, U>, U*> New(_Args&&... args) {
+    template <typename U = value_type, typename... _Args>
+    NODISCARD static Meta::TEnableIf<std::is_base_of_v<T, U>, U*> New(_Args&&... args)
+        requires (std::is_constructible_v<U, _Args&&...>) {
         return TRACKING_NEW(Unique, U)(std::forward<_Args>(args)...);
     }
 
-    CONSTEXPR TUniquePtr() NOEXCEPT
-    :   _ptr(nullptr)
-    {}
+    CONSTEXPR TUniquePtr() NOEXCEPT = default;
+
+    ~TUniquePtr() NOEXCEPT {
+        reset();
+    }
 
     // should use reset(), MakeUnique(), or New<>()
-    CONSTEXPR TUniquePtr(FPointer ptr) NOEXCEPT
+    CONSTEXPR explicit TUniquePtr(TPtrRef<T> ptr) NOEXCEPT
     :   _ptr(ptr)
     {}
 
@@ -52,6 +48,7 @@ public:
     :   _ptr(rvalue._ptr) {
         rvalue._ptr = nullptr;
     }
+
     template <typename U>
     TUniquePtr& operator =(TUniquePtr<U>&& rvalue) NOEXCEPT {
         reset();
@@ -62,20 +59,22 @@ public:
         return (*this);
     }
 
-    ~TUniquePtr() NOEXCEPT {
-        reset();
-    }
+    template <typename... _Args>
+    TUniquePtr(std::piecewise_construct_t, _Args&&... args)
+        requires (std::is_constructible_v<T, _Args&&...>)
+        : _ptr(New(std::forward<_Args>(args)...))
+    {}
 
     CONSTEXPR T& operator *() const NOEXCEPT { Assert(_ptr); return (*_ptr); }
     CONSTEXPR T* operator ->() const NOEXCEPT { Assert(_ptr); return _ptr; }
 
     PPE_FAKEBOOL_OPERATOR_DECL() { return (!!_ptr); }
-    bool valid() const { return (!!_ptr); }
+    NODISCARD bool valid() const { return (!!_ptr); }
 
     CONSTEXPR T* get() const NOEXCEPT { return _ptr; }
 
-    using deleter_f = void (*)(T*) NOEXCEPT;
-    static deleter_f Deleter() { return &tracking_delete<T>; }
+    using deleter_f = void (*)(value_type*) NOEXCEPT;
+    static deleter_f Deleter() { return &tracking_delete<value_type>; }
 
     void reset() NOEXCEPT {
         if (_ptr) {
@@ -84,8 +83,9 @@ public:
         }
     }
 
-    template <typename U = T, typename... _Args>
-    Meta::TAddPointer<U> create(_Args&&... args) {
+    template <typename U = value_type, typename... _Args>
+    U* create(_Args&&... args)
+        requires (std::is_constructible_v<U, _Args&&...>) {
         reset();
 
         const Meta::TAddPointer<U> result =
@@ -96,14 +96,14 @@ public:
     }
 
     template <typename U>
-    U *as() const { return checked_cast<U*>(get()); }
+    NODISCARD U *as() const { return checked_cast<U*>(get()); }
 
     template <typename U>
     void Swap(TUniquePtr<U>& other) NOEXCEPT {
         std::swap(_ptr, other._ptr);
     }
 
-    friend hash_t hash_value(const TUniquePtr& uniq) NOEXCEPT {
+    NODISCARD friend hash_t hash_value(const TUniquePtr& uniq) NOEXCEPT {
         return hash_ptr(uniq.get());
     }
 
@@ -112,31 +112,30 @@ public:
     }
 
     template <typename U>
-    friend bool operator ==(const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
+    NODISCARD friend bool operator ==(const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
         return (lhs._ptr == rhs._ptr);
     }
     template <typename U>
-    friend bool operator !=(const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
+    NODISCARD friend bool operator !=(const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
         return (lhs._ptr != rhs._ptr);
     }
     template <typename U>
-    friend bool operator < (const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
+    NODISCARD friend bool operator < (const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
         return (lhs._ptr < rhs._ptr);
     }
     template <typename U>
-    friend bool operator >=(const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
+    NODISCARD friend bool operator >=(const TUniquePtr& lhs, const TUniquePtr<U>& rhs) NOEXCEPT {
         return (lhs._ptr >= rhs._ptr);
     }
 
 private:
-    T* _ptr;
+    value_type* _ptr{ nullptr };
 };
 //----------------------------------------------------------------------------
 template <typename T, typename... _Args>
-TUniquePtr<T> MakeUnique(_Args&&... args) {
-    using FPointer = typename TUniquePtr<T>::FPointer;
-    const FPointer ptr{ TUniquePtr<T>::New(std::forward<_Args>(args)...) };
-    return TUniquePtr<T>(ptr);
+NODISCARD TUniquePtr<T> MakeUnique(_Args&&... args)
+    requires (std::is_constructible_v<T, _Args&&...>) {
+    return { std::piecewise_construct, std::forward<_Args>(args)... };
 }
 //----------------------------------------------------------------------------
 PPE_ASSUME_TEMPLATE_AS_POINTER(TUniquePtr<T>, typename T)

@@ -17,14 +17,14 @@ struct TSingletonPOD_ {
 #if USE_PPE_ASSERT
     bool HasInstance{ false };
 #endif
-    T* Get() NOEXCEPT {
+    NODISCARD T* Get() NOEXCEPT {
         return static_cast<T*>(static_cast<void*>(&Storage));
     }
 };
 template <typename T, typename _Tag, bool _ThreadLocal>
 class TSingletonStorage_ {
 protected:
-    static void* make_singleton_storage() NOEXCEPT {
+    NODISCARD static void* make_singleton_storage() NOEXCEPT {
         ONE_TIME_DEFAULT_INITIALIZE(TSingletonPOD_<T>, GStorage);
         return (&GStorage);
     }
@@ -32,7 +32,7 @@ protected:
 template <typename T, typename _Tag>
 class TSingletonStorage_<T, _Tag, true> {
 protected:
-    static void* make_singleton_storage() NOEXCEPT {
+    NODISCARD static void* make_singleton_storage() NOEXCEPT {
         ONE_TIME_DEFAULT_INITIALIZE_THREAD_LOCAL(TSingletonPOD_<T>, GStorageTLS);
         return (&GStorageTLS);
     }
@@ -44,7 +44,7 @@ class TSingleton : details::TSingletonStorage_<T, _Tag, _ThreadLocal> {
     using pod_type = details::TSingletonPOD_<T>;
     using storage_type = details::TSingletonStorage_<T, _Tag, _ThreadLocal>;
 
-    static pod_type& SRef_() NOEXCEPT {
+    NODISCARD static pod_type& SRef_() NOEXCEPT {
         // client can provide their own storage (way to handle shared libraries)
         IF_CONSTEXPR(_Shared)
             return (*static_cast<pod_type*>(_Tag::class_singleton_storage()));
@@ -76,12 +76,16 @@ public:
         return (*storage.Get());
     }
 
+
     template <typename... _Args>
-    static void Create(_Args&&... args) {
+    static void Create(_Args&&... args)
+        requires (requires (_Args&&... args) {
+            T{ std::forward<_Args>(args)...};
+        }) {
         auto& storage = SRef_();
         Assert_NoAssume(not storage.HasInstance);
         ONLY_IF_ASSERT(storage.HasInstance = true);
-        new (static_cast<void*>(storage.Get())) T{ std::forward<_Args>(args)... };
+        INPLACE_NEW(storage.Get(), T){ std::forward<_Args>(args)... };
     }
 
     static void Destroy() {
@@ -116,9 +120,8 @@ public:
     }
 
     template <typename... _Args>
-    static void Create(_Args&&... args) {
-        using FPointer = typename TUniquePtr<T>::FPointer;
-        parent_type::Create(FPointer{ TUniquePtr<T>::New(std::forward<_Args>(args)...) });
+    static Meta::TEnableIf<std::is_constructible_v<TUniquePtr<T>, std::piecewise_construct_t, _Args&&...>> Create(_Args&&... args) {
+        parent_type::Create(std::piecewise_construct, std::forward<_Args>(args)...);
     }
 
     static void Destroy() {

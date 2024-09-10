@@ -503,7 +503,7 @@ private:
         return static_cast<u32>(seed % ThreadGranularity);
     }
 
-    class CACHELINE_ALIGNED FPoolBucket_ : public TThreadSafe<FFreeBlockList_, EThreadBarrier::CriticalSection>
+    class CACHELINE_ALIGNED FPoolBucket_ : public TThreadSafe<FFreeBlockList_, EThreadBarrier::RWLock/* smaller than CriticalSection */>
     {};
 
     void InitializeInternalPool_(FInternalPool_& pool);
@@ -512,8 +512,8 @@ private:
     FORCE_INLINE void Clear_ReleaseMemory_AssumeLocked_(FInternalPool_& pool);
 
     CACHELINE_ALIGNED TThreadSafe<FInternalPool_, EThreadBarrier::CriticalSection> _pool;
-    TStaticArray<FPoolBucket_, ThreadGranularity> _buckets;
-    CACHELINE_ALIGNED FBundleRecycler_ _recycler;
+    FBundleRecycler_ _recycler;
+    CACHELINE_ALIGNED TStaticArray<FPoolBucket_, ThreadGranularity> _buckets;
 };
 //----------------------------------------------------------------------------
 template <size_t _BlockSize, size_t _Align, size_t _ChunkSize, size_t _MaxChunks, typename _Allocator>

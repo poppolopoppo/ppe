@@ -97,9 +97,7 @@ FVulkanResourceManager::FVulkanResourceManager(
     size_t stagingBufferSize )
 :   _device(device)
 ,   _memoryManager(device)
-,   _descriptorManager(device)
-,   _submissionCounter(0) {
-
+,   _descriptorManager(device) {
     _staging.MaxStagingBufferMemory = maxStagingBufferMemory < 1_MiB ? UMax : maxStagingBufferMemory;
     _staging.WritePageSize = stagingBufferSize < 1_KiB ? 0 : stagingBufferSize;
     _staging.ReadPageSize = _staging.WritePageSize;
@@ -153,25 +151,25 @@ void FVulkanResourceManager::TearDown() {
 #endif
 
     // release all pools (should all be empty !)
-    ReleasePooledResourcesAndReportLeaks_(*this, _resources.ImagePool);
-    ReleasePooledResourcesAndReportLeaks_(*this, _resources.BufferPool);
-    ReleasePooledResourcesAndReportLeaks_(*this, _resources.MemoryObjectPool);
-    ReleasePooledResourcesAndReportLeaks_(*this, _resources.GPipelinePool);
-    ReleasePooledResourcesAndReportLeaks_(*this, _resources.CPipelinePool);
-    ReleasePooledResourcesAndReportLeaks_(*this, _resources.MPipelinePool);
-    ReleasePooledResourcesAndReportLeaks_(*this, _resources.RPipelinePool);
-    ReleasePooledResourcesAndReportLeaks_(*this, _resources.RtGeometryPool);
-    ReleasePooledResourcesAndReportLeaks_(*this, _resources.RtScenePool);
-    ReleasePooledResourcesAndReportLeaks_(*this, _resources.RtShaderTablePool);
-    ReleasePooledResourcesAndReportLeaks_(*this, _resources.SwapchainPool);
+    ReleasePooledResourcesAndReportLeaks_(*this, *_resources.ImagePool);
+    ReleasePooledResourcesAndReportLeaks_(*this, *_resources.BufferPool);
+    ReleasePooledResourcesAndReportLeaks_(*this, *_resources.MemoryObjectPool);
+    ReleasePooledResourcesAndReportLeaks_(*this, *_resources.GPipelinePool);
+    ReleasePooledResourcesAndReportLeaks_(*this, *_resources.CPipelinePool);
+    ReleasePooledResourcesAndReportLeaks_(*this, *_resources.MPipelinePool);
+    ReleasePooledResourcesAndReportLeaks_(*this, *_resources.RPipelinePool);
+    ReleasePooledResourcesAndReportLeaks_(*this, *_resources.RtGeometryPool);
+    ReleasePooledResourcesAndReportLeaks_(*this, *_resources.RtScenePool);
+    ReleasePooledResourcesAndReportLeaks_(*this, *_resources.RtShaderTablePool);
+    ReleasePooledResourcesAndReportLeaks_(*this, *_resources.SwapchainPool);
 
     // release all cached resources (force tear down)
-    ReleaseCachedResourcesAndReportLeaks_(*this, _resources.PplnResourcesCache);
-    ReleaseCachedResourcesAndReportLeaks_(*this, _resources.PplnLayoutCache);
-    ReleaseCachedResourcesAndReportLeaks_(*this, _resources.DslayoutCache);
-    ReleaseCachedResourcesAndReportLeaks_(*this, _resources.FramebufferCache);
-    ReleaseCachedResourcesAndReportLeaks_(*this, _resources.RenderPassCache);
-    ReleaseCachedResourcesAndReportLeaks_(*this, _resources.SamplerCache);
+    ReleaseCachedResourcesAndReportLeaks_(*this, *_resources.PplnResourcesCache);
+    ReleaseCachedResourcesAndReportLeaks_(*this, *_resources.PplnLayoutCache);
+    ReleaseCachedResourcesAndReportLeaks_(*this, *_resources.DslayoutCache);
+    ReleaseCachedResourcesAndReportLeaks_(*this, *_resources.FramebufferCache);
+    ReleaseCachedResourcesAndReportLeaks_(*this, *_resources.RenderPassCache);
+    ReleaseCachedResourcesAndReportLeaks_(*this, *_resources.SamplerCache);
 
     // release shader cache
     {
@@ -1065,14 +1063,14 @@ void FVulkanResourceManager::RunValidation(u32 maxIteration) {
         return false; // keep alive
     };
 
-    _resources.PplnResourcesCache.GarbageCollect(
+    _resources.PplnResourcesCache->GarbageCollect(
         _validation.PplnResourcesGC,
         maxIteration,
         [&](TResourceProxy<FVulkanPipelineResources>* pResource) {
             return garbageCollectIFP(pResource);
         });
 
-    _resources.FramebufferCache.GarbageCollect(
+    _resources.FramebufferCache->GarbageCollect(
         _validation.FrameBuffersGC,
         maxIteration,
         [&](TResourceProxy<FVulkanFramebuffer>* pResource) {
@@ -1084,17 +1082,17 @@ void FVulkanResourceManager::RunValidation(u32 maxIteration) {
 //----------------------------------------------------------------------------
 void FVulkanResourceManager::ReleaseMemory() {
     // reclaims cached memory from all pools
-    _resources.ImagePool.ReleaseCacheMemory();
-    _resources.BufferPool.ReleaseCacheMemory();
-    _resources.MemoryObjectPool.ReleaseCacheMemory();
-    _resources.GPipelinePool.ReleaseCacheMemory();
-    _resources.CPipelinePool.ReleaseCacheMemory();
-    _resources.MPipelinePool.ReleaseCacheMemory();
-    _resources.RPipelinePool.ReleaseCacheMemory();
-    _resources.RtGeometryPool.ReleaseCacheMemory();
-    _resources.RtScenePool.ReleaseCacheMemory();
-    _resources.RtShaderTablePool.ReleaseCacheMemory();
-    _resources.SwapchainPool.ReleaseCacheMemory();
+    _resources.ImagePool->ReleaseCacheMemory();
+    _resources.BufferPool->ReleaseCacheMemory();
+    _resources.MemoryObjectPool->ReleaseCacheMemory();
+    _resources.GPipelinePool->ReleaseCacheMemory();
+    _resources.CPipelinePool->ReleaseCacheMemory();
+    _resources.MPipelinePool->ReleaseCacheMemory();
+    _resources.RPipelinePool->ReleaseCacheMemory();
+    _resources.RtGeometryPool->ReleaseCacheMemory();
+    _resources.RtScenePool->ReleaseCacheMemory();
+    _resources.RtShaderTablePool->ReleaseCacheMemory();
+    _resources.SwapchainPool->ReleaseCacheMemory();
 
     // trim all unused cached resources
     auto trimDownCache = [this](auto& cache, size_t maxIterations) {
@@ -1113,12 +1111,12 @@ void FVulkanResourceManager::ReleaseMemory() {
     };
 
     constexpr size_t maxIterationsForTrim = MaxCached; // else kept alive due to manual AddRef()
-    trimDownCache(_resources.PplnResourcesCache, maxIterationsForTrim);
-    trimDownCache(_resources.PplnLayoutCache, maxIterationsForTrim);
-    trimDownCache(_resources.DslayoutCache, maxIterationsForTrim);
-    trimDownCache(_resources.RenderPassCache, maxIterationsForTrim);
-    trimDownCache(_resources.FramebufferCache, maxIterationsForTrim);
-    trimDownCache(_resources.SamplerCache, maxIterationsForTrim);
+    trimDownCache(*_resources.PplnResourcesCache, maxIterationsForTrim);
+    trimDownCache(*_resources.PplnLayoutCache, maxIterationsForTrim);
+    trimDownCache(*_resources.DslayoutCache, maxIterationsForTrim);
+    trimDownCache(*_resources.RenderPassCache, maxIterationsForTrim);
+    trimDownCache(*_resources.FramebufferCache, maxIterationsForTrim);
+    trimDownCache(*_resources.SamplerCache, maxIterationsForTrim);
 
     // finally, release memory in allocator
     _memoryManager.ReleaseMemory(*this);
@@ -1140,7 +1138,7 @@ bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBuff
 
     switch (usage) {
     case EBufferUsage::TransferSrc:
-        pool = &_staging.Write;
+        pool = _staging.Write.get();
         desc.SetSize(_staging.WritePageSize);
         memType = EMemoryType::HostWrite;
         poolIndexMask = 1u << 30;
@@ -1148,7 +1146,7 @@ bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBuff
         break;
 
     case EBufferUsage::TransferDst:
-        pool = &_staging.Read;
+        pool = _staging.Read.get();
         desc.SetSize(_staging.ReadPageSize);
         memType = EMemoryType::HostRead;
         poolIndexMask = 2u << 30;
@@ -1156,7 +1154,7 @@ bool FVulkanResourceManager::CreateStagingBuffer(FRawBufferID* pId, FStagingBuff
         break;
 
     case EBufferUsage::Uniform:
-        pool = &_staging.Uniform;
+        pool = _staging.Uniform.get();
         desc.SetSize(_staging.UniformPageSize);
         memType = EMemoryType::HostWrite;
         poolIndexMask = 3u << 30;
@@ -1191,9 +1189,9 @@ void FVulkanResourceManager::ReleaseStagingBuffer(FStagingBufferIndex index) {
 
     // keep the staging buffer created for recycling
     switch (index.Value >> 30) {
-    case 1: _staging.Write.ReleaseBlock(blockIndex); break;
-    case 2: _staging.Read.ReleaseBlock(blockIndex); break;
-    case 3: _staging.Uniform.ReleaseBlock(blockIndex); break;
+    case 1: _staging.Write->ReleaseBlock(blockIndex); break;
+    case 2: _staging.Read->ReleaseBlock(blockIndex); break;
+    case 3: _staging.Uniform->ReleaseBlock(blockIndex); break;
     default: AssertNotImplemented();
     }
 }
@@ -1206,9 +1204,9 @@ void FVulkanResourceManager::TearDownStagingBuffers_() {
         Meta::Destroy(pBufferId);
     };
 
-    _staging.Write.Clear_ReleaseMemory(dtor);
-    _staging.Read.Clear_ReleaseMemory(dtor);
-    _staging.Uniform.Clear_ReleaseMemory(dtor);
+    _staging.Write->Clear_ReleaseMemory(dtor);
+    _staging.Read->Clear_ReleaseMemory(dtor);
+    _staging.Uniform->Clear_ReleaseMemory(dtor);
 }
 //----------------------------------------------------------------------------
 // CreatePooledResource_

@@ -246,7 +246,7 @@ private:
     mutable FCriticalSection _lastFrameStatsCS;
     mutable FFrameStatistics _lastFrameStats;
 
-    VkQueryPool _vkQueryPool;
+    VkQueryPool _vkQueryPool{ VK_NULL_HANDLE };
 
     FShaderDebugCallback _shaderDebugCallback;
     mutable FVulkanDebugger _debugger;

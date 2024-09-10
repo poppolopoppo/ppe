@@ -33,7 +33,7 @@ private:
 
     const FVulkanDevice& _device;
 
-    TThreadSafe<FDescriptorPools, EThreadBarrier::CriticalSection> _descriptorPools;
+    TThreadSafe<FDescriptorPools, EThreadBarrier::RWLock> _descriptorPools;
 };
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
