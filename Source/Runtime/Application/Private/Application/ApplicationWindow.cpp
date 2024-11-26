@@ -99,10 +99,10 @@ void FApplicationWindow::Start() {
     IInputService::MakeDefault(&_input);
     IWindowService::MakeDefault(&_window);
 
-    _window->CreateMainWindow(&_main, ToWString(Name()));
-    _window->SetMainWindow(_main.get());
-
+    _main = _window->CreateMainWindow(ToWString(Name()));
     _main->AddListener(*this);
+
+    _window->SetMainWindow(_main);
     _input->SetupWindow(*_main);
 
     FModularServices& services = Services_();
@@ -164,8 +164,8 @@ void FApplicationWindow::Shutdown() {
     if (_main->Visible())
         VerifyRelease(_main->Close());
 
-    _main->RemoveListener(*this);
     _window->SetMainWindow(nullptr);
+    _main->RemoveListener(*this);
 
     FModularServices& services = Services_();
     if (_rhi) {

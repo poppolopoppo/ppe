@@ -8,6 +8,7 @@
 #include "Container/SparseArray.h"
 #include "Input/InputDevice.h"
 #include "Misc/Event.h"
+#include "Misc/Function_fwd.h"
 
 namespace PPE {
 namespace Application {
@@ -60,6 +61,8 @@ public:
     virtual void InputActionKeyMappings(TAppendable<FInputActionKeyMapping> keyMappings) const NOEXCEPT = 0;
 };
 //----------------------------------------------------------------------------
+using FInputActionKeyMappingProviderRef = TFunctionRef<void(TAppendable<FInputActionKeyMapping>)>;
+//----------------------------------------------------------------------------
 using FInputKeyMappings = SPARSEARRAY_INSITU(Input, FInputActionKeyMapping);
 //----------------------------------------------------------------------------
 class FInputMapping : public FRefCountable {
@@ -73,11 +76,13 @@ public:
     }
 
     PPE_APPLICATION_API void MapAll(const IInputActionKeyMappingProvider& provider);
+    PPE_APPLICATION_API void MapAll(const FInputActionKeyMappingProviderRef& provider);
     PPE_APPLICATION_API FInputActionKeyMapping& MapKey(const SInputAction& action, const FInputKey& key);
     PPE_APPLICATION_API bool UnmapKey(const SCInputAction& action, const FInputKey& key);
 
     PPE_APPLICATION_API void UnmapAll();
     PPE_APPLICATION_API void UnmapAll(const IInputActionKeyMappingProvider& provider);
+    PPE_APPLICATION_API void UnmapAll(const FInputActionKeyMappingProviderRef& provider);
     PPE_APPLICATION_API void UnmapAllKeysFromAction(const SCInputAction& action);
 
 private:

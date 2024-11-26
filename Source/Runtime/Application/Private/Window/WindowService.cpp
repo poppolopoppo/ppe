@@ -2,6 +2,7 @@
 
 #include "Window/WindowService.h"
 
+#include "Viewport/ViewportClient.h"
 #include "Window/MainWindow.h"
 
 #include "Diagnostic/CurrentProcess.h"
@@ -21,15 +22,15 @@ public:
     FDefaultWindowService_() NOEXCEPT;
     ~FDefaultWindowService_() override = default;
 
-    virtual void CreateMainWindow(PMainWindow* window, FWString&& title) override final;
-    virtual void CreateMainWindow(PMainWindow* window, FWString&& title, size_t width, size_t height) override final;
-    virtual void CreateMainWindow(PMainWindow* window, FWString&& title, int left, int top, size_t width, size_t height) override final;
+    virtual PMainWindow CreateMainWindow(FWString&& title) override final;
+    virtual PMainWindow CreateMainWindow(FWString&& title, size_t width, size_t height) override final;
+    virtual PMainWindow CreateMainWindow(FWString&& title, int left, int top, size_t width, size_t height) override final;
 
-    virtual FMainWindow* MainWindow() const NOEXCEPT override final;
-    virtual void SetMainWindow(FMainWindow* window) override final;
+    virtual SMainWindow MainWindow() const NOEXCEPT override final;
+    virtual void SetMainWindow(const SMainWindow& window) override final;
 
-    virtual void AddWindowListener(IWindowListener* listener) override final;
-    virtual void RemoveWindowListener(IWindowListener* listener) override final;
+    virtual SViewportClient MainViewport() const NOEXCEPT override final;
+    virtual void SetMainViewport(const SViewportClient& viewport) override final;
 
     virtual void ShowSystray() override final;
     virtual void HideSystray() override final;
@@ -56,6 +57,7 @@ public:
 
 private:
     SMainWindow _mainWindow;
+    SViewportClient _mainViewport;
     bool _systrayAvailable{ true };
 };
 //----------------------------------------------------------------------------
@@ -66,41 +68,32 @@ FDefaultWindowService_::FDefaultWindowService_() NOEXCEPT {
 #endif
 }
 //----------------------------------------------------------------------------
-void FDefaultWindowService_::CreateMainWindow(PMainWindow* window, FWString&& title) {
-    Assert(window);
-    *window = NEW_REF(Window, FMainWindow, std::move(title), FMainWindow::Definition());
+PMainWindow FDefaultWindowService_::CreateMainWindow(FWString&& title) {
+    return NEW_REF(Window, FMainWindow, std::move(title), FMainWindow::Definition());
 }
 //----------------------------------------------------------------------------
-void FDefaultWindowService_::CreateMainWindow(PMainWindow* window, FWString&& title, size_t width, size_t height) {
-    Assert(window);
-    *window = NEW_REF(Window, FMainWindow, std::move(title), FMainWindow::Definition(width, height));
+PMainWindow FDefaultWindowService_::CreateMainWindow(FWString&& title, size_t width, size_t height) {
+    return NEW_REF(Window, FMainWindow, std::move(title), FMainWindow::Definition(width, height));
 }
 //----------------------------------------------------------------------------
-void FDefaultWindowService_::CreateMainWindow(PMainWindow* window, FWString&& title, int left, int top, size_t width, size_t height) {
-    Assert(window);
-    *window = NEW_REF(Window, FMainWindow, std::move(title), FMainWindow::Definition(left, top, width, height));
+PMainWindow FDefaultWindowService_::CreateMainWindow(FWString&& title, int left, int top, size_t width, size_t height) {
+    return NEW_REF(Window, FMainWindow, std::move(title), FMainWindow::Definition(left, top, width, height));
 }
 //----------------------------------------------------------------------------
-FMainWindow* FDefaultWindowService_::MainWindow() const NOEXCEPT {
-    return _mainWindow.get();
+SMainWindow FDefaultWindowService_::MainWindow() const NOEXCEPT {
+    return _mainWindow;
 }
 //----------------------------------------------------------------------------
-void FDefaultWindowService_::SetMainWindow(FMainWindow* window) {
+void FDefaultWindowService_::SetMainWindow(const SMainWindow& window) {
     _mainWindow.reset(window);
 }
 //----------------------------------------------------------------------------
-void FDefaultWindowService_::AddWindowListener(IWindowListener* listener) {
-    Assert(listener);
-    if (FMainWindow* const wnd = _mainWindow) {
-        wnd->AddListener(listener);
-    }
+SViewportClient FDefaultWindowService_::MainViewport() const NOEXCEPT {
+    return _mainViewport;
 }
 //----------------------------------------------------------------------------
-void FDefaultWindowService_::RemoveWindowListener(IWindowListener* listener) {
-    Assert(listener);
-    if (FMainWindow* const wnd = _mainWindow) {
-        wnd->RemoveListener(listener);
-    }
+void FDefaultWindowService_::SetMainViewport(const SViewportClient& viewport) {
+    _mainViewport.reset(viewport);
 }
 //----------------------------------------------------------------------------
 void FDefaultWindowService_::ShowSystray() {

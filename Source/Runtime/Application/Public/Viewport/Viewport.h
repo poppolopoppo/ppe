@@ -5,7 +5,6 @@
 #include "Viewport/Camera.h"
 
 #include "Maths/ScalarRectangle.h"
-
 #include "Thread/ThreadSafe.h"
 
 namespace PPE {

@@ -79,8 +79,8 @@ public: // must be defined for every platform
     bool Visible() const { PPE_DATARACE_SHARED_SCOPE(this); return _visible; }
     EWindowType Type() const { PPE_DATARACE_SHARED_SCOPE(this); return _type; }
 
-    void AddListener(TPtrRef<IWindowListener>&& listener);
-    void RemoveListener(const TPtrRef<IWindowListener>& listener);
+    void AddListener(TPtrRef<IWindowListener> listener);
+    void RemoveListener(TPtrRef<IWindowListener> listener);
 
     virtual bool Show();
     virtual bool Close();

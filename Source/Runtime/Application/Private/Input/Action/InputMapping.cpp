@@ -42,9 +42,16 @@ FInputActionKeyMapping::FInputActionKeyMapping(
 }
 //----------------------------------------------------------------------------
 void FInputMapping::MapAll(const IInputActionKeyMappingProvider& provider) {
+    MapAll(TFunctionRef{
+        Meta::StaticFunction<&IInputActionKeyMappingProvider::InputActionKeyMappings>,
+        &provider
+    });
+}
+//----------------------------------------------------------------------------
+void FInputMapping::MapAll(const FInputActionKeyMappingProviderRef& provider) {
     const auto mappings = _mappings.LockExclusive();
 
-    provider.InputActionKeyMappings(MakeAppendable<FInputActionKeyMapping>(
+    provider(MakeAppendable<FInputActionKeyMapping>(
         [&mappings](FInputActionKeyMapping&& keyMapping) {
             mappings->EmplaceIt(std::move(keyMapping));
         }));
@@ -91,9 +98,16 @@ void FInputMapping::UnmapAll() {
 }
 //----------------------------------------------------------------------------
 void FInputMapping::UnmapAll(const IInputActionKeyMappingProvider& provider) {
+    UnmapAll(TFunctionRef{
+        Meta::StaticFunction<&IInputActionKeyMappingProvider::InputActionKeyMappings>,
+        &provider
+    });
+}
+//----------------------------------------------------------------------------
+void FInputMapping::UnmapAll(const FInputActionKeyMappingProviderRef& provider) {
     const auto mappings = _mappings.LockExclusive();
 
-    provider.InputActionKeyMappings(MakeAppendable<FInputActionKeyMapping>(
+    provider(MakeAppendable<FInputActionKeyMapping>(
         [&mappings](const FInputActionKeyMapping& keyMapping) {
             Remove_AssertExists(*mappings, keyMapping);
         }));

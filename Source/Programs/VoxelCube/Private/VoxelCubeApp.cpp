@@ -62,19 +62,21 @@ void FVoxelCubeApp::Start() {
 
     parent_type::Start();
 
-    const Application::PMainWindow mainWindow{ Window().MainWindow() };
-
-    _camera = NEW_REF(UserDomain, Application::FCamera);
-    _viewport = NEW_REF(UserDomain, Application::FViewportClient, _camera, mainWindow);
-
     _vertexInput.Bind(Default, sizeof(FVertexData));
     _vertexInput.Add(RHI::EVertexID::Position, RHI::EVertexFormat::Float3, Meta::StandardLayoutOffset(&FVertexData::Position));
     _vertexInput.Add(RHI::EVertexID::Color, RHI::EVertexFormat::UByte4_Norm, Meta::StandardLayoutOffset(&FVertexData::Color));
     _vertexInput.Add(RHI::EVertexID::Normal, RHI::EVertexFormat::Float3/*RHI::EVertexFormat::UByte2_Norm*/, Meta::StandardLayoutOffset(&FVertexData::Normal));
 
+    const Application::PMainWindow mainWindow{ Window().MainWindow() };
+
+    _camera = NEW_REF(UserDomain, Application::FCamera);
+    _viewport = NEW_REF(UserDomain, Application::FViewportClient, _camera, mainWindow);
+
     _cameraInputs = NEW_REF(UserDomain, Application::FInputMapping, "CameraInputs");
     _cameraInputs->MapAll(_freeLookCamera);
+
     Input().AddInputMapping(_cameraInputs, -1);
+    Window().SetMainViewport(_viewport);
 
     _OnApplicationTick.Emplace([frameRateOverlay(MakeUnique<Application::FFrameRateOverlayWidget>(this))](const IApplicationService&, FTimespan) {
         return frameRateOverlay->Show();
@@ -92,6 +94,7 @@ void FVoxelCubeApp::Run() {
 }
 //----------------------------------------------------------------------------
 void FVoxelCubeApp::Shutdown() {
+    Window().SetMainViewport(nullptr);
     Input().RemoveInputMapping(_cameraInputs);
 
     _colorRT.Reset();

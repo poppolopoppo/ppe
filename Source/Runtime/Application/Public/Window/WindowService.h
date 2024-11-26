@@ -16,15 +16,15 @@ public:
     IWindowService() = default;
     virtual ~IWindowService() = default;
 
-    virtual void CreateMainWindow(Application::PMainWindow* window, FWString&& title) = 0;
-    virtual void CreateMainWindow(Application::PMainWindow* window, FWString&& title, size_t width, size_t height) = 0;
-    virtual void CreateMainWindow(Application::PMainWindow* window, FWString&& title, int left, int top, size_t width, size_t height) = 0;
+    NODISCARD virtual Application::PMainWindow CreateMainWindow(FWString&& title) = 0;
+    NODISCARD virtual Application::PMainWindow CreateMainWindow(FWString&& title, size_t width, size_t height) = 0;
+    NODISCARD virtual Application::PMainWindow CreateMainWindow(FWString&& title, int left, int top, size_t width, size_t height) = 0;
 
-    virtual Application::FMainWindow* MainWindow() const NOEXCEPT = 0;
-    virtual void SetMainWindow(Application::FMainWindow* window) = 0;
+    virtual Application::SMainWindow MainWindow() const NOEXCEPT = 0;
+    virtual void SetMainWindow(const Application::SMainWindow& window) = 0;
 
-    virtual void AddWindowListener(Application::IWindowListener* listener) = 0;
-    virtual void RemoveWindowListener(Application::IWindowListener* listener) = 0;
+    virtual Application::SViewportClient MainViewport() const NOEXCEPT = 0;
+    virtual void SetMainViewport(const Application::SViewportClient& viewport) = 0;
 
     virtual void ShowSystray() = 0;
     virtual void HideSystray() = 0;

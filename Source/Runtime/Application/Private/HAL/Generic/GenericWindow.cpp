@@ -345,12 +345,12 @@ bool FGenericWindow::CreateWindow(FGenericWindow* window, FWString&& title, cons
     return true;
 }
 //----------------------------------------------------------------------------
-void FGenericWindow::AddListener(TPtrRef<IWindowListener>&& listener) {
+void FGenericWindow::AddListener(TPtrRef<IWindowListener> listener) {
     Assert(listener);
     Add_Unique(*_listeners.LockExclusive(), std::move(listener));
 }
 //----------------------------------------------------------------------------
-void FGenericWindow::RemoveListener(const TPtrRef<IWindowListener>& listener) {
+void FGenericWindow::RemoveListener(TPtrRef<IWindowListener> listener) {
     Assert(listener);
     Remove_AssertExists(*_listeners.LockExclusive(), listener);
 }
