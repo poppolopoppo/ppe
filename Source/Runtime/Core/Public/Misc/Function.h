@@ -308,7 +308,7 @@ struct TFunctionPayloadExtra<T&&> {
 template <typename T>
 struct TFunctionPayloadExtra<T*> {
     using type = Meta::TConditional<
-        std::conjunction_v<IsRefCountable<T>, IsWeakRefCountable<T>>,
+        std::disjunction_v<IsRefCountable<T>, IsWeakRefCountable<T>>,
         TSafePtr<T>, TPtrRef<T> >;
 };
 //----------------------------------------------------------------------------
@@ -447,13 +447,13 @@ private:
 
     template <typename _Payload>
     NODISCARD static CONSTEVAL bool PayloadNonCopyable_() {
-        PPE_COMPILER_WARNING("5337", "non-copyable or non-movable objects must always be allocated\n\twhile compiling " STRINGIZE(PPE_PRETTY_FUNCTION));
+        PPE_COMPILER_WARNING("5337", "non-copyable or non-movable objects must always be allocated\n\twhile compiling " PPE_PRETTY_FUNCTION);
         return true;
     }
 
     template <typename _Payload>
     NODISCARD static CONSTEVAL bool PayloadIsMutable_() {
-        PPE_COMPILER_WARNING("5338", "mutable objects must always be allocated\n\twhile compiling " STRINGIZE(PPE_PRETTY_FUNCTION));
+        PPE_COMPILER_WARNING("5338", "mutable objects must always be allocated\n\twhile compiling " PPE_PRETTY_FUNCTION);
         return true;
     }
 

@@ -46,7 +46,7 @@ public:
         _srv->Start();
 
         _tickHandle = FApplicationModule::Get(_domain).OnApplicationTick().Add(
-            FApplicationModule::FApplicationTick::Bind<&FDefaultRemotingService_::TickRemoting>(this) );
+            FApplicationModule::FApplicationTick::Bind<&FDefaultRemotingService_::TickRemoting_>(this) );
     }
 
     virtual ~FDefaultRemotingService_() override {
@@ -74,11 +74,12 @@ public:
         _srv->Remove(endpoint);
     }
 
-    void TickRemoting(Application::FApplicationBase& , FTimespan dt) NOEXCEPT {
+private:
+    bool TickRemoting_(Application::FApplicationBase& , FTimespan dt) NOEXCEPT {
         _srv->Tick(dt);
+        return true; // always keep-alive
     }
 
-private:
     const FModularDomain& _domain;
     TUniquePtr<FRemotingServer> _srv;
     FEventHandle _tickHandle;
