@@ -172,8 +172,8 @@ public:
     NODISCARD FRTSceneID AcquireResource(FRawRTSceneID id) override { return (_resourceManager.AcquireResource(id) ? FRTSceneID(id) : Default); }
     NODISCARD FRTShaderTableID AcquireResource(FRawRTShaderTableID id) override { return (_resourceManager.AcquireResource(id) ? FRTShaderTableID(id) : Default); }
 
-    NODISCARD bool UpdateHostBuffer(FRawBufferID id, size_t offset, size_t size, const void* data) override;
-    NODISCARD bool MapBufferRange(FRawBufferID id, size_t offset, size_t& size, void** data) override;
+    NODISCARD bool UpdateHostBuffer(FRawBufferID id, size_t offset, const FRawMemoryConst& data) override;
+    NODISCARD Meta::TOptional<FRawMemory> MapBufferRange(FRawBufferID id, size_t offset, size_t sizeInBytes) override;
 
     NODISCARD FFrameIndex CurrentFrameIndex() const override;
     FFrameIndex PrepareNewFrame() override;

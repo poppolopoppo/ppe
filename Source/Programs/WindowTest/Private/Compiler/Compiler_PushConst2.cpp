@@ -3,6 +3,8 @@
 #include "Test_Includes.h"
 #include "Test_Uniforms.h"
 
+#include "Diagnostic/IgnoreList.h"
+
 namespace PPE {
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
@@ -68,9 +70,12 @@ ARGS_IF_RHIDEBUG("Compiler_PushConst2_PS"));
 
     const EShaderCompilationFlags flags = compiler->CompilationFlags();
     compiler->SetCompilationFlags(EShaderCompilationFlags::Quiet);
-
-    // overlapping pusd constants with different names
-    PPE_LOG_CHECK(WindowTest, not compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    {
+        const FIgnoreList::FIgnoreScope ignoreErrorsInScope{};
+        Unused(ignoreErrorsInScope);
+        // overlapping push constants with different names
+        PPE_LOG_CHECK(WindowTest, not compiler->Compile(ppln, EShaderLangFormat::SPIRV_100));
+    }
 
     compiler->SetCompilationFlags(flags);
 

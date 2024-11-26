@@ -13,11 +13,10 @@ namespace RHI {
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 struct FVulkanMemoryInfo {
-    ubyte* MappedPtr{ nullptr };
+    FRawMemory Mapped;
     VkDeviceMemory Memory{ VK_NULL_HANDLE };
     VkMemoryPropertyFlags Flags{ Default };
     u32 Offset{ 0 };
-    u32 Size{ 0 };
 };
 //----------------------------------------------------------------------------
 struct FVulkanMemoryBlock {

@@ -141,8 +141,8 @@ ARGS_IF_RHIDEBUG("Drawing_TraceRays3_RayClosestHit"));
     {
         FBuildRayTracingGeometry::FTriangles trianglesData;
         trianglesData.SetGeometryId("Triangle"_geometry)
-            .SetIndexData(indices)
-            .SetVertexData(vertices);
+            .SetIndexData(MakeView(indices))
+            .SetVertexData(MakeView(vertices));
 
         FBuildRayTracingScene::FInstance rtInstance;
         rtInstance.SetInstanceId("0"_instance);

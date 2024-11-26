@@ -10,6 +10,7 @@
 
 #include "Maths/ScalarBoundingBox.h"
 #include "Maths/ScalarMatrix.h"
+#include "Memory/SharedBuffer.h"
 #include "Meta/Optional.h"
 
 namespace PPE {
@@ -31,7 +32,7 @@ struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracing
     struct FTriangles {
         FGeometryID Geometry;
 
-        FRawMemoryConst VertexData;
+        FSharedBuffer VertexData;
         FRawBufferID VertexBuffer;
         u32 VertexOffset{ 0 };
         u32 VertexStride{ 0 };
@@ -39,7 +40,7 @@ struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracing
         EVertexFormat VertexFormat{ Default };
 
         // optional indices
-        FRawMemoryConst IndexData;
+        FSharedBuffer IndexData;
         FRawBufferID IndexBuffer;
         u32 IndexOffset{ 0 };
         u32 IndexCount{ 0 };
@@ -56,36 +57,30 @@ struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracing
         }
 
         FTriangles& SetGeometryId(const FGeometryID& geometry) { Assert(geometry); Geometry = geometry; return (*this); }
+        FTriangles& SetVertices(u32 count, EVertexFormat fmt, u32 stride = 0);
+        FTriangles& SetVertexBuffer(FRawBufferID buffer, u32 offset = 0);
+        FTriangles& SetVertexData(const FSharedBuffer& data);
 
         template <typename T>
         FTriangles& SetVertices(u32 count, u32 stride = 0) { return SetVertices(count, VertexAttrib<T>(), stride); }
-        FTriangles& SetVertices(u32 count, EVertexFormat fmt, u32 stride = 0);
-        FTriangles& SetVertexBuffer(FRawBufferID buffer, u32 offset = 0);
-
-        template <typename T, size_t _Dim>
-        FTriangles& SetVertexData(const T(&vertices)[_Dim]) { return SetVertexData(MakeView(vertices)); }
         template <typename T>
         FTriangles& SetVertexData(TMemoryView<const T> vertices);
-        FTriangles& SetVertexData(FRawMemoryConst data);
 
         FTriangles& SetIndices(u32 count, EIndexFormat fmt);
         FTriangles& SetIndexBuffer(FRawBufferID buffer, u32 offset = 0);
-
-        template <typename T, size_t _Dim>
-        FTriangles& SetIndexData(const T(&indices)[_Dim]) { return SetIndexData(MakeView(indices)); }
-        template <typename T>
-        FTriangles& SetIndexData(TMemoryView<const T> indices);
-        FTriangles& SetIndexData(FRawMemoryConst data);
+        FTriangles& SetIndexData(const FSharedBuffer& data);
 
         FTriangles& SetTransformData(const float3x4& transform) { TransformData = transform; return (*this); }
         FTriangles& SetTransformBuffer(FRawBufferID buffer, u32 offset);
+        template <typename T>
+        FTriangles& SetIndexData(TMemoryView<const T> vertices);
     };
 
     using FAabb = FAabb3f;
 
     struct FBoundingVolumes {
         FGeometryID Geometry;
-        FRawMemoryConst AabbData;
+        FSharedBuffer AabbData;
         FRawBufferID AabbBuffer;
         u32 AabbOffset{ 0 };
         u32 AabbStride{ 0 };
@@ -100,7 +95,7 @@ struct FBuildRayTracingGeometry final : details::TFrameTaskDesc<FBuildRayTracing
 
         FBoundingVolumes& SetCount(u32 count, u32 stride = 0);
         FBoundingVolumes& SetBuffer(FRawBufferID buffer, u32 offset = 0);
-        FBoundingVolumes& SetData(FRawMemoryConst data);
+        FBoundingVolumes& SetData(const FSharedBuffer& data);
     };
 
     FRawRTGeometryID Geometry;

@@ -12,22 +12,18 @@ CONSTEXPR TMemoryView<T>::TMemoryView(pointer storage, size_type size) NOEXCEPT
     Assert(storage || 0 == size);
 }
 //----------------------------------------------------------------------------
-// enables type promotion between char[] and TMemoryView<char>
-template <>
+template <typename T>
 template <size_t _Dim>
-CONSTEXPR TMemoryView<const char>::TMemoryView(const char (&staticString)[_Dim]) NOEXCEPT
-:   TMemoryView(staticString, _Dim - 1) {
-    STATIC_ASSERT(0 < _Dim);
-    Assert('\0' == staticString[_Dim - 1]);
-}
-//----------------------------------------------------------------------------
-// enables type promotion between wchar_t[] and TMemoryView<wchar_t>
-template <>
-template <size_t _Dim>
-CONSTEXPR TMemoryView<const wchar_t>::TMemoryView(const wchar_t (&staticString)[_Dim]) NOEXCEPT
-:   TMemoryView(staticString, _Dim - 1) {
-    STATIC_ASSERT(0 < _Dim);
-    Assert('\0' == staticString[_Dim - 1]);
+CONSTEXPR TMemoryView<T>::TMemoryView(value_type (&staticArray)[_Dim]) NOEXCEPT
+:   TMemoryView(staticArray, _Dim) {
+    // MUST STRIP TRAILING '\0' FROM STATIC STRINGS HERE!
+    IF_CONSTEXPR (std::disjunction_v<
+        std::is_same<T, const char>,
+        std::is_same<T, const wchar_t> >) {
+        STATIC_ASSERT(0 < _Dim);
+        Assert_NoAssume(staticArray[_Dim - 1] == Zero);
+        --_size;
+    }
 }
 //----------------------------------------------------------------------------
 template <typename T>

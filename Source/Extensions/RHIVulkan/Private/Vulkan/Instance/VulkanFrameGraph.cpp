@@ -491,13 +491,12 @@ FExternalImage FVulkanFrameGraph::ExternalDescription(FRawImageID id) const NOEX
 //----------------------------------------------------------------------------
 // UpdateHostBuffer
 //----------------------------------------------------------------------------
-bool FVulkanFrameGraph::UpdateHostBuffer(FRawBufferID id, size_t offset, size_t size, const void* data) {
-    Assert(data || size == 0);
+bool FVulkanFrameGraph::UpdateHostBuffer(FRawBufferID id, size_t offset, const FRawMemoryConst& data) {
+    Assert(not data.empty());
 
-    void* pData = nullptr;
-    if (MapBufferRange(id, offset, size, &pData)) {
-        Assert(pData);
-        FPlatformMemory::Memcpy(pData, data, size);
+    const Meta::TOptional<FRawMemory> mapped = MapBufferRange(id, offset, data.SizeInBytes());
+    if (mapped.has_value()) {
+        Copy(mapped->CutBefore(data.SizeInBytes()), data);
         return true;
     }
 
@@ -506,7 +505,7 @@ bool FVulkanFrameGraph::UpdateHostBuffer(FRawBufferID id, size_t offset, size_t 
 //----------------------------------------------------------------------------
 // MapBufferRange
 //----------------------------------------------------------------------------
-bool FVulkanFrameGraph::MapBufferRange(FRawBufferID id, size_t offset, size_t& size, void** data) {
+Meta::TOptional<FRawMemory> FVulkanFrameGraph::MapBufferRange(FRawBufferID id, size_t offset, size_t sizeInBytes) {
     Assert(id.Valid());
     Assert_NoAssume(IsInitialized_());
 
@@ -514,18 +513,12 @@ bool FVulkanFrameGraph::MapBufferRange(FRawBufferID id, size_t offset, size_t& s
         if (const FVulkanMemoryObject* mem = _resourceManager.ResourceDataIFP(*buf->Read()->MemoryId)) {
 
             FVulkanMemoryInfo info;
-            if (mem->MemoryInfo(&info, _resourceManager.MemoryManager())) {
-                Assert(info.MappedPtr);
-                Assert(info.Size >= offset);
-
-                size = Min(size, info.Size - offset);
-                *data = (info.MappedPtr + offset);
-                return true;
-            }
+            if (mem->MemoryInfo(&info, _resourceManager.MemoryManager()))
+                return info.Mapped.SubRange(offset, Min(sizeInBytes, info.Mapped.SizeInBytes() - offset));
         }
     }
 
-    return false;
+    return std::nullopt;
 }
 //----------------------------------------------------------------------------
 // PrepareNewFrame

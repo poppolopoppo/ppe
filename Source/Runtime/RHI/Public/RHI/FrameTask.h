@@ -11,6 +11,7 @@
 #include "Color/Color.h"
 #include "Container/Stack.h"
 #include "Maths/ScalarVectorHelpers.h"
+#include "Memory/SharedBuffer.h"
 #include "Meta/Optional.h"
 #include "Misc/Function.h"
 
@@ -490,11 +491,10 @@ struct FClearDepthStencilImage final : details::TFrameTaskDesc<FClearDepthStenci
 //----------------------------------------------------------------------------
 // FUpdateBuffer
 //----------------------------------------------------------------------------
-struct FUpdateBuffer final : details::TFrameTaskDesc<FUpdateBuffer> {
-
+struct  FUpdateBuffer final : details::TFrameTaskDesc<FUpdateBuffer> {
     struct FRegion {
-        size_t Offset{ 0 };
-        FRawMemoryConst Data;
+        FSharedBuffer Data;
+        size_t BufferOffset{ 0 };
     };
     using FRegions = TFixedSizeStack<FRegion, MaxCopyRegions>;
 
@@ -504,15 +504,18 @@ struct FUpdateBuffer final : details::TFrameTaskDesc<FUpdateBuffer> {
     PPE_RHI_API FUpdateBuffer() NOEXCEPT;
     PPE_RHI_API ~FUpdateBuffer();
 
-    PPE_RHI_API FUpdateBuffer(FRawBufferID buffer, size_t offset, const FRawMemoryConst& data) NOEXCEPT;
+    PPE_RHI_API FUpdateBuffer(FRawBufferID buffer, size_t offset, const FSharedBuffer& data) NOEXCEPT;
+    FUpdateBuffer(FRawBufferID buffer, const FSharedBuffer& data) NOEXCEPT
+        : FUpdateBuffer(std::move(buffer), 0, data)
+    {}
 
     PPE_RHI_API FUpdateBuffer& SetBuffer(FRawBufferID buffer);
 
     template <typename T>
-    FUpdateBuffer& AddData(const TMemoryView<const T>& data, size_t offset = 0) { return AddData(data.template Cast<const u8>(), offset); }
-    FUpdateBuffer& AddData(const void* p, const size_t size, size_t offset = 0) { return AddData(FRawMemoryConst(static_cast<const u8*>(p), size), offset); }
+    FUpdateBuffer& AddData(const TMemoryView<const T>& data, size_t bufferOffset = 0) { return AddData(FSharedBuffer::MakeView(data.template Cast<const u8>()), bufferOffset); }
+    FUpdateBuffer& AddData(const void* p, const size_t size, size_t bufferOffset = 0) { return AddData(FSharedBuffer::MakeView(p, size), bufferOffset); }
 
-    PPE_RHI_API FUpdateBuffer& AddData(const FRawMemoryConst& data, size_t offset = 0);
+    PPE_RHI_API FUpdateBuffer& AddData(const FSharedBuffer& data, size_t bufferOffset = 0) NOEXCEPT;
 };
 //----------------------------------------------------------------------------
 // FReadBuffer
@@ -547,7 +550,7 @@ struct FUpdateImage final : details::TFrameTaskDesc<FUpdateImage> {
     size_t DataRowPitch{ 0 };
     size_t DataSlicePitch{ 0 };
     EImageAspect AspectMask{ EImageAspect::Color };
-    FRawMemoryConst Data;
+    FSharedBuffer Data;
 
     PPE_RHI_API FUpdateImage() NOEXCEPT;
     PPE_RHI_API ~FUpdateImage();
@@ -557,13 +560,13 @@ struct FUpdateImage final : details::TFrameTaskDesc<FUpdateImage> {
     FUpdateImage& SetImage(FRawImageID image, const int2& offset, FImageLayer layer, FMipmapLevel mipmap) { return SetImage(image, int3(offset, 0), layer, mipmap); }
     PPE_RHI_API FUpdateImage& SetImage(FRawImageID image, const int3& offset, FImageLayer layer, FMipmapLevel mipmap);
 
-    FUpdateImage& SetData(FRawMemoryConst data, const uint2& dimension, size_t rowPitch = 0) { return SetData(data, uint3(dimension, 0), rowPitch); }
-    PPE_RHI_API FUpdateImage& SetData(FRawMemoryConst data, const uint3& dimension, size_t rowPitch = 0, size_t slicePitch = 0);
+    FUpdateImage& SetData(const FSharedBuffer& data, const uint2& dimension, size_t rowPitch = 0) { return SetData(data, uint3(dimension, 0), rowPitch); }
+    PPE_RHI_API FUpdateImage& SetData(const FSharedBuffer& data, const uint3& dimension, size_t rowPitch = 0, size_t slicePitch = 0);
 
     template <typename T>
-    FUpdateImage& SetData(TMemoryView<const T> data, const uint2& dimension, size_t rowPitch = 0) { return SetData(data.template Cast<const u8>(), uint3(dimension, 0), rowPitch); }
+    FUpdateImage& SetData(TMemoryView<const T> data, const uint2& dimension, size_t rowPitch = 0) { return SetData(FSharedBuffer::MakeView(data.template Cast<const u8>()), uint3(dimension, 0), rowPitch); }
     template <typename T>
-    FUpdateImage& SetData(TMemoryView<const T> data, const uint3& dimension, size_t rowPitch = 0, size_t slicePitch = 0) { return SetData(data.template Cast<const u8>(), dimension, rowPitch, slicePitch); }
+    FUpdateImage& SetData(TMemoryView<const T> data, const uint3& dimension, size_t rowPitch = 0, size_t slicePitch = 0) { return SetData(FSharedBuffer::MakeView(data.template Cast<const u8>()), dimension, rowPitch, slicePitch); }
 };
 //----------------------------------------------------------------------------
 // FReadImage

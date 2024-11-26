@@ -79,7 +79,7 @@ bool Queue_CopyImage2_(FWindowTestApp& app) {
         PPE_LOG_CHECK(WindowTest, !!cmd);
 
         const uint2 testDim = { srcDim.x, srcDim.y / 2 };
-        const auto testData = srcData.MakeView().CutBefore(srcData.size() / 2);
+        const auto testData = FSharedBuffer::MakeView(srcData.MakeView().CutBefore(srcData.size() / 2));
 
         const PFrameTask tUpdate = cmd->Task(FUpdateImage{}
             .SetImage(srcImage)
@@ -101,7 +101,7 @@ bool Queue_CopyImage2_(FWindowTestApp& app) {
 
         const uint2 testDim = { srcDim.x, srcDim.y / 2 };
         const int2 testOff = { 0, checked_cast<int>(srcDim.y / 2) };
-        const auto testData = srcData.MakeView().CutStartingAt(srcData.size() / 2);
+        const auto testData = FSharedBuffer::MakeView(srcData.MakeView().CutStartingAt(srcData.size() / 2));
 
         const PFrameTask tUpdate = cmd->Task(FUpdateImage{}
             .SetImage(srcImage, testOff)

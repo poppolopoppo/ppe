@@ -6,14 +6,15 @@
 #include "Vulkan/Pipeline/VulkanDebuggableShaderData.h"
 #include "Vulkan/Pipeline/VulkanSpirvCompiler.h"
 
-#if USE_PPE_RHIDEBUG
-#   include "RHI/EnumToString.h"
-#endif
+// for logging:
+#include "RHI/EnumToString.h"
+#include "Vulkan/Common/VulkanEnumToString.h"
 
 #include "Diagnostic/Logger.h"
-#include "Meta/Functor.h"
-#include "IO/Format.h"
 #include "Memory/SharedBuffer.h"
+#include "Meta/Functor.h"
+#include "Misc/Opaque.h"
+#include "IO/Format.h"
 
 namespace PPE {
 namespace RHI {
@@ -655,8 +656,8 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
         if (sh.second.Data.end() == it) {
             logger(ELoggerVerbosity::Error, "@unknown", 0, "no suitable shader format found!"_view, {
                 {"Pipeline", "Mesh"},
-                {"ShaderType", Meta::EnumOrd(sh.first)},
-                {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                {"ShaderType", Opaq::Format(sh.first)},
+                {"SpirvFormat", Opaq::Format(spirvFormat)}
             });
             return false;
         }
@@ -675,9 +676,9 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
             if (not content) {
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
                     {"Pipeline", "Mesh"},
-                    {"ShaderType", Meta::EnumOrd(sh.first)},
-                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                    {"ShaderType", Opaq::Format(sh.first)},
+                    {"ShaderLangFormat", Opaq::Format(it->first)},
+                    {"SpirvFormat", Opaq::Format(spirvFormat)}
                 });
                 return false;
             }
@@ -694,9 +695,9 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
             if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache, logger)) {
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
                     {"Pipeline", "Mesh"},
-                    {"ShaderType", Meta::EnumOrd(sh.first)},
-                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                    {"ShaderType", Opaq::Format(sh.first)},
+                    {"ShaderLangFormat", Opaq::Format(it->first)},
+                    {"SpirvFormat", Opaq::Format(spirvFormat)}
                 });
                 return false;
             }
@@ -704,9 +705,9 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
             if (not MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout, exclusiveData->CompilationFlags)) {
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to merge vulkan pipeline layout!"_view, {
                     {"Pipeline", "Mesh"},
-                    {"ShaderType", Meta::EnumOrd(sh.first)},
-                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                    {"ShaderType", Opaq::Format(sh.first)},
+                    {"ShaderLangFormat", Opaq::Format(it->first)},
+                    {"SpirvFormat", Opaq::Format(spirvFormat)}
                 });
                 return false;
             }
@@ -736,9 +737,9 @@ bool FVulkanPipelineCompiler::Compile(FMeshPipelineDesc& desc, EShaderLangFormat
         else {
             logger(ELoggerVerbosity::Error, "@unknown", 0, "invalid shader data type, expected a source!"_view, {
                 {"Pipeline", "Mesh"},
-                {"ShaderType", Meta::EnumOrd(sh.first)},
-                {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-                {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                {"ShaderType", Opaq::Format(sh.first)},
+                {"ShaderLangFormat", Opaq::Format(it->first)},
+                {"SpirvFormat", Opaq::Format(spirvFormat)},
                 {"ShaderDataType", it->second.index()},
             });
             return false;
@@ -770,7 +771,7 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
             logger(ELoggerVerbosity::Error, "@unknown", 0, "no suitable shader format found!"_view, {
                 {"Pipeline", "RayTracing"},
                 {"ShaderName", sh.first.MakeView()},
-                {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                {"SpirvFormat", Opaq::Format(spirvFormat)},
             });
             return false;
         }
@@ -787,8 +788,8 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
                     {"Pipeline", "RayTracing"},
                     {"ShaderName", sh.first.MakeView()},
-                    {"ShaderType", Meta::EnumOrd(it->first)},
-                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                    {"ShaderType", Opaq::Format(it->first)},
+                    {"SpirvFormat", Opaq::Format(spirvFormat)},
                 });
                 return false;
             }
@@ -808,8 +809,8 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
                     {"Pipeline", "RayTracing"},
                     {"ShaderName", sh.first.MakeView()},
-                    {"ShaderType", Meta::EnumOrd(it->first)},
-                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                    {"ShaderType", Opaq::Format(it->first)},
+                    {"SpirvFormat", Opaq::Format(spirvFormat)},
                 });
                 return false;
             }
@@ -818,8 +819,8 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to merge vulkan pipeline layout!"_view, {
                     {"Pipeline", "RayTracing"},
                     {"ShaderName", sh.first.MakeView()},
-                    {"ShaderType", Meta::EnumOrd(it->first)},
-                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                    {"ShaderType", Opaq::Format(it->first)},
+                    {"SpirvFormat", Opaq::Format(spirvFormat)},
                 });
                 return false;
             }
@@ -843,8 +844,8 @@ bool FVulkanPipelineCompiler::Compile(FRayTracingPipelineDesc& desc, EShaderLang
             logger(ELoggerVerbosity::Error, "@unknown", 0, "invalid shader data type, expected a source!"_view, {
                 {"Pipeline", "RayTracing"},
                 {"ShaderName", sh.first.MakeView()},
-                {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-                {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                {"ShaderLangFormat", Opaq::Format(it->first)},
+                {"SpirvFormat", Opaq::Format(spirvFormat)},
                 {"ShaderDataType", it->second.index()},
             });
             return false;
@@ -875,8 +876,8 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
         if (sh.second.Data.end() == it) {
             logger(ELoggerVerbosity::Error, "@unknown", 0, "no suitable shader format found!"_view, {
                 {"Pipeline", "Graphics"},
-                {"ShaderType", Meta::EnumOrd(sh.first)},
-                {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                {"ShaderType", Opaq::Format(sh.first)},
+                {"SpirvFormat", Opaq::Format(spirvFormat)}
             });
             return false;
         }
@@ -892,9 +893,9 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
             if (not content) {
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
                     {"Pipeline", "Graphics"},
-                    {"ShaderType", Meta::EnumOrd(sh.first)},
-                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                    {"ShaderType", Opaq::Format(sh.first)},
+                    {"ShaderLangFormat", Opaq::Format(it->first)},
+                    {"SpirvFormat", Opaq::Format(spirvFormat)}
                 });
                 return false;
             }
@@ -913,9 +914,9 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
             if (createModule && not CreateVulkanShader_(&shader, exclusiveData->ShaderCache, logger)) {
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
                     {"Pipeline", "Graphics"},
-                    {"ShaderType", Meta::EnumOrd(sh.first)},
-                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                    {"ShaderType", Opaq::Format(sh.first)},
+                    {"ShaderLangFormat", Opaq::Format(it->first)},
+                    {"SpirvFormat", Opaq::Format(spirvFormat)}
                 });
                 return false;
             }
@@ -923,9 +924,9 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
             if (not MergePipelineResources_(&ppln.PipelineLayout, reflection.Layout, exclusiveData->CompilationFlags)) {
                 logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to merge vulkan pipeline layout!"_view, {
                     {"Pipeline", "Graphics"},
-                    {"ShaderType", Meta::EnumOrd(sh.first)},
-                    {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-                    {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                    {"ShaderType", Opaq::Format(sh.first)},
+                    {"ShaderLangFormat", Opaq::Format(it->first)},
+                    {"SpirvFormat", Opaq::Format(spirvFormat)}
                 });
                 return false;
             }
@@ -956,9 +957,9 @@ bool FVulkanPipelineCompiler::Compile(FGraphicsPipelineDesc& desc, EShaderLangFo
         else {
             logger(ELoggerVerbosity::Error, "@unknown", 0, "invalid shader data type, expected a source!"_view, {
                 {"Pipeline", "Graphics"},
-                {"ShaderType", Meta::EnumOrd(sh.first)},
-                {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-                {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+                {"ShaderType", Opaq::Format(sh.first)},
+                {"ShaderLangFormat", Opaq::Format(it->first)},
+                {"SpirvFormat", Opaq::Format(spirvFormat)},
                 {"ShaderDataType", it->second.index()},
             });
             return false;
@@ -989,7 +990,7 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
     if (desc.Shader.Data.cend() == it) {
         logger(ELoggerVerbosity::Error, "@unknown", 0, "no suitable shader format found!"_view, {
             {"Pipeline", "Compute"},
-            {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+            {"SpirvFormat", Opaq::Format(spirvFormat)},
         });
         return false;
     }
@@ -1005,8 +1006,8 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
         if (not content) {
             logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to load shader source!"_view, {
                 {"Pipeline", "Comptue"},
-                {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-                {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                {"ShaderLangFormat", Opaq::Format(it->first)},
+                {"SpirvFormat", Opaq::Format(spirvFormat)}
             });
             return false;
         }
@@ -1023,9 +1024,9 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
 
         if (createModule && not CreateVulkanShader_(&ppln.Shader, exclusiveData->ShaderCache, logger)) {
             logger(ELoggerVerbosity::Error, sourceFile, 0, "failed to create vulkan shader module!"_view, {
-                {"Pipeline", "Comptue"},
-                {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-                {"SpirvFormat", Meta::EnumOrd(spirvFormat)}
+                {"Pipeline", "Compute"},
+                {"ShaderLangFormat", Opaq::Format(it->first)},
+                {"SpirvFormat", Opaq::Format(spirvFormat)}
             });
             return false;
         }
@@ -1037,8 +1038,8 @@ bool FVulkanPipelineCompiler::Compile(FComputePipelineDesc& desc, EShaderLangFor
     else {
         logger(ELoggerVerbosity::Error, "@unknown", 0, "invalid shader data type, expected a source!"_view, {
             {"Pipeline", "Compute"},
-            {"ShaderLangFormat", Meta::EnumOrd(it->first)},
-            {"SpirvFormat", Meta::EnumOrd(spirvFormat)},
+            {"ShaderLangFormat", Opaq::Format(it->first)},
+            {"SpirvFormat", Opaq::Format(spirvFormat)},
             {"ShaderDataType", it->second.index()},
         });
         return false;
@@ -1128,7 +1129,7 @@ bool FVulkanPipelineCompiler::CreateVulkanShader_(FPipelineDesc::FShader* shader
         // remove unknown shader data
         default:
             logger(ELoggerVerbosity::Warning, "@unknown", 0, "removing unknown shader data"_view, {
-                {"ShaderLangFormat", Meta::EnumOrd(sh->first)},
+                {"ShaderLangFormat", Opaq::Format(sh->first)},
                 {"ShaderDataType", sh->second.index()}
             });
             sh = shader->Data.Vector().erase(sh);

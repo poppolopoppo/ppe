@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RayTracingTask.h"
+#include "RHI/RayTracingTask.h"
 
 namespace PPE {
 namespace RHI {
@@ -15,7 +15,7 @@ inline FBuildRayTracingGeometry::FTriangles& FBuildRayTracingGeometry::FTriangle
     return (*this);
 }
 //----------------------------------------------------------------------------
-inline FBuildRayTracingGeometry::FTriangles& FBuildRayTracingGeometry::FTriangles::SetVertexData(FRawMemoryConst data) {
+inline FBuildRayTracingGeometry::FTriangles& FBuildRayTracingGeometry::FTriangles::SetVertexData(const FSharedBuffer& data) {
     Assert(not data.empty());
     Assert(not VertexBuffer);
     VertexData = data;
@@ -26,7 +26,7 @@ template <typename T>
 FBuildRayTracingGeometry::FTriangles& FBuildRayTracingGeometry::FTriangles::SetVertexData(TMemoryView<const T> vertices) {
     Assert(not vertices.empty());
     VertexBuffer = Default;
-    VertexData = vertices.template Cast<const u8>();
+    VertexData = FSharedBuffer::MakeView(vertices.template Cast<const u8>());
     VertexCount = checked_cast<u32>(vertices.size());
     VertexFormat = VertexAttrib<T>();
     VertexStride = sizeof(T);
@@ -49,7 +49,7 @@ inline FBuildRayTracingGeometry::FTriangles& FBuildRayTracingGeometry::FTriangle
     return (*this);
 }
 //----------------------------------------------------------------------------
-inline FBuildRayTracingGeometry::FTriangles& FBuildRayTracingGeometry::FTriangles::SetIndexData(FRawMemoryConst data) {
+inline FBuildRayTracingGeometry::FTriangles& FBuildRayTracingGeometry::FTriangles::SetIndexData(const FSharedBuffer& data) {
     Assert(not IndexBuffer);
     IndexData = data;
     return (*this);
@@ -59,7 +59,7 @@ template <typename T>
 FBuildRayTracingGeometry::FTriangles& FBuildRayTracingGeometry::FTriangles::SetIndexData(TMemoryView<const T> indices) {
     Assert(not indices.empty());
     IndexBuffer = Default;
-    IndexData = indices.template Cast<const u8>();
+    IndexData = FSharedBuffer::MakeView(indices.template Cast<const u8>());
     IndexCount = checked_cast<u32>(indices.size());
     IndexFormat = IndexAttrib<T>();
     return (*this);
@@ -89,7 +89,7 @@ inline FBuildRayTracingGeometry::FBoundingVolumes& FBuildRayTracingGeometry::FBo
     return (*this);
 }
 //----------------------------------------------------------------------------
-inline FBuildRayTracingGeometry::FBoundingVolumes& FBuildRayTracingGeometry::FBoundingVolumes::SetData(FRawMemoryConst data) {
+inline FBuildRayTracingGeometry::FBoundingVolumes& FBuildRayTracingGeometry::FBoundingVolumes::SetData(const FSharedBuffer& data) {
     Assert(not AabbBuffer);
     AabbData = data;
     return (*this);

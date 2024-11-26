@@ -223,7 +223,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         .SetPipeline(ppln)
         .SetTopology(EPrimitiveTopology::TriangleList));
 
-    const PFrameTask tUpdate = cmd->Task(FUpdateImage{}.SetImage(shadingRateImage).SetData(shadingRateData, shadingRateSize, shadingRateSize.x));
+    const PFrameTask tUpdate = cmd->Task(FUpdateImage{}.SetImage(shadingRateImage).SetData(FSharedBuffer::MakeView(shadingRateData), shadingRateSize, shadingRateSize.x));
     const PFrameTask tDraw = cmd->Task(FSubmitRenderPass{ renderPass }.DependsOn(tUpdate));
     const PFrameTask tRead = cmd->Task(FReadImage{}.SetImage(image, int2::Zero, viewSize).SetCallback(onLoaded).DependsOn(tDraw));
     Unused(tRead);

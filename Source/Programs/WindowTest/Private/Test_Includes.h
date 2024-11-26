@@ -9,6 +9,7 @@
 #include "RHI/EnumToString.h"
 #include "RHI/ImageView.h"
 #include "RHI/MemoryDesc.h"
+#include "RHI/PipelineCompiler.h"
 #include "RHI/PipelineDesc.h"
 #include "RHI/SamplerDesc.h"
 

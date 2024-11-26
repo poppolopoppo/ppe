@@ -388,10 +388,8 @@ bool FVulkanCommandBuffer::StagingAlloc(FStagingBlock* pStaging, size_t size, si
         EState::Recording == exclusive->State ||
         EState::Compiling == exclusive->State);
 
-    size_t bufferSize;
     return exclusive->Batch->StageWrite(
         pStaging,
-        &bufferSize,
         size,
         1u,
         align,
@@ -763,7 +761,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
 
         if (not src.VertexData.empty()) {
             TPtrRef<const FVulkanLocalBuffer> vb;
-            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &vb, &dst.geometry.triangles.vertexOffset, src.VertexData.data(), src.VertexData.SizeInBytes(), ref->VertexSize));
+            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &vb, &dst.geometry.triangles.vertexOffset, src.VertexData.MakeView(), ref->VertexSize));
             dst.geometry.triangles.vertexData = vb->Handle();
             //pFrameTask->UsableBuffers.Add(vb); // staging buffer is already immutable
         }
@@ -789,7 +787,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
 
         if (not src.IndexData.empty()) {
             TPtrRef<const FVulkanLocalBuffer> ib = nullptr;
-            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &ib, &dst.geometry.triangles.indexOffset, src.IndexData.data(), src.IndexData.SizeInBytes(), ref->IndexSize));
+            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &ib, &dst.geometry.triangles.indexOffset, src.IndexData.MakeView(), ref->IndexSize));
             dst.geometry.triangles.indexData = ib->Handle();
             //pFrameTask->UsableBuffers.Add(ib); // staging buffer is already immutable
         }
@@ -811,8 +809,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
         }
         else if (src.TransformData.has_value()) {
             TPtrRef<const FVulkanLocalBuffer> tb = nullptr;
-            const float3x4& transform = src.TransformData.value();
-            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &tb, &dst.geometry.triangles.transformOffset, &transform, sizeof(transform), 16_b));
+            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &tb, &dst.geometry.triangles.transformOffset, MakePodConstView(src.TransformData.value()), 16_b));
             dst.geometry.triangles.transformData = tb->Handle();
             //pFrameTask->UsableBuffers.Add(tb); // staging buffer is already immutable
         }
@@ -840,7 +837,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingGeometry& task) {
 
         if (not src.AabbData.empty()) {
             TPtrRef<const FVulkanLocalBuffer> ab = nullptr;
-            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &ab, &dst.geometry.aabbs.offset, src.AabbData.data(), src.AabbData.SizeInBytes(), 8_b));
+            PPE_LOG_CHECK(RHI, StagingStore_(*exclusive, &ab, &dst.geometry.aabbs.offset, src.AabbData.MakeView(), 8_b));
             dst.geometry.aabbs.aabbData = ab->Handle();
             //pFrameTask->UsableBuffers.Add(ab); // staging buffer is already immutable
         }
@@ -917,7 +914,7 @@ PFrameTask FVulkanCommandBuffer::Task(const FBuildRayTracingScene& task) {
     pBuildTask->InstanceBuffer = ToLocal(*instanceBuf);
     ReleaseResource(instanceBuf.Release());
 
-    FVulkanRayTracingGeometryInstance* pInstances = nullptr;
+    TMemoryView<FVulkanRayTracingGeometryInstance> pInstances;
     PPE_LOG_CHECK(RHI, StagingAlloc_<FVulkanRayTracingGeometryInstance >(
         *exclusive,
         &pBuildTask->InstanceStagingBuffer,
@@ -1466,8 +1463,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateBufferTask_(FInternalData& data, cons
 
         for (size_t srcOffset = 0; srcOffset < region.Data.SizeInBytes();) {
             FStagingBlock staging;
-            size_t blockSize;
-            if (not StorePartialData_(data, &staging, &blockSize, region.Data, srcOffset)) {
+            if (not StorePartialData_(data, &staging, region.Data, srcOffset)) {
                 RHI_LOG(Error, "failed to write partial staging data for '{0}' in '{1}'", task.TaskName, data.DebugName);
                 return nullptr;
             }
@@ -1481,9 +1477,9 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateBufferTask_(FInternalData& data, cons
                 copy.Dependencies.Push(pLastTask);
             }
 
-            copy.AddRegion(staging.Offset, region.Offset + srcOffset, blockSize);
+            copy.AddRegion(staging.Offset, region.BufferOffset + srcOffset, staging.Mapped.SizeInBytes());
 
-            srcOffset += blockSize;
+            srcOffset += staging.Mapped.SizeInBytes();
             copy.SrcBuffer = staging.RawBufferID;
         }
     }
@@ -1540,8 +1536,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
         u32 zOffset = 0;
         for (size_t srcOffset = 0; srcOffset < totalSizeInBytes;) {
             FStagingBlock staging;
-            size_t blockSize;
-            if (not StagingImageStore_(data, &staging, &blockSize, task.Data, srcOffset, slicePitch, totalSizeInBytes)) {
+            if (not StagingImageStore_(data, &staging, task.Data, srcOffset, slicePitch, totalSizeInBytes)) {
                 RHI_LOG(Error, "failed to write image slice to staging for '{0}' in '{1}'", task.TaskName, data.DebugName);
                 return nullptr;
             }
@@ -1555,7 +1550,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
                 copy.Dependencies.Push(pLastTask);
             }
 
-            const u32 zSize = checked_cast<u32>(blockSize / slicePitch);
+            const u32 zSize = checked_cast<u32>(staging.Mapped.SizeInBytes() / slicePitch);
             Assert_NoAssume(Meta::IsAlignedPow2(blockDim.x, imageSize.x));
             Assert_NoAssume(Meta::IsAlignedPow2(blockDim.y, imageSize.y));
 
@@ -1565,7 +1560,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
                 task.ImageOffset + int3(0, 0, checked_cast<int>(zOffset)),
                 uint3{imageSize.xy, zSize});
 
-            srcOffset += blockSize;
+            srcOffset += staging.Mapped.SizeInBytes();
             zOffset += zSize;
             copy.SrcBuffer = staging.RawBufferID;
         }
@@ -1576,13 +1571,12 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
     else {
         forrange(slice, 0, imageSize.z) {
             u32 yOffset = 0;
-            const FRawMemoryConst sliceData = task.Data.SubRange(slice * slicePitch, slicePitch);
+            const FRawMemoryConst sliceData = task.Data.MakeView().SubRange(slice * slicePitch, slicePitch);
             const size_t sliceSize = sliceData.SizeInBytes();
 
             for (size_t srcOffset = 0; srcOffset < sliceSize;) {
                 FStagingBlock staging;
-                size_t blockSize;
-                if (not StagingImageStore_(data, &staging, &blockSize, sliceData, srcOffset, rowPitch * blockDim.y, totalSizeInBytes)) {
+                if (not StagingImageStore_(data, &staging, sliceData, srcOffset, rowPitch * blockDim.y, totalSizeInBytes)) {
                     RHI_LOG(Error, "failed to write image row to staging for '{0}' in '{1}'", task.TaskName, data.DebugName);
                     return nullptr;
                 }
@@ -1596,7 +1590,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
                     copy.Dependencies.Push(pLastTask);
                 }
 
-                const u32 ySize = checked_cast<u32>((blockSize * blockDim.y) / rowPitch);
+                const u32 ySize = checked_cast<u32>((staging.Mapped.SizeInBytes() * blockDim.y) / rowPitch);
                 Assert_NoAssume(Meta::IsAlignedPow2(blockDim.x, imageSize.x));
                 Assert_NoAssume(Meta::IsAlignedPow2(blockDim.y, ySize));
                 Assert_NoAssume(Meta::IsAlignedPow2(blockDim.y, task.ImageOffset.y + yOffset));
@@ -1607,7 +1601,7 @@ PFrameTask FVulkanCommandBuffer::MakeUpdateImageTask_(FInternalData& data, const
                     task.ImageOffset + int3(0, checked_cast<int>(yOffset), checked_cast<int>(slice)),
                     uint3{imageSize.x, ySize, 1});
 
-                srcOffset += blockSize;
+                srcOffset += staging.Mapped.SizeInBytes();
                 yOffset += ySize;
                 copy.SrcBuffer = staging.RawBufferID;
             }
@@ -1794,10 +1788,9 @@ PFrameTask FVulkanCommandBuffer::MakeReadImageTask_(FInternalData& data, const F
 //----------------------------------------------------------------------------
 bool FVulkanCommandBuffer::StorePartialData_(
     FInternalData& data,
-    FStagingBlock* pDstStaging, size_t* pOutSize,
+    FStagingBlock* pDstStaging,
     const FRawMemoryConst& srcData, size_t srcOffset ) {
     Assert(pDstStaging);
-    Assert(pOutSize);
 
     // skip blocks less than 1/N of  data size
     const size_t srcSize = srcData.SizeInBytes();
@@ -1805,8 +1798,8 @@ bool FVulkanCommandBuffer::StorePartialData_(
         Min(srcSize, MinBufferPart),
         (srcSize + MaxBufferParts - 1u) / MaxBufferParts );
 
-    if (data.Batch->StageWrite(pDstStaging, pOutSize, srcSize - srcOffset, 1, 16, minSize)) {
-        FPlatformMemory::Memcpy(pDstStaging->Mapped, srcData.data() + srcOffset, *pOutSize);
+    if (data.Batch->StageWrite(pDstStaging, srcSize - srcOffset, 1, 16, minSize)) {
+        Copy(pDstStaging->Mapped, srcData.SubRange(srcOffset, pDstStaging->Mapped.size()));
         return true;
     }
 
@@ -1815,17 +1808,16 @@ bool FVulkanCommandBuffer::StorePartialData_(
 //----------------------------------------------------------------------------
 bool FVulkanCommandBuffer::StagingImageStore_(
     FInternalData& data,
-    FStagingBlock* pDstStaging, size_t* pOutSize,
+    FStagingBlock* pDstStaging,
     const FRawMemoryConst& srcData, size_t srcOffset, size_t srcPitch, size_t srcTotalSize ) {
     Assert(pDstStaging);
-    Assert(pOutSize);
 
     // skip blocks less than 1/N of total data size
     const size_t srcSize = srcData.SizeInBytes();
     const size_t minSize = Max(srcPitch, (srcTotalSize + MaxImageParts - 1) / MaxImageParts);
 
-    if (data.Batch->StageWrite(pDstStaging, pOutSize, srcSize - srcOffset, srcPitch, 16, minSize) ) {
-        FPlatformMemory::Memcpy(pDstStaging->Mapped, srcData.data() + srcOffset, *pOutSize);
+    if (data.Batch->StageWrite(pDstStaging, srcSize - srcOffset, srcPitch, 16, minSize) ) {
+        Copy(pDstStaging->Mapped, srcData.SubRange(srcOffset, pDstStaging->Mapped.size()));
         return true;
     }
 
@@ -1836,16 +1828,15 @@ bool FVulkanCommandBuffer::StagingImageStore_(
 //----------------------------------------------------------------------------
 template <typename T>
 bool FVulkanCommandBuffer::StagingAlloc_(FInternalData& data,
-                                         TPtrRef<const FVulkanLocalBuffer>* pBuffer, VkDeviceSize* pOffset, T** pData,
+                                         TPtrRef<const FVulkanLocalBuffer>* pBuffer, VkDeviceSize* pOffset, TMemoryView<T>* pData,
                                          size_t count) {
     Assert(count > 0);
 
     const size_t requiredSize = (sizeof(T) * count);
 
     FStagingBlock stagingBlock;
-    size_t blockSize;
     if (not data.Batch->StageWrite(
-        &stagingBlock, &blockSize,
+        &stagingBlock,
         requiredSize, 1, 16, requiredSize)) {
         RHI_LOG(Error, "failed to write to staging alloc in {0}", data.DebugName);
         return false;
@@ -1853,18 +1844,17 @@ bool FVulkanCommandBuffer::StagingAlloc_(FInternalData& data,
 
     *pBuffer = ToLocal(stagingBlock.RawBufferID);
     *pOffset = checked_cast<VkDeviceSize>(stagingBlock.Offset);
-    *pData = reinterpret_cast<T*>(stagingBlock.Mapped);
+    *pData = stagingBlock.Mapped.template Cast<T>();
     return true;
 }
 //----------------------------------------------------------------------------
 bool FVulkanCommandBuffer::StagingStore_(FInternalData& data,
                                          TPtrRef<const FVulkanLocalBuffer>* pBuffer, VkDeviceSize* pOffset,
-                                         const void* srcData, size_t dataSize, size_t offsetAlign) {
+                                         const FRawMemoryConst& srcData, size_t offsetAlign) {
     FStagingBlock stagingBlock;
-    size_t blockSize;
     if (not data.Batch->StageWrite(
-        &stagingBlock, &blockSize,
-        dataSize, 1, offsetAlign, dataSize)) {
+        &stagingBlock,
+        srcData.SizeInBytes(), 1, offsetAlign, srcData.SizeInBytes()) ) {
         RHI_LOG(Error, "failed to store in staging at {0}", data.DebugName);
         return false;
     }
@@ -1872,7 +1862,7 @@ bool FVulkanCommandBuffer::StagingStore_(FInternalData& data,
     *pBuffer = ToLocal(stagingBlock.RawBufferID);
     *pOffset = checked_cast<VkDeviceSize>(stagingBlock.Offset);
 
-    FPlatformMemory::Memcpy(stagingBlock.Mapped, srcData, blockSize);
+    Copy(stagingBlock.Mapped, srcData);
     return true;
 }
 //----------------------------------------------------------------------------

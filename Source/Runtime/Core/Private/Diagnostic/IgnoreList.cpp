@@ -18,12 +18,30 @@ namespace {
 //----------------------------------------------------------------------------
 static volatile int GIgnoreList_Available{ 0 };
 //----------------------------------------------------------------------------
+static THREAD_LOCAL int GIgnoreList_IgnoreScopeTLS{ 0 };
+//----------------------------------------------------------------------------
 } //!namespace
+//----------------------------------------------------------------------------
+FIgnoreList::FIgnoreScope::FIgnoreScope() NOEXCEPT {
+    ++GIgnoreList_IgnoreScopeTLS;
+}
+//----------------------------------------------------------------------------
+FIgnoreList::FIgnoreScope::~FIgnoreScope() {
+    --GIgnoreList_IgnoreScopeTLS;
+}
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 void* FIgnoreList::class_singleton_storage() NOEXCEPT {
     return singleton_type::make_singleton_storage(); // for shared lib
+}
+//----------------------------------------------------------------------------
+void FIgnoreList::Create() {
+    singleton_type::Create();
+}
+//----------------------------------------------------------------------------
+void FIgnoreList::Destroy() {
+    singleton_type::Destroy();
 }
 //----------------------------------------------------------------------------
 FIgnoreList::FIgnoreList() {
@@ -52,16 +70,25 @@ auto FIgnoreList::FIgnoreKey::Append(FRawMemoryConst key) NOEXCEPT -> FIgnoreKey
 }
 //----------------------------------------------------------------------------
 void FIgnoreList::Add(const FIgnoreKey& key) {
+    if (Unlikely(GIgnoreList_IgnoreScopeTLS > 0))
+        return;
+
     _hits.LockExclusive()->insert({ key, 1 });
 }
 //----------------------------------------------------------------------------
 auto FIgnoreList::Hit(const FIgnoreKey& key) -> FHitCount {
+    if (Unlikely(GIgnoreList_IgnoreScopeTLS > 0))
+        return UMax;
+
     const auto exclusive = _hits.LockExclusive();
     const auto [it, exist] = exclusive->insert({key, 0});
     return it->second++;
 }
 //----------------------------------------------------------------------------
 bool FIgnoreList::Ignored(const FIgnoreKey& key) const NOEXCEPT {
+    if (Unlikely(GIgnoreList_IgnoreScopeTLS > 0))
+        return false;
+
     FHitCount hitCount;
     if (TryGetValue(*_hits.LockShared(), key, &hitCount)) {
         Assert_NoAssume(hitCount > 0);

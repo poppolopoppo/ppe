@@ -56,8 +56,7 @@ public:
 
     // enables type promotion between T[] and TMemoryView<T>
     template <size_t _Dim>
-    CONSTEXPR TMemoryView(value_type (&staticArray)[_Dim]) NOEXCEPT
-        : TMemoryView(staticArray, _Dim) {}
+    CONSTEXPR TMemoryView(value_type (&staticArray)[_Dim]) NOEXCEPT;
 
     TMemoryView(const iterator& first, const iterator& last) NOEXCEPT
         : TMemoryView(std::addressof(*first), std::distance(first, last)) {}
@@ -519,25 +518,23 @@ NODISCARD TMemoryView<Meta::TRemoveConst<T>> RemoveConstView(const TMemoryView<T
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-template <typename U, typename V, std::decay_t<decltype(std::declval<std::add_lvalue_reference_t<U>>() = std::declval<std::add_rvalue_reference_t<V>>())>* = nullptr>
-CONSTEXPR void Broadcast(const TMemoryView<U>& dst, V&& value) {
+template <typename U, typename V>
+CONSTEXPR Meta::TEnableIf<std::is_assignable_v<U&, V&&>> Broadcast(const TMemoryView<U>& dst, V&& value) {
     std::fill(dst.begin(), dst.end(), std::forward<V>(value));
 }
 //----------------------------------------------------------------------------
-template <typename U, typename V, std::decay_t<decltype(std::declval<std::add_lvalue_reference_t<U>>() = std::declval<std::add_rvalue_reference_t<V>>())>* = nullptr>
-CONSTEXPR void Copy(const TMemoryView<U>& dst, const TMemoryView<V>& src) {
-    Assert(dst.size() == src.size());
-    IF_CONSTEXPR(std::is_same_v<U, V>) {
+template <typename U, typename V>
+CONSTEXPR Meta::TEnableIf<std::is_assignable_v<U&, V&&>> Copy(const TMemoryView<U>& dst, const TMemoryView<V>& src) {
+    Assert_NoAssume(dst.size() == src.size());
+    IF_CONSTEXPR(std::is_same_v<U, V>)
         src.CopyTo(dst); // CopyTo<>() is specialized to use memcpy for raw memory views
-    }
-    else {
+    else
         std::copy(src.begin(), src.end(), dst.begin());
-    }
 }
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR void Move(const TMemoryView<T>& dst, const TMemoryView<T>& src) {
-    Assert(dst.size() == src.size());
+    Assert_NoAssume(dst.size() == src.size());
     std::move(src.begin(), src.end(), dst.begin());
 }
 //----------------------------------------------------------------------------

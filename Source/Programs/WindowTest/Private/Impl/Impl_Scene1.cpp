@@ -216,7 +216,9 @@ ARGS_IF_RHIDEBUG("Impl_Scene1_Ppln2_PS"));
     PPE_LOG_CHECK(WindowTest, opaquePass != transparentPass);
     PPE_LOG_CHECK(WindowTest, transparentPass != depthPass);
 
-
+    const FSharedBuffer buf1Data = FUniqueBuffer::Allocate(256_b).MoveToShared();
+    const FSharedBuffer buf2Data = FUniqueBuffer::Allocate(256_b).MoveToShared();
+    const FSharedBuffer buf3Data = FUniqueBuffer::Allocate(256_b).MoveToShared();
     {
         // Depth Pass
         PFrameTask tSubmitDepth{};
@@ -234,7 +236,7 @@ ARGS_IF_RHIDEBUG("Impl_Scene1_Ppln2_PS"));
                 .SetPipeline(pipeline2)
                 .AddResources("0"_descriptorset, resources));
 
-            PFrameTask tUpdateBuf0 = cmd->Task(FUpdateBuffer{ constBuf2, 0_b, FRawData(256_b).MakeView() }
+            PFrameTask tUpdateBuf0 = cmd->Task(FUpdateBuffer{ constBuf2, 0_b, buf2Data }
                 .SetName("UpdateBuf0"));
 
             tSubmitDepth = cmd->Task(FSubmitRenderPass{ depthPass }
@@ -284,9 +286,9 @@ ARGS_IF_RHIDEBUG("Impl_Scene1_Ppln2_PS"));
                 .SetPipeline(pipeline1)
                 .AddResources("0"_descriptorset, resources));
 
-            PFrameTask tUpdateBuf1 = cmd->Task(FUpdateBuffer{ constBuf1, 0_b, FRawData(256_b).MakeView() }
+            PFrameTask tUpdateBuf1 = cmd->Task(FUpdateBuffer{ constBuf1, 0_b, buf1Data }
                 .SetName("UpdateBuf1"));
-            PFrameTask tUpdateBuf2 = cmd->Task(FUpdateBuffer{ constBuf2, 256_b, FRawData(256_b).MakeView() }
+            PFrameTask tUpdateBuf2 = cmd->Task(FUpdateBuffer{ constBuf2, 256_b, buf2Data }
                 .SetName("UpdateBuf2"));
 
             tSubmitOpaque = cmd->Task(FSubmitRenderPass{ opaquePass }
@@ -336,7 +338,7 @@ ARGS_IF_RHIDEBUG("Impl_Scene1_Ppln2_PS"));
                 .SetPipeline(pipeline1)
                 .AddResources("0"_descriptorset, resources));
 
-            PFrameTask tUpdateBuf3 = cmd->Task(FUpdateBuffer{ constBuf3, 0_b, FRawData(256_b).MakeView() }
+            PFrameTask tUpdateBuf3 = cmd->Task(FUpdateBuffer{ constBuf3, 0_b, buf3Data }
                 .SetName("UpdateBuf3"));
 
             tSubmitTransparent = cmd->Task(FSubmitRenderPass{ transparentPass }

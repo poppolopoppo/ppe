@@ -313,11 +313,10 @@ TVulkanFrameTask<FUpdateBuffer>::TVulkanFrameTask(FVulkanCommandBuffer& cmd, con
 
     forrange(i, 0, checked_cast<u32>(Regions.size())) {
         const FUpdateBuffer::FRegion& src = desc.Regions[i];
-
         FRegion& dst = const_cast<FRegion&>(Regions[i]);
-        dst.DataPtr = cmd.EmbedCopy(src.Data).data();
-        dst.DataSize = checked_cast<VkDeviceSize>(src.Data.SizeInBytes());
-        dst.BufferOffset = checked_cast<VkDeviceSize>(src.Offset);
+
+        dst.Data = src.Data;
+        dst.BufferOffset = checked_cast<VkDeviceSize>(src.BufferOffset);
     }
 }
 //----------------------------------------------------------------------------

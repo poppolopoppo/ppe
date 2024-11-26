@@ -155,10 +155,10 @@ public: // interface
     virtual FRTShaderTableID AcquireResource(FRawRTShaderTableID id) = 0;
 
     // Copy data into host-visible memory.
-    NODISCARD virtual bool UpdateHostBuffer(FRawBufferID id, size_t offset, size_t size, const void* data) = 0;
+    NODISCARD virtual bool UpdateHostBuffer(FRawBufferID id, size_t offset, const FRawMemoryConst& data) = 0;
 
     // Returns pointer to host-visible memory.
-    NODISCARD virtual bool MapBufferRange(FRawBufferID id, size_t offset, size_t& size, void** data) = 0;
+    NODISCARD virtual Meta::TOptional<FRawMemory> MapBufferRange(FRawBufferID id, size_t offset, size_t sizeInBytes) = 0;
 
     // --- Frame execution ---
 

@@ -117,8 +117,9 @@ void main()
 	uvec3 v1 = gl_LaunchSizeNV;
 	vec3 v2 = gl_WorldRayOriginNV;
 	vec3 v3 = gl_WorldRayDirectionNV;
-	vec3 v4 = gl_ObjectRayOriginNV;
-	vec3 v5 = gl_ObjectRayDirectionNV;
+	//error: [VUID-ObjectRayOriginKHR-ObjectRayOriginKHR-04302] Vulkan spec does not allow BuiltIn ObjectRayOriginNV to be used with the execution model MissNV.
+	//vec3 v4 = gl_ObjectRayOriginNV;
+	//vec3 v5 = gl_ObjectRayDirectionNV;
 	float v6 = gl_RayTminNV;
 	float v7 = gl_RayTmaxNV;
 	traceNV(accNV, 0u, 1u, 2u, 3u, 0u, vec3(0.5f), 0.5f, vec3(1.0f), 0.75f, 1);

@@ -429,7 +429,7 @@ void FVulkanCommandBatch::FinalizeStagingBuffers_(const FVulkanDevice& device, F
 bool FVulkanCommandBatch::MapMemory_(FVulkanResourceManager& resources, FStagingBuffer& staging) {
     FVulkanMemoryInfo info;
     if (resources.ResourceData(staging.MemoryId).MemoryInfo(&info, resources.MemoryManager())) {
-        staging.MappedPtr = info.MappedPtr;
+        staging.Mapped = info.Mapped;
         staging.MemoryOffset = info.Offset;
         staging.DeviceMemory = info.Memory;
         staging.IsCoherent = !!(info.Flags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -536,16 +536,15 @@ FVulkanCommandBatch::FStagingBuffer* FVulkanCommandBatch::FindOrAddStagingBuffer
 }
 //----------------------------------------------------------------------------
 bool FVulkanCommandBatch::StageWrite(
-    FStagingBlock* pStaging, size_t* pOutSize,
+    FStagingBlock* pStaging,
     const size_t srcRequiredSize, const size_t blockAlign, const size_t offsetAlign, const size_t dstMinSize ) {
     Assert(pStaging);
-    Assert(pOutSize);
 
     const auto exclusiveData = _data.LockExclusive();
 
     FStagingBuffer* const pSuitable = FindOrAddStagingBuffer_(
         &exclusiveData->Staging.HostToDevice,
-        _frameGraph->ResourceManager().HostWriteBufferSize(),
+        _frameGraph-> ResourceManager().HostWriteBufferSize(),
         EBufferUsage::TransferSrc,
         srcRequiredSize, blockAlign, offsetAlign, dstMinSize );
     if (not pSuitable)
@@ -554,13 +553,12 @@ bool FVulkanCommandBatch::StageWrite(
     // write data to buffer
     pStaging->RawBufferID = pSuitable->BufferId;
     pStaging->Offset = Meta::RoundToNext(pSuitable->Size, offsetAlign);
-    pStaging->Mapped = (pSuitable->MappedPtr + pStaging->Offset);
+    pStaging->Mapped = pSuitable->Mapped.SubRange(
+        pStaging->Offset,
+        Min(Meta::RoundToPrev(pSuitable->Capacity - pStaging->Offset, blockAlign),
+            srcRequiredSize));
 
-    *pOutSize = Min(
-        Meta::RoundToPrev(pSuitable->Capacity - pStaging->Offset, blockAlign),
-        srcRequiredSize );
-
-    pSuitable->Size = (pStaging->Offset + *pOutSize);
+    pSuitable->Size = (pStaging->Offset + pStaging->Mapped.SizeInBytes());
     return true;
 }
 //----------------------------------------------------------------------------
@@ -1082,10 +1080,10 @@ bool FVulkanCommandBatch::ParseDebugOutput2_(FDebugStrings* pDump, const FShader
 
     FVulkanMemoryInfo info;
     PPE_LOG_CHECK( RHI, mem.MemoryInfo(&info, resources.MemoryManager()) );
+    Assert_NoAssume( not info.Mapped.empty() );
 
-    Assert( info.MappedPtr );
     for (const PVulkanShaderModule& shader : dbg.Modules) {
-        const FRawMemoryConst trace{ static_cast<const u8*>(info.MappedPtr) + dbg.Offset, dbg.Size };
+        const FRawMemoryConst trace = info.Mapped.SubRange(dbg.Offset, dbg.Size);
 
         const size_t numMessagesBefore = pDump->size();
         PPE_LOG_CHECK( RHI, shader->ParseDebugOutput(MakeAppendable(*pDump), dbg.Mode, trace) );

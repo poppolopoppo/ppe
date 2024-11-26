@@ -96,7 +96,7 @@ struct FUnitTestFunc_ {
 EACH_WINDOWTEST(WINDOWTEST_EXTERN_DECL)
 #undef WINDOWTEST_EXTERN_DECL
 //----------------------------------------------------------------------------
-static void LaunchWindowTests_(Application::FApplicationBase& baseApp, FTimespan) {
+static bool LaunchWindowTests_(Application::FApplicationBase& baseApp, FTimespan) {
     auto& app = *checked_cast<FWindowTestApp*>(&baseApp);
     auto launchTest = [&app](FWStringView name, auto&& test) {
         Unused(name);
@@ -197,6 +197,8 @@ EACH_WINDOWTEST(LAUNCH_TEST_)
     }
 
     app.ReleaseMemory();
+
+    return false; // fire-and-forget
 }
 //----------------------------------------------------------------------------
 #undef EACH_WINDOWTEST
@@ -222,7 +224,7 @@ void FWindowTestApp::Start() {
 
 #if RUN_PPE_WINDOWTESTS
     auto& appmodule = FApplicationModule::Get(Domain());
-    appmodule.OnApplicationTick().FireAndForget(&LaunchWindowTests_);
+    appmodule.OnApplicationTick().Emplace(&LaunchWindowTests_);
 #endif
 }
 //----------------------------------------------------------------------------

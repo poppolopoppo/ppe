@@ -1726,18 +1726,19 @@ void FVulkanTaskProcessor::Visit(const FVulkanUpdateBufferTask& task) {
     const auto dstBuffer = task.DstBuffer->Read();
 
     for (const auto& region : task.Regions) {
-        AddBuffer_(task.DstBuffer, EResourceState_TransferDst, region.BufferOffset, region.DataSize);
+        AddBuffer_(task.DstBuffer, EResourceState_TransferDst, region.BufferOffset, region.Data.SizeInBytes());
     }
 
     CommitBarriers_();
 
     for (const auto& region : task.Regions) {
+        const FRawMemoryConst regionData = region.Data.MakeView();
         vkCmdUpdateBuffer(
             _vkCommandBuffer,
             dstBuffer->vkBuffer,
             region.BufferOffset,
-            region.DataSize,
-            region.DataPtr );
+            checked_cast<VkDeviceSize>(regionData.SizeInBytes()),
+            regionData.data() );
     }
 
     ONLY_IF_RHIDEBUG(EditStatistics_([&](FFrameStatistics::FRendering& rendering) {
@@ -1807,6 +1808,7 @@ void FVulkanTaskProcessor::Visit(const FVulkanUpdateRayTracingShaderTableTask& t
         &regions,
         *_workerCmd,
         task.Pipeline,
+
         *task.RTScene->GlobalData(),
         task.RayGenShader,
         task.ShaderGroups,

@@ -84,7 +84,7 @@ bool Queue_CopyImage3_(FWindowTestApp& app) {
 
     {
         const uint2 testDim = { srcDim.x, srcDim.y / 2 };
-        const auto testData = srcData.MakeView().CutBefore(srcData.size() / 2);
+        const auto testData = FSharedBuffer::MakeView(srcData.MakeView().CutBefore(srcData.size() / 2));
 
         const PFrameTask tClear = cmd1->Task(FClearColorImage{}
             .SetImage(dstImage)
@@ -107,7 +107,7 @@ bool Queue_CopyImage3_(FWindowTestApp& app) {
     {
         const uint2 testDim = { srcDim.x, srcDim.y / 2 };
         const int2 testOff = { 0, checked_cast<int>(srcDim.y / 2) };
-        const auto testData = srcData.MakeView().CutStartingAt(srcData.size() / 2);
+        const auto testData = FSharedBuffer::MakeView(srcData.MakeView().CutStartingAt(srcData.size() / 2));
 
         const PFrameTask tUpdate = cmd2->Task(FUpdateImage{}
             .SetImage(srcImage, testOff)

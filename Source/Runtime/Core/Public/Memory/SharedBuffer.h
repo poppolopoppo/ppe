@@ -162,6 +162,8 @@ public:
     NODISCARD bool IsImmutable() const { return (not _owner || _owner->IsImmutable()); }
     NODISCARD bool IsMaterialized() const { return (not _owner || _owner->IsMaterialized()); }
 
+    NODISCARD bool empty() const { return (SizeInBytes() == 0); }
+
     PPE_FAKEBOOL_OPERATOR_DECL() { return IsValid(); }
 
     PPE_CORE_API void Materialize();
@@ -197,6 +199,16 @@ public:
 
     NODISCARD PPE_CORE_API static FSharedBuffer MakeView(const FUniqueBuffer& outer);
     NODISCARD PPE_CORE_API static FSharedBuffer MakeView(u64 offset, u64 sizeInBytes, const FUniqueBuffer& outer);
+
+    template <typename _Pod, size_t _Dim>
+    NODISCARD static Meta::TEnableIf<Meta::is_pod_v<_Pod>, FSharedBuffer> MakeView(const _Pod (&arr)[_Dim]) {
+        return MakeView(MakeRawView(arr));
+    }
+
+    template <typename _Pod, size_t _Dim>
+    NODISCARD static Meta::TEnableIf<Meta::is_pod_v<_Pod>, FSharedBuffer> MakeView(const TMemoryView<const _Pod>& view) {
+        return MakeView(MakeRawView(view));
+    }
 
     template <typename _Deleter,
         decltype(std::declval<_Deleter>()(std::declval<void*>()))* = nullptr>

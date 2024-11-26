@@ -581,50 +581,50 @@ bool FPolygonFileFormat::Load(FGenericMesh* dst, const FFilename& filename, IBuf
                 for (const PLY::FProperty& property : element.Properties) {
                     PPE_LOG_CHECK(MeshBuilder, not property.IsList());
 
-                    FRawMemory dst;
+                    FRawMemory buf;
                     switch (property.Name) {
                     // position
                     case PLY::EProperty::X:
-                        dst = MakePodView(positions0[v].x);
+                        buf = MakePodView(positions0[v].x);
                         break;
                     case PLY::EProperty::Y:
-                        dst = MakePodView(positions0[v].y);
+                        buf = MakePodView(positions0[v].y);
                         break;
                     case PLY::EProperty::Z:
-                        dst = MakePodView(positions0[v].z);
+                        buf = MakePodView(positions0[v].z);
                         break;
                     // normal
                     case PLY::EProperty::NX:
-                        dst = MakePodView(normals0[v].x);
+                        buf = MakePodView(normals0[v].x);
                         break;
                     case PLY::EProperty::NY:
-                        dst = MakePodView(normals0[v].y);
+                        buf = MakePodView(normals0[v].y);
                         break;
                     case PLY::EProperty::NZ:
-                        dst = MakePodView(normals0[v].z);
+                        buf = MakePodView(normals0[v].z);
                         break;
                     // texcoord
                     case PLY::EProperty::Texcoord_u:
-                        dst = MakePodView(texcoords3 ? texcoords3[v].x : texcoords2[v].x);
+                        buf = MakePodView(texcoords3 ? texcoords3[v].x : texcoords2[v].x);
                         break;
                     case PLY::EProperty::Texcoord_v:
-                        dst = MakePodView(texcoords3 ? texcoords3[v].y : texcoords2[v].y);
+                        buf = MakePodView(texcoords3 ? texcoords3[v].y : texcoords2[v].y);
                         break;
                     case PLY::EProperty::Texcoord_w:
-                        dst = MakePodView(texcoords3[v].z);
+                        buf = MakePodView(texcoords3[v].z);
                         break;
                     // color
                     case PLY::EProperty::Red:
-                        dst = MakePodView(colors0[v].x);
+                        buf = MakePodView(colors0[v].x);
                         break;
                     case PLY::EProperty::Green:
-                        dst = MakePodView(colors0[v].y);
+                        buf = MakePodView(colors0[v].y);
                         break;
                     case PLY::EProperty::Blue:
-                        dst = MakePodView(colors0[v].z);
+                        buf = MakePodView(colors0[v].z);
                         break;
                     case PLY::EProperty::Alpha:
-                        dst = MakePodView(colors0[v].w);
+                        buf = MakePodView(colors0[v].w);
                         break;
 
                     default:
@@ -640,13 +640,13 @@ bool FPolygonFileFormat::Load(FGenericMesh* dst, const FFilename& filename, IBuf
 
                     if (property.Type == PLY::EType::Float) {
                         // direct copy
-                        PPE_LOG_CHECK(MeshBuilder, header.Format.Read(input, dst, property.Type));
+                        PPE_LOG_CHECK(MeshBuilder, header.Format.Read(input, buf, property.Type));
                     }
                     else {
                         // need intermediate copy and promotion
                         FRawMemory tmp = MakeView(raw).CutBefore(EType_SizeOf(property.Type));
                         PPE_LOG_CHECK(MeshBuilder, header.Format.Read(input, tmp, property.Type));
-                        PPE_LOG_CHECK(MeshBuilder, property.FloatPromote(dst, tmp));
+                        PPE_LOG_CHECK(MeshBuilder, property.FloatPromote(buf, tmp));
                     }
                 }
             }

@@ -451,8 +451,9 @@ inline bool FVulkanMemoryManager::FVulkanMemoryAllocator::MemoryInfo(FVulkanMemo
         pInfo->Memory = info.deviceMemory;
         pInfo->Flags = props.memoryTypes[info.memoryType].propertyFlags;
         pInfo->Offset = checked_cast<u32>(info.offset);
-        pInfo->Size = checked_cast<u32>(info.size);
-        pInfo->MappedPtr = static_cast<ubyte*>(info.pMappedData);
+        pInfo->Mapped = FRawMemory(
+            static_cast<u8*>(info.pMappedData),
+            checked_cast<size_t>(info.size) );
     }
 
     return true;

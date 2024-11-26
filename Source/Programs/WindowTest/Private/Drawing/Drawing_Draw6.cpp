@@ -92,8 +92,8 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         ARGS_IF_RHIDEBUG("ColorsUB")) };
     PPE_LOG_CHECK(WindowTest, colorsUb.Valid());
 
-    PPE_LOG_CHECK(WindowTest, fg.UpdateHostBuffer(positionsUb, 0_b, sizeof(positionsRaw), positionsRaw));
-    PPE_LOG_CHECK(WindowTest, fg.UpdateHostBuffer(colorsUb, 0_b, sizeof(colorsRaw), colorsRaw));
+    PPE_LOG_CHECK(WindowTest, fg.UpdateHostBuffer(positionsUb, 0_b, FSharedBuffer::MakeView(positionsRaw)));
+    PPE_LOG_CHECK(WindowTest, fg.UpdateHostBuffer(colorsUb, 0_b, FSharedBuffer::MakeView(colorsRaw)));
 
     TAutoResource<FGPipelineID> ppln{ fg, fg.CreatePipeline(desc ARGS_IF_RHIDEBUG("Drawing_Draw6")) };
     PPE_LOG_CHECK(WindowTest, ppln.Valid());

@@ -406,8 +406,7 @@ template <>
 class PPE_RHIVULKAN_API TVulkanFrameTask<FUpdateBuffer> final : public IVulkanFrameTask {
 public:
     struct FRegion {
-        void* DataPtr{ nullptr };
-        VkDeviceSize DataSize{ 0 };
+        FSharedBuffer Data;
         VkDeviceSize BufferOffset{ 0 };
     };
 

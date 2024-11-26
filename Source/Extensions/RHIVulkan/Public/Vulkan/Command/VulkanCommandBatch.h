@@ -61,7 +61,7 @@ public:
         size_t Size{ 0 };
 
         VkDeviceMemory DeviceMemory{ VK_NULL_HANDLE };
-        ubyte* MappedPtr{ nullptr };
+        FRawMemory Mapped;
         size_t MemoryOffset{ 0 }; // can be used to flush memory ranges
         bool IsCoherent{ false };
 
@@ -70,17 +70,17 @@ public:
         :   Index(index), BufferId(bufferId), MemoryId(memoryId), Capacity(capacity)
         {}
 
-        bool Empty() const { return (0 == Size); }
-        bool Full() const { return (Capacity == Size); }
+        NODISCARD bool Empty() const { return (0 == Size); }
+        NODISCARD bool Full() const { return (Capacity == Size); }
     };
 
     struct FStagingDataRange {
-        FStagingBuffer const* Buffer{ nullptr };
+        TPtrRef<const FStagingBuffer> Buffer{ nullptr };
         size_t Offset{ 0 };
         size_t Size{ 0 };
 
-        FRawMemory MakeView() const NOEXCEPT {
-            return { static_cast<u8*>(Buffer->MappedPtr) + Offset, Size };
+        NODISCARD FRawMemory MakeView() const NOEXCEPT {
+            return Buffer->Mapped.SubRange(Offset, Size);
         }
     };
 
@@ -225,8 +225,7 @@ public:
 
     // staging buffer
 
-    NODISCARD bool StageWrite(FStagingBlock* pStaging, size_t* pOutSize,
-        const size_t srcRequiredSize, const size_t blockAlign, const size_t offsetAlign, const size_t dstMinSize );
+    NODISCARD bool StageWrite(FStagingBlock* pStaging, const size_t srcRequiredSize, const size_t blockAlign, const size_t offsetAlign, const size_t dstMinSize );
 
     NODISCARD bool AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, size_t srcOffset, size_t srcTotalSize);
     NODISCARD bool AddPendingLoad(FRawBufferID* pDstBuffer, FStagingDataRange* pRange, size_t srcOffset, size_t srcTotalSize, size_t srcPitch);

@@ -32,7 +32,7 @@ bool Queue_CopyImage1_(FWindowTestApp& app) {
     PPE_LOG_CHECK(WindowTest, dstImage.Valid());
 
     RAWSTORAGE(UnitTest, u8) srcData;
-    srcData.Resize_DiscardData(srcRowPitch * srcDim.y);
+    srcData.Resize_DiscardData(static_cast<size_t>(srcDim.y) * srcDim.x);
     forrange(y, 0, srcDim.y) {
         forrange(x, 0, srcDim.x) {
             u8* const texel = &srcData[x * bpp + y * srcRowPitch];
@@ -79,7 +79,7 @@ bool Queue_CopyImage1_(FWindowTestApp& app) {
 
     const PFrameTask tUpdate = cmd->Task(FUpdateImage{}
         .SetImage(srcImage)
-        .SetData(srcData.MakeView(), srcDim));
+        .SetData(FSharedBuffer::MakeView(srcData.MakeConstView()), srcDim));
     const PFrameTask tCopy = cmd->Task(FCopyImage{}
         .From(srcImage).To(dstImage)
         .AddRegion({}, int2(), {}, imgOffset, srcDim)

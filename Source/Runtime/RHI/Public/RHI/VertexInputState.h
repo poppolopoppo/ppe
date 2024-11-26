@@ -89,17 +89,15 @@ struct FVertexBufferBinding {
 };
 PPE_ASSUME_TYPE_AS_POD(FVertexBufferBinding);
 //----------------------------------------------------------------------------
-//////////////////////////////////////////////////////////////////////////////
+using FVertexInputAttributes = TFixedSizeHashMap<FVertexID, FVertexInput, MaxVertexAttribs>;
+using FVertexInputBindings = TFixedSizeFlatMap<FVertexBufferID, FVertexBufferBinding, MaxVertexBuffers>;
 //----------------------------------------------------------------------------
 struct FVertexInputState {
     STATIC_CONST_INTEGRAL(u32, AutoBindingIndex, UMax);
     STATIC_CONST_INTEGRAL(u32, UnknownVertexIndex, UMax);
 
-    using FVertices = TFixedSizeHashMap<FVertexID, FVertexInput, MaxVertexAttribs>;
-    using FBindings = TFixedSizeFlatMap<FVertexBufferID, FVertexBufferBinding, MaxVertexBuffers>;
-
-    FBindings BufferBindings;
-    FVertices Vertices;
+    FVertexInputBindings BufferBindings;
+    FVertexInputAttributes Vertices;
 
     template <typename _Class, typename _Value>
     FVertexInputState& Add(EVertexID vertexId, _Value _Class::* member, const FVertexBufferID& bufferId = Default, size_t index = 0) NOEXCEPT {

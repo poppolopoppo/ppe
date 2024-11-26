@@ -815,11 +815,11 @@ bool FVulkanPipelineCache::CreateShaderTable(
 
 #if USE_PPE_RHIDEBUG
         CONSTEXPR u8 UninitializedPattern_ = 0xAE;
-        FPlatformMemory::Memset(stagingBlock.Mapped, 0, stagingSize);
-        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->RayGenOffset, UninitializedPattern_, handleSize);
-        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->RayMissOffset, UninitializedPattern_, static_cast<size_t>(handleSize) * missShaderCount);
-        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->RayHitOffset, UninitializedPattern_, static_cast<size_t>(handleSize) * maxHitShaders);
-        FPlatformMemory::Memset(stagingBlock.Mapped + exclusiveTable->CallableOffset, UninitializedPattern_, static_cast<size_t>(handleSize) * callableShaderCount);
+        Broadcast(stagingBlock.Mapped.CutBefore(stagingSize), 0_u8);
+        Broadcast(stagingBlock.Mapped.SubRange(exclusiveTable->RayGenOffset, handleSize), UninitializedPattern_);
+        Broadcast(stagingBlock.Mapped.SubRange(exclusiveTable->RayMissOffset, static_cast<size_t>(handleSize) * missShaderCount), UninitializedPattern_);
+        Broadcast(stagingBlock.Mapped.SubRange(exclusiveTable->RayHitOffset, static_cast<size_t>(handleSize) * maxHitShaders), UninitializedPattern_);
+        Broadcast(stagingBlock.Mapped.SubRange(exclusiveTable->CallableOffset, static_cast<size_t>(handleSize) * callableShaderCount), UninitializedPattern_);
 #endif
 
         // ray-gen shader
@@ -828,7 +828,7 @@ bool FVulkanPipelineCache::CreateShaderTable(
             device.vkDevice(),
             table.Pipeline,
             0, 1, handleSize,
-            stagingBlock.Mapped + exclusiveTable->RayGenOffset ) );
+            stagingBlock.Mapped.CutStartingAt(exclusiveTable->RayGenOffset).data() ));
 
         u32 callableShaderIndex = 0;
         for (const FUpdateRayTracingShaderTable::FShaderGroup& sh : shaderGroups) {
@@ -837,22 +837,16 @@ bool FVulkanPipelineCache::CreateShaderTable(
             switch (sh.Type) {
 
             case EGroupType::MissShader: {
-                const u32 dstOffset = exclusiveTable->RayMissOffset + handleSize * sh.RecordOffset;
-                Assert_NoAssume(dstOffset + handleSize <= stagingSize);
-
                 VK_CALL( device.vkGetRayTracingShaderGroupHandlesNV(
                     device.vkDevice(), table.Pipeline, group, 1, handleSize,
-                    stagingBlock.Mapped + dstOffset ));
+                    stagingBlock.Mapped.SubRange(exclusiveTable->RayMissOffset + handleSize * sh.RecordOffset, handleSize).data() ));
                 break;
             }
 
             case EGroupType::CallableShader: {
-                const u32 dstOffset = exclusiveTable->CallableOffset + handleSize * callableShaderIndex++;
-                Assert_NoAssume(dstOffset + handleSize <= stagingSize);
-
                 VK_CALL( device.vkGetRayTracingShaderGroupHandlesNV(
                     device.vkDevice(), table.Pipeline, group, 1, handleSize,
-                    stagingBlock.Mapped + dstOffset ));
+                    stagingBlock.Mapped.SubRange(exclusiveTable->CallableOffset + handleSize * callableShaderIndex++, handleSize).data() ));
                 break;
             }
 
@@ -879,26 +873,20 @@ bool FVulkanPipelineCache::CreateShaderTable(
                         const u32 index = checked_cast<u32>(instance->IndexOffset + i * geometryStride + sh.RecordOffset);
                         AssertRelease(index < maxHitShaders);
 
-                        const u32 dstOffset = exclusiveTable->RayHitOffset + handleSize * index;
-                        Assert_NoAssume(dstOffset + handleSize <= stagingSize);
-
                         VK_CALL( device.vkGetRayTracingShaderGroupHandlesNV(
                             device.vkDevice(),
                             table.Pipeline, group, 1, handleSize,
-                            stagingBlock.Mapped + dstOffset ));
+                            stagingBlock.Mapped.SubRange(exclusiveTable->RayHitOffset + handleSize * index, handleSize).data() ));
                     }
 
                     forrange(i, 0, aabbs.size()) {
                         const u32 index = checked_cast<u32>(instance->IndexOffset + (triangles.size() + i) * geometryStride + sh.RecordOffset);
                         AssertRelease(index < maxHitShaders);
 
-                        const u32 dstOffset = exclusiveTable->RayHitOffset + handleSize * index;
-                        Assert_NoAssume(dstOffset + handleSize <= stagingSize);
-
                         VK_CALL( device.vkGetRayTracingShaderGroupHandlesNV(
                             device.vkDevice(),
                             table.Pipeline, group, 1, handleSize,
-                            stagingBlock.Mapped + dstOffset ));
+                            stagingBlock.Mapped.SubRange(exclusiveTable->RayHitOffset + handleSize * index, handleSize).data() ));
                     }
 
                 }
@@ -908,13 +896,10 @@ bool FVulkanPipelineCache::CreateShaderTable(
                         sh.RecordOffset );
                     AssertRelease(index < maxHitShaders);
 
-                    const u32 dstOffset = exclusiveTable->RayHitOffset + handleSize * index;
-                    Assert_NoAssume(dstOffset + handleSize <= stagingSize);
-
                     VK_CALL( device.vkGetRayTracingShaderGroupHandlesNV(
                         device.vkDevice(),
                         table.Pipeline, group, 1, handleSize,
-                        stagingBlock.Mapped + dstOffset ));
+                        stagingBlock.Mapped.SubRange(exclusiveTable->RayHitOffset + handleSize * index, handleSize).data() ));
                 }
                 break;
             }
@@ -925,12 +910,12 @@ bool FVulkanPipelineCache::CreateShaderTable(
 
 
 #if USE_PPE_RHIDEBUG && USE_PPE_ASSERT
-        // check if uninitialized shader handles
+        // check for uninitialized shader handles
 
         for (u32 pos = 0; pos < stagingSize; pos += handleSize) {
             u32 matched = 0;
-            forrange(i, 0, handleSize)
-                matched += (*(stagingBlock.Mapped + i + pos) == UninitializedPattern_);
+            for (u8 mem : stagingBlock.Mapped.SubRange(pos, handleSize))
+                matched += (mem == UninitializedPattern_);
 
             AssertMessage_NoAssume("uninitialized RT handle found", matched < handleSize);
         }

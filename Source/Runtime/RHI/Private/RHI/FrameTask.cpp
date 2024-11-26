@@ -310,7 +310,7 @@ FUpdateBuffer::FUpdateBuffer() NOEXCEPT : TFrameTaskDesc<FUpdateBuffer>("UpdateB
 FUpdateBuffer::FUpdateBuffer() NOEXCEPT = default;
 #endif
 //----------------------------------------------------------------------------
-FUpdateBuffer::FUpdateBuffer(FRawBufferID buffer, size_t offset, const FRawMemoryConst& data) NOEXCEPT
+FUpdateBuffer::FUpdateBuffer(FRawBufferID buffer, size_t offset, const FSharedBuffer& data) NOEXCEPT
 :   FUpdateBuffer() {
     SetBuffer(buffer).AddData(data, offset);
 }
@@ -323,9 +323,9 @@ FUpdateBuffer& FUpdateBuffer::SetBuffer(FRawBufferID buffer) {
     return (*this);
 }
 //----------------------------------------------------------------------------
-FUpdateBuffer& FUpdateBuffer::AddData(const FRawMemoryConst& data, size_t offset/* = 0 */) {
+FUpdateBuffer& FUpdateBuffer::AddData(const FSharedBuffer& data, size_t bufferOffset/* = 0 */) NOEXCEPT {
     Assert(not data.empty());
-    Emplace_Back(Regions, offset, data);
+    Emplace_Back(Regions, data, bufferOffset);
     return (*this);
 }
 //----------------------------------------------------------------------------
@@ -380,7 +380,7 @@ FUpdateImage& FUpdateImage::SetImage(FRawImageID image, const int3& offset, FIma
     return (*this);
 }
 //----------------------------------------------------------------------------
-FUpdateImage& FUpdateImage::SetData(FRawMemoryConst data, const uint3& dimension, size_t rowPitch/* = 0 */, size_t slicePitch/* = 0 */) {
+FUpdateImage& FUpdateImage::SetData(const FSharedBuffer& data, const uint3& dimension, size_t rowPitch/* = 0 */, size_t slicePitch/* = 0 */) {
     Assert(not data.empty());
     Data = data;
     ImageSize = dimension;
