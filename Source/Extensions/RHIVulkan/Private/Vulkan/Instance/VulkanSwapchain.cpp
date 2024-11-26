@@ -659,29 +659,22 @@ bool FVulkanSwapchain::FInternalData_::CreateSwapchain_(FVulkanFrameGraph& fg AR
     PPE_LOG_CHECK(RHI, CreateFence_(device));
     PPE_LOG_CHECK(RHI, ChoosePresentQueue_(fg));
 
-#if USE_PPE_RHIDEBUG
-    PPE_LOG(RHI, Info, "swapchain properties:\n"
-        "\tName                    : {0}\n"
-        "\tColor format            : {1}\n"
-        "\tColor space             : {2}\n"
-        "\tImage count             : {3}\n"
-        "\tPresent mode            : {4}\n"
-        "\tPre transform           : {5}\n"
-        "\tComposite alpha         : {6}\n"
-        "\tImage usage             : {7}\n"
-        "\tQueue family            : {8}\n"
-        "\tQueue name              : {9}",
-        debugName.MakeView(),
-        RHICast(ColorFormat),
-        ColorSpace,
-        ImageIds.size(),
-        PresentMode,
-        PreTransform,
-        CompositeAlpha,
-        ColorImageUsage,
-        static_cast<u32>(PresentQueue->FamilyIndex),
-        PresentQueue->DebugName );
-#endif
+    PPE_SLOG(RHI, Info, "swapchain properties", {
+        {"Name", debugName.MakeView()},
+        {"ColorFormat", Opaq::Format(RHICast(ColorFormat))},
+        {"ColorSpace", Opaq::Format(ColorSpace)},
+        {"NumImages", ImageIds.size()},
+        {"PresentMode", Opaq::Format(PresentMode)},
+        {"PreTransform", Opaq::Format(PreTransform)},
+        {"CompositeAlpha", Opaq::Format(CompositeAlpha)},
+        {"ColorImageUsage", Opaq::Format(ColorImageUsage)},
+        {"PresentQueueFamily", static_cast<u32>(PresentQueue->FamilyIndex)},
+        {"PresentQueueName", PresentQueue->DebugName},
+        {"SurfaceSize", Opaq::object_init{
+            {"Width", SurfaceSize.x},
+            {"Height", SurfaceSize.y},
+        }}
+    });
 
     return true;
 }

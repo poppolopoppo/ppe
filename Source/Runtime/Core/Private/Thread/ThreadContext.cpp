@@ -189,6 +189,10 @@ void FThreadContext::SetAffinityMask(u64 mask) const {
     Assert(0 != mask);
     Assert(std::this_thread::get_id() == _threadId);
 
+    PPE_SLOG(Thread, Debug, "set thread affinity mask", {
+        {"Thread", Opaq::Format(ThreadId())},
+        {"AffinityMask", Opaq::Format(ThreadId())},
+    });
     PPE_LOG(Thread, Debug, "set thread {0} affinity mask to {1:#16b}", ThreadId(), mask);
 
     FPlatformThread::SetAffinityMask(mask);

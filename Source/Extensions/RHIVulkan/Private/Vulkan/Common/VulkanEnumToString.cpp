@@ -14,7 +14,7 @@ namespace {
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkMemoryHeapFlagBits value) {
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<VkMemoryHeapFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
@@ -34,7 +34,7 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkMemoryHeapFlagBi
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkMemoryPropertyFlagBits value) {
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<VkMemoryPropertyFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
@@ -74,7 +74,7 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkPhysicalDeviceTy
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkPipelineStageFlagBits value) {
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<VkPipelineStageFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
@@ -134,7 +134,7 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkPipelineStageFla
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkDependencyFlagBits value) {
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<VkDependencyFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
@@ -155,7 +155,7 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkDependencyFlagBi
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkAccessFlagBits value) {
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<VkAccessFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
@@ -276,7 +276,7 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkImageLayout valu
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkImageAspectFlagBits value) {
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<VkImageAspectFlagBits>(1u << mask.PopFront_AssumeNotEmpty());
@@ -360,7 +360,7 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkPresentModeKHR v
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkSurfaceTransformFlagBitsKHR value) {
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     for (auto mask = MakeBitMask(static_cast<std::underlying_type_t<VkSurfaceTransformFlagBitsKHR>>(value)); mask; ) {
         const auto it = static_cast<VkSurfaceTransformFlagBitsKHR>(1u << mask.PopFront_AssumeNotEmpty());
@@ -387,7 +387,7 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkSurfaceTransform
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkCompositeAlphaFlagBitsKHR value) {
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     for (auto mask = MakeBitMask(static_cast<std::underlying_type_t<VkCompositeAlphaFlagBitsKHR>>(value)); mask; ) {
         const auto it = static_cast<VkCompositeAlphaFlagBitsKHR>(1u << mask.PopFront_AssumeNotEmpty());
@@ -409,7 +409,7 @@ TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkCompositeAlphaFl
 //----------------------------------------------------------------------------
 template <typename _Char>
 TBasicTextWriter<_Char>& Write_(TBasicTextWriter<_Char>& oss, VkImageUsageFlagBits value) {
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<VkImageUsageFlagBits>(1u << mask.PopFront_AssumeNotEmpty());

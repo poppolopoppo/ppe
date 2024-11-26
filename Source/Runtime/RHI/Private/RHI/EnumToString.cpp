@@ -38,7 +38,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EQueueUsage value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EQueueUsage>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -59,7 +59,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EMemoryType value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EMemoryType>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -80,7 +80,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EBufferUsage value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EBufferUsage>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -137,7 +137,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EImageFlags>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -159,7 +159,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageUsage value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EImageUsage>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     for (auto mask = MakeEnumBitMask(value); mask; ) {
         const auto it = static_cast<EImageUsage>(1u << mask.PopFront_AssumeNotEmpty());
@@ -191,7 +191,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EImageAspect value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EImageAspect>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -451,7 +451,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EDebugFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EDebugFlags>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -638,7 +638,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EPipelineDynamicState value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EPipelineDynamicState>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -663,7 +663,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ERayTracingGeometryFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ERayTracingGeometryFlags>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -683,7 +683,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ERayTracingInstanceFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ERayTracingInstanceFlags>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -705,7 +705,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, ERayTracingBuildFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<ERayTracingBuildFlags>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -750,7 +750,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EShaderStages value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EShaderStages>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -793,7 +793,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EShaderLangFormat value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EShaderLangFormat>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -1068,7 +1068,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EResourceFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EResourceFlags>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -1086,7 +1086,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EResourceShaderStages value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EResourceShaderStages>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
@@ -1113,7 +1113,7 @@ template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_C
 //----------------------------------------------------------------------------
 template <typename _Char> TBasicTextWriter<_Char>& ToString_(TBasicTextWriter<_Char>& oss, EShaderCompilationFlags value) {
     STATIC_ASSERT(Meta::enum_is_flags_v<EShaderCompilationFlags>);
-    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, " | "));
+    auto sep = Fmt::NotFirstTime(STRING_LITERAL(_Char, '|'));
 
     if (value == Zero)
         return oss << STRING_LITERAL(_Char, "0");
