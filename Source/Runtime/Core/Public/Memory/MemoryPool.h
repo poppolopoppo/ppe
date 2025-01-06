@@ -31,7 +31,9 @@ public:
     using allocator_type = _Allocator;
     using allocator_traits = TAllocatorTraits<_Allocator>;
 
-    using block_type = std::aligned_storage_t<_BlockSize, _Align>;
+    struct block_type {
+        alignas(_Align) std::byte data[_BlockSize];
+    };
     using index_type =
         std::conditional_t<(_ChunkSize * _MaxChunks > UINT32_MAX), u64,
         std::conditional_t<(_ChunkSize * _MaxChunks > UINT16_MAX), u32, u16> >;

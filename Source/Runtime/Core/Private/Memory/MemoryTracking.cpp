@@ -98,7 +98,8 @@ static void PPE_DEBUG_SECTION NO_INLINE WarnAboutSmallAllocs_(const FMemoryTrack
         PPE_DEBUG_BREAK();
 
 #   if USE_PPE_IGNORELIST
-        if (volatile bool ignoreFurtherWarnings = false)
+        volatile bool ignoreFurtherWarnings = false;
+        if (ignoreFurtherWarnings)
             FIgnoreList::AddIFP(ignoreKey);
 #   endif
     }

@@ -66,14 +66,13 @@ public:
     }
 
     friend CONSTEXPR bool operator ==(const TAppendable& lhs, const TAppendable& rhs) {
-        return (lhs._userData == rhs._userData && lhs._pushBack == rhs._pushBack);
+        return (lhs._pushBack == rhs._pushBack);
     }
     friend CONSTEXPR bool operator !=(const TAppendable& lhs, const TAppendable& rhs) {
         return (not operator ==(lhs, rhs));
     }
 
     friend CONSTEXPR void swap(TAppendable& lhs, TAppendable& rhs) NOEXCEPT {
-        std::swap(lhs._userData, rhs._userData);
         std::swap(lhs._pushBack, rhs._pushBack);
     }
 

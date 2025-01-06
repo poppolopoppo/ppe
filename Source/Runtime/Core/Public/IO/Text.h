@@ -218,7 +218,7 @@ public:
             const size_t len = length();
             Assert(len > SmallCapacity);
             const TMemoryView<_Char> alloc{ const_cast<_Char*>(_external.Storage), len + 1 };
-            allocator_traits::template DeallocateT(*this, alloc);
+            allocator_traits::template DeallocateT<_Char>(*this, alloc);
         }
 
         _inplace = {};

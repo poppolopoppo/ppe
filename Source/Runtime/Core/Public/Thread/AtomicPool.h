@@ -32,7 +32,9 @@ class TAtomicPool : Meta::FNonCopyableNorMovable {
         mask_type Create{ mask_type::EmptyMask };
     }   _sets[_Chunks];
 
-    using block_type = std::aligned_storage_t<sizeof(T), _Align>;
+    struct block_type {
+        alignas(T) std::byte data[sizeof(T)];
+    };
     block_type _storage[mask_type::Capacity * _Chunks];
 
 #if USE_PPE_MEMORYDOMAINS

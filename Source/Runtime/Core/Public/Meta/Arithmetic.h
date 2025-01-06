@@ -157,53 +157,53 @@ struct TUnaryComplement<void> {
 // Generic Min/Max/Clamp/Compare() functions
 //----------------------------------------------------------------------------
 template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
-CONSTEXPR const T& Less(const T& a, const T& b) NOEXCEPT {
+NODISCARD CONSTEXPR const T& Less(const T& a, const T& b) NOEXCEPT {
     return (a < b);
 }
 //----------------------------------------------------------------------------
 template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
-CONSTEXPR const T& Max(const T& a, const T& b) NOEXCEPT {
+NODISCARD CONSTEXPR const T& Max(const T& a, const T& b) NOEXCEPT {
     return (a < b ? b : a);
 }
 //----------------------------------------------------------------------------
 template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
-CONSTEXPR const T& Min(const T& a, const T& b) NOEXCEPT {
+NODISCARD CONSTEXPR const T& Min(const T& a, const T& b) NOEXCEPT {
     return (a < b ? a : b);
 }
 //----------------------------------------------------------------------------
 template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
-CONSTEXPR const T& Max3(const T& a, const T& b, const T& c) NOEXCEPT {
+NODISCARD CONSTEXPR const T& Max3(const T& a, const T& b, const T& c) NOEXCEPT {
     return Max(a, Max(b, c));
 }
 //----------------------------------------------------------------------------
 template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
-CONSTEXPR const T& Min3(const T& a, const T& b, const T& c) NOEXCEPT {
+NODISCARD CONSTEXPR const T& Min3(const T& a, const T& b, const T& c) NOEXCEPT {
     return Min(a, Min(b, c));
 }
 //----------------------------------------------------------------------------
 template <typename _Lhs, typename _Rhs, TEnableIf<has_trivial_compare_v<_Lhs, _Rhs>>* = nullptr>
-CONSTEXPR int Compare(const _Lhs& a, const _Rhs& b) NOEXCEPT {
+NODISCARD CONSTEXPR int Compare(const _Lhs& a, const _Rhs& b) NOEXCEPT {
     return (a < b ? -1 : a == b ? 0 : 1);
 }
 //----------------------------------------------------------------------------
 template <typename T, TEnableIf<has_trivial_less_v<T, T>>* = nullptr>
-CONSTEXPR const T& Clamp(const T& value, const T& vmin, const T& vmax) NOEXCEPT {
+NODISCARD CONSTEXPR const T& Clamp(const T& value, const T& vmin, const T& vmax) NOEXCEPT {
     return Min(vmax, Max(vmin, value));
 }
 //----------------------------------------------------------------------------
 template <typename T>
 CONSTEXPR u32 BitCount{ sizeof(T) << 3 };
 //----------------------------------------------------------------------------
-template <typename C, typename B, typename A>
-inline /*CONSTEXPR*/ u32 OffsetOf(B A::*member) {
-    constexpr std::aligned_storage_t<sizeof(C), alignof(C)> pod{};
+template <typename C, typename B, typename A = C>
+NODISCARD inline /*CONSTEXPR*/ u32 OffsetOf(B A::*member) NOEXCEPT {
+    alignas(C) std::byte pod[sizeof(C)];
     const C* const c = reinterpret_cast<const C*>(&pod);
     const A* const a = c;
     return static_cast<u32>(reinterpret_cast<intptr_t>(&(a->*member)) - reinterpret_cast<intptr_t>(c));
 }
 //----------------------------------------------------------------------------
 template <typename B, typename A>
-inline /*CONSTEXPR*/ u32 StandardLayoutOffset(B A::*member) {
+NODISCARD inline /*CONSTEXPR*/ u32 StandardLayoutOffset(B A::*member) NOEXCEPT {
     STATIC_ASSERT(std::is_standard_layout_v<A>);
     return OffsetOf<A, B, A>(member);
 }

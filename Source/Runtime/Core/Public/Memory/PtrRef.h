@@ -43,20 +43,20 @@ struct TPtrRef {
         return (*this);
     }
 
-    CONSTEXPR bool valid() const { return (nullptr != Ptr); }
+    NODISCARD CONSTEXPR bool valid() const { return (nullptr != Ptr); }
 
-    CONSTEXPR T* get() const NOEXCEPT { return Ptr; }
-    CONSTEXPR T** ref() NOEXCEPT { return std::addressof(Ptr); }
+    NODISCARD CONSTEXPR T* get() const NOEXCEPT { return Ptr; }
+    NODISCARD CONSTEXPR T** ref() NOEXCEPT { return std::addressof(Ptr); }
 
     CONSTEXPR void reset() NOEXCEPT {
         Ptr = nullptr;
     }
 
-    CONSTEXPR T& operator * () const { Assert(Ptr); return (*Ptr); }
-    CONSTEXPR T* operator ->() const { Assert(Ptr); return Ptr; }
+    NODISCARD CONSTEXPR T& operator * () const { Assert(Ptr); return (*Ptr); }
+    NODISCARD CONSTEXPR T* operator ->() const { Assert(Ptr); return Ptr; }
 
-    CONSTEXPR operator T& () const NOEXCEPT { Assert(Ptr); return (*Ptr); }
-    CONSTEXPR operator T* () const NOEXCEPT { return Ptr; }
+    NODISCARD CONSTEXPR operator T& () const NOEXCEPT { Assert(Ptr); return (*Ptr); }
+    NODISCARD CONSTEXPR operator T* () const NOEXCEPT { return Ptr; }
 
     // can forward operator () calls to inner ptr if T defines it
     template <typename... _Args, decltype(std::declval<T&>()(std::forward<_Args>(std::declval<_Args&&>())...))* = nullptr>
@@ -64,67 +64,73 @@ struct TPtrRef {
         return (*Ptr)(std::forward<_Args>(args)...);
     }
 
-    CONSTEXPR TPtrRef& operator++() {
+    NODISCARD CONSTEXPR TPtrRef& operator++() {
         ++Ptr;
         return (*this);
     }
-    CONSTEXPR TPtrRef operator++(int) {
+    NODISCARD CONSTEXPR TPtrRef operator++(int) {
         TPtrRef tmp(*this);
         ++(*this);
         return tmp;
     }
 
-    CONSTEXPR TPtrRef& operator--() {
+    NODISCARD CONSTEXPR TPtrRef& operator--() {
         --Ptr;
         return (*this);
     }
-    CONSTEXPR TPtrRef operator--(int) {
+    NODISCARD CONSTEXPR TPtrRef operator--(int) {
         TPtrRef tmp(*this);
         --(*this);
         return tmp;
     }
 
-    CONSTEXPR TPtrRef& operator+=(ptrdiff_t offset) {
+    NODISCARD CONSTEXPR TPtrRef& operator+=(ptrdiff_t offset) {
         Ptr += offset;
         return (*this);
     }
-    CONSTEXPR TPtrRef operator+(ptrdiff_t offset) const {
+    NODISCARD CONSTEXPR TPtrRef operator+(ptrdiff_t offset) const {
         TPtrRef tmp(*this);
         return (tmp += offset);
     }
 
-    CONSTEXPR TPtrRef& operator-=(ptrdiff_t offset) {
+    NODISCARD CONSTEXPR TPtrRef& operator-=(ptrdiff_t offset) {
         Ptr -= offset;
         return (*this);
     }
-    CONSTEXPR TPtrRef operator-(ptrdiff_t offset) const {
+    NODISCARD CONSTEXPR TPtrRef operator-(ptrdiff_t offset) const {
         TPtrRef tmp(*this);
         return (tmp -= offset);
     }
 
-    CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr == rhs.Ptr); }
-    CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
+    NODISCARD CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr == rhs.Ptr); }
+    NODISCARD CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
 
-    CONSTEXPR friend bool operator ==(const TPtrRef& lhs, std::nullptr_t) { return (lhs.Ptr == nullptr); }
-    CONSTEXPR friend bool operator !=(const TPtrRef& lhs, std::nullptr_t) { return (not operator ==(lhs, nullptr)); }
+    NODISCARD CONSTEXPR friend bool operator ==(const TPtrRef& lhs, std::nullptr_t) { return (lhs.Ptr == nullptr); }
+    NODISCARD CONSTEXPR friend bool operator !=(const TPtrRef& lhs, std::nullptr_t) { return (not operator ==(lhs, nullptr)); }
 
-    CONSTEXPR friend bool operator ==(std::nullptr_t, const TPtrRef& rhs) { return (rhs.Ptr == nullptr); }
-    CONSTEXPR friend bool operator !=(std::nullptr_t, const TPtrRef& rhs) { return (not operator ==(nullptr, rhs)); }
+    NODISCARD CONSTEXPR friend bool operator ==(std::nullptr_t, const TPtrRef& rhs) { return (rhs.Ptr == nullptr); }
+    NODISCARD CONSTEXPR friend bool operator !=(std::nullptr_t, const TPtrRef& rhs) { return (not operator ==(nullptr, rhs)); }
 
-    CONSTEXPR friend bool operator < (const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr <  rhs.Ptr); }
-    CONSTEXPR friend bool operator >=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator < (lhs, rhs)); }
+    NODISCARD CONSTEXPR friend bool operator < (const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr <  rhs.Ptr); }
+    NODISCARD CONSTEXPR friend bool operator >=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator < (lhs, rhs)); }
 
-    CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const T& rhs) { return (*lhs == rhs); }
-    CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const T& rhs) { return (not operator ==(lhs, rhs)); }
+    NODISCARD CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const T& rhs) { return (*lhs == rhs); }
+    NODISCARD CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const T& rhs) { return (not operator ==(lhs, rhs)); }
 
-    CONSTEXPR friend bool operator ==(const T& lhs, const TPtrRef& rhs) { return (lhs == *rhs); }
-    CONSTEXPR friend bool operator !=(const T& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
+    NODISCARD CONSTEXPR friend bool operator ==(const T& lhs, const TPtrRef& rhs) { return (lhs == *rhs); }
+    NODISCARD CONSTEXPR friend bool operator !=(const T& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
+
+    NODISCARD CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const T* rhs) { return (lhs.get() == rhs); }
+    NODISCARD CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const T* rhs) { return (not operator ==(lhs, rhs)); }
+
+    NODISCARD CONSTEXPR friend bool operator ==(const T* lhs, const TPtrRef& rhs) { return (lhs == rhs.get()); }
+    NODISCARD CONSTEXPR friend bool operator !=(const T* lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
 
     friend void swap(TPtrRef& lhs, TPtrRef& rhs) NOEXCEPT {
         std::swap(lhs.Ptr, rhs.Ptr);
     }
 
-    friend hash_t hash_value(const TPtrRef& ref) NOEXCEPT {
+    NODISCARD friend hash_t hash_value(const TPtrRef& ref) NOEXCEPT {
         return hash_as_pod(ref.Ptr);
     }
 };
@@ -152,31 +158,31 @@ struct TPtrRef<void> {
         return (*this);
     }
 
-    CONSTEXPR bool valid() const { return (nullptr != Ptr); }
+    NODISCARD CONSTEXPR bool valid() const { return (nullptr != Ptr); }
 
-    CONSTEXPR void* get() const NOEXCEPT { return Ptr; }
+    NODISCARD CONSTEXPR void* get() const NOEXCEPT { return Ptr; }
 
-    CONSTEXPR void* operator ->() const { Assert(Ptr); return Ptr; }
+    NODISCARD CONSTEXPR void* operator ->() const { Assert(Ptr); return Ptr; }
 
-    CONSTEXPR operator void* () const NOEXCEPT { return Ptr; }
+    NODISCARD CONSTEXPR operator void* () const NOEXCEPT { return Ptr; }
 
-    CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr == rhs.Ptr); }
-    CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
+    NODISCARD CONSTEXPR friend bool operator ==(const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr == rhs.Ptr); }
+    NODISCARD CONSTEXPR friend bool operator !=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator ==(lhs, rhs)); }
 
-    CONSTEXPR friend bool operator ==(const TPtrRef& lhs, std::nullptr_t) { return (lhs.Ptr == nullptr); }
-    CONSTEXPR friend bool operator !=(const TPtrRef& lhs, std::nullptr_t) { return (not operator ==(lhs, nullptr)); }
+    NODISCARD CONSTEXPR friend bool operator ==(const TPtrRef& lhs, std::nullptr_t) { return (lhs.Ptr == nullptr); }
+    NODISCARD CONSTEXPR friend bool operator !=(const TPtrRef& lhs, std::nullptr_t) { return (not operator ==(lhs, nullptr)); }
 
-    CONSTEXPR friend bool operator ==(std::nullptr_t, const TPtrRef& rhs) { return (rhs.Ptr == nullptr); }
-    CONSTEXPR friend bool operator !=(std::nullptr_t, const TPtrRef& rhs) { return (not operator ==(nullptr, rhs)); }
+    NODISCARD CONSTEXPR friend bool operator ==(std::nullptr_t, const TPtrRef& rhs) { return (rhs.Ptr == nullptr); }
+    NODISCARD CONSTEXPR friend bool operator !=(std::nullptr_t, const TPtrRef& rhs) { return (not operator ==(nullptr, rhs)); }
 
-    CONSTEXPR friend bool operator < (const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr <  rhs.Ptr); }
-    CONSTEXPR friend bool operator >=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator < (lhs, rhs)); }
+    NODISCARD CONSTEXPR friend bool operator < (const TPtrRef& lhs, const TPtrRef& rhs) { return (lhs.Ptr <  rhs.Ptr); }
+    NODISCARD CONSTEXPR friend bool operator >=(const TPtrRef& lhs, const TPtrRef& rhs) { return (not operator < (lhs, rhs)); }
 
     friend void swap(TPtrRef& lhs, TPtrRef& rhs) NOEXCEPT {
         std::swap(lhs.Ptr, rhs.Ptr);
     }
 
-    friend hash_t hash_value(const TPtrRef& ref) NOEXCEPT {
+    NODISCARD friend hash_t hash_value(const TPtrRef& ref) NOEXCEPT {
         return hash_as_pod(ref.Ptr);
     }
 };
@@ -185,12 +191,12 @@ PPE_ASSUME_TEMPLATE_AS_POD(TPtrRef<T>, typename T)
 PPE_ASSUME_TEMPLATE_AS_POINTER(TPtrRef<T>, typename T)
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR TPtrRef<T> MakePtrRef(T& ref) {
+NODISCARD CONSTEXPR TPtrRef<T> MakePtrRef(T& ref) {
     return TPtrRef{ &ref };
 }
 //----------------------------------------------------------------------------
 template <typename T>
-CONSTEXPR TPtrRef<T> MakePtrRef(T* ptr) {
+NODISCARD CONSTEXPR TPtrRef<T> MakePtrRef(T* ptr) {
     return TPtrRef{ ptr };
 }
 //----------------------------------------------------------------------------

@@ -260,7 +260,7 @@ private:
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-void FTextSerializer::Deserialize(const FDeserializeContext& ctx, IStreamReader& input, FTransactionLinker* linker) const {
+void FTextSerializer::Deserialize(const FDeserializeContext& , IStreamReader& input, FTransactionLinker* linker) const {
     Assert(linker);
 
     const FWString fname = linker->Filename().ToWString();

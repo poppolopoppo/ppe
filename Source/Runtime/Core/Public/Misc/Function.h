@@ -447,13 +447,13 @@ private:
 
     template <typename _Payload>
     NODISCARD static CONSTEVAL bool PayloadNonCopyable_() {
-        PPE_COMPILER_WARNING("5337", "non-copyable or non-movable objects must always be allocated\n\twhile compiling " PPE_PRETTY_FUNCTION);
+        PPE_COMPILER_WARNING("5337", "non-copyable or non-movable objects must always be allocated");
         return true;
     }
 
     template <typename _Payload>
     NODISCARD static CONSTEVAL bool PayloadIsMutable_() {
-        PPE_COMPILER_WARNING("5338", "mutable objects must always be allocated\n\twhile compiling " PPE_PRETTY_FUNCTION);
+        PPE_COMPILER_WARNING("5338", "mutable objects must always be allocated");
         return true;
     }
 

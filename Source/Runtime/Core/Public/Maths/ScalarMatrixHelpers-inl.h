@@ -8,7 +8,7 @@ namespace PPE {
 //----------------------------------------------------------------------------
 template <typename T, u32 _Rows, u32 _Cols>
 bool IsHomogeneous(const TScalarMatrix<T, _Rows, _Cols>& m, float epsilon/* = Epsilon */) {
-    return NearlyEquals(m.rows[_Rows - 1], TScalarVector<T, _Cols>::Homogeneous);
+    return NearlyEquals(m.rows[_Rows - 1], TScalarVector<T, _Cols>::Homogeneous, epsilon);
 }
 //----------------------------------------------------------------------------
 template <typename T, u32 N>

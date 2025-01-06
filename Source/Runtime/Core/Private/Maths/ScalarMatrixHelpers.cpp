@@ -138,7 +138,6 @@ float3x3 Make3DRotationMatrixAroundAxis(const float3& axis, float s, float c) NO
 // Make3DRotationMatrixFromQuaternion
 //----------------------------------------------------------------------------
 float3x3 Make3DRotationMatrixFromQuaternion(const FQuaternion& q) NOEXCEPT {
-    //const auto [r, x, y, z] = q.vec.data; %NOCOMMI%
     const auto [x, y, z, r] = q.vec.data;
     return {
         { 1 - 2 * (y * y + z * z),     2 * (x * y + r * z),     2 * (x * z - r * y) },

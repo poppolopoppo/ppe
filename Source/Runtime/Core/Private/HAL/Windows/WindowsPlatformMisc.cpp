@@ -33,6 +33,10 @@ namespace {
 //----------------------------------------------------------------------------
 PRAGMA_MSVC_WARNING_PUSH()
 PRAGMA_MSVC_WARNING_DISABLE(4191) // unsafe conversion from 'type of expression' to 'type required'
+
+PRAGMA_CLANG_WARNING_PUSH()
+PRAGMA_CLANG_WARNING_IGNORE(-Wcast-function-type-mismatch)
+
 bool IsProcess64Bit_(::HANDLE hProcess) {
     typedef ::BOOL(WINAPI* LPFN_ISWOW64PROCESS)(::HANDLE, ::PBOOL);
     ::HMODULE const hKernel32 = ::GetModuleHandleA("kernel32");
@@ -55,6 +59,8 @@ bool IsProcess64Bit_(::HANDLE hProcess) {
         return sysInfo.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64;
     }
 }
+
+PRAGMA_CLANG_WARNING_POP()
 PRAGMA_MSVC_WARNING_POP()
 //----------------------------------------------------------------------------
 static FWindowsPlatformMisc::FCPUInfo FetchCPUInfo_() {

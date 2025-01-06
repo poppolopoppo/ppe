@@ -259,6 +259,9 @@ typedef LONG (NTAPI *pfnNtGetNextThread) (
     IN ULONG Flags,
     OUT PHANDLE NewThreadHandle
 );
+
+PRAGMA_CLANG_WARNING_PUSH()
+PRAGMA_CLANG_WARNING_IGNORE(-Wcast-function-type-mismatch)
 static pfnNtGetNextThread LoadNtGetNextThread_() {
     // Load ntdll.dll
     HMODULE hNtDll = ::LoadLibrary(TEXT("ntdll.dll"));
@@ -277,6 +280,7 @@ static pfnNtGetNextThread LoadNtGetNextThread_() {
 
     return NtGetNextThread;
 }
+PRAGMA_CLANG_WARNING_POP()
 //----------------------------------------------------------------------------
 static FWindowsPlatformCrash::EResult EnumerateThreads_(DWORD (WINAPI *inCallback)( HANDLE ), DWORD inExceptThisOne, DWORD inCurrentThread) {
     const HANDLE hProcess = ::GetCurrentProcess();

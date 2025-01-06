@@ -140,6 +140,7 @@ void FLengthFacet::Validate(const FMetaProperty& meta, const void* data) const {
 
     size_t arity;
     if (const IScalarTraits* const pScalar = traits->AsScalar()) {
+        Unused(pScalar);
         switch (static_cast<ENativeType>(meta.Traits()->TypeId())) {
         case ENativeType::Name:
             arity = static_cast<const FName*>(data)->size();

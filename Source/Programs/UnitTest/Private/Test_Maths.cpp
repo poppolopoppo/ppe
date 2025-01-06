@@ -332,6 +332,7 @@ static NO_INLINE void Test_Matrix_() {
         float4x4 h0 = m.OneExtend();
         float4x4 h1 = n.OneExtend();
         float4x4 h2 = r1.Homogeneous();
+        Unused(r0, v0, v1, h0, h1, h2);
     }
     {
         float3x3 a = Make3DRotationMatrixAroundX(.33f);
