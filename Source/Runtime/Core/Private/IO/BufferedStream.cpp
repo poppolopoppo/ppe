@@ -106,7 +106,6 @@ std::streamoff FBufferedStreamReader::SeekI(std::streamoff offset, ESeekOrigin o
         // Keep current buffer
 
         _offset = checked_cast<u32>(newOrigin - _origin);
-        Assert_NoAssume(TellI() == newOrigin);
     }
     else {
         // Reset overrun buffer
@@ -115,6 +114,7 @@ std::streamoff FBufferedStreamReader::SeekI(std::streamoff offset, ESeekOrigin o
         _offset = _capacity = 0;
     }
 
+    Assert_NoAssume(TellI() == newOrigin);
     return (_origin + _offset);
 }
 //----------------------------------------------------------------------------
@@ -398,7 +398,6 @@ std::streamoff FBufferedStreamWriter::SeekO(std::streamoff offset, ESeekOrigin o
         // Keep current buffer
 
         _offset = checked_cast<u32>(newOrigin - _origin);
-        Assert_NoAssume(TellO() == newOrigin);
     }
     else {
         // Reset overrun buffer
@@ -407,6 +406,7 @@ std::streamoff FBufferedStreamWriter::SeekO(std::streamoff offset, ESeekOrigin o
         _origin = _nonBuffered->SeekO(offset, origin);
     }
 
+    Assert_NoAssume(TellO() == newOrigin);
     return (_origin + checked_cast<std::streamsize>(_offset));
 }
 //----------------------------------------------------------------------------
