@@ -27,8 +27,8 @@ public:
         ,   _site(_match.Site())
     {}
 
-    const Lexer::FMatch& Match() const { return _match; }
-    Lexer::FSpan Site() const { return _site; }
+    NODISCARD const Lexer::FMatch& Match() const { return _match; }
+    NODISCARD Lexer::FSpan Site() const { return _site; }
 
 #if USE_PPE_EXCEPTION_DESCRIPTION
     PPE_SERIALIZE_API virtual FTextWriter& Description(FTextWriter& oss) const override final;
@@ -46,30 +46,30 @@ public:
     FLexer(IBufferedStreamReader& input, const FWStringView& sourceFileName, bool allowTypenames);
     ~FLexer();
 
-    const FMatch* Peek();
-    const FMatch* Peek(const FSymbol* symbol);
+    NODISCARD const FMatch* Peek();
+    NODISCARD const FMatch* Peek(FSymbolRef symbol);
 
-    bool Read(FMatch& match);
-    bool ReadUntil(FMatch& match, const char ch);
-    bool SkipUntil(const char ch);
-    bool SkipUntil(const FStringView& str);
-    bool SkipUntil(FStringLiteral literal) { return SkipUntil(literal.MakeView()); }
+    NODISCARD bool Read(FMatch& match);
+    NODISCARD bool ReadUntil(FMatch& match, const char ch);
+    NODISCARD bool SkipUntil(const char ch);
+    NODISCARD bool SkipUntil(const FStringView& str);
+    NODISCARD bool SkipUntil(FStringLiteral literal) { return SkipUntil(literal.MakeView()); }
 
-    bool ReadIFN(char ch, ECase cmp = ECase::Insensitive);
-    bool ReadIFN(const FStringView& str, ECase cmp = ECase::Insensitive);
-    bool ReadIFN(const PPE::Lexer::FSymbol* expected);
-    bool ReadIFN(FMatch& match, const PPE::Lexer::FSymbol* expected);
-    bool ReadIFN(FStringLiteral literal, ECase cmp = ECase::Insensitive) { return ReadIFN(literal.MakeView(), cmp); }
+    NODISCARD bool ReadIFN(char ch, ECase cmp = ECase::Insensitive);
+    NODISCARD bool ReadIFN(const FStringView& str, ECase cmp = ECase::Insensitive);
+    NODISCARD bool ReadIFN(const PPE::Lexer::FSymbol* expected);
+    NODISCARD bool ReadIFN(FMatch& match, FSymbolRef expected);
+    NODISCARD bool ReadIFN(FStringLiteral literal, ECase cmp = ECase::Insensitive) { return ReadIFN(literal.MakeView(), cmp); }
 
-    void EatWhiteSpaces();
+    NODISCARD void EatWhiteSpaces();
 
-    bool Expect(const PPE::Lexer::FSymbol* expected);
-    bool Expect(FMatch& match, const PPE::Lexer::FSymbol* expected);
+    NODISCARD bool Expect(FSymbolRef expected);
+    NODISCARD bool Expect(FMatch& match, FSymbolRef expected);
 
     void RewindPeekIFN();
 
-    FWStringView SourceFileName() const { return _sourceFileName; }
-    FLocation SourceSite() const { return _reader.SourceSite(); }
+    NODISCARD FWStringView SourceFileName() const { return _sourceFileName; }
+    NODISCARD FLocation SourceSite() const { return _reader.SourceSite(); }
 
 private:
     bool NextMatch_(FMatch& match);

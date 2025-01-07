@@ -35,9 +35,9 @@ public:
     static void Create() { singleton_type::Create(); }
     static const FSymbols& Get() { return singleton_type::Get(); }
 
-    const hashmap_type& All() const { THIS_THREADRESOURCE_CHECKACCESS(); return _symbols; }
+    NODISCARD const hashmap_type& All() const { THIS_THREADRESOURCE_CHECKACCESS(); return _symbols; }
 
-    bool IsPrefix(const FSymbol** psymbol, const FStringView& cstr) const;
+    NODISCARD bool IsPrefix(const FSymbol** psymbol, const FStringView& cstr) const;
 
 public:
     static const FSymbol *Invalid;

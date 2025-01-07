@@ -103,18 +103,20 @@ public:
     :   _type(type), _cstr(view), _ord(ord)
     {}
 
-    CONSTF bool IsValid() const { return (FPlatformMaths::popcnt64(u64(_type)) == 1); }
-    CONSTF bool IsPrefix() const { return (_type ^ Prefix); }
+    NODISCARD CONSTF bool IsValid() const { return (FPlatformMaths::popcnt64(u64(_type)) == 1); }
+    NODISCARD CONSTF bool IsPrefix() const { return (_type ^ Prefix); }
 
-    CONSTF ETypeId Type() const { return _type; }
-    CONSTF const FStringView& CStr() const { return _cstr; }
-    CONSTF u64 Ord() const { return _ord; }
+    NODISCARD CONSTF ETypeId Type() const { return _type; }
+    NODISCARD CONSTF const FStringView& CStr() const { return _cstr; }
+    NODISCARD CONSTF u64 Ord() const { return _ord; }
 
 private:
     ETypeId _type;
     FStringView _cstr;
     u64 _ord;
 };
+//----------------------------------------------------------------------------
+using FSymbolRef = TPtrRef<const FSymbol>;
 //----------------------------------------------------------------------------
 inline CONSTF bool operator ==(const FSymbol& lhs, const FSymbol& rhs) {
     return lhs.Type() == rhs.Type();

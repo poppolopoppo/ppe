@@ -44,27 +44,27 @@ TBasicMatch<T>& TBasicMatch<T>::operator =(TBasicMatch&& rvalue) NOEXCEPT {
 }
 //----------------------------------------------------------------------------
 template <typename T>
-TBasicMatch<T>::TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FSpan& site) NOEXCEPT
+TBasicMatch<T>::TBasicMatch(FSymbolRef symbol, value_type&& rvalue, const FSpan& site) NOEXCEPT
     : _symbol(symbol), _value(std::move(rvalue)), _site(site)
 {}
 //----------------------------------------------------------------------------
 template <typename T>
-TBasicMatch<T>::TBasicMatch(const symbol_type* symbol, const value_type& value, const FSpan& site) NOEXCEPT
+TBasicMatch<T>::TBasicMatch(FSymbolRef symbol, const value_type& value, const FSpan& site) NOEXCEPT
     : TBasicMatch(symbol, value_type(value), site)
 {}
 //----------------------------------------------------------------------------
 template <typename T>
-TBasicMatch<T>::TBasicMatch(const symbol_type* symbol, value_type&& rvalue, const FLocation& start, const FLocation& stop) NOEXCEPT
+TBasicMatch<T>::TBasicMatch(FSymbolRef symbol, value_type&& rvalue, const FLocation& start, const FLocation& stop) NOEXCEPT
     : TBasicMatch(symbol, std::move(rvalue), FSpan::FromSite(start, stop))
 {}
 //----------------------------------------------------------------------------
 template <typename T>
-TBasicMatch<T>::TBasicMatch(const symbol_type* symbol, const value_type& value, const FLocation& start, const FLocation& stop) NOEXCEPT
+TBasicMatch<T>::TBasicMatch(FSymbolRef symbol, const value_type& value, const FLocation& start, const FLocation& stop) NOEXCEPT
     : TBasicMatch(symbol, value_type(value), start, stop)
 {}
 //----------------------------------------------------------------------------
 template <typename T>
-auto TBasicMatch<T>::Symbol() const -> const symbol_type* {
+auto TBasicMatch<T>::Symbol() const -> FSymbolRef {
     return _symbol;
 }
 //----------------------------------------------------------------------------
@@ -90,7 +90,7 @@ FStringView TBasicMatch<T>::MakeView() const {
 //----------------------------------------------------------------------------
 template <typename T>
 bool TBasicMatch<T>::Valid() const {
-    return symbol_type::Invalid != _symbol->Type();
+    return (_symbol && _symbol->IsValid() && _symbol->Type() != FSymbol::Invalid);
 }
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////

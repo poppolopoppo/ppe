@@ -858,7 +858,7 @@ FGrammarImpl::FGrammarImpl() NOEXCEPT
         RTTI::FPathName pathName;
 
         match_p id_ = nullptr, scope_ = nullptr;
-        if      (input.TryRead<symbol_t::Identifier>(&id_)) {
+        if (input.TryRead<symbol_t::Identifier>(&id_)) {
             site = id_->Site();
             pathName.Identifier = RTTI::FName(id_->Value());
         }

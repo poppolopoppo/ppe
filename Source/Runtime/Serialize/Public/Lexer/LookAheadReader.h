@@ -29,7 +29,7 @@ public:
     void SkipFwd(size_t offset);
     void Reset(const FLocation& site);
 
-    NODISCARD Meta::TOptional<char> Peek(size_t n = 0) const;
+    NODISCARD Meta::TOptional<char> Peek() const;
 
     NODISCARD Meta::TOptional<char> Read();
 

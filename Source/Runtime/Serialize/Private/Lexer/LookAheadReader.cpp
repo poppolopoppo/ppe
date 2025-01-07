@@ -43,19 +43,8 @@ void FLookAheadReader::Reset(const FLocation& site) {
     _sourceColumn = site.Column;
 }
 //----------------------------------------------------------------------------
-Meta::TOptional<char> FLookAheadReader::Peek(size_t n/* = 0 */) const {
-    char ch;
-    bool result;
-    if (n == 0) {
-        result = _input.Peek(ch);
-    }
-    else {
-        const auto origin = _input.TellI();
-        _input.SeekI(n, ESeekOrigin::Relative);
-        result = _input.Peek(ch);
-        _input.SeekI(origin, ESeekOrigin::Begin);
-    }
-    if (result)
+Meta::TOptional<char> FLookAheadReader::Peek() const {
+    if (char ch; _input.Peek(ch))
         return ch;
     return std::nullopt;
 }
@@ -97,7 +86,7 @@ bool FLookAheadReader::SkipUntil(char expected) {
 }
 //----------------------------------------------------------------------------
 void FLookAheadReader::EatWhiteSpaces() {
-    while (IsSpace(Peek(0).value_or('\0')))
+    while (IsSpace(Peek().value_or('\0')))
         Unused(Read()); // need to parse source line to keep location coherent with the stream
 }
 //----------------------------------------------------------------------------
