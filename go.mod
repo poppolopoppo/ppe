@@ -25,7 +25,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.19.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pkg/profile v1.7.0 // indirect
-	github.com/quic-go/quic-go v0.45.1 // indirect
+	github.com/quic-go/quic-go v0.48.2 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
 	github.com/tklauser/go-sysconf v0.3.14 // indirect
 	github.com/tklauser/numcpus v0.8.0 // indirect
@@ -36,8 +36,8 @@ require (
 	golang.org/x/crypto v0.35.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.19.0 // indirect
-	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/sync v0.7.0 // indirect
+	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/tools v0.23.0 // indirect
 )
