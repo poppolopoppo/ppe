@@ -409,14 +409,14 @@ float3 Pastelizer(float hue) {
     float2 cocg =  0.25f * SinCos(hue);
     float2 br = float2(-cocg.y, cocg.y) - cocg.x;
     float3 c = 0.729f + float3(br.y, cocg.x, br.x);
-    return c * c;
+    return Saturate(c * c);
 }
 //----------------------------------------------------------------------------
 float3 Hue_to_RGB(float hue) {
-    float R = Abs(hue * 6 - 3) - 1;
-    float G = 2 - Abs(hue * 6 - 2);
-    float B = 2 - Abs(hue * 6 - 4);
-    return Saturate(float3(R,G,B));
+    // from http://lolengine.net/blog/2013/07/27/rgb-to-hsv-in-glsl
+    float4 K = float4(1.0f, 2.0f / 3.0f, 1.0f / 3.0f, 3.0f);
+    float3 p = Abs(Frac(hue + K.xyz) * 6.0f - K.w);
+    return Saturate(p - K.x);
 }
 //----------------------------------------------------------------------------
 // http://www.chilliant.com/rgb2hsv.html
