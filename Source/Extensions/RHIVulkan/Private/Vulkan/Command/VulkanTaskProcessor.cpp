@@ -2057,11 +2057,10 @@ void FVulkanTaskProcessor::AddImage_(
     Assert(desc.LayerCount > 0);
     Assert(desc.LevelCount > 0);
 
+
+
     AddImageState_(pLocalImage, FImageState{
-        state, layout,
-        (EPixelFormat_HasDepth(desc.Format) ? VK_IMAGE_ASPECT_DEPTH_BIT :
-         EPixelFormat_HasStencil(desc.Format) ? VK_IMAGE_ASPECT_STENCIL_BIT :
-         VK_IMAGE_ASPECT_COLOR_BIT ),
+        state, layout, VkCast(desc.AspectMask),
         FImageRange{ desc.BaseLayer, desc.LayerCount, desc.BaseLevel, desc.LevelCount },
         _currentTask
     });

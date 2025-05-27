@@ -64,12 +64,13 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         EPixelFormat::Depth24_Stencil8,
         EPixelFormat::Depth32F_Stencil8,
         EPixelFormat::Depth16_Stencil8,
+        EPixelFormat::Depth32f,
         EPixelFormat::Depth16 };
     for (EPixelFormat fmt : GAllDepthFormats) {
         FImageDesc test;
         test.SetDimension(viewSize).SetFormat(fmt).SetUsage(
             EImageUsage::Sampled |
-            EImageUsage_BlitTransferDst |
+            EImageUsage::TransferDst |
             EImageUsage::DepthStencilAttachment );
 
         if (fg.IsSupported(test)) {
@@ -92,7 +93,7 @@ ARGS_IF_RHIDEBUG("Drawing_Draw_PS"));
         fg.CreateImage(FImageDesc{}
             .SetDimension(viewSize)
             .SetFormat(depthFormat)
-            .SetUsage(EImageUsage::DepthStencilAttachment | EImageUsage_BlitTransferDst | EImageUsage::Sampled),
+            .SetUsage(EImageUsage::DepthStencilAttachment | EImageUsage::TransferDst | EImageUsage::Sampled),
             Default ARGS_IF_RHIDEBUG("DepthTarget"))) };
     PPE_LOG_CHECK(WindowTest, !!depthImage);
 
