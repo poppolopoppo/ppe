@@ -32,7 +32,7 @@ bool Queue_CopyImage1_(FWindowTestApp& app) {
     PPE_LOG_CHECK(WindowTest, dstImage.Valid());
 
     RAWSTORAGE(UnitTest, u8) srcData;
-    srcData.Resize_DiscardData(static_cast<size_t>(srcDim.y) * srcDim.x);
+    srcData.Resize_DiscardData(srcDim.y * srcRowPitch);
     forrange(y, 0, srcDim.y) {
         forrange(x, 0, srcDim.x) {
             u8* const texel = &srcData[x * bpp + y * srcRowPitch];
