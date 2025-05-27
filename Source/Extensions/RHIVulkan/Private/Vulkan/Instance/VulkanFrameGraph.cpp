@@ -91,7 +91,7 @@ void FVulkanFrameGraph::TearDown() {
 
     PPE_LOG(RHI, Emphasis, "tearing down vulkan frame graph");
 
-    WaitIdle(MaxTimeout);
+    WaitIdle(MaxTimeout, true);
     ReleaseMemory();
 
     Verify(SetState_(EState::Idle, EState::Destroyed));
@@ -879,7 +879,7 @@ bool FVulkanFrameGraph::Wait(TMemoryView<const SCommandBatch> commands, FNanosec
     return success;
 }
 //----------------------------------------------------------------------------
-bool FVulkanFrameGraph::WaitIdle(FNanoseconds timeout) {
+bool FVulkanFrameGraph::WaitIdle(FNanoseconds timeout, bool waitForDevice) {
     bool succeed = true;
     ONLY_IF_RHIDEBUG(FAtomicTimedScope waitedTime(&_waitingTime));
     {
@@ -919,6 +919,9 @@ bool FVulkanFrameGraph::WaitIdle(FNanoseconds timeout) {
 
         if (not fences.empty())
             waitAndReleaseFences();
+
+        if (waitForDevice)
+            VK_CALL( _device.vkDeviceWaitIdle(_device.vkDevice()) );
 
         if (succeed) {
             ONLY_IF_RHIDEBUG(const FCriticalScope statsLock(&_lastFrameStatsCS));

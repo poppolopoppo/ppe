@@ -181,7 +181,7 @@ public: // interface
     virtual bool Flush(EQueueUsage queues = EQueueUsage_All) = 0;
 
     // Wait until all commands will complete their work on GPU, trigger events for 'FReadImage' and 'FReadBuffer' tasks.
-    virtual bool WaitIdle(FNanoseconds timeout = MaxTimeout) = 0;
+    virtual bool WaitIdle(FNanoseconds timeout = MaxTimeout, bool waitForDevice = false) = 0;
 
     static CONSTEXPR FNanoseconds MaxTimeout{ 60'000'000'000 };
 

@@ -182,7 +182,7 @@ public:
     NODISCARD bool Wait(TMemoryView<const SCommandBatch> commands, FNanoseconds timeout) override;
 
     bool Flush(EQueueUsage queues) override;
-    bool WaitIdle(FNanoseconds timeout) override;
+    bool WaitIdle(FNanoseconds timeout, bool waitForDevice) override;
 
 #if USE_PPE_RHIDEBUG
     void LogFrame() const override;

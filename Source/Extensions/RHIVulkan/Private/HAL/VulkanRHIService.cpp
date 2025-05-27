@@ -215,7 +215,7 @@ void FVulkanRHIService::TearDown() {
     RHI_LOG(Info, "destroying vulkan RHI service");
 
     if (_frameGraph) {
-        _frameGraph->WaitIdle(IFrameGraph::MaxTimeout);
+        _frameGraph->WaitIdle(IFrameGraph::MaxTimeout, true);
     }
 
     if (_swapchain.Valid()) {
@@ -288,7 +288,7 @@ void FVulkanRHIService::EndFrame() {
     _OnRenderFrame.Invoke(*this, _dt);
 
     PPE_LOG_CHECKVOID(RHI, _frameGraph->Flush(EQueueUsage_All));
-    PPE_LOG_CHECKVOID(RHI, _frameGraph->WaitIdle(IFrameGraph::MaxTimeout));
+    PPE_LOG_CHECKVOID(RHI, _frameGraph->WaitIdle(IFrameGraph::MaxTimeout, false));
 
     _OnEndFrame.Invoke(*this, _currentFrame);
 }
@@ -304,7 +304,7 @@ void FVulkanRHIService::ResizeWindow(const FRHISurfaceCreateInfo& surfaceInfo) {
 
     RHI_LOG(Info, "resizing window to ({0}, {1}) in vulkan service", surfaceInfo.Dimensions.x, surfaceInfo.Dimensions.y);
 
-    _frameGraph->WaitIdle(IFrameGraph::MaxTimeout);
+    _frameGraph->WaitIdle(IFrameGraph::MaxTimeout, false);
 
     if (not CreateBackBufferSwapchain_(_features, _swapchain.Release(), surfaceInfo))
         AssertReleaseMessage("failed to resize swapchain", !!_swapchain);
