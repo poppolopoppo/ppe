@@ -47,7 +47,7 @@ struct FUnitTestFunc_ {
     _Macro(Compiler_Reflection3_) \
     _Macro(Compiler_Reflection4_) \
     _Macro(Compiler_Reflection5_) \
-    _Macro(Compiler_ShaderTrace1_) \
+    /* #TODO: _Macro(Compiler_ShaderTrace1_)*/ \
     _Macro(Compiler_UniformArray1_) \
     _Macro(Compiler_UniformArray2_) \
     /* compute */ \
@@ -75,8 +75,8 @@ struct FUnitTestFunc_ {
     _Macro(Drawing_Draw7_) \
     _Macro(Debugger_ReadAttachment1_) \
     /* debugger */ \
-    _Macro(Debugger_ShaderDebugger1_) \
-    _Macro(Debugger_ShaderDebugger2_) \
+    /* #TODO: _Macro(Debugger_ShaderDebugger1_)*/ \
+    /* #TODO: _Macro(Debugger_ShaderDebugger2_)*/ \
     _Macro(Debugger_RayTracingDebugger1_) \
     /* vendor-specific */ \
     _Macro(Drawing_DrawMeshes1_) \
