@@ -115,7 +115,7 @@ static bool PPE_DEBUG_SECTION DefaultDebugAssertHandler_(const char* msg, const 
     return false; // debug assertions are ignored by default
 }
 //----------------------------------------------------------------------------
-static std::atomic<FAssertionHandler> GAssertionHandler{ &DefaultDebugAssertHandler_ };
+static std::atomic<FAssertionHandler> GAssertionHandler = ATOMIC_VAR_INIT(&DefaultDebugAssertHandler_);
 static THREAD_LOCAL FAssertionHandler GAssertionHandlerForCurrentThread{ nullptr };
 //----------------------------------------------------------------------------
 static void PPE_DEBUG_SECTION DebugPredicateFailed_(const char* msg, const char *file, unsigned line, bool isEnsure) {

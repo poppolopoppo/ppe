@@ -3,6 +3,7 @@
 #include "Core_fwd.h"
 
 #include "IO/TextWriter_fwd.h"
+#include "Memory/PtrRef.h"
 #include "Meta/Iterator.h"
 
 #include <algorithm>
@@ -10,8 +11,6 @@
 //#include <initializer_list>
 #include <iterator>
 #include <type_traits>
-
-#include "PtrRef.h"
 
 namespace PPE {
 //----------------------------------------------------------------------------
@@ -299,7 +298,7 @@ public:
     }
     template <typename _Pred>
     CONSTEXPR iterator StablePartition(_Pred&& pred) const {
-        return std::stable_partition(begin(), end(), pred);
+        return std::stable_partition(begin(), end(), std::forward<_Pred>(pred));
     }
 
     CONSTEXPR friend void swap(TMemoryView& lhs, TMemoryView& rhs) NOEXCEPT {

@@ -39,7 +39,7 @@ public:
 
     template <typename... _Args>
     NODISCARD TRefPtr<T> Allocate(_Args&&... args) NOEXCEPT {
-        const TPtrRef<T> p = *parent_type::template Allocate([&](TPtrRef<T>* p, index_type id) {
+        const TPtrRef<T> p = *parent_type::Allocate([&](TPtrRef<T>* p, index_type id) {
 #if USE_PPE_MEMORYDOMAINS
             TRefPtr<T> refPtr = NewRef<T>(_Domain::TrackingData(), std::forward<_Args>(args)..., id);
 #else

@@ -98,7 +98,7 @@ using i64   = std::int64_t;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-#if defined(CPP_VISUALSTUDIO) && _MSC_VER >= 1900
+#if defined(CPP_VISUALSTUDIO) && __cplusplus >= 201103L
 #   define NOALIAS      __declspec(noalias)
 #   define NOEXCEPT     noexcept
 #   define NOOP(...)    (void)0
@@ -168,7 +168,7 @@ using i64   = std::int64_t;
 #elif defined(__clang__) || defined(__gcc__)
 #   define NO_INLINE __attribute__((noinline))
 #else
-#   error "unsupported compiler"
+#   define NO_INLINE
 #endif
 #define SIMD_INLINE FORCE_INLINE VECTORCALL
 //----------------------------------------------------------------------------
@@ -384,11 +384,12 @@ using ubyte     = u8;
 using ushort    = u16;
 using word      = i32;
 using uword     = u32;
+using size_t    = CODE3264(u32, u64);
 //----------------------------------------------------------------------------
 struct uint128_t {
     u64 lo, hi;
 
-    CONSTEXPR static uint128_t Zero() { return uint128_t{ 0, 0 }; }
+    CONSTEXPR static uint128_t Zero() { return uint128_t{ .lo= 0, .hi= 0 }; }
 
     CONSTEXPR friend bool operator ==(const uint128_t& lhs, const uint128_t& rhs) { return ((lhs.hi == rhs.hi) && (lhs.lo == rhs.lo)); }
     CONSTEXPR friend bool operator !=(const uint128_t& lhs, const uint128_t& rhs) { return not operator ==(lhs, rhs); }
@@ -404,7 +405,7 @@ using u128 = uint128_t;
 struct uint256_t {
     uint128_t lo, hi;
 
-    CONSTEXPR static uint256_t Zero() { return uint256_t{ uint128_t::Zero(), uint128_t::Zero() }; }
+    CONSTEXPR static uint256_t Zero() { return uint256_t{ .lo= uint128_t::Zero(), .hi= uint128_t::Zero() }; }
 
     CONSTEXPR friend bool operator ==(const uint256_t& lhs, const uint256_t& rhs) { return ((lhs.hi == rhs.hi) && (lhs.lo == rhs.lo)); }
     CONSTEXPR friend bool operator !=(const uint256_t& lhs, const uint256_t& rhs) { return not operator ==(lhs, rhs); }

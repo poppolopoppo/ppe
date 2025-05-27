@@ -49,21 +49,6 @@ namespace {
 static bool GIsFirstInstance = false;
 static ::HANDLE GNamedMutex = NULL;
 //----------------------------------------------------------------------------
-template <typename _Char>
-struct TBasicNullTerminatedStr_ {
-    _Char Buffer[MAX_PATH + 1];
-    TBasicNullTerminatedStr_(const TBasicStringView<_Char>& str) {
-        Assert(str.size() <= MAX_PATH);
-        FPlatformMemory::Memcpy(Buffer, str.data(), str.SizeInBytes());
-        Buffer[str.size()] = L'\0';
-    }
-    operator const _Char* () const {
-        return (&Buffer[0]);
-    }
-};
-using FNullTerminatedStr_ = TBasicNullTerminatedStr_<char>;
-using FWNullTerminatedStr_ = TBasicNullTerminatedStr_<wchar_t>;
-//----------------------------------------------------------------------------
 static void ReleaseNamedMutex_(void) {
     if (GNamedMutex) {
         ::ReleaseMutex(GNamedMutex);
@@ -534,17 +519,23 @@ bool FWindowsPlatformProcess::SetPriority(FProcessHandle process, EProcessPriori
 
     switch (priority) {
     case PPE::EProcessPriority::Realtime:
-        dPriorityClass = REALTIME_PRIORITY_CLASS; break;
+        dPriorityClass = REALTIME_PRIORITY_CLASS;
+        break;
     case PPE::EProcessPriority::High:
-        dPriorityClass = HIGH_PRIORITY_CLASS; break;
+        dPriorityClass = HIGH_PRIORITY_CLASS;
+        break;
     case PPE::EProcessPriority::AboveNormal:
-        dPriorityClass = ABOVE_NORMAL_PRIORITY_CLASS; break;
+        dPriorityClass = ABOVE_NORMAL_PRIORITY_CLASS;
+        break;
     case PPE::EProcessPriority::Normal:
-        dPriorityClass = NORMAL_PRIORITY_CLASS; break;
+        dPriorityClass = NORMAL_PRIORITY_CLASS;
+        break;
     case PPE::EProcessPriority::BelowNormal:
-        dPriorityClass = BELOW_NORMAL_PRIORITY_CLASS; break;
+        dPriorityClass = BELOW_NORMAL_PRIORITY_CLASS;
+        break;
     case PPE::EProcessPriority::Idle:
-        dPriorityClass = IDLE_PRIORITY_CLASS; break;
+        dPriorityClass = IDLE_PRIORITY_CLASS;
+        break;
 
     default:
         AssertNotImplemented();
@@ -948,7 +939,7 @@ bool FWindowsPlatformProcess::EditWithDefaultApp(const wchar_t* filename) {
 auto FWindowsPlatformProcess::CreateSemaphore(const char* name, bool create, size_t maxLocks) -> FSemaphore {
     Assert(name);
 
-    ::HANDLE semaphore = NULL;
+    ::HANDLE semaphore;
 
     if (create) {
         semaphore = ::CreateSemaphoreA(NULL, checked_cast<long>(maxLocks), checked_cast<long>(maxLocks), name);

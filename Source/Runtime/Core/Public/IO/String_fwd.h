@@ -154,6 +154,9 @@ CONSTEXPR auto MakeStringLiteral(const _Char (&literalString)[_Len]) {
     return TBasicStringLiteral<_Char>{ literalString };
 }
 //----------------------------------------------------------------------------
+NODISCARD CONSTEXPR FStringLiteral operator ""_literal(const char* str, size_t len) NOEXCEPT;
+NODISCARD CONSTEXPR FWStringLiteral operator ""_literal(const wchar_t* wstr, size_t len) NOEXCEPT;
+//----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
 // Stores a string with a custom allocator, content can't be modified once created
