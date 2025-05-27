@@ -39,23 +39,11 @@ PPE_CORE_API void (tracking_free_for_delete)(FAllocatorBlock blk) NOEXCEPT;
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
-NODISCARD inline void* (tracking_aligned_malloc)(FMemoryTracking& trackingData, size_t size, size_t alignment) {
-    Unused(alignment);
-    void* const p = (tracking_malloc)(trackingData, size);
-    Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
-    return p;
-}
+NODISCARD PPE_CORE_API void* (tracking_aligned_malloc)(FMemoryTracking& trackingData, size_t size, size_t alignment);
 //----------------------------------------------------------------------------
-NODISCARD inline void* (tracking_aligned_realloc)(FMemoryTracking& trackingData, void* ptr, size_t size, size_t alignment) {
-    Unused(alignment);
-    void* const p = (tracking_realloc)(trackingData, ptr, size);
-    Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
-    return p;
-}
+NODISCARD PPE_CORE_API void* (tracking_aligned_realloc)(FMemoryTracking& trackingData, void* ptr, size_t size, size_t alignment);
 //----------------------------------------------------------------------------
-inline void (tracking_aligned_free)(void* ptr) {
-    (tracking_free)(ptr);
-}
+PPE_CORE_API void (tracking_aligned_free)(void* ptr);
 //----------------------------------------------------------------------------
 //////////////////////////////////////////////////////////////////////////////
 //----------------------------------------------------------------------------
@@ -83,7 +71,7 @@ NODISCARD void* tracking_aligned_malloc(size_t size, size_t alignment) {
     return (tracking_aligned_malloc)(_MemoryDomain::TrackingData(), size, alignment);
 #else
     Unused(alignment); // assume always naturally aligned with target
-    void* const p = (PPE::malloc)(size);
+    void* const p = (PPE::aligned_malloc)(size, alignment);
     Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
     return p;
 #endif
