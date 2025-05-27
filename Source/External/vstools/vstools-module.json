@@ -11,7 +11,7 @@
 	"AllowedPlatforms": [
 		"Win32", "Win64"
 	],
-	"Debug": "Disabled",
+	"DebugInfo": "Disabled",
 	"Link": "Dynamic",
 	"HAL": {
 		"Windows": {

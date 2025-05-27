@@ -45,11 +45,11 @@ type BuildVersionHeaderGenerator struct {
 func (x *BuildVersionHeaderGenerator) Serialize(ar Archive) {
 	ar.String(&x.Version)
 }
-func (x BuildVersionHeaderGenerator) CreateGenerated(unit *Unit, output Filename) Generated {
+func (x BuildVersionHeaderGenerator) CreateGenerated(unit *Unit, output Filename) (Generated, error) {
 	return &BuildVersionGeneratedHeader{
 		ModuleDir: unit.ModuleDir,
 		Version:   x.Version,
-	}
+	}, nil
 }
 
 type BuildVersionGeneratedHeader struct {
@@ -91,12 +91,12 @@ type BuildModulesHeaderGenerator struct {
 func (x *BuildModulesHeaderGenerator) Serialize(ar Archive) {
 	ar.String(&x.Version)
 }
-func (x BuildModulesHeaderGenerator) CreateGenerated(unit *Unit, output Filename) Generated {
+func (x BuildModulesHeaderGenerator) CreateGenerated(unit *Unit, output Filename) (Generated, error) {
 	return &BuildModulesGeneratedHeader{
 		Version:          x.Version,
 		Target:           unit.TargetAlias,
 		ShouldExportInfo: unit.Payload != PAYLOAD_EXECUTABLE,
-	}
+	}, nil
 }
 
 type BuildModulesGeneratedHeader struct {
@@ -113,13 +113,13 @@ func (x *BuildModulesGeneratedHeader) Serialize(ar Archive) {
 	ar.Bool(&x.ShouldExportInfo)
 }
 func (x BuildModulesGeneratedHeader) Generate(bc BuildContext, generated *BuildGenerated, dst io.Writer) error {
-	unit, err := FindBuildUnit(x.Target)
+	unit, err := FindBuildUnit(bc, x.Target)
 	if err != nil {
 		return err
 	}
 
 	filterModule := func(ta TargetAlias) bool {
-		module, err := FindBuildModule(ta.ModuleAlias)
+		module, err := FindBuildModule(bc, ta.ModuleAlias)
 		if err != nil {
 			panic(err)
 		}

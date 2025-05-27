@@ -1,7 +1,7 @@
 {
 	"Archetypes": [
 		"PPE/External",
-		"SDK/SPIRV-TOOLS"
+		"SDK/EXTERNAL"
 	],
 	"ExtraFiles": [
 		"Public/spirv-tools-external.h"
@@ -13,6 +13,48 @@
 		"Private/spirv-tools.cpp"
 	],
 	"Exports": [
-		"SpirvTools/Path=SPIRV-Tools.zip"
-	]
+		"SDK/Name=SPIRV-Tools",
+		"SDK/IncludeDirname=install/include",
+		"SDK/ExtractDirname=SPIRV-Tools.zip",
+		"SDK/HeadersRegexp=(?i)(?:install[\\\\/]include[\\\\/]spirv-tools[\\\\/].*)",
+		"SDK/FollowRedirect=true"
+	],
+	"HAL": {
+		"Windows": {
+			"Exports": [
+				"SDK/ArchiveURL=https://storage.googleapis.com/spirv-tools/badges/build_link_windows_vs2022_release.html"
+			]
+		},
+		"Linux": {
+			"Exports": [
+				"SDK/ArchiveURL=https://storage.googleapis.com/spirv-tools/badges/build_link_linux_gcc_release.html"
+			]
+		},
+		"Darwin": {
+			"Exports": [
+				"SDK/ArchiveURL=https://storage.googleapis.com/spirv-tools/badges/build_link_macos_clang_release.html"
+			]
+		}
+	},
+	"TAG": {
+		"DEBUG": {
+			"HAL": {
+				"Windows": {
+					"Exports": [
+						"SDK/ArchiveURL=https://storage.googleapis.com/spirv-tools/badges/build_link_windows_vs2022_debug.html"
+					]
+				},
+				"Linux": {
+					"Exports": [
+						"SDK/ArchiveURL=https://storage.googleapis.com/spirv-tools/badges/build_link_linux_gcc_debug.html"
+					]
+				},
+				"Darwin": {
+					"Exports": [
+						"SDK/ArchiveURL=https://storage.googleapis.com/spirv-tools/badges/build_link_macos_clang_debug.html"
+					]
+				}
+			}
+		}
+	}
 }

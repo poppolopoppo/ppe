@@ -20,5 +20,8 @@
 	],
 	"PrivateDependencies": [
 		"External/glslang"
-	]
+	],
+	"Warnings": {
+		"Default": "WARN"
+	}
 }

@@ -4,13 +4,16 @@ BASEDIR=$(dirname "$0")
 PPEDIR="$BASEDIR/../.."
 
 function ppb_profile_command() {
+    echo '[[' $* ']]'
     ./PPE $*
     go tool pprof -proto cpu.pprof default.pgo > merged.pprof && mv merged.pprof default.pgo
 }
 
 cd "$PPEDIR" && \
+    echo '[[ Build PPB with PGO profiling ]]' && \
     go build -tags=ppb_profiling PPE.go && \
     echo > default.pgo && \
+    echo '[[ Run PPB coverage tests ]]' && \
     ppb_profile_command configure -F && \
     ppb_profile_command configure -F -q -Ide && \
     ppb_profile_command configure -and vscode -and vcxproj -F -q -Ide && \

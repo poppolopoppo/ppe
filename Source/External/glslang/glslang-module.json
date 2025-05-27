@@ -1,7 +1,7 @@
 {
 	"Archetypes": [
 		"PPE/External",
-		"SDK/GLSLANG"
+		"SDK/EXTERNAL"
 	],
 	"ExtraFiles": [
 		"Public/glslang-external.h"
@@ -13,6 +13,47 @@
 		"Private/glslang.cpp"
 	],
 	"Exports": [
-		"Glslang/Path=glslang.zip"
-	]
+		"SDK/Name=glslang",
+		"SDK/ExtractDirname=glslang.zip",
+		"SDK/HeadersRegexp=(?i)(?:include[\\\\/]glslang[\\\\/](Include|Public|MachineIndependent|SPIRV)[\\\\/].*)",
+		"SDK/LibrariesRegexp=(?i)(?:lib[\\\\/](GenericCodeGen|glslang|MachineIndependent|OGLCompiler|OSDependent|SPIRV).*)"
+	],
+	"HAL": {
+		"Windows": {
+			"Exports": [
+				"SDK/ArchiveURL=http://github.com/KhronosGroup/glslang/releases/download/master-tot/glslang-master-windows-x64-Release.zip"
+			]
+		},
+		"Linux": {
+			"Exports": [
+				"SDK/ArchiveURL=http://github.com/KhronosGroup/glslang/releases/download/master-tot/glslang-master-linux-Release.zip"
+			]
+		},
+		"Darwin": {
+			"Exports": [
+				"SDK/ArchiveURL=http://github.com/KhronosGroup/glslang/releases/download/master-tot/glslang-master-osx-Release.zip"
+			]
+		}
+	},
+	"TAG": {
+		"DEBUG": {
+			"HAL": {
+				"Windows": {
+					"Exports": [
+						"SDK/ArchiveURL=http://github.com/KhronosGroup/glslang/releases/download/master-tot/glslang-master-windows-x64-Debug.zip"
+					]
+				},
+				"Linux": {
+					"Exports": [
+						"SDK/ArchiveURL=http://github.com/KhronosGroup/glslang/releases/download/master-tot/glslang-master-linux-Debug.zip"
+					]
+				},
+				"Darwin": {
+					"Exports": [
+						"SDK/ArchiveURL=http://github.com/KhronosGroup/glslang/releases/download/master-tot/glslang-master-osx-Debug.zip"
+					]
+				}
+			}
+		}
+	}
 }
