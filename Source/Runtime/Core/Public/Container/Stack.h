@@ -411,6 +411,15 @@ void Add_AssertUnique(TStack<T, _IsPod>& s, T&& relt) {
 }
 //----------------------------------------------------------------------------
 template <typename T, bool _IsPod>
+bool Add_Unique(TStack<T, _IsPod>& s, const T& elt) {
+    if (not s.Contains(elt)) {
+        s.Push(elt);
+        return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename T, bool _IsPod>
 bool Add_Unique(TStack<T, _IsPod>& s, T&& relt) {
     if (not s.Contains(relt)) {
         s.Push(std::move(relt));

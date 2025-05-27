@@ -343,8 +343,7 @@ FRawImageID FVulkanCommandBuffer::SwapchainImage(FRawSwapchainID swapchainId) {
     // transit to undefined layout
     AcquireImage(imageId, true, true);
 
-    Add_Unique(exclusive->Batch->_data.LockExclusive()->Swapchains,
-               static_cast<const FVulkanSwapchain*>(pSwapchain));
+    Add_Unique(exclusive->Batch->_data.LockExclusive()->Swapchains, pSwapchain);
 
     return imageId;
 }

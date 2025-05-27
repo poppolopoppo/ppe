@@ -349,6 +349,9 @@ template <typename T, typename _Allocator>
 void Add_AssertUnique(TVector<T, _Allocator>& v, Meta::TDontDeduce<T>&& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+bool Add_Unique(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>&& elt);
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 bool Add_Unique(TVector<T, _Allocator>& v, Meta::TDontDeduce<T>&& elt);
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename... _Args>

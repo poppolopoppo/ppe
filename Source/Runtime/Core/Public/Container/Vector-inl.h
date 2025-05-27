@@ -752,14 +752,21 @@ auto Emplace_Back(TVector<T, _Allocator>& v, _Args&&... args) -> Meta::TEnableIf
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator>
+bool Add_Unique(TVector<T, _Allocator>& v, const Meta::TDontDeduce<T>& elt) {
+    if (not Contains(v, elt)) {
+        v.emplace_back(elt);
+        return true;
+    }
+    return false;
+}
+//----------------------------------------------------------------------------
+template <typename T, typename _Allocator>
 bool Add_Unique(TVector<T, _Allocator>& v, Meta::TDontDeduce<T>&& elt) {
     if (not Contains(v, elt)) {
         v.emplace_back(std::move(elt));
         return true;
     }
-    else {
-        return false;
-    }
+    return false;
 }
 //----------------------------------------------------------------------------
 template <typename T, typename _Allocator, typename _Pred>
