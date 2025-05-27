@@ -251,7 +251,8 @@ bool FShaderToyApp::FBuffer::RecreateRenderTarget(RHI::IFrameGraph& fg, const ui
 }
 //----------------------------------------------------------------------------
 RHI::PFrameTask FShaderToyApp::FBuffer::UpdateUniformBuffer(const RHI::FCommandBufferBatch& cmd, const FPushConstantData& frameData) {
-    FPushConstantData pc = frameData;
+    alignas(16) FPushConstantData pc;
+    pc = frameData;
 
     pc.iResolution.xy = float2(Resolution);
     pc.iResolution.zw = Rcp(pc.iResolution.xy);
