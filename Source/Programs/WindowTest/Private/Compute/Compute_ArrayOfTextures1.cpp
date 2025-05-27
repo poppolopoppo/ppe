@@ -15,6 +15,7 @@ bool Compute_ArrayOfTextures1_(FWindowTestApp& app) {
     desc.AddShader(EShaderLangFormat::VKSL_100, "main", R"#(
 #version 460 core
 #extension GL_ARB_shading_language_420pack : enable
+#extension GL_EXT_nonuniform_qualifier : require
 
 layout (local_size_x = 8, local_size_y = 1, local_size_z = 1) in;
 
@@ -26,7 +27,7 @@ void main ()
 {
 	const int	i		= int(gl_LocalInvocationIndex);
 	const vec2	coord	= vec2(gl_GlobalInvocationID.xy) / vec2(gl_WorkGroupSize.xy * gl_NumWorkGroups.xy - 1);
-		  vec4	color	= texture( un_Textures[i], coord );
+		  vec4	color	= texture( un_Textures[nonuniformEXT(i)], coord );
 
 	imageStore( un_OutImage, ivec2(gl_GlobalInvocationID.xy), color );
 }
