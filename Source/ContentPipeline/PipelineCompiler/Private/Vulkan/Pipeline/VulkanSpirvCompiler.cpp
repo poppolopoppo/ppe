@@ -693,7 +693,17 @@ bool FVulkanSpirvCompiler::CompileSPIRV_(FRawData* outSPIRV, const FCompilationC
     PPE_LOG_CHECK(PipelineCompiler, !!intermediate);
 
     SpvOptions spvOptions{};
-    spvOptions.generateDebugInfo = (_compilationFlags & EShaderCompilationFlags::GenerateDebug);
+    if (_compilationFlags & EShaderCompilationFlags::GenerateDebug) {
+        spvOptions.generateDebugInfo = true;
+        spvOptions.stripDebugInfo = false;
+        spvOptions.emitNonSemanticShaderDebugInfo = true;
+        spvOptions.emitNonSemanticShaderDebugSource = true;
+    }
+    else {
+        spvOptions.generateDebugInfo = false;
+        spvOptions.stripDebugInfo = true;
+    }
+
     spvOptions.disableOptimizer = not (_compilationFlags & EShaderCompilationFlags::Optimize);
     spvOptions.optimizeSize = (_compilationFlags & EShaderCompilationFlags::OptimizeSize);
     spvOptions.validate = (_compilationFlags & EShaderCompilationFlags::Validate);

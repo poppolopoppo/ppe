@@ -649,6 +649,8 @@ void SetupDeviceFeatures_(FVulkanDeviceFeatures_* pFeatures, void** nextExt, VkP
     enableFeature(&pFeatures->ConditionalRendering, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT);
     enableFeature(&pFeatures->ShaderDrawParameters, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES);
 
+    *nextFeatures = nullptr;
+
     api.vkGetPhysicalDeviceFeatures2( vkPhysicalDevice, &pFeatures->Main2 );
 }
 //----------------------------------------------------------------------------
@@ -1451,7 +1453,11 @@ FVulkanDeviceExtensionSet FVulkanInstance::RequiredDeviceExtensions(EVulkanVersi
 //----------------------------------------------------------------------------
 FVulkanDeviceExtensionSet FVulkanInstance::DebuggingDeviceExtensions(EVulkanVersion version) NOEXCEPT {
     Unused(version);
-    return Default;
+    FVulkanDeviceExtensionSet result;
+#ifdef VK_KHR_shader_non_semantic_info
+    result += EVulkanDeviceExtension::KHR_shader_non_semantic_info;
+#endif
+    return result;
 }
 //----------------------------------------------------------------------------
 FVulkanDeviceExtensionSet FVulkanInstance::ProfilingDeviceExtensions(EVulkanVersion version) NOEXCEPT {
