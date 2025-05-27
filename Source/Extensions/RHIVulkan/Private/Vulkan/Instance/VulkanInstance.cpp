@@ -44,10 +44,8 @@ static void* VulkanMalloc_(void* pUserData, size_t size, size_t alignment, VkSys
 #if USE_PPE_MEMORYDOMAINS
     return PPE::tracking_aligned_malloc(VulkanTrackingData_(allocationScope), size, alignment);
 #else
-    Unused(alignment);
     Unused(allocationScope);
-    Assert_NoAssume(alignment < ALLOCATION_BOUNDARY);
-    void* const p = PPE::malloc(size);
+    void* const p = PPE::aligned_malloc(size, alignment);
     Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
     return p;
 #endif
@@ -58,10 +56,8 @@ static void* VulkanRealloc_(void* pUserData, void* pOriginal, size_t size, size_
 #if USE_PPE_MEMORYDOMAINS
     return PPE::tracking_aligned_realloc(VulkanTrackingData_(allocationScope), pOriginal, size, alignment);
 #else
-    Unused(alignment);
     Unused(allocationScope);
-    Assert_NoAssume(alignment < ALLOCATION_BOUNDARY);
-    void* const p = PPE::realloc(pOriginal, size);
+    void* const p = PPE::aligned_realloc(pOriginal, size, alignment);
     Assert_NoAssume(Meta::IsAlignedPow2(alignment, p));
     return p;
 #endif
@@ -70,9 +66,9 @@ static void* VulkanRealloc_(void* pUserData, void* pOriginal, size_t size, size_
 static void VulkanFree_(void* pUserData, void* pMemory) {
     Unused(pUserData);
 #if USE_PPE_MEMORYDOMAINS
-    PPE::tracking_free(pMemory);
+    PPE::tracking_aligned_free(pMemory);
 #else
-    PPE::free(pMemory);
+    PPE::aligned_free(pMemory);
 #endif
 }
 //----------------------------------------------------------------------------

@@ -32,12 +32,12 @@ struct FBlockTracking_ {
 
     canary_type Canary;
 
-    canary_type MakeCanary() const {
+    canary_type MakeCanary(size_t userSeed = CanarySeed) const {
         return static_cast<canary_type>(hash_tuple(
             hash_ptr(this),
             hash_ptr(TrackingData),
             UserSize,
-            CanarySeed));
+            userSeed));
     }
 
     bool CheckCanary() const { return (MakeCanary() == Canary); }
@@ -75,6 +75,66 @@ struct FBlockTracking_ {
     }
 };
 STATIC_ASSERT(sizeof(FBlockTracking_) == ALLOCATION_BOUNDARY);
+//----------------------------------------------------------------------------
+struct FAlignedBlockTracking_ {
+    using canary_type = FBlockTracking_::canary_type;
+
+    void* AllocPtr;
+    size_t Alignment;
+    FBlockTracking_ BlockData;
+
+    canary_type MakeCanary() const {
+        return static_cast<canary_type>(hash_tuple(
+            BlockData.MakeCanary(),
+            AllocPtr,
+            Alignment));
+    }
+
+    bool CheckCanary() const { return MakeCanary() == BlockData.Canary; }
+
+    static CONSTEXPR CONSTF size_t UserSizeFromSystem(size_t systemSize, size_t alignment) {
+        Assert(systemSize > sizeof(FAlignedBlockTracking_) + alignment);
+        return systemSize - sizeof(FAlignedBlockTracking_) - alignment;
+    }
+    static CONSTEXPR CONSTF size_t SystemSizeFromUser(size_t userSize, size_t alignment) {
+        return userSize + sizeof(FAlignedBlockTracking_) + alignment;
+    }
+
+    static FAlignedBlockTracking_* BlockFromPtr(void* ptr) NOEXCEPT {
+        return (reinterpret_cast<FAlignedBlockTracking_*>(ptr) - 1);
+    }
+
+    static void* MakeAlloc(FMemoryTracking& tracking, void* allocPtr, size_t userSize, size_t alignment) NOEXCEPT {
+        const size_t systemSize = FMallocDebug::RegionSize(allocPtr);
+        u8* const userPtr = Meta::RoundToNext(static_cast<u8*>(allocPtr) + sizeof(FAlignedBlockTracking_), alignment);
+        Assert(systemSize - (userPtr - static_cast<u8*>(allocPtr)) >= userSize);
+
+        auto* const pblock = BlockFromPtr(userPtr);
+        pblock->AllocPtr = allocPtr;
+        pblock->Alignment = alignment;
+        pblock->BlockData.TrackingData = &tracking;
+        pblock->BlockData.UserSize = checked_cast<u32>(userSize);
+        pblock->BlockData.Canary = pblock->MakeCanary();
+
+        pblock->BlockData.TrackingData->Allocate(userSize, systemSize);
+
+        Assert_NoAssume(Meta::IsAlignedPow2(pblock->Alignment, userPtr));
+        Assert_NoAssume(Meta::IsAlignedPow2(ALLOCATION_BOUNDARY, userPtr));
+        return userPtr;
+    }
+
+    static FAlignedBlockTracking_* ReleaseAlloc(void* userPtr) {
+        FAlignedBlockTracking_* const pblock = BlockFromPtr(userPtr);
+        Assert_NoAssume(Meta::IsAlignedPow2(pblock->Alignment, userPtr));
+        Assert_NoAssume(pblock->CheckCanary());
+
+        pblock->BlockData.TrackingData->Deallocate(pblock->BlockData.UserSize, FMallocDebug::RegionSize(pblock->AllocPtr));
+
+        return pblock;
+    }
+};
+STATIC_ASSERT(sizeof(FAlignedBlockTracking_) == 2 * ALLOCATION_BOUNDARY);
+//----------------------------------------------------------------------------
 #endif //!USE_PPE_TRACKINGMALLOC
 //----------------------------------------------------------------------------
 } //!namespace
@@ -204,6 +264,72 @@ FAllocatorBlock (tracking_realloc_for_new)(FMemoryTracking& trackingData, FAlloc
 #else
     Unused(trackingData);
     return PPE::realloc_for_new(blk, size);
+#endif
+}
+//----------------------------------------------------------------------------
+//////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------
+void* (tracking_aligned_malloc)(FMemoryTracking& trackingData, size_t size, size_t alignment) {
+#if USE_PPE_TRACKINGMALLOC
+    Assert(Meta::IsPow2(alignment));
+    alignment = Max<size_t>(alignment, ALLOCATION_BOUNDARY);
+    if (0 == size)
+        return nullptr;
+
+    const FMemoryTracking::FThreadScope threadTracking{ trackingData };
+
+    // We align the block manually, so don't use aligned_malloc() when tracking memory
+    void* const pblock = PPE::malloc(FAlignedBlockTracking_::SystemSizeFromUser(size, alignment));
+
+    return FAlignedBlockTracking_::MakeAlloc(trackingData, pblock, size, alignment);
+
+#else
+    Unused(trackingData);
+    return PPE::aligned_malloc(size, alignment);
+#endif
+}
+//----------------------------------------------------------------------------
+void* (tracking_aligned_realloc)(FMemoryTracking& trackingData, void* ptr, size_t size, size_t alignment) {
+#if USE_PPE_TRACKINGMALLOC
+    Assert(Meta::IsPow2(alignment));
+    alignment = Max<size_t>(alignment, ALLOCATION_BOUNDARY);
+    const FMemoryTracking::FThreadScope threadTracking{ trackingData };
+
+    void* allocPtr = nullptr;
+    if (!!ptr) {
+        auto* const pblock = FAlignedBlockTracking_::ReleaseAlloc(ptr);
+        Assert_NoAssume(&trackingData == pblock->BlockData.TrackingData);
+        allocPtr = pblock->AllocPtr;
+    }
+
+    // We align the block manually, so don't use aligned_realloc() when tracking memory
+    void* const nblock = PPE::realloc(allocPtr, FAlignedBlockTracking_::SystemSizeFromUser(size, alignment));
+    if (Likely(!!nblock))
+        return FAlignedBlockTracking_::MakeAlloc(trackingData, nblock, size, alignment);
+
+    Assert_NoAssume(size == 0);
+    return nullptr;
+
+#else
+    Unused(trackingData);
+    return PPE::aligned_realloc(ptr, size, alignment);
+#endif
+}
+//----------------------------------------------------------------------------
+void (tracking_aligned_free)(void* ptr) {
+#if USE_PPE_TRACKINGMALLOC
+    if (nullptr == ptr)
+        return;
+
+    FAlignedBlockTracking_* const pblock = FAlignedBlockTracking_::ReleaseAlloc(ptr);
+
+    const FMemoryTracking::FThreadScope threadTracking{ *pblock->BlockData.TrackingData };
+
+    // We align the block manually, so don't use aligned_free() when tracking memory
+    PPE::free(pblock->AllocPtr);
+
+#else
+    PPE::aligned_free(ptr);
 #endif
 }
 //----------------------------------------------------------------------------

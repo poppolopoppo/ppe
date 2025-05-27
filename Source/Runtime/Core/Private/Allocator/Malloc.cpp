@@ -549,7 +549,6 @@ void*   (realloc)(void *ptr, size_t size) {
 //----------------------------------------------------------------------------
 NOALIAS RESTRICT
 void*   (aligned_malloc)(size_t size, size_t alignment) {
-    Assert_NoAssume(ALLOCATION_BOUNDARY < alignment);
     return (Likely(size) ? FMallocProxy::AlignedMalloc(size, alignment) : nullptr);
 }
 //----------------------------------------------------------------------------
@@ -562,13 +561,11 @@ void    (aligned_free)(void *ptr) {
 NOALIAS RESTRICT
 void*   (aligned_calloc)(size_t nmemb, size_t size, size_t alignment) {
     AssertRelease(size);
-    Assert_NoAssume(ALLOCATION_BOUNDARY < alignment);
     return (Likely(nmemb) ? FMallocProxy::AlignedCalloc(nmemb, size, alignment) : nullptr);
 }
 //----------------------------------------------------------------------------
 NOALIAS RESTRICT
 void*   (aligned_realloc)(void *ptr, size_t size, size_t alignment) {
-    Assert_NoAssume(ALLOCATION_BOUNDARY < alignment);
     return FMallocProxy::AlignedRealloc(ptr, size, alignment);
 }
 //----------------------------------------------------------------------------
