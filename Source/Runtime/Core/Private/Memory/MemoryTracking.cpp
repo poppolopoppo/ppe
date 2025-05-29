@@ -48,12 +48,15 @@ static bool CONSTF ShouldIgnoreMemoryChecks_(const FMemoryTracking& domain) {
 //----------------------------------------------------------------------------
 #if USE_PPE_ASSERT
 static bool CONSTF PPE_DEBUG_SECTION CheckMemoryPredicates2_(const FMemoryTracking::FCounters& user, const FMemoryTracking::FCounters& system) NOEXCEPT {
-    forrange(n, 0, 10) {
-        u64 usz = user.TotalSize.load(std::memory_order_relaxed);
-        u64 ssz = system.TotalSize.load(std::memory_order_relaxed);
-        std::atomic_thread_fence(std::memory_order_acquire);
+    i32 backoff{0};
+    forrange(n, 0, 100) {
+        const u64 usz = user.TotalSize.load(std::memory_order_relaxed);
+        const u64 ssz = system.TotalSize.load(std::memory_order_relaxed);
+        std::atomic_thread_fence(std::memory_order_seq_cst);
         if (usz <= ssz)
             return true;
+
+        FPlatformProcess::SleepForSpinning(backoff);
     }
 
     Assert_NoAssume(false);
