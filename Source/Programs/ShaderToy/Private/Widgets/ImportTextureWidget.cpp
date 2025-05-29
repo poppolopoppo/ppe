@@ -327,10 +327,7 @@ bool FImportTextureWidget::Show() {
 
     if (TextureGenerated) {
         if (not TextureGenerated->Available()) {
-            ImGui::SetCursorPos(float2(ImGui::GetWindowViewport()->GetCenter()) - 40.f);
-            ImGui::PushFont(ImGui::LargeFont());
-            ImGui::Spinner("Compressing texture...", 40, 8, ImGui::GetColorU32(ImGuiCol_TitleBgActive));
-            ImGui::PopFont();
+            ImGui::OpenPopup("Compressing Texture");
         } else {
             if (const ContentPipeline::PTexture generated = TextureGenerated->Result())
                 _OnImportSuccess.FireAndForget(generated);
@@ -339,6 +336,21 @@ bool FImportTextureWidget::Show() {
 
             Reset();
             ImGui::CloseCurrentPopup();
+        }
+
+        // Always center this window when appearing
+        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+        if (ImGui::BeginPopupModal("Compressing Texture", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+            ImGui::PushFont(ImGui::LargeFont());
+            ImGui::Spinner("Compressing texture...", 40, 8, ImGui::GetColorU32(ImGuiCol_TitleBgActive));
+            ImGui::PopFont();
+
+            if (not TextureGenerated or TextureGenerated->Available())
+                ImGui::CloseCurrentPopup();
+
+            ImGui::EndPopup();
         }
     }
 
