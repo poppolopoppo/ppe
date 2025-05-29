@@ -296,7 +296,7 @@ FReleaseAssertionHandler SetAssertionReleaseHandler(FReleaseAssertionHandler han
     }
 }
 //----------------------------------------------------------------------------
-FReleaseAssertionHandler SetAssertionReleaseHandlerForCurrentThrad(FReleaseAssertionHandler handler) NOEXCEPT {
+FReleaseAssertionHandler SetAssertionReleaseHandlerForCurrentThread(FReleaseAssertionHandler handler) NOEXCEPT {
     std::swap(handler, GAssertionReleaseHandlerForCurrentThread);
     return handler;
 }
