@@ -660,7 +660,6 @@ bool FVulkanSwapchain::FInternalData_::CreateSwapchain_(FVulkanFrameGraph& fg AR
     PPE_LOG_CHECK(RHI, ChoosePresentQueue_(fg));
 
     PPE_SLOG(RHI, Info, "swapchain properties", {
-        {"Name", debugName.MakeView()},
         {"ColorFormat", Opaq::Format(RHICast(ColorFormat))},
         {"ColorSpace", Opaq::Format(ColorSpace)},
         {"NumImages", ImageIds.size()},
@@ -669,11 +668,12 @@ bool FVulkanSwapchain::FInternalData_::CreateSwapchain_(FVulkanFrameGraph& fg AR
         {"CompositeAlpha", Opaq::Format(CompositeAlpha)},
         {"ColorImageUsage", Opaq::Format(ColorImageUsage)},
         {"PresentQueueFamily", static_cast<u32>(PresentQueue->FamilyIndex)},
-        {"PresentQueueName", PresentQueue->DebugName},
         {"SurfaceSize", Opaq::object_init{
             {"Width", SurfaceSize.x},
             {"Height", SurfaceSize.y},
         }}
+        ARG0_IF_RHIDEBUG({"PresentQueueName", PresentQueue->DebugName})
+        ARG0_IF_RHIDEBUG({"Name", debugName.MakeView()})
     });
 
     return true;
