@@ -2,9 +2,10 @@
 
 #include "Application.h"
 
-#include "HAL/PlatformApplication.h"
+#include "HAL/PlatformDialog.h"
 #include "HAL/PlatformProcess.h"
 
+#include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/FeedbackContext.h"
 #include "Modular/ModularDomain.h"
 
@@ -23,6 +24,14 @@ public:
         FGlobalFeedbackContext::Start();
 
         ReportAllTrackingData();
+
+#if !USE_PPE_FINAL_RELEASE
+        // Detect debugger for QOL
+        if (FCurrentProcess::StartedWithDebugger()) {
+            // Do not show startup splash screen if a debuger is attached
+            FPlatformDialog::ToggleSplashScreenEnabled(false);
+        }
+#endif
     }
 
     static void OnPlatformShutdown() {

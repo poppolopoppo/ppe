@@ -21,6 +21,9 @@ public:
 
     PPE_CORE_API static EResult FileDialog(const FConstWChar& sourceFile, u32 sourceLine, const FWStringView& text, const FWStringView& caption, EType dialogType, EIcon iconType);
 
+    PPE_CORE_API static bool IsSplashScreenEnabled() NOEXCEPT;
+    PPE_CORE_API static void ToggleSplashScreenEnabled(bool enabled) NOEXCEPT;
+
     PPE_CORE_API static bool PushSplashScreen_ReturnIfOpened();
     PPE_CORE_API static bool PopSplashScreen_ReturnIfOpened();
 

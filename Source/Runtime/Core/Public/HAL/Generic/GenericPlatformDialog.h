@@ -59,6 +59,9 @@ public: // must be defined for every platform
     static EResult Show(const FWStringView& text, const FWStringView& caption, EType dialogType, EIcon iconType) = delete;
     static EResult FileDialog(const FConstWChar& sourceFile, u32 sourceLine, const FWStringView& text, const FWStringView& caption, EType dialogType, EIcon iconType) = delete;
 
+    static bool IsSplashScreenEnabled() NOEXCEPT = delete;
+    static void ToggleSplashScreenEnabled(bool enabled) = delete;
+
     static bool PushSplashScreen_ReturnIfOpened() = delete;
     static bool PopSplashScreen_ReturnIfOpened() = delete;
 

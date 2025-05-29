@@ -5,6 +5,8 @@
 #include "ApplicationModule.h"
 #include "Diagnostic/CurrentProcess.h"
 #include "Diagnostic/Logger.h"
+
+#include "HAL/PlatformDialog.h"
 #include "HAL/PlatformMessageHandler.h"
 #include "HAL/PlatformTime.h"
 #include "Maths/MathHelpers.h"
@@ -25,8 +27,11 @@ FGenericApplication::FGenericApplication(FModularDomain& domain, FString&& name)
     Assert(not _name.empty());
 
 #if !USE_PPE_FINAL_RELEASE
-    if (FCurrentProcess::StartedWithDebugger())
+    // Detect debugger for QOL
+    if (FCurrentProcess::StartedWithDebugger()) {
+        // Do not change frame pacing when losing focus if a debugger is attached
         _lowerTickRateInBackground = false;
+    }
 #endif
 
     _domain.Services().Add<IApplicationService>(this);

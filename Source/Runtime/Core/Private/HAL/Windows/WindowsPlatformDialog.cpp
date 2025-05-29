@@ -1051,6 +1051,8 @@ private:
     }
 };
 //----------------------------------------------------------------------------
+bool GSplashScreenEnabled_ = true;
+//----------------------------------------------------------------------------
 TThreadSafe<TPtrRef<FSplashScreenDialog_>, EThreadBarrier::RWLock> FSplashScreenDialog_::GInstance_{};
 //----------------------------------------------------------------------------
 } //!namespace
@@ -1072,12 +1074,24 @@ auto FWindowsPlatformDialog::FileDialog(const FConstWChar& sourceFile, u32 sourc
     return Template_CreateDialogBox_(iconType, dialogType, text, caption, sourceFile, sourceLine);
 }
 //----------------------------------------------------------------------------
+bool FWindowsPlatformDialog::IsSplashScreenEnabled() NOEXCEPT {
+    return GSplashScreenEnabled_;
+}
+//----------------------------------------------------------------------------
+void FWindowsPlatformDialog::ToggleSplashScreenEnabled(bool enabled) NOEXCEPT {
+    GSplashScreenEnabled_ = enabled;
+}
+//----------------------------------------------------------------------------
 bool FWindowsPlatformDialog::PushSplashScreen_ReturnIfOpened() {
-    return FSplashScreenDialog_::PushOpen();
+    if (GSplashScreenEnabled_)
+        return FSplashScreenDialog_::PushOpen();
+    return false;
 }
 //----------------------------------------------------------------------------
 bool FWindowsPlatformDialog::PopSplashScreen_ReturnIfOpened() {
-    return FSplashScreenDialog_::PopClose();
+    if (GSplashScreenEnabled_)
+        return FSplashScreenDialog_::PopClose();
+    return false;
 }
 //----------------------------------------------------------------------------
 auto FWindowsPlatformDialog::BeginProgress(const FWStringView& text, size_t total/* = 0.f */) -> FDialogHandle {
