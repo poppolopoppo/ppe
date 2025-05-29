@@ -197,8 +197,9 @@ public:
     NODISCARD PPE_CORE_API static FSharedBuffer MakeView(u64 offset, u64 sizeInBytes, FSharedBuffer&& outer);
     NODISCARD PPE_CORE_API static FSharedBuffer MakeView(u64 offset, u64 sizeInBytes, const FSharedBuffer& outer);
 
-    NODISCARD PPE_CORE_API static FSharedBuffer MakeView(const FUniqueBuffer& outer);
-    NODISCARD PPE_CORE_API static FSharedBuffer MakeView(u64 offset, u64 sizeInBytes, const FUniqueBuffer& outer);
+    // /!\ UNSAFE API /!\
+    // NODISCARD PPE_CORE_API static FSharedBuffer MakeView(const FUniqueBuffer& outer);
+    // NODISCARD PPE_CORE_API static FSharedBuffer MakeView(u64 offset, u64 sizeInBytes, const FUniqueBuffer& outer);
 
     template <typename _Pod, size_t _Dim>
     NODISCARD static Meta::TEnableIf<Meta::is_pod_v<_Pod>, FSharedBuffer> MakeView(const _Pod (&arr)[_Dim]) {

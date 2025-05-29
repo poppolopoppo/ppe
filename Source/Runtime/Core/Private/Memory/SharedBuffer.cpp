@@ -231,15 +231,15 @@ FSharedBuffer FSharedBuffer::MakeView(u64 offset, u64 sizeInBytes, const FShared
     const FRawMemoryConst view = outer.MakeView().SubRange(checked_cast<size_t>(offset), checked_cast<size_t>(sizeInBytes));
     return MakeSharedViewWithOuter_(view.data(), view.SizeInBytes(), outer);
 }
-//----------------------------------------------------------------------------
-FSharedBuffer FSharedBuffer::MakeView(const FUniqueBuffer& outer) {
-    return FSharedBuffer::MakeView(outer.MakeView());
-}
-//----------------------------------------------------------------------------
-FSharedBuffer FSharedBuffer::MakeView(u64 offset, u64 sizeInBytes, const FUniqueBuffer& outer) {
-    return FSharedBuffer::MakeView(outer.MakeView()
-        .SubRange(checked_cast<size_t>(offset), checked_cast<size_t>(sizeInBytes)));
-}
+// //----------------------------------------------------------------------------
+// FSharedBuffer FSharedBuffer::MakeView(const FUniqueBuffer& outer) {
+//     return FSharedBuffer::MakeView(outer.MakeView());
+// }
+// //----------------------------------------------------------------------------
+// FSharedBuffer FSharedBuffer::MakeView(u64 offset, u64 sizeInBytes, const FUniqueBuffer& outer) {
+//     return FSharedBuffer::MakeView(outer.MakeView()
+//         .SubRange(checked_cast<size_t>(offset), checked_cast<size_t>(sizeInBytes)));
+// }
 //----------------------------------------------------------------------------
 template <typename _OuterBuffer>
 NODISCARD FSharedBuffer FSharedBuffer::MakeSharedViewWithOuter_(const void* data, u64 sizeInBytes, _OuterBuffer&& outer) {
