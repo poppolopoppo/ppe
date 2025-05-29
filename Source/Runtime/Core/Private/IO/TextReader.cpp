@@ -41,7 +41,39 @@ bool TextReader_ReadAndConvert_(TBasicTextReader<_Char>& r, T* p, bool (*charset
 //----------------------------------------------------------------------------
 template <typename _Char, typename T>
 bool TextReader_ReadUnsignedInt_(TBasicTextReader<_Char>& r, T* p) {
-    return TextReader_ReadAndConvert_(r, p, &IsDigit);
+    const std::streamoff before = r.Tell();
+
+    r.SkipSpaces();
+
+    u32 base = 10;
+    bool (*charset)(_Char ch) NOEXCEPT = &IsDigit;
+    if (r.Expect(STRING_LITERAL(_Char, '0'))) {
+        if (r.Expect(STRING_LITERAL(_Char, 'x'))) {
+            base = 16;
+            charset = &IsXDigit;
+        }
+        else if (r.Expect(STRING_LITERAL(_Char, 'b'))) {
+            base = 2;
+            charset = &IsBDigit;
+        }
+        else {
+            base = 8;
+            charset = &IsODigit;
+        }
+    }
+
+    TBasicStringConversion<_Char> conv;
+    conv.Base = base;
+    if (r.ReadCharset(&conv, charset)) {
+        if (conv >> p)
+            return true;
+    } else if (base == 8) {
+        *p = Zero;
+        return true;
+    }
+
+    r.Seek(before);
+    return false;
 }
 //----------------------------------------------------------------------------
 template <typename _Char, typename T>
@@ -52,7 +84,7 @@ bool TextReader_ReadSignedInt_(TBasicTextReader<_Char>& r, T* p) {
 
     const bool negative = r.Expect(STRING_LITERAL(_Char, '-'));
 
-    if (TextReader_ReadAndConvert_(r, p, &IsDigit)) {
+    if (TextReader_ReadUnsignedInt_(r, p)) {
         if (negative)
             *p = -*p;
         return true;
@@ -245,7 +277,7 @@ template <> bool TBasicTextReader<char>::ReadIdentifier(const stringappendable_t
 template <> bool TBasicTextReader<char>::ReadCharset(const stringappendable_type& parsed, charset_func charset) { return TextReader_AppendCharset_(*_istream, parsed, charset); }
 template <> bool TBasicTextReader<char>::ReadCharset(stringconversion_type* parsed, charset_func charset) {
     if (TextReader_ReadCharset_(*_istream, &_read, charset)) {
-        *parsed = stringconversion_type{ _read, _base };
+        parsed->Input = _read;
         return true;
     }
     return false;
@@ -277,7 +309,7 @@ template <> bool TBasicTextReader<wchar_t>::ReadIdentifier(const stringappendabl
 template <> bool TBasicTextReader<wchar_t>::ReadCharset(const stringappendable_type& parsed, charset_func charset) { return TextReader_AppendCharset_(*_istream, parsed, charset); }
 template <> bool TBasicTextReader<wchar_t>::ReadCharset(stringconversion_type* parsed, charset_func charset) {
     if (TextReader_ReadCharset_(*_istream, &_read, charset)) {
-        *parsed = stringconversion_type{ _read, _base };
+        parsed->Input = _read;
         return true;
     }
     return false;

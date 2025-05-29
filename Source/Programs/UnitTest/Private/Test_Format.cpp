@@ -117,7 +117,7 @@ static void Test_Format_() {
 template <typename _Char>
 static void Test_TextReader_Impl_() {
     FMemoryViewReader src(MakeStringView(STRING_LITERAL(_Char,
-        "f 123/2707/-4613243\n"
+        "f 123/0x2AF7/-04613243\n"
         "vt 0.972642 0.024023\n"
         " \t   vt \t0.950977   -0.024023  \n"
         "done\n")));
@@ -132,10 +132,10 @@ static void Test_TextReader_Impl_() {
     PPE_LOG_CHECKVOID(Test_Format, i0 == 123);
     VerifyRelease(r.Expect(STRING_LITERAL(_Char, '/')));
     VerifyRelease(r >> &i1);
-    PPE_LOG_CHECKVOID(Test_Format, i1 == 2707);
+    PPE_LOG_CHECKVOID(Test_Format, i1 == 0x2AF7);
     VerifyRelease(r.Expect(STRING_LITERAL(_Char, '/')));
     VerifyRelease(r >> &i2);
-    PPE_LOG_CHECKVOID(Test_Format, i2 == -4613243);
+    PPE_LOG_CHECKVOID(Test_Format, i2 == -04613243);
 
     VerifyRelease(r >> &str);
     PPE_LOG_CHECKVOID(Test_Format, str == STRING_LITERAL(_Char, "vt"));

@@ -338,6 +338,12 @@ NODISCARD inline bool CONSTF IsDigit(wchar_t wch) NOEXCEPT { return 0 != std::is
 NODISCARD CONSTEXPR bool CONSTF IsEndLine(char ch) NOEXCEPT { return ( ( ch == '\r' ) || ( ch == '\n' ) ); }
 NODISCARD CONSTEXPR bool CONSTF IsEndLine(wchar_t wch) NOEXCEPT { return ( ( wch == L'\r' ) || ( wch == L'\n' ) ); }
 //----------------------------------------------------------------------------
+NODISCARD CONSTEXPR bool CONSTF IsBDigit(char ch) NOEXCEPT { return ( ( ch == '0' ) || ( ch == '1' ) ); }
+NODISCARD CONSTEXPR bool CONSTF IsBDigit(wchar_t ch) NOEXCEPT { return ( ( ch == L'0' ) || ( ch == L'1' ) ); }
+//----------------------------------------------------------------------------
+NODISCARD CONSTEXPR bool CONSTF IsODigit(char ch) NOEXCEPT { return (static_cast<uint8_t>('7' - '0' + 1) > static_cast<uint8_t>(ch - '0')); }
+NODISCARD CONSTEXPR bool CONSTF IsODigit(wchar_t ch) NOEXCEPT { return (static_cast<uint8_t>(L'7' - L'0' + 1) > static_cast<uint8_t>(ch - L'0')); }
+//----------------------------------------------------------------------------
 #if 1 //optimized ASM
 NODISCARD CONSTEXPR bool CONSTF IsXDigit(char ch) NOEXCEPT { return (
     (static_cast<uint8_t>('9' - '0' + 1) > static_cast<uint8_t>(ch - '0')) ||
