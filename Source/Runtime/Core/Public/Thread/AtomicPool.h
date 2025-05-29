@@ -155,6 +155,7 @@ public:
                 // release only free blocks
                 auto c = set.Create.Fetch();
                 c &= set.Alloc.Fetch();
+                std::atomic_thread_fence(std::memory_order_acquire);
                 if (not c)
                     break; // assume nothing to release
 
