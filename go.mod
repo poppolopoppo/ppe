@@ -1,4 +1,4 @@
-﻿module ppe
+module ppe
 
 go 1.23.3
 
