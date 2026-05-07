@@ -120,6 +120,7 @@ MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIRenderPass,            RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIResource,              RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIShader,                RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIState,                 RHI)
+MEMORYDOMAIN_COLLAPSABLE_IMPL(RHITriangleBag,           RHI)
 MEMORYDOMAIN_COLLAPSABLE_IMPL(RHIVulkan,                RHI)
 //------------------------------------------------------------------------------
 MEMORYDOMAIN_GROUP_IMPL(Network,                        UsedMemory)
