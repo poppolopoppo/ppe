@@ -1,0 +1,13 @@
+# Source/Extensions/RHIVulkan/Private/Vulkan/Descriptors/
+
+## Responsibility
+The Private Vulkan Descriptors folder contains the implementation of descriptor set layout creation, descriptor pool management, and descriptor set caching for the Vulkan rendering pipeline. This folder implements the Vulkan-specific descriptor set layout types, pool creation, and set allocation that are used by the pipeline resources and ray tracing subsystems.
+
+## Design
+The design centers on FVulkanDescriptorSetLayout, which handles the creation of VkDescriptorSetLayout objects, the management of pool sizes for descriptor pool creation, and the caching of allocated descriptor sets. Hash-based deduplication is used to identify identical layouts and reuse existing descriptor sets, reducing memory usage. The VkDescriptorSetLayoutBinding entries are constructed from shader reflection data, with support for VK_EXT_descriptor_indexing and partial binding (VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT). The descriptor set cache is a TFixedSizeStack<FVulkanDescriptorSet, 32> per layout, providing fast allocation and reuse. Vectors are marked VECTORINSITU for small buffer optimization (maximum 5 bindings).
+
+## Flow
+Descriptor set layout creation begins with shader reflection (FPipelineDesc::FVariantUniform), which extracts the required bindings from the compiled SPIRV. The bindings are hashed to identify duplicate layouts. If the layout is new, vkCreateDescriptorSetLayout is called, and pool sizes are cached for descriptor pool creation. If the layout already exists, the cached descriptor set is reused. Descriptor set allocation calls Get<T>() for type-safe access to uniform and storage buffers. Binding APIs (BindImage, BindTexture, BindBuffer, BindSampler, BindTexelBuffer, BindRayTracingScene) are used to populate descriptor sets with the appropriate resources. The cache key is hashed from the layout and dynamic data, enabling deduplication across pipelines.
+
+## Integration
+This folder is consumed by the pipeline resources subsystem (FVulkanPipelineResources) which binds descriptor sets to pipelines. It is also used by the ray tracing subsystem (FVulkanRayTracingShaderTable) for ray tracing descriptor sets. The descriptor set layouts are created during pipeline initialization and are referenced by TVulkanFrameTask<_Task> nodes during command execution. Descriptor set bindings flow from the application code through FVulkanPipelineResources.BindImage(), BindTexture(), BindBuffer(), and other binding methods, which ultimately call vkCmdBindDescriptorSets to bind the sets to the command buffer. The hash-based deduplication key is computed from the layout and dynamic data, enabling cross-pipeline reuse.

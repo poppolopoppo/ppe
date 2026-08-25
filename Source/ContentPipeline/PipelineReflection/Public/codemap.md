@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements public PipelineReflection components, exposing reflection data extraction and type information APIs that other modules and tools can consume directly. It provides the type-safe interface for pipeline reflection data without depending on private implementation details.
+
+## Design
+Key patterns publicly expose reflection data types extracted from compiled shaders, including pipeline descriptor mappings (`FMeshPipelineDesc`, `FGraphicsPipelineDesc`, `FComputePipelineDesc`, `FRayTracingPipelineDesc`) and shader resource information. The design leverages RTTI-enabled type information (`FMetaObject` base class patterns) for dynamic type resolution of reflection types. Public reflection interfaces are consistent with the private implementation, ensuring that compiled shader reflection and pipeline descriptor metadata remain synchronized across the ContentPipeline subsystem.
+
+## Flow
+Public consumers access reflection data through well-defined interfaces that return pipeline descriptor type mappings and shader resource information. Reflection data is made available after pipeline compilation completes, with type resolution using dynamic casting through the `FMetaObject` hierarchy for type-safe access. Clean operations remove public reflection artifacts while preserving source type mapping references. Type-safe access patterns follow the established `META_DYNAMIC_CASTABLE_IMPL` convention across the ContentPipeline subsystem.
+
+## Integration
+Integrates with `Source/ContentPipeline/PipelineCompiler/Private/` and `Source/ContentPipeline/PipelineCompiler/Public/` for reflection data consumption during pipeline compilation, `Source/ContentPipeline/BuildGraph/Private/` and `Source/ContentPipeline/BuildGraph/Public/` for build graph tracking of reflection artifacts, and `Source/ContentPipeline/MeshBuilder/Private/` and `Source/ContentPipeline/MeshBuilder/Public/` for mesh-associated reflection data. Also connects to `Source/ContentPipeline/Asset.Texture/Private/` and `Source/ContentPipeline/Asset.Texture/Public/` for texture-related reflection data.

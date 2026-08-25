@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements public MeshBuilder format-specific components for the Mesh/ submodule, exposing format conversion and mesh preprocessing APIs that other modules and tools can consume directly. It provides the type-safe interface for mesh format operations while keeping implementation details encapsulated within the MeshBuilder module.
+
+## Design
+Key patterns expose `IContentImporter` as the public base importer interface, with `TContentImporter<_Import>` templated importers providing type-safe format-specific import operations. `FContentImporterContext` is publicly available for import context management. Format descriptor types leverage `FMeshPipelineDesc` and `FGraphicsPipelineDesc` for Vulkan graphics pipeline configuration when format-converted meshes are destined for shader compilation. The design uses `META_DYNAMIC_CASTABLE_IMPL` for dynamic type resolution and follows the template-based type-safe pattern established across the ContentPipeline subsystem.
+
+## Flow
+Public importers are invoked via `IContentImporter::Import(ctx, dst)`, which dynamically resolves to the appropriate `TContentImporter<_Import>` for format-specific mesh reading and intermediate representation generation. Process operations execute format-specific mesh preprocessing, producing optimized vertex/index buffers and material references compatible with downstream pipeline stages. Output mesh artifacts are registered with `FBuildEnvironment::AddFiles()` for downstream consumption. Clean operations remove public format intermediates via the standard `FCleanContext` protocol.
+
+## Integration
+Connects to `Source/ContentPipeline/MeshBuilder/Public/Mesh/Format` for format-specific implementation details, `Source/ContentPipeline/MeshBuilder/Private/Mesh/` for core mesh data types, and `Source/ContentPipeline/PipelineCompiler/Public/Vulkan/Pipeline/` for Vulkan pipeline compilation of format-converted meshes. Also integrates with `Source/ContentPipeline/Asset.Geometry/Public/` for geometry symbol references and `Source/ContentPipeline/BuildGraph/Public/` for graph execution orchestration.

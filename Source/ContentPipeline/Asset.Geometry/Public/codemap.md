@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements public geometry content pipeline components for Asset.Geometry, exposing geometry types and operations that other modules and tools can consume directly. It serves as the primary entry point for geometry-related content pipeline functionality, defining the public API surface for geometry processing, import, and serialization.
+
+## Design
+Key patterns rely on `FBuildGraph` for DAG-based geometry build orchestration, with `FBuildNode` as the base type for all public geometry pipeline nodes. The design leverages `FPipelineContext` variants (`FScanContext`, `FBuildContext`, `FCleanContext`) for the three-phase pipeline lifecycle. Public geometry nodes use `FContentPipelineNode` as the RTTI-enabled base type, and import/process operations are dispatched via `IContentImporter` and `IContentProcessor` interfaces with dynamic type resolution. Format negotiation and type-safe casting are handled through `META_DYNAMIC_CASTABLE_IMPL` macros, following the established template-based pattern in the codebase.
+
+## Flow
+Scan phase: `FScanContext::Scan()` is called on each public geometry node, which triggers `node.Scan()` to discover source mesh files and register them as dependencies with `FBuildEnvironment`. Build phase: `FBuildContext::Build()` calls `node.Import()` to dynamically resolve and execute the appropriate `TContentImporter<_Import>`, followed by `node.Process()` which routes through `IContentProcessor::Process(ctx, dst)` for geometry type-specific processing. Output files are tracked via `FBuildGraph::AddFile()` for downstream consumption. Clean phase: `FCleanContext::Clean()` removes generated geometry artifacts while preserving source file references.
+
+## Integration
+Integrates with `Source/ContentPipeline/Asset.Geometry/Private/` for private implementation details, `Source/ContentPipeline/MeshBuilder/Public/Mesh/` for public mesh data and importing, and `Source/ContentPipeline/PipelineCompiler/Public/Vulkan/Pipeline/` for Vulkan pipeline compilation. Also connects to `Source/ContentPipeline/Texture/Public/Texture/` for geometry-to-texture workflows and `Source/ContentPipeline/BuildGraph/Public/` for graph execution orchestration.

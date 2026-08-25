@@ -1,0 +1,13 @@
+# Source/Runtime/RHI/Public/RHI/
+
+## Responsibility
+This sub-folder contains the primary RHI public API declarations used throughout the engine and by the Vulkan extension. It declares the FDeviceResource, FDeviceResourceSharable, FIndexBuffer, FVertexBuffer, FConstantBuffer, and IDeviceAPIEncapsulator types, along with EBufferMode and EBufferUsage enumerations. The responsibility of this folder is to define the API-agnostic rendering primitives that all downstream modules — including the Vulkan frame graph, DX11 encapsulator, and application code — depend upon without needing to know the underlying graphics API.
+
+## Design
+The design centers on the IDeviceAPIEncapsulator abstract class, which declares the virtual interface for all device operations. Concrete implementations (DX11DeviceAPIEncapsulator, FVulkanDeviceAPI) hide API-specific details behind this interface. FDeviceResource serves as the base class for all GPU resources, providing virtual GetData/SetData/CopyFrom/CopySubPart methods. FDeviceResourceSharable adds reference-counting and pooling support, enabling FIndexBuffer, FVertexBuffer, and FConstantBuffer to participate in resource deduplication. Bit-packed metadata (stride/mode/usage in a single u32) is a deliberate cross-API optimization.
+
+## Flow
+Rendering code requests resources through the RHI factory interface, which creates the appropriate concrete type via the encapsulator. Buffer data is transferred using GetData/SetData/CopyFrom/CopySubPart, which virtual-dispatch to the backend implementation. Index buffers bind indices for drawing; vertex buffers supply vertex data; constant buffers hold per-frame uniform data. The FCommandBufferBatch class (defined in CommandBatch.h) collects command submissions and bridges them to the Vulkan frame graph. All API dispatch flows through the encapsulator, ensuring the rendering core remains API-agnostic.
+
+## Integration
+This folder is the primary RHI interface consumed by Source/Extensions/RHIVulkan/. The FCommandBufferBatch class in Source/Extensions/RHIVulkan/Public/Vulkan/Command bridges RHI commands to the Vulkan frame graph. Buffer types (FIndexBuffer, FVertexBuffer, FConstantBuffer) are created here and used as inputs to TVulkanFrameTask<_Task> nodes. Memory allocation draws from TMemoryPool in Source/Runtime/Core/Public/Memory/. The swapchain and presentation flow connects through FVulkanSwapchain in Source/Extensions/RHIVulkan/Private/Vulkan/Instance/. DX11 integration occurs through DX11DeviceAPIEncapsulator in the legacy code path, which also implements IDeviceAPIEncapsulator.

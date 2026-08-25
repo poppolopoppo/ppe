@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements public Vulkan pipeline compiler components for the Vulkan/Pipeline submodule, exposing shader compilation and pipeline generation APIs that other modules and tools can consume directly. It provides the type-safe interface for Vulkan pipeline compilation without depending on private implementation details.
+
+## Design
+Key patterns expose `IPipelineCompiler` as the public compiler abstraction interface, with `FVulkanPipelineCompiler` as the concrete public Vulkan backend. `FVulkanSpirvCompiler` public operations handle GLSL → SPIR-V compilation, and pipeline descriptor types (`FMeshPipelineDesc`, `FGraphicsPipelineDesc`, `FComputePipelineDesc`, `FRayTracingPipelineDesc`) are publicly available for pipeline configuration. `FMeshPipelineDesc` and `FGraphicsPipelineDesc` are the primary descriptor types for graphics pipeline compilation. Shader module creation and caching operations are exposed through the public interface, with format negotiation via `HighestPriorityShaderFormat_()` selecting the best available format. Debug/profiling/trace support is provided through public-facing debug module operations.
+
+## Flow
+Public consumers initiate pipeline compilation by calling `IPipelineCompiler::Compile()` with a pipeline descriptor and format configuration. The compilation flow follows GLSL → SPIR-V → shader module creation → pipeline layout generation. Reflection data is extracted and made available through public interfaces. Output pipeline objects and shader modules are registered with `FBuildEnvironment::AddFiles()` for downstream consumption. Clean operations remove public pipeline artifacts while preserving source shader references.
+
+## Integration
+Connects to `Source/ContentPipeline/PipelineCompiler/Private/Vulkan/Pipeline/` for private Vulkan pipeline compilation details, `Source/ContentPipeline/BuildGraph/Public/` for build graph orchestration of public pipeline compilation, `Source/ContentPipeline/MeshBuilder/Public/Mesh/` for mesh data to compile, and `Source/ContentPipeline/Texture/Public/Texture` for texture-associated pipeline compilation. Also integrates with `*.cpp` for test validation.

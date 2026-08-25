@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements private MeshBuilder format-specific components for the Mesh/ submodule, handling geometry format conversion, mesh data preprocessing, and intermediate representation generation for mesh assets undergoing the content pipeline. It specializes in format-specific mesh processing that sits between source mesh files and the core MeshBuilder pipeline.
+
+## Design
+Key patterns rely on `IContentImporter` as the base importer interface, with `TContentImporter<_Import>` templated importers providing type-safe format-specific import. The design uses `FContentImporterContext` for import context management (source directory, destination directory, dependency tracking). Format-specific mesh data structures follow the repo's memory conventions with `TPtrRef` ref-counted smart pointers. Architectural decisions favor `META_DYNAMIC_CASTABLE_IMPL` for dynamic type resolution between format importers, and exception throwing via `FContentImporterException` on type mismatch. Format descriptors leverage `FMeshBuilderModule` module interface for service registration.
+
+## Flow
+Scan phase: `FScanContext::Scan()` discovers mesh format nodes, each calling `node.Scan()` to identify source mesh files and register dependencies. Import phase: `IContentImporter::Import(ctx, dst)` is dispatched to the appropriate `TContentImporter<_Import>` via dynamic cast, which reads source mesh format and produces intermediate mesh representation. Process phase: format-specific mesh preprocessing executes, generating optimized vertex/index buffers and material references. Clean phase: generated format intermediates are removed via `FCleanContext::Clean()`.
+
+## Integration
+Connects to `Source/ContentPipeline/MeshBuilder/Private/Mesh/` for core mesh data types, `Source/ContentPipeline/Asset.Geometry/Private/` for source geometry references, and `Source/ContentPipeline/BuildGraph/Private/` for graph execution orchestration of format conversion builds. Downstream, format-converted meshes flow into `Source/ContentPipeline/PipelineCompiler/Private/Vulkan/Pipeline/` for Vulkan mesh shader pipeline compilation.

@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements private PipelineCompiler components, providing the core compiler infrastructure and abstraction layers that support all pipeline type compilation (Vulkan, graphics, compute, ray tracing). It manages the compiler orchestration, interface implementation, and shared resources used across all pipeline backend implementations.
+
+## Design
+Key patterns center on `IPipelineCompiler` as the compiler abstraction interface, with `FVulkanPipelineCompiler` as the concrete Vulkan backend implementation. `FVulkanSpirvCompiler` handles GLSL → SPIR-V compilation, while pipeline descriptor types (`FMeshPipelineDesc`, `FGraphicsPipelineDesc`, `FComputePipelineDesc`, `FRayTracingPipelineDesc`) define the configuration space for different pipeline kinds. The design leverages `FVulkanDebuggableShaderModule` for debug/profiling/trace support across all pipeline types. Specialization constants for task/mesh group sizes and local group sizes are handled uniformly across pipeline backends. Format negotiation via `HighestPriorityShaderFormat_()` selects the best available format from supported options.
+
+## Flow
+Compiler orchestration begins with `IPipelineCompiler::Compile()` interface calls, which dispatch to the appropriate backend implementation (`FVulkanPipelineCompiler::Compile()` for Vulkan). The compiled pipeline descrriptor is then used for shader module creation and pipeline layout generation. Reflection data extracted during SPIR-V compilation is made available for downstream consumers. Clean phase removes compiled pipeline artifacts and reflection data.
+
+## Integration
+Integrates with `Source/ContentPipeline/BuildGraph/Private/` and `Source/ContentPipeline/BuildGraph/Public/` for build graph orchestration of pipeline compilation, `Source/ContentPipeline/MeshBuilder/Private/` and `Source/ContentPipeline/MeshBuilder/Public/` for mesh data input, `Source/ContentPipeline/Asset.Texture/Private/` and `Source/ContentPipeline/Asset.Texture/Public/` for texture-related pipeline compilation, and `Source/Programs/WindowTest/Private/Compiler/` for compiler validation tests.

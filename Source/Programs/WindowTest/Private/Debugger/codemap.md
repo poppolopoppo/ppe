@@ -1,0 +1,13 @@
+# Source/Programs/WindowTest/Private/Debugger/
+
+## Responsibility
+This directory implements the Debugger test subsystem, providing shader source-level debugging and ray tracing debug support. These tests validate the RHI's debugger integration, allowing developers to set breakpoints, inspect variables, and step through shader execution during ray tracing workloads.
+
+## Design
+The debugger test definitions follow a pattern that exercises the RHI's debug command list and debug resource creation. `Debugger_ShaderDebugger*.cpp` tests the basic shader debugging workflow: compile a debuggable shader, insert debug markers, set breakpoints, and verify that the debugger can pause execution at the breakpoint and inspect variable values. `Debugger_RayTracingDebugger1.cpp` extends the basic workflow to ray tracing shaders, testing the ability to set breakpoints in ray generation, miss, closest hit, and miss shaders, and inspect the ray payload and acceleration structure hit data at each breakpoint. The tests use the RHI's debug marker API to insert named labels into the command list, and the debugger client validates that the correct breakpoints are hit and the correct data is available at each stop.
+
+## Flow
+The test flow begins when the test function creates a debuggable shader program and inserts debug markers into the command list. The RHI's debug layer is enabled, and the debugger client connects to the debug session. Breakpoints are set at specified shader instructions, and the test runs the ray tracing or graphics command list. The debugger pauses execution at each breakpoint, and the test validates that the correct instruction is highlighted and that the variable values match the expected state. After each breakpoint, the test either single-steps forward or continues to the next breakpoint. The result is logged via `EXTERN_LOG_CATEGORY`, and the test function returns a pass/fail status based on whether the expected breakpoints were hit and the correct data was available.
+
+## Integration
+The Debugger subsystem integrates with `Source/Runtime/RHI/` (`Source/Runtime/RHI`) for the debug command list and debug resource creation. It interfaces with the remoting module via `Source/Extensions/ApplicationUI/` (`Source/Extensions/ApplicationUI`) for remote debugging scenarios. The test definitions are auto-discovered by the WindowTest harness at startup, and the results are reported through the harness's console summary. The debugger tests share the same `FApplicationWindow` base class as `Source/Programs/ShaderToy/` and `Source/Programs/VoxelCube`, and all three register with the `FModularDomain` for lifecycle coordination.

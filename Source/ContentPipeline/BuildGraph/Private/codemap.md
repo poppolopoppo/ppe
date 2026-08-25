@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements private BuildGraph components, providing the core DAG-based build orchestration engine that drives the content pipeline's Scan→Build→Clean lifecycle. It manages node discovery, dependency tracking, parallel execution, and artifact caching for all content pipeline operations.
+
+## Design
+Key patterns center on `FBuildGraph` as the directed acyclic graph container, `FBuildNode` as the base type for all build nodes extending `FMetaObject`, and `FBuildEnvironment` which platforms, cache, executor, and logging services. The three-phase pipeline is managed by `FPipelineContext` variants: `FScanContext` for Scan phase node discovery, `FBuildContext` for Build phase execution, and `FCleanContext` for Clean phase finalization. `IBuildExecutor` interfaces parallel artifact execution, while `IBuildCache` provides artifact caching with revision tracking via `FBuildRevision`. Atomic result aggregation uses `Combine()` + `compare_exchange_weak`, and stop-on-error behavior is configurable via `HasStopOnError()`.
+
+## Flow
+Scan phase: `FBuildGraph::AppendNodes()` discovers build nodes via transaction-based node discovery; `FScanContext::Scan()` iterates nodes calling `node.Scan()` to register static and dynamic dependencies. Build phase: `FBuildContext::Build()` executes `node.Import()` → `node.Process()` for each node, with `IBuildExecutor::QueueAndWaitFor()` managing parallel execution. Clean phase: `FCleanContext::Clean()` calls `node.Clean()` on each node to remove generated artifacts. Dependency resolution flows through `StaticDeps()` → `DynamicDeps()` → `RuntimeDeps()` chains, and output files are tracked via `AddFiles()` after scan completion.
+
+## Integration
+Integrates with `Source/ContentPipeline/MeshBuilder/Private/` and `Source/ContentPipeline/Asset.Geometry/Private/` for geometry mesh building, `Source/ContentPipeline/Asset.Texture/Private/` for texture processing, `Source/ContentPipeline/PipelineCompiler/Private/` for pipeline compiler orchestration, and `Source/ContentPipeline/MeshBuilder/Public/` and `Source/ContentPipeline/Asset.Texture/Public/` for public API integration. Also connects to `Source/Tools/IODetouring/` and `Source/Tools/IOWrapper/` for IO tracing during builds.

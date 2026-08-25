@@ -1,0 +1,13 @@
+# Source/Programs/VoxelCube/Public/
+
+## Responsibility
+The Public directory for VoxelCube exposes the types and interfaces that define the voxel rendering pipeline, camera controller, and mesh data model. These types are intended for use by developers extending the voxel demo or integrating voxel rendering into other applications.
+
+## Design
+The public API centers on `FFreeLookCameraController` (`Application/Window/WindowClient.h`), which encapsulates the free-look navigation logic for keyboard and mouse input. `FGenericMesh` (`Runtime/Geometry/GenericMesh.h`) is exposed for mesh data creation and buffer upload, providing methods for vertex buffer setup, index buffer binding, and material parameter updates. The graphics pipeline descriptor types (`FGraphicsPipelineDesc`, `FComputePipelineDesc`) are exposed for developer configuration of the rendering pipeline. Uniform buffer layout parameters are defined as public structs, enabling developers to bind camera and light data to the shader pipeline. All public types are designed for cross-platform use and do not depend on platform-specific RHI abstractions beyond the base `RHI::IFrameGraph` interface.
+
+## Flow
+Developers create an `FGenericMesh` instance and populate it with voxel data, either programmatically or by importing from the content pipeline. The `FFreeLookCameraController` is instantiated and connected to the input system, providing camera transform updates each frame. The graphics pipeline is created using the exposed descriptor types, and the uniform buffer is filled with camera and light data. The render loop binds the pipeline, updates the uniform buffer, and issues a draw call to render the voxel mesh. The swap chain presents the result to the screen. Window resize events trigger pipeline recreation and resource reallocation.
+
+## Integration
+The public types integrate with `Source/Runtime/Application/` (`Source/Runtime/Application`) for the `FApplicationWindow` base class and `FModularDomain` lifecycle coordination. The mesh data may be populated from assets processed by `Source/ContentPipeline/Asset/` (`Source/ContentPipeline/Asset/codemap.md`). The `FFreeLookCameraController` interfaces with the input subsystem through the application's input mapping layer. The graphics pipeline uses `Source/Runtime/RHI/` frame graph resources for render target management. Downstream, built voxel assets may feed into `Source/Programs/ShaderToy/` for live shader experimentation, and the module is validated through `Source/Programs/WindowTest/` (`Source/Programs/WindowTest/codemap.md`) RHI test harness.

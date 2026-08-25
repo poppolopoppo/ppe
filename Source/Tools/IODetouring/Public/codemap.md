@@ -1,0 +1,13 @@
+# Source/Tools/IODetouring/Public/
+
+## Responsibility
+The Public directory exposes the API surface consumed by client code and the IOWrapper launcher. It defines the shared types and interfaces that describe the hook management, tracing, and path remapping capabilities provided by the IODetouring subsystem.
+
+## Design
+The public header `IODetouringHooks.h:14` declares the `FIODetouringHooks` singleton, the central authority for hook installation, removal, and status querying. `IODetouringTblog.h` defines `FIODetouringTblog`, a thread-safe trace logger that writes to a named pipe with printf-style formatting. `IODetouringFiles.h` declares `FIODetouringFiles`, which encapsulates the path mounting and remapping logic used both during hook interception and for static configuration. All public types are designed for cross-DLL usage, with explicit export markers and minimal inline implementation to avoid ODR violations. Specialization constants such as the number of hooked APIs and the named pipe name are defined as `constexpr` variables for compile-time configurability.
+
+## Flow
+Client code includes the public headers and calls `FIODetouringHooks::Initialize()` or equivalent to register the desired hook set. The singleton initializes internal state and prepares the hook table, which maps each hooked Win32 API to its detour implementation. At process attach, the IOWrapper invokes the initialization sequence, after which every subsequent call to a hooked API (CreateFileW/ReadFile/etc.) is intercepted at the API boundary, logged via the trace blog, and forwarded to the named pipe. The path remapping table is consulted during each hooked call to determine whether the requested path should be translated before the original API dispatch.
+
+## Integration
+The public headers are consumed by `Source/Tools/IOWrapper/Private/main.cpp:238` (`RunProcessWithDetours`), which uses the types defined here to construct the `FIODetouringPayload` for DLL injection. The `FIODetouringTblog` named pipe is the primary integration point with the IOWrapper IOCP loop (`Private/main.cpp:382`), carrying per-operation logs including API type, path, return value, and timestamp. Downstream, `Source/Programs/IOWrapperTest/` (`Source/Programs/IOWrapperTest/codemap.md`) uses these public APIs to validate that tracing captures the expected operation set under test scenarios, and `Source/Tools/IODetouring/` (`Source/Tools/IODetouring/codemap.md`) provides the architectural context for these integrations.

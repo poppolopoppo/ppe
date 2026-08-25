@@ -1,0 +1,13 @@
+# Source/Programs/VoxelCube/
+
+## Responsibility
+This folder implements the voxel rendering demo, a windowed application that renders a procedural or imported voxel-based mesh in real time. VoxelCube serves as a demonstration of the frame graph rendering pipeline, procedural geometry generation, and free-look camera control using the RHI subsystem. It is used to validate voxel pipeline features, test performance characteristics, and prototype voxel-based rendering techniques.
+
+## Design
+The module is built around `FFreeLookCameraController` and `FViewportClient` for camera control, providing free-look navigation via keyboard and mouse input. Procedural voxel mesh generation is handled by `FGenericMesh`, which supports both programmatically generated voxel topologies and meshes imported from external pipelines. Uniform buffers store the camera transform, light direction, and material parameters. The graphics pipeline is created and recreated on demand, supporting point, line, and triangle rendering modes. Normal recomputation is available as a post-processing step to improve shading quality. The module also supports mesh buffer uploads and uniform buffer updates via the RHI's command list interface.
+
+## Flow
+The rendering flow begins at the main application loop, which processes OS messages and input events. The `FFreeLookCameraController` updates the camera transform each frame based on keyboard and mouse input. The voxel mesh is either procedurally generated or imported, and the mesh buffers are uploaded to GPU resources. The graphics pipeline is bound, and a full-screen quad or cube is rendered using the voxel material shader. Uniform buffers are updated with the camera transform and light parameters before each draw call. If normal recomputation is enabled, the shader recomputes face normals for improved shading. The frame is presented to the screen via the RHI swap chain. The module also handles window resize events, recreating the graphics pipeline and swap chain resources as needed.
+
+## Integration
+VoxelCube integrates with `Source/Runtime/RHI/` for the frame graph and rendering pipeline, and with `Source/Runtime/Application/` (`Source/Runtime/Application`) for the `FApplicationWindow` base class and modular domain coordination. The voxel mesh may be populated from assets processed by `Source/ContentPipeline/Asset/` (`Source/ContentPipeline/Asset/codemap.md`) via the content pipeline. Uniform buffer parameters interface with `Source/Runtime/RHI/` frame graph resources. The module shares the `FModularDomain` with all other programs, enabling coordinated lifecycle and lifecycle events across the application.

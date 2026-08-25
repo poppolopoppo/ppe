@@ -1,0 +1,13 @@
+# Source/Extensions/RHIVulkan/Private/Vulkan/RenderPass/
+
+## Responsibility
+The Private Vulkan RenderPass folder contains the implementation of render pass creation, subpass management, and framebuffer setup for the Vulkan rendering pipeline. This folder implements the Vulkan-specific render pass objects, subpass dependencies, and framebuffer objects that are used by the frame graph and draw tasks to render geometry to the swapchain images.
+
+## Design
+The design implements Vulkan render passes as VkRenderPass objects created during initialization, with subpass dependencies defined to enforce correct pipeline barriers between subpasses. The render pass creation process takes as input the set of attachments used across all subpasses, including color attachments, depth/stencil attachments, and resolve attachments. Subpass descriptions define which attachments are read from and written to in each subpass, and the dependency information ensures that pipeline barriers are inserted at the correct points. The render pass is shared across all frames, with the framebuffer being recreated each frame to match the current swapchain image views.
+
+## Flow
+Render pass creation begins with the FVulkanFrameGraph, which collects all attachments used across the rendering pipeline. The render pass is created with VkRenderPassCreateInfo, specifying the attachment descriptions and subpass information. During each frame, the framebuffer is created with VkFramebufferCreateInfo, attaching the current swapchain image views as color attachments and the depth/stencil image as the depth/stencil attachment. The render pass is passed to the draw tasks, which use it to begin rendering via vkCmdBeginRenderPass and end rendering via vkCmdEndRenderPass. Subpass transitions are handled automatically through the subpass dependency information, ensuring that pipeline barriers are inserted between subpasses.
+
+## Integration
+This folder integrates with the frame graph subsystem (FVulkanFrameGraph) which creates the render pass during initialization. The render pass is consumed by TVulkanFrameTask<_Task> nodes, which begin and end rendering within the task graph's two-pass processing model. Draw tasks (FDrawVertices, FDrawIndexed, etc.) use the render pass when issuing vkCmdBeginRenderPass and vkCmdEndRenderPass. The framebuffer is created by the frame graph and passed to each task. The swapchain image views used as color attachments are managed by FVulkanSwapchain in Source/Extensions/RHIVulkan/Private/Vulkan/Instance/. Depth/stencil attachments are managed by the memory and resource subsystem.

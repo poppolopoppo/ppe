@@ -1,0 +1,13 @@
+# Source/Extensions/RHIVulkan/Public/Vulkan/RayTracing/
+
+## Responsibility
+The Public Vulkan Ray Tracing folder exposes the API-visible Vulkan ray tracing types and interfaces used by engine code. It declares the types that are safe to include in public headers for ray tracing pipeline creation, shader binding table management, and ray tracing command execution. This folder ensures that engine code depends only on publicly documented Vulkan ray tracing types, allowing the private implementation to evolve independently.
+
+## Design
+The public API provides FVulkanRayTracingShaderTable declaring the shader binding table (SBT) with debug modes for different pipeline types. The shader binding table is an array of VkRayTracingShaderKHR handles and associated data, organized per pipeline layout. BindingsFor() extracts offsets/strides for vkCmdTraceRaysKHR from the shader table and pipeline layout. The SBT is organized per-mode: Pipeline, LayoutId, BufferOffset, and Mode. All public types are designed to be stable across Vulkan API versions, allowing the engine to remain compatible across API updates.
+
+## Flow
+Ray tracing initialization begins with pipeline creation, which compiles the ray tracing shader groups and builds the shader binding table (SBT). The SBT is stored in FVulkanRayTracingShaderTable, associated with the pipeline layout and debug mode. During command execution, vkCmdTraceRaysKHR is called with the SBT pointer, ray generation group index, miss group indices, hit group indices, and the width/height of the ray launch region. The visitor pattern processes ray tracing tasks: Process1 sets up any required descriptors and barriers, Process2 issues the vkCmdTraceRaysKHR command. Descriptor sets for ray tracing are provided by the pipeline resources system, which binds the required uniform and storage buffers.
+
+## Integration
+This folder is consumed by the private ray tracing subsystem (Private/Vulkan/RayTracing/) which implements the full ray tracing functionality. The shader binding table (FVulkanRayTracingShaderTable) is used by the command processing subsystem (Private/Vulkan/Command/) when issuing vkCmdTraceRaysKHR. Pipeline layout and descriptor set layout information flows from FVulkanDescriptorSetLayout. The ray tracing pipeline is created during FVulkanFrameGraph initialization and is referenced by the frame graph's task descriptions. Engine code uses the public types to set up ray tracing without depending on private implementation details.

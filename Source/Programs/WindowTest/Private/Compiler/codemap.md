@@ -1,0 +1,13 @@
+# Source/Programs/WindowTest/Private/Compiler/
+
+## Responsibility
+This directory implements the Compiler annotation test subsystem, validating the pipeline compiler's reflection and annotation parsing capabilities. These tests exercise the compiler's ability to parse GLSL/HLSL annotations, produce correct SPIR-V reflection data, and generate pipeline descriptors from the reflected resources.
+
+## Design
+The compiler annotation test definitions follow a pattern that exercises the pipeline compiler's annotation parsing pipeline. `Compiler_Annotation*.cpp` tests parse custom GLSL annotations that configure pipeline layout, specialization constants, and debug parameters. The tests validate that the parsed annotations are correctly reflected into pipeline descriptor structures (`FVulkanPipelineCompiler`'s pipeline desc types), that specialization constants are correctly extracted, and that the reflection data matches the expected format. The tests use the compiler's public reflection API to query descriptor counts, shader stage frequencies, and resource binding information, and they compare the results against expected values.
+
+## Flow
+The test flow begins when the test function loads a compiled shader binary (SPIR-V) or a GLSL source string and calls the pipeline compiler's reflection API. The test then queries the reflection data for each shader stage, checking descriptor counts, variable names, and specialization constant indices. Custom GLSL annotations embedded in the source are parsed, and the parsed values are compared against expected configuration values. The test validates that the pipeline descriptor merge (`MergePipelineResources_`) produces the correct layout from the reflected resources. The result is logged via `EXTERN_LOG_CATEGORY`, and the test function returns a pass/fail status based on whether the reflection data matches the expected values.
+
+## Integration
+The Compiler subsystem integrates with `Source/ContentPipeline/PipelineCompiler/` (`Source/ContentPipeline/PipelineCompiler/codemap.md`) for the core compilation and reflection pipeline, as the tests directly exercise the compiler's annotation parsing and reflection output. The test definitions are auto-discovered by the WindowTest harness at startup, and the results are reported through the harness's console summary. Reflection data that passes these tests flows into `Source/Runtime/RHI/` (`Source/Runtime/RHI`) for pipeline layout creation during actual rendering.

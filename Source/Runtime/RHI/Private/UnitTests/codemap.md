@@ -1,0 +1,13 @@
+# Source/Runtime/RHI/Private/UnitTests/
+
+## Responsibility
+This folder contains unit tests for the RHI private implementation types and API encapsulators. The tests validate buffer creation and destruction, data transfer operations (GetData/SetData/CopyFrom/CopySubPart), API encapsulator behavior (DX11DeviceAPIEncapsulator, FVulkanDeviceAPI), and resource pooling via FDeviceResourceSharable. The tests ensure that RHI types function correctly across both Vulkan and DX11 backends and that the bit-packed metadata implementation via Meta::TBit produces expected results.
+
+## Design
+The unit tests are designed around the Arrange-Act-Assert pattern for each RHI type. Buffer tests create FIndexBuffer, FVertexBuffer, and FConstantBuffer instances, verify resource creation through the encapsulator, and test data transfer operations. Encapsulator tests validate that DX11DeviceAPIEncapsulator and FVulkanDeviceAPI correctly implement IDeviceAPIEncapsulator methods. Resource pooling tests verify that FDeviceResourceSharable enables deduplication and reference counting across multiple owners. Each test exercise exercises the virtual dispatch path through FDeviceResource base methods.
+
+## Flow
+Test initialization creates RHI resource types through the encapsulator factory, exercising the Create() dispatch path. Data transfer tests call GetData/SetData/CopyFrom/CopySubPart and verify the virtual dispatch reaches the API-specific backend. Resource pooling tests create multiple owners of FDeviceResourceSharable-wrapped resources and verify reference counting and deduplication behavior. Test teardown calls Destroy() on each resource, exercising the factory pattern and resource cleanup. All tests run against both Vulkan and DX11 encapsulators to ensure cross-API correctness.
+
+## Integration
+This folder tests the interfaces consumed by Source/Extensions/RHIVulkan/, particularly the FVulkanDeviceAPI and buffer types that feed into the Vulkan frame graph. Unit tests validate that buffer resources created in Source/Runtime/RHI/Public/ can be correctly consumed by TVulkanFrameTask<_Task> nodes. Memory allocation patterns tested here match those used by TMemoryPool in Source/Runtime/Core/Public/Memory/. The swapchain and presentation flow is indirectly tested through FVulkanSwapchain integration points. DX11 test coverage ensures the legacy code path remains functional alongside the Vulkan backend.

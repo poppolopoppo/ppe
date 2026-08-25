@@ -1,0 +1,13 @@
+# Source/Runtime/Application/Public/Application/
+
+## Responsibility
+This folder contains the public application abstraction layer that defines the contract for all windowed applications in the PPE engine. It exports FApplicationBase and FApplicationWindow, which provide modular domain-driven lifecycle management, platform service integration, and the base class that all concrete programs (ShaderToy, VoxelCube, WindowTest) inherit. The public API hides private implementation details behind this abstraction boundary, enabling platform-independent application construction while enforcing a consistent initialization, duty-cycle, and shutdown pattern across all derived apps.
+
+## Design
+FApplicationBase declares pure virtual methods OnInitialize, OnDutyCycle, and OnShutdown, registered via RTTI_MODULE_DECL for runtime type identification. FApplicationWindow extends FApplicationWindow adding window ownership, IWindowListener integration, and message loop management. The modular domain (FModularDomain) drives component activation order and service registration. All classes use TPtrRef for ref-counted dependencies on input, RHI, and window services. Pure virtual interfaces (delete) enforce concrete implementation in platform-specific subclasses, while concrete methods provide ready-made message pump scaffolding and service acquisition.
+
+## Flow
+App startup invokes FModularDomain::Initialize, causing component modules to register their services. FApplicationWindow::OnInitialize platform services initializes, creates the platform window via the HAL layer, and acquires IInputService, IRHIService, and IWindowService through the modular domain. The duty-cycle loop calls OnDutyCycle each frame, which polls input, advances the RHI frame graph, and processes UI overlay. OnShutdown tears down modules in reverse order, destroys the window, and releases platform resources. Derived apps (FShaderToyApp, FVoxelCubeApp, FWindowTestApp) override lifecycle methods while calling base class equivalents to preserve the framework contract.
+
+## Integration
+Source/Runtime/Application/Private/Application/ (private implementation details), Source/Runtime/Application/Public/Input/ (input service abstraction), Source/Runtime/Application/Public/Window/ (window management and IWindowListener), Source/Runtime/Application/Public/HAL/ (platform-specific window and message hooks), Source/Extensions/ApplicationUI/Public/ (ImGui-based UI service integration), Source/Programs/ShaderToy/, Source/Programs/VoxelCube/, Source/Programs/WindowTest/ (concrete application instances that inherit FApplicationWindow)

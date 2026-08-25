@@ -1,0 +1,13 @@
+# Source/Runtime/RHI/
+
+## Responsibility
+The RHI (Render Hardware Interface) layer provides an API-agnostic abstraction between the engine's rendering logic and the specific graphics APIs (Vulkan, DirectX 11). This folder contains the core types and interfaces common across all supported APIs, including buffer resources (FDeviceResourceBuffer, FDeviceResourceSharable), index and vertex buffers, constant buffers, and the IDeviceAPIEncapsulator interface. The RHI enables rendering code to remain API-independent by encapsulating API-specific details behind well-defined interfaces, facilitating portability across Vulkan and DX11 backends.
+
+## Design
+The RHI employs an interface-based abstraction with concrete API implementations. Key types include FDeviceResource as the base class, FDeviceResourceSharable for resource pooling and deduplication, and API-specific backends (FDeviceAPIDependantResourceBuffer for Vulkan/DX11). Bit-packed metadata packs stride/mode/usage into a single u32 via Meta::TBit. Resources follow a factory pattern via Create()/Destroy() on the device encapsulator. The design centers on the IDeviceAPIEncapsulator abstract class, with DX11DeviceAPIEncapsulator and FVulkanDeviceAPI as concrete implementations. Buffer types (FIndexBuffer, FVertexBuffer, FConstantBuffer) wrap FDeviceResourceSharable to enable pooling and sharing across rendering modules.
+
+## Flow
+Data flows from rendering code through the IDeviceAPIEncapsulator interface, which dispatches to the appropriate API backend. Buffer creation calls Create() on the encapsulator, which allocates the underlying resource and wraps it in FDeviceResourceSharable. Virtual methods GetData()/SetData()/CopyFrom()/CopySubPart() dispatch through the FDeviceResource base class to API-specific implementations. Command batching is handled by FCommandBufferBatch, which bridges RHI command submission to the Vulkan frame graph. The DX11 legacy path operates through DX11DeviceAPIEncapsulator.cpp with three callers per buffer type.
+
+## Integration
+This folder integrates with Source/Extensions/RHIVulkan/ through the FCommandBufferBatch class, which bridges RHI command submission to the Vulkan frame graph. Buffer resources created here are consumed by TVulkanFrameTask<_Task> nodes in the frame graph, which track inputs/outputs and dependencies. Memory allocation for RHI resources draws from TMemoryPool and TSlabHeap defined in Source/Runtime/Core/Public/Memory/. The swapchain and presentation flow connects through FVulkanSwapchain in Source/Extensions/RHIVulkan/Private/Vulkan/Instance/. DX11 callers in Source/Legacy/RHI/Public/Device/ also consume these buffer types, reflecting the shared RHI abstraction layer.

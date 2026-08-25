@@ -1,0 +1,13 @@
+# Source/Extensions/RHIVulkan/Public/Vulkan/Pipeline/
+
+## Responsibility
+The Public Vulkan Pipeline folder exposes the API-visible Vulkan pipeline types and interfaces used by engine code. It declares the types that are safe to include in public headers for graphics pipeline, compute pipeline, mesh pipeline, and ray tracing pipeline creation. This folder ensures that engine code depends only on publicly documented Vulkan pipeline types, allowing the private implementation to evolve independently.
+
+## Design
+The public API provides types for graphics pipeline creation (FVulkanGraphicsPipeline), compute pipeline creation (FVulkanComputePipeline), mesh pipeline creation (FVulkanMeshPipeline for NV_mesh_shader), and ray tracing pipeline creation (FVulkanRTPipeline). These types are deliberately kept as data-only structures without behavior, allowing the private Vulkan implementation to impose shader stage configuration, dynamic state, and pipeline layout details. The two-pass task processing model is documented for engine code that needs to understand the processing pipeline. All public types are designed to be stable across Vulkan API versions.
+
+## Flow
+Engine code uses the public pipeline types to describe the shader stages, vertex input state, input assembly, tessellation, geometry shading, viewport, and rasterization state for graphics pipelines. For compute pipelines, the shader stage and dispatch state are specified. For mesh pipelines, the mesh and task shader stages are specified. For ray tracing pipelines, the shader groups and SBT linkage are defined. The pipeline layout is created with the required descriptor set layouts. Dynamic state is configured via the public API. During rendering, the pipeline is bound to the command buffer, and resources are bound via the binding APIs.
+
+## Integration
+This folder is consumed by the private pipeline subsystem (Private/Vulkan/Pipeline/) which implements the full pipeline creation and resource binding functionality. The frame graph subsystem (FVulkanFrameGraph) references public pipeline types when creating pipelines and referencing them in TVulkanFrameTask<_Task> descriptions. Descriptor set layouts (FVulkanDescriptorSetLayout) are consumed by the pipeline layout creation. Draw tasks (FDrawVertices, FDrawIndexed, etc.) use the public pipeline types when processing through the visitor pattern (IVulkanDrawTask::Process1/Process2). The ray tracing pipeline (FVulkanRTPipeline) integrates with the ray tracing subsystem (FVulkanRayTracingShaderTable).

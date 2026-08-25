@@ -1,0 +1,13 @@
+# Source/Extensions/RHIVulkan/Private/Vulkan/Image/
+
+## Responsibility
+The Private Vulkan Image folder contains the implementation of Vulkan image creation, memory allocation, and resource management for the rendering pipeline. This folder implements the types and functions for creating Vulkan images (VkImage), allocating memory for those images, and managing their lifecycle across frames. The folder handles both local and shared image types, with support for sampled, storage, and render target usage patterns.
+
+## Design
+The design implements FVulkanLocalImage and FVulkanSharedImage as the two primary image types. FVulkanLocalImage owns the image memory and is tied to the lifetime of a single frame, while FVulkanSharedImage can be shared across multiple frames and rendering modules. Memory allocation for images draws from TMemoryPool and TSlabHeap, with the choice of allocator depending on the expected lifetime and access pattern. Image views (VkImageView) are created as needed for sampling or render target attachment. The design supports sampled images (textures), storage images (render targets, shader storage), and depth/stencil images.
+
+## Flow
+Image creation begins with the specification of the VkImageCreateInfo parameters (format, extent, usage, tiling). The image is created with vkCreateImage, and memory is allocated via TMemoryPool or TSlabHeap, depending on the expected lifetime and access pattern. The allocated memory is bound to the image with vkBindImageMemory. An image view (VkImageView) is created for sampling or render target attachment, using the appropriate subresource range. During the frame graph processing, images are passed as inputs and outputs to TVulkanFrameTask<_Task> nodes, which track layout transitions via pipeline barriers. At the end of the frame, local images are released, while shared images persist across frames.
+
+## Integration
+This folder integrates with the frame graph subsystem (FVulkanFrameGraph) which passes images as inputs and outputs to TVulkanFrameTask<_Task> nodes. Memory allocation draws from TMemoryPool in Source/Runtime/Core/Public/Memory/ and TSlabHeap in Source/Runtime/Core/Public/Allocator/. The descriptor set subsystem (FVulkanDescriptorSetLayout) binds image samplers and storage buffers to descriptor sets. The pipeline resources subsystem (FVulkanPipelineResources) binds images as textures or storage buffers to pipelines. The swapchain subsystem (FVulkanSwapchain) creates the swapchain images and manages their lifecycle. Ray tracing shader tables (FVulkanRayTracingShaderTable) may reference acceleration structures built from image data.

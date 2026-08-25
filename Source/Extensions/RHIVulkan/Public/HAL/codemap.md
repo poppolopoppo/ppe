@@ -1,0 +1,13 @@
+# Source/Extensions/RHIVulkan/Public/HAL/
+
+## Responsibility
+The Public HAL folder for RHIVulkan declares the low-level Vulkan hardware abstraction types that are safe to include in public engine headers. This folder exposes Vulkan-specific types such as VkPhysicalDeviceFeatures, VkQueueFamilyProperties, VkMemoryPropertyFlags, and other Vk structures that engine code needs to query without depending on private Vulkan implementation details. The responsibility of this folder is to provide a stable public interface between the engine and the Vulkan API.
+
+## Design
+The HAL design provides thin wrappers around Vulkan structures, ensuring that engine code can reference VkPhysicalDeviceFeatures, VqQueueFamilyProperties, and similar types without needing to include Vulkan headers directly. These types are deliberately data-only, containing no behavior or validation logic. The design follows the principle that the public HAL should be a stable interface, allowing the private Vulkan encapsulator to evolve its internal representations without breaking engine code that depends on these types. Platform-specific extensions and debug extensions are conditionally exposed via preprocessor macros.
+
+## Flow
+Engine code queries the Vulkan encapsulator for physical device properties and queue family properties, which are returned as public HAL types. The RHI layer and rendering subsystems use these types to configure device creation, memory allocation, and command pool setup. The fiber scheduler queries HAL for CPU topology when assigning rendering work to worker fibers. Surface creation code uses public HAL types to describe the VkSurfaceKHR and associated platform handles. All HAL type propagation occurs by value or const reference, ensuring zero-overhead propagation across module boundaries.
+
+## Integration
+This folder integrates with Source/Extensions/RHIVulkan/Private/ through the Vulkan encapsulator, which reads internal Vulkan structures and presents them as public HAL types. The RHI layer in Source/Runtime/RHI/ also consumes these types when querying device capabilities. The fiber scheduler uses HAL queue family information when scheduling rendering tasks. Surface creation and presentation flow through FVulkanSwapchain, which initializes the VkSurfaceKHR using public HAL types. Memory property queries for TMemoryPool allocation decisions also pass through these public types.

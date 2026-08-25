@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements private MeshBuilder components for the Mesh submodule, handling core mesh data types, mesh import orchestration, and the build graph node management that forms the foundation of the mesh content pipeline. It provides the essential data structures and orchestration logic that both format-specific and public mesh operations depend upon.
+
+## Design
+Key patterns center on `FContentPipelineNode` as the RTTI-enabled base type for all mesh pipeline nodes, and `FContentImporterContext` for managing source-to-destination mesh mapping during import. The design leverages `TContentImporter<_Import>` templated importers for dynamic mesh format resolution, with `META_DYNAMIC_CASTABLE_IMPL` enabling runtime type switching between importer variants. `FBuildNode` serves as the base type for mesh build graph nodes, integrating with `FBuildGraph::AddNode()` and `FBuildGraph::AppendNodes()` for DAG management. Memory layout follows the repo's ref-counted smart pointer conventions (`TPtrRef`, `U*`) for deterministic mesh data cleanup.
+
+## Flow
+Scan phase: `FScanContext::Scan()` discovers mesh pipeline nodes, each calling `node.Scan()` to identify source mesh files and register dependencies with `FBuildEnvironment`. Import phase: `IContentImporter::Import(ctx, dst)` is dynamically cast to the appropriate `TContentImporter<_Import>`, which reads source mesh data and produces intermediate mesh representations. Build phase: `FBuildContext::Build()` calls `node.Process()` which routes mesh data through the pipeline, generating optimized geometry output. Clean phase: `FCleanContext::Clean()` removes generated mesh artifacts and temporary files.
+
+## Integration
+Integrates with `Source/ContentPipeline/MeshBuilder/Public/Mesh/Format` for format-specific mesh processing, `Source/ContentPipeline/Asset.Geometry/Private/` for source geometry data, and `Source/ContentPipeline/BuildGraph/Private/` for graph execution orchestration. Also connects to `Source/ContentPipeline/Asset.Texture/Private/` for mesh-associated texture generation and `Source/ContentPipeline/PipelineCompiler/Private/Vulkan/Pipeline/` for downstream Vulkan mesh pipeline compilation.

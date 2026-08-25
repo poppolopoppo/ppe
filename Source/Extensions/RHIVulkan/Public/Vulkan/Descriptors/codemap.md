@@ -1,0 +1,13 @@
+# Source/Extensions/RHIVulkan/Public/Vulkan/Descriptors/
+
+## Responsibility
+The Public Vulkan Descriptors folder exposes the API-visible Vulkan descriptor set layout and pool types used by engine code. It declares the types that are safe to include in public headers for descriptor set layout creation, pool management, and set allocation. This folder ensures that engine code depends only on publicly documented Vulkan descriptor types, allowing the private implementation to evolve independently.
+
+## Design
+The public API provides FVulkanDescriptorSetLayout declaring the creation of VkDescriptorSetLayout objects, pool size management, and set allocation with hash-based deduplication. The public interface abstracts the VkDescriptorSetLayoutBinding entries and supports VK_EXT_descriptor_indexing and partial binding (VK_DESCRIPTOR_BINDING_PARTIALLY_BOUND_BIT). Vector types are marked VECTORINSITU for small buffer optimization (maximum 5 bindings). The hash-based deduplication key is computed from the layout and dynamic data, enabling reuse across pipelines. All public types are designed to be stable across Vulkan API versions.
+
+## Flow
+Descriptor set layout creation begins with shader reflection (FPipelineDesc::FVariantUniform), which extracts the required bindings from the compiled SPIRV. The bindings are hashed to identify duplicate layouts. If the layout is new, the public interface facilitates vkCreateDescriptorSetLayout, and pool sizes are cached for descriptor pool creation. If the layout already exists, the cached descriptor set is reused. Descriptor set allocation provides type-safe access via Get<T>() for uniform and storage buffers. Binding APIs (BindImage, BindTexture, BindBuffer, BindSampler, BindTexelBuffer) are used to populate descriptor sets with the appropriate resources. The cache key is hashed from the layout and dynamic data, enabling deduplication across pipelines.
+
+## Integration
+This folder is consumed by the private descriptor subsystem (Private/Vulkan/Descriptors/) which implements the full descriptor set layout and pool functionality. The pipeline resources subsystem (FVulkanPipelineResources) binds descriptor sets to pipelines using the public types. The ray tracing subsystem (FVulkanRayTracingShaderTable) uses descriptor sets for ray tracing shaders. The pipeline creation subsystem (FVulkanPipeline) consumes descriptor set layouts for pipeline layout creation. Engine code uses the public types to create descriptor set layouts without depending on private implementation details.

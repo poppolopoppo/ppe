@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements public Texture components for the Texture submodule, exposing the texture data types and pipeline operations that other modules and tools can consume directly. It provides the type-safe interface for texture operations as the primary entry point for texture-related functionality across the ContentPipeline subsystem.
+
+## Design
+Key patterns center on `FTextureSource` as the publicly available texture data + metadata type, with `FTextureSourceProperties` publicly exposing dimensions, format, gamma, and flags. The design leverages `IContentProcessor` as the public processor interface with `TContentProcessor` templated type-safe processing for texture operations. Compression follows the established block-compression pattern (DXT1/DXT5) with color mask detection (RGB→DXT1, RGBA→DXT5) publicly accessible. `FCompressedImage` provides the public compressed image type. Mip chain validation via `HasFullMipChain2D()` is publicly available. HDR and LongLat cubemap detection support specialized public texture workflows. The design follows the repo's ref-counted smart pointer conventions (`TPtrRef`, `U*`) for public texture data management.
+
+## Flow
+Public consumers access texture operations through the `FTextureSource` type, which provides data and metadata. Texture processing is initiated via `IContentProcessor::Process(ctx, dst)`, dynamically casting to `TContentProcessor` for type-specific processing. The pipeline flows: image processing → compression (DXT1/DXT5 with color mask detection) → mip chain generation (validated via `HasFullMipChain2D()`) → output registration. Clean operations remove public texture artifacts via the standard `FCleanContext` protocol.
+
+## Integration
+Integrates with `Source/ContentPipeline/Texture/Private/Texture/` for private texture implementation details, `Source/ContentPipeline/MeshBuilder/Public/Mesh/` for mesh-associated texture workflows, `Source/ContentPipeline/PipelineCompiler/Public/Vulkan/Pipeline/` for Vulkan texture backend integration, and `Source/ContentPipeline/BuildGraph/Public/` for graph execution orchestration of public texture builds.

@@ -1,0 +1,13 @@
+# Source/Extensions/RHIVulkan/Private/Vulkan/RayTracing/
+
+## Responsibility
+The Private Vulkan Ray Tracing folder contains the implementation of ray tracing pipeline creation, shader binding table management, and ray tracing command execution for the Vulkan rendering pipeline. This folder implements the Vulkan-specific ray tracing pipeline types, the shader binding table (SBT) layout, and the command processing for ray tracing workloads.
+
+## Design
+The design centers on FVulkanRayTracingShaderTable, which manages the shader binding table (SBT) with debug modes for different pipeline types (RayTracing, Pipeline, LayoutId). The shader binding table is an array of VkRayTracingShaderKHR handles and associated data, organized per pipeline layout. BindingsFor() extracts offsets/strides for vkCmdTraceRaysKHR from the shader table and pipeline layout. The SBT is organized per-mode: Pipeline, LayoutId, BufferOffset, and Mode. Ray tracing pipeline creation is integrated with the pipeline resources system (FVulkanPipelineResources), which provides the descriptor sets and push constants required by ray tracing shaders. The shader binding table is built during pipeline initialization and used during command execution.
+
+## Flow
+Ray tracing initialization begins with pipeline creation, which compiles the ray tracing shader groups and builds the shader binding table (SBT). The SBT is stored in FVulkanRayTracingShaderTable, associated with the pipeline layout and debug mode. During command execution (Pass2 of the task processing model), vkCmdTraceRaysKHR is called with the SBT pointer, ray generation group index, miss group indices, hit group indices, and the width/height of the ray launch region. The visitor pattern processes ray tracing tasks: Process1 sets up any required descriptors and barriers, Process2 issues the vkCmdTraceRaysKHR command. Descriptor sets for ray tracing are provided by FVulkanPipelineResources, which binds the required uniform and storage buffers.
+
+## Integration
+This folder integrates with the pipeline resources subsystem (FVulkanPipelineResources) which provides the descriptor sets required by ray tracing shaders. It consumes the task graph nodes (TVulkanFrameTask<_Task>) for ray tracing workloads, which are processed in the two-pass model. The shader binding table (FVulkanRayTracingShaderTable) is used by the command processing subsystem (Private/Vulkan/Command/) when issuing vkCmdTraceRaysKHR. Pipeline layout and descriptor set layout information flows from FVulkanDescriptorSetLayout. The ray tracing pipeline is created during FVulkanFrameGraph initialization and is referenced by the frame graph's task descriptions.

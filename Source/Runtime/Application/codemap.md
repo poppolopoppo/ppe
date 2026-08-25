@@ -1,0 +1,13 @@
+# Source/Runtime/Application/
+
+## Responsibility
+This folder group encompasses the core application layer of the PPE engine, containing both public and private implementation details for windowed application lifecycle, input management, platform abstraction (HAL), viewport control, and program instances. It serves as the foundation for all concrete applications (ShaderToy, VoxelCube, WindowTest) that inherit from FApplicationWindow, defining the modular domain-driven architecture, service registration boundaries, and the public API surface that other subsystems depend on.
+
+## Design
+The public folders (Application, Input, Input/Device, Input/Action, HAL, Window, Viewport) expose abstracted interfaces via RTTI-registered classes (FApplicationBase, FApplicationWindow, FInputAction, FGenericPlatformApplicationMisc) while the private folders encapsulate concrete implementations behind those interfaces. FModularDomain drives component activation order and service registration order. All classes use TPtrRef for ref-counted dependencies. Pure virtual interfaces ( = delete) enforce concrete implementation in platform-specific subclasses, while concrete methods provide ready-made framework scaffolding. The layering pattern (Public → Private) hides implementation details behind clean abstraction boundaries.
+
+## Flow
+App startup → FModularDomain::Initialize → component modules register → FApplicationWindow::OnInitialize → platform services initialize → window creation via HAL → duty cycle loop → OnDutyCycle each frame polls input, advances RHI frame graph, processes UI overlay → OnShutdown tears down modules in reverse order → window destruction → platform resource release. Derived apps (FShaderToyApp, FVoxelCubeApp, FWindowTestApp) override lifecycle methods while calling base class equivalents. Input flows: device poll → state fill → action binding evaluation → application consumption. UI flow: NewFrame → widget rendering → dockspace render.
+
+## Integration
+Source/Runtime/Application/Private/ (private implementation details for all layers), Source/Extensions/ApplicationUI/Public/ (ImGui-based UI service), Source/Extensions/ApplicationUI/Private/ (private UI details and widgets), Source/Programs/ShaderToy/, Source/Programs/VoxelCube/, Source/Programs/WindowTest/ (concrete application instances), Source/ContentPipeline/ (content pipeline modules integrated through modular domain)

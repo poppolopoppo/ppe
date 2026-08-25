@@ -1,0 +1,13 @@
+# Source/Runtime/RHI/Private/RHI/
+
+## Responsibility
+This sub-folder contains the private implementation of the RHI core types and the concrete API encapsulators. It defines FDeviceAPIDependantResourceBuffer and its Vulkan/DX11 subclasses, the FDeviceResource and FDeviceResourceSharable base classes, and the internal resource management logic used throughout the rendering subsystem. The responsibility of this folder is to realize the API-agnostic RHI interface in concrete API terms, enabling both Vulkan and DX11 backends to operate correctly.
+
+## Design
+The design implements FDeviceAPIDependantResourceBuffer as an abstract base with two concrete subclasses: FVulkanBuffer (backed by VkBuffer with memory allocation via TMemoryPool) and FDX11Buffer (backed by ID3D11Buffer). FDeviceResource provides the virtual interface for GetData/SetData/CopyFrom/CopySubPart, which dispatch to the API-specific backend. FDeviceResourceSharable adds reference counting and pooling support, enabling resource deduplication across rendering modules. The bit-packed metadata layout (stride/mode/usage in a single u32 via Meta::TBit) is implemented at this level. Two encapsulators implement IDeviceAPIEncapsulator: DX11DeviceAPIEncapsulator for DirectX 11 and FVulkanDeviceAPI for Vulkan.
+
+## Flow
+Resource creation begins with the encapsulator's Create() method, which dispatches to the appropriate API-specific implementation. Buffer data transfers flow through the virtual methods on FDeviceResource, which dispatch to the backend. The FCommandBufferBatch class (defined in Source/Extensions/RHIVulkan/Public/Vulkan/Command) collects submissions and records them into API-specific command buffers. The DX11 path records immediate-mode commands; the Vulkan path records command buffer submissions that are later submitted to queues. Resource destruction follows the Destroy() factory pattern, releasing API-specific handles and decrementing reference counts on sharable resources.
+
+## Integration
+This folder is the primary integration point between the RHI and Source/Extensions/RHIVulkan/. The FVulkanDeviceAPI implements IDeviceAPIEncapsulator for Vulkan, and its buffer types (FVulkanBuffer) are consumed by the Vulkan frame graph (TVulkanFrameTask<_Task>) and the command buffer system (FVulkanCommandBuffer). Memory allocation draws from TMemoryPool in Source/Runtime/Core/Public/Memory/. The FCommandBufferBatch class bridges RHI submissions to Vulkan command buffers. The swapchain and presentation flow connects through FVulkanSwapchain in Source/Extensions/RHIVulkan/Private/Vulkan/Instance/. The DX11 encapsulator (DX11DeviceAPIEncapsulator) also implements IDeviceAPIEncapsulator for the legacy code path.

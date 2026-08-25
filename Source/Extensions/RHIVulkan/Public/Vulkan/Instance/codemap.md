@@ -1,0 +1,13 @@
+# Source/Extensions/RHIVulkan/Public/Vulkan/Instance/
+
+## Responsibility
+The Public Vulkan Instance folder exposes the API-visible Vulkan instance and device types used by engine code. It declares the types that are safe to include in public headers for Vulkan instance creation, device creation, surface creation, and queue family selection. This folder ensures that engine code depends only on publicly documented Vulkan instance/device types, allowing the private implementation to evolve independently.
+
+## Design
+The public API provides Vulkan instance types (FVulkanInstance) declaring methods for surface creation (VkSurfaceKHR from window handle), device creation (device + queues with/without surface), and queue family information. Surface creation types describe the platform-specific window handle and surface configuration. Queue family types enumerate the available queue families and their properties (graphics, compute, transfer, present). All public types are designed to be stable across Vulkan API versions, allowing the engine to remain compatible across API updates. The instance and device creation flow is documented for engine code that needs to create a Vulkan device.
+
+## Flow
+Engine code creates a Vulkan instance using the public types, then selects a physical device and creates a logical device with the required queue families. Surface creation is performed by calling the public method with a platform-specific window handle, which creates a VkSurfaceKHR. Device creation is performed with or without a surface, producing the VkDevice and queue family handles. Queue family information is queried to determine the available queues (graphics, compute, transfer, present). The present queue is used for swapchain presentation, and the graphics queue is used for command submission.
+
+## Integration
+This folder is consumed by the private instance subsystem (Private/Vulkan/Instance/) which implements the full Vulkan instance and device creation functionality. The RHI layer (Source/Runtime/RHI/) references public instance types when creating the device encapsulator. The swapchain subsystem (FVulkanSwapchain) uses public instance types for surface creation and present queue selection. The surface and presentation flow connects to FVulkanSwapchain in Source/Extensions/RHIVulkan/Private/Vulkan/Instance/. The fiber scheduler (Source/Runtime/Core/Private/Thread/Task/) queries queue family information when scheduling rendering work across worker fibers.

@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements private texture content pipeline components for Asset.Texture, handling low-level texture processing, compression, and intermediate representation generation. It operates behind the scenes to produce build artifacts consumed by public-facing texture modules while keeping implementation details encapsulated and adhering to the repo's content pipeline conventions.
+
+## Design
+Key patterns rely on `FTextureSource` for texture data + metadata representation, `FTextureSourceProperties` for dimensions, format, gamma, and flags, and `FCompressedImage` for DXT1/DXT5 block compression operations. The design uses `IContentProcessor` as the processor interface with `TContentProcessor` templated type-safe processing. Compression follows the established block-compression pattern: `Compress()` → `Compress_()` → `BlockCompress_<DXT1/DXT5>()` with 4x4 alignment requirements. Color mask detection routes RGB data to DXT1 and RGBA data to DXT5 format selection. Mip chain validation via `HasFullMipChain2D()` ensures generated mipmaps meet quality requirements. HDR and LongLat cubemap detection are supported for specialized texture types.
+
+## Flow
+Scan phase: `FScanContext::Scan()` discovers texture source files under the private directory, registering each as a dependency with `FBuildEnvironment` and validating source metadata via `FTextureSourceProperties`. Build phase: `FBuildContext::Build()` triggers `node.Process()`, which dynamically casts to `TContentProcessor` and executes compression/processing pipelines. The compressed image is stored via `FCompressedImage` with appropriate format selection. Clean phase: `FCleanContext::Clean()` removes generated compressed artifacts and intermediate texture files.
+
+## Integration
+Connects to `Source/ContentPipeline/Texture/Public/Texture` for public texture symbol exposure, `Source/ContentPipeline/Texture/Private/Texture/Compression/` for low-level compression routines, and `Source/ContentPipeline/PipelineCompiler/Private/Vulkan/Pipeline/` for Vulkan texture backend integration. Also interfaces with `Source/ContentPipeline/MeshBuilder/Private/Mesh/` for mesh-associated texture generation and `Source/ContentPipeline/BuildGraph/Private/` for graph execution orchestration.

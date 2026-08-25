@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements private Texture image components for the Texture/Private/Texture submodule, handling source image data loading, format metadata, and the foundational types that support the entire texture content pipeline above the compression layer.
+
+## Design
+Key patterns rely on `FTextureSource` for texture data + metadata representation, with `FTextureSourceProperties` storing dimensions, format, gamma, and flags. The design uses `IContentProcessor` as the processor interface with `TContentProcessor` templated type-safe processing for image format conversions. Source image loading follows the repo's established patterns with bulk data attachment for dependency tracking via `FBuildEnvironment`. Color mask detection for format selection (RGB→DXT1, RGBA→DXT5) is a core design decision. Mip chain validation via `HasFullMipChain2D()` ensures image data integrity. HDR and LongLat cubemap detection support specialized texture types. Memory layout follows the repo's ref-counted smart pointer conventions (`TPtrRef`, `U*`) for deterministic image data cleanup.
+
+## Flow
+Scan phase: `FScanContext::Scan()` discovers source image files, registering each as a dependency with `FBuildEnvironment` and validating source metadata via `FTextureSourceProperties`. Build phase: `FBuildContext::Build()` triggers `node.Process()`, which dynamically casts to `TContentProcessor` and executes image format conversion and metadata extraction. The processed image data is stored in `FTextureSource` with appropriate format properties. Mip chain generation and validation execute via `HasFullMipChain2D()`. HDR/LongLat cubemap detection may trigger format overrides. Clean phase: `FCleanContext::Clean()` removes generated image artifacts and temporary files.
+
+## Integration
+Connects to `Source/ContentPipeline/Texture/Private/Texture/Compression/` for compressed image output, `Source/ContentPipeline/Texture/Private/Texture/` for higher-level texture orchestration, `Source/ContentPipeline/Texture/Public/Texture` for public texture symbol exposure, and `Source/ContentPipeline/BuildGraph/Private/` for graph execution orchestration of image processing builds.

@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements private Vulkan pipeline compiler components, providing the core Vulkan backend and SPIR-V compilation infrastructure that supports the entire pipeline compiler module's shader translation and pipeline generation capabilities.
+
+## Design
+Key patterns center on `FVulkanPipelineCompiler` as the primary compiler coordinator, with `IPipelineCompiler` as the abstraction interface. `FVulkanSpirvCompiler` handles the GLSL → SPIR-V compilation chain: `ParseGLSL_()` → `CompileSPIRV_()` → `BuildReflection_()` → `ParseAnnotations_()`. Pipeline descriptor types (`FMeshPipelineDesc`, `FGraphicsPipelineDesc`, `FComputePipelineDesc`, `FRayTracingPipelineDesc`) define the configuration space for different pipeline kinds. Shader module creation with `VkShaderModule` caching is managed through `CreateVulkanShader_()`. Format negotiation via `HighestPriorityShaderFormat_()` selects the best available format from supported options. Debug/profiling/trace support is provided through `FRayTracingDebuggableShaderModule` for integration with debugging and profiling workflows.
+
+## Flow
+The compilation flow begins with `FVulkanPipelineCompiler::Compile()` dispatching to `FVulkanSpirvCompiler::Compile()`, which executes the GLSL parsing, SPIR-V compilation, reflection building, and annotation parsing sequence. Pipeline layout generation merges descriptor sets from all shader stages. Shader module creation and caching occur via `CreateVulkanShader_()`. Result aggregation uses atomic `Combine()` + `compare_exchange_weak` patterns. Stop-on-error behavior is configurable through `HasStopOnError()`.
+
+## Integration
+Integrates with `Source/ContentPipeline/BuildGraph/Private/` and `Source/ContentPipeline/BuildGraph/Public/` for build graph orchestration, `Source/ContentPipeline/MeshBuilder/Private/` and `Source/ContentPipeline/MeshBuilder/Public/` for mesh data input, `Source/ContentPipeline/Asset.Texture/Private/` and `Source/ContentPipeline/Asset.Texture/Public/` for texture-related pipeline compilation, and `*.cpp` for test validation.

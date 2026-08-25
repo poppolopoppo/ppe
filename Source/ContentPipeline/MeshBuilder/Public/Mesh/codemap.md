@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements public MeshBuilder components for the Mesh submodule, exposing the mesh content pipeline's API surface for other modules and tools to consume. It provides type-safe mesh operations, import interfaces, and build graph node types that form the primary entry point for mesh-related content pipeline functionality.
+
+## Design
+Key patterns center on `IContentImporter` as the public base importer interface, with `TContentImporter<_Import>` templated importers providing type-safe mesh format import. `FContentImporterContext` is publicly available for source-to-destination mesh mapping. `FContentPipelineNode` serves as the RTTI-enabled base type for public mesh pipeline nodes, integrating with `FBuildGraph::AddNode()` and `FBuildGraph::AppendNodes()` for DAG management. `FBuildNode` is the foundational node type extending `FMetaObject`. The design follows the established template-based type-safe pattern with `META_DYNAMIC_CASTABLE_IMPL` for dynamic type resolution, and leverages `FBuildEnvironment` for platform, cache, and executor services.
+
+## Flow
+Public consumers initiate mesh import by calling `IContentImporter::Import(ctx, dst)`, which dynamically casts to the appropriate `TContentImporter<_Import>` for source mesh reading. Build graph execution is triggered via `FBuildGraph::ScanAll()` → `FScanContext::Scan()` → `node.Scan()` for dependency registration, followed by `FBuildContext::Build()` → `node.Import()` → `node.Process()` for mesh data processing. Output mesh files are tracked via `FBuildGraph::AddFiles()` for downstream consumption. Clean operations use `FBuildEnvironment::CleanAll()` → `FCleanContext::Clean()` → `node.Clean()` to remove generated mesh artifacts.
+
+## Integration
+Integrates with `Source/ContentPipeline/MeshBuilder/Private/Mesh/` and `Source/ContentPipeline/MeshBuilder/Public/Mesh/Format` for private mesh implementation details, `Source/ContentPipeline/Asset.Geometry/Private/` and `Source/ContentPipeline/Asset.Geometry/Public/` for geometry data, and `Source/ContentPipeline/BuildGraph/Private/` and `Source/ContentPipeline/BuildGraph/Public/` for graph execution orchestration. Also connects to `Source/ContentPipeline/PipelineCompiler/Private/Vulkan/Pipeline/` and `Source/ContentPipeline/PipelineCompiler/Public/Vulkan/Pipeline/` for Vulkan mesh pipeline compilation.

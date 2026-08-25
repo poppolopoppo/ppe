@@ -1,0 +1,13 @@
+# Source/Extensions/RHIVulkan/Private/Vulkan/Buffer/
+
+## Responsibility
+The Private Vulkan Buffer folder contains the implementation of Vulkan buffer creation, memory allocation, and resource management for the rendering pipeline. This folder implements the types and functions for creating Vulkan buffers (VkBuffer), allocating memory for those buffers, and managing their lifecycle across frames. The folder handles both local and shared buffer types, with support for index, vertex, constant, and uniform usage patterns.
+
+## Design
+The design implements FVulkanLocalBuffer and FVulkanSharedBuffer as the two primary buffer types. FVulkanLocalBuffer owns the buffer memory and is tied to the lifetime of a single frame, while FVulkanSharedBuffer can be shared across multiple frames and rendering modules. Memory allocation for buffers draws from TMemoryPool and TSlabHeap, with the choice of allocator depending on the expected lifetime and access pattern. The bit-packed metadata layout (stride/mode/usage in a single u32 via Meta::TBit) is implemented at this level, enabling resource pooling and deduplication. Buffer views and sparse resource support are also handled.
+
+## Flow
+Buffer creation begins with the specification of the VkBufferCreateInfo parameters (size, usage, sharing mode). The buffer is created with vkCreateBuffer, and memory is allocated via TMemoryPool or TSlabHeap, depending on the expected lifetime and access pattern. The allocated memory is bound to the buffer with vkBindBufferMemory. The bit-packed metadata (stride/mode/usage) is stored alongside the buffer resource, enabling resource pooling via FDeviceResourceSharable. During the frame graph processing, buffers are passed as inputs and outputs to TVulkanFrameTask<_Task> nodes, which track layout transitions and usage patterns. At the end of the frame, local buffers are released, while shared buffers persist across frames.
+
+## Integration
+This folder integrates with the frame graph subsystem (FVulkanFrameGraph) which passes buffers as inputs and outputs to TVulkanFrameTask<_Task> nodes. Memory allocation draws from TMemoryPool in Source/Runtime/Core/Public/Memory/ and TSlabHeap in Source/Runtime/Core/Public/Allocator/. The descriptor set subsystem (FVulkanDescriptorSetLayout) binds buffer samplers and storage buffers to descriptor sets. The pipeline resources subsystem (FVulkanPipelineResources) binds buffers as vertex/index/uniform buffers to pipelines. The swapchain subsystem (FVulkanSwapchain) may reference buffer resources for present-kernel integration. The RHI layer (Source/Runtime/RHI/) also creates buffer resources that are consumed by this subsystem.

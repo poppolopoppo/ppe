@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements public texture content pipeline components for Asset.Texture, exposing texture types and operations that other modules and tools can consume directly. It serves as the primary entry point for texture-related content pipeline functionality, defining the public API surface for texture processing, import, and serialization.
+
+## Design
+Key patterns rely on `FBuildGraph` for DAG-based texture build orchestration, with `FBuildNode` as the base type for all public texture pipeline nodes. The design leverages `FPipelineContext` variants (`FScanContext`, `FBuildContext`, `FCleanContext`) for the three-phase pipeline lifecycle. Public texture nodes use `FContentPipelineNode` as the RTTI-enabled base type, and import/process operations are dispatched via `IContentImporter` and `IContentProcessor` interfaces with dynamic type resolution. Format selection follows the established color mask detection pattern (RGB→DXT1, RGBA→DXT5), and mip chain validation is performed via `HasFullMipChain2D()`. HDR/LongLat cubemap detection is also supported for specialized public texture workflows.
+
+## Flow
+Scan phase: `FScanContext::Scan()` is called on each public texture node, which triggers `node.Scan()` to discover source texture files and register dependencies with `FBuildEnvironment`. Build phase: `FBuildContext::Build()` calls `node.Import()` to dynamically resolve and execute the appropriate `TContentImporter<_Import>`, followed by `node.Process()` which routes through `IContentProcessor::Process(ctx, dst)` for texture type-specific processing and compression. Output files are tracked via `FBuildGraph::AddFile()` for downstream consumption. Clean phase: `FCleanContext::Clean()` removes generated texture artifacts while preserving source file references.
+
+## Integration
+Integrates with `Source/ContentPipeline/Asset.Texture/Private/` for private texture implementation details, `Source/ContentPipeline/MeshBuilder/Public/Mesh/` for mesh-associated texture workflows, and `Source/ContentPipeline/PipelineCompiler/Public/Vulkan/Pipeline/` for Vulkan texture backend integration. Also connects to `Source/ContentPipeline/BuildGraph/Public/` for graph execution orchestration of public texture builds.

@@ -1,0 +1,11 @@
+## Responsibility
+This folder provides public interop interfaces for Asset.Geometry, enabling other modules and external tools to consume geometry data through well-defined APIs. It exposes geometry metadata, format conversions, and pipeline-ready descriptors that downstream systems can reference without depending on private implementation details.
+
+## Design
+Key patterns center on `FMeshPipelineDesc` and `FGraphicsPipelineDesc` for describing geometry pipeline configurations, and `FVulkanPipelineCompiler` for Vulkan backend compilation. Public-facing types such as `FTextureSource` are leveraged when geometry is associated with texture assets. The design employs `TContentImporter<_Import>` for geometry import from source formats and `IContentProcessor` for geometry processing, with RTTI dynamic casting ensuring type safety across the module boundary. Specialization constants for task/mesh group sizes are exposed via `FMeshPipelineDesc` for Vulkan shader configuration.
+
+## Flow
+During the Scan phase, `FBuildGraph` discovers public geometry nodes that reference source meshes; each node's `Import()` method dynamically casts to the appropriate `TContentImporter<_Import>` to load geometry data. Build phase executes `node.Process()`, which routes through `IContentProcessor::Process(ctx, dst)` to convert and validate geometry for public consumption. Output artifacts are registered with `FBuildEnvironment::AddFiles()` so downstream systems can track and consume them. Clean phase removes public geometry artifacts while preserving source references.
+
+## Integration
+Connects to `Source/ContentPipeline/Asset.Geometry/Private/` for private geometry implementation details, `Source/ContentPipeline/MeshBuilder/Public/Mesh/` for public mesh symbols, and `Source/ContentPipeline/PipelineCompiler/Public/Vulkan/Pipeline/` for Vulkan pipeline compilation triggers. Also integrates with `Source/ContentPipeline/Texture/Public/Texture/` for geometry-associated texture lookups and `Source/ContentPipeline/BuildGraph/Public/` for graph-level orchestration of public geometry builds.

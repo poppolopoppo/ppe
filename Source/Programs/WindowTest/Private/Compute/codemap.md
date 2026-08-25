@@ -1,0 +1,13 @@
+# Source/Programs/WindowTest/Private/Compute/
+
+## Responsibility
+This directory implements the Compute test subsystem, validating shader compute functionality, async compute command queues, and push constant/dynamic offset handling. These tests exercise the RHI's compute command path from resource creation to kernel dispatch.
+
+## Design
+The compute test definitions cover a range of compute workloads: `Compute_Compute*.cpp` for basic compute shader dispatch, `Compute_AsyncCompute*.cpp` for async compute command queue operations where compute and graphics commands are interleaved, `Compute_ArrayOfTextures*.cpp` for compute shaders that process array-of-textures inputs, `Compute_PushConstant1.cpp` for shaders that consume push constants, and `Compute_DynamicOffset1.cpp` for shaders that use dynamic uniform buffer offsets. Each test creates the required compute resources (buffers, textures, pipeline state), dispatches the compute kernel, and reads back the result for validation. The tests use structured assertions to check the result, such as comparing buffer contents against expected patterns, verifying that the correct number of work groups were dispatched, and confirming that push constants and dynamic offsets are applied correctly.
+
+## Flow
+The test flow begins when the test function creates the required compute resources (compute pipeline, command queue, buffers, and textures). The compute kernel is dispatched via the command list, specifying the work group count and dimensions. For async compute tests, the dispatch is interleaved with graphics commands, and the test validates that the interleaving does not cause resource conflicts or pipeline stalls. After the dispatch completes, the test reads back the result from the destination buffer or texture and compares it against the expected pattern using structured assertions. The result is logged via `EXTERN_LOG_CATEGORY`, and the test function returns a pass/fail status.
+
+## Integration
+The Compute subsystem integrates with `Source/Runtime/RHI/` (`Source/Runtime/RHI`) for compute pipeline creation, command queue submission, and async compute support. It interfaces with `Source/ContentPipeline/PipelineCompiler/` (`Source/ContentPipeline/PipelineCompiler/codemap.md`) for compute shader compilation validation, as the test compute shaders are compiled through the pipeline compiler before the test runs. The test definitions are auto-discovered by the WindowTest harness at startup, and the results are reported through the harness's console summary.

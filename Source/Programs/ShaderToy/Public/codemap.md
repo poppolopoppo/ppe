@@ -1,0 +1,13 @@
+# Source/Programs/ShaderToy/Public/
+
+## Responsibility
+The Public directory for ShaderToy exposes the types and interfaces that define the shader playground's rendering pipeline, ImGui configuration, and shader input model. These types are intended for use by developers extending the platform or integrating the shader pipeline into other applications.
+
+## Design
+The public API centers on the shader uniform input descriptors: `iTime` (float, elapsed time in seconds), `iMouse` (vec2, cursor position), `iResolution` (vec3, window dimensions), `iFrame` (int, current frame count), and `iFrameRate` (float, average frame rate). Four channel descriptors (`iChannelResolution[4]`, `iChannel[4]`) define the sampler parameters for the four optional input textures/buffers. The ImGui dockspace configuration is also exposed, including the main viewport setup, widget identifiers, and default layout persistence. Live recompilation settings such as compilation timeout and error handling mode are configured via public structs. All types are marked for cross-platform use and do not depend on RHI-specific abstractions, making them usable as a minimal shader input schema independent of the full application.
+
+## Flow
+Developers constructing a shader integration start by filling in the uniform input structure with values from their application context (time, cursor, resolution). The structure is passed to the shader compilation pipeline, which handles GLSL parsing, SPIR-V generation, and Vulkan shader module creation. The compiled shader is then loaded into the rendering frame graph, where uniform buffers are updated each frame with the current input values. If live recompilation is enabled, the pipeline monitors the source file for changes and re-triggers the compilation chain. The ImGui dockspace is initialized with the exposed configuration, providing widgets for source editing, file import, and log viewing.
+
+## Integration
+The public types are consumed by the ShaderToy main application and by any external application that wishes to embed the shader playground pipeline. Integration with `Source/Extensions/ApplicationUI/` (`Source/Extensions/ApplicationUI`) provides module loading and remoting capabilities. The shader input schema integrates with `Source/ContentPipeline/Texture/` (`Source/ContentPipeline/Texture/codemap.md`) for texture channel population. Live recompilation internally uses `Source/ContentPipeline/PipelineCompiler/` (`Source/ContentPipeline/PipelineCompiler/codemap.md`) for GLSL-to-SPIR-V translation, though this integration is transparent to the public API consumer. `Source/Programs/ShaderToy/Private/` (`Source/Programs/ShaderToy/Private/codemap.md`) implements the full UI and rendering logic on top of these public types.

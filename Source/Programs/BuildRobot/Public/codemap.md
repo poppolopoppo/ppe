@@ -1,0 +1,13 @@
+# Source/Programs/BuildRobot/Public/
+
+## Responsibility
+The Public directory for BuildRobot exposes the configuration and environment types that define how the headless orchestrator interacts with the ContentPipeline. These types are intended for use by CI scripts, build configuration authors, and integration points with external build systems.
+
+## Design
+The public API centers on `FBuildEnvironment` (`BuildEnvironment.h:15`), which encapsulates the platform configuration, artifact cache, parallel build executor, and structured logger. `FBuildGraph` (`Public/BuildGraph.h:18`) is exposed for inspection of the DAG structure without requiring internal context creation. The build node base class `FBuildNode` (`Public/BuildNode.h`) provides the RTTI-enabled interface that all pipeline nodes implement, including `Scan()`, `Import()`, `Build()`, and `Clean()` methods. Specialization constants define the maximum concurrent build threads, cache timeout values, and stop-on-error behavior. All public types are designed for serialization and cross-process communication, enabling BuildRobot to be driven from remote script hosts or CI frameworks.
+
+## Flow
+External consumers configure a `FBuildEnvironment` instance and pass it to the BuildRobot console main, which takes ownership of the build lifecycle. The consumer calls `FBuildEnvironment::ExecuteGraph()` or equivalent to begin the Scan→Build→Clean sequence. The graph execution proceeds through `FBuildGraph::AddNode()` and `AppendNodes()` to discover and queue work, followed by the executor's `QueueAndWaitFor()` to parallelize building. Cache lookups via `IBuildCache::HasFile()` guard each build step, and results are finalized via `FBuildEnvironment::GetLog()` for post-run inspection. If stop-on-error is configured, the execution halts on the first node failure.
+
+## Integration
+The public types are consumed by CI scripts and external build frameworks that need to drive asset pipeline builds without launching the full application shell. BuildRobot's console entry point reads configuration from standard input or a config file and instantiates the environment accordingly. The graph DAG structure integrates with `Source/ContentPipeline/BuildGraph/` (`Source/ContentPipeline/BuildGraph/codemap.md`) for node discovery and execution, and the executor services integrate with the parallel execution framework defined in that module. Downstream, built assets flow into `Source/Programs/VoxelCube/` and `Source/Programs/ShaderToy/` as pre-built content packages.

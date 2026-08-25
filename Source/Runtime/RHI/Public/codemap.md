@@ -1,0 +1,13 @@
+# Source/Runtime/RHI/Public/
+
+## Responsibility
+The Public RHI folder exposes the API-agnostic rendering interface used by engine code and downstream API encapsulators. It declares the core types, interfaces, and enumerations that are safe to include in public headers, including EBufferMode, EBufferUsage, FDeviceResourceBuffer, FDeviceResourceSharable, FIndexBuffer, FVertexBuffer, FConstantBuffer, and IDeviceAPIEncapsulator. This folder ensures that engine rendering logic depends only on API-agnostic types, allowing the RHI to remain portable across Vulkan and DirectX 11 implementations.
+
+## Design
+The public API is designed around well-defined interfaces and data types that hide implementation details. EBufferMode and EBufferUsage enumerate the possible buffer access patterns (Read/Write/Discard/Immutable/Dynamic/Staging). FDeviceResourceBuffer holds the core buffer state (stride, count, mode, usage bit-packed). FDeviceResourceSharable enables resource pooling and deduplication. FIndexBuffer, FVertexBuffer, and FConstantBuffer each wrap FDeviceResourceSharable for specific GPU resource types. IDeviceAPIEncapsulator declares the virtual interface for device-specific operations. The bit-packed metadata layout via Meta::TBit is a deliberate optimization to reduce per-resource overhead.
+
+## Flow
+Engine code calls RHI factory functions (Create, Destroy) which dispatch to the IDeviceAPIEncapsulator implementation. Buffer creation flows through GetData()/SetData()/CopyFrom()/CopySubPart() virtual methods, which are dispatched to API-specific backends. Constant buffer updates flow through the ConstantBuffer class, which maps and writes data directly. Index and vertex buffers are created via their respective wrappers, which internally allocate and bind the underlying GPU resource. All API dispatch occurs through the encapsulator, which abstracts Vulkan and DX11 differences.
+
+## Integration
+This folder is consumed by Source/Extensions/RHIVulkan/ through FCommandBufferBatch, which uses the public RHI types to submit commands to the Vulkan frame graph. Buffer resources (FIndexBuffer, FVertexBuffer, FConstantBuffer) are created here and referenced in TVulkanFrameTask<_Task> descriptions. Memory allocation for these buffers draws from TMemoryPool in Source/Runtime/Core/Public/Memory/. The RHI types are also used by Source/Legacy/RHI/Public/Device/ for DX11 integration. Cross-module dependencies are tracked through the FDeviceResourceSharable interface, which enables resource pooling across RHI and Vulkan subsystems.

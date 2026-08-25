@@ -1,0 +1,13 @@
+# Source/Programs/WindowTest/Private/Impl/
+
+## Responsibility
+This directory contains the private implementation details that support the WindowTest test harness, including the test selection menu, console event handling, RHI initialization boilerplate, and the common test infrastructure used by all subsystem test files. These components are the operational core of the test harness.
+
+## Design
+The private implementation centers on the `FWindowTestHarness` class, which provides the core infrastructure for all test subsystems. The harness manages RHI device creation, swap chain setup, and command queue acquisition. It provides a console command list for test selection, skipping, and exit. The `RunTest()` method takes a test identifier and dispatches to the appropriate test subsystem. The harness also manages the test result reporting, using `EXTERN_LOG_CATEGORY` for structured output. A test registry (`RTTI_TEST_REGISTRY`) is provided for automatic test discovery, and each test file registers itself at static initialization time. The harness handles window resize events, RHI device loss recovery, and clean shutdown of all acquired resources.
+
+## Flow
+The orchestration flow begins when the harness creates the RHI device and swap chain, then enters the console event loop. The user can select a test category and specific test file via console commands. The `RunTest()` method dispatches to the appropriate private subsystem (Drawing, Compute, Queue, Debugger, Compiler). Each subsystem initializes its required resources, executes the test operation, and reads back the result. The harness collects the result, logs it, and returns to the console menu. After all selected tests complete, the harness reports a summary and shuts down the RHI device cleanly. The registry of test files is auto-discovered from the `Private/` subdirectories at startup.
+
+## Integration
+The private implementation is the foundation used by all other `Private/` subdirectories in WindowTest: `Drawing/` (`Source/Programs/WindowTest/Private/Drawing/codemap.md`), `Compute/` (`Source/Programs/WindowTest/Private/Compute/codemap.md`), `Queue/` (`Source/Programs/WindowTest/Private/Queue/codemap.md`), `Debugger/` (`Source/Programs/WindowTest/Private/Debugger/codemap.md`), and `Compiler/` (`Source/Programs/WindowTest/Private/Compiler/codemap.md`). Each of these subsystems uses the harness's `FWindowTestHarness` base class for RHI initialization and result reporting. The harness itself integrates with `Source/Runtime/RHI/` (`Source/Runtime/RHI`) for device creation and with `FModularDomain` for lifecycle coordination.

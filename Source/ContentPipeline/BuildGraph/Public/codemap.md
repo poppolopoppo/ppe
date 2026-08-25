@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements public BuildGraph components, exposing the DAG-based build orchestration engine's API surface for other modules and tools to consume. It provides the interfaces and types required to interact with the content pipeline's Scan→Build→Clean lifecycle without depending on private implementation details.
+
+## Design
+Key patterns expose `FBuildGraph` as the primary DAG type with public methods `AddNode()`, `AppendNodes()`, `GetFile()`, and `AddFile()`. `FBuildEnvironment` is publicly available with platform, cache, executor, and log services. `IBuildExecutor::QueueAndWaitFor()`, `IBuildExecutor::Queue()`, and `IBuildExecutor::WaitForAll()` provide parallel execution control. `IBuildCache::GetArtifact()` and `IBuildCache::StoreArtifact()` enable caching interactions. `IBuildLog::Log()` and `IBuildLog::Flush()` structured logging interfaces are also exposed. Template-based type safety follows the `TContentImporter<_Import>` and `TContentProcessor` patterns established in other pipeline modules.
+
+## Flow
+Public consumers initiate a Scan by calling `FBuildGraph::ScanAll()`, which triggers the three-phase pipeline: ScanAll → ScanNodes_ → FScanContext::Scan → node.Scan(). Build execution is started via `FBuildEnvironment::BuildAll()`, which flows into BuildNodes_ → FBuildContext::Build → node.Import() → node.Process(). Clean operations use `FBuildEnvironment::CleanAll()` → CleanNodes_ → FCleanContext::Clean → node.Clean(). Dependency tracking flows through `StaticDeps()` → `DynamicDeps()` → `RuntimeDeps()`, and output file tracking is available via `AddFiles()` after scan completion.
+
+## Integration
+Integrates with `Source/ContentPipeline/MeshBuilder/Private/` and `Source/ContentPipeline/Asset.Geometry/Private/` for geometry mesh building, `Source/ContentPipeline/Asset.Texture/Private/` and `Source/ContentPipeline/Asset.Texture/Public/` for texture processing, and `Source/ContentPipeline/PipelineCompiler/Private/` and `Source/ContentPipeline/PipelineCompiler/Public/` for pipeline compiler orchestration. Also connects to `Source/Tools/IODetouring/` and `Source/Tools/IOWrapper/` for IO tracing, and `Source/Programs/BuildRobot/` for headless build automation.

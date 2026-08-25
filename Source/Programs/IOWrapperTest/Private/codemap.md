@@ -1,0 +1,13 @@
+# Source/Programs/IOWrapperTest/Private/
+
+## Responsibility
+This directory contains the private implementation of the IO wrapper integration test harness, including the test driver, named pipe client, trace entry validation, and result reporting. These components are the operational core of the integration test.
+
+## Design
+The private test driver implements the same pattern as the public test harness but with the internal details encapsulated. The driver creates the named pipe connection to the injected DLL, reads trace log entries as they are written, and validates each entry against the expected operation set. The driver supports configurable expected operation lists, mounted path remapping verification, and ignored application filtering. The trace entry format matches the `FIODetouringTblog` output format defined in `Source/Tools/IODetouring/Private/` (`Source/Tools/IODetouring/Private/codemap.md`). The driver reports results via `EXTERN_LOG_CATEGORY` and returns a pass/fail summary with a count of validation discrepancies.
+
+## Flow
+The test flow begins when the driver process launches the target application through IOWrapper with DLL injection. The driver connects to the named pipe created by the DLL and enters a read loop, consuming trace entries as they are written by the hooked Win32 APIs. Each trace entry is parsed and validated against the expected operation set. If an entry does not match an expected pattern, it is logged as a discrepancy and counted as a failure. The driver also verifies that path remapping was applied correctly by checking that the recorded paths correspond to the mounted paths configuration defined in the payload. After all expected operations are validated, or a timeout expires, the driver disconnects from the pipe and the test harness reports the result. The outcome is logged via `EXTERN_LOG_CATEGORY`, and the harness exits with a return code indicating the number of validation failures.
+
+## Integration
+The private implementation integrates directly with `Source/Tools/IODetouring/` (`Source/Tools/IODetouring/codemap.md`) at the hook and trace log level, and with `Source/Tools/IOWrapper/` (`Source/Tools/IOWrapper/codemap.md`) at the DLL injection and named pipe level. The trace entry format matches the `FIODetouringTblog` output, and the named pipe connection is the same one created by `Source/Tools/IOWrapper/Private/main.cpp:382`'s `IOCompletionLoop_()`. The test harness validates the full end-to-end stack: DLL injection, hook installation, trace data generation, named pipe transmission, and trace entry validation.

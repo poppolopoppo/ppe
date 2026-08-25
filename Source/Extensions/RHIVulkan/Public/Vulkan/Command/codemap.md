@@ -1,0 +1,13 @@
+# Source/Extensions/RHIVulkan/Public/Vulkan/Command/
+
+## Responsibility
+The Public Vulkan Command folder exposes the API-visible types and interfaces for command buffer recording and task graph processing. It declares the types that are safe to include in public headers: FVulkanCommandBuffer, FVulkanCommandBatch, IVulkanDrawTask, and the various task-specific types (FDispatchCompute, FCopyBuffer, FDrawVertices, etc.). This folder ensures that engine rendering code depends only on publicly documented Vulkan command types, allowing the private implementation to evolve independently.
+
+## Design
+The public API is designed around well-defined interfaces and template types that hide implementation details. FVulkanCommandBuffer owns the Vulkan command buffer and integrates with the TVulkanTaskGraph<_Visitor> dependency graph. The slab allocator within FVulkanCommandBuffer allocates TVulkanFrameTask<_Task> nodes from the command buffer's memory pool. FVulkanCommandBatch tracks queue family usage, ensuring that commands are submitted to the correct queue family. The two-pass processing model is documented: Pass1 sets up barriers and binds descriptors for each task, while Pass2 executes the commands. The visitor pattern (IVulkanDrawTask::Process1/Process2) separates barrier setup from command execution. Draw task templates (FDrawVertices, FDrawIndexed, etc.) are zero-cost abstractions specialized at compile time.
+
+## Flow
+Command recording begins with the creation of TVulkanFrameTask<_Task> nodes and their addition to the TVulkanTaskGraph<_Visitor>. The task graph processes tasks in two passes: Pass1 sets up barriers and binds descriptors for each task, while Pass2 executes the commands (vkCmdDraw, vkCmdDispatch, vkCmdTraceRaysKHR). FVulkanCommandBuffer records these commands into the Vulkan command buffer, using its slab allocator for node allocation. FVulkanCommandBatch tracks queue family usage across batches. The visitor pattern processes each task: Process1 sets up barriers and binds descriptors, Process2 issues the draw/dispatch/trace rays command. Descriptor sets are cached per-task.
+
+## Integration
+This folder is consumed by Source/Extensions/RHIVulkan/Private/ through the private implementation classes. FVulkanCommandBuffer is the primary integration point, used by the frame graph and command processing subsystems. Draw task types are processed by the private task processor (VulkanTaskProcessor). The two-pass processing model is documented for engine code. Swapchain integration occurs through FVulkanSwapchain, which is defined in the Private folder but referenced here for public API consistency.

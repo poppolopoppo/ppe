@@ -1,0 +1,11 @@
+## Responsibility
+This folder implements private PipelineReflection components, providing the reflection data extraction and type information services that support pipeline compilation and asset introspection. It extracts shader reflection information, pipeline descriptor metadata, and type mappings required by downstream consumers during the content pipeline build process.
+
+## Design
+Key patterns center on extracting reflection data from compiled SPIR-V shaders via `FVulkanSpirvCompiler::BuildReflection_()`, which produces pipeline descriptor type mappings and shader resource information. Reflection data is stored in `FMeshPipelineDesc`, `FGraphicsPipelineDesc`, `FComputePipelineDesc`, and `FRayTracingPipelineDesc` descriptor types for consumption by the pipeline compiler. The design leverages RTTI-enabled type information (`FMetaObject` base class patterns) for dynamic type resolution of reflection types. Reflection extraction follows the same GLSL → SPIR-V → reflection pipeline as the compiler, ensuring consistency between compiled shader reflection and pipeline descriptor metadata.
+
+## Flow
+Reflection extraction is triggered during the compile phase when `FVulkanPipelineCompiler::Compile()` dispatches to `FVulkanSpirvCompiler::BuildReflection_()`. The extracted reflection data is stored in the appropriate pipeline descriptor type and made available to downstream consumers via `FBuildGraph::AddFiles()` for tracking. Clean phase removes reflection artifacts and temporary type mapping files. Reflection type resolution uses dynamic casting through the `FMetaObject` hierarchy for type-safe access.
+
+## Integration
+Integrates with `Source/ContentPipeline/PipelineCompiler/Private/` and `Source/ContentPipeline/PipelineCompiler/Public/` for reflection data consumption during pipeline compilation, `Source/ContentPipeline/BuildGraph/Private/` and `Source/ContentPipeline/BuildGraph/Public/` for build graph tracking of reflection artifacts, and `Source/ContentPipeline/MeshBuilder/Private/` and `Source/ContentPipeline/MeshBuilder/Public/` for mesh-associated reflection data. Also connects to `Source/ContentPipeline/Asset.Texture/Private/` and `Source/ContentPipeline/Asset.Texture/Public/` for texture-related reflection data.

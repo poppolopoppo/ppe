@@ -1,0 +1,13 @@
+# Source/Tools/IODetouring/Private/
+
+## Responsibility
+The Private directory contains the implementation details, Win32 API hook detours, and low-level tracing logic that are not intended for external consumption. This is where the 40+ API hooks are defined and where the DLL's runtime behavior is implemented.
+
+## Design
+Hook implementations are defined for each targeted Win32 API: `Hook_CreateFileW/A` (`IODetouringHooks.h:62`), `Hook_ReadFile/WriteFile` (`IODetouringHooks.h:190`), `Hook_CreateProcessW/A` (`IODetouringHooks.h:92`), plus additional hooks for memory allocation, library loading, and console handling. Each hook function follows the Microsoft Detours trampoline pattern: it saves the original API entry point via Detours' `DetourAttach()`, redirects calls through the trampoline, executes application-specific logging, and then forwards to the original API function. The trace log implementation in this directory writes directly to a named pipe using overlapped I/O, ensuring minimal impact on the hooked application's execution path. Genealogy tracking structures maintain parent/child process relationships, and a configurable list of ignored applications (via environment variable) prevents self-injection and injection of known-benchmark processes.
+
+## Flow
+When the DLL is attached to a target process, `DllMain::OnProcessAttach_` (`IODetouring.cpp:32`) runs the hook installation sequence. For each API, `AttachDetours()` patches the import address table using Microsoft Detours, replacing the first few bytes of the original function with a detour trampoline. When the hooked API is called, control transfers to the hook function, which logs the operation (API index, path handle, result) to the named pipe via `FIODetouringTblog`, then calls the original function via the trampoline and returns the result to the caller. The named pipe write is asynchronous and does not block the hooked API significantly. Upon process detach, `OnProcessDetach_` removes all hooks and flushes any remaining trace data. The ignored applications list is checked at attach time to skip processes matching the patterns.
+
+## Integration
+Private hook implementations are the technical realization of the public API declared in `IODetouringHooks.h`. The named pipe endpoint created here is the same one consumed by `Source/Tools/IOWrapper/Private/main.cpp:382`'s `IOCompletionLoop_()`, forming the concrete integration point between the injected DLL and the launcher. Trace data format (log entries with API index, path, return value) is also consumed by `Source/Programs/IOWrapperTest/` (`Source/Programs/IOWrapperTest/codemap.md`) test harness, which launches processes under injection and validates the captured operation stream against expected patterns.
